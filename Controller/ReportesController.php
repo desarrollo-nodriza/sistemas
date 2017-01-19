@@ -237,6 +237,7 @@ class ReportesController extends AppController
 
 			$queryReporte = array();
 			$resultReporte = array();
+			$nuevoResult = array();
 
 			// Sobreescribimos la configuración de la base de datos a utilizar
 			ClassRegistry::init('Orders')->useDbConfig = $reporte['Tienda']['configuracion'];
@@ -249,21 +250,12 @@ class ReportesController extends AppController
 				$queryReporte[] = $grafico['Grafico']['descipcion'];
 
 				$resultReporte[$grafico['Grafico']['slug']] = ClassRegistry::init('Orders')->query($queryReporte[$indice]);
-			}
-
-			$nuevoResult = array();
-			foreach ($resultReporte as $key => $value) {
-				foreach ($value as $indice => $valor) {
-					foreach ($valor as $index => $final) {
-						$nuevoResult[][$key] = $final;
+				foreach ($resultReporte[$grafico['Grafico']['slug']] as $key => $value) {
+					foreach ($value as $index => $valor) {
+						$value['grafico'] = $grafico['Grafico']['tipo_grafico'];
+						$nuevoResult[$grafico['Grafico']['slug']][] = $value;
 					}
 				}
-			}
-
-			$val = '';
-			$resultFinal = array();
-			foreach ($nuevoResult as $k => $v) {
-				$resultFinal[$k] = $v;
 			}
 			print_r($nuevoResult);
 			exit;
