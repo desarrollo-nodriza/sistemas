@@ -1,0 +1,46 @@
+@charset 'utf-8';
+
+.query-historial-versiones pre.query {
+	display: none;
+	font-size: 10px;
+}
+.lockscreen-container .lockscreen-box {
+    width: 240px;
+}
+.lockscreen-container .lockscreen-box .lsb-form {
+	width: 100%;
+}
+.lockscreen-container .alert {
+	margin-top: 15px;
+	padding: 4px;
+}
+.lockscreen-container .alert a {
+	display: none;
+}
+.fila-filtro {
+	margin-bottom: 20px;
+}
+.btn.btn-limpiar {
+	padding: 1px 5px;
+	line-height: normal;
+	margin-left: 5px;
+}
+
+.table > tbody > tr > td, .table > tbody > tr > th, .table > tfoot > tr > td, .table > tfoot > tr > th, .table > thead > tr > td, .table > thead > tr > th {
+    border-top: 0;
+}
+
+.alert {border: none; border-radius: 0;}
+
+.btn.btn-buscar.btn-success {
+    margin-top: 22px;
+}
+
+.btn.btn-buscar.btn-primary {
+    margin-top: 22px;
+}
+.icons-list li {width: 50%;}
+.select-icon {cursor: pointer;}
+.table-responsive {overflow-x: inherit; }
+.dropdown-menu-left {float: right; right: 0; left: inherit;}
+.wizard .stepContainer, .wizard .actionBar {height: auto !important;}
