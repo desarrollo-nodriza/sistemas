@@ -44,3 +44,7 @@
 .table-responsive {overflow-x: inherit; }
 .dropdown-menu-left {float: right; right: 0; left: inherit;}
 .wizard .stepContainer, .wizard .actionBar {height: auto !important;}
+
+.widget , .tile {min-height: 120px !important;}
+.tile {padding: 20px 10px !important;}
+.description-graph {float: left; width: 100%; margin-left: 7px;}

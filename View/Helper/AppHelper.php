@@ -29,4 +29,37 @@ class AppHelper extends Helper
 			(isset($link['action']) ? ($link['action'] == $action) : true)
 		);
 	}
+
+	/**
+	 * Traducir Mes a Español
+	 * @param 	String 	Mes a traducir
+	 * @return  String 	Mes traducido	
+	 */
+	public function translateMonth( $mes = null ) {
+
+		if (!empty($mes)) {
+
+			$mesesAEspañol = array(
+				'January' => 'Enero',
+				'Feruary' => 'Febrero',
+				'March' => 'Marzo',
+				'April' => 'Abril',
+				'May' => 'Mayo',
+				'June'=> 'Junio',
+				'July' => 'Julio',
+				'August' => 'Agosto',
+				'September' => 'Septiembre',
+				'October' => 'Octubre',
+				'November' => 'Noviembre',
+				'December' => 'Diciembre'
+			);
+
+			if ( array_key_exists($mes, $mesesAEspañol) ) {
+				$mes = $mesesAEspañol[$mes];
+				return $mes;
+			}else{
+				return $mes;
+			}
+		}
+	}
 }

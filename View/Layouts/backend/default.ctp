@@ -34,6 +34,9 @@
 			'/backend/js/plugins/bootstrap/bootstrap-datepicker',
 			'/backend/js/plugins/morris/raphael-min',
 			'/backend/js/plugins/morris/morris.min',
+			'/backend/js/plugins/nvd3/lib/d3.v3',
+			'/backend/js/plugins/nvd3/nv.d3.min',
+			'/backend/js/plugins/owl/owl.carousel.min',
 			'/backend/js/custom',
 			//'/backend/js/plugins',
 			//'/backend/js/demo_charts_morris'

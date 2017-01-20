@@ -660,6 +660,10 @@ jQuery(document).ready(function($)
 		});
 	}
 
+	if($(".owl-carousel").length > 0){
+        $(".owl-carousel").owlCarousel({mouseDrag: false, touchDrag: true, slideSpeed: 300, paginationSpeed: 400, singleItem: true, navigation: false,autoPlay: true});
+    }
+
 
 	/*
 	 * Gráficos y generación del reporte
@@ -725,35 +729,208 @@ jQuery(document).ready(function($)
 			insertarElemento(cajaVentas);
 		}
 
-		function armarGraficosLinea(data) {
-			Morris.Line({
-		      element: 'morris-line-example',
-		      data: [
-		        { y: '2006', a: 100, b: 90 },
-		        { y: '2007', a: 75,  b: 65 },
-		        { y: '2008', a: 50,  b: 40 },
-		        { y: '2009', a: 75,  b: 65 },
-		        { y: '2010', a: 50,  b: 40 },
-		        { y: '2011', a: 75,  b: 65 },
-		        { y: '2012', a: 100, b: 90 }
-		      ],
-		      xkey: 'y',
-		      ykeys: ['a', 'b'],
-		      labels: ['Series A', 'Series B'],
-		      resize: true,
-		      lineColors: ['#33414E', '#95B75D']
+
+		function armarGraficosDonuts(elemento, datos, colores) {
+			Morris.Donut({
+		      	element: elemento,
+				data: datos,
+				colors: colores
 		    });
+
+		    /*Morris.Donut({
+		        element: 'morris-donut-example',
+		        data: [
+		            {label: "Download Sales", value: 12},
+		            {label: "In-Store Sales", value: 30},
+		            {label: "Mail-Order Sales", value: 20}
+		        ],
+		        colors: ['#95B75D', '#3FBAE4', '#FEA223']
+		    });*/
+		}
+
+
+		function armarGraficosLinea(elemento, datos, ejeX, ejeY, etiquetas, colores) {
+			Morris.Line({
+		      	element: elemento,
+				data: datos,
+				xkey: ejeX,
+				ykeys: ejeY,
+				labels: etiquetas,
+				resize: true,
+				lineColors: colores
+		    });
+		}
+
+
+		function armarGraficosArea(elemento, datos, ejeX, ejeY, etiquetas, colores) {
+			Morris.Area({
+		      	element: elemento,
+				data: datos,
+				xkey: ejeX,
+				ykeys: ejeY,
+				labels: etiquetas,
+				resize: true,
+				lineColors: colores
+		    });
+		}
+
+		function armarGraficosBarra(elemento, datos, ejeX, ejeY, etiquetas, colores) {
+			Morris.Bar({
+		      	element: elemento,
+				data: datos,
+				xkey: ejeX,
+				ykeys: ejeY,
+				labels: etiquetas,
+				resize: true,
+				lineColors: colores
+		    });
+		}
+
+		function armarGraficoLineaNVD3(element, data, colores ) {
+			nv.addGraph(function() {
+				var chart = nv.models.lineChart().margin({
+					left : 100
+				})//Adjust chart margins to give the x-axis some breathing room.
+				.useInteractiveGuideline(true)//We want nice looking tooltips and a guideline!
+				.transitionDuration(350)//how fast do you want the lines to transition?
+				.showLegend(true)//Show the legend, allowing users to turn on/off line series.
+				.showYAxis(true)//Show the y-axis
+				.showXAxis(true)//Show the x-axis
+				.color(colores);
+				chart.xAxis//Chart x-axis settings
+				.axisLabel('Marcas').tickFormat(d3.format(',r'));
+
+				chart.yAxis//Chart y-axis settings
+				.axisLabel('Cantidad').tickFormat(d3.format('.02f'));
+
+				d3.select(element)//Select the <svg> element you want to render the chart in.
+				.datum(data)//Populate the <svg> element with chart data...
+				.call(chart);
+				//Finally, render the chart!
+
+				//Update the chart when window resizes.
+				nv.utils.windowResize(function() {
+	                chart.update();
+				});
+			});
+		}
+
+
+		function productosDelPeriodo(data) {
+			var element =  'productos_del_periodo';
+			var datos = [];
+			var colors = ['#5D58DD', '#524EC4', '#3C63F0', '#6783E8', '#2041BA', '#1D348A', '#1D5E8A', '#2495E0', '#0879C4', '#1EC4DA'];
+
+			var count = 0;
+			var total = 0;
+			var porcentaje = 0;
+			var i;
+
+			for (i in data) {
+			    if (data.hasOwnProperty(i)) {
+			    	total = total + parseInt(data[i][0]['Cantidad']);
+			    }
+			}
+
+			// Texto total de productos
+			$('#cant_total_product').text(total);
+
+			for (i in data) {
+			    if (data.hasOwnProperty(i)) {
+			    	porcentaje = (( total / 100 ) * parseInt(data[i][0]['Cantidad']) );
+			    	datos.push({ label : data[i]['Producto']['Referencia'], value: parseInt(porcentaje) });
+			        count++;
+			    }
+			}
+			// Mostrar solo los 10 mayores elementos
+			datos.splice(10, (count-10));
+
+			armarGraficosDonuts(element, datos, colors);
+		}
+
+
+		function categoriasDelPeriodo(data) {
+			var element =  'categorias_del_mes';
+			var datos = [];
+			var colors = ['#17191E', '#36B7E3', '#FE9C16', '#DE4444', '#BFDE44', '#6EDE5A', '#5ADEC6', '#5A5ADE', '#B65ADE', '#DE5AD9'];
+
+			var count = 0;
+			var total = 0;
+			var i;
+			var porcentaje = 0;
+
+			for (i in data) {
+			    if (data.hasOwnProperty(i)) {
+			    	total = total + parseInt(data[i][0]['Cantidad']);
+			    }
+			}
+
+			for (i in data) {
+			    if (data.hasOwnProperty(i)) {
+			    	porcentaje = (( total / 100 ) * parseInt(data[i][0]['Cantidad']) );
+			    	datos.push({ label : data[i]['IdiomaCategoria']['Nombre'], value: parseInt(data[i][0]['Cantidad']) });
+			        count++;
+			    }
+			}
+			// Mostrar solo los 10 mayores elementos
+			datos.splice(10, (count-10));
+
+			armarGraficosDonuts(element, datos, colors);
+		}
+
+
+		function comparadorDePeriodos(data) {
+			var element =  'comparador_de_periodos';
+			var datos = [];
+			var x = 'y';
+			var y = ['a'];
+			var labels = ['Total'];
+			var colors = ['#3EBAE4'];
+
+			var count = 0;
+			var i;
+
+			for (i in data) {
+			    if (data.hasOwnProperty(i)) {
+			    	datos.push({ y : data[i][0]['Mes'], a: parseInt(data[i][0].VentaPeriodoActual) });
+			        count++;
+			    }
+			}
+
+			armarGraficosArea(element, datos, x, y, labels, colors);
+		}
+
+
+		function marcasDelPeriodo(data) {
+			var element =  '#marcas_del_periodo svg';
+			var datos = [];
+			var x = 'y';
+			var y = ['a'];
+			var labels = ['Total'];
+			var colors = ['#3EBAE4'];
+
+			var count = 0;
+			var i;
+
+			for (i in data) {
+			    if (data.hasOwnProperty(i)) {
+			    	datos.push({ x : data[i]['Proveedor']['Nombre'], y: parseInt(data[i][0]['Cantidad']) });
+			        count++;
+			    }
+			}
+
+			armarGraficoLineaNVD3(element, datos, colors);
 		}
 
 		// Generar reporte
 		$('#generarGraficoBtn').on('click', function(){
-			var $boton = $(this);
+			//var $boton = $(this);
 			var $fechaReporte = $('#fecha_reporte');
 			var graficosId = $("#graficosId").data("value").split(',').map(JSON.parse);
 			var graficos = [];
 
 			// Deshabilitar el botón
-			$boton.attr('disabled', 'disabled');
+			//$boton.attr('disabled', 'disabled');
 
 			// Armar array de ids de los gráficos
 			for (var i = 0; i <= graficosId.length - 1; i++) {
@@ -771,18 +948,42 @@ jQuery(document).ready(function($)
 			    url: webroot + "reportes/get_query_result_json",
 			})
 			.done(function( data, textStatus, jqXHR ) {
-			    console.log( "La solicitud se ha completado correctamente." );
-			    //console.log(Object.keys(data).length);
-			    console.log(data);
-			    /*for (var i = 0; i <= Object.keys(data).length - 1; i++) {
-					//crearCajaVentas(Object.keys(data[i]));
-				}*/
 
-			    accionesReporte($boton, $fechaReporte);
+			    var result = $.parseJSON(data);
+		    	var ventasTotal = result['total_ventas_del_mes'];
+		    	var categorias = result['categorias_del_mes'];
+		    	var comparador = result['comparador_de_periodos'];
+		    	var productos = result['productos_del_periodo'];
+		    	var descuentos = result['total_descuentos_del_periodo'];
+		    	var pedidos = result['pedidos_del_mes'];
+		    	var compradores = result['compradores_del_periodo'];
+		    	var marcas = result['marcas_del_periodo'];
+
+		    	// Comparador de periodos
+				if (comparador) {
+		    		comparadorDePeriodos(comparador);
+		    	}
+
+		    	// Productos del periodo
+		    	if (productos) {
+		    		productosDelPeriodo(productos);
+		    	}
+
+		    	// Categorias del periodo
+		    	if (categorias) {
+		    		categoriasDelPeriodo(categorias);
+		    	}
+
+		    	// Categorias del periodo
+		    	if (marcas) {
+		    		marcasDelPeriodo(marcas);
+		    	}
+
+			    //accionesReporte($boton, $fechaReporte);
 			})
 			.fail(function( jqXHR, textStatus, errorThrown ) {
 			    console.log( "La solicitud a fallado: " +  textStatus);
-			    accionesReporte($boton, $fechaReporte);
+			    //accionesReporte($boton, $fechaReporte);
 			});
 		})
 

@@ -148,7 +148,7 @@ class ReportesController extends AppController
 
 			$queryReporte = array();
 			$resultReporte = array();
-
+			$nuevoResult = array();
 			// Sobreescribimos la configuración de la base d e datos a utilizar
 			ClassRegistry::init('Orders')->useDbConfig = $reporte['Tienda']['configuracion'];
 			$this->Conection = ClassRegistry::init('Orders');
@@ -159,8 +159,9 @@ class ReportesController extends AppController
 				$grafico['Grafico']['descipcion'] = str_replace('[*FINISH_DATE*]', $fecha_final, $grafico['Grafico']['descipcion']);
 
 				$queryReporte[] = $grafico['Grafico']['descipcion'];
-				$resultReporte[$grafico['Grafico']['slug']] =$this->Conection->query($queryReporte[$indice]);
+				$resultReporte[$grafico['Grafico']['slug']] = $this->Conection->query($queryReporte[$indice]);
 			}
+
 
 			BreadcrumbComponent::add('Reportes ', '/reportes');
 			BreadcrumbComponent::add($reporte['Reporte']['nombre']);
@@ -173,10 +174,11 @@ class ReportesController extends AppController
 			// Limpiamos el array $data
 			unset($data['id_grafico']);
 
-
-
 			$this->set(compact('resultReporte', 'reporte' , 'data' , 'graficos'));
 			
+		}else{
+			$this->Session->setFlash('No es posible generar el reporte.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
 		}
 
 	}
@@ -250,14 +252,10 @@ class ReportesController extends AppController
 				$queryReporte[] = $grafico['Grafico']['descipcion'];
 
 				$resultReporte[$grafico['Grafico']['slug']] = ClassRegistry::init('Orders')->query($queryReporte[$indice]);
-				foreach ($resultReporte[$grafico['Grafico']['slug']] as $key => $value) {
-					foreach ($value as $index => $valor) {
-						$value['grafico'] = $grafico['Grafico']['tipo_grafico'];
-						$nuevoResult[$grafico['Grafico']['slug']][] = $value;
-					}
-				}
+
 			}
-			print_r($nuevoResult);
+
+			print_r(json_encode($resultReporte));
 			exit;
 
 
