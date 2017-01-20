@@ -39,6 +39,7 @@
 			'/backend/js/plugins/owl/owl.carousel.min',
 			'/backend/js/custom',
 			//'/backend/js/plugins',
+			//'/backend/js/demo_charts_nvd3'
 			//'/backend/js/demo_charts_morris'
 			/*
 			'/backend/js/plugins/bootstrap/bootstrap-datepicker',

@@ -786,7 +786,41 @@ jQuery(document).ready(function($)
 		    });
 		}
 
+		function sinAndCos() {
+			var sin = [], sin2 = [], cos = [];
+
+			//Data is represented as an array of {x,y} pairs.
+			for (var i = 0; i < 100; i++) {
+				sin.push({
+					x : i,
+					y : Math.sin(i / 10)
+				});
+				sin2.push({
+					x : i,
+					y : Math.sin(i / 10) * 0.25 + 0.5
+				});
+				cos.push({
+					x : i,
+					y : .5 * Math.cos(i / 10)
+				});
+			}
+
+			//Line chart data should be sent as an array of series objects.
+			return [{
+				values : sin, //values - represents the array of {x,y} data points
+				key : 'Sine Wave' //key  - the name of the series.
+			}, {
+				values : cos,
+				key : 'Cosine Wave'
+			}, {
+				values : sin2,
+				key : 'Another sine wave',
+				area : true //area - set to true if you want this line to turn into a filled area chart.
+			}];
+		}
+
 		function armarGraficoLineaNVD3(element, data, colores ) {
+			console.log(sinAndCos());
 			nv.addGraph(function() {
 				var chart = nv.models.lineChart().margin({
 					left : 100
@@ -820,7 +854,6 @@ jQuery(document).ready(function($)
 			var element =  'productos_del_periodo';
 			var datos = [];
 			var colors = ['#5D58DD', '#524EC4', '#3C63F0', '#6783E8', '#2041BA', '#1D348A', '#1D5E8A', '#2495E0', '#0879C4', '#1EC4DA'];
-
 			var count = 0;
 			var total = 0;
 			var porcentaje = 0;
@@ -853,7 +886,6 @@ jQuery(document).ready(function($)
 			var element =  'categorias_del_mes';
 			var datos = [];
 			var colors = ['#17191E', '#36B7E3', '#FE9C16', '#DE4444', '#BFDE44', '#6EDE5A', '#5ADEC6', '#5A5ADE', '#B65ADE', '#DE5AD9'];
-
 			var count = 0;
 			var total = 0;
 			var i;
@@ -902,24 +934,52 @@ jQuery(document).ready(function($)
 
 
 		function marcasDelPeriodo(data) {
-			var element =  '#marcas_del_periodo svg';
+			var element =  'marcas_del_periodo';
 			var datos = [];
-			var x = 'y';
-			var y = ['a'];
-			var labels = ['Total'];
-			var colors = ['#3EBAE4'];
-
+			var colors = ['#17191E', '#36B7E3', '#FE9C16', '#DE4444', '#BFDE44', '#6EDE5A', '#5ADEC6', '#5A5ADE', '#B65ADE', '#DE5AD9'];
 			var count = 0;
+			var total = 0;
+			var i;
+			var porcentaje = 0;
+
+			for (i in data) {
+			    if (data.hasOwnProperty(i)) {
+			    	total = total + parseInt(data[i][0]['Cantidad']);
+			    }
+			}
+
+			for (i in data) {
+			    if (data.hasOwnProperty(i)) {
+			    	porcentaje = (( total / 100 ) * parseInt(data[i][0]['Cantidad']) );
+			    	datos.push({ label : data[i]['Proveedor']['Nombre'], value: parseInt(data[i][0]['Cantidad']) });
+			        count++;
+			    }
+			}
+			// Mostrar solo los 10 mayores elementos
+			datos.splice(10, (count-10));
+
+			armarGraficosDonuts(element, datos, colors);
+		}
+
+
+		function compradoresDelPeriodo(data) {
+			var element =  'compradores_del_periodo';
+			var datos = [];
+			var colors = ['#17191E', '#36B7E3', '#FE9C16', '#DE4444', '#BFDE44', '#6EDE5A', '#5ADEC6', '#5A5ADE', '#B65ADE', '#DE5AD9'];
+			var count = 0;
+			var total = 0;
 			var i;
 
 			for (i in data) {
 			    if (data.hasOwnProperty(i)) {
-			    	datos.push({ x : data[i]['Proveedor']['Nombre'], y: parseInt(data[i][0]['Cantidad']) });
+			    	datos.push({ label : data[i][0]['nombre'], value: parseInt(data[i][0]['pagado']) });
 			        count++;
 			    }
 			}
+			// Mostrar solo los 10 mayores elementos
+			datos.splice(10, (count-10));
 
-			armarGraficoLineaNVD3(element, datos, colors);
+			armarGraficosDonuts(element, datos, colors);
 		}
 
 		// Generar reporte
@@ -977,6 +1037,11 @@ jQuery(document).ready(function($)
 		    	// Categorias del periodo
 		    	if (marcas) {
 		    		marcasDelPeriodo(marcas);
+		    	}
+
+		    	// Categorias del periodo
+		    	if (compradores) {
+		    		compradoresDelPeriodo(compradores);
 		    	}
 
 			    //accionesReporte($boton, $fechaReporte);
