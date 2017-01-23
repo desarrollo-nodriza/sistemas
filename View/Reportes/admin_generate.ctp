@@ -29,7 +29,7 @@
 	<span id="graficosId" data-value='<?=$data['graficos'];?>'></span>
 	
 	<div class="row">
-	<? if( isset($resultReporte['total_ventas_del_mes']) && !empty($resultReporte['total_ventas_del_mes']) ) : ?>
+	<? if( isset($resultReporte['total_ventas_del_mes']) && !empty($resultReporte['total_ventas_del_periodo']) ) : ?>
 		<div class="col-xs-6 col-sm-4">
 			<div class="tile tile-primary">
 				<?=$resultReporte['total_ventas_del_mes'][0][0]['TotalVentas'];?>
@@ -47,12 +47,12 @@
             </div>
 		</div>
 	<? endif; ?>
-	<? if( isset($resultReporte['pedidos_del_mes']) && !empty($resultReporte['pedidos_del_mes']) ) : ?>
+	<? if( isset($resultReporte['pedidos_del_periodo']) && !empty($resultReporte['pedidos_del_periodo']) ) : ?>
 		<div class="col-xs-6 col-sm-4">
 			<div class="widget widget-warning widget-carousel">
-                <div class="owl-carousel" id="pedidos_del_mes">
+                <div class="owl-carousel" id="pedidos_del_periodo">
                 	<? $contador1 = 0; ?>
-                	<? foreach ($resultReporte['pedidos_del_mes'] as $pedidoItem) : ?>
+                	<? foreach ($resultReporte['pedidos_del_periodo'] as $pedidoItem) : ?>
                 		<? if ($contador1 == 0) : ?>
                 			<div>                                    
 		                        <div class="widget-title">Total pedidos</div>
@@ -102,7 +102,7 @@
             </div>
         </div>
     <? endif;?>
-    <? if( isset($resultReporte['categorias_del_mes']) && !empty($resultReporte['categorias_del_mes']) ) : ?>
+    <? if( isset($resultReporte['categorias_del_periodo']) && !empty($resultReporte['categorias_del_periodo']) ) : ?>
     	<div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -110,7 +110,7 @@
                     <small class="description-graph">Representa la cantidad de ventas de las 10 mayores categorias.</small>                                
                 </div>
                 <div class="panel-body">
-                    <div id="categorias_del_mes" style="height: 300px;"></div>
+                    <div id="categorias_del_periodo" style="height: 300px;"></div>
                 </div>
             </div>
         </div>
