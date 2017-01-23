@@ -14,6 +14,7 @@
 						<div class="col-xs-12 col-sm-6">
 							<label>Etiquetas disponibles:</label>
 							<ul>
+								<li><b>[*PREFIX*]</b> = Selector de Prefijo</li>
 								<li><b>[*START_DATE*]</b> = Selector de fecha inicial</li>
 								<li><b>[*FINISH_DATE*]</b> = Selector de fecha final</li>
 								<li><b>[*LIMIT*]</b> = Selector limite de registros</li>

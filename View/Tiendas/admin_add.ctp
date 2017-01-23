@@ -23,6 +23,10 @@
 						<td><?= $this->Form->input('configuracion'); ?></td>
 					</tr>
 					<tr>
+						<th><?= $this->Form->label('prefijo', 'Prefijo de las tablas'); ?></th>
+						<td><?= $this->Form->input('prefijo'); ?></td>
+					</tr>
+					<tr>
 						<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 						<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 					</tr>

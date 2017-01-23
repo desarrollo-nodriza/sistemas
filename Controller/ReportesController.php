@@ -145,6 +145,7 @@ class ReportesController extends AppController
 
 			$fecha_inicial = sprintf("'%s'", $this->request->data['Reporte']['f_inicio']);
 			$fecha_final = sprintf("'%s'", $this->request->data['Reporte']['f_final']);
+			$prefijo = $reporte['Tienda']['prefijo'];
 
 			$queryReporte = array();
 			$resultReporte = array();
@@ -157,6 +158,7 @@ class ReportesController extends AppController
 			foreach ($graficos as $indice => $grafico) {
 				$grafico['Grafico']['descipcion'] = str_replace('[*START_DATE*]', $fecha_inicial, $grafico['Grafico']['descipcion']);
 				$grafico['Grafico']['descipcion'] = str_replace('[*FINISH_DATE*]', $fecha_final, $grafico['Grafico']['descipcion']);
+				$grafico['Grafico']['descipcion'] = str_replace('[*PREFIX*]', $prefijo, $grafico['Grafico']['descipcion']);
 
 				$queryReporte[] = $grafico['Grafico']['descipcion'];
 				$resultReporte[$grafico['Grafico']['slug']] = $this->Conection->query($queryReporte[$indice]);
@@ -236,6 +238,7 @@ class ReportesController extends AppController
 
 			$fecha_inicial = sprintf("'%s'", $f_inicio);
 			$fecha_final = sprintf("'%s'", $f_final);
+			$prefijo = $reporte['Tienda']['prefijo'];
 
 			$queryReporte = array();
 			$resultReporte = array();
@@ -248,6 +251,7 @@ class ReportesController extends AppController
 			foreach ($graficos as $indice => $grafico) {
 				$grafico['Grafico']['descipcion'] = str_replace('[*START_DATE*]', $fecha_inicial, $grafico['Grafico']['descipcion']);
 				$grafico['Grafico']['descipcion'] = str_replace('[*FINISH_DATE*]', $fecha_final, $grafico['Grafico']['descipcion']);
+				$grafico['Grafico']['descipcion'] = str_replace('[*PREFIX*]', $prefijo, $grafico['Grafico']['descipcion']);
 
 				$queryReporte[] = $grafico['Grafico']['descipcion'];
 
