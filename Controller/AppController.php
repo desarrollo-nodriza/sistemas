@@ -188,6 +188,10 @@ class AppController extends Controller
 	{
 		$jsonPermisos = ClassRegistry::init('Rol')->find('first', array('conditions' => array('Rol.id' => $this->Auth->user('rol_id')), 'fields' => array('permisos')));
 
+		if (empty($jsonPermisos)) {
+			return false;
+		}
+
 		if (empty($jsonPermisos['Rol']['permisos']) && $this->request->params['action'] != 'admin_login' && $this->request->params['action'] != 'admin_logout') {
 		 	throw new Exception('Falta Json con información de permisos.', 11);
 		}

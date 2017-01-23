@@ -14,7 +14,7 @@ class EmailsController extends AppController
 
 		// Condicones para super administrador
 		if ( $this->Auth->user('admin') == 0 ) {
-			$conditions = array('Email.activo' => 1);
+			$conditions = array();
 		}
 
 		$this->paginate		= array(
@@ -248,9 +248,8 @@ class EmailsController extends AppController
 
 		}
 
-		
 
-		if ( $this->Email->saveField('activo', 0) )
+		if ( $this->Email->saveField('activo', 0, array('callbacks' => false)) )
 
 		{
 
@@ -298,7 +297,7 @@ class EmailsController extends AppController
 
 		
 
-		if ( $this->Email->saveField('activo', 1) )
+		if ( $this->Email->saveField('activo', 1, array('callbacks' => false)) )
 
 		{
 

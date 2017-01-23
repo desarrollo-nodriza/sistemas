@@ -782,45 +782,13 @@ jQuery(document).ready(function($)
 				ykeys: ejeY,
 				labels: etiquetas,
 				resize: true,
-				lineColors: colores
+				barColors: colores
 		    });
 		}
 
-		function sinAndCos() {
-			var sin = [], sin2 = [], cos = [];
-
-			//Data is represented as an array of {x,y} pairs.
-			for (var i = 0; i < 100; i++) {
-				sin.push({
-					x : i,
-					y : Math.sin(i / 10)
-				});
-				sin2.push({
-					x : i,
-					y : Math.sin(i / 10) * 0.25 + 0.5
-				});
-				cos.push({
-					x : i,
-					y : .5 * Math.cos(i / 10)
-				});
-			}
-
-			//Line chart data should be sent as an array of series objects.
-			return [{
-				values : sin, //values - represents the array of {x,y} data points
-				key : 'Sine Wave' //key  - the name of the series.
-			}, {
-				values : cos,
-				key : 'Cosine Wave'
-			}, {
-				values : sin2,
-				key : 'Another sine wave',
-				area : true //area - set to true if you want this line to turn into a filled area chart.
-			}];
-		}
 
 		function armarGraficoLineaNVD3(element, data, colores ) {
-			console.log(sinAndCos());
+		
 			nv.addGraph(function() {
 				var chart = nv.models.lineChart().margin({
 					left : 100
@@ -870,7 +838,7 @@ jQuery(document).ready(function($)
 
 			for (i in data) {
 			    if (data.hasOwnProperty(i)) {
-			    	porcentaje = (( total / 100 ) * parseInt(data[i][0]['Cantidad']) );
+			    	porcentaje = (( parseInt(data[i][0]['Cantidad']) * 100 ) / total);
 			    	datos.push({ label : data[i]['Producto']['Referencia'], value: parseInt(porcentaje) });
 			        count++;
 			    }
@@ -899,7 +867,7 @@ jQuery(document).ready(function($)
 
 			for (i in data) {
 			    if (data.hasOwnProperty(i)) {
-			    	porcentaje = (( total / 100 ) * parseInt(data[i][0]['Cantidad']) );
+			    	porcentaje = (( parseInt(data[i][0]['Cantidad']) * 100 ) / total);
 			    	datos.push({ label : data[i]['IdiomaCategoria']['Nombre'], value: parseInt(data[i][0]['Cantidad']) });
 			        count++;
 			    }
@@ -915,21 +883,21 @@ jQuery(document).ready(function($)
 			var element =  'comparador_de_periodos';
 			var datos = [];
 			var x = 'y';
-			var y = ['a'];
-			var labels = ['Total'];
-			var colors = ['#3EBAE4'];
+			var y = ['a', 'b'];
+			var labels = ['Total Comprado', 'Total Descuentos'];
+			var colors = ['#3EBAE4', '#DE4444'];
 
 			var count = 0;
 			var i;
 
 			for (i in data) {
 			    if (data.hasOwnProperty(i)) {
-			    	datos.push({ y : data[i][0]['Mes'], a: parseInt(data[i][0].VentaPeriodoActual) });
+			    	datos.push({ y : data[i][0]['Mes'], a: parseInt(data[i][0].VentaPeriodoActual), b: parseInt(data[i][0].TotalDescuentos) });
 			        count++;
 			    }
 			}
 
-			armarGraficosArea(element, datos, x, y, labels, colors);
+			armarGraficosLinea(element, datos, x, y, labels, colors);
 		}
 
 
@@ -948,10 +916,14 @@ jQuery(document).ready(function($)
 			    }
 			}
 
+			// Texto total de productos
+			$('#cant_total_marcas').text(total);
+			
 			for (i in data) {
 			    if (data.hasOwnProperty(i)) {
-			    	porcentaje = (( total / 100 ) * parseInt(data[i][0]['Cantidad']) );
-			    	datos.push({ label : data[i]['Proveedor']['Nombre'], value: parseInt(data[i][0]['Cantidad']) });
+			    	porcentaje = (( parseInt(data[i][0]['Cantidad']) * 100 ) / total);
+			    	console.log(porcentaje);
+			    	datos.push({ label : data[i]['Proveedor']['Nombre'], value: parseInt(porcentaje) });
 			        count++;
 			    }
 			}

@@ -119,7 +119,8 @@
     	<div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Mejores marcas</h3>                                
+                    <h3 class="panel-title">Mejores marcas</h3>
+                    <small class="description-graph">Representa el porcentaje (%) de los 10 mejores marcas con respecto al universo de <span id="cant_total_marcas"></span>.</small>                               
                 </div>
                 <div class="panel-body">
                     <div id="marcas_del_periodo" style="height: 300px;"></div>
@@ -131,7 +132,8 @@
     	<div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Mejores compradores</h3>                                
+                    <h3 class="panel-title">Mejores compradores</h3>   
+                    <small class="description-graph">Muestra los 10 mejores clientes del periodo.</small>                                  
                 </div>
                 <div class="panel-body">
                     <div id="compradores_del_periodo" style="height: 300px;"></div>
