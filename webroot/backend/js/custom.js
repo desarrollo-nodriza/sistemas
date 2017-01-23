@@ -982,12 +982,12 @@ jQuery(document).ready(function($)
 			.done(function( data, textStatus, jqXHR ) {
 
 			    var result = $.parseJSON(data);
-		    	var ventasTotal = result['total_ventas_del_mes'];
-		    	var categorias = result['categorias_del_mes'];
+		    	var ventasTotal = result['total_ventas_del_periodo'];
+		    	var categorias = result['categorias_del_periodo'];
 		    	var comparador = result['comparador_de_periodos'];
 		    	var productos = result['productos_del_periodo'];
 		    	var descuentos = result['total_descuentos_del_periodo'];
-		    	var pedidos = result['pedidos_del_mes'];
+		    	var pedidos = result['pedidos_del_periodo'];
 		    	var compradores = result['compradores_del_periodo'];
 		    	var marcas = result['marcas_del_periodo'];
 
