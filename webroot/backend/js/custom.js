@@ -730,10 +730,11 @@ jQuery(document).ready(function($)
 		}
 
 
-		function armarGraficosDonuts(elemento, datos, colores) {
+		function armarGraficosDonuts(elemento, datos, colores, formato) {
 			Morris.Donut({
 		      	element: elemento,
 				data: datos,
+				formatter: formato,
 				colors: colores
 		    });
 
@@ -757,6 +758,7 @@ jQuery(document).ready(function($)
 				ykeys: ejeY,
 				labels: etiquetas,
 				resize: true,
+				xLabels: 'month',
 				lineColors: colores
 		    });
 		}
@@ -826,6 +828,7 @@ jQuery(document).ready(function($)
 			var total = 0;
 			var porcentaje = 0;
 			var i;
+			var formato = function (y, data) { return y + '%' };
 
 			for (i in data) {
 			    if (data.hasOwnProperty(i)) {
@@ -846,7 +849,7 @@ jQuery(document).ready(function($)
 			// Mostrar solo los 10 mayores elementos
 			datos.splice(10, (count-10));
 
-			armarGraficosDonuts(element, datos, colors);
+			armarGraficosDonuts(element, datos, colors, formato);
 		}
 
 
@@ -858,6 +861,7 @@ jQuery(document).ready(function($)
 			var total = 0;
 			var i;
 			var porcentaje = 0;
+			var formato = function (y, data) { return y + ' ventas'};
 
 			for (i in data) {
 			    if (data.hasOwnProperty(i)) {
@@ -875,7 +879,7 @@ jQuery(document).ready(function($)
 			// Mostrar solo los 10 mayores elementos
 			datos.splice(10, (count-10));
 
-			armarGraficosDonuts(element, datos, colors);
+			armarGraficosDonuts(element, datos, colors, formato);
 		}
 
 
@@ -909,6 +913,7 @@ jQuery(document).ready(function($)
 			var total = 0;
 			var i;
 			var porcentaje = 0;
+			var formato = function (y, data) { return y + '%' };
 
 			for (i in data) {
 			    if (data.hasOwnProperty(i)) {
@@ -930,7 +935,7 @@ jQuery(document).ready(function($)
 			// Mostrar solo los 10 mayores elementos
 			datos.splice(10, (count-10));
 
-			armarGraficosDonuts(element, datos, colors);
+			armarGraficosDonuts(element, datos, colors, formato);
 		}
 
 
@@ -941,6 +946,7 @@ jQuery(document).ready(function($)
 			var count = 0;
 			var total = 0;
 			var i;
+			var formato = function (y, data) { return '$' + y };
 
 			for (i in data) {
 			    if (data.hasOwnProperty(i)) {
@@ -951,7 +957,7 @@ jQuery(document).ready(function($)
 			// Mostrar solo los 10 mayores elementos
 			datos.splice(10, (count-10));
 
-			armarGraficosDonuts(element, datos, colors);
+			armarGraficosDonuts(element, datos, colors, formato);
 		}
 
 		// Generar reporte
