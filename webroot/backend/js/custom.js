@@ -851,7 +851,7 @@ jQuery(document).ready(function($)
 
 
 		function categoriasDelPeriodo(data) {
-			var element =  'categorias_del_mes';
+			var element =  'categorias_del_periodo';
 			var datos = [];
 			var colors = ['#17191E', '#36B7E3', '#FE9C16', '#DE4444', '#BFDE44', '#6EDE5A', '#5ADEC6', '#5A5ADE', '#B65ADE', '#DE5AD9'];
 			var count = 0;
@@ -980,7 +980,7 @@ jQuery(document).ready(function($)
 			    url: webroot + "reportes/get_query_result_json",
 			})
 			.done(function( data, textStatus, jqXHR ) {
-
+					console.log(data);
 			    var result = $.parseJSON(data);
 		    	var ventasTotal = result['total_ventas_del_periodo'];
 		    	var categorias = result['categorias_del_periodo'];

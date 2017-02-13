@@ -16,7 +16,7 @@ class CategoriasToolmania extends AppModel
 	/**
 	 * Use Toolmania Connect
 	 */
-	public $useDbConfig = 'newsletter';
+	public $useDbConfig = 'reportes';
 
 	/**
 	 * BEHAVIORS

@@ -13,6 +13,18 @@ class ReportesController extends AppController
 		$this->set(compact('reportes', 'graficos'));
 	}
 
+	public function admin_all()
+	{
+		$this->paginate		= array(
+			'recursive'			=> 1
+		);
+		BreadcrumbComponent::add('Todos los reportes ');
+
+		$reportes	= $this->paginate();
+
+		$this->set(compact('reportes'));
+	}
+
 	public function admin_add()
 	{
 		if ( $this->request->is('post') )

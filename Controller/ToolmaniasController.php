@@ -196,7 +196,7 @@ class ToolmaniasController extends AppController {
 		            'type'  => 'LEFT',
 		            'conditions' => array(
 		                'Toolmania.id_product = im.id_product',
-		                'im.cover' => 0
+		                'im.cover' => 1
 		            )
 	        	)
 			),

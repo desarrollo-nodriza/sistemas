@@ -9,6 +9,9 @@
 				<div class="panel-heading">
 					<h3 class="panel-title">Generar Reportes</h3>
 					<div class="btn-group pull-right">
+					<? if ($permisos['edit']) : ?>
+						<?= $this->Html->link('<i class="fa fa-list"></i> Todos', array('action' => 'all'), array('class' => 'btn btn-info', 'escape' => false)); ?>
+					<? endif; ?>
 					<? if ($permisos['add']) : ?>
 						<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Reporte', array('action' => 'add'), array('class' => 'btn btn-success', 'escape' => false)); ?>
 					<? endif; ?>

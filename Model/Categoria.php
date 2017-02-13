@@ -6,7 +6,7 @@ class Categoria extends AppModel
 	 * CONFIGURACION DB
 	 */
 
-	public $useDbConfig = 'newsletter';
+	public $useDbConfig = 'reportes';
 	public $displayField	= 'nombre';
 
 	/**

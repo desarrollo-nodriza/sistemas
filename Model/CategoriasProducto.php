@@ -5,7 +5,7 @@ class CategoriasProducto extends AppModel
 	/**
 	 * CONFIGURACION DB
 	 */
-	public $useDbConfig = 'newsletter';
+	public $useDbConfig = 'reportes';
 	/**
 	 * BEHAVIORS
 	 */
