@@ -203,6 +203,7 @@ class AppController extends Controller
 		$json = json_decode( $jsonPermisos['Rol']['permisos'], true );
 
 		$controladorActual = $this->request->params['controller'];
+
 		$accionActual = $this->request->params['action'];
 
 		if( ! array_key_exists($controladorActual, $json) ){
@@ -315,6 +316,5 @@ class AppController extends Controller
 
 		return $txt;
 	}
-
 	
 }
