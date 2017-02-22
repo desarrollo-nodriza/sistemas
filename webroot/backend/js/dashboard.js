@@ -57,6 +57,32 @@ $.extend({
 				$buscador_fecha_inicio.datepicker('setEndDate', data.date);
 			});
 	},
+	obtenerTiendas: function(obj, element){
+		$.ajax({
+			url: webroot + "pages/get_shops_list",
+		    dataType: "json"
+		   
+		})
+		.done(function( data, textStatus, jqXHR ) {
+				console.log(data);
+				var listaHtml = '';
+				var i;
+
+				for (i in data) {
+				    if (data.hasOwnProperty(i)) {
+				    	listaHtml += '<option value="' + data[i]['Tienda']['id'] + '">' +data[i]['Tienda']['nombre']+ '</li>';
+				    }
+				}
+
+				obj.html(listaHtml);
+
+				element.trigger('click');
+
+		})
+		.fail(function( jqXHR, textStatus, errorThrown ) {
+		    console.log( "La solicitud a fallado: " +  textStatus);
+		});
+	},
 	graficos: {
 		init: function(){
 			if ( $('#dashboard').length ) {
@@ -96,6 +122,14 @@ $.extend({
 				lineColors: colores
 		    });
 		},
+		graficoDonuts: function(elemento, datos, colores, formato) {
+			Morris.Donut({
+		      	element: elemento,
+				data: datos,
+				formatter: formato,
+				colors: colores
+		    });
+		},
 		obtenerVentasPorRango: function(){
 			var divGrafico = $('#GraficoVentasHistorico');
 			
@@ -108,7 +142,7 @@ $.extend({
 			.done(function( data, textStatus, jqXHR ) {
 					console.log(data);
 					var datos = [];
-					var colors = ['#8FB255', '#F55A00', '#5A2602'];
+					var colors = ['#39A23B', '#1C1D1C', '#737473'];
 					var yKeys = [ 'a', 'b', 'c'];
 					var etiquetas = ['Total', 'Toolmania', 'Walko'];
 					var i;
@@ -122,6 +156,7 @@ $.extend({
 					$('#GraficoVentasHistorico').html('');
 
 					$.graficos.graficoLinea(divGrafico, datos, 'y', yKeys, etiquetas, colors);
+
 			})
 			.fail(function( jqXHR, textStatus, errorThrown ) {
 			    console.log( "La solicitud a fallado: " +  textStatus);
@@ -140,7 +175,7 @@ $.extend({
 			.done(function( data, textStatus, jqXHR ) {
 					console.log(data);
 					var datos = [];
-					var colors = ['#45C13A', '#3AADC1', '#C13AB1'];
+					var colors = ['#2B40BC', '#4EAEEA', '#A479EF'];
 					var yKeys = [ 'a', 'b', 'c'];
 					var etiquetas = ['Total', 'Toolmania', 'Walko'];
 					var i;
@@ -154,6 +189,7 @@ $.extend({
 					$('#GraficoDescuentosHistorico').html('');
 
 					$.graficos.graficoLinea(divGrafico, datos, 'y', yKeys, etiquetas, colors);
+
 			})
 			.fail(function( jqXHR, textStatus, errorThrown ) {
 			    console.log( "La solicitud a fallado: " +  textStatus);
@@ -172,7 +208,7 @@ $.extend({
 			.done(function( data, textStatus, jqXHR ) {
 					console.log(data);
 					var datos = [];
-					var colors = ['#C13A70', '#653AC1', '#226468'];
+					var colors = ['#5C5C5C', '#819AFC', '#000000'];
 					var yKeys = [ 'a', 'b', 'c'];
 					var etiquetas = ['Total', 'Toolmania', 'Walko'];
 					var i;
@@ -192,24 +228,164 @@ $.extend({
 			    //accionesReporte($boton, $fechaReporte);
 			});
 		},
+		obtenerProductosPorRango: function(){
+			var divGrafico = $('#GraficoProductosDonuts');
+			
+			// Request
+			$.ajax({
+				url: webroot + "pages/top_products/" + $('#ProductosFInicio').val() + '/' + $('#ProductosFFinal').val() + '/' + $('#ProductosTienda').val() + '/' + 'true',
+			    dataType: "json"
+			   
+			})
+			.done(function( data, textStatus, jqXHR ) {
+				var datos = [];
+				var colors = ['#5D58DD', '#524EC4', '#3C63F0', '#6783E8', '#2041BA', '#1D348A', '#1D5E8A', '#2495E0', '#0879C4', '#1EC4DA'];
+				var count = 0;
+				var total = 0;
+				var porcentaje = 0;
+				var i;
+				var formato = function (y, data) { return y + '%' };
+
+				for (i in data) {
+				    if (data.hasOwnProperty(i)) {
+				    	total = total + parseInt(data[i][0]['Cantidad']);
+				    }
+				}
+
+				for (i in data) {
+				    if (data.hasOwnProperty(i)) {
+				    	porcentaje = (( parseInt(data[i][0]['Cantidad']) * 100 ) / total);
+				    	datos.push({ label : data[i]['Producto']['Referencia'], value: parseInt(porcentaje) });
+				        count++;
+				    }
+				}
+				// Mostrar solo los 10 mayores elementos
+				datos.splice(10, (count-10));
+
+				$('#totalProductos').html('Total de productos vendidos: ' + total);
+
+				$('#GraficoProductosDonuts').html('');
+
+				$.graficos.graficoDonuts(divGrafico, datos, colors, formato);
+			})
+			.fail(function( jqXHR, textStatus, errorThrown ) {
+			    console.log( "La solicitud a fallado: " +  textStatus);
+			    //accionesReporte($boton, $fechaReporte);
+			});
+		},
+		obtenerMarcasPorRango: function(){
+			var divGrafico = $('#GraficoMarcasDonuts');
+			
+			// Request
+			$.ajax({
+				url: webroot + "pages/top_brands/" + $('#MarcasFInicio').val() + '/' + $('#MarcasFFinal').val() + '/' + $('#MarcasTienda').val() + '/' + 'true',
+			    dataType: "json"
+			   
+			})
+			.done(function( data, textStatus, jqXHR ) {
+				var datos = [];
+				var colors = ['#5D58DD', '#524EC4', '#3C63F0', '#6783E8', '#2041BA', '#1D348A', '#1D5E8A', '#2495E0', '#0879C4', '#1EC4DA'];
+				var count = 0;
+				var total = 0;
+				var porcentaje = 0;
+				var i;
+				var formato = function (y, data) { return y + '%' };
+
+				for (i in data) {
+				    if (data.hasOwnProperty(i)) {
+				    	total = total + parseInt(data[i][0]['Cantidad']);
+				    }
+				}
+
+				for (i in data) {
+				    if (data.hasOwnProperty(i)) {
+				    	porcentaje = (( parseInt(data[i][0]['Cantidad']) * 100 ) / total);
+				    	datos.push({ label : data[i]['Fabricante']['Nombre'], value: parseInt(porcentaje) });
+				        count++;
+				    }
+				}
+				// Mostrar solo los 10 mayores elementos
+				datos.splice(10, (count-10));
+
+				$('#totalMarcas').html('Total de productos vendidos: ' + total);
+
+				$('#GraficoMarcasDonuts').html('');
+
+				$.graficos.graficoDonuts(divGrafico, datos, colors, formato);
+			})
+			.fail(function( jqXHR, textStatus, errorThrown ) {
+			    console.log( "La solicitud a fallado: " +  textStatus);
+			    //accionesReporte($boton, $fechaReporte);
+			});
+		},
+		obtenerClientesPorRango: function(){
+			var divGrafico = $('#GraficoClientesDonuts');
+			
+			// Request
+			$.ajax({
+				url: webroot + "pages/top_customers/" + $('#ClientesFInicio').val() + '/' + $('#ClientesFFinal').val() + '/' + $('#ClientesTienda').val() + '/' + 'true',
+			    dataType: "json"
+			   
+			})
+			.done(function( data, textStatus, jqXHR ) {
+				var datos = [];
+				var colors = ['#5D58DD', '#524EC4', '#3C63F0', '#6783E8', '#2041BA', '#1D348A', '#1D5E8A', '#2495E0', '#0879C4', '#1EC4DA'];
+				var i;
+				var formato = function (y, data) { return '$' + new Intl.NumberFormat('de-DE').format(y) };
+
+				for (i in data) {
+				    if (data.hasOwnProperty(i)) {
+				    	datos.push({ label : data[i]['nombre'], value: data[i]['pagado'] });
+				    }
+				}
+
+				$('#GraficoClientesDonuts').html('');
+
+				$.graficos.graficoDonuts(divGrafico, datos, colors, formato);
+			})
+			.fail(function( jqXHR, textStatus, errorThrown ) {
+			    console.log( "La solicitud a fallado: " +  textStatus);
+			    //accionesReporte($boton, $fechaReporte);
+			});
+		},
 		bind: function(){
+			// Obtener tiendas
+			$.obtenerTiendas($('#ProductosTienda'), $('#enviarFormularioProductos'));
+			$.obtenerTiendas($('#MarcasTienda'), $('#enviarFormularioMarcas'));
+			$.obtenerTiendas($('#ClientesTienda'), $('#enviarFormularioClientes'));
+
 			// Ventas
-			$('#VentasFInicio').val($.inicioMesAnterior());
+			$('#VentasFInicio').val($.inicioMes());
 			$('#VentasFFinal').val($.hoy());
 			$.calendario($('#VentasFInicio'), $('#VentasFFinal'));
-			$('#VentasAgrupar').val('mes');
+			$('#VentasAgrupar').val('dia');
 
 			// Descuentos
-			$('#DescuentosFInicio').val($.inicioMesAnterior());
+			$('#DescuentosFInicio').val($.inicioMes());
 			$('#DescuentosFFinal').val($.hoy());
 			$.calendario($('#DescuentosFInicio'), $('#DescuentosFFinal'));
-			$('#DescuentosAgrupar').val('mes');
+			$('#DescuentosAgrupar').val('dia');
 
 			// Pedidos
-			$('#PedidosFInicio').val($.inicioMesAnterior());
+			$('#PedidosFInicio').val($.inicioMes());
 			$('#PedidosFFinal').val($.hoy());
 			$.calendario($('#PedidosFInicio'), $('#PedidosFFinal'));
-			$('#PedidosAgrupar').val('mes');
+			$('#PedidosAgrupar').val('dia');
+
+			// Productos
+			$('#ProductosFInicio').val($.inicioMes());
+			$('#ProductosFFinal').val($.hoy());
+			$.calendario($('#ProductosFInicio'), $('#ProductosFFinal'));
+
+			// Marcas
+			$('#MarcasFInicio').val($.inicioMes());
+			$('#MarcasFFinal').val($.hoy());
+			$.calendario($('#MarcasFInicio'), $('#MarcasFFinal'));
+
+			// Clientes
+			$('#ClientesFInicio').val($.inicioMes());
+			$('#ClientesFFinal').val($.hoy());
+			$.calendario($('#ClientesFInicio'), $('#ClientesFFinal'));
 
 			// Descuentos
 			$('#enviarFormularioDescuentos').on('click', function(){
@@ -226,14 +402,32 @@ $.extend({
 				$.graficos.obtenerPedidosPorRango();
 			});
 
-			// Descuentos
-			$('#enviarFormularioDescuentos').trigger('click');
+			// Productos
+			$('#enviarFormularioProductos').on('click', function(){
+				$.graficos.obtenerProductosPorRango();
+			});
 
-			// Ventas
-			$('#enviarFormularioVentas').trigger('click');
+			// Marcas
+			$('#enviarFormularioMarcas').on('click', function(){
+				$.graficos.obtenerMarcasPorRango();
+			});
 
-			// Pedidos
-			$('#enviarFormularioPedidos').trigger('click');
+			// Clientes
+			$('#enviarFormularioClientes').on('click', function(){
+				$.graficos.obtenerClientesPorRango();
+			});
+
+			$(window).on('load', function(){
+				// Ventas
+				$('#enviarFormularioVentas').trigger('click');
+
+				// Descuentos
+				$('#enviarFormularioDescuentos').trigger('click');
+
+				// Pedidos
+				$('#enviarFormularioPedidos').trigger('click');
+			});
+
 		}
 	}
 });

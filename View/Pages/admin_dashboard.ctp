@@ -1,6 +1,9 @@
 <div class="page-title">
     <div class="col-xs-12 col-sm-3">
 	   <h2><span class="fa fa-tachometer"></span> Inicio</h2>
+       
+               <label class="label label-info label-form">* IVA(19%) aplicado a todos los valores</label>
+
     </div>
     <div class="col-xs-12 col-sm-9">
     </div>
@@ -80,7 +83,7 @@
                         <li><label class="control-label">Agrupar</label></li>
                         <li>
                             <div class="input-group">
-                                <?=$this->Form->select('agrupar', array('anno' => 'Año', 'mes' => 'Mes', 'dia' => 'Día'), array('empty' => false, 'class' => 'form-control'));?>
+                                <?=$this->Form->select('agrupar', array('anno' => 'Año', 'mes' => 'Mes', 'dia' => 'Día', 'hora' => 'Hora'), array('empty' => false, 'class' => 'form-control'));?>
                             </div>
                         </li>
                         <li><a id="enviarFormularioVentas" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
@@ -115,7 +118,7 @@
                         <li><label class="control-label">Agrupar</label></li>
                         <li>
                             <div class="input-group">
-                                <?=$this->Form->select('agrupar', array('anno' => 'Año', 'mes' => 'Mes', 'dia' => 'Día'), array('empty' => false, 'class' => 'form-control'));?>
+                                <?=$this->Form->select('agrupar', array('anno' => 'Año', 'mes' => 'Mes', 'dia' => 'Día', 'hora' => 'Hora'), array('empty' => false, 'class' => 'form-control'));?>
                             </div>
                         </li>
                         <li><a id="enviarFormularioDescuentos" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
@@ -148,7 +151,7 @@
                         <li><label class="control-label">Agrupar</label></li>
                         <li>
                             <div class="input-group">
-                                <?=$this->Form->select('agrupar', array('anno' => 'Año', 'mes' => 'Mes', 'dia' => 'Día'), array('empty' => false, 'class' => 'form-control'));?>
+                                <?=$this->Form->select('agrupar', array('anno' => 'Año', 'mes' => 'Mes', 'dia' => 'Día', 'hora' => 'Hora'), array('empty' => false, 'class' => 'form-control'));?>
                             </div>
                         </li>
                         <li><a id="enviarFormularioPedidos" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
@@ -165,4 +168,107 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-xs-12 col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Top 10 Productos</h3>
+                    <?= $this->Form->create('Productos', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+                    <ul class="panel-controls">      
+                        <li><label class="control-label">Rango </label></li>
+                        <li>
+                            <div class="input-group">
+                                <?=$this->Form->input('f_inicio', array('class' => 'form-control datepicker'));?>
+                                <span class="input-group-addon add-on"> - </span>
+                                <?=$this->Form->input('f_final', array('class' => 'form-control datepicker'));?>
+                            </div>
+                        </li>
+                        <li><label class="control-label">Tienda</label></li>
+                        <li>
+                            <div class="input-group">
+                                <?=$this->Form->select('tienda', array(), array('empty' => false, 'class' => 'form-control'));?>
+                            </div>
+                        </li>
+                        <li><a id="enviarFormularioProductos" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+                    <?= $this->Form->end(); ?>
+                </div>
+                <div class="panel-body">
+                    <legend id="totalProductos"></legend>
+                    <div id="GraficoProductosDonuts" style="height: 200px;">
+                        
+                    </div>
+                </div>                             
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Top 10 Marcas</h3>
+                    <?= $this->Form->create('Marcas', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+                    <ul class="panel-controls">      
+                        <li><label class="control-label">Rango </label></li>
+                        <li>
+                            <div class="input-group">
+                                <?=$this->Form->input('f_inicio', array('class' => 'form-control datepicker'));?>
+                                <span class="input-group-addon add-on"> - </span>
+                                <?=$this->Form->input('f_final', array('class' => 'form-control datepicker'));?>
+                            </div>
+                        </li>
+                        <li><label class="control-label">Tienda</label></li>
+                        <li>
+                            <div class="input-group">
+                                <?=$this->Form->select('tienda', array(), array('empty' => false, 'class' => 'form-control'));?>
+                            </div>
+                        </li>
+                        <li><a id="enviarFormularioMarcas" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+                    <?= $this->Form->end(); ?>
+                </div>
+                <div class="panel-body">
+                    <legend id="totalMarcas"></legend>
+                    <div id="GraficoMarcasDonuts" style="height: 200px;">
+                        
+                    </div>
+                </div>                             
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Top 10 Clientes</h3>
+                    <?= $this->Form->create('Clientes', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+                    <ul class="panel-controls">      
+                        <li><label class="control-label">Rango </label></li>
+                        <li>
+                            <div class="input-group">
+                                <?=$this->Form->input('f_inicio', array('class' => 'form-control datepicker'));?>
+                                <span class="input-group-addon add-on"> - </span>
+                                <?=$this->Form->input('f_final', array('class' => 'form-control datepicker'));?>
+                            </div>
+                        </li>
+                        <li><label class="control-label">Tienda</label></li>
+                        <li>
+                            <div class="input-group">
+                                <?=$this->Form->select('tienda', array(), array('empty' => false, 'class' => 'form-control'));?>
+                            </div>
+                        </li>
+                        <li><a id="enviarFormularioClientes" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+                    <?= $this->Form->end(); ?>
+                </div>
+                <div class="panel-body">
+                    <div id="GraficoClientesDonuts" style="height: 200px;">
+                        
+                    </div>
+                </div>                             
+            </div>
+        </div>
+    </div>
+
 </div>

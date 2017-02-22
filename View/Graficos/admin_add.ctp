@@ -18,6 +18,8 @@
 								<li><b>[*START_DATE*]</b> = Selector de fecha inicial</li>
 								<li><b>[*FINISH_DATE*]</b> = Selector de fecha final</li>
 								<li><b>[*LIMIT*]</b> = Selector limite de registros</li>
+								<li><b>[*GROUP_BY_COL*]</b> = Obtener valor del group by</li>
+								<li><b>[*GROUP_BY_*]</b> = Agrupar</li>
 							</ul>
 						</div>
 					</div>
