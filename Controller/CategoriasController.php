@@ -18,10 +18,10 @@ class CategoriasController extends AppController
 		}
 
 		$this->paginate		= array(
-
 			'recursive'			=> 0,
 			'limit'	=> 10,
-			'conditions' => $conditions
+			'conditions' => $conditions,
+			'contain' => array('Tienda')
 
 		);
 
@@ -69,65 +69,41 @@ class CategoriasController extends AppController
 		BreadcrumbComponent::add('Agregar ');
 
 		$emails	= $this->Categoria->Email->find('list');
+		$tiendas = $this->Categoria->Tienda->find('list', array('conditions' => array('Tienda.activo' => 1)));
 
-
-		$this->set(compact('emails'));
+		$this->set(compact('emails', 'tiendas'));
 
 	}
 
 
 
-	public function admin_edit($id = null)
-
+	public function admin_edit($id = null) 
 	{
-
 		if ( ! $this->Categoria->exists($id) )
-
 		{
-
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-
 			$this->redirect(array('action' => 'index'));
-
 		}
-
-
 
 		if ( $this->request->is('post') || $this->request->is('put') )
-
 		{
-
-
 			if ( $this->Categoria->saveAll($this->request->data) )
-
 			{
-
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
-
 				$this->redirect(array('action' => 'index'));
-
 			}
-
 			else
-
 			{
-
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
-
 			}
-
 		}
-
 		else
-
 		{
-
 			$this->request->data	= $this->Categoria->find('first', array(
 
 				'conditions'	=> array('Categoria.id' => $id)
 
 			));
-
 		}
 
 		BreadcrumbComponent::add('Categorias ', '/categorias');
@@ -136,57 +112,78 @@ class CategoriasController extends AppController
 		$emails	= $this->Categoria->Email->find('list');
 		
 
-		$relacionados = $this->Categoria->CategoriasToolmania->find('all', array(
-			'fields' => array('CategoriasToolmania.id_product'),
-			'conditions' => array('CategoriasToolmania.categoria_id' => $id)
+		$relacionados = $this->Categoria->CategoriasProductotienda->find('all', array(
+			'fields' => array('CategoriasProductotienda.id_product'),
+			'conditions' => array('CategoriasProductotienda.categoria_id' => $id)
 			)
 		);
 
 		$arrayProductosId = array();
 		$arrayRelacionadosId = array();
 
-		
-
 		foreach ($relacionados as $relacionado) {
-			$arrayRelacionadosId[] = $relacionado['CategoriasToolmania']['id_product'];
+			$arrayRelacionadosId[] = $relacionado['CategoriasProductotienda']['id_product'];
 		}
 
-		$productos	= $this->Categoria->Toolmania->find('list', array(
+		// Obtenemos la información de a tienda
+		$tienda = ClassRegistry::init('Tienda')->find('first', array(
+			'conditions' => array('Tienda.activo' => 1, 'Tienda.id' => $this->request->data['Categoria']['tienda_id'])
+			));
+
+		// Virificar existencia de la tienda
+		if (empty($tienda)) {
+			$this->Session->setFlash('La categoria no tiene una tienda' , null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		// Verificar que la tienda esté configurada
+		if (empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['configuracion'])) {
+			$this->Session->setFlash('La tienda no está configurada completamente. Verifiquela y vuelva a intentarlo' , null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		// Cambiamos la configuración de la base de datos
+		$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
+
+		$productos	= $this->Categoria->Productotienda->find('all', array(
 			'fields' => array(
-				'Toolmania.id_product',
-				'Toolmania.reference'
+				'Productotienda.id_product',
+				'Productotienda.reference',
+				'pl.name',
 			),
 			'conditions' => array(
-				'Toolmania.id_product' => $arrayRelacionadosId,
-				'Toolmania.active' => 1,
-				'Toolmania.available_for_order' => 1,
-				'Toolmania.id_shop_default' => 1,
+				'Productotienda.id_product' => $arrayRelacionadosId,
+				'Productotienda.active' => 1,
+				'Productotienda.available_for_order' => 1,
+				'Productotienda.id_shop_default' => 1,
 				'pl.id_lang' => 1
 			),
 			'joins' => array(
 				array(
-		            'table' => 'tm_product_lang',
+		            'table' => sprintf('%sproduct_lang', $tienda['Tienda']['prefijo']),
 		            'alias' => 'pl',
 		            'type'  => 'LEFT',
 		            'conditions' => array(
-		                'Toolmania.id_product=pl.id_product'
+		                'Productotienda.id_product=pl.id_product'
 		            )
 
 	        	),
 	        	array(
-		            'table' => 'tm_image',
+		            'table' => sprintf('%simage', $tienda['Tienda']['prefijo']),
 		            'alias' => 'im',
 		            'type'  => 'LEFT',
 		            'conditions' => array(
-		                'Toolmania.id_product = im.id_product',
+		                'Productotienda.id_product = im.id_product',
 		                'im.cover' => 1
 		            )
 	        	)
 			)
 		));
 
+		$tiendas = $this->Categoria->Tienda->find('list', array('conditions' => array('Tienda.activo' => 1)));
 
-		$this->set(compact('emails', 'productos'));
+
+		$this->set(compact('emails', 'productos', 'tiendas'));
 
 	}
 
@@ -355,7 +352,7 @@ class CategoriasController extends AppController
 		}
 
 		// Eliminar asociaciones con toolmanía
-		if ( $this->Categoria->CategoriasToolmania->deleteAll(array('CategoriasToolmania.categoria_id' => $id)) ) {
+		if ( $this->Categoria->CategoriasProductotienda->deleteAll(array('CategoriasProductotienda.categoria_id' => $id)) ) {
 			$this->Session->setFlash('Categoría restablecida correctamente.', null, array(), 'success');
 			$this->redirect(array('action' => 'index'));
 		}else{

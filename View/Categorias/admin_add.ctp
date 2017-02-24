@@ -18,6 +18,10 @@
 									<td><?= $this->Form->input('nombre'); ?></td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('tienda_id', 'Tienda'); ?></th>
+									<td><?= $this->Form->input('tienda_id'); ?></td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('descripcion', 'Descripcion <small>(Opcional)</small>'); ?></th>
 									<td><?= $this->Form->input('descripcion'); ?></td>
 								</tr>

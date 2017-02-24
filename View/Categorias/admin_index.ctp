@@ -22,9 +22,7 @@
 								<tr class="sort">
 									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('descripcion', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('imagen', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('color_fondo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('color_titulo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('tienda_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
 								</tr>
 							</thead>
@@ -33,9 +31,7 @@
 								<tr>
 									<td><?= h($categoria['Categoria']['nombre']); ?>&nbsp;</td>
 									<td><?= h($categoria['Categoria']['descripcion']); ?>&nbsp;</td>
-									<td><?= h($categoria['Categoria']['imagen']); ?>&nbsp;</td>
-									<td><?= h($categoria['Categoria']['color_fondo']); ?>&nbsp;</td>
-									<td><?= h($categoria['Categoria']['color_titulo']); ?>&nbsp;</td>
+									<td><?= h($categoria['Tienda']['nombre']); ?>&nbsp;</td>
 									<td>
 									<? if ($permisos['edit']) : ?>
 										<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $categoria['Categoria']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>

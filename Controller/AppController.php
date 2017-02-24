@@ -206,6 +206,8 @@ class AppController extends Controller
 
 		$accionActual = $this->request->params['action'];
 
+		
+
 		if( ! array_key_exists($controladorActual, $json) ){
 			throw new Exception('No existe el controlador en el json.', 12);
 		}
@@ -225,7 +227,7 @@ class AppController extends Controller
 	 */
 	public function getModuleByRole(){
 		$modulos = ClassRegistry::init('Modulo')->find('all', array(
-				'conditions' => array('parent_id' => NULL),
+				'conditions' => array('parent_id' => NULL, 'Modulo.activo' => 1),
 				'joins' => array(
 					array(
 						'table' => 'modulos_roles',
@@ -236,15 +238,17 @@ class AppController extends Controller
 			                'md.rol_id' => $this->Auth->user('rol_id')
 			            )
 					)
-				)));
+				),
+				'fields' => array('Modulo.id', 'Modulo.parent_id', 'Modulo.nombre', 'Modulo.url', 'Modulo.icono')));
 		$data = array();
 		foreach ($modulos as $padre) {
 			$data[] = array(
 				'nombre' => $padre['Modulo']['nombre'],
 				'icono'	 => $padre['Modulo']['icono'],
+				'url'	 => $padre['Modulo']['url'],
 				'hijos' => ClassRegistry::init('Modulo')->find(
 					'all', array(
-						'conditions' => array('Modulo.parent_id' => $padre['Modulo']['id'] ),
+						'conditions' => array('Modulo.parent_id' => $padre['Modulo']['id'], 'Modulo.activo' => 1 ),
 						'contain' => array('Rol'),
 						'joins' => array(
 							array(
@@ -256,7 +260,8 @@ class AppController extends Controller
 					                'md.rol_id' => $this->Auth->user('rol_id')
 					            )
 							)
-						)
+						),
+						'fields' => array('Modulo.id', 'Modulo.parent_id', 'Modulo.nombre', 'Modulo.url', 'Modulo.icono')
 					)
 				)
 			);
@@ -316,5 +321,19 @@ class AppController extends Controller
 
 		return $txt;
 	}
+
+	/**
+	 * Functión que permite cambiar la configuración de los modelos de BD esternos
+	 * @param  string  	$tiendaConf  	Nombre de la configuración de BD a utilizar
+	 * @return void
+	 */
+	public function cambiarConfigDB( $tiendaConf = '' ) {
+    	// Cambiamos la configuración de la base de datos
+		ClassRegistry::init('Productotienda')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('TaxRulesGroup')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('TaxRule')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('Tax')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('SpecificPrice')->useDbConfig = $tiendaConf;
+    }
 	
 }

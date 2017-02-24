@@ -349,10 +349,6 @@ $.extend({
 			});
 		},
 		bind: function(){
-			// Obtener tiendas
-			$.obtenerTiendas($('#ProductosTienda'), $('#enviarFormularioProductos'));
-			$.obtenerTiendas($('#MarcasTienda'), $('#enviarFormularioMarcas'));
-			$.obtenerTiendas($('#ClientesTienda'), $('#enviarFormularioClientes'));
 
 			// Ventas
 			$('#VentasFInicio').val($.inicioMes());
@@ -417,21 +413,40 @@ $.extend({
 				$.graficos.obtenerClientesPorRango();
 			});
 
-			$(window).on('load', function(){
+			var cargaVentas = setTimeout(function(){
 				// Ventas
 				$('#enviarFormularioVentas').trigger('click');
+			}, 100);
 
+			var cargaDescuentos = setTimeout(function(){
 				// Descuentos
 				$('#enviarFormularioDescuentos').trigger('click');
+			}, 2000);
 
+			var cargaDescuentos = setTimeout(function(){
 				// Pedidos
 				$('#enviarFormularioPedidos').trigger('click');
-			});
+			}, 4000);
+
+			var cargaProductos = setTimeout(function(){
+				// Cargar Productos
+				$.obtenerTiendas($('#ProductosTienda'), $('#enviarFormularioProductos'));
+			}, 8000);
+
+			var cargaMarcas = setTimeout(function(){
+				// Cargar Marcas
+				$.obtenerTiendas($('#MarcasTienda'), $('#enviarFormularioMarcas'));
+			}, 10000);
+
+			var cargaMarcas = setTimeout(function(){
+				// Cargar Clientes
+				$.obtenerTiendas($('#ClientesTienda'), $('#enviarFormularioClientes'));
+			}, 12000);	
 
 		}
 	}
 });
 
-$(document).ready(function(){
+$(window).on('load', function(){
 	$.graficos.init();
 });

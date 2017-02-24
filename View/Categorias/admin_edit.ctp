@@ -19,6 +19,10 @@
 									<td><?= $this->Form->input('nombre'); ?></td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('tienda_id', 'Tienda'); ?></th>
+									<td><?= $this->Form->input('tienda_id'); ?></td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('descripcion', 'Descripcion <small>(Opcional)</small>'); ?></th>
 									<td><?= $this->Form->input('descripcion'); ?></td>
 								</tr>
@@ -49,8 +53,8 @@
 								<tr>
 									<th><?= $this->Form->label('Producto', 'Productos relacionados'); ?></th>
 									<td><ul id="sortable" class="list-group border-bottom">
-								<?	foreach ($productos as $indice => $producto) : ?>
-										<li class="list-group-item" data-related="<?=$indice;?>"  id="relacionado-<?=$indice;?>"><?=$producto;?></li>	
+								<?	foreach ($productos as $producto) : ?>
+										<li class="list-group-item" data-related="<?=$producto['Productotienda']['id_product'];?>"  id="relacionado-<?=$producto['Productotienda']['id_product'];?>"><b><?=$producto['Productotienda']['reference'];?></b> - <?=$producto['pl']['name'];?></li>	
 								<?	endforeach; ?>
 									</ul>
 									</td>
@@ -71,7 +75,7 @@
 										'referencia_desc' 	=> 'Referencia Desc',
 										); ?>
 									<?= $this->Form->select('orden_productos', $opciones, array(
-										'class' => 'form-control select',
+										'class' => 'form-control',
 										'empty' => 'Seleccione')
 									); ?>
 									</td>

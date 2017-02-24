@@ -212,6 +212,23 @@ jQuery(document).ready(function($)
             }//End
         });
     }
+
+    /**
+     * Filtro de producto
+     */
+    if ($('#FiltroAdminIndexForm').length) {
+    	if($('#FiltroFindby').val() == '') {
+    		$('#FiltroNombreBuscar').attr('disabled', 'disabled');
+    	}
+    	$('#FiltroFindby').on('change', function(){
+    		if($('#FiltroFindby').val() == '') {
+	    		$('#FiltroNombreBuscar').attr('disabled', 'disabled');
+	    	}else{
+	    		$('#FiltroNombreBuscar').removeAttr('disabled');
+	    	}
+    	});
+
+    }
                 
 	/* LOCK SCREEN */
     $('.lockscreen-box .lsb-access').on('click',function()

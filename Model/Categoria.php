@@ -133,6 +133,34 @@ class Categoria extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'Productotienda' => array(
+			'className'				=> 'Productotienda',
+			'joinTable'				=> 'categorias_productotiendas',
+			'foreignKey'			=> 'categoria_id',
+			'associationForeignKey'	=> 'id_product',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'with'					=> 'CategoriasProductotienda',
+			'limit'					=> '',
+			'offset'				=> '',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		)
+	);
+
+	public $belongsTo = array(
+		'Tienda' => array(
+			'className'				=> 'Tienda',
+			'foreignKey'			=> 'tienda_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		)
 	);
 }
