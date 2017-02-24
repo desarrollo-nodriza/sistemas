@@ -3,7 +3,7 @@
 		<li class="xn-logo">
 			<?= $this->Html->link(
 				'<span class="fa fa-dashboard"></span> <span class="x-navigation-control">Backend</span>',
-				'/admin',
+				'/',
 				array('escape' => false)
 			); ?>
 			<a href="#" class="x-navigation-control"></a>

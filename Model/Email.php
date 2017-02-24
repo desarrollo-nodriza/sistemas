@@ -51,6 +51,16 @@ class Email extends AppModel
 				//'on'			=> 'update', // Solo valida en operaciones de 'create' o 'update'
 			),
 		),
+		'tienda_id' => array(
+			'notBlank' => array(
+				'rule'			=> array('notBlank'),
+				'last'			=> true,
+				'message'		=> 'Debe iseleccionar una tienda',
+				//'allowEmpty'	=> true,
+				//'required'		=> false,
+				//'on'			=> 'update', // Solo valida en operaciones de 'create' o 'update'
+			),
+		),
 		'activo' => array(
 			'boolean' => array(
 				'rule'			=> array('boolean'),
@@ -80,6 +90,15 @@ class Email extends AppModel
 		'Plantilla' => array(
 			'className'				=> 'Plantilla',
 			'foreignKey'			=> 'plantilla_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
+		'Tienda' => array(
+			'className'				=> 'Tienda',
+			'foreignKey'			=> 'tienda_id',
 			'conditions'			=> '',
 			'fields'				=> '',
 			'order'					=> '',

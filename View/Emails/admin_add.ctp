@@ -14,6 +14,10 @@
 						<?= $this->Form->create('Email', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 							<table class="table">
 								<tr>
+									<th><?= $this->Form->label('tienda_id', 'Tienda'); ?></th>
+									<td><?= $this->Form->input('tienda_id'); ?></td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('nombre', 'Nombre'); ?></th>
 									<td><?= $this->Form->input('nombre'); ?></td>
 								</tr>

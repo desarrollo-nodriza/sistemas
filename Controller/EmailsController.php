@@ -21,7 +21,8 @@ class EmailsController extends AppController
 
 			'recursive'			=> 0,
 			'limit'	=> 1000,
-			'conditions' => $conditions
+			'conditions' => $conditions,
+			'contain' => array('Tienda', 'Plantilla')
 
 		);
 
@@ -42,6 +43,8 @@ class EmailsController extends AppController
 		if ( $this->request->is('post') )
 
 		{	
+			// Se verifica y formatea la url
+			$this->request->data['Email']['sitio_url'] = $this->formatear_url($this->request->data['Email']['sitio_url']);
 
 			$this->Email->create();
 
@@ -69,10 +72,10 @@ class EmailsController extends AppController
 		BreadcrumbComponent::add('Agregar ');
 
 		$plantillas	= $this->Email->Plantilla->find('list', array('conditions' => array('activo' => 1)));
-
 		$categorias	= $this->Email->Categoria->find('list', array('conditions' => array('activo' => 1)));
+		$tiendas	= $this->Email->Tienda->find('list', array('conditions' => array('activo' => 1)));
 
-		$this->set(compact('plantillas', 'categorias'));
+		$this->set(compact('plantillas', 'categorias', 'tiendas'));
 
 	}
 
@@ -93,14 +96,12 @@ class EmailsController extends AppController
 		}
 
 
-
 		if ( $this->request->is('post') || $this->request->is('put') )
 
 		{	//prx($this->request->data);
 
 			// Se verifica y formatea la url
 			$this->request->data['Email']['sitio_url'] = $this->formatear_url($this->request->data['Email']['sitio_url']);
-
 
 			/**
 
@@ -143,11 +144,8 @@ class EmailsController extends AppController
 	
 
 			$this->request->data	= $this->Email->find('first', array(
-
-				'conditions'	=> array('Email.id' => $id),
-
-				'contain'		=> array('Categoria')
-
+				'contain'		=> array('Categoria', 'Tienda', 'Plantilla'),
+				'conditions'	=> array('Email.id' => $id)
 			));
 
 	
@@ -155,10 +153,10 @@ class EmailsController extends AppController
 		BreadcrumbComponent::add('Editar ');
 
 		$plantillas	= $this->Email->Plantilla->find('list', array('conditions' => array('activo' => 1)));
+		$categorias	= $this->Email->Categoria->find('list', array('conditions' => array('activo' => 1, 'tienda_id' => $this->request->data['Email']['tienda_id'])));
+		$tiendas	= $this->Email->Tienda->find('list', array('conditions' => array('activo' => 1)));
 
-		$categorias	= $this->Email->Categoria->find('list', array('conditions' => array('activo' => 1)));
-
-		$this->set(compact('plantillas', 'categorias'));
+		$this->set(compact('plantillas', 'categorias', 'tiendas'));
 
 	}
 
@@ -171,7 +169,6 @@ class EmailsController extends AppController
 		$this->Email->id = $id;
 
 		if ( ! $this->Email->exists() )
-
 		{
 
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
@@ -179,19 +176,12 @@ class EmailsController extends AppController
 			$this->redirect(array('action' => 'index'));
 
 		}
-
-
-
 		$this->request->onlyAllow('post', 'delete');
 
 		if ( $this->Email->delete() )
-
 		{
-
 			$this->Session->setFlash('Registro eliminado correctamente.', null, array(), 'success');
-
 			$this->redirect(array('action' => 'index'));
-
 		}
 
 		$this->Session->setFlash('Error al eliminar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
@@ -293,10 +283,6 @@ class EmailsController extends AppController
 
 		}
 
-
-
-		
-
 		if ( $this->Email->saveField('activo', 1, array('callbacks' => false)) )
 
 		{
@@ -318,30 +304,18 @@ class EmailsController extends AppController
 
 
 	public function admin_view($id =  null) {
-
-
-
+		$this->redirect(array('action' => 'index'));
 		if ( ! $this->Email->exists($id) )
-
 		{
-
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-
 			$this->redirect(array('action' => 'index'));
 
 		}
 
-
-
 		$this->request->data	= $this->Email->find('first', array(
-
 			'conditions'	=> array('Email.id' => $id),
-
 			'contain'		=> array('Categoria')
-
 		));
-
-
 
 	}
 
@@ -352,9 +326,9 @@ class EmailsController extends AppController
 	public function admin_generarHtml($id = null, $save = false) {
 
 			$htmlEmail = $this->Email->find('first', array(
-				'conditions' => array('id' => $id), 
-				'fields' => array('html','nombre', 'sitio_url'),
-				'contain'	=> array('Categoria')	
+				'conditions' => array('Email.id' => $id), 
+				'fields' => array('html','nombre', 'sitio_url', 'tienda_id'),
+				'contain'	=> array('Categoria', 'Tienda')	
 				)
 			);
 
@@ -374,13 +348,34 @@ class EmailsController extends AppController
 			$categorias = ClassRegistry::init('Categoria')->find('all', array(
 					'conditions' => array(
 						'Categoria.id'	=> $categoriasId,
-						'Categoria.activo' => 1
+						'Categoria.activo' => 1, 
+						'Categoria.tienda_id' => $htmlEmail['Email']['tienda_id']
 					),
 					'order'	=> array(
 						'Categoria.orden DESC'
 					)
 				)
 			);
+
+			// Obtenemos la información de a tienda
+			$tienda = ClassRegistry::init('Tienda')->find('first', array(
+				'conditions' => array('Tienda.activo' => 1, 'Tienda.id' => $htmlEmail['Email']['tienda_id'])
+				));
+
+			// Virificar existencia de la tienda
+			if (empty($tienda)) {
+				$this->Session->setFlash('La tienda seleccionada no existe' , null, array(), 'danger');
+				$this->redirect(array('action' => 'index'));
+			}
+
+			// Verificar que la tienda esté configurada
+			if (empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['configuracion'])) {
+				$this->Session->setFlash('La tienda no está configurada completamente. Verifiquela y vuelva a intentarlo' , null, array(), 'danger');
+				$this->redirect(array('action' => 'index'));
+			}
+
+			// Cambiamos la configuración de la base de datos
+			$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
 
 			// Se genera HTML para el newsletter (ver modelo Email)
 			$htmlEmail = $this->Email->armarHtmlEmail($htmlEmail);
@@ -390,7 +385,7 @@ class EmailsController extends AppController
 
 			// Orden de productos por defecto
 			$ordenProductos = array(
-				'Toolmania.id_product DESC'
+				'Productotienda.id_product DESC'
 			);
 
 
@@ -420,22 +415,22 @@ class EmailsController extends AppController
 							break;
 						case 'precio_asc':
 							$ordenProductos = array(
-								'Toolmania.price ASC'
+								'Productotienda.price ASC'
 							);
 							break;
 						case 'precio_desc':
 							$ordenProductos = array(
-								'Toolmania.price DESC'
+								'Productotienda.price DESC'
 							);
 							break;
 						case 'referencia_asc':
 							$ordenProductos = array(
-								'Toolmania.reference ASC'
+								'Productotienda.reference ASC'
 							);
 							break;
 						case 'referencia_desc':
 							$ordenProductos = array(
-								'Toolmania.reference DESC'
+								'Productotienda.reference DESC'
 							);
 							break;
 					}
@@ -444,9 +439,9 @@ class EmailsController extends AppController
 				/**
 				* Obtenemos los productos relacionados a la categoría
 				*/
-				$relacionados = ClassRegistry::init('Categoria')->CategoriasToolmania->find('all', array(
-					'fields' => array('CategoriasToolmania.id_product'),
-					'conditions' => array('CategoriasToolmania.categoria_id' => $categoria['Categoria']['id'])
+				$relacionados = ClassRegistry::init('CategoriasProductotienda')->find('all', array(
+					'fields' => array('CategoriasProductotienda.id_product'),
+					'conditions' => array('CategoriasProductotienda.categoria_id' => $categoria['Categoria']['id'])
 					)
 				);
 
@@ -455,36 +450,36 @@ class EmailsController extends AppController
 
 				// Agregamos al arreglo $arrayRelacionadosId los IDs de los productos
 				foreach ($relacionados as $relacionado) {
-					$arrayRelacionadosId[] = $relacionado['CategoriasToolmania']['id_product'];
+					$arrayRelacionadosId[] = $relacionado['CategoriasProductotienda']['id_product'];
 				}
 
 				// Buscamos los productos que cumplan con el criterio
-				$productos	= ClassRegistry::init('Categoria')->Toolmania->find('all', array(
+				$productos	= ClassRegistry::init('Productotienda')->find('all', array(
 					'fields' => array(
-						'concat(\'http://www.toolmania.cl/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-large_default.jpg\' ) AS url_image',
-						'Toolmania.id_product', 
+						'concat(\'http://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-large_default.jpg\' ) AS url_image',
+						'Productotienda.id_product', 
 						'pl.name', 
-						'Toolmania.price', 
+						'Productotienda.price', 
 						'pl.link_rewrite', 
-						'Toolmania.reference', 
-						'Toolmania.show_price'
+						'Productotienda.reference', 
+						'Productotienda.show_price'
 					),
 					'joins' => array(
 						array(
-				            'table' => 'tm_product_lang',
+				            'table' => sprintf('%sproduct_lang', $tienda['Tienda']['prefijo']),
 				            'alias' => 'pl',
 				            'type'  => 'LEFT',
 				            'conditions' => array(
-				                'Toolmania.id_product=pl.id_product'
+				                'Productotienda.id_product=pl.id_product'
 				            )
 
 			        	),
 			        	array(
-				            'table' => 'tm_image',
+				            'table' => sprintf('%simage', $tienda['Tienda']['prefijo']),
 				            'alias' => 'im',
 				            'type'  => 'LEFT',
 				            'conditions' => array(
-				                'Toolmania.id_product = im.id_product',
+				                'Productotienda.id_product = im.id_product',
 		                		'im.cover' => 1
 				            )
 			        	)
@@ -512,21 +507,17 @@ class EmailsController extends AppController
 						'SpecificPricePriority'
 					),
 					'conditions' => array(
-						'Toolmania.id_product' => $arrayRelacionadosId,
-						'Toolmania.active' => 1,
-						'Toolmania.available_for_order' => 1,
-						'Toolmania.id_shop_default' => 1,
+						'Productotienda.id_product' => $arrayRelacionadosId,
+						'Productotienda.active' => 1,
+						'Productotienda.available_for_order' => 1,
+						'Productotienda.id_shop_default' => 1,
 						'pl.id_lang' => 1 
 					),
 					'order' => $ordenProductos
 				));
 
-
-
 				// Agregamos los productos al arreglo final
 				$categoria['Producto'] = $productos;
-
-		
 
 
 				// Se abre el bloque sección
@@ -544,7 +535,7 @@ class EmailsController extends AppController
 				foreach ($categoria['Producto'] as $llave => $producto) {
 					
 					// Retornar valor del producto con iva;
-					$producto['Toolmania']['valor_iva'] = $this->precio($producto['Toolmania']['price'], $producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
+					$producto['Productotienda']['valor_iva'] = $this->precio($producto['Productotienda']['price'], $producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
 					
 
 					// Criterio del precio específico del producto
@@ -552,15 +543,15 @@ class EmailsController extends AppController
 						$precioEspecificoPrioridad = explode(';', $criterio['priority']);
 					}
 
-					$producto['Toolmania']['valor_final'] = $producto['Toolmania']['valor_iva'];
+					$producto['Productotienda']['valor_final'] = $producto['Productotienda']['valor_iva'];
 
 					// Retornar último precio espeficico según criterio del producto
 					foreach ($producto['SpecificPrice'] as $precio) {
 						if ( $precio['reduction'] == 0 ) {
-							$producto['Toolmania']['valor_final'] = $producto['Toolmania']['valor_iva'];
+							$producto['Productotienda']['valor_final'] = $producto['Productotienda']['valor_iva'];
 						}else{
-							$producto['Toolmania']['valor_final'] = $this->precio($producto['Toolmania']['valor_iva'], ($precio['reduction'] * 100 * -1) );
-							$producto['Toolmania']['descuento'] = ($precio['reduction'] * 100 * -1 );
+							$producto['Productotienda']['valor_final'] = $this->precio($producto['Productotienda']['valor_iva'], ($precio['reduction'] * 100 * -1) );
+							$producto['Productotienda']['descuento'] = ($precio['reduction'] * 100 * -1 );
 						}
 					}
 
@@ -568,12 +559,12 @@ class EmailsController extends AppController
 					* Información del producto
 					*/
 					$urlProducto 			= $producto[0]['url_image'];
-					$porcentaje_descuento 	= ( !empty($producto['Toolmania']['descuento']) ) ? $producto['Toolmania']['descuento'] . '%' : '<font size="2">Oferta</font>' ;
+					$porcentaje_descuento 	= ( !empty($producto['Productotienda']['descuento']) ) ? $producto['Productotienda']['descuento'] . '%' : '<font size="2">Oferta</font>' ;
 					$nombre_producto		= CakeText::truncate($producto['pl']['name'], 40, array('exact' => false));
-					$modelo_producto		= $producto['Toolmania']['reference'];
-					$valor_producto			= ( $precio['reduction'] != 0 ) ? CakeNumber::currency($producto['Toolmania']['valor_iva'] , 'CLP') : '' ;
-					$oferta_producto		= CakeNumber::currency($producto['Toolmania']['valor_final'] , 'CLP');
-					$url_producto			= sprintf('%s%s-%s.html', $SitioUrl, $producto['pl']['link_rewrite'], $producto['Toolmania']['id_product']);
+					$modelo_producto		= $producto['Productotienda']['reference'];
+					$valor_producto			= ( isset($precio['reduction']) ) ? CakeNumber::currency($producto['Productotienda']['valor_iva'] , 'CLP') : '' ;
+					$oferta_producto		= CakeNumber::currency($producto['Productotienda']['valor_final'] , 'CLP');
+					$url_producto			= sprintf('%s%s-%s.html', $SitioUrl, $producto['pl']['link_rewrite'], $producto['Productotienda']['id_product']);
 
 
 					/**

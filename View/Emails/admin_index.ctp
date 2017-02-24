@@ -21,7 +21,7 @@
 							<thead>
 								<tr class="sort">
 									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('titulo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('tienda_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('plantilla_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('created', 'Creado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('activo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -32,7 +32,7 @@
 								<?php foreach ( $emails as $email ) : ?>
 								<tr>
 									<td><?= h($email['Email']['nombre']); ?>&nbsp;</td>
-									<td><?= h($email['Email']['titulo']); ?>&nbsp;</td>
+									<td><?= h($email['Tienda']['nombre']); ?>&nbsp;</td>
 									<td><?= h($email['Plantilla']['nombre']); ?>&nbsp;</td>
 									<td><?= h($email['Email']['created']); ?>&nbsp;</td>
 									<td><?= ($email['Email']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>

@@ -38,6 +38,7 @@
 			'/backend/js/plugins/nvd3/nv.d3.min',
 			'/backend/js/plugins/owl/owl.carousel.min',
 			'/backend/js/custom',
+			'/backend/js/dashboard',
 			//'/backend/js/plugins',
 			//'/backend/js/demo_charts_nvd3'
 			//'/backend/js/demo_charts_morris'

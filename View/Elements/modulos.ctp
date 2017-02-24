@@ -19,6 +19,10 @@
 		<? }?>
 			</ul>
 		</li>
+	<? }elseif (!empty($moduloPadre['url'])) { ?>
+		<li>
+			<?=$this->Html->link(sprintf('%s %s', (!empty($moduloPadre['icono'])) ? '<span class="'.$moduloPadre['icono'].'"></span> ' : '', $moduloPadre['nombre']), sprintf('/%s', strtolower($moduloPadre['url'])), array('escape' => false)); ?>
+		</li>
 	<? } ?>
 <? } ?>
 <script type="text/javascript">

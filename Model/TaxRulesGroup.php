@@ -29,6 +29,19 @@ Class TaxRulesGroup extends AppModel {
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
 		),
+		'Productotienda' => array(
+			'className'				=> 'Productotienda',
+			'foreignKey'			=> 'id_tax_rules_group',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
 		'TaxRule' => array(
 			'className'				=> 'TaxRule',
 			'foreignKey'			=> 'id_tax_rules_group',
