@@ -61,6 +61,16 @@ class Email extends AppModel
 				//'on'			=> 'update', // Solo valida en operaciones de 'create' o 'update'
 			),
 		),
+		'mostrar_cuotas' => array(
+			'boolean' => array(
+				'rule'			=> array('boolean'),
+				'last'			=> true,
+				//'message'		=> 'Mensaje de validación personalizado',
+				//'allowEmpty'	=> true,
+				//'required'		=> false,
+				//'on'			=> 'update', // Solo valida en operaciones de 'create' o 'update'
+			),
+		),
 		'activo' => array(
 			'boolean' => array(
 				'rule'			=> array('boolean'),

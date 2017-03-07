@@ -327,7 +327,7 @@ class EmailsController extends AppController
 
 			$htmlEmail = $this->Email->find('first', array(
 				'conditions' => array('Email.id' => $id), 
-				'fields' => array('html','nombre', 'sitio_url', 'tienda_id'),
+				'fields' => array('html','nombre', 'sitio_url', 'tienda_id', 'mostrar_cuotas', 'cuotas'),
 				'contain'	=> array('Categoria', 'Tienda')	
 				)
 			);
@@ -342,6 +342,10 @@ class EmailsController extends AppController
 
 			// Url del sitio que corresponde el newsletter
 			$SitioUrl = $htmlEmail['Email']['sitio_url'];
+
+			// Cuotas
+			$MostrarCuotasEmail = $htmlEmail['Email']['mostrar_cuotas'];
+			$CuotasEmail = $htmlEmail['Email']['cuotas'];
 
 			$categoriasId = Hash::extract($htmlEmail['Categoria'], '{n}.id');
 
@@ -549,6 +553,10 @@ class EmailsController extends AppController
 					foreach ($producto['SpecificPrice'] as $precio) {
 						if ( $precio['reduction'] == 0 ) {
 							$producto['Productotienda']['valor_final'] = $producto['Productotienda']['valor_iva'];
+						}elseif ( $MostrarCuotasEmail ){
+							$producto['Productotienda']['valor_final'] = $this->precio($producto['Productotienda']['valor_iva'], ($precio['reduction'] * 100 * -1) );
+							$producto['Productotienda']['descuento'] = ($precio['reduction'] * 100 * -1 );
+							$producto['Productotienda']['valor_cuotas'] = ($producto['Productotienda']['valor_final'] / $CuotasEmail);
 						}else{
 							$producto['Productotienda']['valor_final'] = $this->precio($producto['Productotienda']['valor_iva'], ($precio['reduction'] * 100 * -1) );
 							$producto['Productotienda']['descuento'] = ($precio['reduction'] * 100 * -1 );
@@ -562,10 +570,10 @@ class EmailsController extends AppController
 					$porcentaje_descuento 	= ( !empty($producto['Productotienda']['descuento']) ) ? $producto['Productotienda']['descuento'] . '%' : '<font size="2">Oferta</font>' ;
 					$nombre_producto		= CakeText::truncate($producto['pl']['name'], 40, array('exact' => false));
 					$modelo_producto		= $producto['Productotienda']['reference'];
-					$valor_producto			= ( isset($precio['reduction']) ) ? CakeNumber::currency($producto['Productotienda']['valor_iva'] , 'CLP') : '' ;
+					$valor_producto			= ( isset($precio['reduction']) ) ? '<font style="text-decoration: line-through;">' . CakeNumber::currency($producto['Productotienda']['valor_iva'], 'CLP') . '</font>' : '' ;
 					$oferta_producto		= CakeNumber::currency($producto['Productotienda']['valor_final'] , 'CLP');
 					$url_producto			= sprintf('%s%s-%s.html', $SitioUrl, $producto['pl']['link_rewrite'], $producto['Productotienda']['id_product']);
-
+					$cuotas_producto 		= ( isset($producto['Productotienda']['valor_cuotas']) ) ? sprintf('<font style="background-color:#EA3A3A; display: ;display: block;line-height: 25px;color: #fff;margin: 4px 5px;">%s cuotas de %s</font>', $CuotasEmail, CakeNumber::currency($producto['Productotienda']['valor_cuotas'] , 'CLP') ) : '';
 
 					/**
 					* Agregamos la información al HTML del email
@@ -577,6 +585,7 @@ class EmailsController extends AppController
 					$seccion[$indice] = str_replace('[**modelo_producto**]', $modelo_producto , $seccion[$indice]);
 					$seccion[$indice] = str_replace('[**antes_producto**]', $valor_producto , $seccion[$indice]);
 					$seccion[$indice] = str_replace('[*valor_producto*]', $oferta_producto , $seccion[$indice]);
+					$seccion[$indice] = str_replace('[*cuotas_producto*]', $cuotas_producto , $seccion[$indice]);
 					$seccion[$indice] = str_replace('[**url_producto**]', $url_producto , $seccion[$indice]);
 				}
 
