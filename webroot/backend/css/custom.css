@@ -97,3 +97,24 @@
     top: 50%;
     left: 50%;
 }
+
+.panel-toggled .panel-body, .panel-toggled .panel-footer {
+    display: block !important;
+}
+
+.rut-error{
+    color: #b64645;
+    margin-bottom: 0px;
+    margin-top: 3px;
+    font-size: 11px;
+    font-weight: normal;
+    width: 100%;
+}
+
+.js-clon-agregar.btn.btn-success {
+    margin-bottom: 20px;
+}
+
+.pull-right.seccion-botones {
+    margin: 0px 0 20px 0;
+}

@@ -15,6 +15,10 @@ Class Cliente extends AppModel {
 	*/
 	public $displayField	= 'firstname';
 
+	public $validate = array(
+
+	);
+
 
 	/**
 	 * Asosiaciones

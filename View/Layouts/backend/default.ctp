@@ -40,6 +40,8 @@
 			'/backend/js/plugins/noty/jquery.noty',
 			'/backend/js/plugins/noty/layouts/topRight',
 			'/backend/js/plugins/noty/themes/default',
+			'/backend/js/plugins/maskedinput/jquery.maskedinput.min',
+			'/backend/js/plugins/jquery.rut.min',
 			'/backend/js/custom',
 			'/backend/js/dashboard',
 			'/backend/js/app',
