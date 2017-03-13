@@ -553,13 +553,19 @@ class EmailsController extends AppController
 					foreach ($producto['SpecificPrice'] as $precio) {
 						if ( $precio['reduction'] == 0 ) {
 							$producto['Productotienda']['valor_final'] = $producto['Productotienda']['valor_iva'];
-						}elseif ( $MostrarCuotasEmail ){
-							$producto['Productotienda']['valor_final'] = $this->precio($producto['Productotienda']['valor_iva'], ($precio['reduction'] * 100 * -1) );
-							$producto['Productotienda']['descuento'] = ($precio['reduction'] * 100 * -1 );
-							$producto['Productotienda']['valor_cuotas'] = ($producto['Productotienda']['valor_final'] / $CuotasEmail);
+
+							if ($MostrarCuotasEmail) {
+								$producto['Productotienda']['valor_cuotas'] = ($producto['Productotienda']['valor_final'] / $CuotasEmail);
+							}
+
 						}else{
+
 							$producto['Productotienda']['valor_final'] = $this->precio($producto['Productotienda']['valor_iva'], ($precio['reduction'] * 100 * -1) );
 							$producto['Productotienda']['descuento'] = ($precio['reduction'] * 100 * -1 );
+
+							if ($MostrarCuotasEmail) {
+								$producto['Productotienda']['valor_cuotas'] = ($producto['Productotienda']['valor_final'] / $CuotasEmail);
+							}
 						}
 					}
 
