@@ -13,8 +13,6 @@ Class Lang extends AppModel {
 	/**
 	 * Use Toolmania Connect
 	 */
-	public $useDbConfig = 'toolmania';
-
 
 	public $belongsTo = array(
 		'TaxLang' => array(
@@ -25,6 +23,25 @@ Class Lang extends AppModel {
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		)
+	);
+
+	public $hasAndBelongsToMany = array(
+		'Paise' => array(
+			'className'				=> 'Paise',
+			'joinTable'				=> 'country_lang',
+			'foreignKey'			=> 'id_lang',
+			'associationForeignKey'	=> 'id_country',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'PaisIdioma',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 }

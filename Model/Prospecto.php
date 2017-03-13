@@ -88,6 +88,15 @@ class Prospecto extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Origen')
+		),
+		'Tienda' => array(
+			'className'				=> 'Tienda',
+			'foreignKey'			=> 'tienda_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'ValidezFecha')
 		)
 	);
 	public $hasMany = array(
@@ -103,6 +112,25 @@ class Prospecto extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		)
+	);
+
+	public $hasAndBelongsToMany = array(
+		'Productotienda' => array(
+			'className'				=> 'Productotienda',
+			'joinTable'				=> 'productotiendas_prospectos',
+			'foreignKey'			=> 'id_product',
+			'associationForeignKey'	=> 'prospecto_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'ProductotiendaProspecto',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 }

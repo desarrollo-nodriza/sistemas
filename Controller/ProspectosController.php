@@ -8,6 +8,7 @@ class ProspectosController extends AppController
 			'recursive'			=> 0
 		);
 		$prospectos	= $this->paginate();
+
 		BreadcrumbComponent::add('Prospectos ');
 		$this->set(compact('prospectos'));
 	}
@@ -15,7 +16,7 @@ class ProspectosController extends AppController
 	public function admin_add()
 	{
 		if ( $this->request->is('post') )
-		{
+		{	prx($this->request->data);
 			$this->Prospecto->create();
 			if ( $this->Prospecto->save($this->request->data) )
 			{
@@ -27,12 +28,14 @@ class ProspectosController extends AppController
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
 		}
-		$estadoProspectos	= $this->Prospecto->EstadoProspecto->find('list');
-		$monedas	= $this->Prospecto->Moneda->find('list');
-		$origenes	= $this->Prospecto->Origen->find('list');
+		$estadoProspectos	= $this->Prospecto->EstadoProspecto->find('list', array('conditions' => array('EstadoProspecto.activo' => 1)));
+		$monedas	= $this->Prospecto->Moneda->find('list', array('conditions' => array('Moneda.activo' => 1)));
+		$origenes	= $this->Prospecto->Origen->find('list', array('conditions' => array('Origen.activo' => 1)));
+		$tiendas	= $this->Prospecto->Tienda->find('list', array('conditions' => array('Tienda.activo' => 1)));
+
 		BreadcrumbComponent::add('Prospectos ', '/prospectos');
 		BreadcrumbComponent::add('Agregar ');
-		$this->set(compact('estadoProspectos', 'monedas', 'origenes'));
+		$this->set(compact('estadoProspectos', 'monedas', 'origenes', 'tiendas'));
 	}
 
 	public function admin_edit($id = null)
@@ -61,12 +64,13 @@ class ProspectosController extends AppController
 				'conditions'	=> array('Prospecto.id' => $id)
 			));
 		}
-		$estadoProspectos	= $this->Prospecto->EstadoProspecto->find('list');
-		$monedas	= $this->Prospecto->Moneda->find('list');
-		$origenes	= $this->Prospecto->Origen->find('list');
+		$estadoProspectos	= $this->Prospecto->EstadoProspecto->find('list', array('conditions' => array('EstadoProspecto.activo' => 1)));
+		$monedas	= $this->Prospecto->Moneda->find('list', array('conditions' => array('Moneda.activo' => 1)));
+		$origenes	= $this->Prospecto->Origen->find('list', array('conditions' => array('Origen.activo' => 1)));
+		$tiendas	= $this->Prospecto->Tienda->find('list', array('conditions' => array('Tienda.activo' => 1)));
 		BreadcrumbComponent::add('Prospectos ', '/prospectos');
 		BreadcrumbComponent::add('Editar ');
-		$this->set(compact('estadoProspectos', 'monedas', 'origenes'));
+		$this->set(compact('estadoProspectos', 'monedas', 'origenes', 'tiendas'));
 	}
 
 	public function admin_delete($id = null)

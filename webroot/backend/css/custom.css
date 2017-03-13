@@ -51,3 +51,49 @@
 .input-group {max-width: 197px;}
 .input-group .form-control.datepicker {max-width: 80px; padding: 8px;}
 .control-label {margin-right: 5px; margin-left: 5px;}
+
+
+/* ui autocomplete */
+
+.ui-helper-hidden-accessible {
+	display: none !important;
+}
+.ui-autocomplete {
+    background: #FFF;
+    border: 1px solid #D5D5D5;
+    -moz-border-radius: 0px;
+    -webkit-border-radius: 0px;
+    border-radius: 0px;
+    list-style: none;
+    padding-left: 0;
+}
+
+.ui-autocomplete .ui-menu-item {
+    background: #FFF;
+    border-bottom: 1px solid #D5D5D5;
+    line-height: 20px;
+    padding: 8px 15px;
+}
+
+.ui-autocomplete .ui-menu-item:hover {
+	cursor: pointer;
+	background-color: #4B4A4A;
+    color: #fff;
+}
+
+.loader {
+    display: none;
+    background: rgba(255,255,255,0.5);
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+}
+
+.loader > .fa {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}

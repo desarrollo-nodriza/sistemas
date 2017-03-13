@@ -21,6 +21,7 @@
 							<thead>
 								<tr class="sort">
 									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('tienda_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('estado_prospecto_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('moneda_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('created', 'Creado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -31,6 +32,7 @@
 								<?php foreach ( $prospectos as $prospecto ) : ?>
 								<tr>
 									<td><?= h($prospecto['Prospecto']['nombre']); ?>&nbsp;</td>
+									<td><?= h($prospecto['Tienda']['nombre']); ?>&nbsp;</td>
 									<td><?= h($prospecto['EstadoProspecto']['nombre']); ?>&nbsp;</td>
 									<td><?= h($prospecto['Moneda']['nombre']); ?>&nbsp;</td>
 									<td><?= h($prospecto['Prospecto']['created']); ?>&nbsp;</td>

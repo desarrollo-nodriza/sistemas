@@ -37,8 +37,12 @@
 			'/backend/js/plugins/nvd3/lib/d3.v3',
 			'/backend/js/plugins/nvd3/nv.d3.min',
 			'/backend/js/plugins/owl/owl.carousel.min',
+			'/backend/js/plugins/noty/jquery.noty',
+			'/backend/js/plugins/noty/layouts/topRight',
+			'/backend/js/plugins/noty/themes/default',
 			'/backend/js/custom',
 			'/backend/js/dashboard',
+			'/backend/js/app',
 			//'/backend/js/plugins',
 			//'/backend/js/demo_charts_nvd3'
 			//'/backend/js/demo_charts_morris'

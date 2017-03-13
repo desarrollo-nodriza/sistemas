@@ -291,15 +291,18 @@ jQuery(document).ready(function($)
 	/**
 	 * Editor de ayudas
 	 */
-	if ( $('.js-summernote').length )
+	if ( $('.summernote').length )
 	{
-		$('.js-summernote').summernote(
+		$('.summernote').summernote(
 		{
-			height		: 300,
+			height		: 200,
 			focus		: true,
 			toolbar		: [
 				['style', ['bold', 'italic', 'underline', 'clear']],
-				['insert', ['link', 'picture']]
+				['insert', []],
+				['para', ['ul', 'ol', 'paragraph']],
+				['font', ['strikethrough']],
+                ['fontsize', ['fontsize']],
 			]
 		});
 	}
@@ -384,6 +387,15 @@ jQuery(document).ready(function($)
 		}(jQuery);
 	}
 
+	/**
+	 * Datepicker
+	 */
+	if ($('.datepicker').length > 0) {
+		$('.datepicker').datepicker({
+			language	: 'es',
+			format		: 'yyyy-mm-dd'
+		});
+	}
 
 	/**
 	 * Buscador de OC - Datepicker rango fechas

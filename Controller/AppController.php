@@ -333,7 +333,14 @@ class AppController extends Controller
 		ClassRegistry::init('TaxRulesGroup')->useDbConfig = $tiendaConf;
 		ClassRegistry::init('TaxRule')->useDbConfig = $tiendaConf;
 		ClassRegistry::init('Tax')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('TaxLang')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('Lang')->useDbConfig = $tiendaConf;
 		ClassRegistry::init('SpecificPrice')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('Cliente')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('Clientedireccion')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('Paise')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('PaisIdioma')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('Region')->useDbConfig = $tiendaConf;
     }
 	
 }

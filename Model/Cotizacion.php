@@ -127,6 +127,34 @@ class Cotizacion extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'ValidezFecha')
+		),
+		'Tienda' => array(
+			'className'				=> 'Tienda',
+			'foreignKey'			=> 'tienda_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'ValidezFecha')
+		)
+	);
+
+	public $hasAndBelongsToMany = array(
+		'Productotienda' => array(
+			'className'				=> 'Productotienda',
+			'joinTable'				=> 'productotiendas_cotizaciones',
+			'foreignKey'			=> 'id_product',
+			'associationForeignKey'	=> 'cotizacion_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'ProductotiendaCotizacion',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 }

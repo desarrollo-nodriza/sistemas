@@ -34,6 +34,38 @@ Class Productotienda extends AppModel {
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'Prospecto' => array(
+			'className'				=> 'Prospecto',
+			'joinTable'				=> 'productotiendas_prospectos',
+			'foreignKey'			=> 'id_product',
+			'associationForeignKey'	=> 'prospecto_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'ProductotiendaProspecto',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		),
+		'Cotizacion' => array(
+			'className'				=> 'Cotizacion',
+			'joinTable'				=> 'productotiendas_cotizaciones',
+			'foreignKey'			=> 'id_product',
+			'associationForeignKey'	=> 'cotizacion_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'ProductotiendaCotizacion',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 

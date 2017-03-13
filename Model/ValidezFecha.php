@@ -5,7 +5,7 @@ class ValidezFecha extends AppModel
 	/**
 	 * CONFIGURACION DB
 	 */
-
+	public $displayField	= 'valor';
 	/**
 	 * BEHAVIORS
 	 */
