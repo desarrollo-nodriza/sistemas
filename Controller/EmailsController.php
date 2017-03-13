@@ -356,7 +356,7 @@ class EmailsController extends AppController
 						'Categoria.tienda_id' => $htmlEmail['Email']['tienda_id']
 					),
 					'order'	=> array(
-						'Categoria.orden DESC'
+						'Categoria.orden ASC'
 					)
 				)
 			);
