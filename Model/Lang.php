@@ -42,6 +42,38 @@ Class Lang extends AppModel {
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'OrdenEstado' => array(
+			'className'				=> 'OrdenEstado',
+			'joinTable'				=> 'order_state_lang',
+			'foreignKey'			=> 'id_lang',
+			'associationForeignKey'	=> 'id_order_state',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'OrdenEstadoIdioma',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		),
+		'Productotienda' => array(
+			'className'				=> 'Productotienda',
+			'joinTable'				=> 'product_lang',
+			'foreignKey'			=> 'id_lang',
+			'associationForeignKey'	=> 'id_product',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'ProductotiendaIdioma',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 }

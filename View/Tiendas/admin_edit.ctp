@@ -31,6 +31,14 @@
 						<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 						<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 					</tr>
+					<tr>
+						<th><?= $this->Form->label('principal', 'Tienda principal'); ?></th>
+						<td><?= $this->Form->input('principal', array('class' => 'icheckbox')); ?></td>
+					</tr>
+					<tr>
+						<th><?= $this->Form->label('tema', 'Tema de la tienda'); ?></th>
+						<td><?= $this->Form->input('tema'); ?></td>
+					</tr>
 				</table>
 
 				<div class="pull-right">

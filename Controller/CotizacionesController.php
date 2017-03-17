@@ -5,7 +5,10 @@ class CotizacionesController extends AppController
 	public function admin_index()
 	{
 		$this->paginate		= array(
-			'recursive'			=> 0
+			'recursive'			=> 0,
+			'conditions' => array(
+				'tienda_id' => $this->Session->read('Tienda.id')
+				)
 		);
 		$cotizaciones	= $this->paginate();
 		BreadcrumbComponent::add('Cotizaciones ');

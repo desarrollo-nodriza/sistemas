@@ -118,3 +118,51 @@
 .pull-right.seccion-botones {
     margin: 0px 0 20px 0;
 }
+
+#tablaProductos{
+    margin-top: 60px;
+}
+
+#tablaProductos tfoot {
+    background: #ECECEC;
+}
+
+#tablaProductos tfoot tr > td {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+#tablaProductos tfoot tr > td label {
+    vertical-align: middle;
+    margin: 0;
+    line-height: 30px;
+}
+
+textarea {
+    resize: none;
+}
+
+.x-navigation .xn-search::before {
+    content: '\f290' !important;
+    color: #fff;
+}
+
+.txt-tienda {
+    color: #fff;
+    padding-left: 30px;
+    line-height: 30px;
+    margin: 0;
+    padding-right: 10px;
+}
+
+@media screen and (max-width: 768px) {
+    .x-navigation .form-inline .form-group {
+        display: inline-block;
+        margin-bottom: 0;
+        vertical-align: middle;
+    }
+}
+
+.x-navigation.x-navigation-horizontal {
+    margin-bottom: 0;
+}

@@ -10,9 +10,17 @@ Class Orders extends AppModel {
 	public $useTable = 'orders';
 	public $primaryKey = 'id_order';
 
-	/**
-	 * Use Toolmania Connect
-	 */
-	public $useDbConfig = 'toolmania';
+
+	public $belongsTo = array(
+		'OrdenEstado' => array(
+			'className'				=> 'OrdenEstado',
+			'foreignKey'			=> 'current_state',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'OrdenEstado')
+		)
+	);
 
 }

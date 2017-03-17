@@ -1,6 +1,6 @@
 <?php
 App::uses('AppModel', 'Model');
-class ProductotiendaProspecto extends AppModel
+class OrdenEstadoIdioma extends AppModel
 {
 	/**
 	 * CONFIGURACION DB
@@ -9,14 +9,10 @@ class ProductotiendaProspecto extends AppModel
 	/**
 	 * Set Cake config DB
 	 */
-	public $name = 'ProductotiendaProspecto';
-	public $useTable = 'productotiendas_prospectos';
-	public $primaryKey = 'id';
+	public $name = 'OrdenEstadoIdioma';
+	public $useTable = 'order_state_lang';
+	public $primaryKey = 'id_order_state';
 
-	/**
-	 * Use Toolmania Connect
-	 */
-	public $useDbConfig = 'reportes';
 
 	/**
 	 * BEHAVIORS

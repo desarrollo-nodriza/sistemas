@@ -10,6 +10,7 @@ Class Productotienda extends AppModel {
 	public $useTable = 'product';
 	public $primaryKey = 'id_product';
 
+
 	/**
 	* Config
 	*/
@@ -66,6 +67,22 @@ Class Productotienda extends AppModel {
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'Lang' => array(
+			'className'				=> 'Lang',
+			'joinTable'				=> 'product_lang',
+			'foreignKey'			=> 'id_product',
+			'associationForeignKey'	=> 'id_lang',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'ProductotiendaIdioma',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 
@@ -107,15 +124,28 @@ Class Productotienda extends AppModel {
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'ProductotiendaDescuento' => array(
+			'className'				=> 'ProductotiendaDescuento',
+			'foreignKey'			=> 'id_product',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 	
 	/**
 	* CAllbacks
 	*/
+
 	public function beforeSave($options = array()) {
 		parent::beforeSave();
-		
 	}
 
 	public function afterSave($created = null, $options = Array()) {

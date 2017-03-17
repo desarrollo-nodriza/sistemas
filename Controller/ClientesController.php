@@ -19,120 +19,84 @@ class ClientesController extends AppController {
 		// Filtrado de clientes por formulario
 		if ( $this->request->is('post') ) {
 
-			if (empty($this->request->data['Filtro']['tienda'])) {
-				$this->Session->setFlash('Seleccione una tienda' , null, array(), 'danger');
-				$this->redirect(array('action' => 'index'));
-			}
-
-			if ( ! empty($this->request->data['Filtro']['tienda']) && empty($this->request->data['Filtro']['findby']) ) {
-				$this->redirect(array('controller' => 'clientes', 'action' => 'index', 'tienda' => $this->request->data['Filtro']['tienda']));
-			}
-
-			if ( ! empty($this->request->data['Filtro']['tienda']) && ! empty($this->request->data['Filtro']['findby']) && empty($this->request->data['Filtro']['nombre_buscar']) ) {
+			if ( ! empty($this->request->data['Filtro']['findby']) && empty($this->request->data['Filtro']['nombre_buscar']) ) {
 				$this->Session->setFlash('Ingrese nombre o referencia del producto' , null, array(), 'danger');
 				$this->redirect(array('action' => 'index'));
 			}
 
-			if ( ! empty($this->request->data['Filtro']['tienda']) && ! empty($this->request->data['Filtro']['findby']) && ! empty($this->request->data['Filtro']['nombre_buscar']) ) {
-				$this->redirect(array('controller' => 'clientes', 'action' => 'index', 'tienda' => $this->request->data['Filtro']['tienda'], 'findby' => $this->request->data['Filtro']['findby'], 'nombre_buscar' => $this->request->data['Filtro']['nombre_buscar']));
+			if ( ! empty($this->request->data['Filtro']['findby']) && ! empty($this->request->data['Filtro']['nombre_buscar']) ) {
+				$this->redirect(array('controller' => 'clientes', 'action' => 'index', 'findby' => $this->request->data['Filtro']['findby'], 'nombre_buscar' => $this->request->data['Filtro']['nombre_buscar']));
 			}
-		}else{
+		}
 			
-			if ( ! empty($this->request->params['named']['tienda']) ) {
-				//Buscamos el prefijo de la tienda
-				$tienda = ClassRegistry::init('Tienda')->find('first', array(
-				'conditions' => array(
-					'Tienda.id' => $this->request->params['named']['tienda']
-					)
-				));
 
-				// Virificar existencia de la tienda
-				if (empty($tienda)) {
-					$this->Session->setFlash('La tienda seleccionada no existe' , null, array(), 'danger');
-					$this->redirect(array('action' => 'index'));
-				}
+		// Opciones de paginación
+		$paginate = array_replace_recursive(array(
+			'limit' => 10,
+			'fields' => array(),
+			'joins' => array(),
+			'contain' => array(),
+			'conditions' => array()
+		));
 
-				// Verificar que la tienda esté configurada
-				if (empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['configuracion'])) {
-					$this->Session->setFlash('La tienda no está configurada completamente. Verifiquela y vuelva a intentarlo' , null, array(), 'danger');
-					$this->redirect(array('action' => 'index'));
-				}
+		// Cambiamos la configuración de la base de datos
+		$this->cambiarConfigDB($this->tiendaConf($this->Session->read('Tienda.id')));
 
-				// Opciones de paginación
-				$paginate = array_replace_recursive(array(
-					'limit' => 10,
-					'fields' => array(),
-					'joins' => array(),
-					'contain' => array(),
-					'conditions' => array()
-				));
+		/**
+		* Buscar por
+		*/
+		if ( !empty($this->request->params['named']['findby']) && !empty($this->request->params['named']['nombre_buscar']) ) {
 
-				// Cambiamos la configuración de la base de datos
-				$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
-
-				/**
-				* Buscar por
-				*/
-				if ( !empty($this->request->params['named']['findby']) && !empty($this->request->params['named']['nombre_buscar']) ) {
-
-					/**
-					* Agregar condiciones a la paginación
-					* según el criterio de busqueda (código de referencia o nombre del producto)
-					*/
-					switch ($this->request->params['named']['findby']) {
-						case 'email':
-							$paginate		= array_replace_recursive($paginate, array(
-								'conditions'	=> array(
-									'Cliente.email' => trim($this->request->params['named']['nombre_buscar'])
-								)
-							));
-							break;
-						
-						case 'nombre':
-							$paginate		= array_replace_recursive($paginate, array(
-								'conditions'	=> array(
-									'Cliente.firstname LIKE "%' . trim($this->request->params['named']['nombre_buscar']) . '%"'
-								)
-							));
-							break;
-					}
-					// Texto ingresado en el campo buscar
-					$textoBuscar = $this->request->params['named']['nombre_buscar'];
-					
-				}else if ( ! empty($this->request->params['named']['findby'])) {
-					$this->Session->setFlash('No se aceptan campos vacios.' ,  null, array(), 'danger');
-				}
-
-				// Total de registros de la tienda
-				$total 		= $this->Cliente->find('count', array(
-					'joins' => array(),
-					'conditions' => array()
-				));
-
-
-				$this->paginate = $paginate;
-
-				$clientes	= $this->paginate();
-				$totalMostrados = count($clientes);
-
-				if (empty($clientes)) {
-					$this->Session->setFlash(sprintf('No se encontraron resultados para %s', $this->request->params['named']['nombre_buscar']) , null, array(), 'danger');
-					$this->redirect(array('action' => 'index'));
-				}
-
-				$this->set(compact('clientes', 'total', 'totalMostrados', 'textoBuscar', 'tienda'));
-
+			/**
+			* Agregar condiciones a la paginación
+			* según el criterio de busqueda (código de referencia o nombre del producto)
+			*/
+			switch ($this->request->params['named']['findby']) {
+				case 'email':
+					$paginate		= array_replace_recursive($paginate, array(
+						'conditions'	=> array(
+							'Cliente.email' => trim($this->request->params['named']['nombre_buscar'])
+						)
+					));
+					break;
+				
+				case 'nombre':
+					$paginate		= array_replace_recursive($paginate, array(
+						'conditions'	=> array(
+							'Cliente.firstname LIKE "%' . trim($this->request->params['named']['nombre_buscar']) . '%"'
+						)
+					));
+					break;
 			}
+			// Texto ingresado en el campo buscar
+			$textoBuscar = $this->request->params['named']['nombre_buscar'];
+			
+		}else if ( ! empty($this->request->params['named']['findby'])) {
+			$this->Session->setFlash('No se aceptan campos vacios.' ,  null, array(), 'danger');
+		}
 
+		// Total de registros de la tienda
+		$total 		= $this->Cliente->find('count', array(
+			'joins' => array(),
+			'conditions' => array()
+		));
+
+
+		$this->paginate = $paginate;
+
+		$clientes	= $this->paginate();
+		$totalMostrados = count($clientes);
+
+		if (empty($clientes)) {
+			$this->Session->setFlash(sprintf('No se encontraron resultados para %s', $this->request->params['named']['nombre_buscar']) , null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
 		}
 
 		BreadcrumbComponent::add('Clientes');
-
-		$tiendas = ClassRegistry::init('Tienda')->find('list', array('conditions' => array('activo' => 1)));
-		$this->set(compact('tiendas'));
+		$this->set(compact('clientes', 'total', 'totalMostrados', 'textoBuscar'));
     }
 
-    public function admin_view ($id = '', $tienda = '') {
+    public function admin_view ($id = '') {
     	
     }
 
@@ -142,20 +106,7 @@ class ClientesController extends AppController {
     		exit;
     	}
 
-    	$tiendaR = ClassRegistry::init('Tienda')->find('first', array(
-    		'conditions' => array(
-    			'Tienda.id' => $tienda,
-    			'Tienda.activo' => 1
-    			)
-    		));
-
-    	if (empty($tiendaR)) {
-    		echo json_encode(array('0' => array('id' => '', 'value' => 'No se encontró la tienda')));
-    		exit;
-    	}
-
-    	// Cambiamos la configuración de la base de datos
-		$this->cambiarConfigDB($tiendaR['Tienda']['configuracion']);
+    	$this->cambiarConfigDB($this->tiendaConf($tienda));
 
     	$clientes = $this->Cliente->find('all', array(
     		'conditions' => array('OR' => array(

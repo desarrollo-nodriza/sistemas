@@ -2,7 +2,7 @@
 App::uses('AppController', 'Controller');
 class AdministradoresController extends AppController
 {
-	public function crear()
+	/*public function crear()
 	{
 		$administrador		= array(
 			'nombre'			=> 'Desarrollo Nodriza Spa',
@@ -13,7 +13,7 @@ class AdministradoresController extends AppController
 		$this->Administrador->save($administrador);
 		$this->Session->setFlash('Administrador creado correctamente. Email: desarrollo@nodriza.cl -- Clave: admin', null, array(), 'success');
 		$this->redirect($this->Auth->redirectUrl());
-	}
+	}*/
 
 	public function admin_login()
 	{
@@ -23,7 +23,30 @@ class AdministradoresController extends AppController
 		if ( $this->request->is('post') )
 		{
 			if ( $this->Auth->login() )
-			{
+			{	
+				# Obtenemos la tienda principal
+				$tiendaPrincipal = ClassRegistry::init('Tienda')->find('first', array(
+					'conditions' => array('Tienda.principal' => 1),
+					'order' => array('Tienda.modified' => 'DESC')
+					));
+				
+				if ( empty($tiendaPrincipal) ) {
+					
+					# Enviamos mensaje de porque la redirección
+					$this->Session->setFlash('No existe una tienda principal, porfavor contácte al encargado.', null, array(), 'danger');
+
+					# Elimina la sesión de google
+					$this->Session->delete('Google.token');
+					# Eliminamos la sesión tienda
+					$this->Session->delete('Tienda');
+					# Deslogeamos
+					$this->admin_logout();
+				}else {
+					$this->Session->setFlash('Su tienda principal es ' . $tiendaPrincipal['Tienda']['nombre'], null, array(), 'success');
+					$this->Session->write('Tienda.id', $tiendaPrincipal['Tienda']['id']);
+					$this->Session->write('Tienda.tema', $tiendaPrincipal['Tienda']['tema']);
+				}
+
 				$this->Session->delete('Google.token');
 				$this->redirect($this->Auth->redirectUrl());
 			}
@@ -147,6 +170,7 @@ class AdministradoresController extends AppController
 		*	Elimina la sesión de google
 		*/
 		$this->Session->delete('Google.token');
+		$this->Session->delete('Tienda');
 		$this->redirect($this->Auth->logout());
 	}
 

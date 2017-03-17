@@ -11,15 +11,7 @@
 					<h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
 				</div>
 				<div class="panel-body">
-					<div class="col-sm-2 col-xs-12">
-						<div class="form-group">
-							<label>Tienda:</label>
-							<?=$this->Form->select('tienda', $tiendas,
-								array( 'class' => 'form-control', 'empty' => false )
-							);?>
-						</div>
-					</div>
-					<div class="col-sm-2 col-xs-12">
+					<div class="col-sm-4 col-xs-12">
 						<div class="form-group">
 							<label>Buscar por:</label>
 							<?=$this->Form->select('findby', array(
@@ -69,10 +61,7 @@
 						<table class="table">
 							<tbody>
 								<tr>
-								<? if (!empty($tienda)): ?>
-									<td><?=sprintf('<b>Tienda:</b>  %s - %s', $tienda['Tienda']['nombre'],  $tienda['Tienda']['url']);?></td>
 									<td><b>Total de productos:</b> <?=sprintf('%d producto/s activos actualmente en el sitio', $total)?></td>
-								<? endif;?>
 								</tr>
 								<tr>
 								<? if ( !empty($textoBuscar) ) : ?>
@@ -107,7 +96,7 @@
 									?></td>
 									<td><?= $this->Html->image($producto['0']['url_image'], array('class' => 'img-responsive', 'width' => '100px')); ?>&nbsp;</td>
 									<? if ($permisos['edit']) : ?>
-									<td><?= $this->Html->link( 'Editar', array('action' => 'associate', $producto['Productotienda']['id_product'], $this->request->params['named']['tienda']),
+									<td><?= $this->Html->link( 'Editar', array('action' => 'associate', $producto['Productotienda']['id_product'], $this->Session->read('Tienda.id')),
 										array( 'escape' => false, 'class' => 'btn btn-xs btn-success btn-block' )
 										);  ?>
 									<? endif; ?>

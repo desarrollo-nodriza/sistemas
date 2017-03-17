@@ -10,20 +10,20 @@ class EmailsController extends AppController
 
 	{
 
-		$conditions = array();
+		$conditions = array(
+			'tienda_id' => $this->Session->read('Tienda.id')
+		);
 
 		// Condicones para super administrador
-		if ( $this->Auth->user('admin') == 0 ) {
-			$conditions = array();
+		if ( $this->Auth->user('Aministrador.rol_id') == 1 ) {
+			$conditions[] = array('Categoria.activo' => 1);
 		}
 
 		$this->paginate		= array(
-
 			'recursive'			=> 0,
 			'limit'	=> 1000,
 			'conditions' => $conditions,
 			'contain' => array('Tienda', 'Plantilla')
-
 		);
 
 		BreadcrumbComponent::add('Newsletters ');
@@ -45,6 +45,9 @@ class EmailsController extends AppController
 		{	
 			// Se verifica y formatea la url
 			$this->request->data['Email']['sitio_url'] = $this->formatear_url($this->request->data['Email']['sitio_url']);
+
+			// Forzamos tienda id
+			$this->request->data['Email']['tienda_id'] = $this->Session->read('Tienda.id');
 
 			$this->Email->create();
 
@@ -72,10 +75,9 @@ class EmailsController extends AppController
 		BreadcrumbComponent::add('Agregar ');
 
 		$plantillas	= $this->Email->Plantilla->find('list', array('conditions' => array('activo' => 1)));
-		$categorias	= $this->Email->Categoria->find('list', array('conditions' => array('activo' => 1)));
-		$tiendas	= $this->Email->Tienda->find('list', array('conditions' => array('activo' => 1)));
+		$categorias	= $this->Email->Categoria->find('list', array('conditions' => array('activo' => 1, 'tienda_id' => $this->Session->read('Tienda.id'))));
 
-		$this->set(compact('plantillas', 'categorias', 'tiendas'));
+		$this->set(compact('plantillas', 'categorias'));
 
 	}
 
@@ -98,10 +100,13 @@ class EmailsController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 
-		{	//prx($this->request->data);
+		{	
 
 			// Se verifica y formatea la url
 			$this->request->data['Email']['sitio_url'] = $this->formatear_url($this->request->data['Email']['sitio_url']);
+
+			// Forzamos tienda id
+			$this->request->data['Email']['tienda_id'] = $this->Session->read('Tienda.id');
 
 			/**
 
@@ -153,7 +158,7 @@ class EmailsController extends AppController
 		BreadcrumbComponent::add('Editar ');
 
 		$plantillas	= $this->Email->Plantilla->find('list', array('conditions' => array('activo' => 1)));
-		$categorias	= $this->Email->Categoria->find('list', array('conditions' => array('activo' => 1, 'tienda_id' => $this->request->data['Email']['tienda_id'])));
+		$categorias	= $this->Email->Categoria->find('list', array('conditions' => array('activo' => 1, 'tienda_id' => $this->Session->read('Tienda.id'))));
 		$tiendas	= $this->Email->Tienda->find('list', array('conditions' => array('activo' => 1)));
 
 		$this->set(compact('plantillas', 'categorias', 'tiendas'));
@@ -378,7 +383,11 @@ class EmailsController extends AppController
 				$this->redirect(array('action' => 'index'));
 			}
 
-			// Cambiamos la configuración de la base de datos
+			/*******************************************
+			 * 
+			 * Aplicar a todos los modelos dinámicos
+			 * 
+			 ******************************************/
 			$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
 
 			// Se genera HTML para el newsletter (ver modelo Email)
