@@ -1,0 +1,59 @@
+html, ody {
+    font-family: 'Helvetica', sans-serif;
+    outline: none !important;
+}
+
+.logo-cotizacion {
+    width: 325px;
+    margin: 15px 10px;
+}
+
+.tabla-cotizacion {
+    padding: 50px 30px;
+}
+
+.tabla-cotizacion table {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 20px;
+    font-size: 12px;
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+.tabla-cotizacion table tr td {
+    border: 0;
+    border-color: transparent;
+    vertical-align: middle;
+}
+
+.tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > th, .tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > th, .tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > th {
+    padding: 5px;
+    vertical-align: top;
+    line-height: normal;
+}
+
+.tabla-cotizacion table > tr > th, .tabla-cotizacion table > tr > th, .tabla-cotizacion table > tr > th, .tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > td {
+    border-color: #E5E5E5;
+    border-width: 1px;
+}
+
+.tabla-cotizacion > table {
+    border: 1px solid #ddd;
+}
+
+.tabla-cotizacion > table > tr > td, .tabla-cotizacion > table > tr > th, .tabla-cotizacion > table > tr > td, .tabla-cotizacion > table > tr > th, .tabla-cotizacion > table > tr > td, .tabla-cotizacion > table > tr > th {
+    border: 1px solid #ddd;
+}
+
+.tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > th, .tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > th, .tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > th {
+    
+}
+
+.tabla-cotizacion table > tr b {
+    background: #FFF;
+    color: #333;
+    line-height: normal;
+    font-size: 13px;
+    white-space: nowrap;
+}

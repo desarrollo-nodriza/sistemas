@@ -44,8 +44,9 @@
 						<?= $this->Form->input('id_customer', array('type' => 'hidden')); ?>
 						<?= $this->Form->input('id_address', array('type' => 'hidden')); ?>
 						<?= $this->Form->input('tienda_id', array('class' => 'js-tienda-input hidden')); ?>
+						<?= $this->Form->input('cotizacion', array('class' => 'hidden js-input-a-cotizacion', 'type' => 'text')); ?>
 						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
-						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<input type="submit" class="btn btn-info js-a-cotizacion" autocomplete="off" data-loading-text="Espera un momento..." value="Pasar a cotización">
 						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
@@ -104,6 +105,7 @@
 				<div class="panel-footer">
 					<div class="pull-right">
 						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<input type="submit" class="btn btn-info js-a-cotizacion" autocomplete="off" data-loading-text="Espera un momento..." value="Pasar a cotización">
 						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
@@ -199,6 +201,7 @@
 		<div class="col-xs-12">
 			<div class="pull-right seccion-botones">
 				<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+				<input type="submit" class="btn btn-info js-a-cotizacion" autocomplete="off" data-loading-text="Espera un momento..." value="Pasar a cotización">
 				<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 			</div>
 		</div> <!-- end col -->
@@ -230,6 +233,7 @@
 								<th>Referencia</th>
 								<th>Nombre</th>
 								<th>Precio venta</th>
+								<th>Cantidad</th>
 								<th>Nombre desc.</th>
 								<th>Descuento (%)</th>
 								<th>Acciones</th>
@@ -239,7 +243,7 @@
 							</tbody>
 							<tfoot>
 								<tr>
-									<td colspan="5"><?= $this->Form->label('descuento', 'Descuento global'); ?></td>
+									<td colspan="6"><?= $this->Form->label('descuento', 'Descuento global'); ?></td>
 									<td colspan="2"><?= $this->Form->input('descuento', array('style' => 'max-width: 70px;', 'min' => 0, 'max' => 100)); ?></td>
 								</tr>
 							</tfoot>
@@ -249,6 +253,7 @@
 				<div class="panel-footer">
 					<div class="pull-right">
 						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<input type="submit" class="btn btn-info js-a-cotizacion" autocomplete="off" data-loading-text="Espera un momento..." value="Pasar a cotización">
 						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>

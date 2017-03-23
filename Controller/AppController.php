@@ -116,6 +116,9 @@ class AppController extends Controller
 		 */ 
 		$this->cambioTienda();
 
+		// Configuración de tablas externas
+		$this->cambiarConfigDB($this->tiendaConf($this->Session->read('Tienda.id')));
+
 	}
 
 	/**

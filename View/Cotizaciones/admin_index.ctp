@@ -35,8 +35,11 @@
 									<td><?= h($cotizacion['EstadoCotizacion']['nombre']); ?>&nbsp;</td>
 									<td><?= h($cotizacion['Prospecto']['nombre']); ?>&nbsp;</td>
 									<td><?= h($cotizacion['Cotizacion']['created']); ?>&nbsp;</td>
-									<td><?= h($cotizacion['ValidezFecha']['nombre']); ?>&nbsp;</td>	
+									<td><?= h($cotizacion['ValidezFecha']['valor']); ?>&nbsp;</td>	
 									<td>
+									<? if ($permisos['view']) : ?>
+									<?= $this->Html->link('<i class="fa fa-eye"></i> Editar', array('action' => 'view', $cotizacion['Cotizacion']['id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+									<? endif; ?>
 									<? if ($permisos['edit']) : ?>
 									<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $cotizacion['Cotizacion']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
 									<? endif; ?>

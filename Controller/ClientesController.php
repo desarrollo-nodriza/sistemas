@@ -109,15 +109,12 @@ class ClientesController extends AppController {
     	$this->cambiarConfigDB($this->tiendaConf($tienda));
 
     	$clientes = $this->Cliente->find('all', array(
-    		'conditions' => array('OR' => array(
+    		'conditions' => array(
     			'Cliente.email LIKE' => '%' . $palabra . '%',
-    			'Cliente.firstname LIKE' => '%' . $palabra . '%',
-    			'Cliente.lastname LIKE' => '%' . $palabra . '%'
-    			), 
-    			'AND' => array(
-    				'Cliente.id_default_group' => 3)
+                'Cliente.id_default_group' => 3
     			)
-    		));
+    		)
+    	);
     	
     	if (empty($clientes)) {
     		echo json_encode(array('0' => array('id' => '', 'value' => 'No se encontraron coincidencias')));

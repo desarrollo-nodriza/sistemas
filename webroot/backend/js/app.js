@@ -13,6 +13,11 @@ $.extend({
 						event.preventDefault();
 						noty({text: 'Seleccione solo una dirección para cotizar', layout: 'topRight', type: 'error'});
 					}else{
+						if ($(this).hasClass('js-a-cotizacion')) {
+							$('.js-input-a-cotizacion').val('1');
+						}else{
+							$('.js-input-a-cotizacion').val('0');
+						}
 						var direccionSeleccion = $('.js-direccion-utilizar:checked').parents('.js-clon-clonada').eq(0).find('.js-direccion-id');
 						$('#ProspectoIdAddress').val(direccionSeleccion.val());
 					}

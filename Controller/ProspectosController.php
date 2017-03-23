@@ -39,32 +39,39 @@ class ProspectosController extends AppController
 
 					# Se crea un password para el cliente default y la fecha de creación y actualización
 					$this->request->data['Cliente'][1]['id_lang'] 			= 1; 					# Idioma español por defeco
-					$this->request->data['Cliente'][1]['id_default_group'] 	= 1; 					# Grupo de clientes por defecto
+					$this->request->data['Cliente'][1]['id_risk'] 			= 0;					# Valor default de prestashop
+					$this->request->data['Cliente'][1]['id_default_group'] 	= 3; 					# Grupo de clientes por defecto
 					$this->request->data['Cliente'][1]['passwd'] 			= 'cliente123456'; 		# Contraseña defecto
 					$this->request->data['Cliente'][1]['date_add'] 			= date('Y-m-d H:i:s');	# Fecha creación
 					$this->request->data['Cliente'][1]['date_upd'] 			= date('Y-m-d H:i:s'); 	# fecha de actualización
+					$this->request->data['Cliente'][1]['active'] 			= 1;					# Dejar activo al cliente
 
 					# Cliente nuevo, se crea.
 					$this->Cliente = ClassRegistry::init('Cliente');
 					
-					if( $this->Cliente->saveAll($this->request->data['Cliente'][1]) ) {
-						// Agregamos el id del cliente y su dirección
-						$clienteNuevo = $this->Cliente->find('first', array(
-							'fields' => array('Cliente.id_customer'),
-							'order' => array('Cliente.id_customer' => 'DESC'),
-							'contain' => array('Clientedireccion')
-							));
+					# Verificamos su existencia en la base de datos de la tienda
+					$verificarExistencia = $this->Cliente->find('all', array('conditions' => array('Cliente.email' => $this->request->data['Cliente']['email'])));
 
-						// Seteamos los id de cliente y direccion del prospecto
-						$this->request->data['Prospecto']['id_customer'] = $clienteNuevo['Cliente']['id_customer'];
-						$this->request->data['Prospecto']['id_address'] = $clienteNuevo['Clientedireccion'][0]['id_address'];
+					if ( empty($verificarExistencia) ) {
+						if( $this->Cliente->saveAll($this->request->data['Cliente'][1]) ) {
+							// Agregamos el id del cliente y su dirección
+							$clienteNuevo = $this->Cliente->find('first', array(
+								'fields' => array('Cliente.id_customer'),
+								'order' => array('Cliente.id_customer' => 'DESC'),
+								'contain' => array('Clientedireccion')
+								));
 
-					}else{
-						$this->Session->setFlash('No se pudo guardar el nuevo cliente.', null, array(), 'danger');
+							// Seteamos los id de cliente y direccion del prospecto
+							$this->request->data['Prospecto']['id_customer'] = $clienteNuevo['Cliente']['id_customer'];
+							$this->request->data['Prospecto']['id_address'] = $clienteNuevo['Clientedireccion'][0]['id_address'];
+
+						}else{
+							$this->Session->setFlash('No se pudo guardar el nuevo cliente.', null, array(), 'danger');
+						}
+
+						// Eliminamos a cliente del arreglo para que no se vuelva a actualizar
+						unset($this->request->data['Cliente']);	
 					}
-
-					// Eliminamos a cliente del arreglo para que no se vuelva a actualizar
-					unset($this->request->data['Cliente']);
 
 				}
 
@@ -81,9 +88,19 @@ class ProspectosController extends AppController
 					if( $this->Cliente->saveAll($this->request->data['Cliente'][1]) ) {
 						$this->Session->setFlash('Información del cliente actualizada con éxito.', null, array(), 'success');
 					}else{
-						prx($this->validationErrors);
+						
 						$this->Session->setFlash('Error al actualizar la información del cliente.', null, array(), 'error');
 					}
+				}
+
+				if( $this->request->data['Prospecto']['cotizacion'] ) {
+
+					# Obtenemos el prospecto recién creado
+					$prospecto = $this->Prospecto->find('first', array('order' => 'Prospecto.id DESC'));
+
+					# Redireccionamos a la cotización
+					$this->Session->setFlash('El prospecto fue creado exitósamente. Ahora puede crear la cotización', null, array(), 'success');
+					$this->redirect(array('controller' => 'cotizaciones', 'action' => 'add', $prospecto['Prospecto']['id']));
 				}
 
 				$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');

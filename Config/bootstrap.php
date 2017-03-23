@@ -89,6 +89,8 @@ Inflector::rules(
  */
 //CakePlugin::loadAll();
 CakePlugin::load('DebugKit');
+# Cake pdf
+CakePlugin::load('CakePdf', array('bootstrap' => true, 'routes' => true));
 
 /**
  * You can attach event listeners to the request lifecycle as Dispatcher Filter . By Default CakePHP bundles two filters:
@@ -129,6 +131,17 @@ CakeLog::config('error', array(
 
 //Moneda local
 CakeNumber::addFormat('CLP', array('before' => '$', 'thousands' => '.', 'decimals' => ',', 'places' => 0));
+
+// Configuración CakePDF
+Configure::write('CakePdf', array(
+    'engine' => 'CakePdf.DomPdf',
+    'pageSize' => 'A4',
+    'orientation' => 'portrait'
+));
+
+ define('DOMPDF_ENABLE_REMOTE', true);
+
+
 
 /**
  * Funciones personalizadas
