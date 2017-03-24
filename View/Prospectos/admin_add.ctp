@@ -18,14 +18,10 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('descripcion', 'Descripcion del prospecto (*)'); ?></th>
-								<td><?= $this->Form->input('descripcion', array('placeholder' => 'Ingrese una descripción para el prospecto')); ?></td>
+								<td><?= $this->Form->input('descripcion', array('placeholder' => 'Ingrese una descripción para el prospecto (max 100 carácteres)')); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('estado_prospecto_id', 'Estado del prospecto (*)'); ?></th>
-								<td><?= $this->Form->input('estado_prospecto_id'); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('moneda_id', 'Moneda a utilizar (*)'); ?></th>
+								<th><?= $this->Form->label('moneda_id', 'Medio de pago (*)'); ?></th>
 								<td><?= $this->Form->input('moneda_id'); ?></td>
 							</tr>
 							<tr>

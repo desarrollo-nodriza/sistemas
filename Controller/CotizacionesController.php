@@ -287,7 +287,7 @@ class CotizacionesController extends AppController
 			}
 
 		}
-
+	
 		$monedas	= $this->Cotizacion->Moneda->find('list');
 		$estadoCotizaciones	= $this->Cotizacion->EstadoCotizacion->find('list');
 		$prospectos	= $this->Cotizacion->Prospecto->find('list');

@@ -25,6 +25,41 @@ $.extend({
 				
 			}
 		},
+		clienteExistente: function(){
+			if ($('.js-cliente-existente').length) {
+				// Cargamos la información del cliente
+				//$.app.loader.mostrar();
+				//$.app.autocompletarBuscar.obtenerDatosCliente($('.js-tienda').val(), $('.js-cliente-existente').val());
+
+				// Seleccionamos la dirección
+				var direccionseleccionada = $('.js-address-exist').val();
+
+				$('.js-direccion-id').each(function(){
+					console.info('Existe direccion seleccionada');
+					var $este = $(this),
+						$direccion = $este.parents('.js-clon-contenedor').find('js-direccion-utilizar');
+					if ($este.val() == direccionseleccionada) {
+						console.info('Coinciden direcciones');
+						$direccion.prop('checked', true);
+					}
+				});
+			}
+			
+		},
+		dataValor: {
+			init: function(){
+				if ($('[data-value]').length) {
+					$.app.dataValor.bind();
+				}
+			},
+			bind: function(){
+				console.info('Data valor activado');
+				$('[data-value]').each(function(){
+					var $este = $(this);
+					$este.val($este.data('value'));
+				});
+			}
+		},
 		validarProspecto: {
 			init: function(){
 				if ($('#ProspectoAdminAddForm').length) {
@@ -294,6 +329,7 @@ $.extend({
 						direcciones = cliente.Clientedireccion;
 					$('#ProspectoIdCustomer').val(cliente.Cliente.id_customer);
 					$('#Cliente1IdCustomer').val(cliente.Cliente.id_customer);
+					$('#Cliente1Email').val(cliente.Cliente.email);
 					$('#Cliente1Ape').val(cliente.Cliente.ape);
 					$('#Cliente1Siret').val(cliente.Cliente.siret);
 					$('#Cliente1IdGender').val(cliente.Cliente.id_gender);
@@ -451,7 +487,7 @@ $.extend({
 					event.preventDefault();
 
 					$('#tablaProductos tbody').append(todo);
-
+					$('.input-productos-buscar').val('');
 				});
 
 				// Botón quitar elemento de la lista
@@ -598,6 +634,9 @@ $.extend({
 			$.app.validarProspecto.init();
 			$.app.rutChileno.init();
 			$.app.seleccionDireccion.init();
+			$.app.clienteExistente();
+			$.app.dataValor.init();
+			
 		}
 	}
 });

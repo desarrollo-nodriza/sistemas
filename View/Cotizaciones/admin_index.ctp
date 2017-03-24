@@ -38,7 +38,7 @@
 									<td><?= h($cotizacion['ValidezFecha']['valor']); ?>&nbsp;</td>	
 									<td>
 									<? if ($permisos['view']) : ?>
-									<?= $this->Html->link('<i class="fa fa-eye"></i> Editar', array('action' => 'view', $cotizacion['Cotizacion']['id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+									<?= $this->Html->link('<i class="fa fa-eye"></i> Ver', array('action' => 'view', $cotizacion['Cotizacion']['id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
 									<? endif; ?>
 									<? if ($permisos['edit']) : ?>
 									<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $cotizacion['Cotizacion']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
