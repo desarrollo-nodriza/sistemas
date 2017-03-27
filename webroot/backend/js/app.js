@@ -261,6 +261,7 @@ $.extend({
 				tablaClonada.addClass('js-clon-clonada');
 				tablaClonada.find('.js-pais').addClass('js-pais-valida');
 				tablaClonada.find('input, select, textarea').removeAttr('disabled');
+				tablaClonada.find('.js-direccion-utilizar').attr('checked', 'checked');
 
 				$('#accordion').append(tablaClonada);
 
@@ -543,7 +544,8 @@ $.extend({
 					tablaClonada.addClass('js-clon-clonada');
 					tablaClonada.find('.js-pais').addClass('js-pais-valida');
 					tablaClonada.find('input, select, textarea').removeAttr('disabled');
-					
+					tablaClonada.find('.js-direccion-utilizar').attr('checked', 'checked');
+
 					$this.append(tablaClonada);
 
 					$.app.clonarTabla.reindexar();

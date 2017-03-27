@@ -4,17 +4,106 @@ class ProspectosController extends AppController
 {
 
 	public function admin_index()
-	{
-		$this->paginate		= array(
-			'recursive'			=> 0,
+	{	
+
+		$paginate = array(); 
+    	$conditions = array();
+    	$total = 0;
+    	$totalMostrados = 0;
+    	$categorias = array();
+
+    	$textoBuscar = null;
+
+		if ( $this->request->is('post') ) {
+
+			if ( ! empty($this->request->data['Filtro']['findby']) && empty($this->request->data['Filtro']['f_inicio']) && empty($this->request->data['Filtro']['f_final']) ) {
+				$this->redirect(array('controller' => 'prospectos', 'action' => 'index', 'findby' => $this->request->data['Filtro']['findby']));
+			}
+
+            if ( empty($this->request->data['Filtro']['findby']) && ! empty($this->request->data['Filtro']['f_inicio']) && ! empty($this->request->data['Filtro']['f_final']) ) {
+                $this->redirect(array('controller' => 'prospectos', 'action' => 'index', 'f_inicio' => $this->request->data['Filtro']['f_inicio'], 'f_final' => $this->request->data['Filtro']['f_final']));
+            }
+
+            if ( ! empty($this->request->data['Filtro']['findby']) && ! empty($this->request->data['Filtro']['f_inicio']) && ! empty($this->request->data['Filtro']['f_final']) ) {
+                $this->redirect(array('controller' => 'prospectos', 'action' => 'index', 'findby' => $this->request->data['Filtro']['findby'], 'f_inicio' => $this->request->data['Filtro']['f_inicio'], 'f_final' => $this->request->data['Filtro']['f_final']));
+            }
+
+		}
+
+		// Opciones de paginación
+		$paginate = array_replace_recursive(array(
+			'limit' => 10,
+			'fields' => array(),
+			'joins' => array(),
+			'contain' => array('Tienda', 'EstadoProspecto', 'Moneda'),
 			'conditions' => array(
-				'tienda_id' => $this->Session->read('Tienda.id')
+					'Prospecto.tienda_id' => $this->Session->read('Tienda.id')
+				),
+			'recursive'	=> 0,
+			'order' => 'Prospecto.id ASC'
+		));
+
+		/**
+		* Buscar por
+		*/
+		if ( !empty($this->request->params['named']['findby']) && empty($this->request->params['named']['f_inicio']) && empty($this->request->params['named']['f_final']) ) {
+
+			
+			$paginate		= array_replace_recursive($paginate, array(
+				'conditions'	=> array(
+					'Prospecto.estado_prospecto_id' => trim($this->request->params['named']['findby']),
+					'Prospecto.tienda_id' => $this->Session->read('Tienda.id')
 				)
-		);
+			));
+			
+		}
+
+		if ( empty($this->request->params['named']['findby']) && ! empty($this->request->params['named']['f_inicio']) && ! empty($this->request->params['named']['f_final']) ) {
+
+			$f_inicio = date('Y-m-d 00:00:00', strtotime($this->request->params['named']['f_inicio']));
+			$f_final  = date('Y-m-d 23:59:59', strtotime($this->request->params['named']['f_final']));
+
+			$paginate		= array_replace_recursive($paginate, array(
+				'conditions'	=> array(
+					'Prospecto.created BETWEEN ? AND ?' => array($f_inicio, $f_final),
+					'Prospecto.tienda_id' => $this->Session->read('Tienda.id')
+				)
+			));
+			
+		}
+
+		if ( !empty($this->request->params['named']['findby']) && !empty($this->request->params['named']['f_inicio']) && !empty($this->request->params['named']['f_final']) ) {
+
+			$f_inicio = date('Y-m-d 00:00:00', strtotime($this->request->params['named']['f_inicio']));
+			$f_final  = date('Y-m-d 23:59:59', strtotime($this->request->params['named']['f_final']));
+
+			$paginate		= array_replace_recursive($paginate, array(
+				'conditions'	=> array(
+					'Prospecto.estado_prospecto_id' => trim($this->request->params['named']['findby']),
+					'Prospecto.created BETWEEN ? AND ?' => array($f_inicio, $f_final),
+					'Prospecto.tienda_id' => $this->Session->read('Tienda.id')
+				)
+			));
+			
+		}
+
+		// Total de registros
+		$total 		= $this->Prospecto->find('count', array(
+			'joins' => array(),
+			'conditions' => array()
+		));
+
+
+		$this->paginate = $paginate;
+
+
 		$prospectos	= $this->paginate();
 
+
+		$estadoProspectos = $this->Prospecto->EstadoProspecto->find('list');
+
 		BreadcrumbComponent::add('Prospectos ');
-		$this->set(compact('prospectos'));
+		$this->set(compact('prospectos', 'estadoProspectos'));
 	}
 
 	public function admin_add()
@@ -45,7 +134,7 @@ class ProspectosController extends AppController
 					$this->request->data['Cliente'][1]['date_add'] 			= date('Y-m-d H:i:s');	# Fecha creación
 					$this->request->data['Cliente'][1]['date_upd'] 			= date('Y-m-d H:i:s'); 	# fecha de actualización
 					$this->request->data['Cliente'][1]['active'] 			= 1;					# Dejar activo al cliente
-					prx($this->request->data);
+					
 					# Cliente nuevo, se crea.
 					$this->Cliente = ClassRegistry::init('Cliente');
 					
@@ -109,14 +198,16 @@ class ProspectosController extends AppController
 					# Verificamos que exista la información mínima para pasar a cotización
 					if ( empty($prospecto['Prospecto']['id_customer']) || empty($prospecto['Prospecto']['id_address']) || empty($prospecto['Prospecto']['nombre']) || empty($prospecto['Prospecto']['descripcion']) || empty($prospectoProductos)) {
 
-						# Se pasa a estado finalizado
-						$this->Prospecto->saveField('estado_prospecto_id', 7);
+						# Se pasa a estado esperando información
+						$this->Prospecto->saveField('estado_prospecto_id', 3);
 
 						$this->Session->setFlash('El prospecto fue creado exitósamente, pero no puede pasar a cotización. Necesita agregar al cliente, seleccionar dirección y añadir productos.', null, array(), 'success');
 						$this->redirect(array('action' => 'edit', $prospecto['Prospecto']['id']));
 					}else{
-						# Se pasa a estado esperando información
-						$this->Prospecto->saveField('estado_prospecto_id', 3);
+						# Se pasa a estado finalizado
+						$this->Prospecto->saveField('estado_prospecto_id', 7);
+						$this->Session->setFlash('El prospecto fue creado exitósamente, puede crear la cotización.', null, array(), 'success');
+						$this->redirect(array('controller' => 'cotizaciones', 'action' => 'add', $prospecto['Prospecto']['id']));
 					}
 
 				}
@@ -188,7 +279,7 @@ class ProspectosController extends AppController
 							// Agregamos el id del cliente y su dirección
 							$clienteNuevo = $this->Cliente->find('first', array(
 								'fields' => array('Cliente.id_customer'),
-								'order' => array('Cliente.id_customer' => 'DESC'),
+								'conditions' => array('Cliente.email' => $this->request->data['Cliente'][1]['email']),
 								'contain' => array('Clientedireccion')
 								));
 
@@ -235,7 +326,7 @@ class ProspectosController extends AppController
 				if( $this->request->data['Prospecto']['cotizacion'] ) {
 
 					# Obtenemos el prospecto recién creado
-					$prospecto = $this->Prospecto->find('first', array('order' => 'Prospecto.id DESC'));
+					$prospecto = $this->Prospecto->find('first', array('conditions' => array('Prospecto.id' => $id)));
 
 					# Obtenemos los ID´S de productos relacionados al prospecto
 					$prospectoProductos = $this->Prospecto->ProductotiendaProspecto->find('all', array(
@@ -244,15 +335,16 @@ class ProspectosController extends AppController
 
 					# Verificamos que exista la información mínima para pasar a cotización
 					if ( empty($prospecto['Prospecto']['id_customer']) || empty($prospecto['Prospecto']['id_address']) || empty($prospecto['Prospecto']['nombre']) || empty($prospecto['Prospecto']['descripcion']) || empty($prospectoProductos)) {
-
-						# Se pasa a estado esperando información
-						$this->Prospecto->saveField('estado_prospecto_id', 7);
 						
+						# Se pasa a estado en espera
+						$this->Prospecto->saveField('estado_prospecto_id', 3);
 						$this->Session->setFlash('El prospecto fue creado exitósamente, pero no puede pasar a cotización. Necesita agregar al cliente, seleccionar dirección y añadir productos.', null, array(), 'success');
 						$this->redirect(array('action' => 'edit', $prospecto['Prospecto']['id']));
 					}else{
-						# Se pasa a estado esperando información
-						$this->Prospecto->saveField('estado_prospecto_id', 3);
+						# Se pasa a estado finalizado
+						$this->Prospecto->saveField('estado_prospecto_id', 7);
+						$this->Session->setFlash('El prospecto fue creado exitósamente, puede crear la cotización.', null, array(), 'success');
+						$this->redirect(array('controller' => 'cotizaciones', 'action' => 'add', $prospecto['Prospecto']['id']));
 					}
 
 				}

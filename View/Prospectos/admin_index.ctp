@@ -5,6 +5,52 @@
 <div class="page-content-wrap">
 	<div class="row">
 		<div class="col-xs-12">
+			<?= $this->Form->create('Filtro', array('url' => array('controller' => 'prospectos', 'action' => 'index'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
+				</div>
+				<div class="panel-body">
+					<div class="col-sm-4 col-xs-12">
+						<div class="form-group">
+							<label>Estado</label>
+							<?=$this->Form->select('findby', $estadoProspectos,
+								array(
+								'class' => 'form-control',
+								'empty' => 'No importa'
+								)
+							);?>
+						</div>
+					</div>
+					<div class="col-sm-2 col-xs-12">
+						<div class="form-group">
+							<label>Creado entre</label>
+                            <?=$this->Form->input('f_inicio', array('class' => 'form-control datepicker'));?>
+						</div>
+					</div>
+					<div class="col-sm-2 col-xs-12">
+						<div class="form-group">
+							<label>y el</label>
+                            <?=$this->Form->input('f_final', array('class' => 'form-control datepicker'));?>
+						</div>
+					</div>
+					<div class="col-sm-2 col-xs-12">
+						<div class="form-group">
+							<?= $this->Form->button('<i class="fa fa-search" aria-hidden="true"></i> Buscar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
+						</div>
+					</div>
+					<?= $this->Form->end(); ?>
+					<div class="col-sm-2 col-xs-12">
+						<div class="form-group">
+							<?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtro', array('action' => 'index'), array('class' => 'btn btn-buscar btn-primary btn-block', 'escape' => false)); ?>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-xs-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title">Listado de Prospectos</h3>
@@ -37,10 +83,10 @@
 									<td><?= h($prospecto['Moneda']['nombre']); ?>&nbsp;</td>
 									<td><?= h($prospecto['Prospecto']['created']); ?>&nbsp;</td>
 									<td>
-									<? if ($permisos['edit']) : ?>
+									<? if ($permisos['edit'] && $prospecto['EstadoProspecto']['nombre'] != 'Finalizada') : ?>
 									<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $prospecto['Prospecto']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
 									<? endif; ?>
-									<? if ($permisos['delete']) : ?>
+									<? if ($permisos['delete'] && $prospecto['EstadoProspecto']['nombre'] != 'Finalizada') : ?>
 									<?= $this->Form->postLink('<i class="fa fa-remove"></i> Eliminar', array('action' => 'delete', $prospecto['Prospecto']['id']), array('class' => 'btn btn-xs btn-danger confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
 									<? endif; ?>
 									</td>
@@ -65,3 +111,25 @@
 		</div> <!-- end col -->
 	</div> <!-- end row -->
 </div>
+
+<? 	
+	if ( ! empty( $this->request->params['named']['findby'] ) ) :
+		echo "<script type='text/javascript'>";
+		echo "$('#FiltroFindby').val('" . $this->request->params['named']['findby'] . "');";
+		echo "</script> ";
+	endif;
+
+	if ( ! empty( $this->request->params['named']['f_inicio'] ) ) :
+		echo "<script type='text/javascript'>";
+		echo "$('#FiltroFInicio').val('" . $this->request->params['named']['f_inicio'] . "');";
+		echo "</script> ";
+	endif;
+
+
+	if ( ! empty( $this->request->params['named']['f_final'] ) ) :
+		echo "<script type='text/javascript'>";
+		echo "$('#FiltroFFinal').val('" . $this->request->params['named']['f_final'] . "');";
+		echo "</script> ";
+	endif;
+
+?>

@@ -56,9 +56,6 @@
 				<div class="panel-body">
 					<div class="loader"><i class="fa fa-refresh fa-spin fa-3x fa-fw"></i></div>
 					<div class="table-responsive">
-						<? if ( ! empty($this->request->data['Cliente'][1]['id_customer'])) {
-							echo $this->Form->hidden('Cliente.1.id_customer', array('class' => 'js-cliente-existente', 'value' => $this->request->data['Cliente']['Cliente']['id_customer']));	
-						}?>
 						<table class="table">
 							<tr>
 								<th><?= $this->Form->label('existente', '¿Cliente existente?'); ?></th>
@@ -67,6 +64,9 @@
 							<tr>
 								<th><?= $this->Form->label('ape', 'Tipo de cliente'); ?></th>
 								<td>
+								<? if ( ! empty($this->request->data['Cliente']['Cliente']['id_customer'])) {
+									echo $this->Form->hidden('Cliente.1.id_customer', array('class' => 'js-cliente-existente', 'value' => $this->request->data['Cliente']['Cliente']['id_customer']));	
+								}?>
 								<? if ( !empty($this->request->data['Cliente']['Cliente']['ape']) ): ?>
 									<?=$this->Form->select('Cliente.1.ape', array(
 										'1' => 'Persona',
@@ -379,7 +379,7 @@
 								    	<td><label class="label label-form label-success"><?=CakeNumber::currency($producto['Productotienda']['precio'], 'CLP');?></label></td>
 								    	<td><?=$this->Form->input(sprintf('Productotienda.%d.cantidad', $indice), array('type' => 'number', 'class' => 'form-control js-number', 'min' => 0, 'max' => 100, 'style' => 'max-width: 70px;', 'value' => $producto['Productotienda']['cantidad'])); ?></td>
 								    	<td><?=$this->Form->input(sprintf('Productotienda.%d.nombre_descuento', $indice), array('placeholder' => 'Desc Nombre', 'style' => 'max-width: 200px;', 'value' => $producto['Productotienda']['nombre_descuento']));?></td>
-								    	<td><?=$this->Form->input(sprintf('Productotienda.%d.descuento', $indice), array('class' => 'form-control js-number', 'placeholder' => '%', 'style' => 'max-width: 70px;', 'min' => 0, 'max' => 100, 'type' => 'number', 'value' => $producto['Productotienda']['nombre_descuento']));?></td>
+								    	<td><?=$this->Form->input(sprintf('Productotienda.%d.descuento', $indice), array('class' => 'form-control js-number', 'placeholder' => '%', 'style' => 'max-width: 70px;', 'min' => 0, 'max' => 100, 'type' => 'number', 'value' => $producto['Productotienda']['descuento']));?></td>
 								    	<td><button class="quitar btn btn-danger">Quitar</button></td>
 							    	</tr>
 								<? endforeach; ?>

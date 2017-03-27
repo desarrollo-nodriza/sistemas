@@ -70,7 +70,7 @@
 												<td>Teléfono:</td><td><?=$this->Form->input('fono_cliente', array('value' => $cliente['Clientedireccion'][0]['phone'], 'class' => 'mascara_fono form-control'));?></td>
 											</tr>
 											<tr>	
-												<td>Dirección:</td><td><?=$this->Form->input('direccion_cliente', array('value' => $cliente['Clientedireccion'][0]['address1']));?></td>
+												<td>Dirección:</td><td><?=$this->Form->input('direccion_cliente', array('value' => sprintf('%s, %s - %s', $cliente['Clientedireccion'][0]['address1'], $cliente['Clientedireccion'][0]['Region']['name'], $cliente['Clientedireccion'][0]['Paise']['Lang'][0]['PaisIdioma']['name']) ));?></td>
 											</tr>
 											<tr>	
 												<td>Asunto:</td><td><?=$this->Form->input('asunto_cliente', array('value' => $prospecto['Prospecto']['descripcion']));?></td>
@@ -90,7 +90,7 @@
 									<td>
 										<table class="table">
 											<tr>
-												<td>Fecha:</td><td><?=$this->Form->input('fecha_cotizacion', array('value' => date('d/m/Y')));?></td>
+												<td>Fecha:</td><td><?=$this->Form->input('fecha_cotizacion', array('value' => date('d-m-Y')));?></td>
 											</tr>
 											<tr>
 												<td>Oferta válida solo:</td><td><?=$this->Form->input('validez_fecha_id');?></td>
@@ -176,12 +176,31 @@
 							<?= $this->Form->input('prospecto_id', array('value' => $prospecto['Prospecto']['id'], 'type' => 'hidden')); ?>
 						<? endif; ?>
 						<?= $this->Form->input('tienda_id', array('value' => $this->Session->read('Tienda.id'), 'type' => 'hidden')); ?>
-						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<a href="#" class="mb-control  btn btn-success" data-box="#mb-alerta-cotizacion"><i class="fa fa-floppy-o" aria-hidden="true"></i> Generar Cotización</a>
+						<?= $this->Html->link('Volver al prospecto', array('controller' => 'prospectos', 'action' => 'edit', $prospecto['Prospecto']['id']), array('class' => 'btn btn-warning')); ?>
 						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>
 		</div> <!-- end col -->
 	</div> <!-- end row -->
+</div>
+<div class="message-box message-box-banger animated fadeIn" data-sound="alert" id="mb-alerta-cotizacion">
+	<div class="mb-container">
+		<div class="mb-middle">
+			<div class="mb-title"><span class="fa fa-floppy-o"></span>¿Generar <strong>Cotización</strong>?</div>
+			<div class="mb-content">
+				<p>¿Seguro que quieres generar esta cotización?</p>
+				<p>La cotización se enviará <b>via email al cliente.</b></p>
+				<p>Para cancelar presiona No</p>
+			</div>
+			<div class="mb-footer">
+				<div class="pull-right">
+					<input type="submit" class="btn btn-success esperar-carga btn-lg" autocomplete="off" data-loading-text="Espera un momento..." value="Generar cotización">
+					<button class="btn btn-default btn-lg mb-control-close">No</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 <?= $this->Form->end(); ?>

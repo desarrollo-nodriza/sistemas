@@ -10,16 +10,16 @@
 						<td colspan="2"><b style="font-size: 16px;"><?=$tienda['Tienda']['nombre_fantasia'];?></b></td>
 					</tr>
 					<tr>
-						<td><b>Rut:</b></td><td><?=$tienda['Tienda']['rut'];?></td>
+						<td><strong>Rut:</strong></td><td><?=$tienda['Tienda']['rut'];?></td>
 					</tr>
 					<tr>	
-						<td><b>Dirección:</b></td><td><?=$tienda['Tienda']['direccion'];?></td>
+						<td><strong>Dirección:</strong></td><td><?=$tienda['Tienda']['direccion'];?></td>
 					</tr>
 					<tr>
-						<td><b>Giro:</b></td><td><?=$tienda['Tienda']['giro'];?></td>
+						<td><strong>Giro:</strong></td><td><?=$tienda['Tienda']['giro'];?></td>
 					</tr>
 					<tr>	
-						<td><b>Fono:</b></td><td><?=$tienda['Tienda']['fono'];?></td>
+						<td><strong>Fono:</strong></td><td><?=$tienda['Tienda']['fono'];?></td>
 					</tr>
 					<tr>	
 						<td colspan="2"><a href="http://<?=$tienda['Tienda']['url'];?>" target="_blank"><?=$tienda['Tienda']['url'];?></a></td>
@@ -40,28 +40,28 @@
 			<td>
 				<table>
 					<tr>
-						<td>Email:</td><td><?=$cotizacion['Cotizacion']['email_cliente'];?></td>
+						<td><strong>Email:</strong></td><td><?=$cotizacion['Cotizacion']['email_cliente'];?></td>
 					</tr>
 					<tr>
-						<td>Nombre:</td><td><?=$cotizacion['Cotizacion']['nombre_cliente'];?></td>
+						<td><strong>Nombre:</strong></td><td><?=$cotizacion['Cotizacion']['nombre_cliente'];?></td>
 					</tr>
 					<tr>	
-						<td>Teléfono:</td><td><?=$cotizacion['Cotizacion']['fono_cliente'];?></td>
+						<td><strong>Teléfono:</strong></td><td><?=$cotizacion['Cotizacion']['fono_cliente'];?></td>
 					</tr>
 					<tr>	
-						<td>Dirección:</td><td><?=$cotizacion['Cotizacion']['direccion_cliente'];?></td>
+						<td><strong>Dirección:</strong></td><td><?=$cotizacion['Cotizacion']['direccion_cliente'];?></td>
 					</tr>
 					<tr>	
-						<td>Asunto:</td><td><?=$cotizacion['Cotizacion']['asunto_cliente'];?></td>
+						<td><strong>Asunto:</strong></td><td><?=$cotizacion['Cotizacion']['asunto_cliente'];?></td>
 					</tr>
 					<? if (! empty($cotizacion['Cotizacion']['rut_empresa_cliente']) ) : ?>
 						<tr>
-							<td>Rut Empresa: </td><td><?=$cotizacion['Cotizacion']['rut_empresa_cliente'];?></td>
+							<td><strong>Rut Empresa:</strong></td><td><?=$cotizacion['Cotizacion']['rut_empresa_cliente'];?></td>
 						</tr>
 					<? endif; ?>
 					<? if ( ! empty($cotizacion['Cotizacion']['nombre_empresa_cliente'])) : ?>
 						<tr>
-							<td>Empresa: </td><td><?=$cotizacion['Cotizacion']['nombre_empresa_cliente'];?></td>
+							<td><strong>Empresa:</strong></td><td><?=$cotizacion['Cotizacion']['nombre_empresa_cliente'];?></td>
 						</tr>
 					<? endif; ?>
 				</table>
@@ -69,22 +69,24 @@
 			<td>
 				<table>
 					<tr>
-						<td>Fecha:</td><td><?=$cotizacion['Cotizacion']['fecha_cotizacion'];?></td>
+						<td><strong>Fecha:</strong></td><td><?=$cotizacion['Cotizacion']['fecha_cotizacion'];?></td>
 					</tr>
 					<tr>
-						<td>Oferta válida solo:</td><td><?=$cotizacion['ValidezFecha']['valor'];?></td>
+						<td><strong>Oferta válida solo:</strong></td><td><?=$cotizacion['ValidezFecha']['valor'];?></td>
 					</tr>
 					<tr>
-						<td>Forma de pago:</td><td><?=$cotizacion['Moneda']['nombre'];?></td>
+						<td><strong>Forma de pago:</strong></td><td><?=$cotizacion['Moneda']['nombre'];?></td>
+					</tr>
+					<? if ( !empty($cotizacion['Cotizacion']['envio_cotizacion']) ) : ?>
+					<tr>
+						<td><strong>Envío:</strong></td><td><?=$cotizacion['Cotizacion']['envio_cotizacion'];?></td>
+					</tr>
+					<? endif; ?>
+					<tr>
+						<td><strong>Vendedor:</strong></td><td><?=$cotizacion['Cotizacion']['vendedor'];?></td>
 					</tr>
 					<tr>
-						<td>Envío:</td><td><?=$cotizacion['Cotizacion']['envio_cotizacion'];?></td>
-					</tr>
-					<tr>
-						<td>Vendedor:</td><td><?=$cotizacion['Cotizacion']['vendedor'];?></td>
-					</tr>
-					<tr>
-						<td>Email vendedor:</td><td><?=$cotizacion['Cotizacion']['email_vendedor'];?></td>
+						<td><strong>Email vendedor:</strong></td><td><?=$cotizacion['Cotizacion']['email_vendedor'];?></td>
 					</tr>
 				</table>
 			</td>

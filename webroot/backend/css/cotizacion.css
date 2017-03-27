@@ -9,14 +9,14 @@ html, ody {
 }
 
 .tabla-cotizacion {
-    padding: 50px 30px;
+    padding: 50px 20px;
 }
 
 .tabla-cotizacion table {
     width: 100%;
     max-width: 100%;
-    margin-bottom: 20px;
-    font-size: 12px;
+    margin-bottom: 10px;
+    font-size: 11px;
     border-spacing: 0;
     border-collapse: collapse;
 }
@@ -28,7 +28,7 @@ html, ody {
 }
 
 .tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > th, .tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > th, .tabla-cotizacion table > tr > td, .tabla-cotizacion table > tr > th {
-    padding: 5px;
+    padding: 2px 5px;
     vertical-align: top;
     line-height: normal;
 }

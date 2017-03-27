@@ -139,7 +139,9 @@
 				</div>
 				<div class="panel-footer">
 					<div class="pull-right">
-						<?=$this->Html->link(__('Exportar a PDF'), array('action' => 'generar', $this->request->data['Cotizacion']['id'], 'ext' => 'pdf'), array('class' => 'btn btn-danger')); ?>
+						<? if( ! empty($this->request->data['Cotizacion']['archivo']) )?>
+						<a href="<?=$this->request->data['Cotizacion']['archivo'];?>" download class="btn btn-primary">Descargar en PDF</a>
+						<?= $this->Html->link('Volver', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>

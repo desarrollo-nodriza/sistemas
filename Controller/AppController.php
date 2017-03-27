@@ -493,4 +493,14 @@ class AppController extends Controller
 		}
 
 	}
+
+	public function calcularDescuento($monto = '', $descuento = '') {
+		if ( ! empty($monto) && ! empty($descuento) ) {
+			$descuento = $descuento / 100;
+			
+			$monto = $monto - ( $monto * $descuento);
+			
+			return round($monto);
+		}
+	}
 }
