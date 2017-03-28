@@ -16,7 +16,7 @@
 								<?= $this->Form->input('id'); ?>
 								<tr>
 									<th><?= $this->Form->label('tienda_id', 'Tienda'); ?></th>
-									<td><?= $this->Form->input('tienda_id'); ?></td>
+									<td><label class="label label-form label-warning"><?=$this->request->data['Tienda']['nombre'];?></label></td>
 								</tr>
 								<tr>
 									<th><?= $this->Form->label('nombre', 'Nombre'); ?></th>

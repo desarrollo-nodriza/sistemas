@@ -110,6 +110,15 @@ class AppController extends Controller
 		 * Cookies IE
 		 */
 		header('P3P:CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT"');
+
+		/**
+		 * Cambiar tienda
+		 */ 
+		$this->cambioTienda();
+
+		// Configuración de tablas externas
+		$this->cambiarConfigDB($this->tiendaConf($this->Session->read('Tienda.id')));
+
 	}
 
 	/**
@@ -156,12 +165,27 @@ class AppController extends Controller
 
 		// Camino de migas
 		$breadcrumbs	= BreadcrumbComponent::get();
-		if ( ! empty($breadcrumbs) && count($breadcrumbs) > 2 )
-		{
+		if ( ! empty($breadcrumbs) && count($breadcrumbs) > 2 ) {
 			$this->set(compact('breadcrumbs'));
 		}
 
-		$this->set(compact('avatar', 'modulosDisponibles', 'permisos'));
+		// Tiendas
+		$tiendasList = $this->obtenerTiendas();
+
+		$this->set(compact('avatar', 'modulosDisponibles', 'permisos', 'tiendasList'));
+	}
+
+
+	private function obtenerTiendas() {
+		$tiendas = ClassRegistry::init('Tienda')->find('list', array(
+			'conditions' => array('Tienda.activo' => 1)
+			));
+
+		if (empty($tiendas)) {
+			return array( 0 => 'No existen tiendas');
+		}
+
+		return $tiendas;
 	}
 
 
@@ -323,24 +347,166 @@ class AppController extends Controller
 	}
 
 	/**
-	 * Functión que permite cambiar la configuración de los modelos de BD esternos
+	 * Functión que permite cambiar la configuración de los modelos de BD externos
 	 * @param  string  	$tiendaConf  	Nombre de la configuración de BD a utilizar
 	 * @return void
 	 */
 	public function cambiarConfigDB( $tiendaConf = '' ) {
     	// Cambiamos la configuración de la base de datos
-		ClassRegistry::init('Productotienda')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('TaxRulesGroup')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('TaxRule')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('Tax')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('TaxLang')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('Lang')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('SpecificPrice')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('Cliente')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('Clientedireccion')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('Paise')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('PaisIdioma')->useDbConfig = $tiendaConf;
-		ClassRegistry::init('Region')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('Productotienda')->useDbConfig 		= $tiendaConf;
+		ClassRegistry::init('TaxRulesGroup')->useDbConfig 		= $tiendaConf;
+		ClassRegistry::init('TaxRule')->useDbConfig 			= $tiendaConf;
+		ClassRegistry::init('Tax')->useDbConfig 				= $tiendaConf;
+		ClassRegistry::init('TaxLang')->useDbConfig 			= $tiendaConf;
+		ClassRegistry::init('Lang')->useDbConfig 				= $tiendaConf;
+		ClassRegistry::init('SpecificPrice')->useDbConfig 		= $tiendaConf;
+		ClassRegistry::init('Cliente')->useDbConfig 			= $tiendaConf;
+		ClassRegistry::init('Clientedireccion')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('Paise')->useDbConfig 				= $tiendaConf;
+		ClassRegistry::init('PaisIdioma')->useDbConfig 			= $tiendaConf;
+		ClassRegistry::init('Region')->useDbConfig 				= $tiendaConf;
+		ClassRegistry::init('Orders')->useDbConfig 				= $tiendaConf;
+		ClassRegistry::init('OrdenEstado')->useDbConfig 		= $tiendaConf;
+		ClassRegistry::init('OrdenEstadoIdioma')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('ProductotiendaIdioma')->useDbConfig 	= $tiendaConf;
     }
 	
+	/**
+	 * Functión que permite cambiar la configuración de los modelos de BD externos
+	 * @param  string  	$tiendaConf  	Nombre de la configuración de BD a utilizar
+	 * @return void
+	 
+	public function cambiarConfigDB( $modelos = array() ) {
+
+		if (SessionComponent::check('Tienda') && !empty($modelos)) {
+
+			# Buscamos la config de la tienda
+			$tienda = ClassRegistry::init('Tienda')->find('first', array(
+				'conditions' => array(
+					'Tienda.id' => SessionComponent::read('Tienda.id')
+					)
+				));
+
+			# Virificar existencia de la tienda
+			if (empty($tienda)) {
+				return false;
+			}
+
+			# Verificar que la tienda esté configurada
+			if (empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['configuracion'])) {
+				return false;
+			}
+
+			# Cambiamos el datasource de los modelos
+			foreach ($modelos as $modelo) {
+				ClassRegistry::init($modelo)->useDbConfig = $tienda['Tienda']['configuracion'];
+			}
+			
+			return true;
+		}
+
+    }*/
+
+	public function tiendaConf( $tienda_id = '') {
+		$tiendaConf = ClassRegistry::init('Tienda')->find('first', array('conditions' => array(
+				'Tienda.id' => $tienda_id,
+			),
+			'fields' => array('configuracion')
+		));
+
+		if (!empty($tiendaConf)) {
+			return $tiendaConf['Tienda']['configuracion'];
+		}
+
+		return false;
+	}
+
+	public function limpiarDirecciones( $cliente = array() ) {
+		
+		if (empty($cliente)) {
+			return false;
+		}
+		
+		# Sorry for this
+		foreach ($cliente as $indice => $valor) {
+
+			foreach ($valor['Clientedireccion'] as $ix => $direccion) {
+				
+				# Verificamos si viene con dirección
+				if ( empty($direccion['alias']) || empty($direccion['address1']) || empty($direccion['id_country']) || empty($direccion['id_state']) ) {
+					unset($cliente[$indice]['Clientedireccion']);
+				}else {
+					# Actualizamos el valor de update
+					$cliente[$indice]['Clientedireccion'][$ix]['date_upd'] = date('Y-m-d H:i:s');
+					
+					if ( isset($direccion['id_address']) && empty($direccion['id_address']) ) {
+						unset($cliente[$indice]['Clientedireccion'][$ix]['id_address']);
+
+						# Se agregan campos predeterminados de la tabla
+						$cliente[$indice]['Clientedireccion'][$ix]['date_add'] = date('Y-m-d H:i:s');
+						
+					}
+				}
+
+				if ( !isset($direccion['utilizar_check']) || !$direccion['utilizar_check'] ) {
+					unset($cliente[$indice]['Clientedireccion']);
+				}else{
+					unset($cliente[$indice]['Clientedireccion'][$ix]['utilizar_check']);
+				}	
+			}
+
+			if (empty($cliente[$indice])) {
+				unset($cliente[$indice]);
+			}
+		}
+		
+		if (!empty($cliente)) {
+			return $cliente;
+		}
+		return false;
+	}
+
+
+	private function cambioTienda() {
+		# si es una peticioón post
+		if (isset($this->request->data['Tienda']['tienda']) ) {
+
+			# Tema de la tienda
+			$tienda = ClassRegistry::init('Tienda')->find('first', array(
+				'conditions' => array('Tienda.id' => $this->request->data['Tienda']['tienda'])
+				));
+
+			# Método actual
+			$action = str_replace(sprintf('%s_', $this->request->params['prefix']), '', $this->request->params['action']);
+			
+			# Redireccionamos a mismo
+			# Si tiene parámetros se redirecciona al index del controllador actual
+			if ( !empty($this->request->params['pass']) ) {
+
+				# Cambiamos Session Tienda
+				$this->Session->write('Tienda.id', $tienda['Tienda']['id']);
+				$this->Session->write('Tienda.tema', $tienda['Tienda']['tema']);
+				
+				# Redireccionamos
+				$this->redirect(array('action' => 'index'));
+			}
+
+			# Cambiamos Session Tienda
+			$this->Session->write('Tienda.id', $tienda['Tienda']['id']);
+			$this->Session->write('Tienda.tema', $tienda['Tienda']['tema']);
+
+			$this->redirect(array('action' => $action));
+		}
+
+	}
+
+	public function calcularDescuento($monto = '', $descuento = '') {
+		if ( ! empty($monto) && ! empty($descuento) ) {
+			$descuento = $descuento / 100;
+			
+			$monto = $monto - ( $monto * $descuento);
+			
+			return round($monto);
+		}
+	}
 }

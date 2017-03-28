@@ -10,11 +10,13 @@ class CategoriasController extends AppController
 
 	{
 
-		$conditions = array();
+		$conditions = array(
+			'tienda_id' => $this->Session->read('Tienda.id')
+		);
 
 		// Condicones para super administrador
-		if ( $this->Auth->user('admin') == 0 ) {
-			$conditions = array('Categoria.activo' => 1);
+		if ( $this->Auth->user('Aministrador.rol_id') == 1 ) {
+			$conditions[] = array('Categoria.activo' => 1);
 		}
 
 		$this->paginate		= array(
@@ -42,6 +44,8 @@ class CategoriasController extends AppController
 		if ( $this->request->is('post') )
 
 		{
+			// Forzamos tienda id
+			$this->request->data['Categoria']['tienda_id'] = $this->Session->read('Tienda.id');
 
 			$this->Categoria->create();
 
@@ -86,7 +90,10 @@ class CategoriasController extends AppController
 		}
 
 		if ( $this->request->is('post') || $this->request->is('put') )
-		{
+		{	
+			// Forzamos tienda id
+			$this->request->data['Categoria']['tienda_id'] = $this->Session->read('Tienda.id');
+			
 			if ( $this->Categoria->saveAll($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
@@ -142,7 +149,11 @@ class CategoriasController extends AppController
 			$this->redirect(array('action' => 'index'));
 		}
 
-		// Cambiamos la configuración de la base de datos
+		/*******************************************
+		 * 
+		 * Aplicar a todos los modelos dinámicos
+		 * 
+		 ******************************************/
 		$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
 
 		$productos	= $this->Categoria->Productotienda->find('all', array(

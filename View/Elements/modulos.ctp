@@ -9,10 +9,10 @@
 			</a>
 			<ul>
 		<? foreach ($moduloPadre['hijos'] as $modulo) { ?>
-			<li class="submenu <?= ($this->Html->menuActivo(array('controller' => strtolower($modulo['Modulo']['url']), 'action' => 'index')) ? 'active' : ''); ?>">
+			<li class="submenu <?= ($this->Html->menuActivo(array('controller' => $modulo['Modulo']['url'], 'action' => 'index')) ? 'active' : ''); ?>">
 				<?= $this->Html->link(
 					'<span class="'.$modulo['Modulo']['icono'].'"></span> '.$modulo['Modulo']['nombre'],
-					array('controller' => strtolower($modulo['Modulo']['url']), 'action' => 'index'),
+					array('controller' => $modulo['Modulo']['url'], 'action' => 'index'),
 					array('escape' => false)
 				); ?>
 			</li>
@@ -21,7 +21,7 @@
 		</li>
 	<? }elseif (!empty($moduloPadre['url'])) { ?>
 		<li>
-			<?=$this->Html->link(sprintf('%s %s', (!empty($moduloPadre['icono'])) ? '<span class="'.$moduloPadre['icono'].'"></span> ' : '', $moduloPadre['nombre']), sprintf('/%s', strtolower($moduloPadre['url'])), array('escape' => false)); ?>
+			<?=$this->Html->link(sprintf('%s %s', (!empty($moduloPadre['icono'])) ? '<span class="'.$moduloPadre['icono'].'"></span> ' : '', $moduloPadre['nombre']), sprintf('/%s', $moduloPadre['url']), array('escape' => false)); ?>
 		</li>
 	<? } ?>
 <? } ?>

@@ -130,6 +130,21 @@ CakeLog::config('error', array(
 //Moneda local
 CakeNumber::addFormat('CLP', array('before' => '$', 'thousands' => '.', 'decimals' => ',', 'places' => 0));
 
+
+# Cake pdf
+CakePlugin::load('CakePdf', array('bootstrap' => true, 'routes' => true));
+
+// Configuración CakePDF
+Configure::write('CakePdf', array(
+    'engine' => 'CakePdf.DomPdf',
+    'pageSize' => 'A4',
+    'orientation' => 'portrait'
+));
+
+ define('DOMPDF_ENABLE_REMOTE', true);
+
+
+
 /**
  * Funciones personalizadas
  */

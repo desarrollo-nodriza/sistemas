@@ -7,7 +7,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<?= $this->Html->meta('icon'); ?>
 		<?= $this->Html->css(array(
-			'/backend/css/theme-dark',
+			sprintf('/backend/css/theme-%s', $this->Session->read('Tienda.tema')),
 			'/backend/css/icheck/skins/flat/red',
 			'/backend/css/custom',
 			/*

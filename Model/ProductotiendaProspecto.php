@@ -1,6 +1,6 @@
 <?php
 App::uses('AppModel', 'Model');
-class ProductoTiendaProspecto extends AppModel
+class ProductotiendaProspecto extends AppModel
 {
 	/**
 	 * CONFIGURACION DB
@@ -9,7 +9,7 @@ class ProductoTiendaProspecto extends AppModel
 	/**
 	 * Set Cake config DB
 	 */
-	public $name = 'ProductoTiendaProspecto';
+	public $name = 'ProductotiendaProspecto';
 	public $useTable = 'productotiendas_prospectos';
 	public $primaryKey = 'id';
 

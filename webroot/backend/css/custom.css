@@ -118,3 +118,111 @@
 .pull-right.seccion-botones {
     margin: 0px 0 20px 0;
 }
+
+#tablaProductos{
+    margin-top: 60px;
+}
+
+#tablaProductos tfoot {
+    background: #ECECEC;
+}
+
+#tablaProductos tfoot tr > td {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+#tablaProductos tfoot tr > td label {
+    vertical-align: middle;
+    margin: 0;
+    line-height: 30px;
+}
+
+textarea {
+    resize: none;
+}
+
+.x-navigation .xn-search::before {
+    content: '\f290' !important;
+    color: #fff;
+}
+
+.txt-tienda {
+    color: #fff;
+    padding-left: 30px;
+    line-height: 30px;
+    margin: 0;
+    padding-right: 10px;
+}
+
+@media screen and (max-width: 768px) {
+    .x-navigation .form-inline .form-group {
+        display: inline-block;
+        margin-bottom: 0;
+        vertical-align: middle;
+    }
+}
+
+.x-navigation.x-navigation-horizontal {
+    margin-bottom: 0;
+}
+
+.logo-cotizacion {
+    width: 225px;
+}
+
+.nombre-cotizacion {
+    width: 100%;
+    margin-bottom: 10px !important;
+}
+
+.nombre-cotizacion label {
+    font-size: 20px;
+    padding: 20px 0;
+    width: 15%;
+}
+
+.nombre-cotizacion input.form-control {
+    width: 85%;
+    padding: 10px;
+    height: auto;
+    font-size: 20px;
+}
+
+.tabla-cotizacion table {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 20px;
+}
+
+
+.tabla-cotizacion table > tbody > tr > td, .tabla-cotizacion table > tbody > tr > th, .tabla-cotizacion table > tfoot > tr > td, .tabla-cotizacion table > tfoot > tr > th, .tabla-cotizacion table > thead > tr > td, .tabla-cotizacion table > thead > tr > th {
+    padding: 8px;
+    line-height: 1.42857143;
+    vertical-align: top;
+    border-top: 1px solid #ddd;
+}
+
+.tabla-cotizacion table > thead > tr > th, .tabla-cotizacion table > tbody > tr > th, .tabla-cotizacion table > tfoot > tr > th, .tabla-cotizacion table > thead > tr > td, .tabla-cotizacion table > tbody > tr > td, .tabla-cotizacion table > tfoot > tr > td {
+    border-color: #E5E5E5;
+    border-width: 1px;
+}
+
+.tabla-cotizacion > table {
+    border: 1px solid #ddd;
+}
+
+.tabla-cotizacion > table > tbody > tr > td, .tabla-cotizacion > table > tbody > tr > th, .tabla-cotizacion > table > tfoot > tr > td, .tabla-cotizacion > table > tfoot > tr > th, .tabla-cotizacion > table > thead > tr > td, .tabla-cotizacion > table > thead > tr > th {
+    border: 1px solid #ddd;
+}
+
+.tabla-cotizacion table > tbody > tr > td, .tabla-cotizacion table > tbody > tr > th, .tabla-cotizacion table > tfoot > tr > td, .tabla-cotizacion table > tfoot > tr > th, .tabla-cotizacion table > thead > tr > td, .tabla-cotizacion table > thead > tr > th {
+    border-top: 0;
+}
+
+.tabla-cotizacion table > thead > tr > th {
+    background: #FFF;
+    color: #333;
+    font-size: 11px;
+    white-space: nowrap;
+}

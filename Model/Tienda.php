@@ -15,22 +15,26 @@ class Tienda extends AppModel
 		/**
 		 * IMAGE UPLOAD
 		 */
-		/*
 		'Image'		=> array(
 			'fields'	=> array(
-				'imagen'	=> array(
+				'logo'	=> array(
 					'versions'	=> array(
 						array(
 							'prefix'	=> 'mini',
 							'width'		=> 100,
 							'height'	=> 100,
 							'crop'		=> true
+						),
+						array(
+							'prefix'	=> 'cotizacion',
+							'width'		=> 200,
+							'height'	=> 90,
+							'crop'		=> false
 						)
 					)
 				)
 			)
 		)
-		*/
 	);
 
 	/**
@@ -137,6 +141,19 @@ class Tienda extends AppModel
 		),
 		'Cotizacion' => array(
 			'className'				=> 'Cotizacion',
+			'foreignKey'			=> 'tienda_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'ProductotiendaDescuento' => array(
+			'className'				=> 'ProductotiendaDescuento',
 			'foreignKey'			=> 'tienda_id',
 			'dependent'				=> false,
 			'conditions'			=> '',

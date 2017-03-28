@@ -8,7 +8,7 @@ Class Clientedireccion extends AppModel {
 	 */
 	public $name = 'Clientedireccion';
 	public $useTable = 'address';
-	public $primaryKey = 'id_customer';
+	public $primaryKey = 'id_address';
 
 	/**
 	* Config

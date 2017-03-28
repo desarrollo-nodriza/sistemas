@@ -46,19 +46,9 @@ class Cotizacion extends AppModel
 				//'on'			=> 'update', // Solo valida en operaciones de 'create' o 'update'
 			),
 		),
-		'comentarios' => array(
+		'email_cliente' => array(
 			'notBlank' => array(
 				'rule'			=> array('notBlank'),
-				'last'			=> true,
-				//'message'		=> 'Mensaje de validación personalizado',
-				//'allowEmpty'	=> true,
-				//'required'		=> false,
-				//'on'			=> 'update', // Solo valida en operaciones de 'create' o 'update'
-			),
-		),
-		'descuento' => array(
-			'numeric' => array(
-				'rule'			=> array('numeric'),
 				'last'			=> true,
 				//'message'		=> 'Mensaje de validación personalizado',
 				//'allowEmpty'	=> true,
@@ -143,8 +133,8 @@ class Cotizacion extends AppModel
 		'Productotienda' => array(
 			'className'				=> 'Productotienda',
 			'joinTable'				=> 'productotiendas_cotizaciones',
-			'foreignKey'			=> 'id_product',
-			'associationForeignKey'	=> 'cotizacion_id',
+			'foreignKey'			=> 'cotizacion_id',
+			'associationForeignKey'	=> 'id_product',
 			'unique'				=> true,
 			'conditions'			=> '',
 			'fields'				=> '',

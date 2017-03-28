@@ -119,8 +119,8 @@ class Prospecto extends AppModel
 		'Productotienda' => array(
 			'className'				=> 'Productotienda',
 			'joinTable'				=> 'productotiendas_prospectos',
-			'foreignKey'			=> 'id_product',
-			'associationForeignKey'	=> 'prospecto_id',
+			'foreignKey'			=> 'prospecto_id',
+			'associationForeignKey'	=> 'id_product',
 			'unique'				=> true,
 			'conditions'			=> '',
 			'fields'				=> '',
@@ -133,4 +133,9 @@ class Prospecto extends AppModel
 			'insertQuery'			=> ''
 		)
 	);
+
+	public function beforeSave( $options = array() )
+	{	
+
+	}
 }
