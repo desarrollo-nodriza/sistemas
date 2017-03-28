@@ -503,12 +503,12 @@ class CotizacionesController extends AppController
 			$this->Email
 			->viewVars(compact('cotizacion', 'tienda'))
 			->emailFormat('html')
-			->from(array('desarrollo@nodriza.cl' => 'Ventas Nodriza Spa'))
+			->from(array('ventas@nodriza.cl' => 'Ventas Nodriza Spa'))
 			->to($email)
-			->addBcc( 'cristian.rojas@nodria.cl' , 'Ventas Nodriza Spa') 
+			->addBcc( 'ventas@nodriza.cl' , 'Ventas Nodriza Spa') 
 			->template('cotizacion_cliente')
 			->attachments(array($archivoAbsoluto))
-			->subject('[TEST] Se ha creado una cotización en ' . $tienda['Tienda']['url']);
+			->subject('[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url']);
 			
 			if( $this->Email->send() ) {
 				# Enviado
@@ -652,12 +652,12 @@ class CotizacionesController extends AppController
 			$this->Email
 			->viewVars(compact('cotizacion', 'tienda'))
 			->emailFormat('html')
-			->from(array('desarrollo@nodriza.cl' => 'Ventas Nodriza Spa'))
+			->from(array('ventas@nodriza.cl' => 'Ventas Nodriza Spa'))
 			->to($email)
-			->addBcc( 'cristian.rojas@nodria.cl' , 'Ventas Nodriza Spa') 
+			->addBcc( 'ventas@nodriza.cl' , 'Ventas Nodriza Spa') 
 			->template('cotizacion_cliente')
 			->attachments(array($archivoAbsoluto))
-			->subject('[TEST] Se ha creado una cotización en ' . $tienda['Tienda']['url']);
+			->subject('[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url']);
 			
 			if( $this->Email->send() ) {
 				# Enviado
