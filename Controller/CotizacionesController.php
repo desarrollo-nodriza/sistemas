@@ -497,15 +497,25 @@ class CotizacionesController extends AppController
 			*/
 			$email = $cotizacion['Cotizacion']['email_cliente'];
 
+			$bccArray = array();
+			# BCC
+			if ( !empty($tienda['Tienda']['emails_bcc']) ) {
+				$bcc = explode( ',', trim($tienda['Tienda']['emails_bcc']) );
+				$bccArray = array();
+				foreach ($bcc as $key => $value) {
+					$bccArray[$value] = $value;
+				}
+			}
+
 			App::uses('CakeEmail', 'Network/Email');
 		
 			$this->Email = new CakeEmail();
 			$this->Email
 			->viewVars(compact('cotizacion', 'tienda'))
 			->emailFormat('html')
-			->from(array('ventas@nodriza.cl' => 'Ventas Nodriza Spa'))
+			->from(array($tienda['Tienda']['email_remitente'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
 			->to($email)
-			->addBcc( 'ventas@nodriza.cl' , 'Ventas Nodriza Spa') 
+			->addBcc( $bccArray ) 
 			->template('cotizacion_cliente')
 			->attachments(array($archivoAbsoluto))
 			->subject('[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url']);
@@ -644,7 +654,15 @@ class CotizacionesController extends AppController
 			
 			# Ruta absoluta del archivo para adjuntarlo	
 			$archivoAbsoluto = APP . 'webroot' . DS . 'Pdf' . DS . 'Cotizaciones' . DS . $cotizacion['Cotizacion']['fecha_cotizacion'] . DS . 'cotizacion_' . $cotizacion['Cotizacion']['id'] . '_' . $cotizacion['Cotizacion']['email_cliente'] . '_' . Inflector::slug($cotizacion['Cotizacion']['created']) . '.pdf';
-			
+
+			# BCC
+			if ( !empty($tienda['Tienda']['emails_bcc']) ) {
+				$bcc = explode( ',', trim($tienda['Tienda']['emails_bcc']) );
+				$bccArray = array();
+				foreach ($bcc as $key => $value) {
+					$bccArray[$value] = $value;
+				}
+			}
 
 			App::uses('CakeEmail', 'Network/Email');
 		
@@ -652,9 +670,9 @@ class CotizacionesController extends AppController
 			$this->Email
 			->viewVars(compact('cotizacion', 'tienda'))
 			->emailFormat('html')
-			->from(array('ventas@nodriza.cl' => 'Ventas Nodriza Spa'))
+			->from(array($tienda['Tienda']['email_remitente'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
 			->to($email)
-			->addBcc( 'ventas@nodriza.cl' , 'Ventas Nodriza Spa') 
+			->addBcc($bccArray) 
 			->template('cotizacion_cliente')
 			->attachments(array($archivoAbsoluto))
 			->subject('[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url']);

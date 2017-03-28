@@ -53,6 +53,14 @@
 											'serenity' => 'Serenity'
 										), array('class' => 'form-control','empty' => false)); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('email_remitente', 'Email remitente'); ?></th>
+								<td><?= $this->Form->input('email_remitente'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('emails_bcc', 'Email para CCO'); ?></th>
+								<td><?= $this->Form->input('emails_bcc', array('placeholder' => 'Emails separados por coma (,)')); ?></td>
+							</tr>
 						</table>
 						<div class="pull-right">
 							<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
