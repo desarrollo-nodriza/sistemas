@@ -431,15 +431,21 @@ class AppController extends Controller
 		foreach ($cliente as $indice => $valor) {
 
 			foreach ($valor['Clientedireccion'] as $ix => $direccion) {
-				# Actualizamos el valor de update
-				$cliente[$indice]['Clientedireccion'][$ix]['date_upd'] = date('Y-m-d H:i:s');
 				
-				if ( isset($direccion['id_address']) && empty($direccion['id_address']) ) {
-					unset($cliente[$indice]['Clientedireccion'][$ix]['id_address']);
-
-					# Se agregan campos predeterminados de la tabla
-					$cliente[$indice]['Clientedireccion'][$ix]['date_add'] = date('Y-m-d H:i:s');
+				# Verificamos si viene con dirección
+				if ( empty($direccion['alias']) || empty($direccion['address1']) || empty($direccion['id_country']) || empty($direccion['id_state']) ) {
+					unset($cliente[$indice]['Clientedireccion']);
+				}else {
+					# Actualizamos el valor de update
+					$cliente[$indice]['Clientedireccion'][$ix]['date_upd'] = date('Y-m-d H:i:s');
 					
+					if ( isset($direccion['id_address']) && empty($direccion['id_address']) ) {
+						unset($cliente[$indice]['Clientedireccion'][$ix]['id_address']);
+
+						# Se agregan campos predeterminados de la tabla
+						$cliente[$indice]['Clientedireccion'][$ix]['date_add'] = date('Y-m-d H:i:s');
+						
+					}
 				}
 
 				if ( !isset($direccion['utilizar_check']) || !$direccion['utilizar_check'] ) {

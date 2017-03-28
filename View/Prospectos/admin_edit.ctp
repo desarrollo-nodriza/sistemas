@@ -363,8 +363,6 @@
 								<th>Nombre</th>
 								<th>Precio venta</th>
 								<th>Cantidad</th>
-								<th>Nombre desc.</th>
-								<th>Descuento (%)</th>
 								<th>Acciones</th>
 							</thead>
 							<tbody>
@@ -378,8 +376,6 @@
 								    	<td><?=$producto['Lang'][0]['ProductotiendaIdioma']['name'];?></td>
 								    	<td><label class="label label-form label-success"><?=CakeNumber::currency($producto['Productotienda']['precio'], 'CLP');?></label></td>
 								    	<td><?=$this->Form->input(sprintf('Productotienda.%d.cantidad', $indice), array('type' => 'number', 'class' => 'form-control js-number', 'min' => 0, 'max' => 100, 'style' => 'max-width: 70px;', 'value' => $producto['Productotienda']['cantidad'])); ?></td>
-								    	<td><?=$this->Form->input(sprintf('Productotienda.%d.nombre_descuento', $indice), array('placeholder' => 'Desc Nombre', 'style' => 'max-width: 200px;', 'value' => $producto['Productotienda']['nombre_descuento']));?></td>
-								    	<td><?=$this->Form->input(sprintf('Productotienda.%d.descuento', $indice), array('class' => 'form-control js-number', 'placeholder' => '%', 'style' => 'max-width: 70px;', 'min' => 0, 'max' => 100, 'type' => 'number', 'value' => $producto['Productotienda']['descuento']));?></td>
 								    	<td><button class="quitar btn btn-danger">Quitar</button></td>
 							    	</tr>
 								<? endforeach; ?>
@@ -387,7 +383,7 @@
 							</tbody>
 							<tfoot>
 								<tr>
-									<td colspan="6"><?= $this->Form->label('descuento', 'Descuento global'); ?></td>
+									<td colspan="4"><?= $this->Form->label('descuento', 'Descuento global (1-100 %)'); ?></td>
 									<td colspan="2"><?= $this->Form->input('descuento', array('style' => 'max-width: 70px;', 'min' => 0, 'max' => 100)); ?></td>
 								</tr>
 							</tfoot>

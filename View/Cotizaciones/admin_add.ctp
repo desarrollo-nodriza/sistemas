@@ -124,10 +124,8 @@
 								<thead>
 									<th>Código</th>
 									<th>Detalles del producto</th>
-									<th>Neto</th>
 									<th>Cantidad</th>
-									<th>Descuento</th>
-									<th>Neto con desc.</th>
+									<th>Neto</th>
 									<th>Total</th>
 								</thead>
 								<tbody>
@@ -138,9 +136,7 @@
 												<?=$producto['Productotienda']['reference'];?>
 											</td>
 											<td><?=$producto['Lang'][0]['ProductotiendaIdioma']['name'];?></td>
-											<td><?=$producto['Productotienda']['precio_neto'];?></td>
 											<td><?= $this->Form->input(sprintf('Productotienda.%d.cantidad', $inx), array('value' => $producto['Productotienda']['cantidad'])); ?></td>
-											<td><?=$descuento_producto = ( ! empty($producto['Productotienda']['descuento']) ) ? $this->Form->input(sprintf('Productotienda.%d.descuento', $inx), array('value' => $producto['Productotienda']['descuento'] . '%')) : $this->Form->input(sprintf('Productotienda.%d.descuento', $inx), array('value' => 0)); ?></td>
 											<td><?= $this->Form->input(sprintf('Productotienda.%d.precio_neto', $inx), array('value' => $producto['Productotienda']['precio_neto_desc'])); ?></td>
 											<td><?= $this->Form->input(sprintf('Productotienda.%d.total_neto', $inx), array('value' => $producto['Productotienda']['total_neto_desc'])); ?></td>
 										</tr>								
@@ -148,16 +144,16 @@
 								</tbody>
 								<tfoot>
 									<tr>
-										<td colspan="6"><b>Total Neto</b></td><td><?=$this->Form->input('total_neto', array('value' => $prospecto['total_productos_neto_desc']));?></td>
+										<td colspan="4"><b>Total Neto</b></td><td><?=$this->Form->input('total_neto', array('value' => $prospecto['total_productos_neto_desc']));?></td>
 									</tr>
 									<tr>
-										<td colspan="6"><b>Descuento <?=$descuento = (!empty($prospecto['Prospecto']['descuento'])) ?  '(' . $prospecto['Prospecto']['descuento'] . '%)' :  '' ; ?> </b></td><td><?=$this->Form->input('descuento', array('value' => $prospecto['total_descuento']));?></td>
+										<td colspan="4"><b>Descuento <?=$descuento = (!empty($prospecto['Prospecto']['descuento'])) ?  '(' . $prospecto['Prospecto']['descuento'] . '%)' :  '' ; ?> </b></td><td><?=$this->Form->input('descuento', array('value' => $prospecto['total_descuento']));?></td>
 									</tr>
 									<tr>
-										<td colspan="6"><b>IVA</b></td><td><?=$this->Form->input('iva', array('value' => $prospecto['iva']));?></td>
+										<td colspan="4"><b>IVA</b></td><td><?=$this->Form->input('iva', array('value' => $prospecto['iva']));?></td>
 									</tr>
 									<tr>
-										<td colspan="6"><b>Total</b></td><td><?=$this->Form->input('total_bruto', array('value' => $prospecto['total_bruto']));?></td>
+										<td colspan="4"><b>Total</b></td><td><?=$this->Form->input('total_bruto', array('value' => $prospecto['total_bruto']));?></td>
 									</tr>
 								</tfoot>
 							</tr>

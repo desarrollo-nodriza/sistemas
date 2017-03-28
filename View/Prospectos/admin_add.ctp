@@ -230,8 +230,6 @@
 								<th>Nombre</th>
 								<th>Precio venta</th>
 								<th>Cantidad</th>
-								<th>Nombre desc.</th>
-								<th>Descuento (%)</th>
 								<th>Acciones</th>
 							</thead>
 							<tbody>
@@ -239,7 +237,7 @@
 							</tbody>
 							<tfoot>
 								<tr>
-									<td colspan="6"><?= $this->Form->label('descuento', 'Descuento global'); ?></td>
+									<td colspan="4"><?= $this->Form->label('descuento', 'Descuento global (1-100 %)'); ?></td>
 									<td colspan="2"><?= $this->Form->input('descuento', array('style' => 'max-width: 70px;', 'min' => 0, 'max' => 100)); ?></td>
 								</tr>
 							</tfoot>

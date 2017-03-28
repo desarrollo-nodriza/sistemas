@@ -127,13 +127,16 @@ class ProspectosController extends AppController
 				if ( ! $this->request->data['Prospecto']['existente'] && ! empty($this->request->data['Cliente'][1]['email']) ) {
 
 					# Se crea un password para el cliente default y la fecha de creación y actualización
-					$this->request->data['Cliente'][1]['id_lang'] 			= 1; 					# Idioma español por defeco
-					$this->request->data['Cliente'][1]['id_risk'] 			= 0;					# Valor default de prestashop
-					$this->request->data['Cliente'][1]['id_default_group'] 	= 3; 					# Grupo de clientes por defecto
-					$this->request->data['Cliente'][1]['passwd'] 			= 'cliente123456'; 		# Contraseña defecto
-					$this->request->data['Cliente'][1]['date_add'] 			= date('Y-m-d H:i:s');	# Fecha creación
-					$this->request->data['Cliente'][1]['date_upd'] 			= date('Y-m-d H:i:s'); 	# fecha de actualización
-					$this->request->data['Cliente'][1]['active'] 			= 1;					# Dejar activo al cliente
+					$this->request->data['Cliente'][1]['id_lang'] 			= 1; 							# Idioma español por defeco
+					$this->request->data['Cliente'][1]['id_risk'] 			= 0;							# Valor default de prestashop
+					$this->request->data['Cliente'][1]['id_default_group'] 	= 3; 							# Grupo de clientes por defecto
+					$this->request->data['Cliente'][1]['passwd'] 			= 'cliente123456'; 				# Contraseña defecto
+					$this->request->data['Cliente'][1]['date_add'] 			= date('Y-m-d H:i:s');			# Fecha creación
+					$this->request->data['Cliente'][1]['date_upd'] 			= date('Y-m-d H:i:s'); 			# fecha de actualización
+					$this->request->data['Cliente'][1]['active'] 			= 1;							# Dejar activo al cliente
+					$this->request->data['Cliente'][1]['secure_key'] 		= md5(uniqid(rand(), true)); 	# Llave de seguridad unica por cliente
+					$this->request->data['Cliente'][1]['newsletter'] 		= 1; 							# Inscribir al newsletter
+					$this->request->data['Cliente'][1]['newsletter_date_add'] 		= date('Y-m-d H:i:s'); 	# Fecha inscrición al newsletter
 					
 					# Cliente nuevo, se crea.
 					$this->Cliente = ClassRegistry::init('Cliente');
@@ -178,9 +181,14 @@ class ProspectosController extends AppController
 					$this->Cliente = ClassRegistry::init('Cliente');
 					
 					if( $this->Cliente->saveAll($this->request->data['Cliente'][1]) ) {
+						# Se pasa a estado esperando información
+						$this->Prospecto->saveField('estado_prospecto_id', 3);
 						$this->Session->setFlash('Información del cliente actualizada con éxito.', null, array(), 'success');
+
 					}else{
-						
+
+						# Se pasa a estado esperando información
+						$this->Prospecto->saveField('estado_prospecto_id', 3);
 						$this->Session->setFlash('Error al actualizar la información del cliente.', null, array(), 'error');
 					}
 				}
@@ -260,13 +268,16 @@ class ProspectosController extends AppController
 				if ( ! $this->request->data['Prospecto']['existente'] && ! empty($this->request->data['Cliente'][1]['email']) ) {
 
 					# Se crea un password para el cliente default y la fecha de creación y actualización
-					$this->request->data['Cliente'][1]['id_lang'] 			= 1; 					# Idioma español por defeco
-					$this->request->data['Cliente'][1]['id_risk'] 			= 0;					# Valor default de prestashop
-					$this->request->data['Cliente'][1]['id_default_group'] 	= 3; 					# Grupo de clientes por defecto
-					$this->request->data['Cliente'][1]['passwd'] 			= 'cliente123456'; 		# Contraseña defecto
-					$this->request->data['Cliente'][1]['date_add'] 			= date('Y-m-d H:i:s');	# Fecha creación
-					$this->request->data['Cliente'][1]['date_upd'] 			= date('Y-m-d H:i:s'); 	# fecha de actualización
-					$this->request->data['Cliente'][1]['active'] 			= 1;					# Dejar activo al cliente
+					$this->request->data['Cliente'][1]['id_lang'] 			= 1; 							# Idioma español por defeco
+					$this->request->data['Cliente'][1]['id_risk'] 			= 0;							# Valor default de prestashop
+					$this->request->data['Cliente'][1]['id_default_group'] 	= 3; 							# Grupo de clientes por defecto
+					$this->request->data['Cliente'][1]['passwd'] 			= 'cliente123456'; 				# Contraseña defecto
+					$this->request->data['Cliente'][1]['date_add'] 			= date('Y-m-d H:i:s');			# Fecha creación
+					$this->request->data['Cliente'][1]['date_upd'] 			= date('Y-m-d H:i:s'); 			# fecha de actualización
+					$this->request->data['Cliente'][1]['active'] 			= 1;							# Dejar activo al cliente
+					$this->request->data['Cliente'][1]['secure_key'] 		= md5(uniqid(rand(), true)); 	# Llave de seguridad unica por cliente
+					$this->request->data['Cliente'][1]['newsletter'] 		= 1; 							# Inscribir al newsletter
+					$this->request->data['Cliente'][1]['newsletter_date_add'] 		= date('Y-m-d H:i:s'); 	# Fecha inscrición al newsletter
 
 					# Cliente nuevo, se crea.
 					$this->Cliente = ClassRegistry::init('Cliente');
@@ -316,10 +327,17 @@ class ProspectosController extends AppController
 					$this->Cliente = ClassRegistry::init('Cliente');
 					
 					if( $this->Cliente->saveAll($this->request->data['Cliente'][1]) ) {
-						$this->Session->setFlash('Información del cliente actualizada con éxito.', null, array(), 'success');
-					}else{
 						
+						# Se pasa a estado esperando información
+						$this->Prospecto->saveField('estado_prospecto_id', 3);
+						$this->Session->setFlash('Información del cliente actualizada con éxito.', null, array(), 'success');
+
+					}else{
+
+						# Se pasa a estado esperando información
+						$this->Prospecto->saveField('estado_prospecto_id', 3);
 						$this->Session->setFlash('Error al actualizar la información del cliente.', null, array(), 'error');
+						
 					}
 				}
 

@@ -208,17 +208,19 @@ class CotizacionesController extends AppController
 				if ($prospecto['Prospecto']['descuento'] > 0) {
 					
 					$totalDescuento = $totalDescuento + $totalProductosNetoDesc - $this->calcularDescuento($totalProductosNetoDesc, $prospecto['Prospecto']['descuento']);
-
+					$totalProductosNeto = $totalProductosNetoDesc - $totalDescuento;
+				}else{
+					$totalProductosNeto = $totalProductosNetoDesc;
 				}
 
-				$iva = $totalProductosNetoDesc * 0.19;
+				$iva = $totalProductosNeto * 0.19;
 
 
 				#$prospecto['total_productos_neto'] = CakeNumber::currency($totalProductosNeto , 'CLP');
 				$prospecto['total_productos_neto_desc'] = CakeNumber::currency($totalProductosNetoDesc , 'CLP');
 				$prospecto['total_descuento'] = CakeNumber::currency($totalDescuento , 'CLP');
 				$prospecto['iva'] = CakeNumber::currency($iva , 'CLP');
-				$prospecto['total_bruto'] = CakeNumber::currency(($iva + $totalProductosNetoDesc) , 'CLP');
+				$prospecto['total_bruto'] = CakeNumber::currency(($iva + $totalProductosNeto) , 'CLP');
 			}
 
 			# Se obtienen el clientes relacionado y la direccion para la cotización

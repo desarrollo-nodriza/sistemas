@@ -105,34 +105,30 @@
 							<tr>
 								<td>Código</td>
 								<td>Detalles del producto</td>
-								<td>Neto</td>
 								<td>Cantidad</td>
-								<td>Descuento</td>
-								<td>Neto con desc.</td>
+								<td>Neto</td>
 								<td>Total</td>
 							</tr>
 							<? foreach ($productos as $inx => $producto) : ?>
 								<tr>
 									<td><?=$producto['Productotienda']['reference'];?></td>
 									<td><?=$producto['Lang'][0]['ProductotiendaIdioma']['name'];?></td>
-									<td><?=$producto['Productotienda']['precio_neto'];?></td>
 									<td><?=$producto['Productotienda']['cantidad']; ?></td>
-									<td><?=$producto['Productotienda']['descuento'];?></td>
 									<td><?=$producto['Productotienda']['precio_neto']?></td>
 									<td><?=$producto['Productotienda']['total_neto']; ?></td>
 								</tr>								
 							<? endforeach; ?>
 							<tr>
-								<td colspan="6"><b>Total Neto</b></td><td><?=$this->request->data['Cotizacion']['total_neto'];?></td>
+								<td colspan="4"><b>Total Neto</b></td><td><?=$this->request->data['Cotizacion']['total_neto'];?></td>
 							</tr>
 							<tr>
-								<td colspan="6"><b>Descuento</b></td><td><?=$this->request->data['Cotizacion']['descuento'];?></td>
+								<td colspan="4"><b>Descuento</b></td><td><?=$this->request->data['Cotizacion']['descuento'];?></td>
 							</tr>
 							<tr>
-								<td colspan="6"><b>IVA</b></td><td><?=$this->request->data['Cotizacion']['iva'];?></td>
+								<td colspan="4"><b>IVA</b></td><td><?=$this->request->data['Cotizacion']['iva'];?></td>
 							</tr>
 							<tr>
-								<td colspan="6"><b>Total</b></td><td><?=$this->request->data['Cotizacion']['total_bruto'];?></td>
+								<td colspan="4"><b>Total</b></td><td><?=$this->request->data['Cotizacion']['total_bruto'];?></td>
 							</tr>
 						</table>
 					</div>

@@ -23,4 +23,17 @@ Class Orders extends AppModel {
 		)
 	);
 
+	/*public function getUniqReference($id_cart = '') {
+		$referencia = $this->find('first', array(
+			'conditions' => array('Orders.id_cart' => $id_cart),
+			'fields' => array('MIN(id_order) as min', 'MAX(id_order) as max', 'id_order', 'reference')
+			));
+
+		if ( $referencia['Orders']['min'] == $referencia['Orders']['max'] ) {
+			return $referencia['Orders']['reference'];
+		}else {
+			return $referencia['Orders']['reference'].'#'.($referencia['Orders']['id_order'] + 1 - $referencia['Orders']['min']);
+		}
+	}*/
+
 }
