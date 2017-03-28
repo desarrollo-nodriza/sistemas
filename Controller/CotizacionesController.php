@@ -515,7 +515,7 @@ class CotizacionesController extends AppController
 			->emailFormat('html')
 			->from(array($tienda['Tienda']['email_remitente'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
 			->to($email)
-			->addBcc( $bccArray ) 
+			->addBcc( $bcc ) 
 			->template('cotizacion_cliente')
 			->attachments(array($archivoAbsoluto))
 			->subject('[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url']);
@@ -672,7 +672,7 @@ class CotizacionesController extends AppController
 			->emailFormat('html')
 			->from(array($tienda['Tienda']['email_remitente'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
 			->to($email)
-			->addBcc($bccArray) 
+			->addBcc($bcc) 
 			->template('cotizacion_cliente')
 			->attachments(array($archivoAbsoluto))
 			->subject('[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url']);
