@@ -204,7 +204,7 @@ class ProspectosController extends AppController
 					));
 
 					# Verificamos que exista la información mínima para pasar a cotización
-					if ( empty($prospecto['Prospecto']['id_customer']) || empty($prospecto['Prospecto']['id_address']) || empty($prospecto['Prospecto']['nombre']) || empty($prospecto['Prospecto']['descripcion']) || empty($prospectoProductos)) {
+					if ( empty($prospecto['Prospecto']['id_customer']) || empty($prospecto['Prospecto']['nombre']) || empty($prospecto['Prospecto']['descripcion']) || empty($prospectoProductos)) {
 
 						# Se pasa a estado esperando información
 						$this->Prospecto->saveField('estado_prospecto_id', 3);
@@ -352,7 +352,7 @@ class ProspectosController extends AppController
 					));
 
 					# Verificamos que exista la información mínima para pasar a cotización
-					if ( empty($prospecto['Prospecto']['id_customer']) || empty($prospecto['Prospecto']['id_address']) || empty($prospecto['Prospecto']['nombre']) || empty($prospecto['Prospecto']['descripcion']) || empty($prospectoProductos)) {
+					if ( empty($prospecto['Prospecto']['id_customer']) || empty($prospecto['Prospecto']['nombre']) || empty($prospecto['Prospecto']['descripcion']) || empty($prospectoProductos)) {
 						
 						# Se pasa a estado en espera
 						$this->Prospecto->saveField('estado_prospecto_id', 3);

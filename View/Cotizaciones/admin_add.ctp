@@ -66,11 +66,19 @@
 											<tr>
 												<td>Nombre:</td><td><?=$this->Form->input('nombre_cliente', array('value' => $cliente['Cliente']['firstname'] . ' ' . $cliente['Cliente']['lastname']));?></td>
 											</tr>
-											<tr>	
+											<tr>
+											<? if (!empty($cliente['Clientedireccion'][0]['phone'])) : ?>	
 												<td>Teléfono:</td><td><?=$this->Form->input('fono_cliente', array('value' => $cliente['Clientedireccion'][0]['phone'], 'class' => 'mascara_fono form-control'));?></td>
+											<? else : ?>
+												<td>Teléfono:</td><td><?=$this->Form->input('fono_cliente', array('class' => 'mascara_fono form-control'));?></td>
+											<? endif; ?>
 											</tr>
-											<tr>	
+											<tr>
+											<? if (!empty($cliente['Clientedireccion'][0]['address1'])) : ?>	
 												<td>Dirección:</td><td><?=$this->Form->input('direccion_cliente', array('value' => sprintf('%s, %s - %s', $cliente['Clientedireccion'][0]['address1'], $cliente['Clientedireccion'][0]['Region']['name'], $cliente['Clientedireccion'][0]['Paise']['Lang'][0]['PaisIdioma']['name']) ));?></td>
+											<? else : ?>
+												<td>Dirección:</td><td><?=$this->Form->input('direccion_cliente');?></td>
+											<? endif; ?>	
 											</tr>
 											<tr>	
 												<td>Asunto:</td><td><?=$this->Form->input('asunto_cliente', array('value' => $prospecto['Prospecto']['descripcion']));?></td>
