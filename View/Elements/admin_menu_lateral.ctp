@@ -34,7 +34,7 @@
                 </div>
             </div>                                                                        
         </li>
-        <li class="<?= ($this->Html->menuActivo(array('controller' => 'pages', 'action' => 'dashboard')) ? 'active' : ''); ?>"><?= $this->Html->link('<span class="fa fa-dashboard"></span> Dashboard', '/', array('escape' => false) ); ?></li>
+        <li class="<?= ($this->Html->menuActivo(array('controller' => 'pages', 'action' => 'dashboard')) ? 'active' : ''); ?>"><?= $this->Html->link('<span class="fa fa-dashboard"></span> <span class="xn-text">Dashboard</span>', '/', array('escape' => false) ); ?></li>
 		<!-- Get Modules View -->	
 		<?= $this->element('modulos'); ?>
 

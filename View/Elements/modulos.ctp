@@ -21,7 +21,7 @@
 		</li>
 	<? }elseif (!empty($moduloPadre['url'])) { ?>
 		<li>
-			<?=$this->Html->link(sprintf('%s %s', (!empty($moduloPadre['icono'])) ? '<span class="'.$moduloPadre['icono'].'"></span> ' : '', $moduloPadre['nombre']), sprintf('/%s', $moduloPadre['url']), array('escape' => false)); ?>
+			<?=$this->Html->link(sprintf('%s %s', (!empty($moduloPadre['icono'])) ? '<span class="'.$moduloPadre['icono'].'"></span> ' : '', '<span class="xn-text">' . $moduloPadre['nombre'] . '</span>'), sprintf('/%s', $moduloPadre['url']), array('escape' => false)); ?>
 		</li>
 	<? } ?>
 <? } ?>

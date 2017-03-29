@@ -39,7 +39,7 @@
 										   foreach ( $controladores as $controlador ) : 
 										   if ( $controlador === 'App' ) continue; 
 
-											 $options[strtolower($controlador)] = $controlador; 
+											 $options[lcfirst($controlador)] = $controlador; 
 
 										   endforeach; ?>
 									
