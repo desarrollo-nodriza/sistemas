@@ -37,7 +37,7 @@ class CotizacionesController extends AppController
 					'Cotizacion.tienda_id' => $this->Session->read('Tienda.id')
 				),
 			'recursive'	=> 0,
-			'order' => 'Cotizacion.id ASC'
+			'order' => 'Cotizacion.id DESC'
 		));
 
 		/**

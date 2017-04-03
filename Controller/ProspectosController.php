@@ -40,7 +40,7 @@ class ProspectosController extends AppController
 					'Prospecto.tienda_id' => $this->Session->read('Tienda.id')
 				),
 			'recursive'	=> 0,
-			'order' => 'Prospecto.id ASC'
+			'order' => 'Prospecto.id DESC'
 		));
 
 		/**
