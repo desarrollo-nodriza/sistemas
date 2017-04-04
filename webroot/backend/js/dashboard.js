@@ -348,6 +348,22 @@ $.extend({
 			    //accionesReporte($boton, $fechaReporte);
 			});
 		},
+		obtenerFabricantesPorRango: function(){
+			var divGrafico = $('#tablaMarcasVentas');
+			
+			// Request
+			$.ajax({
+				url: webroot + "pages/sales_by_brands/" + $('#TablaMarcasFInicio').val() + '/' + $('#TablaMarcasFFinal').val() + '/' + $('#TablaMarcasTienda').val() + '/' + 'true',
+			})
+			.done(function( data, textStatus, jqXHR ) {
+				divGrafico.find('tbody').html(data);
+				divGrafico.find('tfoot').remove();
+			})
+			.fail(function( jqXHR, textStatus, errorThrown ) {
+			    console.log( "La solicitud a fallado: " +  textStatus);
+			    //accionesReporte($boton, $fechaReporte);
+			});
+		},
 		bind: function(){
 
 			// Ventas
@@ -383,6 +399,11 @@ $.extend({
 			$('#ClientesFFinal').val($.hoy());
 			$.calendario($('#ClientesFInicio'), $('#ClientesFFinal'));
 
+			// TablaVentas
+			$('#TablaMarcasFInicio').val($.inicioMes());
+			$('#TablaMarcasFFinal').val($.hoy());
+			$.calendario($('#TablaMarcasFInicio'), $('#TablaMarcasFFinal'));
+
 			// Descuentos
 			$('#enviarFormularioDescuentos').on('click', function(){
 				$.graficos.obtenerDescuentosPorRango();
@@ -411,6 +432,11 @@ $.extend({
 			// Clientes
 			$('#enviarFormularioClientes').on('click', function(){
 				$.graficos.obtenerClientesPorRango();
+			});
+
+			// Clientes
+			$('#enviarFormularioTablaMarcas').on('click', function(){
+				$.graficos.obtenerFabricantesPorRango();
 			});
 
 			var cargaVentas = setTimeout(function(){

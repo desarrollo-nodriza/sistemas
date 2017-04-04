@@ -749,6 +749,123 @@ class PagesController extends AppController
 		return $promedio;
 	}
 
+
+	public function admin_sales_by_brands ($f_inicio = null, $f_final = null, $tienda = '', $tabla = false, $group_by = '', $limite = 0) {
+		if (is_null($f_inicio) || is_null($f_final) || empty($f_inicio) || empty($f_final)) {
+			$f_inicio = date('Y-m-01 00:00:00');
+			$f_final = date('Y-m-t 23:59:59');
+		}else{
+			$f_inicio = sprintf('%s 00:00:00', $f_inicio);
+			$f_final = sprintf('%s 23:59:59', $f_final);
+		}
+
+		//Normalizar fechas
+		$f_inicio = sprintf("'%s'", $f_inicio);
+		$f_final = sprintf("'%s'", $f_final);
+
+		if (is_null($tienda) || empty($tienda)) {
+			return false;
+		}
+
+		$tiendas = ClassRegistry::init('Tienda')->find('all', array(
+			'conditions' => array('activo' => 1, 'id' => $tienda)
+			));
+
+		// Aloja toda la info retornada de las queries
+		$arrayResultado = array();
+		$arrayQuery = null;
+
+		// La query
+		$query = ClassRegistry::init('Grafico')->find('first', array(
+			'conditions' => array('Grafico.slug' => 'tabla_marcas'),
+			'fields' => array('Grafico.descipcion')
+			));
+
+		if (empty($query)) {
+			return;
+		}
+
+		// Agrupar
+		$group_by_col = '';
+		
+		switch ($group_by) {
+			case 'anno':
+				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y") AS Fecha';
+				$group_by = 'GROUP BY YEAR(Orden.date_add) ORDER BY Orden.date_add ASC';
+				break;
+			case 'mes':
+				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m") AS Fecha';
+				$group_by = 'GROUP BY MONTH(Orden.date_add) ORDER BY Orden.date_add ASC';
+				break;
+			case 'dia':
+				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m-%d") AS Fecha';
+				$group_by = 'GROUP BY DAY(Orden.date_add) ORDER BY Orden.date_add ASC';
+				break;
+			
+			default:
+				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m") AS Fecha';
+				$group_by = 'GROUP BY MONTH(Orden.date_add) ORDER BY Orden.date_add ASC';
+				break;
+		}
+
+		// Rango de fechas
+		$query['Grafico']['descipcion'] = str_replace('[*START_DATE*]', $f_inicio, $query['Grafico']['descipcion']);
+		$query['Grafico']['descipcion'] = str_replace('[*FINISH_DATE*]', $f_final, $query['Grafico']['descipcion']);
+		// campo group
+		$query['Grafico']['descipcion'] = str_replace('[*GROUP_BY_COL*]', $group_by_col, $query['Grafico']['descipcion']);
+		$query['Grafico']['descipcion'] = str_replace('[*GROUP_BY*]', $group_by, $query['Grafico']['descipcion']);
+
+		// Cantidad de elementos
+		if ($limite > 0 && is_integer($limite)) {
+			$query['Grafico']['descipcion'] = str_replace('[*LIMIT*]', sprintf('LIMIT %s', $limite), $query['Grafico']['descipcion']);
+		}else{
+			$query['Grafico']['descipcion'] = str_replace('[*LIMIT*]', '', $query['Grafico']['descipcion']);
+		}
+
+		// Armamos la query por tiendas
+		foreach ($tiendas as $indice => $tienda) :
+			$arrayQuery = str_replace('[*PREFIX*]', $tienda['Tienda']['prefijo'], $query['Grafico']['descipcion']);
+			
+			// Sobreescribimos la configuración de la base de datos a utilizar
+			ClassRegistry::init('Orders')->useDbConfig = $tienda['Tienda']['configuracion'];
+			$OCPagadas = ClassRegistry::init('Orders');
+			try {
+				$arrayResultado[$indice] = $OCPagadas->query($arrayQuery);
+				foreach ($arrayResultado[$indice] as $indx => $val) {
+					$arrayResultado[$indice][$indx][0]['tienda'] = $tienda['Tienda']['nombre'];
+				}
+			} catch (Exception $e) {
+				$arrayResultado[$indice] = $e->getMessage();
+			}
+		endforeach;
+
+		$arrayResultado = Hash::extract($arrayResultado, '{n}.{n}');
+
+		if ($tabla) {
+			$tablaHtml = '';
+			$totalVendidoMarcas = 0; $totalCantidadVendido = 0; $totalPorcentaje = 0;
+
+			foreach ($arrayResultado as $linea) {
+				$tablaHtml.= '<tr>';
+				$tablaHtml.= '<td>' . $linea['Fabricante']['Marca'] . '</td>';
+				$tablaHtml.= '<td>' . $linea[0]['Total'] . '%</td>';
+				$tablaHtml.= '<td>' . $linea[0]['Cantidad'] . '</td>';
+				$tablaHtml.= '<td>' . CakeNumber::currency($linea[0]['PrecioVenta'], 'CLP') . '</td>';
+				$tablaHtml.= '</tr>';
+
+				$totalVendidoMarcas = $totalVendidoMarcas + $linea[0]['PrecioVenta']; 
+				$totalCantidadVendido = $totalCantidadVendido + $linea[0]['Cantidad']; 
+				$totalPorcentaje = $totalPorcentaje + $linea[0]['Total'];
+			}
+
+			$tablaHtml .= '<tr><td><b>Totales</b></td><td><b>'. $totalPorcentaje .'%<b></td><td><b>' . $totalCantidadVendido . '</b></td><td><b>' . CakeNumber::currency($totalVendidoMarcas, 'CLP') . '</b></td></tr>';
+			echo $tablaHtml;
+			exit;
+		}else{
+			return $arrayResultado;
+		}
+	}
+
 	public function admin_dashboard() {
 		BreadcrumbComponent::add('');
 
@@ -760,7 +877,8 @@ class PagesController extends AppController
 		$pedidos = $this->admin_get_all_orders();
 		// Calculamos Tickets promedios
 		$tickets = $this->admin_tickets($ventas, $pedidos);
-
+		// Tabla de ventas por fabricante
+		$tablaMarcas = $this->admin_sales_by_brands('','', $this->Session->read('Tienda.id') );
 
 		// Obtener total de ventas de los comercios
 		$sumaVentas = $this->admin_get_total_sum($ventas, 'Total');
@@ -769,7 +887,7 @@ class PagesController extends AppController
 		// Obtener el total de pedidos e los comercios
 		$sumaPedidos = $this->admin_get_total_sum($pedidos, 'Total', false);
 		
-		$this->set(compact('sumaVentas','ventas', 'sumaDescuentos', 'descuentos', 'sumaPedidos', 'pedidos', 'tickets'));
+		$this->set(compact('sumaVentas','ventas', 'sumaDescuentos', 'descuentos', 'sumaPedidos', 'pedidos', 'tickets', 'tablaMarcas'));
 
 	}
 

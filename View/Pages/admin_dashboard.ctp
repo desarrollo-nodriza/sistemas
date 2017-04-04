@@ -283,5 +283,66 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-default" id="tablaMarcasVentas">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Ventas por Fabricante</h3>
+                    <?= $this->Form->create('TablaMarcas', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+                        <ul class="panel-controls">      
+                            <li><label class="control-label">Rango </label></li>
+                            <li>
+                                <div class="input-group">
+                                    <?=$this->Form->input('f_inicio', array('class' => 'form-control datepicker'));?>
+                                    <span class="input-group-addon add-on"> - </span>
+                                    <?=$this->Form->input('f_final', array('class' => 'form-control datepicker'));?>
+                                </div>
+                            </li>
+                            <li><label class="control-label">Tienda</label></li>
+                            <li>
+                                <div class="input-group">
+                                    <?=$this->Form->select('tienda', $tiendasList, array('empty' => false, 'class' => 'form-control'));?>
+                                </div>
+                            </li>
+                            <li><a id="enviarFormularioTablaMarcas" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
+                            <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                        </ul>
+                    <?= $this->Form->end(); ?>
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" style="height: 200px;">
+                            <thead>
+                                <th>Marca</th>
+                                <th>Porcentaje ventas</th>
+                                <th>Cantidad vendidas</th>
+                                <th>Monto vendido</th>
+                            </thead>
+                            <tbody>
+                            <? $totalVendidoMarcas = 0; $totalCantidadVendido = 0; $totalPorcentaje = 0;?>
+                            <? foreach ($tablaMarcas as $marca) : ?>
+                                <tr>
+                                    <td><?=$marca['Fabricante']['Marca'];?></td>
+                                    <td><?=$marca[0]['Total'];?>%</td>
+                                    <td><?=$marca[0]['Cantidad'];?></td>
+                                    <td><?=$this->Number->currency($marca[0]['PrecioVenta'], 'CLP');?></td>
+                                </tr>
+                            <? $totalVendidoMarcas = $totalVendidoMarcas + $marca[0]['PrecioVenta']; $totalCantidadVendido = $totalCantidadVendido + $marca[0]['Cantidad']; $totalPorcentaje = $totalPorcentaje + $marca[0]['Total'];?>
+                            <? endforeach; ?>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td><b>Totales<b></td>
+                                    <td><b><?=$totalPorcentaje;?>%</b></td>
+                                    <td><b><?=$totalCantidadVendido;?></b></td>
+                                    <td><b><?=$this->Number->currency($totalVendidoMarcas, 'CLP');?></b></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
