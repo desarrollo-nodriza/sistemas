@@ -728,6 +728,27 @@ class PagesController extends AppController
 		}
 	}
 
+	/**
+	 * Función que crea una array con el ticket promedio según los 
+	 * parámetros de ventas y pedidos
+	 * @param  array  $ventas  Ventas total de cada comercio
+	 * @param  array  $pedidos Pedidos total de cada comercio
+	 * @return array          Ticket promedio por comercio
+	 */
+	public function admin_tickets($ventas = array(), $pedidos = array()) {
+		$promedio = array();
+		foreach ($ventas as $key => $venta) {
+			foreach ($pedidos as $pedido) {
+				if ($venta['tienda'] == $pedido['tienda']) {
+					$promedio[$key]['tienda'] = $venta['tienda'];
+					$promedio[$key]['total'] = $venta['Total'] / $pedido['Total'];	
+				}
+			}
+		}
+
+		return $promedio;
+	}
+
 	public function admin_dashboard() {
 		BreadcrumbComponent::add('');
 
@@ -737,6 +758,8 @@ class PagesController extends AppController
 		$descuentos = $this->admin_get_all_discount();
 		// Obtener pedidos de los comercios
 		$pedidos = $this->admin_get_all_orders();
+		// Calculamos Tickets promedios
+		$tickets = $this->admin_tickets($ventas, $pedidos);
 
 
 		// Obtener total de ventas de los comercios
@@ -746,7 +769,7 @@ class PagesController extends AppController
 		// Obtener el total de pedidos e los comercios
 		$sumaPedidos = $this->admin_get_total_sum($pedidos, 'Total', false);
 		
-		$this->set(compact('sumaVentas','ventas', 'sumaDescuentos', 'descuentos', 'sumaPedidos', 'pedidos'));
+		$this->set(compact('sumaVentas','ventas', 'sumaDescuentos', 'descuentos', 'sumaPedidos', 'pedidos', 'tickets'));
 
 	}
 

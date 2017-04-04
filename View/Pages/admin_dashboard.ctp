@@ -28,7 +28,7 @@
                 </div>                                                        
             </div>
         </div>
-        <div class="col-xs-6 col-sm-4">
+        <!--<div class="col-xs-6 col-sm-4">
             <div class="widget widget-info widget-carousel">
                 <div class="owl-carousel" id="pedidos_del_periodo">
                     <div>                                    
@@ -41,6 +41,19 @@
                             <div class="widget-title">Total Descuento del mes</div>
                             <div class="widget-subtitle"><?=$descuento['tienda']?></div>                                                                       
                             <div class="widget-int"><?=$this->Number->currency($descuento['Total'], 'CLP');?></div>
+                        </div>
+                    <? endforeach; ?>
+                </div>                                                      
+            </div>
+        </div>-->
+        <div class="col-xs-6 col-sm-4">
+            <div class="widget widget-info widget-carousel">
+                <div class="owl-carousel" id="pedidos_del_periodo">
+                    <? foreach ($tickets as $ticket) : ?>
+                        <div>                                    
+                            <div class="widget-title">Valor ticket promedio del mes</div>
+                            <div class="widget-subtitle"><?=$ticket['tienda']?></div>                                                                       
+                            <div class="widget-int"><?=$this->Number->currency($ticket['total'], 'CLP');?></div>
                         </div>
                     <? endforeach; ?>
                 </div>                                                      
