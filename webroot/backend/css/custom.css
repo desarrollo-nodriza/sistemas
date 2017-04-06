@@ -226,3 +226,7 @@ textarea {
     font-size: 11px;
     white-space: nowrap;
 }
+
+tfoot > tr > td, tfoot > tr:first-child > td {
+    border: 1px solid #ddd !important;
+}

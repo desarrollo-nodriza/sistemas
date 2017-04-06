@@ -20,6 +20,7 @@
 						<table class="table">
 							<thead>
 								<tr class="sort">
+									<th><?= $this->Paginator->sort('slug', 'Identificador', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('activo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('created', 'Fecha de creación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -29,6 +30,7 @@
 							<tbody>
 								<?php foreach ( $graficos as $grafico ) : ?>
 								<tr>
+									<td><?= h($grafico['Grafico']['slug']); ?>&nbsp;</td>
 									<td><?= h($grafico['Grafico']['nombre']); ?>&nbsp;</td>
 									<td><?= ($grafico['Grafico']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td><?= h($grafico['Grafico']['created']); ?>&nbsp;</td>

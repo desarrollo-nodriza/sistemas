@@ -843,7 +843,7 @@ class PagesController extends AppController
 
 		if ($tabla) {
 			$tablaHtml = '';
-			$totalVendidoMarcas = 0; $totalCantidadVendido = 0; $totalPorcentaje = 0;
+			$totalVendidoMarcas = 0; $totalCantidadVendido = 0; $totalPorcentaje = 0; $descuentos = 0; $despachos = 0;
 
 			foreach ($arrayResultado as $linea) {
 				$tablaHtml.= '<tr>';
@@ -856,9 +856,14 @@ class PagesController extends AppController
 				$totalVendidoMarcas = $totalVendidoMarcas + $linea[0]['PrecioVenta']; 
 				$totalCantidadVendido = $totalCantidadVendido + $linea[0]['Cantidad']; 
 				$totalPorcentaje = $totalPorcentaje + $linea[0]['Total'];
+				$descuentos = $linea[0]['Descuentos'];
+				$despachos = $linea[0]['Despachos'];
 			}
 
 			$tablaHtml .= '<tr><td><b>Totales</b></td><td><b>'. $totalPorcentaje .'%<b></td><td><b>' . $totalCantidadVendido . '</b></td><td><b>' . CakeNumber::currency($totalVendidoMarcas, 'CLP') . '</b></td></tr>';
+			$tablaHtml .= '<tr><td colspan="3"><b>Descuentos</b></td><td><b>- ' . CakeNumber::currency($descuentos, 'CLP') . '<b></td></tr>';
+			$tablaHtml .= '<tr><td colspan="3"><b>Despachos</b></td><td><b>+ ' . CakeNumber::currency($despachos, 'CLP') . '<b></td></tr>';
+			$tablaHtml .= '<tr><td colspan="3"><b>Total Ventas</b></td><td><b>' . CakeNumber::currency(($totalVendidoMarcas - $descuentos + $despachos), 'CLP') . '</b></td></tr>';
 			echo $tablaHtml;
 			exit;
 		}else{

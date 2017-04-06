@@ -319,7 +319,7 @@
                                 <th>Monto vendido</th>
                             </thead>
                             <tbody>
-                            <? $totalVendidoMarcas = 0; $totalCantidadVendido = 0; $totalPorcentaje = 0;?>
+                            <? $totalVendidoMarcas = 0; $totalCantidadVendido = 0; $totalPorcentaje = 0; $descuentos = 0; $despachos = 0;?>
                             <? foreach ($tablaMarcas as $marca) : ?>
                                 <tr>
                                     <td><?=$marca['Fabricante']['Marca'];?></td>
@@ -327,7 +327,11 @@
                                     <td><?=$marca[0]['Cantidad'];?></td>
                                     <td><?=$this->Number->currency($marca[0]['PrecioVenta'], 'CLP');?></td>
                                 </tr>
-                            <? $totalVendidoMarcas = $totalVendidoMarcas + $marca[0]['PrecioVenta']; $totalCantidadVendido = $totalCantidadVendido + $marca[0]['Cantidad']; $totalPorcentaje = $totalPorcentaje + $marca[0]['Total'];?>
+                            <?  $totalVendidoMarcas = $totalVendidoMarcas + $marca[0]['PrecioVenta']; 
+                                $totalCantidadVendido = $totalCantidadVendido + $marca[0]['Cantidad']; 
+                                $totalPorcentaje = $totalPorcentaje + $marca[0]['Total'];
+                                $descuentos = $marca[0]['Descuentos'];
+                                $despachos = $marca[0]['Despachos']; ?>
                             <? endforeach; ?>
                             </tbody>
                             <tfoot>
@@ -336,6 +340,18 @@
                                     <td><b><?=$totalPorcentaje;?>%</b></td>
                                     <td><b><?=$totalCantidadVendido;?></b></td>
                                     <td><b><?=$this->Number->currency($totalVendidoMarcas, 'CLP');?></b></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><b>Descuentos</b></td>
+                                    <td><b> - <?=$this->Number->currency($descuentos, 'CLP');?></b></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><b>Despachos<b></td>
+                                    <td><b> + <?=$this->Number->currency($despachos, 'CLP');?></b></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><b>Total Ventas</b></td>
+                                    <td><b><?=$this->Number->currency(($totalVendidoMarcas - $descuentos + $despachos), 'CLP');?></b></td>
                                 </tr>
                             </tfoot>
                         </table>
