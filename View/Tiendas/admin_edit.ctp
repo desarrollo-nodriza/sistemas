@@ -105,6 +105,10 @@
 									<th><?= $this->Form->label('', 'Logo actual'); ?></th>
 									<td><?=$this->Html->image($this->request->data['Tienda']['logo']['path'], array('class' => 'img-responsive'));?></td>
 								</tr>
+								<tr>
+									<th><?= $this->Form->label('logo', 'Actualiza (300x135)'); ?></th>
+									<td><?= $this->Form->input('logo', array('class' => '', 'type' => 'file')); ?></td>
+								</tr>
 							<? else : ?>
 								<tr>
 									<th><?= $this->Form->label('logo', 'Logo (300x135)'); ?></th>
