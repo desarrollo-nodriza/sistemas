@@ -212,8 +212,9 @@ class ProspectosController extends AppController
 						$this->Session->setFlash('El prospecto fue creado exitósamente, pero no puede pasar a cotización. Necesita agregar al cliente, seleccionar dirección y añadir productos.', null, array(), 'success');
 						$this->redirect(array('action' => 'edit', $prospecto['Prospecto']['id']));
 					}else{
-						# Se pasa a estado finalizado
-						$this->Prospecto->saveField('estado_prospecto_id', 7);
+
+						# Se pasa a estado esperando información
+						$this->Prospecto->saveField('estado_prospecto_id', 3);
 						$this->Session->setFlash('El prospecto fue creado exitósamente, puede crear la cotización.', null, array(), 'success');
 						$this->redirect(array('controller' => 'cotizaciones', 'action' => 'add', $prospecto['Prospecto']['id']));
 					}
@@ -360,7 +361,7 @@ class ProspectosController extends AppController
 						$this->redirect(array('action' => 'edit', $prospecto['Prospecto']['id']));
 					}else{
 						# Se pasa a estado finalizado
-						$this->Prospecto->saveField('estado_prospecto_id', 7);
+						$this->Prospecto->saveField('estado_prospecto_id', 3);
 						$this->Session->setFlash('El prospecto fue creado exitósamente, puede crear la cotización.', null, array(), 'success');
 						$this->redirect(array('controller' => 'cotizaciones', 'action' => 'add', $prospecto['Prospecto']['id']));
 					}

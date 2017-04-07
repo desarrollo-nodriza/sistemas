@@ -89,16 +89,32 @@ class CotizacionesController extends AppController
 					$generado = $e->getMessage();		
 				}
 
+				$ultimaCotizacion = $this->Cotizacion->find('first', array('order' => array('id' => 'DESC'), 'fields' => array('id')));
+				$this->Cotizacion->id = $ultimaCotizacion['Cotizacion']['id'];
+
+				$this->Cotizacion->Prospecto->id = $this->request->data['Cotizacion']['prospecto_id'];
+
 				if ($generado == 'Ok') {
+					# Se pasa a estado Finalizado
+					$this->Cotizacion->Prospecto->saveField('estado_prospecto_id', 7);
+					# Se cambia el estado de la cotización
+					$this->Cotizacion->saveField('estado_cotizacion_id', 1);
 					$this->Session->setFlash('Cotización generada y enviada con éxito.', null, array(), 'success');
 					$this->redirect(array('action' => 'index'));
 				}else{
+					# Se pasa a estado esperando información
+					$this->Cotizacion->Prospecto->saveField('estado_prospecto_id', 7);
+					# Se cambia el estado de la cotización
+					$this->Cotizacion->saveField('estado_cotizacion_id', 2);
 					$this->Session->setFlash('Cotización guardada, error: ' . $generado, null, array(), 'danger');
 					$this->redirect(array('action' => 'index'));
 				}
 			}
 			else
-			{
+			{	
+				# Se pasa a estado esperando información
+				$this->Cotizacion->Prospecto->id = $this->request->data['Cotizacion']['prospecto_id'];
+				$this->Cotizacion->Prospecto->saveField('estado_prospecto_id', 1);
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
 		}

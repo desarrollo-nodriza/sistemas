@@ -51,6 +51,13 @@
 								</td>
 							</tr>
 						</table>
+						<? if (!empty($prospecto['Prospecto']['comentarios'])) : ?>
+						<table class="table" style="background-color: #DC5C60; color: #fff;">
+							<tr>
+								<td style=" width: 65%;"><b>Comentarios del prospecto:</b></td><td><?=$prospecto['Prospecto']['comentarios'];?></td>
+							</tr>
+						</table>
+						<? endif; ?>
 						<table class="table table-bordered">
 							<thead>
 								<th style=" width: 65%;">Datos de Cliente</th>
