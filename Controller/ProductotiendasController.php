@@ -307,11 +307,14 @@ class ProductotiendasController extends AppController {
 				'pl.id_lang' => 1
 			)
 		));
-	
-		// Retornar valor con iva;
-		$producto['Productotienda']['valor_iva'] = $this->precio($producto['Productotienda']['price'], $producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
 		
-
+		// Retornar valor con iva;
+		if ( !isset($producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']) ) {
+			$producto['Productotienda']['valor_iva'] = $producto['Productotienda']['price'];	
+		}else{
+			$producto['Productotienda']['valor_iva'] = $this->precio($producto['Productotienda']['price'], $producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
+		}
+		
 		// Criterio del precio específico
 		foreach ($producto['SpecificPricePriority'] as $criterio) {
 			$precioEspecificoPrioridad = explode(';', $criterio['priority']);
@@ -327,9 +330,10 @@ class ProductotiendasController extends AppController {
 			}else{
 				$producto['Productotienda']['valor_final'] = $this->precio($producto['Productotienda']['valor_iva'], ($precio['reduction'] * 100 * -1) );
 				$producto['Productotienda']['descuento'] = ($precio['reduction'] * 100 * -1 );
+
 			}
 		}
-
+		
 		$categorias = $this->Productotienda->Categoria->find('list', array('conditions' => array('Categoria.activo' => 1, 'Categoria.tienda_id' => $tiendaId)));
 
 		BreadcrumbComponent::add('Productos Tiendas', '/productotiendas');

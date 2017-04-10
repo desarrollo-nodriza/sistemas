@@ -546,9 +546,13 @@ class EmailsController extends AppController
 				* Agregamos los productos al HTML
 				*/
 				foreach ($categoria['Producto'] as $llave => $producto) {
-					
-					// Retornar valor del producto con iva;
-					$producto['Productotienda']['valor_iva'] = $this->precio($producto['Productotienda']['price'], $producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
+
+					// Retornar valor con iva;
+					if ( !isset($producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']) ) {
+						$producto['Productotienda']['valor_iva'] = $producto['Productotienda']['price'];	
+					}else{
+						$producto['Productotienda']['valor_iva'] = $this->precio($producto['Productotienda']['price'], $producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
+					}
 					
 
 					// Criterio del precio específico del producto
