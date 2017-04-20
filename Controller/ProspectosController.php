@@ -236,10 +236,10 @@ class ProspectosController extends AppController
 		$monedas	= $this->Prospecto->Moneda->find('list', array('conditions' => array('Moneda.activo' => 1)));
 		$origenes	= $this->Prospecto->Origen->find('list', array('conditions' => array('Origen.activo' => 1)));
 		$tiendas	= $this->Prospecto->Tienda->find('list', array('conditions' => array('Tienda.activo' => 1)));
-
+		$transportes = $this->Prospecto->Transporte->find('list');
 		BreadcrumbComponent::add('Prospectos ', '/prospectos');
 		BreadcrumbComponent::add('Agregar ');
-		$this->set(compact('estadoProspectos', 'monedas', 'origenes', 'tiendas'));
+		$this->set(compact('estadoProspectos', 'monedas', 'origenes', 'tiendas', 'transportes'));
 	}
 
 	public function admin_edit($id = null)
@@ -313,6 +313,7 @@ class ProspectosController extends AppController
 				}
 
 			}
+
 			
 			# Se eliminan los productos asociados y se agrgan nuevamente
 			if ( ! empty($this->request->data['Productotienda'])) {
@@ -468,9 +469,10 @@ class ProspectosController extends AppController
 		$monedas	= $this->Prospecto->Moneda->find('list', array('conditions' => array('Moneda.activo' => 1)));
 		$origenes	= $this->Prospecto->Origen->find('list', array('conditions' => array('Origen.activo' => 1)));
 		$tiendas	= $this->Prospecto->Tienda->find('list', array('conditions' => array('Tienda.activo' => 1)));
+		$transportes = $this->Prospecto->Transporte->find('list');
 		BreadcrumbComponent::add('Prospectos ', '/prospectos');
 		BreadcrumbComponent::add('Editar ');
-		$this->set(compact('estadoProspectos', 'monedas', 'origenes', 'tiendas', 'arrayPaises', 'regiones'));
+		$this->set(compact('estadoProspectos', 'monedas', 'origenes', 'tiendas', 'arrayPaises', 'regiones', 'transportes'));
 	}
 
 	public function admin_delete($id = null)

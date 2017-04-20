@@ -81,7 +81,7 @@
             <div class="page-content">
                 <?= $this->element('admin_menu_superior'); ?>
 				<?= $this->element('admin_alertas'); ?>
-				<?=$this->element('breadcrumbs'); ?>
+				<?= $this->element('breadcrumbs'); ?>
 				<?= $this->fetch('content'); ?>
 			</div>
 		</div>

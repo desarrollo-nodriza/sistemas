@@ -126,6 +126,15 @@ class Cotizacion extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'ValidezFecha')
+		),
+		'Transporte' => array(
+			'className'				=> 'Transporte',
+			'foreignKey'			=> 'transporte_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'ValidezFecha')
 		)
 	);
 

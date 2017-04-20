@@ -840,7 +840,7 @@ class PagesController extends AppController
 		endforeach;
 
 		$arrayResultado = Hash::extract($arrayResultado, '{n}.{n}');
-
+		
 		if ($tabla) {
 			$tablaHtml = '';
 			$totalVendidoMarcas = 0; $totalCantidadVendido = 0; $totalPorcentaje = 0; $descuentos = 0; $despachos = 0;

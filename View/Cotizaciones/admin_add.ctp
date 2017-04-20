@@ -7,7 +7,7 @@
 		<div class="col-xs-12">
 			<h3><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Importante</h3>
 			<p>Para crear la cotización, indique un nombre descriptivo con el cual pueda identificar la cotización en el futuro.</p>
-			<p>La información cargada en la cotización viene desde el prospeto recién creado. Sí desea hacer una modificación de textos, precios, etc. considere que los calculos de IVA y descuentos deberá hacerlos manualmente.</p>
+			<p>La información cargada en la cotización viene desde el prospecto recién creado. Sí desea hacer una modificación de textos, precios, etc. considere que los calculos de IVA y descuentos deberá hacerlos manualmente.</p>
 			<p>La información del cliente y los productos no modifica la información de la tienda. Es solo para generar la cotización.</p>
 				<br>
 			<p><b>La cotización se enviará al email ingresado en la sección "Datos de Cliente".</b></p>
@@ -167,6 +167,11 @@
 									<tr>
 										<td colspan="4"><b>IVA</b></td><td><?=$this->Form->input('iva', array('value' => $prospecto['iva']));?></td>
 									</tr>
+									<? if ( ! empty($prospecto['Prospecto']['transporte_id']) ) : ?>
+									<tr>
+										<td colspan="4"><b><?=$prospecto['Transporte']['nombre']; ?></b></td><td><?=$this->Form->input('transporte', array('value' => CakeNumber::currency($prospecto['Transporte']['precio'] , 'CLP')));?></td>
+									</tr>
+									<? endif; ?>
 									<tr>
 										<td colspan="4"><b>Total</b></td><td><?=$this->Form->input('total_bruto', array('value' => $prospecto['total_bruto']));?></td>
 									</tr>
@@ -185,6 +190,9 @@
 						<? endif; ?>
 						<? if ( ! empty($prospecto) ) : ?>
 							<?= $this->Form->input('prospecto_id', array('value' => $prospecto['Prospecto']['id'], 'type' => 'hidden')); ?>
+						<? endif; ?>
+						<? if ( ! empty($prospecto['Prospecto']['transporte_id']) ) : ?>
+							<?=$this->Form->input('transporte_id', array('value' => $prospecto['Prospecto']['transporte_id'], 'type' => 'hidden' ));?>
 						<? endif; ?>
 						<?= $this->Form->input('tienda_id', array('value' => $this->Session->read('Tienda.id'), 'type' => 'hidden')); ?>
 						<a href="#" class="mb-control  btn btn-success" data-box="#mb-alerta-cotizacion"><i class="fa fa-floppy-o" aria-hidden="true"></i> Generar Cotización</a>

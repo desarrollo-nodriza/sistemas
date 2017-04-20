@@ -30,6 +30,10 @@
 								<td><?= $this->Form->input('origen_id'); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('transporte_id', 'Transporte'); ?></th>
+								<td><?= $this->Form->input('transporte_id', array('empty' => 'Seleccione transporte')); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('comentarios', 'Comentarios adicionales'); ?></th>
 								<td><?= $this->Form->input('comentarios', array('placeholder' => 'Ingrese comentarios adicionales.')); ?></td>
 							</tr>
