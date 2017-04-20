@@ -132,7 +132,8 @@ class CotizacionesController extends AppController
 
 			# Obtenemos el prospecto	
 			$prospecto = $this->Cotizacion->Prospecto->find('first', array(
-				'conditions' => array('Prospecto.id' => $id_prospecto)
+				'conditions' => array('Prospecto.id' => $id_prospecto),
+				'contain' => array('Transporte')
 				)
 			);
 			# Verificamos la existencia del prospecto
@@ -236,7 +237,13 @@ class CotizacionesController extends AppController
 				$prospecto['total_productos_neto_desc'] = CakeNumber::currency($totalProductosNetoDesc , 'CLP');
 				$prospecto['total_descuento'] = CakeNumber::currency($totalDescuento , 'CLP');
 				$prospecto['iva'] = CakeNumber::currency($iva , 'CLP');
-				$prospecto['total_bruto'] = CakeNumber::currency(($iva + $totalProductosNeto) , 'CLP');
+
+				# Se agrega el valor del transporte si existe
+				if ( ! empty($prospecto['Prospecto']['transporte_id']) ) {
+					$prospecto['total_bruto'] = CakeNumber::currency(($iva + $totalProductosNeto + $prospecto['Transporte']['precio']) , 'CLP');
+				}else{
+					$prospecto['total_bruto'] = CakeNumber::currency(($iva + $totalProductosNeto) , 'CLP');
+				}
 			}
 
 			# Se obtienen el clientes relacionado y la direccion para la cotización
@@ -317,6 +324,7 @@ class CotizacionesController extends AppController
 				'Moneda',
 				'EstadoCotizacion',
 				'ValidezFecha',
+				'Transporte'
 			)
 		));
 
@@ -426,6 +434,7 @@ class CotizacionesController extends AppController
 				'Moneda',
 				'EstadoCotizacion',
 				'ValidezFecha',
+				'Transporte'
 			),
 			'order' => array('Cotizacion.id' => 'DESC')
 		));
@@ -569,6 +578,7 @@ class CotizacionesController extends AppController
 				'Moneda',
 				'EstadoCotizacion',
 				'ValidezFecha',
+				'Transporte'
 			)
 		));
 

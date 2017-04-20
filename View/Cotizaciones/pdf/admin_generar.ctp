@@ -135,6 +135,11 @@
 									<tr>
 										<td colspan="4"><b>IVA</b></td><td><?=$this->request->data['Cotizacion']['iva'];?></td>
 									</tr>
+									<? if (!empty($this->request->data['Transporte'])) : ?>
+									<tr>
+										<td colspan="4"><b><?= $this->request->data['Transporte']['nombre']; ?></b></td><td><?=$this->request->data['Cotizacion']['transporte'];?></td>
+									</tr>
+									<? endif; ?>
 									<tr>
 										<td colspan="4"><b>Total</b></td><td><?=$this->request->data['Cotizacion']['total_bruto'];?></td>
 									</tr>

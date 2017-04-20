@@ -118,6 +118,11 @@
 		<tr>
 			<td colspan="4"><b>IVA</b></td><td><?=$cotizacion['Cotizacion']['iva'];?></td>
 		</tr>
+		<? if (!empty($cotizacion['Transporte'])) : ?>
+		<tr>
+			<td colspan="4"><b><?= $cotizacion['Transporte']['nombre']; ?></b></td><td><?= $cotizacion['Cotizacion']['transporte'];?></td>
+		</tr>
+		<? endif; ?>
 		<tr>
 			<td colspan="4"><b>Total</b></td><td><?=$cotizacion['Cotizacion']['total_bruto'];?></td>
 		</tr>
