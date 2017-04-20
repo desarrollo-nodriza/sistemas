@@ -390,19 +390,19 @@ class ProductotiendasController extends AppController {
     		echo json_encode(array('0' => array('id' => '', 'value' => 'No se encontraron coincidencias')));
     		exit;
     	}
-
-    	$tabla = '<tr>';
-    	$tabla .= '<td><input type="hidden" name="data[Productotienda][[*ID*]][id_product]" value="[*ID*]" class="js-input-id_product">[*ID*]</td>';
-    	$tabla .= '<td>[*REFERENCIA*]</td>';
-    	$tabla .= '<td>[*NOMBRE*]</td>';
-    	$tabla .= '<td><label class="label label-form label-success">[*PRECIO*]</label></td>';
-    	$tabla .= '<td><input type="number" name="data[Productotienda][[*ID*]][cantidad]" class="form-control js-number" min="0" max="100" placeholder="X" style="max-width: 70px;" value="1" /></td>';
-    	$tabla .= '<td><button class="quitar btn btn-danger">Quitar</button></td>';
-    	$tabla .= '</tr>';
     	
     	foreach ($productos as $index => $producto) {
     		$arrayProductos[$index]['id'] = $producto['Productotienda']['id_product'];
 			$arrayProductos[$index]['value'] = sprintf('%s - %s', $producto['Productotienda']['reference'], $producto['Lang'][0]['ProductotiendaIdioma']['name']);
+
+			$tabla = '<tr>';
+	    	$tabla .= '<td><input type="hidden" name="data[Productotienda][[*ID*]][id_product]" value="[*ID*]" class="js-input-id_product">[*ID*]</td>';
+	    	$tabla .= '<td>[*REFERENCIA*]</td>';
+	    	$tabla .= '<td>[*NOMBRE*]</td>';
+	    	$tabla .= '<td><label class="label label-form label-success">[*PRECIO*]</label></td>';
+	    	$tabla .= '<td><input type="number" name="data[Productotienda][[*ID*]][cantidad]" class="form-control js-number" min="0" max="100" placeholder="X" style="max-width: 70px;" value="1" /></td>';
+	    	$tabla .= '<td><button class="quitar btn btn-danger">Quitar</button></td>';
+	    	$tabla .= '</tr>';
 
 			// Armamos la tabla
 			$tabla = str_replace('[*ID*]', $producto['Productotienda']['id_product'] , $tabla);
@@ -421,10 +421,9 @@ class ProductotiendasController extends AppController {
 			}else{
 				$tabla = str_replace('[*PRECIO*]', CakeNumber::currency($precio_normal , 'CLP') , $tabla);
 			}
-			
 			$arrayProductos[$index]['todo'] = $tabla;
     	}
-    	
+
     	echo json_encode($arrayProductos, JSON_FORCE_OBJECT);
     	exit;
     }
