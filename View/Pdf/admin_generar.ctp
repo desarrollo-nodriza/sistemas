@@ -118,7 +118,7 @@
 		<tr>
 			<td colspan="4"><b>IVA</b></td><td><?=$cotizacion['Cotizacion']['iva'];?></td>
 		</tr>
-		<? if (!empty($cotizacion['Transporte'])) : ?>
+		<? if (!empty($cotizacion['Transporte']['id'])) : ?>
 		<tr>
 			<td colspan="4"><b><?= $cotizacion['Transporte']['nombre']; ?></b></td><td><?= $cotizacion['Cotizacion']['transporte'];?></td>
 		</tr>
