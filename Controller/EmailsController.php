@@ -590,7 +590,7 @@ class EmailsController extends AppController
 					$valor_producto			= ( !empty($producto['Productotienda']['descuento']) ) ? '<font style="text-decoration: line-through;">' . CakeNumber::currency($producto['Productotienda']['valor_iva'], 'CLP') . '</font>' : '' ;
 					$oferta_producto		= CakeNumber::currency($producto['Productotienda']['valor_final'] , 'CLP');
 					$url_producto			= sprintf('%s%s-%s.html', $SitioUrl, $producto['pl']['link_rewrite'], $producto['Productotienda']['id_product']);
-					$cuotas_producto 		= ( isset($producto['Productotienda']['valor_cuotas']) ) ? sprintf('<font style="background-color:#EA3A3A; display: ;display: block;line-height: 25px;color: #fff;margin: 4px 5px;">%s cuotas de %s</font>', $CuotasEmail, CakeNumber::currency($producto['Productotienda']['valor_cuotas'] , 'CLP') ) : '';
+					$cuotas_producto 		= ( isset($producto['Productotienda']['valor_cuotas']) ) ? sprintf('<font style="background-color:#EA3A3A; display: block;line-height: 25px;color: #fff;margin: 4px 5px;">%s cuotas de %s</font>', $CuotasEmail, CakeNumber::currency($producto['Productotienda']['valor_cuotas'] , 'CLP') ) : '';
 					
 					/**
 					* Agregamos la información al HTML del email
