@@ -83,6 +83,38 @@ Class Productotienda extends AppModel {
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'Especificacion' => array(
+			'className'				=> 'Especificacion',
+			'joinTable'				=> 'feature_product',
+			'foreignKey'			=> 'id_product',
+			'associationForeignKey'	=> 'id_feature',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'EspecificacionProductotienda',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		),
+		'EspecificacionValor' => array(
+			'className'				=> 'EspecificacionValor',
+			'joinTable'				=> 'feature_product',
+			'foreignKey'			=> 'id_product',
+			'associationForeignKey'	=> 'id_feature_value',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'EspecificacionValorProductotienda',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 

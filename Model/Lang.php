@@ -74,6 +74,39 @@ Class Lang extends AppModel {
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
-		)
+		),
+		'Especificacion' => array(
+			'className'				=> 'Especificacion',
+			'joinTable'				=> 'feature_lang',
+			'foreignKey'			=> 'id_lang',
+			'associationForeignKey'	=> 'id_feature',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> '',
+			'finderQuery'			=> 'EspecificacionIdioma',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		),
+		'EspecificacionValor' => array(
+			'className'				=> 'EspecificacionValor',
+			'joinTable'				=> 'feature_value_lang',
+			'foreignKey'			=> 'id_lang',
+			'associationForeignKey'	=> 'id_feature_value',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> '',
+			'finderQuery'			=> 'EspecificacionValorIdioma',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		),
+
 	);
 }

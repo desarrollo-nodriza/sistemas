@@ -318,6 +318,10 @@ $.extend({
 				if ( $('.input-productos-buscar').length > 0 ) {
 					$.app.autocompletarBuscar.buscar();
 				}
+
+				if ( $('.input-productos-buscar-meli').length > 0 ) {
+					$.app.autocompletarBuscar.buscar();
+				}
 			},	
 			obtenerDatosCliente: function( tienda, idCliente){
 				/**
@@ -480,6 +484,35 @@ $.extend({
 		                    autocomplete.css("width", width);
 		                    autocomplete.css("position", 'absolute');
 		                }
+					});
+				});
+
+				$('.input-productos-buscar-meli').each(function(){
+					var $esto 	= $(this),
+						image 	= '',
+						name 	= '',
+						description = '',
+						specs = '';
+					
+					$esto.autocomplete({
+					   	source: function(request, response) {
+					      	$.get( webroot + 'mercadoLibres/obtener_productos/' + request.term, function(respuesta){
+								response( $.parseJSON(respuesta) );
+					      	})
+					      	.fail(function(){
+								$.app.loader.ocultar();
+
+								noty({text: 'Ocurrió un error al obtener la información. Intente nuevamente.', layout: 'topRight', type: 'error'});
+
+								setTimeout(function(){
+									$.noty.closeAll();
+								}, 10000);
+							});
+					    },
+					    select: function( event, ui ) {
+					        console.log("Seleccionado: " + ui.item.value + " id " + ui.item.id);
+					        $('.id-product').val(ui.item.id);
+					    }
 					});
 				});
 

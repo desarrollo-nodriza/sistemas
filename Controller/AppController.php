@@ -369,6 +369,13 @@ class AppController extends Controller
 		ClassRegistry::init('OrdenEstado')->useDbConfig 		= $tiendaConf;
 		ClassRegistry::init('OrdenEstadoIdioma')->useDbConfig 	= $tiendaConf;
 		ClassRegistry::init('ProductotiendaIdioma')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('Especificacion')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('EspecificacionIdioma')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('EspecificacionProductotienda')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('EspecificacionValor')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('EspecificacionValorIdioma')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('EspecificacionValorProductotienda')->useDbConfig 	= $tiendaConf;
+		
     }
 	
 	/**
