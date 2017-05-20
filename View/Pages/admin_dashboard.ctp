@@ -10,7 +10,7 @@
 </div>
 <div class="page-content-wrap" id="dashboard">
     <div class="row">
-        <div class="col-xs-6 col-sm-4">
+        <div class="col-xs-12 col-sm-4">
             <div class="widget widget-success widget-carousel">
                 <div class="owl-carousel" id="ventas_del_periodo">
                 	<div>                                    
@@ -46,7 +46,7 @@
                 </div>                                                      
             </div>
         </div>-->
-        <div class="col-xs-6 col-sm-4">
+        <div class="col-xs-12 col-sm-4">
             <div class="widget widget-info widget-carousel">
                 <div class="owl-carousel" id="pedidos_del_periodo">
                     <? foreach ($tickets as $ticket) : ?>
@@ -59,7 +59,7 @@
                 </div>                                                      
             </div>
         </div>
-        <div class="col-xs-6 col-sm-4">
+        <div class="col-xs-12 col-sm-4">
             <div class="widget widget-primary widget-carousel">
                 <div class="owl-carousel" id="pedidos_del_periodo">
                     <div>                                    
