@@ -388,7 +388,7 @@
 							<tfoot>
 								<tr>
 									<td colspan="4"><?= $this->Form->label('descuento', 'Descuento global (1-100 %)'); ?></td>
-									<td colspan="2"><?= $this->Form->input('descuento', array('style' => 'max-width: 70px;', 'min' => 0, 'max' => 100)); ?></td>
+									<td colspan="2"><?= $this->Form->input('descuento', array('style' => 'max-width: 70px;', 'min' => 0, 'max' => 10000)); ?></td>
 								</tr>
 							</tfoot>
 						</table>

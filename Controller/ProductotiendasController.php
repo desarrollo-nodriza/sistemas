@@ -400,7 +400,7 @@ class ProductotiendasController extends AppController {
 	    	$tabla .= '<td>[*REFERENCIA*]</td>';
 	    	$tabla .= '<td>[*NOMBRE*]</td>';
 	    	$tabla .= '<td><label class="label label-form label-success">[*PRECIO*]</label></td>';
-	    	$tabla .= '<td><input type="number" name="data[Productotienda][[*ID*]][cantidad]" class="form-control js-number" min="0" max="100" placeholder="X" style="max-width: 70px;" value="1" /></td>';
+	    	$tabla .= '<td><input type="number" name="data[Productotienda][[*ID*]][cantidad]" class="form-control js-number" min="0" max="100000" placeholder="X" style="max-width: 70px;" value="1" /></td>';
 	    	$tabla .= '<td><button class="quitar btn btn-danger">Quitar</button></td>';
 	    	$tabla .= '</tr>';
 
