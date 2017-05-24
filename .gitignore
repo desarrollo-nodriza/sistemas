@@ -22,3 +22,5 @@
 /tmp/*
 /Config/core.php
 /Config/database.php
+/webroot/Pdf/*
+/webroot/img/*
