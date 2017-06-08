@@ -666,7 +666,7 @@ class CotizacionesController extends AppController
 			'conditions' => array(
 				'Cotizacion.id' => $id
 				),
-			'fields' => array('id', 'email_cliente', 'nombre_cliente', 'generado', 'enviado', 'archivo', 'fecha_cotizacion', 'created')
+			'fields' => array('id', 'email_cliente', 'email_vendedor', 'nombre_cliente', 'generado', 'enviado', 'archivo', 'fecha_cotizacion', 'created')
 			)
 		);
 
