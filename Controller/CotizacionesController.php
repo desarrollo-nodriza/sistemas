@@ -324,10 +324,11 @@ class CotizacionesController extends AppController
 				'Moneda',
 				'EstadoCotizacion',
 				'ValidezFecha',
-				'Transporte'
+				'Transporte',
+				'Prospecto'
 			)
 		));
-
+		
 		$productos = array();
 
 		# Obtenemos los ID´S de productos relacionados de la cotización
@@ -434,7 +435,8 @@ class CotizacionesController extends AppController
 				'Moneda',
 				'EstadoCotizacion',
 				'ValidezFecha',
-				'Transporte'
+				'Transporte',
+				'Prospecto'
 			),
 			'order' => array('Cotizacion.id' => 'DESC')
 		));
@@ -538,7 +540,7 @@ class CotizacionesController extends AppController
 			$this->Email
 			->viewVars(compact('cotizacion', 'tienda'))
 			->emailFormat('html')
-			->from(array($tienda['Tienda']['email_remitente'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
+			->from(array($cotizacion['Cotizacion']['email_vendedor'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
 			->to($email)
 			->addBcc( $bcc ) 
 			->template('cotizacion_cliente')
@@ -696,7 +698,7 @@ class CotizacionesController extends AppController
 			$this->Email
 			->viewVars(compact('cotizacion', 'tienda'))
 			->emailFormat('html')
-			->from(array($tienda['Tienda']['email_remitente'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
+			->from(array($cotizacion['Cotizacion']['email_vendedor'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
 			->to($email)
 			->addBcc($bcc) 
 			->template('cotizacion_cliente')

@@ -60,7 +60,7 @@
 								<td><?= $this->Form->input('email_remitente'); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('emails_bcc', 'Email para CCO'); ?></th>
+								<th><?= $this->Form->label('emails_bcc', 'Email para <br> Copia oculta'); ?></th>
 								<td><?= $this->Form->input('emails_bcc', array('placeholder' => 'Emails separados por coma (,)')); ?></td>
 							</tr>
 						</table>
@@ -95,6 +95,10 @@
 							<tr>
 								<th><?= $this->Form->label('giro', 'Giro comercial'); ?></th>
 								<td><?= $this->Form->input('giro'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('detalle_cuenta', 'Información para transferencias'); ?></th>
+								<td><?= $this->Form->input('detalle_cuenta'); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('fono', 'Teléfono'); ?></th>

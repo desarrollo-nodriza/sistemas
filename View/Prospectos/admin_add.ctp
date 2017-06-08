@@ -33,6 +33,10 @@
 								<td><?= $this->Form->input('transporte_id', array('empty' => 'Seleccione transporte')); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('datos_bancarios', 'Agregar información de <br>transferencia a la cotización'); ?></th>
+								<td><?= $this->Form->input('datos_bancarios', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('comentarios', 'Comentarios adicionales'); ?></th>
 								<td><?= $this->Form->input('comentarios', array('placeholder' => 'Ingrese comentarios adicionales.')); ?></td>
 							</tr>

@@ -41,6 +41,11 @@
 										<tr>	
 											<td><b>Fono:</b></td><td><?=$tienda['Tienda']['fono'];?></td>
 										</tr>
+										<? if ( $prospecto['Prospecto']['datos_bancarios'] && !empty($tienda['Tienda']['detalle_cuenta'])) : ?>
+										<tr>
+											<td><b>Datos para <br>la transerencia:</b></td><td><?=$this->Text->autoParagraph($tienda['Tienda']['detalle_cuenta']);?></td>
+										</tr>
+										<? endif; ?>
 										<tr>	
 											<td colspan="2"><a href="http://<?=$tienda['Tienda']['url'];?>" target="_blank"><?=$tienda['Tienda']['url'];?></a></td>
 										</tr>
