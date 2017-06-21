@@ -40,10 +40,10 @@ jQuery(document).ready(function($)
 	 * Data tables
 	 */
 	 if($(".datatable").length > 0){
-        $(".datatable").dataTable();
-        $(".datatable").on('page.dt',function () {
-            onresize(100);
+        $(".datatable").dataTable({
+        	ordering:  false
         });
+       
     }
 
 

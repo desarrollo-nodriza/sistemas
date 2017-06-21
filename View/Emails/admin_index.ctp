@@ -44,7 +44,12 @@
 											<? if ($permisos['edit']) : ?>
 												<li><?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $email['Email']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?></li>
 											<? endif; ?>
-												<li><?= $this->Form->postLink('<i class="fa fa-eye"></i> Generar', array('action' => 'generarHtml', $email['Email']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Ver', 'escape' => false)); ?></li>
+												<!--<li><?= $this->Form->postLink('<i class="fa fa-eye"></i> Generar', array('action' => 'generarHtml', $email['Email']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Ver', 'escape' => false)); ?></li>-->
+											<? if (!empty($email['Email']['ultimo_html'])) : ?>
+												<li>
+													<?= $this->Html->link('<i class="fa fa-check"></i> Ver Html guardado', array('action' => 'view_html', $email['Email']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
+												</li>
+											<? endif; ?>
 											<? if ($permisos['generate'] ) :?>
 												<li><a href="#" class="mb-control " data-box="#mb-signout<?=$email['Email']['id'];?>"><i class="fa fa-cogs"></i> Generar y guardar</a></li>
 											<? endif; ?>

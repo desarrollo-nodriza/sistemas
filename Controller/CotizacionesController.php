@@ -691,7 +691,7 @@ class CotizacionesController extends AppController
 					$bccArray[$value] = $value;
 				}
 			}
-
+			
 			App::uses('CakeEmail', 'Network/Email');
 		
 			$this->Email = new CakeEmail();

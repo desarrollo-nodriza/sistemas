@@ -23,7 +23,8 @@ class EmailsController extends AppController
 			'recursive'			=> 0,
 			'limit'	=> 1000,
 			'conditions' => $conditions,
-			'contain' => array('Tienda', 'Plantilla')
+			'contain' => array('Tienda', 'Plantilla'),
+			'order' => array('Email.created' => 'DESC')
 		);
 
 		BreadcrumbComponent::add('Newsletters ');
@@ -321,6 +322,32 @@ class EmailsController extends AppController
 			'conditions'	=> array('Email.id' => $id),
 			'contain'		=> array('Categoria')
 		));
+
+	}
+
+	/**
+	 * Función que permite ver el último html guardado de un newsleter
+	 * @param 	bigint 	$id 	Identificador del nesletter
+	 */
+	public function admin_view_html($id =  null) {
+		if ( ! $this->Email->exists($id) )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+
+		}
+
+		$this->request->data	= $this->Email->find('first', array(
+			'conditions'	=> array('Email.id' => $id)
+		));
+
+		if (empty($this->request->data)) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		BreadcrumbComponent::add('Newsletters ', '/emails');
+		BreadcrumbComponent::add(sprintf('Último html guardado para %s', $this->request->data['Email']['nombre']));
 
 	}
 
@@ -644,7 +671,7 @@ class EmailsController extends AppController
 			BreadcrumbComponent::add('Newsletters ', '/emails');
 			BreadcrumbComponent::add('Generar ');
 
-			$this->set(compact('htmlFinal', 'htmlNombre'));
+			$this->set(compact('htmlFinal', 'htmlNombre', 'save'));
 
 	}
 
