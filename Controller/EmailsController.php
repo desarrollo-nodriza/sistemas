@@ -133,7 +133,7 @@ class EmailsController extends AppController
 
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
 
-				$this->redirect(array('action' => 'generarHtml', $id));
+				$this->redirect(array('action' => 'generarHtml', $id, true));
 
 			}
 
