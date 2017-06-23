@@ -201,7 +201,10 @@ class Email extends AppModel
 				}
 
 
-				
+				// Tiene desripcion
+				if ( ! empty($this->data['Email']['descripcion']) ) {
+					$htmlPlantilla['Plantilla']['html'] = str_replace('[**descripcion**]', nl2br($this->data['Email']['descripcion']), $htmlPlantilla['Plantilla']['html']);
+				}
 
 				// Asignamos el html de la plantilla al newsletter
 				$this->data['Email']['html'] = $htmlPlantilla['Plantilla']['html'];

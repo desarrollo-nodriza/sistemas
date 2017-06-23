@@ -359,7 +359,7 @@ class EmailsController extends AppController
 
 			$htmlEmail = $this->Email->find('first', array(
 				'conditions' => array('Email.id' => $id), 
-				'fields' => array('html','nombre', 'sitio_url', 'tienda_id', 'mostrar_cuotas', 'cuotas'),
+				'fields' => array('html','nombre', 'sitio_url', 'tienda_id', 'mostrar_cuotas', 'cuotas', 'descripcion'),
 				'contain'	=> array('Categoria', 'Tienda')	
 				)
 			);

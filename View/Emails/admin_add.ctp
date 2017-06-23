@@ -22,8 +22,10 @@
 									<td><?= $this->Form->input('titulo'); ?></td>
 								</tr>
 								<tr>
-									<th><?= $this->Form->label('descripcion', 'Descripcion'); ?></th>
-									<td><?= $this->Form->input('descripcion'); ?></td>
+									<th><?= $this->Form->label('descripcion', 'Descripción'); ?></th>
+									<td>
+										<label>La descripción se mostrará al final del newsletter</label>
+										<?= $this->Form->input('descripcion'); ?></td>
 								</tr>
 								<tr>
 									<th><?= $this->Form->label('fecha', 'Fecha'); ?></th>
