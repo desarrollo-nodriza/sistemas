@@ -1,7 +1,40 @@
 <?php
 App::uses('AppController', 'Controller');
 class MercadoLibresController extends AppController
-{
+{	
+
+	function beforeFilter() {
+	    parent::beforeFilter();
+
+	    if ($this->request->params['meli']) {
+	    	$this->Auth->allow('get');	
+	    }
+	}
+
+	/**
+	* MELI Access
+	* Método de retorna el html generado para un producto, una tienda y una plantilla definida
+	*/
+	public function meli_get()
+	{	
+		if (isset($this->request->params['meli']) 
+			&& isset($this->request->params['tienda'])
+			&& isset($this->request->params['plantilla']) 
+			&& isset($this->request->params['producto'])) 
+		{
+			$this->request->data['MercadoLibr']['mercado_libre_plantilla_id'] = $this->request->params['plantilla'];
+			$this->request->data['MercadoLibr']['id_product'] = $this->request->params['producto'];
+
+			// Set tienda
+			$this->Session->write('Tienda.id', $this->request->params['tienda']);
+
+			$this->request->data['MercadoLibr']['html'] = $this->createHtml();
+
+			echo $this->request->data['MercadoLibr']['html'];
+			exit;
+		}
+	}
+
 	public function admin_index()
 	{
 		$this->paginate		= array(
