@@ -20,6 +20,7 @@
 						<table class="table">
 							<thead>
 								<tr class="sort">
+									<th><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('mercado_libre_plantilla_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('tienda_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -30,6 +31,7 @@
 							<tbody>
 								<?php foreach ( $mercadoLibres as $mercadoLibr ) : ?>
 								<tr>
+									<td>#<?= h($mercadoLibr['MercadoLibr']['id']); ?>&nbsp;</td>
 									<td><?= h($mercadoLibr['MercadoLibrePlantilla']['nombre']); ?>&nbsp;</td>
 									<td><?= h($mercadoLibr['Tienda']['nombre']); ?>&nbsp;</td>
 									<td><?= h($mercadoLibr['MercadoLibr']['nombre']); ?>&nbsp;</td>

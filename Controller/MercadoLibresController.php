@@ -6,7 +6,7 @@ class MercadoLibresController extends AppController
 	function beforeFilter() {
 	    parent::beforeFilter();
 
-	    if ($this->request->params['meli']) {
+	    if (isset($this->request->params['meli'])) {
 	    	$this->Auth->allow('get');	
 	    }
 	}
@@ -30,7 +30,7 @@ class MercadoLibresController extends AppController
 
 			$this->request->data['MercadoLibr']['html'] = $this->createHtml();
 
-			echo $this->request->data['MercadoLibr']['html'];
+			return $this->request->data['MercadoLibr']['html'];
 			exit;
 		}
 	}
@@ -41,7 +41,8 @@ class MercadoLibresController extends AppController
 			'recursive'			=> 0,
 			'conditions' => array(
 				'MercadoLibr.tienda_id' => $this->Session->read('Tienda.id')
-				)
+				),
+			'order' => array('MercadoLibr.id' => 'DESC')
 		);
 
 		BreadcrumbComponent::add('Mercado Libre Productos ');
