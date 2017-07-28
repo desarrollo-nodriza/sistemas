@@ -19,6 +19,23 @@ Router::connect(
     )
 );
 
+/**
+ * Kanasta
+ */
+Router::connect('/knasta', array('controller' => 'productotiendas', 'action' => 'feed', 'knasta' => true, 'prefix' => 'knasta'));
+Router::connect(
+    '/knasta/:tienda', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'productotiendas', 
+        'action' => 'feed',
+        'knasta' => true,
+        'prefix' => 'knasta'),
+    array(
+        'pass' => array('tienda'),
+        'tienda' => '[a-z]+'
+    )
+);
+
 Router::connect('/login', array('controller' => 'administradores', 'action' => 'login', 'admin' => true));
 Router::connect('/logout', array('controller' => 'administradores', 'action' => 'logout', 'admin' => true));
 

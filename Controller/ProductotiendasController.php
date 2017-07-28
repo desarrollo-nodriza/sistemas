@@ -6,6 +6,283 @@ class ProductotiendasController extends AppController {
     public $name = 'Productotiendas';    
     public $uses = array('Productotienda');
 
+
+    function beforeFilter() {
+	    parent::beforeFilter();
+
+	    # Se permite el acceso por url al método feed
+	    if (isset($this->request->params['knasta'])) {
+	    	$this->Auth->allow('feed');	
+	    }
+	}
+
+
+	/**
+	 * Ordena la información de la categoria
+	 * @param 	$id_category 		int 		Identificador de categoia
+	 * @param 	$name 				string 		Nombre de la categoria
+	 * @param 	$level_depth 		int 		Nivel de categoria
+	 * @param 	$parent_categories	array 		Arreglo de datos de categorias padres
+	 * @return 	$array 
+	 */
+	public function formatTree($id_category = null, $name = '', $level_depth = null, $parent_categories = array())
+	{
+		$arr = array(
+			'id_category' => (int) $id_category,
+			'name' => (string) $name,
+			'level_depth' => (int) $level_depth,
+			'parent_categories' => (array) $parent_categories
+		);
+
+		return $arr;
+	}
+
+
+	public function getParentCategory($id_category = '', $prefix = 'tm_')
+	{
+		if (empty($id_category)) {
+			return;
+		}
+
+		$categories = array();
+
+		$q = "SELECT c.id_category, c.id_parent, c.level_depth, cl.name FROM  ".$prefix."category AS c 
+			LEFT JOIN ".$prefix."category_lang cl ON (c.id_category = cl.id_category) 
+			WHERE c.id_category =" . $id_category;
+			
+		$parentCategory = $this->Productotienda->query($q);
+		
+		for ( $i = $parentCategory[0]['c']['level_depth'] ; $i > 1 ; $i--) {
+			if ($i == $parentCategory[0]['c']['level_depth']) {
+				$categories[$i] = $this->formatTree($parentCategory[0]['c']['id_category'], $parentCategory[0]['cl']['name'], $parentCategory[0]['c']['level_depth'], $this->getParentCategory($parentCategory[0]['c']['id_parent'], $prefix));	
+			}
+		}
+	
+		return $categories;
+	
+	}
+
+	public function categoriesTree( $categories = array() )
+	{
+		$arr = '';
+		
+		foreach ($categories as $ix => $category) {
+			$arr .= $category['name'] . ',';
+			
+			for ( $i = $category['level_depth']; $i > 0 ; $i-- ) { 
+				if ($i == $category['level_depth'] ) {
+					$arr .= $this->categoriesTree($category['parent_categories']);
+				}
+			}
+		}
+
+		return $arr;
+	}
+
+	public function tree($string)
+	{
+		$formatted = explode(',', $string);
+		$formatted = array_reverse($formatted);
+		
+		$s = '';
+
+		foreach ($formatted as $key => $value) {
+			if ($key > 1) {
+				$s .= ' > ' . $value;
+			}else{
+				$s .= $value;
+			}
+		}
+
+		return $s;
+	}
+
+	public function getProductCategoriesFull($id_product = '', $id_category_default = '' , $id_lang = 1, $prefix = 'tm_')
+    {
+        if (!$id_lang) {
+            $id_lang = 1;
+        }
+
+        $ret = array();
+        $row = $this->Productotienda->query('
+			SELECT cp.`id_category`, cl.`name`, cl.`link_rewrite`m c.`id_parent` FROM `'.$prefix.'category_product` cp
+			LEFT JOIN `'.$prefix.'category` c ON (c.id_category = cp.id_category)
+			LEFT JOIN `'.$prefix.'category_lang` cl ON (cp.`id_category` = cl.`id_category`)
+			WHERE cp.`id_product` = '.(int)$id_product.'
+				AND cl.`id_lang` = '.(int)$id_lang.'
+				AND c.id'
+        );
+        prx($row);
+        foreach ($row as $key => $val) {
+            $ret[$key]['id_category'] = $val['cp']['id_category'];
+            $ret[$key]['name'] = $val['cl']['name'];
+            $ret[$key]['link_rewrite'] = $val['cl']['link_rewrite'];
+        }
+        prx($ret);
+        return $ret;
+    }
+
+    public function knasta_feed()
+    {	
+    	$out = array();
+
+    	if (isset($this->request->params['knasta']) && isset($this->request->params['tienda']) ) 
+		{
+			//Buscamos el prefijo de la tienda
+			$tienda = ClassRegistry::init('Tienda')->find('first', array(
+			'conditions' => array(
+				'Tienda.configuracion' => $this->request->params['tienda']
+				)
+			));
+		}else{
+
+			$out = array('error' => array('code' => 400, 'message' => 'Tienda no válida'));
+		
+		}
+
+		// Virificar existencia de la tienda
+		if (empty($tienda)) {
+			$out = array('error' => array('code' => 404, 'message' => 'Tienda no válida'));	
+		}else if (empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['configuracion']) || empty($tienda['Tienda']['url'])) {
+			$out = array('error' => array('code' => 500, 'message' => 'La tienda no está configurada completamente. Verifiquela y vuelva a intentarlo'));
+		}else{
+			# Url de la tienda
+			$sitioUrl = $this->formatear_url($tienda['Tienda']['url'], true);
+			
+			# cambiamos el datasource de las modelos externos
+			$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
+
+			// Buscamos los productos que cumplan con el criterio
+			$productos	= $this->Productotienda->find('all', array(
+				'fields' => array(
+					'concat(\'http://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-home_default.jpg\' ) AS url_image_thumb',
+					'concat(\'http://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'.jpg\' ) AS url_image_large',
+					'Productotienda.id_product',
+					'Productotienda.id_category_default',
+					'pl.name', 
+					'pl.description_short',
+					'Productotienda.price', 
+					'pl.link_rewrite', 
+					'Productotienda.reference', 
+					'Productotienda.show_price'
+				),
+				'joins' => array(
+					array(
+			            'table' => sprintf('%sproduct_lang', $tienda['Tienda']['prefijo']),
+			            'alias' => 'pl',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Productotienda.id_product=pl.id_product'
+			            )
+
+		        	),
+		        	array(
+			            'table' => sprintf('%simage', $tienda['Tienda']['prefijo']),
+			            'alias' => 'im',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Productotienda.id_product = im.id_product',
+	                		'im.cover' => 1
+			            )
+		        	),
+		        	array(
+			            'table' => sprintf('%scategory_product', $tienda['Tienda']['prefijo']),
+			            'alias' => 'CategoriaProducto',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'CategoriaProducto.id_product' => 'Productotienda.id_product'
+			            )
+		        	)
+				),
+				'contain' => array(
+					'TaxRulesGroup' => array(
+						'TaxRule' => array(
+							'Tax'
+						)
+					),
+					'SpecificPrice' => array(
+						'conditions' => array(
+							'OR' => array(
+								'OR' => array(
+									array('SpecificPrice.from' => '000-00-00 00:00:00'),
+									array('SpecificPrice.to' => '000-00-00 00:00:00')
+								),
+								'AND' => array(
+									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+								)
+							)
+						)
+					),
+					'SpecificPricePriority'
+				),
+				'conditions' => array(
+					'Productotienda.active' => 1,
+					'Productotienda.available_for_order' => 1,
+					'Productotienda.id_shop_default' => 1,
+					'Productotienda.quantity > 0' 
+				)
+			));
+			
+			$knasta = array();
+
+			foreach ($productos as $key => $value) {
+				$cate = $this->getParentCategory($value['Productotienda']['id_category_default'], $tienda['Tienda']['prefijo']);
+				$cate = $this->categoriesTree($cate);
+
+
+				if ( !isset($value['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']) ) {
+					$value['Productotienda']['valor_iva'] = $value['Productotienda']['price'];	
+				}else{
+					$value['Productotienda']['valor_iva'] = $this->precio($value['Productotienda']['price'], $value['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
+				}
+				
+
+				// Criterio del precio específico del producto
+				foreach ($value['SpecificPricePriority'] as $criterio) {
+					$precioEspecificoPrioridad = explode(';', $criterio['priority']);
+				}
+
+				$value['Productotienda']['valor_final'] = $value['Productotienda']['valor_iva'];
+
+				// Retornar último precio espeficico según criterio del producto
+				foreach ($value['SpecificPrice'] as $precio) {
+					if ( $precio['reduction'] == 0 ) {
+						$value['Productotienda']['valor_final'] = $value['Productotienda']['valor_iva'];
+
+					}else{
+
+						$value['Productotienda']['valor_final'] = $this->precio($value['Productotienda']['valor_iva'], ($precio['reduction'] * 100 * -1) );
+						$value['Productotienda']['descuento'] = ($precio['reduction'] * 100 * -1 );
+
+					}
+				}
+
+				$knasta[$key]['Sku'] = $value['Productotienda']['reference'];
+				$knasta[$key]['Description'] = strip_tags($value['pl']['description_short']);
+				$knasta[$key]['Title'] = $value['pl']['name'];
+				$knasta[$key]['ProductListImage'] = $value[0]['url_image_thumb'];
+				$knasta[$key]['ProductViewImages'] = array($value[0]['url_image_large']);
+				$knasta[$key]['ProductUrl'] = sprintf('%s%s-%s.html', $sitioUrl, $value['pl']['link_rewrite'], $value['Productotienda']['id_product']);;
+				$knasta[$key]['CategoryId'] = $value['Productotienda']['id_category_default'];
+				$knasta[$key]['CategoryName'] = $this->tree($cate);
+				$knasta[$key]['Stock'] = '1';
+				$knasta[$key]['InternetPrice'] = CakeNumber::currency($value['Productotienda']['valor_iva'], 'CLP');
+
+			}
+
+			$out = $knasta;
+		}
+
+		$this->layout = 'ajax';
+		
+		$out = str_replace('"', '\\\"', $out);
+
+		$this->set(compact('out'));
+		$this->set('_serialize', array('out'));
+    	
+    }
+
     public function admin_index() 
     {
     	$paginate = array(); 
@@ -28,6 +305,7 @@ class ProductotiendasController extends AppController {
 				$this->redirect(array('controller' => 'productotiendas', 'action' => 'index', 'findby' => $this->request->data['Filtro']['findby'], 'nombre_buscar' => $this->request->data['Filtro']['nombre_buscar']));
 			}
 		}
+
 		//Buscamos el prefijo de la tienda
 		$tienda = ClassRegistry::init('Tienda')->find('first', array(
 		'conditions' => array(

@@ -35,6 +35,7 @@ class AppController extends Controller
 			'scopes'				=> array('profile', 'email')
 		),
 		'DebugKit.Toolbar',
+		'RequestHandler',
 		'Breadcrumb' => array(
 			'crumbs'		=> array(
 				array('', null),
@@ -68,7 +69,7 @@ class AppController extends Controller
 		$this->Google->cliente->setRedirectUri(Router::url(array('controller' => 'administradores', 'action' => 'login'), true));
 		$this->Google->oauth();
 
-		if ( ! empty($this->request->query['code']) && $this->Session->read('Google.code') != $this->request->query['code'] )
+		if ( ! empty($this->request->query['code']) && $this->Session->check('Google.code') && $this->Session->read('Google.code') != $this->request->query['code'] )
 		{
 			$this->Google->oauth->authenticate($this->request->query['code']);
 			$this->Session->write('Google', array(
@@ -327,14 +328,18 @@ class AppController extends Controller
 	* @param 	$txt 	String 		Texto a formatear
 	* @return 	$txt 	String 		Texto formateado
 	*/
-	public function formatear_url($txt = null) 
+	public function formatear_url($txt = null, $ssl = false) 
 	{
 		if (!empty($txt)) {
 			
 			$largo_url = strlen($txt);
 
 			if ( substr($txt, 0, 7) != 'http://' && substr($txt, 0, 8) != 'https://' ) {
-				$txt = 'http://' . $txt;
+				if ($ssl) {
+					$txt = 'https://' . $txt;
+				}else{
+					$txt = 'http://' . $txt;
+				}
 			}
 
 			if ( substr($txt, ($largo_url - 1), 1) != '/' ) {
@@ -382,8 +387,8 @@ class AppController extends Controller
 	 * Functión que permite cambiar la configuración de los modelos de BD externos
 	 * @param  string  	$tiendaConf  	Nombre de la configuración de BD a utilizar
 	 * @return void
-	 
-	public function cambiarConfigDB( $modelos = array() ) {
+	 */
+	/*public function cambiarConfigDB( $modelos = array() ) {
 
 		if (SessionComponent::check('Tienda') && !empty($modelos)) {
 

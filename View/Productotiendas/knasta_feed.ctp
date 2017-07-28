@@ -1,0 +1,1 @@
+<? print_r(json_encode($out, JSON_UNESCAPED_UNICODE)); ?>
