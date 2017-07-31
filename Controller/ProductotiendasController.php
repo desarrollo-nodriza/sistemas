@@ -241,7 +241,7 @@ class ProductotiendasController extends AppController {
 				$knasta[$key]['ProductUrl'] = sprintf('%s%s-%s.html', $sitioUrl, $value['pl']['link_rewrite'], $value['Productotienda']['id_product']);;
 				$knasta[$key]['CategoryId'] = $value['Productotienda']['id_category_default'];
 				$knasta[$key]['CategoryName'] = $this->tree($cate);
-				$knasta[$key]['Stock'] = 1;
+				$knasta[$key]['Stock'] = '1';
 				#$knasta[$key]['Stock'] = ($value['Productotienda']['quantity'] > 0) ? '1' : '0';
 				$knasta[$key]['InternetPrice'] = CakeNumber::currency($value['Productotienda']['valor_iva'], 'CLP');
 
