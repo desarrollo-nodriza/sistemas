@@ -97,31 +97,6 @@ class ProductotiendasController extends AppController {
 		return $s;
 	}
 
-	public function getProductCategoriesFull($id_product = '', $id_category_default = '' , $id_lang = 1, $prefix = 'tm_')
-    {
-        if (!$id_lang) {
-            $id_lang = 1;
-        }
-
-        $ret = array();
-        $row = $this->Productotienda->query('
-			SELECT cp.`id_category`, cl.`name`, cl.`link_rewrite`m c.`id_parent` FROM `'.$prefix.'category_product` cp
-			LEFT JOIN `'.$prefix.'category` c ON (c.id_category = cp.id_category)
-			LEFT JOIN `'.$prefix.'category_lang` cl ON (cp.`id_category` = cl.`id_category`)
-			WHERE cp.`id_product` = '.(int)$id_product.'
-				AND cl.`id_lang` = '.(int)$id_lang.'
-				AND c.id'
-        );
-        prx($row);
-        foreach ($row as $key => $val) {
-            $ret[$key]['id_category'] = $val['cp']['id_category'];
-            $ret[$key]['name'] = $val['cl']['name'];
-            $ret[$key]['link_rewrite'] = $val['cl']['link_rewrite'];
-        }
-        prx($ret);
-        return $ret;
-    }
-
     public function knasta_feed()
     {	
     	$out = array();
@@ -220,7 +195,7 @@ class ProductotiendasController extends AppController {
 					'Productotienda.active' => 1,
 					'Productotienda.available_for_order' => 1,
 					'Productotienda.id_shop_default' => 1,
-					'Productotienda.quantity > 0' 
+					'Productotienda.quantity > 0'
 				)
 			));
 			
@@ -277,6 +252,10 @@ class ProductotiendasController extends AppController {
 		$this->layout = 'ajax';
 		
 		$out = str_replace('"', '\\\"', $out);
+
+		header('Content-Type: application/json; charset=utf-8'); 
+		echo json_encode($out, JSON_UNESCAPED_UNICODE);
+		exit;
 
 		$this->set(compact('out'));
 		$this->set('_serialize', array('out'));
