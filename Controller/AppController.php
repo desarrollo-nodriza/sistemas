@@ -68,8 +68,8 @@ class AppController extends Controller
 		 */
 		$this->Google->cliente->setRedirectUri(Router::url(array('controller' => 'administradores', 'action' => 'login'), true));
 		$this->Google->oauth();
-
-		if ( ! empty($this->request->query['code']) && $this->Session->check('Google.code') && $this->Session->read('Google.code') != $this->request->query['code'] )
+		
+		if ( ! empty($this->request->query['code']) && $this->request->params['controller'] == 'administradores' && $this->request->params['action'] == 'admin_login')
 		{
 			$this->Google->oauth->authenticate($this->request->query['code']);
 			$this->Session->write('Google', array(

@@ -139,7 +139,8 @@ class ProductotiendasController extends AppController {
 					'Productotienda.price', 
 					'pl.link_rewrite', 
 					'Productotienda.reference', 
-					'Productotienda.show_price'
+					'Productotienda.show_price',
+					'Productotienda.quantity'
 				),
 				'joins' => array(
 					array(
@@ -194,8 +195,7 @@ class ProductotiendasController extends AppController {
 				'conditions' => array(
 					'Productotienda.active' => 1,
 					'Productotienda.available_for_order' => 1,
-					'Productotienda.id_shop_default' => 1,
-					'Productotienda.quantity > 0'
+					'Productotienda.id_shop_default' => 1
 				)
 			));
 			
@@ -241,7 +241,8 @@ class ProductotiendasController extends AppController {
 				$knasta[$key]['ProductUrl'] = sprintf('%s%s-%s.html', $sitioUrl, $value['pl']['link_rewrite'], $value['Productotienda']['id_product']);;
 				$knasta[$key]['CategoryId'] = $value['Productotienda']['id_category_default'];
 				$knasta[$key]['CategoryName'] = $this->tree($cate);
-				$knasta[$key]['Stock'] = '1';
+				$knasta[$key]['Stock'] = 1;
+				#$knasta[$key]['Stock'] = ($value['Productotienda']['quantity'] > 0) ? '1' : '0';
 				$knasta[$key]['InternetPrice'] = CakeNumber::currency($value['Productotienda']['valor_iva'], 'CLP');
 
 			}
