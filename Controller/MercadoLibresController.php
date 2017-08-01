@@ -1,7 +1,11 @@
 <?php
 App::uses('AppController', 'Controller');
+#App::import('Vendor', 'Meli', array('file' => 'Meli/meli.php'));
+
 class MercadoLibresController extends AppController
 {	
+
+	public $components = array('Meli');
 
 	function beforeFilter() {
 	    parent::beforeFilter();
@@ -30,9 +34,103 @@ class MercadoLibresController extends AppController
 
 			$this->request->data['MercadoLibr']['html'] = $this->createHtml();
 
-			return $this->request->data['MercadoLibr']['html'];
+			echo $this->request->data['MercadoLibr']['html'];
 			exit;
 		}
+	}
+
+	public function autorizacionMeli()
+	{	
+		if ( ! empty($this->request->query['code']) || ($this->Session->check('Meli.access_token') && !empty($this->Session->read('Meli.access_token'))) ) {
+			if( isset($this->request->query['code']) && !$this->Session->check('Meli.access_token') ) {
+				$this->Meli->login($this->request->query['code'], Router::url(array('controller' => 'mercadoLibres', 'action' => 'index'), true));
+			} else {
+				$this->Meli->checkTokenAndRefreshIfNeed();
+			}
+		}else{
+			return $this->Meli->getAuthUrl(Router::url(array('controller' => 'mercadoLibres', 'action' => 'index'), true));
+		}
+	}
+
+	public function admin_obtenerCategorias()
+	{
+		$response = $this->Meli->getSiteCategories();
+		if ($response['httpCode'] != 200) {
+			$response = '';
+		}else{
+			$response = json_decode(json_encode($response['body']), true);
+		}
+		
+		$new = array();
+		foreach ($response as $key => $value) {
+			$new[$key]['id'] = $value['id'];
+			$new[$key]['text'] = $value['name'];
+			$new[$key]['li_attr'] = array('data-id' => $value['id']);
+			$new[$key]['a_attr'] = array('data-id' => $value['id']);
+			$new[$key]['children'] = $this->admin_obtenerCategoriasId($value['id'], false);
+		}
+
+		header('Content-Type: application/json; charset=utf-8'); 
+		echo json_encode($new, JSON_UNESCAPED_UNICODE);
+		exit;
+	}
+
+	public function admin_obtenerCategoriasId($id, $print = true)
+	{	
+		if (empty($id)) {
+			return;
+		}
+
+		$response = $this->Meli->getCategoriesByIdentifier($id);
+		if ($response['httpCode'] != 200) {
+			return;
+		}else{
+			$response = json_decode(json_encode($response['body']), true);
+		}
+		
+		$new = array();
+		foreach ($response['children_categories'] as $key => $value) {
+			$new[$key]['id'] = $value['id'];
+			$new[$key]['text'] = $value['name'];
+			$new[$key]['li_attr'] = array('data-id' => $value['id']);
+			$new[$key]['a_attr'] = array('data-id' => $value['id']);
+			$new[$key]['children'] = $this->admin_obtenerCategoriasId($value['id'], false);
+		}
+
+		if ($print) {
+			header('Content-Type: application/json; charset=utf-8'); 
+			echo json_encode($new, JSON_UNESCAPED_UNICODE);
+			exit;
+		}else{
+			return $new;
+		}
+	}
+
+	public function admin_desconectar()
+	{
+		$this->Session->delete('Meli');
+		$this->Session->setFlash('Aplicación desconectada con éxito.', null, array(), 'success');
+		$this->redirect(array('action' => 'index'));
+	}
+
+	public function admin_usuario()
+	{
+		$miCuenta = array();
+		if ($this->Session->check('Meli.access_token') && empty($this->autorizacionMeli())) {
+			$miCuenta =  json_decode(json_encode($this->Meli->getMyAccountInfo()), true);
+
+			if ($miCuenta['httpCode'] != 200) {
+				$miCuenta = '';
+			}else{
+				$miCuenta = $miCuenta['body'];
+			}
+
+		}
+
+		BreadcrumbComponent::add('Mercado Libre Productos', '/mercadoLibres');
+		BreadcrumbComponent::add('Mi cuenta ');
+		
+		$this->set(compact('miCuenta'));
 	}
 
 	public function admin_index()
@@ -45,10 +143,16 @@ class MercadoLibresController extends AppController
 			'order' => array('MercadoLibr.id' => 'DESC')
 		);
 
+		$url = '';
+		
+		if (!empty($this->autorizacionMeli())) {
+			$url = $this->autorizacionMeli();
+		}
+
 		BreadcrumbComponent::add('Mercado Libre Productos ');
 
 		$mercadoLibres	= $this->paginate();
-		$this->set(compact('mercadoLibres'));
+		$this->set(compact('mercadoLibres', 'url'));
 	}
 
 	public function admin_add()
@@ -116,6 +220,10 @@ class MercadoLibresController extends AppController
 			'contain' => array('Lang')
 			));
 		
+
+
+		#prx($this->Meli->getCategoriesByPredictor($producto['Lang'][0]['ProductotiendaIdioma']['name']));
+
 		$this->set(compact('plantillas', 'producto'));
 	}
 

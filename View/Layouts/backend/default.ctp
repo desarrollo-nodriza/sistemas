@@ -9,6 +9,7 @@
 		<?= $this->Html->css(array(
 			sprintf('/backend/css/theme-%s', $this->Session->read('Tienda.tema')),
 			'/backend/css/icheck/skins/flat/red',
+			'/backend/css/jstree/jstree.min',
 			'/backend/css/custom',
 			/*
 			'/backend/css/ion/ion.rangeSlider',
@@ -42,6 +43,7 @@
 			'/backend/js/plugins/noty/themes/default',
 			'/backend/js/plugins/maskedinput/jquery.maskedinput.min',
 			'/backend/js/plugins/jquery.rut.min',
+			'/backend/js/plugins/jstree/jstree.min',
 			'/backend/js/custom',
 			'/backend/js/dashboard',
 			'/backend/js/app',

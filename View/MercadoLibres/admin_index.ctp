@@ -1,5 +1,23 @@
 <div class="page-title">
 	<h2><span class="fa fa-shopping-basket"></span> Mercado Libre Productos</h2>
+	<div class="pull-right">
+		<? if (!empty($url) && ! $this->Session->check('Meli.access_token')) : ?>
+			<div class="btn-group">
+	            <a href="#" data-toggle="dropdown" class="btn btn-warning dropdown-toggle" aria-expanded="false">Aplicación Desconectada <span class="caret"></span></a>
+	            <ul class="dropdown-menu pull-right" role="menu">
+	                <li><?= $this->Html->link('Conectar aplicación', $url, array('escape' => false)); ?></li>
+	            </ul>
+	        </div>
+		<? else : ?>
+			<div class="btn-group">
+	            <a href="#" data-toggle="dropdown" class="btn btn-success dropdown-toggle" aria-expanded="false">Aplicación Conectada <span class="caret"></span></a>
+	            <ul class="dropdown-menu pull-right" role="menu">
+	                <li><?= $this->Html->link('Ver mi cuenta', array('action' => 'usuario'), array('escape' => false)); ?></li>
+	                <li><?= $this->Html->link('Desconectar aplicación', array('action' => 'desconectar'), array('escape' => false)); ?></li>                                                    
+	            </ul>
+	        </div>
+		<? endif; ?>
+	</div>
 </div>
 
 <div class="page-content-wrap">
@@ -37,15 +55,21 @@
 									<td><?= h($mercadoLibr['MercadoLibr']['nombre']); ?>&nbsp;</td>
 									<td><?= h($mercadoLibr['MercadoLibr']['producto']); ?>&nbsp;</td>
 									<td>
-									<? if ($permisos['edit']) : ?>
-										<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $mercadoLibr['MercadoLibr']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
-									<? endif; ?>
-									<? if ($permisos['view']) : ?>
-										<?= $this->Form->postLink('<i class="fa fa-eye"></i> Ver Html', array('action' => 'view', $mercadoLibr['MercadoLibr']['id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
-									<? endif; ?>
-									<? if ($permisos['delete']) :?>
-										<?= $this->Form->postLink('<i class="fa fa-remove"></i> Eliminar', array('action' => 'delete', $mercadoLibr['MercadoLibr']['id']), array('class' => 'btn btn-xs btn-danger confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
-									<? endif; ?>
+									<div class="btn-group">
+							            <a href="#" data-toggle="dropdown" class="btn btn-primary btn-xs dropdown-toggle" aria-expanded="false">Acciones <span class="caret"></span></a>
+							            <ul class="dropdown-menu pull-right" role="menu">
+							            <? if ($permisos['edit']) : ?>
+											<li><?= $this->Html->link('Editar', array('action' => 'edit', $mercadoLibr['MercadoLibr']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?></li>
+										<? endif; ?>
+										<? if ($permisos['view']) : ?>
+											<li><?= $this->Form->postLink('Ver Html', array('action' => 'view', $mercadoLibr['MercadoLibr']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+											</li>
+										<? endif; ?>
+										<? if ($permisos['delete']) :?>
+											<li><?= $this->Form->postLink('Eliminar', array('action' => 'delete', $mercadoLibr['MercadoLibr']['id']), array('class' => 'confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?></li>
+										<? endif; ?>
+							            </ul>
+							        </div>
 									</td>
 								</tr>
 								<?php endforeach; ?>

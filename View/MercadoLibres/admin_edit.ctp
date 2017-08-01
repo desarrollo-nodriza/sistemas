@@ -38,6 +38,9 @@
 									<td><?= $this->Form->input('producto', array('type' => 'text', 'class' => 'form-control input-productos-buscar-meli')); ?></td>
 								</tr>
 							<? endif; ?>
+							<div id="jstree_default" class="push-down-20">
+                                
+                            </div>
 						</table>
 					</div>
 				</div>
@@ -52,3 +55,40 @@
 	</div> <!-- end row -->
 </div>
 <?= $this->Form->end(); ?>
+<script type="text/javascript">
+	
+
+	$.extend({
+		meli: {
+			bind:function(){
+				$jstree = $('#jstree_default')
+					.jstree({
+						"core" : {
+						    "animation" : 0,
+						    "check_callback" : true,
+						    "themes" : { "stripes" : true },
+						    'data' : {
+						      'url' : function (node) {
+						        return node.id === '#' ?
+						          webroot + 'mercadoLibres/obtenerCategorias' :  webroot + 'mercadoLibres/obtenerCategoriasId';
+						      },
+						      'data' : function (node) {
+						        return { 
+						        	'id' : node.id };
+						      },
+						      "dataType" : "json"
+						    }
+						  }
+					});
+			},
+			init:function(){
+				if ( $('#jstree_default').length ) {
+					$.meli.bind();
+				}
+			}
+		}
+	});
+	$(document).ready(function(){
+		$.meli.init();
+	});
+</script>
