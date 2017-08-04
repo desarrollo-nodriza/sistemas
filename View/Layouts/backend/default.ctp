@@ -43,10 +43,10 @@
 			'/backend/js/plugins/noty/themes/default',
 			'/backend/js/plugins/maskedinput/jquery.maskedinput.min',
 			'/backend/js/plugins/jquery.rut.min',
-			'/backend/js/plugins/jstree/jstree.min',
 			'/backend/js/custom',
 			'/backend/js/dashboard',
 			'/backend/js/app',
+			'/backend/js/meli',
 			//'/backend/js/plugins',
 			//'/backend/js/demo_charts_nvd3'
 			//'/backend/js/demo_charts_morris'

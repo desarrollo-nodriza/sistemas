@@ -39,10 +39,11 @@
 							<thead>
 								<tr class="sort">
 									<th><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('mercado_libre_plantilla_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th style="width: 250px;"><?= $this->Paginator->sort('producto', 'Producto', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('tienda_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('producto', 'Producto', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('mercado_libre_plantilla_id', 'Plantilla', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('', 'Publicado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('estado', 'Estado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
 								</tr>
 							</thead>
@@ -50,10 +51,24 @@
 								<?php foreach ( $mercadoLibres as $mercadoLibr ) : ?>
 								<tr>
 									<td>#<?= h($mercadoLibr['MercadoLibr']['id']); ?>&nbsp;</td>
-									<td><?= h($mercadoLibr['MercadoLibrePlantilla']['nombre']); ?>&nbsp;</td>
-									<td><?= h($mercadoLibr['Tienda']['nombre']); ?>&nbsp;</td>
-									<td><?= h($mercadoLibr['MercadoLibr']['nombre']); ?>&nbsp;</td>
 									<td><?= h($mercadoLibr['MercadoLibr']['producto']); ?>&nbsp;</td>
+									<td><?= h($mercadoLibr['Tienda']['nombre']); ?>&nbsp;</td>
+									<td><?= h($mercadoLibr['MercadoLibrePlantilla']['nombre']); ?>&nbsp;</td>
+									<td><?= $publicado = (!empty($mercadoLibr['MercadoLibr']['id_meli'])) ? '<i class="fa fa-check-circle text-success fa-lg"></i>' : '<i class="fa fa-times-circle text-danger fa-lg"></i>' ;?></td>
+									<td>
+										<? if ($mercadoLibr['MercadoLibr']['estado'] == 'closed' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
+											<label class="label label-danger">Cerrada</label>
+										<? endif; ?>
+										<? if ($mercadoLibr['MercadoLibr']['estado'] == 'paused' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
+											<label class="label label-warning">Pausada</label>
+										<? endif; ?>
+										<? if ($mercadoLibr['MercadoLibr']['estado'] == 'active' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
+											<label class="label label-success">Abierta</label>
+										<? endif; ?>
+										<? if ( empty($mercadoLibr['MercadoLibr']['id_meli']) ) : ?>
+											<label class="label label-primary">No publicado</label>
+										<? endif; ?>
+									</td>
 									<td>
 									<div class="btn-group">
 							            <a href="#" data-toggle="dropdown" class="btn btn-primary btn-xs dropdown-toggle" aria-expanded="false">Acciones <span class="caret"></span></a>
@@ -64,6 +79,30 @@
 										<? if ($permisos['view']) : ?>
 											<li><?= $this->Form->postLink('Ver Html', array('action' => 'view', $mercadoLibr['MercadoLibr']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
 											</li>
+										<? endif; ?>
+										<? if (!empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
+											<li><?= $this->Html->link('Ver publicación en MELI', $mercadoLibr['MercadoLibr']['url_meli'], array('class' => '', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false, 'target' => '_blank')); ?>
+											</li>
+											<? if ($mercadoLibr['MercadoLibr']['estado'] == 'closed') : ?>
+											<li><?= $this->Html->link('Abrir', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'active'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Activar item', 'escape' => false)); ?>
+											</li>
+											<li><?= $this->Html->link('Pausar', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'paused'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Pausar item', 'escape' => false)); ?>
+											</li>
+											<? endif; ?>
+
+											<? if ($mercadoLibr['MercadoLibr']['estado'] == 'paused') : ?>
+											<li><?= $this->Html->link('Abrir', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'active'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Activar item', 'escape' => false)); ?>
+											</li>
+											<li><?= $this->Html->link('Cerrar', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'closed'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Cerrar item', 'escape' => false)); ?>
+											</li>
+											<? endif; ?>
+
+											<? if ($mercadoLibr['MercadoLibr']['estado'] == 'active') : ?>
+											<li><?= $this->Html->link('Pausar', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'paused'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Pausar item', 'escape' => false)); ?>
+											</li>
+											<li><?= $this->Html->link('Cerrar', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'closed'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Cerrar item', 'escape' => false)); ?>
+											</li>
+											<? endif; ?>
 										<? endif; ?>
 										<? if ($permisos['delete']) :?>
 											<li><?= $this->Form->postLink('Eliminar', array('action' => 'delete', $mercadoLibr['MercadoLibr']['id']), array('class' => 'confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?></li>

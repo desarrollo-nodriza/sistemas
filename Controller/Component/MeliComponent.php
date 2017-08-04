@@ -55,6 +55,10 @@ class MeliComponent extends Component
 				// Make the refresh proccess
 				$refresh = $this->meli->refreshAccessToken();
 
+				if (empty($refresh)) {
+					return;
+				}
+
 				// Now we create the sessions with the new parameters
 				$this->Session->write('Meli.access_token', $refresh['body']->access_token);
 				$this->Session->write('Meli.expires_in', time() + $refresh['body']->expires_in);
@@ -109,6 +113,38 @@ class MeliComponent extends Component
 		$this->meli = new Meli($this->client_id, $this->client_secret);
 		$params = array('access_token' => $this->Session->read('Meli.access_token'));
 		$result = $this->meli->get('/users/me', $params);
+
+		return $result;
+	}
+
+
+	public function getMyBrands()
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+		
+		$me = json_decode(json_encode($this->getMyAccountInfo()), true);
+		
+		if ($me['httpCode'] != 200) {
+			$result = '';
+		}else{
+			$result = $this->meli->get('/users/' . $me['body']['id'] . '/brands');
+		}
+		
+		if ($result['httpCode'] != 200) {
+			$result = '';
+		}
+
+		return $result;
+	}
+
+	public function createTestUsr($name = '')
+	{	
+		$params = array('access_token' => $this->Session->read('Meli.access_token'));
+		$data = array('site_id' => 'MLC');
+		$result = $this->meli->post('/users/' . $name, $data, $params);
 
 		return $result;
 	}
@@ -202,4 +238,184 @@ class MeliComponent extends Component
 
 		return $result;
 	}
+
+
+	/**
+	 * Tipos de publicación
+	 * Existen diferentes tipos de publicación disponibles para cada país.
+	 * El método obtiene los tipos de publicación disponibles para el pais
+	 *
+	 * @param $type 	$tring 		Identificador del tipo de publicación.
+	 *
+	 * @return 	Objeto de categorias
+	 */
+	public function listing_types($type = '')
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		if (!empty($type)) {
+			$result = json_decode(json_encode($this->meli->get('/sites/MLC/listing_types/' . $type)), true);
+		}else{
+			$result = json_decode(json_encode($this->meli->get('/sites/MLC/listing_types/' . $type)), true);
+		}
+
+		$listType = array();
+		if ($result['httpCode'] != 200) {
+			return '';
+		}else{
+			foreach ($result['body'] as $k => $type) {
+				$listType[$type['id']] = $type['name'];
+			}
+		}
+
+		return $listType;
+	}
+
+	public function validate($item = array())
+	{
+		if (!empty($item)) {
+			return $this->meli->post('/items/validate', $item, array('access_token' => $this->Session->read('Meli.access_token')));
+		}
+	}
+
+
+	public function publish($title, $category_id, $price, $currency_id = 'CLP', $available_quantity = 1, $buying_mode = 'buy_it_now', $listing_type_id, $condition = 'new', $description = 'Item de test - No Ofertar', $video_id = '', $warranty = '', $pictures = array() )
+	{	
+
+		if (empty($title) ||
+			empty($category_id) ||
+			empty($price) ||
+			empty($listing_type_id) ) {
+			return '';
+		}
+
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		// We construct the item to POST
+		$item = array(
+			"title" => $title,
+			"category_id" => $category_id,
+			"price" => $price,
+			"currency_id" => $currency_id,
+			"available_quantity" => $available_quantity,
+			"buying_mode" => $buying_mode,
+			"listing_type_id" => $listing_type_id,
+			"condition" => $condition,
+			"description" => $description,
+			"video_id" => $video_id,
+			"warranty" => $warranty,
+			"pictures" => $pictures,
+			"tags" => array(
+		        "immediate_payment"
+		    )
+		);
+		
+		# Validate item with MEli validator api
+		$validItem = $this->validate($item);
+
+		if ($validItem['httpCode'] >= 300) {
+			return $validItem;
+		}else{
+			return $this->meli->post('/items', $item, array('access_token' => $this->Session->read('Meli.access_token')));
+		}
+
+	}
+
+
+	public function update($id, $title, $price, $available_quantity = 1, $video_id = '', $pictures = array() )
+	{	
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		// We construct the item to POST
+		$item = array(
+			"title" => $title,
+			"price" => $price,
+			"available_quantity" => $available_quantity,
+			"video_id" => $video_id,
+			"pictures" => $pictures,
+			"tags" => array(
+		        "immediate_payment"
+		    )
+		);
+		
+		// We call the post request to list a item
+		$result = $this->meli->put('/items/' . $id, $item, array('access_token' => $this->Session->read('Meli.access_token')));
+
+		return $result;
+
+	}
+
+
+	public function viewItem($id)
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		$result = '';
+		
+		if (!empty($id)) {
+			$result = $this->meli->get('/items/' . $id);
+		}
+
+		return $result;
+	}
+
+	public function changeState($id, $state)
+	{	
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+		
+		$states = array('closed', 'paused', 'active');
+		
+		if (!in_array($state, $states)) {
+			return;
+		}
+
+		$item = array(
+			"status" => $state
+		);
+		
+		$result = $this->meli->put('/items/' . $id, $item, array('access_token' => $this->Session->read('Meli.access_token')));
+
+		return $result;
+	}
+
+
+	public function updateDescription($id, $desc = '')
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		$body = array('text' => $desc);
+
+		$response = $this->meli->put(sprintf('/items/%s/descriptions', $id), $body,  array('access_token' => $this->Session->read('Meli.access_token')));
+
+		return $response;
+	}
+
+
+	public function getShippingMethod()
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		$result = '';
+		
+		if (!empty($id)) {
+			$result = $this->meli->get('/sites/MLC/shipping_methods');
+		}
+
+		return $result;
+	}
+
 }

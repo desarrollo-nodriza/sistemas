@@ -493,7 +493,7 @@ $.extend({
 						name 	= '',
 						description = '',
 						specs = '';
-					
+					console.log($esto);
 					$esto.autocomplete({
 					   	source: function(request, response) {
 					      	$.get( webroot + 'mercadoLibres/obtener_productos/' + request.term, function(respuesta){
@@ -512,6 +512,9 @@ $.extend({
 					    select: function( event, ui ) {
 					        console.log("Seleccionado: " + ui.item.value + " id " + ui.item.id);
 					        $('.id-product').val(ui.item.id);
+					        $('.js-precio').val(ui.item.precio);
+					        $('.js-imagen').val(ui.item.imagen);
+					        $('.js-imagen-preview').attr('src', ui.item.imagen);
 					    }
 					});
 				});
