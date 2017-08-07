@@ -369,7 +369,7 @@ class MercadoLibresController extends AppController
 
 		BreadcrumbComponent::add('Mercado Libre Productos ');
 
-		prx($this->Meli->uploadFile('https://www.toolmania.cl/img/p/4/3/8/5/4385.jpg'));
+		#prx($this->Meli->uploadFile('https://www.toolmania.cl/img/p/4/3/8/5/4385.jpg'));
 		#prx($this->Meli->linkImageToItem('833366-MLC25840423212_082017', 'MLC447841638'));
 
 		$mercadoLibres	= $this->paginate();
