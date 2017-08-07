@@ -245,6 +245,8 @@ class MeliComponent extends Component
 	 * Existen diferentes tipos de publicación disponibles para cada país.
 	 * El método obtiene los tipos de publicación disponibles para el pais
 	 *
+	 * Más información: http://developers.mercadolibre.com/es/publica-productos/#Tipos-de-publicacion
+	 *
 	 * @param $type 	$tring 		Identificador del tipo de publicación.
 	 *
 	 * @return 	Objeto de categorias
@@ -273,6 +275,17 @@ class MeliComponent extends Component
 		return $listType;
 	}
 
+
+	/**
+	 * Valida que un item esté correctamente formateado según 
+	 * la informacion de MELI.
+	 *
+	 * Más información: http://developers.mercadolibre.com/es/validador-de-publicaciones/
+	 *
+	 * @param 	$item 	$array() 	Item para validar
+	 * 
+	 * @return Objeto
+	 */
 	public function validate($item = array())
 	{
 		if (!empty($item)) {
@@ -281,6 +294,33 @@ class MeliComponent extends Component
 	}
 
 
+
+	/**
+	 * Publicar un item en mercado libre
+	 * 
+	 * @param 	$title 					String 		El título es un atributo obligatorio y la clave para que los compradores encuentren 
+	 *												tu producto; por eso, debes ser lo más específico posible.
+	 * @param 	$category_id 			String 		Los vendedores deben definir una categoría en el site de MercadoLibre. 
+	 * 												Este atributo es obligatorio y solo acepta ID preestablecidos.
+	 * @param 	$price 					Bigint 		Éste es un atributo obligatorio: cuando defines un nuevo artículo, debe tener precio.
+	 * @param 	$currency_id 			String 		Además del precio, debes definir una moneda. Este atributo también es obligatorio. 
+	 *												Debes definirla utilizando un ID preestablecido.
+	 * @param 	$available_quantity		String 		Este atributo define el stock, que es la cantidad de productos disponibles para la 
+	 * 												venta de este artículo.
+	 * @param 	$buying_mode			String 		Define el tipo de publicación (Vender ahora/ Subasta)
+	 * @param 	$listing_type_id 		String 		Es otro caso de un atributo obligatorio que solo acepta valores predefinidos y es muy importante que lo entiendas.
+	 *												Existen diferentes tipos de publicación disponibles para cada país. Debes realizar una 
+	 *												llamada mixta a través de los sites y recursos listing_types para conocer los listing_types soportados.
+	 * @param 	$condition 				String 		Nuevo /Usado
+	 * @param 	$description 			Text 		Descripción del prodcuto en HTML o texto plano
+	 * @param 	$video_id 				String 		Identificador de video de Youtube
+	 * @param 	$warranty 				Text 		Texto que describe la garantía del item
+	 * @param  	$pictures 				Array 		Arreglo de imágenes con el formato array(array('source' => 'url_image'), array('source' => 'url_image_"'));
+	 * 
+	 * Más información en:  http://developers.mercadolibre.com/es/publica-productos/#Publica-un-articulo
+	 *
+	 * @return Objeto devuelto por MELI	 
+	 */
 	public function publish($title, $category_id, $price, $currency_id = 'CLP', $available_quantity = 1, $buying_mode = 'buy_it_now', $listing_type_id, $condition = 'new', $description = 'Item de test - No Ofertar', $video_id = '', $warranty = '', $pictures = array() )
 	{	
 
@@ -326,6 +366,24 @@ class MeliComponent extends Component
 	}
 
 
+	/**
+	 * Actualizar un item en mercado libre
+	 * 
+	 * @param 	$id 					String 		Identificador de mercado libre del item.
+	 * @param 	$title 					String 		El título es un atributo obligatorio y la clave para que los compradores encuentren 
+	 *												tu producto; por eso, debes ser lo más específico posible.
+	 * @param 	$price 					Bigint 		Éste es un atributo obligatorio: cuando defines un nuevo artículo, debe tener precio.
+	 * @param 	$currency_id 			String 		Además del precio, debes definir una moneda. Este atributo también es obligatorio. 
+	 *												Debes definirla utilizando un ID preestablecido.
+	 * @param 	$available_quantity		String 		Este atributo define el stock, que es la cantidad de productos disponibles para la 
+	 * 												venta de este artículo.
+	 * @param 	$video_id 				String 		Identificador de video de Youtube
+	 * @param  	$pictures 				Array 		Arreglo de imágenes con el formato array(array('source' => 'url_image'), array('source' => 'url_image_"'));
+	 * 
+	 * Más información en:  http://developers.mercadolibre.com/es/producto-sincroniza-modifica-publicaciones/#Actualiza-tu-art%C3%ADculo
+	 *
+	 * @return Objeto devuelto por MELI	 
+	 */
 	public function update($id, $title, $price, $available_quantity = 1, $video_id = '', $pictures = array() )
 	{	
 		# Configuración de la tienda
@@ -397,7 +455,7 @@ class MeliComponent extends Component
 
 		$body = array('text' => $desc);
 
-		$response = $this->meli->put(sprintf('/items/%s/descriptions', $id), $body,  array('access_token' => $this->Session->read('Meli.access_token')));
+		$response = $this->meli->put(sprintf('/items/%s/description', $id), $body,  array('access_token' => $this->Session->read('Meli.access_token')));
 
 		return $response;
 	}
@@ -413,6 +471,42 @@ class MeliComponent extends Component
 		
 		if (!empty($id)) {
 			$result = $this->meli->get('/sites/MLC/shipping_methods');
+		}
+
+		return $result;
+	}
+
+	public function uploadFile($image)
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		$result = '';
+		
+		if (!empty($image)) {
+			$result = $this->meli->file('/pictures', $image ,array('access_token' => $this->Session->read('Meli.access_token')));
+		}
+
+		return $result;
+	}
+
+
+	public function linkImageToItem($image_id, $item_id)
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		$result = '';
+
+		if (!empty($image_id) && !empty($item_id)) {
+
+			$data = array(
+				'id' => $image_id
+				);
+
+			$result = $this->meli->post('/items/' . $item_id . '/pictures', $data, array('access_token' => $this->Session->read('Meli.access_token')));
 		}
 
 		return $result;

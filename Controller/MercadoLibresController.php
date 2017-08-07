@@ -369,6 +369,9 @@ class MercadoLibresController extends AppController
 
 		BreadcrumbComponent::add('Mercado Libre Productos ');
 
+		prx($this->Meli->uploadFile('https://www.toolmania.cl/img/p/4/3/8/5/4385.jpg'));
+		#prx($this->Meli->linkImageToItem('833366-MLC25840423212_082017', 'MLC447841638'));
+
 		$mercadoLibres	= $this->paginate();
 		$this->set(compact('mercadoLibres', 'url'));
 	}
@@ -591,7 +594,7 @@ class MercadoLibresController extends AppController
 		$productos	= $this->MercadoLibr->Productotienda->find('all', array(
 			'fields' => array(
 				'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-home_default.jpg\' ) AS url_image_thumb',
-				'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'.jpg\' ) AS url_image_large',
+				'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-thickbox_default.jpg\' ) AS url_image_large',
 				'Productotienda.id_product',
 				'Productotienda.id_category_default',
 				'pl.name', 
