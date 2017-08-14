@@ -173,7 +173,7 @@ class MercadoLibresController extends AppController
 
 				$imagenes = array(
 					array(
-					'source' => sprintf('"%s"', $producto['MercadoLibr']['imagen_meli'])
+					'source' => $producto['MercadoLibr']['imagen_meli']
 					)
 				);
 
@@ -223,7 +223,7 @@ class MercadoLibresController extends AppController
 
 			}else{
 
-				$this->Session->setFlash('Producto editado correctamente en Mercado libre. <br><p>Recuerde que la actualización en Mercado libre no es automática. Ver producto <a href="' . $producto['MercadoLibr']['url_meli'] . '" target="_blank" class="btn btn-default btn-xs">aquí</a></p> ', null, array(), 'success');
+				$this->Session->setFlash('Producto editado correctamente en Mercado libre. <br><p>Recuerde que la actualización en Mercado libre no es inmediata. Ver producto <a href="' . $producto['MercadoLibr']['url_meli'] . '" target="_blank" class="btn btn-default btn-xs">aquí</a></p> ', null, array(), 'success');
 				$this->redirect(array('action' => 'index'));
 			}
 		}
@@ -240,7 +240,7 @@ class MercadoLibresController extends AppController
 
 				$imagenes = array(
 					array(
-					'source' => sprintf('"%s"', $producto['MercadoLibr']['imagen_meli'])
+					'source' => $producto['MercadoLibr']['imagen_meli']
 					)
 				);
 
@@ -473,7 +473,7 @@ class MercadoLibresController extends AppController
 		$categoriasRoot = $this->admin_obtenerCategorias(false);
 		$categoriasHojas = array();
 
-		# Recoreemos por los 4 nievels de categorias de Mercadolibre
+		# Recoreemos por los 6 nievels de categorias de Mercadolibre
 		for ( $i = 1; $i < 6; $i++ ) { 
 			if (!empty($this->request->data['MercadoLibr']['categoria_0' . $i])) {
 
@@ -493,6 +493,8 @@ class MercadoLibresController extends AppController
 
 		$tipoPublicacionesMeli = $this->Meli->listing_types();
 		$condicionProducto = array('new' => 'Nuevo');
+
+		#$this->Meli->getShippingMode('MLC162513');
 
 		$meliItem = $this->admin_verProducto($this->request->data['MercadoLibr']['id_meli']);
 

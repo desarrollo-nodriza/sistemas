@@ -74,6 +74,10 @@
 								<th><?= $this->Form->label('id_video', 'Video del producto'); ?></th>
 								<td><?= $this->Form->input('id_video'); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('garantia', 'Garantia'); ?></th>
+								<td><?= $this->Form->input('garantia'); ?></td>
+							</tr>
 						</table>
 					</div>
 				</div>

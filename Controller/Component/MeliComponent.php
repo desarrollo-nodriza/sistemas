@@ -53,16 +53,16 @@ class MeliComponent extends Component
     			$this->meli = new Meli($this->client_id, $this->client_secret);
 
 				// Make the refresh proccess
-				$refresh = $this->meli->refreshAccessToken();
+				$refresh = to_array($this->meli->refreshAccessToken());
 
 				if (empty($refresh)) {
 					return;
 				}
 
 				// Now we create the sessions with the new parameters
-				$this->Session->write('Meli.access_token', $refresh['body']->access_token);
-				$this->Session->write('Meli.expires_in', time() + $refresh['body']->expires_in);
-				$this->Session->write('Meli.refresh_token', $refresh['body']->refresh_token);
+				$this->Session->write('Meli.access_token', $user['body']['access_token']);
+				$this->Session->write('Meli.expires_in', time() + $user['body']['expires_in']);
+				$this->Session->write('Meli.refresh_token', $user['body']['refresh_token']);
 
 			} catch (Exception $e) {
 			  	echo "Exception: ",  $e->getMessage(), "\n";
@@ -78,12 +78,16 @@ class MeliComponent extends Component
 
 		$this->meli = new Meli($this->client_id, $this->client_secret);
 		// If the code was in get parameter we authorize
-		$user = $this->meli->authorize($code, $callbackUrl );
+		$user = to_array($this->meli->authorize($code, $callbackUrl ));
+
+		if (empty($user)) {
+			return;
+		}
 		
 		// Now we create the sessions with the authenticated user
-		$this->Session->write('Meli.access_token', $user['body']->access_token);
-		$this->Session->write('Meli.expires_in', time() + $user['body']->expires_in);
-		$this->Session->write('Meli.refresh_token', $user['body']->refresh_token);
+		$this->Session->write('Meli.access_token', $user['body']['access_token']);
+		$this->Session->write('Meli.expires_in', time() + $user['body']['expires_in']);
+		$this->Session->write('Meli.refresh_token', $user['body']['refresh_token']);
 
 	}
 
@@ -345,13 +349,13 @@ class MeliComponent extends Component
 			"buying_mode" => $buying_mode,
 			"listing_type_id" => $listing_type_id,
 			"condition" => $condition,
-			"description" => $description,
 			"video_id" => $video_id,
 			"warranty" => $warranty,
 			"pictures" => $pictures,
 			"tags" => array(
 		        "immediate_payment"
-		    )
+		    ),
+		    "description" => $description
 		);
 		
 		# Validate item with MEli validator api
@@ -507,6 +511,40 @@ class MeliComponent extends Component
 				);
 
 			$result = $this->meli->post('/items/' . $item_id . '/pictures', $data, array('access_token' => $this->Session->read('Meli.access_token')));
+		}
+
+		return $result;
+	}
+
+
+	public function getShippingMode($category_id, $dimensions = '')
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+		
+		$me = json_decode(json_encode($this->getMyAccountInfo()), true);
+		
+		if ($me['httpCode'] != 200) {
+			$result = '';
+		}else{
+
+			$params =  array(
+				'category_id' => $category_id,
+				'dimensions' => $dimensions
+			);
+
+			$result = to_array($this->meli->get('/users/' . $me['body']['id'] . '/shipping_modes', $params));
+		}
+		
+		if ($result['httpCode'] != 200) {
+			$result = '';
+		}else{
+
+			# Creamos lista
+			
+			prx($result['body']);
 		}
 
 		return $result;
