@@ -7,6 +7,12 @@ class MercadoLibresController extends AppController
 
 	public $components = array('Meli');
 
+	private $envios = array(
+		'me2' => 'Envío por MercadoEnvíos',
+		'not_specified' => 'También se puede retirar en persona',
+		'custom' => 'Personalizado'
+	);
+
 	function beforeFilter() {
 	    parent::beforeFilter();
 
@@ -130,6 +136,28 @@ class MercadoLibresController extends AppController
 		}else{
 			return $itemInfo['body'];
 		}
+	}
+
+
+	public function admin_envioDisponible($categoria = '')
+	{
+		if (empty($categoria)) {
+			return '';
+		}
+
+		$resultado = $this->Meli->getShippingMode($categoria);
+
+		if ($resultado['httpCode'] != 200) {
+			return '';
+		}
+
+		$envioLista = array();
+		foreach ($resultado['body'] as $indice => $modo) {
+			$envioLista[$indice] = $modo;
+			$envioLista[$indice]['label'] = $this->envios[$modo['mode']];
+		}
+		
+		return $envioLista;
 	}
 
 
@@ -494,11 +522,12 @@ class MercadoLibresController extends AppController
 		$tipoPublicacionesMeli = $this->Meli->listing_types();
 		$condicionProducto = array('new' => 'Nuevo');
 
-		#$this->Meli->getShippingMode('MLC162513');
-
+		# Envio
+		$envio = $this->admin_envioDisponible($this->request->data['MercadoLibr']['categoria_hoja']);
+		
 		$meliItem = $this->admin_verProducto($this->request->data['MercadoLibr']['id_meli']);
 
-		$this->set(compact('plantillas', 'producto', 'categoriasRoot', 'categoriasHojas', 'url', 'tipoPublicacionesMeli', 'condicionProducto', 'meliItem'));
+		$this->set(compact('plantillas', 'producto', 'categoriasRoot', 'categoriasHojas', 'url', 'tipoPublicacionesMeli', 'condicionProducto', 'meliItem', 'envio'));
 	}
 
 
@@ -645,13 +674,21 @@ class MercadoLibresController extends AppController
 				'SpecificPrice' => array(
 					'conditions' => array(
 						'OR' => array(
-							'OR' => array(
-								array('SpecificPrice.from' => '000-00-00 00:00:00'),
-								array('SpecificPrice.to' => '000-00-00 00:00:00')
-							),
-							'AND' => array(
+							array(
 								'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
 								'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+							),
+							array(
+								'SpecificPrice.from' => '0000-00-00 00:00:00',
+								'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+							),
+							array(
+								'SpecificPrice.from' => '0000-00-00 00:00:00',
+								'SpecificPrice.to' => '0000-00-00 00:00:00'
+							),
+							array(
+								'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+								'SpecificPrice.to' => '0000-00-00 00:00:00'
 							)
 						)
 					)

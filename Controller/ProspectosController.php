@@ -411,13 +411,21 @@ class ProspectosController extends AppController
 						'SpecificPrice' => array(
 							'conditions' => array(
 								'OR' => array(
-									'OR' => array(
-										array('SpecificPrice.from' => '000-00-00 00:00:00'),
-										array('SpecificPrice.to' => '000-00-00 00:00:00')
-									),
-									'AND' => array(
+									array(
 										'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
 										'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+									),
+									array(
+										'SpecificPrice.from' => '0000-00-00 00:00:00',
+										'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+									),
+									array(
+										'SpecificPrice.from' => '0000-00-00 00:00:00',
+										'SpecificPrice.to' => '0000-00-00 00:00:00'
+									),
+									array(
+										'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+										'SpecificPrice.to' => '0000-00-00 00:00:00'
 									)
 								)
 							)

@@ -534,8 +534,10 @@ class EmailsController extends AppController
 							'conditions' => array(
 								'OR' => array(
 									'OR' => array(
-										array('SpecificPrice.from' => '000-00-00 00:00:00'),
-										array('SpecificPrice.to' => '000-00-00 00:00:00')
+										array(
+											'SpecificPrice.from' => '000-00-00 00:00:00',
+											'SpecificPrice.to' => '000-00-00 00:00:00'
+										)
 									),
 									'AND' => array(
 										'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',

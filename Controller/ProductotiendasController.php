@@ -126,7 +126,7 @@ class ProductotiendasController extends AppController {
 			
 			# cambiamos el datasource de las modelos externos
 			$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
-
+	
 			// Buscamos los productos que cumplan con el criterio
 			$productos	= $this->Productotienda->find('all', array(
 				'fields' => array(
@@ -179,13 +179,21 @@ class ProductotiendasController extends AppController {
 					'SpecificPrice' => array(
 						'conditions' => array(
 							'OR' => array(
-								'OR' => array(
-									array('SpecificPrice.from' => '000-00-00 00:00:00'),
-									array('SpecificPrice.to' => '000-00-00 00:00:00')
-								),
-								'AND' => array(
+								array(
 									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
 									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+								),
+								array(
+									'SpecificPrice.from' => '0000-00-00 00:00:00',
+									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+								),
+								array(
+									'SpecificPrice.from' => '0000-00-00 00:00:00',
+									'SpecificPrice.to' => '0000-00-00 00:00:00'
+								),
+								array(
+									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+									'SpecificPrice.to' => '0000-00-00 00:00:00'
 								)
 							)
 						)
@@ -200,7 +208,7 @@ class ProductotiendasController extends AppController {
 			));
 			
 			$knasta = array();
-
+			
 			foreach ($productos as $key => $value) {
 				$cate = $this->getParentCategory($value['Productotienda']['id_category_default'], $tienda['Tienda']['prefijo']);
 				$cate = $this->categoriesTree($cate);
@@ -544,13 +552,21 @@ class ProductotiendasController extends AppController {
 				'SpecificPrice' => array(
 					'conditions' => array(
 						'OR' => array(
-							'OR' => array(
-								array('SpecificPrice.from' => '000-00-00 00:00:00'),
-								array('SpecificPrice.to' => '000-00-00 00:00:00')
-							),
-							'AND' => array(
+							array(
 								'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
 								'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+							),
+							array(
+								'SpecificPrice.from' => '0000-00-00 00:00:00',
+								'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+							),
+							array(
+								'SpecificPrice.from' => '0000-00-00 00:00:00',
+								'SpecificPrice.to' => '0000-00-00 00:00:00'
+							),
+							array(
+								'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+								'SpecificPrice.to' => '0000-00-00 00:00:00'
 							)
 						)
 					)
@@ -629,13 +645,21 @@ class ProductotiendasController extends AppController {
 				'SpecificPrice' => array(
 					'conditions' => array(
 						'OR' => array(
-							'OR' => array(
-								array('SpecificPrice.from' => '000-00-00 00:00:00'),
-								array('SpecificPrice.to' => '000-00-00 00:00:00')
-							),
-							'AND' => array(
+							array(
 								'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
 								'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+							),
+							array(
+								'SpecificPrice.from' => '0000-00-00 00:00:00',
+								'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+							),
+							array(
+								'SpecificPrice.from' => '0000-00-00 00:00:00',
+								'SpecificPrice.to' => '0000-00-00 00:00:00'
+							),
+							array(
+								'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+								'SpecificPrice.to' => '0000-00-00 00:00:00'
 							)
 						)
 					)
