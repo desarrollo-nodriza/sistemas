@@ -10,7 +10,7 @@ class MercadoLibresController extends AppController
 	private $envios = array(
 		'me2' => 'Envío por MercadoEnvíos',
 		'not_specified' => 'También se puede retirar en persona',
-		'custom' => 'Personalizado'
+		'custom' => 'Envío Personalizado'
 	);
 
 	function beforeFilter() {
@@ -139,25 +139,54 @@ class MercadoLibresController extends AppController
 	}
 
 
-	public function admin_envioDisponible($categoria = '')
+	public function admin_envioDisponible($categoria = '', $print = false )
 	{
 		if (empty($categoria)) {
+			if ($print) {
+				echo $resultado['httpCode'];
+				exit;
+			}
 			return '';
 		}
 
 		$resultado = $this->Meli->getShippingMode($categoria);
 
 		if ($resultado['httpCode'] != 200) {
+			if ($print) {
+				echo $resultado['httpCode'];
+				exit;
+			}
 			return '';
 		}
+		
+		$listaModos = Hash::extract($resultado['body'], '{n}.mode');
 
 		$envioLista = array();
+
 		foreach ($resultado['body'] as $indice => $modo) {
-			$envioLista[$indice] = $modo;
-			$envioLista[$indice]['label'] = $this->envios[$modo['mode']];
+			if (in_array('me2', $listaModos) && $modo['mode'] == 'custom') {
+				unset($resultado['body'][$indice]);
+			}else{
+				if ($modo['mode'] == 'custom') {
+					$envioLista[$indice] = $modo;
+					$envioLista[$indice]['label'] = $this->envios[$modo['mode']];
+				}
+
+				if ($modo['mode'] == 'me2') {
+					$envioLista[$indice] = $modo;
+					$envioLista[$indice]['label'] = $this->envios[$modo['mode']];
+				}
+			}
+		}
+
+		if ($print) {
+			header('Content-Type: application/json; charset=utf-8'); 
+			echo json_encode(array_reverse($envioLista), JSON_UNESCAPED_UNICODE);
+			exit;
+		}else{
+			return array_reverse($envioLista);
 		}
 		
-		return $envioLista;
 	}
 
 
@@ -199,14 +228,39 @@ class MercadoLibresController extends AppController
 			# Verificamos que el producto no esté publicado en mercadolibre
 			if (!empty($producto['MercadoLibr']['id_meli'])) {
 
+				# Imagenes del item
 				$imagenes = array(
 					array(
 					'source' => $producto['MercadoLibr']['imagen_meli']
 					)
 				);
 
+				# Envios
+				$envios = array();
+				if (isset($this->request->data['Envios'])) {
+					$count = 0;
+					foreach ($this->request->data['Envios'] as $index => $envio) {
+						if ($envio) {
+							$envios[$count]['mode'] = $index;
+							$envios[$count]['methods'] = array();
+
+							if ($index == 'not_specified') {
+								$envios[$count]['local_pick_up'] = true;
+							}else{
+								$envios[$count]['local_pick_up'] = false;
+							}
+
+							if (is_array($envio)) {
+								prx($envio);
+							}
+						}
+						$count++;
+					}
+				}
+				
+				
 				# Actualizamos publicación existente en mercado libre
-				$meliRespuesta = $this->Meli->update($producto['MercadoLibr']['id_meli'], $producto['MercadoLibr']['producto'], $producto['MercadoLibr']['precio'], $producto['MercadoLibr']['cantidad_disponible'], $producto['MercadoLibr']['id_video'], $imagenes);
+				$meliRespuesta = $this->Meli->update($producto['MercadoLibr']['id_meli'], $producto['MercadoLibr']['producto'], $producto['MercadoLibr']['precio'], $producto['MercadoLibr']['cantidad_disponible'], $producto['MercadoLibr']['id_video'], $imagenes, $envios);
 			
 				$publicarResponse = to_array($meliRespuesta);
 				if ($meliRespuesta['httpCode'] == 200) {
@@ -272,7 +326,24 @@ class MercadoLibresController extends AppController
 					)
 				);
 
-				$meliRespuesta = $this->Meli->publish($producto['MercadoLibr']['producto'], $producto['MercadoLibr']['categoria_hoja'], $producto['MercadoLibr']['precio'], 'CLP', $producto['MercadoLibr']['cantidad_disponible'], 'buy_it_now', $producto['MercadoLibr']['tipo_publicacion'], $producto['MercadoLibr']['condicion'], $producto['MercadoLibr']['html'], $producto['MercadoLibr']['id_video'], $producto['MercadoLibr']['garantia'], $imagenes);
+				# Envios
+				$envios = array();
+				if (isset($this->request->data['Envios'])) {
+					
+					if (isset($this->request->data['Envios']['me2'])) {
+						$envios['mode'] = 'me2';
+						$envios['local_pick_up'] = (isset($this->request->data['Envios']['me2']) && $this->request->data['Envios']['me2']) ? true : false;
+						$envios['free_shipping'] = false;
+						$envios['free_methods'] = array();
+					}
+
+					if (isset($this->request->data['Envios']['custom'])) {
+						prx($this->request->data['Envios']['custom']);
+					}
+
+				}
+				
+				$meliRespuesta = $this->Meli->publish($producto['MercadoLibr']['producto'], $producto['MercadoLibr']['categoria_hoja'], $producto['MercadoLibr']['precio'], 'CLP', $producto['MercadoLibr']['cantidad_disponible'], 'buy_it_now', $producto['MercadoLibr']['tipo_publicacion'], $producto['MercadoLibr']['condicion'], $producto['MercadoLibr']['html'], $producto['MercadoLibr']['id_video'], $producto['MercadoLibr']['garantia'], $imagenes, $envios);
 				
 				if (!empty($meliRespuesta)) {
 					if ($meliRespuesta['httpCode'] >= 300) {
@@ -363,7 +434,6 @@ class MercadoLibresController extends AppController
 			}else{
 				$miCuenta = $miCuenta['body'];
 			}
-
 		}
 
 		$url = '';
@@ -375,7 +445,7 @@ class MercadoLibresController extends AppController
 		BreadcrumbComponent::add('Mercado Libre Productos', '/mercadoLibres');
 		BreadcrumbComponent::add('Mi cuenta ');
 		
-		$this->set(compact('miCuenta', $url));
+		$this->set(compact('miCuenta', 'url'));
 	}
 
 
@@ -386,7 +456,8 @@ class MercadoLibresController extends AppController
 			'conditions' => array(
 				'MercadoLibr.tienda_id' => $this->Session->read('Tienda.id')
 				),
-			'order' => array('MercadoLibr.id' => 'DESC')
+			'order' => array('MercadoLibr.id' => 'DESC'),
+			'limit' => 10
 		);
 
 		$url = '';
@@ -396,9 +467,6 @@ class MercadoLibresController extends AppController
 		}
 
 		BreadcrumbComponent::add('Mercado Libre Productos ');
-
-		#prx($this->Meli->uploadFile('https://www.toolmania.cl/img/p/4/3/8/5/4385.jpg'));
-		#prx($this->Meli->linkImageToItem('833366-MLC25840423212_082017', 'MLC447841638'));
 
 		$mercadoLibres	= $this->paginate();
 		$this->set(compact('mercadoLibres', 'url'));

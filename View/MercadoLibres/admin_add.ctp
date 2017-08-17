@@ -75,6 +75,10 @@
 								<td><?= $this->Form->input('id_video'); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('', 'Opciones de envio'); ?></th>
+								<td class="shipping-container"></td>
+							<tr>
+							<tr>
 								<th><?= $this->Form->label('garantia', 'Garantia'); ?></th>
 								<td><?= $this->Form->input('garantia'); ?></td>
 							</tr>

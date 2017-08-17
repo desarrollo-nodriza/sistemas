@@ -25,6 +25,42 @@
 <?= $this->Form->input('id_product', array('type' => 'hidden', 'class' => 'id-product')); ?>
 <div class="page-content-wrap">
 	<div class="row">
+	<? if(isset($meliItem['sold_quantity'])) : ?>
+		<div class="col-xs-12 col-sm-3">
+            <a href="#" class="tile tile-primary">
+                <?= $meliItem['sold_quantity']; ?>
+                <p>Cantidad vendida en MELI</p>                            
+                <div class="informer informer-default"><span class="fa fa-shopping-cart"></span></div>
+            </a>
+        </div>
+    <? endif; ?>
+    <? if(isset($meliItem['available_quantity'])) : ?>
+		<div class="col-xs-12 col-sm-3">
+            <a href="#" class="tile tile-info">
+                <?= $meliItem['available_quantity']; ?>
+                <p>Stock MELI</p>                            
+                <div class="informer informer-default"><span class="fa fa-cubes"></span></div>
+            </a>
+        </div>
+    <? endif; ?>
+    <? if(isset($meliItem['price'])) : ?>
+		<div class="col-xs-12 col-sm-3">
+            <a href="#" class="tile tile-success">
+                <?= CakeNumber::currency($meliItem['price'], 'CLP'); ?>
+                <p>Precio MELI</p>                            
+                <div class="informer informer-default"><span class="fa fa-usd"></span></div>
+            </a>
+        </div>
+    <? endif; ?>
+    <? if (isset($meliItem['permalink'])) : ?>
+    <div class="col-xs-12 col-sm-3">
+            <a href="<?=$meliItem['permalink'];?>" class="tile tile-warning" target="_blank">
+                <span class="fa fa-eye"></span>              
+            </a>
+        </div>
+    <? endif; ?>
+	</div>
+	<div class="row">
 		<div class="col-xs-12">
 			<div class="panel panel-default">
 				<div class="panel-heading">
@@ -33,15 +69,24 @@
 				<div class="panel-body">
 					<div class="col-xs-12">
 						<h4>Categoría Mercadolibre</h4>
+						<? if (!empty($this->request->data['MercadoLibr']['categoria_00'])) : ?>
+						<label class="label label-info">La categoria del item debe ser actualizado directamente en Mercado Libre</label>
+						<br />
+						<br />
+						<? endif; ?>
 					</div>
 					<div class="col-xs-12 col-sm-3 js-base">
+						<? if (!empty($this->request->data['MercadoLibr']['categoria_00'])) : ?>
+						<?=$this->Form->select('categoria_00', $categoriasRoot, array('empty' => 'Seleccione categoria raiz', 'class' => 'form-control', 'id' => 'BaseCat', 'required' => true, 'disabled' => true));?>
+						<? else : ?>
 						<?=$this->Form->select('categoria_00', $categoriasRoot, array('empty' => 'Seleccione categoria raiz', 'class' => 'form-control js-cat', 'id' => 'BaseCat', 'required' => true));?>
+						<? endif; ?>
 						<span class="help-block"></span>
 					</div>
 					<? if (!empty($categoriasHojas)) : ?>
 					<? foreach($categoriasHojas as $index => $categoriasHoja) : ?>
 						<div class="col-xs-12 col-sm-3">
-							<?=$this->Form->select('categoria_0' . $index, $categoriasHoja, array('empty' => 'Seleccione categoria', 'class' => 'form-control js-cat', 'required' => true));?>
+							<?=$this->Form->select('categoria_0' . $index, $categoriasHoja, array('empty' => 'Seleccione categoria', 'class' => 'form-control', 'required' => true, 'disabled' => true));?>
 							<? if (end($categoriasHojas) == $categoriasHojas[$index]) : ?>
 							<span class="help-block"><i class="fa fa-check text-success"></i> Categoría final</span>
 							<? endif; ?>
@@ -100,9 +145,107 @@
 								<th><?= $this->Form->label('id_video', 'Video del producto'); ?></th>
 								<td><?= $this->Form->input('id_video'); ?></td>
 							</tr>
+							<? if (!empty($envio)) : ?>
+							<tr>
+								<th><?= $this->Form->label('', 'Opciones de envio'); ?></th>
+								<? if(isset($meliItem['sold_quantity']) && $meliItem['sold_quantity'] > 0) : ?>
+
+									<label class="label label-info">Los métodos de envio no pueden ser modificadas</label>
+
+								<? else : ?>
+								<td class="shipping-container">
+									<? foreach ($envio as $k => $v) : ?>
+									<? if ($v['mode'] == 'custom') : ?>
+									<? if (isset($v['shipping_attributes']['local_pick_up']) ) : ?>
+									<? if (isset($meliItem['shipping']['local_pick_up']) && $meliItem['shipping']['local_pick_up'] ) : ?>
+									<div class="form-group">
+										<input type="checkbox" name="data[Envios][local_pick_up]" checked>
+										<label> Tambien se puede retirar en persona</label>
+									</div>
+									<? else : ?>
+									<div class="form-group">
+										<input type="checkbox" name="data[Envios][local_pick_up]">
+										<label> Tambien se puede retirar en persona</label>
+									</div>
+									<? endif; ?>
+									<? endif;  ?>
+									<div class="form-group">
+										<? if (isset($meliItem['shipping']['mode']) && $meliItem['shipping']['mode'] == $v['mode']) : ?>
+										<input type="checkbox" name="data[Envios][<?= $v['mode']; ?>]" id="<?= $v['mode']; ?>" class="meli-custom-shipment" checked>
+										<label for="<?= $v['mode']; ?>"><?= $v['label']; ?></label>
+										<? else : ?>
+										<input type="checkbox" name="data[Envios][<?= $v['mode']; ?>]" id="<?= $v['mode']; ?>" class="meli-custom-shipment">
+										<label for="<?= $v['mode']; ?>"><?= $v['label']; ?></label>
+										<? endif; ?>
+									</div>
+									<div class="meli-custom-list table-responsive">
+										<table class="table table-bordered js-clon-scope" data-limit="10">
+											<thead>
+												<th><?= __('Descripción'); ?></th>
+												<th><?= __('Costo'); ?></th>
+												<th><?= __('Acciones'); ?></th>
+											</thead>
+											<tbody class="js-clon-contenedor js-clon-blank">
+												<tr class="js-clon-base hidden">
+													<td>
+														<?= $this->Form->input(sprintf('Envios.%s.costs.999.description', $v['mode']), array('disabled' => true, 'class' => 'form-control'));?>
+													</td>
+													<td>
+														<?= $this->Form->input(sprintf('Envios.%s.costs.999.cost', $v['mode']), array('disabled' => true, 'class' => 'form-control'));?>
+													</td>
+													<td>
+														<a href="#" class="btn btn-xs btn-danger js-clon-eliminar"><i class="fa fa-trash"></i> Quitar</a>
+													</td>
+												</tr>
+											</tbody>
+											<tfoot>
+												<tr>
+													<td colspan="3"><a href="#" class="btn btn-xs btn-success js-clon-agregar"><i class="fa fa-plus"></i> Agregar otro</a></td>
+												</tr>
+											</tfoot>
+										</table>
+									</div>
+									<? elseif ($v['mode'] == 'me2') : ?>
+									<? if (isset($meliItem['shipping']['mode']) && $meliItem['shipping']['mode'] == $v['mode']) : ?>
+									<div class="form-group">
+										<input type="checkbox" name="data[Envios][<?= $v['mode']; ?>]" id="<?= $v['mode']; ?>" checked>
+										<label for="<?= $v['mode']; ?>"><?= $v['label']; ?></label>
+									</div>
+									<? else : ?>
+									<div class="form-group">
+										<input type="checkbox" name="data[Envios][<?= $v['mode']; ?>]" id="<?= $v['mode']; ?>">
+										<label for="<?= $v['mode']; ?>"><?= $v['label']; ?></label>
+									</div>
+									<? endif; ?>
+									<? if (isset($v['shipping_attributes']['local_pick_up']) ) : ?>
+									<? if (isset($meliItem['shipping']['local_pick_up']) && $meliItem['shipping']['local_pick_up'] ) : ?>
+									<div class="form-group">
+										<input type="checkbox" name="data[Envios][local_pick_up]" checked>
+										<label> Tambien se puede retirar en persona</label>
+									</div>
+									<? else : ?>
+									<div class="form-group">
+										<input type="checkbox" name="data[Envios][local_pick_up]">
+										<label> Tambien se puede retirar en persona</label>
+									</div>
+									<? endif; ?>
+									<? endif;  ?>
+									<? endif; ?>
+									<? endforeach; ?>
+								</td>
+								<? endif; ?>
+							</tr>
+							<? endif; ?>
 							<tr>
 								<th><?= $this->Form->label('garantia', 'Garantia'); ?></th>
-								<td><?= $this->Form->input('garantia'); ?></td>
+								<td>
+									<? if(isset($meliItem['sold_quantity']) && $meliItem['sold_quantity'] > 0) : ?>
+										<?= $this->Form->input('garantia', array('disabled' => true)); ?>
+									<? else : ?>
+										<?= $this->Form->input('garantia'); ?>
+									<? endif; ?>
+									
+								</td>
 							</tr>
 
 							<? if(!empty($meliItem)) : ?>

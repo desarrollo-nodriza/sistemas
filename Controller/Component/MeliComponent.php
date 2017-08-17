@@ -60,9 +60,9 @@ class MeliComponent extends Component
 				}
 
 				// Now we create the sessions with the new parameters
-				$this->Session->write('Meli.access_token', $user['body']['access_token']);
-				$this->Session->write('Meli.expires_in', time() + $user['body']['expires_in']);
-				$this->Session->write('Meli.refresh_token', $user['body']['refresh_token']);
+				$this->Session->write('Meli.access_token', $refresh['body']['access_token']);
+				$this->Session->write('Meli.expires_in', time() + $refresh['body']['expires_in']);
+				$this->Session->write('Meli.refresh_token', $refresh['body']['refresh_token']);
 
 			} catch (Exception $e) {
 			  	echo "Exception: ",  $e->getMessage(), "\n";
@@ -325,7 +325,7 @@ class MeliComponent extends Component
 	 *
 	 * @return Objeto devuelto por MELI	 
 	 */
-	public function publish($title, $category_id, $price, $currency_id = 'CLP', $available_quantity = 1, $buying_mode = 'buy_it_now', $listing_type_id, $condition = 'new', $description = 'Item de test - No Ofertar', $video_id = '', $warranty = '', $pictures = array() )
+	public function publish($title, $category_id, $price, $currency_id = 'CLP', $available_quantity = 1, $buying_mode = 'buy_it_now', $listing_type_id, $condition = 'new', $description = 'Item de test - No Ofertar', $video_id = '', $warranty = '', $pictures = array(), $shipping = array() )
 	{	
 
 		if (empty($title) ||
@@ -355,7 +355,8 @@ class MeliComponent extends Component
 			"tags" => array(
 		        "immediate_payment"
 		    ),
-		    "description" => $description
+		    "description" => $description,
+		    "shipping" => $shipping
 		);
 		
 		# Validate item with MEli validator api
@@ -388,11 +389,12 @@ class MeliComponent extends Component
 	 *
 	 * @return Objeto devuelto por MELI	 
 	 */
-	public function update($id, $title, $price, $available_quantity = 1, $video_id = '', $pictures = array() )
+	public function update($id, $title, $price, $available_quantity = 1, $video_id = '', $pictures = array() , $shipping = array())
 	{	
 		# Configuración de la tienda
     	$this->setComponentConfig();
 		$this->meli = new Meli($this->client_id, $this->client_secret);
+
 
 		// We construct the item to POST
 		$item = array(
@@ -403,7 +405,8 @@ class MeliComponent extends Component
 			"pictures" => $pictures,
 			"tags" => array(
 		        "immediate_payment"
-		    )
+		    ),
+		    "shipping" => $shipping
 		);
 		
 		// We call the post request to list a item
@@ -526,8 +529,11 @@ class MeliComponent extends Component
 		
 		$me = json_decode(json_encode($this->getMyAccountInfo()), true);
 		
+		# Creamos lista
+		$list = array();
+
 		if ($me['httpCode'] != 200) {
-			$result = '';
+			return;
 		}else{
 
 			$params =  array(
@@ -539,15 +545,10 @@ class MeliComponent extends Component
 		}
 		
 		if ($result['httpCode'] != 200) {
-			$result = '';
+			return;
 		}else{
-
-			# Creamos lista
-			
-			prx($result['body']);
+			return array_reverse($result);
 		}
-
-		return $result;
 	}
 
 }

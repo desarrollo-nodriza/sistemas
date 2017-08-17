@@ -51,10 +51,12 @@
 								<th><label>Email</label></th>
 								<td><?=$miCuenta['email'];?></td>
 							</tr>
+							<? if (!empty($miCuenta['logo'])) : ?>
 							<tr>
 								<th><label>Imagen</label></th>
-								<td><?=$this->Html->image($miCuenta['thumbnail']['picture_url'], array('class' => 'thumbnail img-responsive'));?></td>
+								<td><?=$this->Html->image($miCuenta['logo'], array('class' => 'thumbnail img-responsive'));?></td>
 							</tr>
+							<? endif; ?>
 							<tr>
 								<th><label>Fecha registro</label></th>
 								<td><?=$miCuenta['registration_date'];?></td>

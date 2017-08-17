@@ -567,14 +567,46 @@ $.extend({
 			}
 		},
 		clonarTabla: {
+			quitar: function() {
+				/**
+				 * Eliminar clon
+				 */
+				$(document).on('click', '.js-clon-eliminar', function(evento)
+				{
+					evento.preventDefault();
+
+					var $this			= $(this),
+						$tr				= $this.parents('tr').first();
+
+					$tr.remove();
+
+					/**
+					 * Reindexa
+					 */
+					$.app.clonarTabla.reindexar();
+				});
+			},
 			clonar: function() {
 				// Clonar tabla
 				$('.js-clon-contenedor').each(function(){
 
+					var limite 	= $(this).parents('.js-clon-scope').eq(0).data('limit'),
+						trs = $(this).parents('.js-clon-scope').eq(0).find('.js-clon-contenedor').find('tr').length;
+					
+					if (typeof(limite) != 'undefined' && typeof(trs) != 'undefined') {
+						console.log(trs-1);
+						if ((trs - 1) == limite) {
+							noty({text: 'Solo se permite agregar ' + limite + ' elemento/s.', layout: 'topRight', type: 'error'});
+							return;
+						}
+					}
+
 					var $this 			= $(this),
 						tablaInicial 	= $this.find('.js-clon-base'),
 						tablaClonada 	= tablaInicial.clone();
-						console.log('Contenedor clonar disparado');
+						
+					console.log('Contenedor clonar disparado');
+					
 					tablaClonada.removeClass('js-clon-base');
 					tablaClonada.removeClass('hidden');
 					tablaClonada.addClass('js-clon-clonada');
@@ -590,13 +622,14 @@ $.extend({
 			init: function(){
 				if($('.js-clon-contenedor').length) {
 					$.app.clonarTabla.clonar();
+					$.app.clonarTabla.quitar();
 					$.app.clonarTabla.bind();
 				}
 			},
 			bind: function(){
 
 				// Agregar tabla click
-				$('.js-clon-agregar').on('click', function(event){
+				$(document).on('click', '.js-clon-agregar', function(event){
 					event.preventDefault();
 					$.app.clonarTabla.clonar();
 				});

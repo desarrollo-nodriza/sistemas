@@ -26,6 +26,92 @@ $.extend({
 		}
 	},
 	meli: {
+		listShipping: function(categoria_hoja){
+			var requestUrl 	= webroot + 'mercadoLibres/envioDisponible/' + categoria_hoja + '/true';
+			var html = "";
+			$.get(requestUrl, function(result){
+
+				if (typeof(result) == 'object') {
+					if (result.length > 0) {
+						for (var itr = 0; itr <= result.length - 1; itr++) {
+							if (result[itr]['mode'] == 'custom') {
+								if (typeof(result[itr]['shipping_attributes']['local_pick_up']) != 'undefined') {
+								html += "<div class='form-group'>";
+								html +=	"<input type='checkbox' name='data[Envios][local_pick_up]'>";
+								html += "<label>Tambien se puede retirar en persona</label>";
+								html +=	"</div>";
+								}
+								
+								html += "<div class='form-group'>";
+								html += "<input type='checkbox' name='data[Envios][" + result[itr]['mode'] + "]' id='" + result[itr]['mode'] + "' class='meli-custom-shipment'>";
+								html +=	" <label for='" + result[itr]['mode'] + "'>" + result[itr]['label'] + "</label>";
+								html += "</div>";
+								html += "<div class='meli-custom-list table-responsive'>";
+								html +=	"<table class='table table-bordered js-clon-scope' data-limit='10'>";
+								html +=	"	<thead>";
+								html += "		<th>Descripción</th>";
+								html += "		<th>Costo</th>";
+								html += "		<th>Acciones</th>";
+								html += "	</thead>";
+								html += "	<tbody class='js-clon-contenedor js-clon-blank'>";
+								html += "	<tr class='js-clon-base hidden'>";
+								html += "		<td>";
+								html += "			<input type='text' name='data[Envios][" + itr + "][costs][999][description]' class='form-control' disabled='disabled'>";
+								html += "		</td>";
+								html += "		<td>";
+								html += "			<input type='text' name='data[Envios][" + itr + "][costs][999][cost]' class='form-control' disabled='disabled'>";
+								html += "		</td>";
+								html += "		<td>";
+								html += "			<a href='#' class='btn btn-xs btn-danger js-clon-eliminar'><i class='fa fa-trash'></i> Quitar</a>";
+								html += "		</td>";
+								html += "	</tr>";
+								html += "	</tbody>";
+								html += "	<tfoot>";
+								html += "	<tr>";
+								html += "		<td colspan='3'><a href='#' class='btn btn-xs btn-success js-clon-agregar'><i class='fa fa-plus'></i> Agregar otro</a></td>";
+								html += "	</tr>";
+								html += "	</tfoot>";
+								html += "</table>";
+								html += "</div>";
+							}else if (result[itr]['mode'] == 'me2') {
+								html += "<div class='form-group'>";
+								html += "<input type='checkbox' name='data[Envios][" + result[itr]['mode'] + "]' id='" + result[itr]['mode'] + "' class='meli-custom-shipment'>";
+								html +=	" <label for='" + result[itr]['mode'] + "'>" + result[itr]['label'] + "</label>";
+								html += "</div>";
+								if (typeof(result[itr]['shipping_attributes']['local_pick_up']) != 'undefined') {
+								html += "<div class='form-group'>";
+								html +=	"<input type='checkbox' name='data[Envios][local_pick_up]'>";
+								html += "<label>Tambien se puede retirar en persona</label>";
+								html +=	"</div>";
+								}
+							}
+						}
+					}
+					$('.shipping-container').html('');
+					$('.shipping-container').html(html);
+				}
+
+				$.app.clonarTabla.init();
+				$.meli.shipping();
+			});
+		},
+		shipping: function(){
+
+			$('.meli-custom-shipment').on('change', function(){
+				if ($(this).is(':checked')) {
+					$('.meli-custom-list').removeClass('hide');
+				}else{
+					$('.meli-custom-list').addClass('hide');
+				}
+			});
+
+			if ($('.meli-custom-shipment').is(':checked')) {
+				$('.meli-custom-list').removeClass('hide');
+			}else{
+				$('.meli-custom-list').addClass('hide');
+			}
+			
+		},
 		bind:function(){
 
 			var $htmlBase = $('.js-base');
@@ -63,10 +149,14 @@ $.extend({
 
 							$nextHtmlCategory.insertAfter($this.parent());
 
+							$('.shipping-container').html('');
+
 							$.app.loader.ocultar();
 
 						}else{
 
+							$.meli.listShipping($this.val());
+							
 							$.app.loader.ocultar();
 
 							$this.removeClass('js-base');
@@ -84,6 +174,11 @@ $.extend({
 				$.meli.bind();
 				$.toggleInput.bind();
 			}
+
+			if ($('.meli-custom-shipment').length) {
+				$.meli.shipping();
+			}
+
 		}
 	}
 });
