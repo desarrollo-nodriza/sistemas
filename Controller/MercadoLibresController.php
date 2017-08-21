@@ -238,26 +238,26 @@ class MercadoLibresController extends AppController
 				# Envios
 				$envios = array();
 				if (isset($this->request->data['Envios'])) {
-					$count = 0;
-					foreach ($this->request->data['Envios'] as $index => $envio) {
-						if ($envio) {
-							$envios[$count]['mode'] = $index;
-							$envios[$count]['methods'] = array();
-
-							if ($index == 'not_specified') {
-								$envios[$count]['local_pick_up'] = true;
-							}else{
-								$envios[$count]['local_pick_up'] = false;
-							}
-
-							if (is_array($envio)) {
-								prx($envio);
-							}
-						}
-						$count++;
+					
+					if (isset($this->request->data['Envios']['me2'])) {
+						$envios['mode'] = 'me2';
+						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
+						$envios['free_shipping'] = false;
+						$envios['free_methods'] = array();
 					}
+
+					if (isset($this->request->data['Envios']['custom'])) {
+						$envios['mode'] = 'custom';
+						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
+						$envios['free_shipping'] = false;
+						$envios['free_methods'] = array();
+						foreach ($this->request->data['Envios']['costs'] as $indice => $costo) {
+							$envios['costs'][] = $costo;
+						}
+						
+					}
+
 				}
-				
 				
 				# Actualizamos publicación existente en mercado libre
 				$meliRespuesta = $this->Meli->update($producto['MercadoLibr']['id_meli'], $producto['MercadoLibr']['producto'], $producto['MercadoLibr']['precio'], $producto['MercadoLibr']['cantidad_disponible'], $producto['MercadoLibr']['id_video'], $imagenes, $envios);
@@ -332,13 +332,20 @@ class MercadoLibresController extends AppController
 					
 					if (isset($this->request->data['Envios']['me2'])) {
 						$envios['mode'] = 'me2';
-						$envios['local_pick_up'] = (isset($this->request->data['Envios']['me2']) && $this->request->data['Envios']['me2']) ? true : false;
+						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
 						$envios['free_shipping'] = false;
 						$envios['free_methods'] = array();
 					}
 
 					if (isset($this->request->data['Envios']['custom'])) {
-						prx($this->request->data['Envios']['custom']);
+						$envios['mode'] = 'custom';
+						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
+						$envios['free_shipping'] = false;
+						$envios['free_methods'] = array();
+						foreach ($this->request->data['Envios']['costs'] as $indice => $costo) {
+							$envios['costs'][] = $costo;
+						}
+						
 					}
 
 				}
@@ -594,8 +601,9 @@ class MercadoLibresController extends AppController
 		$envio = $this->admin_envioDisponible($this->request->data['MercadoLibr']['categoria_hoja']);
 		
 		$meliItem = $this->admin_verProducto($this->request->data['MercadoLibr']['id_meli']);
+		$meliItemShipping = $this->Meli->getShippingOptions($this->request->data['MercadoLibr']['id_meli']);
 
-		$this->set(compact('plantillas', 'producto', 'categoriasRoot', 'categoriasHojas', 'url', 'tipoPublicacionesMeli', 'condicionProducto', 'meliItem', 'envio'));
+		$this->set(compact('plantillas', 'producto', 'categoriasRoot', 'categoriasHojas', 'url', 'tipoPublicacionesMeli', 'condicionProducto', 'meliItem', 'envio', 'meliItemShipping'));
 	}
 
 

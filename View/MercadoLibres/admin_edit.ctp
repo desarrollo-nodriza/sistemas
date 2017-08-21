@@ -188,15 +188,30 @@
 											<tbody class="js-clon-contenedor js-clon-blank">
 												<tr class="js-clon-base hidden">
 													<td>
-														<?= $this->Form->input(sprintf('Envios.%s.costs.999.description', $v['mode']), array('disabled' => true, 'class' => 'form-control'));?>
+														<?= $this->Form->input('Envios.costs.999.description', array('disabled' => true, 'class' => 'form-control'));?>
 													</td>
 													<td>
-														<?= $this->Form->input(sprintf('Envios.%s.costs.999.cost', $v['mode']), array('disabled' => true, 'class' => 'form-control'));?>
+														<?= $this->Form->input('Envios.costs.999.cost', array('disabled' => true, 'class' => 'form-control'));?>
 													</td>
 													<td>
 														<a href="#" class="btn btn-xs btn-danger js-clon-eliminar"><i class="fa fa-trash"></i> Quitar</a>
 													</td>
 												</tr>
+												<? if (is_array($meliItemShipping['options'])) : ?>
+												<? foreach ($meliItemShipping['options'] as $indice => $costo) : ?>
+													<tr>
+														<td>
+															<?= $this->Form->input(sprintf('Envios.costs.%d.description', $indice), array('class' => 'form-control', 'value' => $costo['name'], 'disabled' => true)); ?>
+														</td>
+														<td>
+															<?= $this->Form->input(sprintf('Envios.costs.%d.cost', $indice), array('class' => 'form-control', 'value' => $costo['cost'], 'disabled' => true)); ?>
+														</td>
+														<td>
+															Se debe modificar<br>en Mercado Libre
+														</td>
+													</tr>
+												<? endforeach; ?>
+												<? endif; ?>
 											</tbody>
 											<tfoot>
 												<tr>
@@ -235,6 +250,11 @@
 								</td>
 								<? endif; ?>
 							</tr>
+							<? else : ?>
+							<tr>
+								<th><?= $this->Form->label('', 'Opciones de envio'); ?></th>
+								<td class="shipping-container"></td>
+							<tr>
 							<? endif; ?>
 							<tr>
 								<th><?= $this->Form->label('garantia', 'Garantia'); ?></th>
@@ -252,7 +272,7 @@
 							<tr>
 								<th><?= $this->Form->label('fecha_finaliza', 'Fecha de finalización'); ?></th>
 								<td>
-									<? 	$fecha = date('Y-m-d H:i:s', strtotime($meliItem['stop_time'])); ?>
+									<? 	$fecha = (isset($meliItem['stop_time'])) ? date('Y-m-d H:i:s', strtotime($meliItem['stop_time'])) : 'No especificado'; ?>
 									<?= $this->Form->input('fecha_finaliza', array('type' => 'hidden', 'value' => $fecha)); ?>
 									<?= $fecha; ?>
 								</td>

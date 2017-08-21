@@ -519,6 +519,9 @@ class MeliComponent extends Component
 		return $result;
 	}
 
+	/**
+	 * Shipping
+	 */
 
 	public function getShippingMode($category_id, $dimensions = '')
 	{
@@ -548,6 +551,23 @@ class MeliComponent extends Component
 			return;
 		}else{
 			return array_reverse($result);
+		}
+	}
+
+
+	public function getShippingOptions($id)
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+	
+		$result = to_array($this->meli->get('items/'.$id.'/shipping_options'));
+		
+		if ($result['httpCode'] != 200) {
+			return;
+		}else{
+			return $result['body'];
 		}
 	}
 

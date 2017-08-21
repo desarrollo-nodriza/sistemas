@@ -56,10 +56,10 @@ $.extend({
 								html += "	<tbody class='js-clon-contenedor js-clon-blank'>";
 								html += "	<tr class='js-clon-base hidden'>";
 								html += "		<td>";
-								html += "			<input type='text' name='data[Envios][" + itr + "][costs][999][description]' class='form-control' disabled='disabled'>";
+								html += "			<input type='text' name='data[Envios][costs][999][description]' class='form-control' disabled='disabled'>";
 								html += "		</td>";
 								html += "		<td>";
-								html += "			<input type='text' name='data[Envios][" + itr + "][costs][999][cost]' class='form-control' disabled='disabled'>";
+								html += "			<input type='text' name='data[Envios][costs][999][cost]' class='form-control' disabled='disabled'>";
 								html += "		</td>";
 								html += "		<td>";
 								html += "			<a href='#' class='btn btn-xs btn-danger js-clon-eliminar'><i class='fa fa-trash'></i> Quitar</a>";

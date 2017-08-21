@@ -672,6 +672,25 @@ $.extend({
 				});
 
 				$contenedor.find('.table').each(function(index)
+				{	console.log('Reindexar');
+					$(this).find('input, select, textarea').each(function()
+					{
+						var $that		= $(this),
+							nombre		= $that.attr('name').replace(/[(\d)]/, (index));
+
+						$that.attr('name', nombre);
+					});
+
+					$(this).find('label').each(function()
+					{
+						var $that		= $(this),
+							nombre		= $that.attr('for').replace(/[(\d)]/, (index));
+
+						$that.attr('for', nombre);
+					});
+				});
+
+				$('.meli-custom-list').find('tr').each(function(index)
 				{	
 					$(this).find('input, select, textarea').each(function()
 					{
