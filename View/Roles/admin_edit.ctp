@@ -23,6 +23,10 @@
 									<td><?= $this->Form->input('permisos'); ?></td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('mostrar_dashboard', 'Mostrar dashboard'); ?></th>
+									<td><?= $this->Form->input('mostrar_dashboard', array('class' => 'icheckbox')); ?></td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 									<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 								</tr>

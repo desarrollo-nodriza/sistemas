@@ -45,7 +45,7 @@ class RolesController extends AppController
 		}
 
 		if ( $this->request->is('post') || $this->request->is('put') )
-		{
+		{	
 			if ( $this->Rol->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');

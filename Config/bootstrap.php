@@ -159,3 +159,19 @@ function to_array($obj)
 {
 	return json_decode(json_encode($obj), true);
 }
+
+function getDashboard($rol_id)
+{	
+	if (empty($rol_id)) {
+		return false;
+	}else{
+
+		$dashboard = ClassRegistry::init('Rol')->find('first', array('Rol.id' => $rol_id));
+	
+		if (!empty($dashboard) && $dashboard['Rol']['mostrar_dashboard']) {
+			return true;
+		}
+
+		return false;
+	}
+}

@@ -22,6 +22,7 @@
 									<tr class="sort">
 										<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('activo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+										<th><?= $this->Paginator->sort('mostrar_dashboard', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('created', 'Fecha de creación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th>Acciones</th>
 									</tr>
@@ -31,6 +32,7 @@
 									<tr>
 										<td><?= h($rol['Rol']['nombre']); ?>&nbsp;</td>
 										<td><?= ($rol['Rol']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
+										<td><?= ($rol['Rol']['mostrar_dashboard'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 										<td><?= h($rol['Rol']['created']); ?>&nbsp;</td>
 										<td>
 										<? if ($permisos['edit']) : ?>

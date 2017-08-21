@@ -34,7 +34,9 @@
                 </div>
             </div>                                                                        
         </li>
+        <? if (getDashboard($this->Session->read('Auth.Administrador.rol_id'))) : ?>
         <li class="<?= ($this->Html->menuActivo(array('controller' => 'pages', 'action' => 'dashboard')) ? 'active' : ''); ?>"><?= $this->Html->link('<span class="fa fa-dashboard"></span> <span class="xn-text">Dashboard</span>', '/', array('escape' => false) ); ?></li>
+        <? endif; ?>
 		<!-- Get Modules View -->	
 		<?= $this->element('modulos'); ?>
 
