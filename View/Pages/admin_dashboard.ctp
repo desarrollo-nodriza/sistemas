@@ -1,3 +1,4 @@
+<? if (getDashboard($this->Session->read('Auth.Administrador.rol_id'))) : ?>
 <div class="page-title">
     <div class="col-xs-12 col-sm-3">
 	   <h2><span class="fa fa-tachometer"></span> Inicio</h2>
@@ -362,3 +363,4 @@
     </div>
 
 </div>
+<? endif; ?>
