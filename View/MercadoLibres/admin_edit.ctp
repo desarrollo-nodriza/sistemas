@@ -104,6 +104,10 @@
 							</tr>
 							<? if (!empty($producto)) : ?>
 								<tr>
+									<th><label>Producto</label></th>
+									<td><?= $this->Form->input('producto', array('type' => 'text', 'class' => 'form-control input-productos-buscar-meli')); ?></td>
+								</tr>
+								<!--<tr>
 									<th><label>Producto Actual</label></th>
 									<td>
 										<div class="input-group js-toggle-wrapper">
@@ -114,7 +118,7 @@
                                             </span>
                                         </div>
 									</td>
-								</tr>
+								</tr>-->
 							<? else : ?>
 								<tr>
 									<th><label>Producto</label></th>
