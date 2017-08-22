@@ -166,12 +166,12 @@ function getDashboard($rol_id)
 		return false;
 	}else{
 
-		$dashboard = ClassRegistry::init('Rol')->find('first', array('Rol.id' => $rol_id));
-	
+		$dashboard = ClassRegistry::init('Rol')->find('first', array('conditions' => array('Rol.id' => $rol_id)));
+		
 		if (!empty($dashboard) && $dashboard['Rol']['mostrar_dashboard']) {
 			return true;
 		}
-
-		return false;
 	}
+
+	return false;
 }

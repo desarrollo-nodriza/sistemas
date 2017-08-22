@@ -11,7 +11,7 @@ class AppController extends Controller
 		'Session',
 		'Auth'		=> array(
 			'loginAction'		=> array('controller' => 'administradores', 'action' => 'login', 'admin' => true),
-			'loginRedirect'		=> '/emails',
+			'loginRedirect'		=> '/',
 			'logoutRedirect'	=> '/',
 			'authError'			=> 'No tienes permisos para entrar a esta sección.',
 			'authenticate'		=> array(
@@ -172,8 +172,10 @@ class AppController extends Controller
 
 		// Tiendas
 		$tiendasList = $this->obtenerTiendas();
-
-		$this->set(compact('avatar', 'modulosDisponibles', 'permisos', 'tiendasList'));
+		
+		$showDashboard = getDashboard($this->Auth->user('rol_id'));
+		
+		$this->set(compact('avatar', 'modulosDisponibles', 'permisos', 'tiendasList', 'showDashboard'));
 	}
 
 
