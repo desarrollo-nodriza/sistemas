@@ -1,4 +1,3 @@
-
 <TABLE class="rtable mainTable" cellSpacing=0 cellPadding=0 width="100%" bgColor=#f3f3f3>
   <TR>
     <TD style="FONT-SIZE: 0px; HEIGHT: 20px; LINE-HEIGHT: 0">&#160;</TD>
@@ -17,7 +16,7 @@
                         <TABLE cellSpacing=0 cellPadding=0 border=0>
                           <TR>
                             <TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; BACKGROUND-COLOR: transparent">
-                              <?=$this->Html->image('nodrizablanco.png', array('vspace' => '0', 'hspace' => 0, 'border' => 0, 'class' => 'rimg', 'style' => 'MAX-WIDTH: 135px; BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: block; BACKGROUND-COLOR: transparent', 'fullBase' => true));?>
+                              <img src="<?= FULL_BASE_URL; ?>webroot/img/nodrizablanco.png" vspace=0 hspace=0 border=0 class="rimg" style="MAX-WIDTH: 135px; BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: block; BACKGROUND-COLOR: transparent"/>
                             </TD>
                           </TR>
                         </TABLE>
@@ -35,22 +34,13 @@
               <TR style="HEIGHT: 20px">
                 <TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; WIDTH: 100%; VERTICAL-ALIGN: top; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; TEXT-ALIGN: center; PADDING-TOP: 35px; PADDING-LEFT: 15px; BORDER-LEFT: medium none; PADDING-RIGHT: 15px; BACKGROUND-COLOR: #feffff">
                   <P style="FONT-SIZE: 16px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a8a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>
-                    Estimado/a Nodriza Spa<br>
                     <STRONG>Existen precios desactualizados en Mercado libre. Por favor actualicelos lo antes posible.</STRONG>
                   </P>
                   <P style="FONT-SIZE: 12px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>
                   <BR>
                   <BR>Para actualizar ingrese al click en el siguiente link:
                   <BR>
-                  <?=$this->html->link('Ir a sistemas', array(
-                      'controller' => 'MercadoLibres', 
-                      'action' => 'index',
-                      'admin' => true,
-                      'full_base' => true), 
-                      array(
-                      'style' => 'background-color:#771D97; font-size: 14px; font-family: arial, helvetica, sans-serif; color: #ffffff; padding: 5px 15px; text-decoration: none; margin-top: 15px; display: inline-block; text-align: center;'
-                      )
-                    );?>
+                    <a href="<?=sprintf('%sMercadoLibres/',FULL_BASE_URL); ?>" style="background-color:#771D97; font-size: 14px; font-family: arial, helvetica, sans-serif; color: #ffffff; padding: 5px 15px; text-decoration: none; margin-top: 10px; display: inline-block; text-align: center;">Ir a sistemas</a>
                   <BR>
                   <BR>
                   <P style="FONT-SIZE: 12px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>Atte Equipo de Nodriza Spa.</P>

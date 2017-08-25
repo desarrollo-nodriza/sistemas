@@ -143,7 +143,10 @@ Configure::write('CakePdf', array(
 
  define('DOMPDF_ENABLE_REMOTE', true);
 
-
+// URL Base para consola
+if ( !defined('FULL_BASE_URL') ) {
+	define('FULL_BASE_URL', 'http://sistemas.nodriza.cl/');
+}
 
 /**
  * Funciones personalizadas
