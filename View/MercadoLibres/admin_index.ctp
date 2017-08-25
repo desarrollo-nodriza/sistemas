@@ -9,6 +9,7 @@
 	            </ul>
 	        </div>
 		<? else : ?>
+			<?= $this->Html->link('<i class="fa fa-refresh"></i> Sincronizar precios', array('action' => 'actualizarPrecios'), array('escape' => false, 'class' => 'btn btn-info meli-loading')); ?>
 			<div class="btn-group">
 	            <a href="#" data-toggle="dropdown" class="btn btn-success dropdown-toggle" aria-expanded="false">Aplicación Conectada <span class="caret"></span></a>
 	            <ul class="dropdown-menu pull-right" role="menu">

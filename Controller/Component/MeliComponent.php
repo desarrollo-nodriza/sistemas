@@ -31,21 +31,32 @@ class MeliComponent extends Component
 		}
 	}
 
-	private function setComponentConfig ()
+	private function setComponentConfig ($id = '')
 	{
 		$app = new AppController();
-    	$tienda = $app->tiendaConf($this->Session->read('Tienda.id'));
 
+		if (empty($id)) {
+			$tienda = $app->tiendaConf($this->Session->read('Tienda.id'));	
+		}else{
+			$tienda = $app->tiendaConf($id);
+		}
+		
     	if (!empty($tienda)) {
     		$this->client_id = Configure::read(sprintf('Meli.%s.client_id', $tienda));
     		$this->client_secret = Configure::read(sprintf('Meli.%s.client_secret', $tienda));
+    		#$this->client_id = Configure::read(sprintf('Meli.tiendas_oficiales.client_id', $tienda));
+    		#$this->client_secret = Configure::read(sprintf('Meli.tiendas_oficiales.client_secret', $tienda));
     	}
 	}
 
-    public function checkTokenAndRefreshIfNeed()
+    public function checkTokenAndRefreshIfNeed($tienda_id = '')
     {	
-    	# Configuración de la tienda
-    	$this->setComponentConfig();
+    	if (!empty($tienda_id)) {
+    		# Configuración de la tienda
+    		$this->setComponentConfig($tienda_id);	
+    	}else{
+    		$this->setComponentConfig();	
+    	}
 
     	if( $this->Session->read('Meli.expires_in') < time()) {
     		try {
@@ -71,10 +82,16 @@ class MeliComponent extends Component
     }
 
 
-	public function login($code = '', $callbackUrl = '') {
+	public function login($code = '', $callbackUrl = '', $tienda_id = '') {
 
-		# Configuración de la tienda
-    	$this->setComponentConfig();
+		if (!empty($tienda_id)) {
+			# Configuración de la tienda
+    		$this->setComponentConfig($tienda_id);
+		}else{
+			# Configuración de la tienda
+    		$this->setComponentConfig();
+		}
+		
 
 		$this->meli = new Meli($this->client_id, $this->client_secret);
 		// If the code was in get parameter we authorize
@@ -91,7 +108,7 @@ class MeliComponent extends Component
 
 	}
 
-	public function getAuthUrl($redirect_uri)
+	public function getAuthUrl($redirect_uri = '')
 	{	
 		# Configuración de la tienda
     	$this->setComponentConfig();
@@ -99,6 +116,17 @@ class MeliComponent extends Component
 		$this->meli = new Meli($this->client_id, $this->client_secret);
 
 		return $this->meli->getAuthUrl($redirect_uri, Meli::$AUTH_URL['MLC']);
+	}
+
+
+	public function getCode($url = '')
+	{	
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		return $this->meli->get($url);
 	}
 
 
@@ -135,6 +163,32 @@ class MeliComponent extends Component
 			$result = '';
 		}else{
 			$result = $this->meli->get('/users/' . $me['body']['id'] . '/brands');
+		}
+		
+		if ($result['httpCode'] != 200) {
+			$result = '';
+		}
+
+		return $result;
+	}
+
+	public function getMyItems()
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+		
+		$me = json_decode(json_encode($this->getMyAccountInfo()), true);
+		
+		if ($me['httpCode'] != 200) {
+			$result = '';
+		}else{
+			$params = array(
+				'access_token' => $this->Session->read('Meli.access_token'),
+				'limit' => 0
+			);
+			$result = $this->meli->get(sprintf('/users/%s/items/search', $me['body']['id']), $params);
 		}
 		
 		if ($result['httpCode'] != 200) {
@@ -416,6 +470,38 @@ class MeliComponent extends Component
 
 	}
 
+	/**
+	 * Método encargado de actualizar el precio de un item publicado
+	 * @param 		$id 		string 		Identificador del item en MELI
+	 * @param 		$price 		bigint 		Precio a actualizar
+	 * @param 		$store_id 	int 		Identificador de la tienda
+	 * @return 		Object
+	 */
+	public function updatePrice($id, $price, $store_id = '')
+	{
+		if (!empty($id) && !empty($price)) {
+			if (!empty($store_id)) {
+				# Configuración de la tienda
+	    		$this->setComponentConfig($store_id);
+			}else{
+				# Configuración de la tienda
+	    		$this->setComponentConfig();
+			}
+			
+			$this->meli = new Meli($this->client_id, $this->client_secret);
+
+			$item = array(
+				"price" => $price
+			);
+			
+			// We call the post request to list a item
+			$result = $this->meli->put('/items/' . $id, $item, array('access_token' => $this->Session->read('Meli.access_token')));
+
+			return $result;
+
+		}
+	}
+
 
 	public function viewItem($id)
 	{
@@ -427,6 +513,21 @@ class MeliComponent extends Component
 		
 		if (!empty($id)) {
 			$result = $this->meli->get('/items/' . $id);
+		}
+
+		return $result;
+	}
+
+	public function viewItems()
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		$result = '';
+		
+		if (!empty($id)) {
+			$result = $this->meli->get('/users/');
 		}
 
 		return $result;
@@ -468,20 +569,9 @@ class MeliComponent extends Component
 	}
 
 
-	public function getShippingMethod()
-	{
-		# Configuración de la tienda
-    	$this->setComponentConfig();
-		$this->meli = new Meli($this->client_id, $this->client_secret);
-
-		$result = '';
-		
-		if (!empty($id)) {
-			$result = $this->meli->get('/sites/MLC/shipping_methods');
-		}
-
-		return $result;
-	}
+	/**
+	 * Upload image and associate a image to item
+	 */
 
 	public function uploadFile($image)
 	{
@@ -523,6 +613,23 @@ class MeliComponent extends Component
 	 * Shipping
 	 */
 
+
+	public function getShippingMethod()
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+
+		$result = '';
+		
+		if (!empty($id)) {
+			$result = $this->meli->get('/sites/MLC/shipping_methods');
+		}
+
+		return $result;
+	}
+
+
 	public function getShippingMode($category_id, $dimensions = '')
 	{
 		# Configuración de la tienda
@@ -554,7 +661,11 @@ class MeliComponent extends Component
 		}
 	}
 
-
+	/**
+	 * Función que retorna la información de envio de un producto
+	 * @param $id 		String 		Identificador del producto en MELI
+	 * @return array 	Arreglo con la información del envio del item
+	 */
 	public function getShippingOptions($id)
 	{
 		# Configuración de la tienda
@@ -568,6 +679,61 @@ class MeliComponent extends Component
 			return;
 		}else{
 			return $result['body'];
+		}
+	}
+
+
+
+	/**
+	 * Estadísticas
+	 */
+
+	public function getMonthlyFlow($date_from = '', $date_to = '' )
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+		
+		$me = json_decode(json_encode($this->getMyAccountInfo()), true);
+		
+		# Creamos lista
+		$list = array();
+
+		if ($me['httpCode'] != 200) {
+			return;
+		}else{
+
+			if (empty($date_from)) {
+				$date_from = date('Y-m-1 00:00:00');
+			}else{
+				$date_from = $date_from . '00:00:00';
+			}
+
+			if (empty($date_to)) {
+				$date_to = date('Y-m-d H:i:s');
+			}else{
+				$date_to = $date_to . '23:59:59';
+			}
+
+			$dateFrom = datetime::createFromFormat("Y-m-d H:i:s",$date_from);
+			$dateTo = datetime::createFromFormat("Y-m-d H:i:s",$date_to);
+			$ISODateFrom = $dateFrom->format("c");
+			$ISODateTo = $dateTo->format("c");
+
+			$params =  array(
+				'date_from' => $ISODateFrom,
+				'date_to' => $ISODateTo
+			);
+
+			$result = to_array($this->meli->get('/users/' . $me['body']['id'] . '/items_visits', $params));
+		}
+		
+		
+		if ($result['httpCode'] != 200) {
+			return;
+		}else{
+			return $result;
 		}
 	}
 

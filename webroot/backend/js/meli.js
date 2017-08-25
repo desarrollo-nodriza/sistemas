@@ -1,9 +1,162 @@
 $.extend({
+	hoy: function(){
+		var hoy = new Date();
+		if (hoy.getMonth() < 10 ) {
+			if (hoy.getDate() < 10 ) {
+				return hoy.getFullYear() + '-0' + (hoy.getMonth() + 1) + '-0' + hoy.getDate();
+			}else{
+				return hoy.getFullYear() + '-0' + (hoy.getMonth() + 1) + '-' + hoy.getDate();
+			}
+		}else{
+			return hoy.getFullYear() + '-' + (hoy.getMonth() + 1) + '-' + hoy.getDate();
+		}
+	},
+	inicioMes: function(){
+		var inicioM = new Date();
+		if (inicioM.getMonth() < 10 ) {
+			return inicioM.getFullYear() + '-0' + (inicioM.getMonth() + 1) + '-01';
+		}else{
+			return inicioM.getFullYear() + '-' + (inicioM.getMonth() + 1) + '-01';
+		}
+	},
+	inicioMesAnterior: function(){
+		var inicioM = new Date();
+		if (inicioM.getMonth() < 10 ) {
+			return inicioM.getFullYear() + '-0' + (inicioM.getMonth()) + '-01';
+		}else{
+			return inicioM.getFullYear() + '-' + (inicioM.getMonth()) + '-01';
+		}
+	},
+	calendario: function(f_inicio, f_final){
+		/**
+		 * Datepicker rango fechas
+		 */
+		var $buscador_fecha_inicio		= f_inicio,
+			$buscador_fecha_fin			= f_final;
+
+			$buscador_fecha_inicio.datepicker(
+			{	
+				language	: 'es',
+				format		: 'yyyy-mm-dd',
+			}).on('changeDate', function(data)
+			{
+				$buscador_fecha_fin.datepicker('setStartDate', data.date);
+			});
+
+			$buscador_fecha_fin.datepicker(
+			{
+				language	: 'es',
+				format		: 'yyyy-mm-dd'
+			}).on('changeDate', function(data)
+			{
+				$buscador_fecha_inicio.datepicker('setEndDate', data.date);
+			});
+	},
+	graficosMeli: {
+		init: function(){
+			if ( $('#meli-account').length ) {
+				$.graficosMeli.bind();
+			}
+		},
+		graficoBarra: function(elemento, datos, ejeX, ejeY, etiquetas, colores){
+			Morris.Bar({
+		      	element: elemento,
+				data: datos,
+				xkey: ejeX,
+				ykeys: ejeY,
+				labels: etiquetas,
+				resize: true,
+				barColors: colores
+		    });
+		},
+		graficoLinea: function(elemento, datos, ejeX, ejeY, etiquetas, colores){
+			Morris.Line({
+		      	element: elemento,
+				data: datos,
+				xkey: ejeX,
+				ykeys: ejeY,
+				labels: etiquetas,
+				resize: true,
+				lineColors: colores
+		    });
+		},
+		graficoArea: function(elemento, datos, ejeX, ejeY, etiquetas, colores){
+			Morris.Area({
+		      	element: elemento,
+				data: datos,
+				xkey: ejeX,
+				ykeys: ejeY,
+				labels: etiquetas,
+				resize: true,
+				lineColors: colores
+		    });
+		},
+		graficoDonuts: function(elemento, datos, colores, formato) {
+			Morris.Donut({
+		      	element: elemento,
+				data: datos,
+				formatter: formato,
+				colors: colores
+		    });
+		},
+		obtenerVisitasPorRango: function(){
+			var divGrafico = $('#HistoricoVisitasMeli');
+			
+			// Request
+			$.ajax({
+				url: webroot + "mercadoLibres/totalVisitas/" + $('#VisitasFInicio').val() + '/' + $('#VisitasFFinal').val() + '/' + 'true',
+			    dataType: "json"
+			   
+			})
+			.done(function( data, textStatus, jqXHR ) {
+					console.log(data);
+					var datos = [];
+					var colors = ['#39A23B', '#1C1D1C', '#737473'];
+					var yKeys = [ 'a', 'b', 'c'];
+					var etiquetas = ['Total', 'Toolmania', 'Walko'];
+					var i;
+					console.log(data);
+					for (i in data) {
+					    if (data.hasOwnProperty(i)) {
+					    	/*datos.push({ y : data[i]['y'], a: data[i]['total'], b : data[i]['toolmania'], c: data[i]['walko'] });*/
+					    }
+					}
+
+					$('#HistoricoVisitasMeli').html('');
+
+					$.graficosMeli.graficoLinea(divGrafico, datos, 'y', yKeys, etiquetas, colors);
+
+			})
+			.fail(function( jqXHR, textStatus, errorThrown ) {
+			    console.log( "La solicitud a fallado: " +  textStatus);
+			    //accionesReporte($boton, $fechaReporte);
+			});
+		},
+		bind: function(){
+
+			// Visitas
+			$('#VisitasFInicio').val($.inicioMes());
+			$('#VisitasFFinal').val($.hoy());
+			$.calendario($('#VisitasFInicio'), $('#VisitasFFinal'));
+			$('#VisitasAgrupar').val('dia');
+
+			// Visitas
+			$('#enviarFormularioVisitasMeli').on('click', function(){
+				$.graficosMeli.obtenerVisitasPorRango();
+			});
+
+
+			$('#enviarFormularioVisitasMeli').trigger('click');
+			
+
+		},
+	},
 	toggleInput: {
 		bind: function(){
+
 			$('.toggle-button').on('click', function(e){
 				e.preventDefault();
-
+				
 				var $contexto = $(this).parents('.js-toggle-wrapper').eq(0),
 					$input 	 = $contexto.find('.toggle-input').eq(0);
 					$text = $contexto.find('.toggle-text').eq(0);
@@ -20,7 +173,7 @@ $.extend({
 			});
 		},
 		init: function(){
-			if ( $('.toggle-input').length && $('.toggle-button') ) {
+			if ( $('.toggle-input').length && $('.toggle-button').length ) {
 				$.toggleInput.bind();
 			};
 		}
@@ -178,6 +331,8 @@ $.extend({
 			if ($('.meli-custom-shipment').length) {
 				$.meli.shipping();
 			}
+
+			$.graficosMeli.init();
 
 		}
 	}

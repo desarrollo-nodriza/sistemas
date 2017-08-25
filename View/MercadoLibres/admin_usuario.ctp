@@ -20,9 +20,55 @@
 	</div>
 </div>
 
-<div class="page-content-wrap">
+<div class="page-content-wrap" id="meli-account">
 	<div class="row">
-		<div class="col-xs-12">
+	<? if(isset($totalVisitasMes['body']['total_visits'])) : ?>
+		<div class="col-xs-12 col-sm-3">
+            <a href="#" class="tile tile-primary">
+                <?= $totalVisitasMes['body']['total_visits'] ?>
+                <p>Visitas totales del mes</p>                            
+                <div class="informer informer-default"><span class="fa fa-eye"></span></div>
+            </a>
+        </div>
+    <? endif; ?>
+	</div>
+	<div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Histórico de Visitas</h3>
+                    <?= $this->Form->create('Visitas', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+                    <ul class="panel-controls">      
+                        <li><label class="control-label">Rango </label></li>
+                        <li>
+                            <div class="input-group">
+                                <?=$this->Form->input('f_inicio', array('class' => 'form-control datepicker'));?>
+                                <span class="input-group-addon add-on"> - </span>
+                                <?=$this->Form->input('f_final', array('class' => 'form-control datepicker'));?>
+                            </div>
+                        </li>
+                        <li><label class="control-label">Agrupar</label></li>
+                        <li>
+                            <div class="input-group">
+                                <?=$this->Form->select('agrupar', array('anno' => 'Año', 'mes' => 'Mes', 'dia' => 'Día', 'hora' => 'Hora'), array('empty' => false, 'class' => 'form-control'));?>
+                            </div>
+                        </li>
+                        <li><a id="enviarFormularioVisitasMeli" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
+                        <li><a href="#" class="panel-fullscreen"><span class="fa fa-expand"></span></a></li>
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+                    <?= $this->Form->end(); ?>
+                </div>
+                <div class="panel-body">
+                    <div id="HistoricoVisitasMeli" style="height: 300px;">
+                        
+                    </div>
+                </div>                             
+            </div>
+        </div>
+    </div>
+	<div class="row">
+		<div class="col-xs-12 col-sm-8">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title">Información de la cuenta de Mercado libre</h3>
@@ -69,5 +115,34 @@
 				</div>
 			</div>
 		</div> <!-- end col -->
+		<div class="col-xs-12 col-sm-4">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Marcas/tiendas de Mercado libre</h3>
+				</div>
+				<div class="panel-body">
+					<? if (isset($miMarcas['body']['brands']) && !empty($miMarcas['body']['brands'])) : ?>
+					<div class="table-responsive">
+						<table class="table table-striped">
+							<thead>
+								<th>Identificador</th>
+								<th>Marca</th>
+							</thead>
+							<tbody>
+								<? foreach($miMarcas['body']['brands'] as $ix => $marca) : ?>
+								<tr>
+									<td><?=$marca['official_store_id']?></td>
+									<td><?=$marca['name']?></td>
+								</tr>
+								<? endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+					<? else: ?>
+						<label class="label label-warning">No tiene marcas asociadas</label>
+					<? endif; ?>
+				</div>
+			</div>
+		</div>
 	</div> <!-- end row -->
 </div>

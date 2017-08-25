@@ -69,14 +69,14 @@
 				<div class="panel-body">
 					<div class="col-xs-12">
 						<h4>Categoría Mercadolibre</h4>
-						<? if (!empty($this->request->data['MercadoLibr']['categoria_00'])) : ?>
+						<? if (!empty($this->request->data['MercadoLibr']['categoria_00']) && empty($this->request->data['MercadoLibr']['id_meli']) ) : ?>
 						<label class="label label-info">La categoria del item debe ser actualizado directamente en Mercado Libre</label>
 						<br />
 						<br />
 						<? endif; ?>
 					</div>
 					<div class="col-xs-12 col-sm-3 js-base">
-						<? if (!empty($this->request->data['MercadoLibr']['categoria_00'])) : ?>
+						<? if (!empty($this->request->data['MercadoLibr']['categoria_00']) && !empty($this->request->data['MercadoLibr']['id_meli'])) : ?>
 						<?=$this->Form->select('categoria_00', $categoriasRoot, array('empty' => 'Seleccione categoria raiz', 'class' => 'form-control', 'id' => 'BaseCat', 'required' => true, 'disabled' => true));?>
 						<? else : ?>
 						<?=$this->Form->select('categoria_00', $categoriasRoot, array('empty' => 'Seleccione categoria raiz', 'class' => 'form-control js-cat', 'id' => 'BaseCat', 'required' => true));?>
@@ -86,10 +86,17 @@
 					<? if (!empty($categoriasHojas)) : ?>
 					<? foreach($categoriasHojas as $index => $categoriasHoja) : ?>
 						<div class="col-xs-12 col-sm-3">
-							<?=$this->Form->select('categoria_0' . $index, $categoriasHoja, array('empty' => 'Seleccione categoria', 'class' => 'form-control', 'required' => true, 'disabled' => true));?>
+							
+							<? if (!empty($this->request->data['MercadoLibr']['id_meli'])) : ?>
+								<?=$this->Form->select('categoria_0' . $index, $categoriasHoja, array('empty' => 'Seleccione categoria', 'class' => 'form-control', 'required' => true, 'disabled' => true));?>
+							<? else : ?>
+								<?=$this->Form->select('categoria_0' . $index, $categoriasHoja, array('empty' => 'Seleccione categoria', 'class' => 'form-control', 'required' => true));?>
+							<? endif; ?>
+							
 							<? if (end($categoriasHojas) == $categoriasHojas[$index]) : ?>
 							<span class="help-block"><i class="fa fa-check text-success"></i> Categoría final</span>
 							<? endif; ?>
+						
 						</div>
 					<? endforeach; ?>
 					<? endif; ?>

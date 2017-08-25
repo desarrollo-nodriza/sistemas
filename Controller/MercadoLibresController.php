@@ -46,15 +46,22 @@ class MercadoLibresController extends AppController
 	}
 
 
-	public function autorizacionMeli()
+	public function autorizacionMeli($callback = '')
 	{	
 		if ( ! empty($this->request->query['code']) || ($this->Session->check('Meli.access_token') && !empty($this->Session->read('Meli.access_token'))) ) {
 			if( isset($this->request->query['code']) && !$this->Session->check('Meli.access_token') ) {
-				$this->Meli->login($this->request->query['code'], Router::url(array('controller' => 'mercadoLibres', 'action' => 'index'), true));
+				if (!empty($callback)) {
+					$this->Meli->login($this->request->query['code'], $callback, true);
+				}else{
+					$this->Meli->login($this->request->query['code'], Router::url(array('controller' => 'mercadoLibres', 'action' => 'index'), true));
+				}
 			} else {
 				$this->Meli->checkTokenAndRefreshIfNeed();
 			}
 		}else{
+			if (!empty($callback)) {
+				return $this->Meli->getAuthUrl($callback, true);
+			}
 			return $this->Meli->getAuthUrl(Router::url(array('controller' => 'mercadoLibres', 'action' => 'index'), true));
 		}
 	}
@@ -430,6 +437,35 @@ class MercadoLibresController extends AppController
 	}
 
 
+	public function admin_otenerDetalleItems($items = '')
+	{
+		$array = array();
+		$itemses = to_array($items['body']->results);
+		foreach ($itemses as $key => $value) {
+			$array[$key] = $this->admin_verProducto($value);
+		}
+
+		#prx($array);
+	}
+
+
+	public function admin_totalVisitas($desde = '', $hasta = '', $json = true)
+	{
+		$visitas = to_array($this->Meli->getMonthlyFlow($desde, $hasta));
+		
+		if ($visitas['httpCode'] < 300) {
+			if ($json){
+				echo json_encode($visitas);
+				exit;	
+			}else{
+				return $visitas;
+			}
+		}else{
+			return 0;
+		}
+	}
+
+
 	public function admin_usuario()
 	{
 		$miCuenta = array();
@@ -451,8 +487,12 @@ class MercadoLibresController extends AppController
 
 		BreadcrumbComponent::add('Mercado Libre Productos', '/mercadoLibres');
 		BreadcrumbComponent::add('Mi cuenta ');
+		$items = $this->Meli->getMyItems();
+		#prx($this->admin_otenerDetalleItems($items));
+		$miMarcas = to_array($this->Meli->getMyBrands());
+		$totalVisitasMes = $this->admin_totalVisitas('','',false);
 		
-		$this->set(compact('miCuenta', 'url'));
+		$this->set(compact('miCuenta', 'url', 'miMarcas', 'totalVisitasMes'));
 	}
 
 
@@ -474,6 +514,13 @@ class MercadoLibresController extends AppController
 		}
 
 		BreadcrumbComponent::add('Mercado Libre Productos ');
+
+		# Se lanza mensaje de actualizar precios
+		if($this->verificarCambiosDePrecios()) {
+			$this->Session->setFlash('¡Tienes precios desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
+		}else{
+			$this->Session->setFlash('¡Bien! Todos los productos tienen sus precios sincronizados.', null, array(), 'success');
+		}
 
 		$mercadoLibres	= $this->paginate();
 		$this->set(compact('mercadoLibres', 'url'));
@@ -962,5 +1009,326 @@ class MercadoLibresController extends AppController
     	$htmlFinal .=  $plantillaPredefinida['footer'];
     	
 		return $htmlFinal;
+	}
+
+	/**
+	 * Actualización de precios
+	 *
+	 */
+
+	public function htmlResponse($res = array())
+	{
+		$html = '<ul>';
+		foreach ($res as $key => $value) {
+			if (isset($value['errors'])) {
+				foreach ($value['errors'] as $k => $v) {
+					$html .= '<li>Producto: ' . $v['id'] . ' - ' . $v['producto'] . '<br> Error: ' . $v['mensaje'] . '</li>';
+				}
+			}
+		}
+		$html .= '</ul>';
+
+		return $html;
+	}
+
+	public function verificarCambiosDePrecios($console = false)
+	{
+		if (!$console && $this->Session->check('Tienda.id')) {
+			# Obtenemos las tiendas configuradas
+			$tiendas = ClassRegistry::init('Tienda')->find('all', array('conditions' => array('Tienda.id' => $this->Session->read('Tienda.id'))));
+		}else{
+			$tiendas = ClassRegistry::init('Tienda')->find('all');
+		}
+
+		# Variable que almacena los productos
+		$t = array();
+
+		# Obtenemos productos por tiendas
+		foreach ($tiendas as $indice => $tienda) {
+			$t[$tienda['Tienda']['configuracion']] = $this->getProductsMeli($tienda);
+		}
+
+		# Comparamos los precios para ver si hay alguna diferencia. En la primera diferencia se detiene y retorna true; 
+		foreach ($t as $ix => $productos) {
+			foreach ($productos as $producto) {
+				if ($producto['MercadoLibr']['precio'] != $producto['Productotienda']['precio']) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+
+	}
+
+	public function admin_actualizarPrecios($console = false)
+	{	
+		if ($console) {
+			$url = $this->autorizacionMeli(Router::url(array('controller' => 'mercadoLibres', 'action' => 'actualizarPrecios', 1)));
+			if ( !empty($url) ) {
+				$code = $this->Meli->getCode($url);
+			}
+		}else{
+			if (!empty($this->autorizacionMeli())) {
+				$this->Session->setFlash('Imposible actualizar los precios en Mercado libre. Detalles del error:<br> La sesión de Mercado libre expiró. Conecte nuevamente la aplicación.', null, array(), 'danger');
+				$this->redirect(array('action' => 'index'));
+			}
+		}
+
+		if ($this->Session->check('Tienda.id')) {
+			# Obtenemos las tiendas configuradas
+			$tiendas = ClassRegistry::init('Tienda')->find('all', array('conditions' => array('Tienda.id' => $this->Session->read('Tienda.id'))));
+		}else{
+			$tiendas = ClassRegistry::init('Tienda')->find('all');
+		}
+		
+		# Variable que almacena los productos
+		$productos = array();
+
+		# Obtenemos productos por tiendas
+		foreach ($tiendas as $indice => $tienda) {
+			$productos[$tienda['Tienda']['configuracion']] = $this->getProductsMeli($tienda);
+		}
+		
+		# Actualizamos de los productos publicados, tanto interna como en MELI
+		$result = $this->sincronizarPrecios($productos);
+
+		/*if (!$result['Interno']['res'] && !$result['Meli']['res']) {
+			$this->Session->setFlash('Imposible actualizar los precios en Mercado libre. Intente nuevamente.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		if ($result['Interno']['res'] && !$result['Meli']['res']) {
+			$this->Session->setFlash('Sólo se logró actualizar el precio de los productos interno y no de Mercado libre. Intente nuevamente.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		if (!$result['Interno']['res'] && $result['Meli']['res']) {
+			$this->Session->setFlash('Sólo se logró actualizar el precio de Mercado libre y no de los productos internos. Intente nuevamente.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		if ($result['Interno']['res'] && $result['Meli']['res']) {
+			$this->Session->setFlash('¡Éxito!<br> Se actualizó el precio de todos los productos.', null, array(), 'success');
+			$this->redirect(array('action' => 'index'));
+		}*/
+		
+		$urlReponse = $this->htmlResponse($result);	
+
+		$this->Session->setFlash('Resultados de la operación: <br>' . $urlReponse , null, array(), 'flash');
+		$this->redirect(array('action' => 'index'));
+	}
+
+
+	public function sincronizarPrecios($tiendas = array())
+	{	
+		$out = array();
+		foreach ($tiendas as $k => $productos) {
+			
+			foreach ($productos as $i => $producto) {
+
+				# Actualizamos el precio interno
+				$this->MercadoLibr->id = $producto['MercadoLibr']['id'];
+				if ( ! $this->MercadoLibr->saveField('precio', $producto['Productotienda']['precio']) ) {
+					$out['Interno']['res'] = 0;
+					$out['Interno']['errors'][$i]['id'] = $producto['MercadoLibr']['id'];
+					$out['Interno']['errors'][$i]['producto'] = $producto['MercadoLibr']['producto'];
+					$out['Interno']['errors'][$i]['mensaje'] = 'No fue posible actualizar el item en el sistema.';
+				}else{
+					$out['Interno']['res'] = 1;
+					$out['Interno']['success'][$i]['id'] = $producto['MercadoLibr']['id'];
+					$out['Interno']['success'][$i]['producto'] = $producto['MercadoLibr']['producto'];
+					$out['Interno']['success'][$i]['precio_actual'] = $producto['MercadoLibr']['precio'];
+					$out['Interno']['success'][$i]['precio_nuevo'] = $producto['Productotienda']['precio'];
+				}
+
+				# Verificamos que el producto esté publicado en mercadolibre
+				if (!empty($producto['MercadoLibr']['id_meli'])) {
+					
+					# Actualizamos publicación existente en mercado libre
+					$meliRespuesta = $this->Meli->updatePrice($producto['MercadoLibr']['id_meli'], $producto['Productotienda']['precio']);
+					
+					$res = to_array($meliRespuesta);
+
+					if ($res['httpCode'] < 300) {
+						$out['Meli']['res'] = 1;
+						$out['Meli']['success'][$i]['id'] = $producto['MercadoLibr']['id'];
+						$out['Meli']['success'][$i]['meli'] = $producto['MercadoLibr']['id_meli'];
+						$out['Meli']['success'][$i]['producto'] = $producto['MercadoLibr']['producto'];
+						$out['Meli']['success'][$i]['precio_actual'] = $producto['MercadoLibr']['precio'];
+						$out['Meli']['success'][$i]['precio_nuevo'] = $producto['Productotienda']['precio'];
+					}else{
+						$out['Meli']['res'] = 0;
+						$out['Meli']['errors'][$i]['id'] = $producto['MercadoLibr']['id'];
+						$out['Meli']['errors'][$i]['meli'] = $producto['MercadoLibr']['id_meli'];
+						$out['Meli']['errors'][$i]['producto'] = $producto['MercadoLibr']['producto'];
+						$out['Meli']['errors'][$i]['mensaje'] = $res['body']['message'];
+					}
+				}	
+			}
+		}
+
+		return $out;
+	}
+
+	public function getProductsMeli($store = array())
+	{
+		if (!empty($store)) {
+			# Instanciamos el controlador APP
+			#$app = new AppController(new CakeRequest(), new CakeResponse());
+			
+			# Cambiamos la configuración de los modelos externos según la tienda
+			$this->cambiarConfigDB($store['Tienda']['configuracion']);
+
+			# Listamos productos de mercadolibre
+			$productos = $this->MercadoLibr->find('all', array(
+				'fields' => array('id', 'id_product', 'producto' ,'precio', 'id_meli'),
+				'conditions' => array(
+					'MercadoLibr.tienda_id' => $store['Tienda']['id'],
+					'MercadoLibr.id_product !=' => null
+				)));
+
+
+			foreach ($productos as $i => $producto) {
+				$productos[$i]['Productotienda'] = $this->getProductPriceFromStore($producto['MercadoLibr']['id_product'], $store);
+			}
+
+			return $productos;
+		}
+	}
+
+
+	public function getProductPriceFromStore($idProduct = null, $store = array())
+	{	
+
+		if ( !empty($idProduct) && !empty($store)) {
+			
+			#$app = new AppController(new CakeRequest(), new CakeResponse());
+			
+			$this->cambiarConfigDB($store['Tienda']['configuracion']);
+			
+   			// Buscamos los productos que cumplan con el criterio
+			$producto	= $this->MercadoLibr->Productotienda->find('first', array(
+				'fields' => array(
+					'concat(\'https://' . $store['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-home_default.jpg\' ) AS url_image_thumb',
+					'concat(\'https://' . $store['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-thickbox_default.jpg\' ) AS url_image_large',
+					'Productotienda.id_product',
+					'Productotienda.id_category_default',
+					'pl.name', 
+					'pl.description_short',
+					'Productotienda.price', 
+					'pl.link_rewrite', 
+					'Productotienda.reference', 
+					'Productotienda.show_price',
+					'Productotienda.quantity'
+				),
+				'joins' => array(
+					array(
+			            'table' => sprintf('%sproduct_lang', $store['Tienda']['prefijo']),
+			            'alias' => 'pl',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Productotienda.id_product=pl.id_product'
+			            )
+
+		        	),
+		        	array(
+			            'table' => sprintf('%simage', $store['Tienda']['prefijo']),
+			            'alias' => 'im',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Productotienda.id_product = im.id_product',
+	                		'im.cover' => 1
+			            )
+		        	),
+		        	array(
+			            'table' => sprintf('%scategory_product', $store['Tienda']['prefijo']),
+			            'alias' => 'CategoriaProducto',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'CategoriaProducto.id_product' => 'Productotienda.id_product'
+			            )
+		        	)
+				),
+				'contain' => array(
+					'Lang',
+					'TaxRulesGroup' => array(
+						'TaxRule' => array(
+							'Tax'
+						)
+					),
+					'SpecificPrice' => array(
+						'conditions' => array(
+							'OR' => array(
+								array(
+									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+								),
+								array(
+									'SpecificPrice.from' => '0000-00-00 00:00:00',
+									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+								),
+								array(
+									'SpecificPrice.from' => '0000-00-00 00:00:00',
+									'SpecificPrice.to' => '0000-00-00 00:00:00'
+								),
+								array(
+									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+									'SpecificPrice.to' => '0000-00-00 00:00:00'
+								)
+							)
+						)
+					),
+					'SpecificPricePriority'
+				),
+				'conditions' => array(
+					'Productotienda.id_product' => $idProduct
+				)
+			));
+			
+			$arrayProducto = array();
+
+			if (!empty($producto)) {
+
+	    		if ( !isset($producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']) ) {
+					$producto['Productotienda']['valor_iva'] = $producto['Productotienda']['price'];	
+				}else{
+					$producto['Productotienda']['valor_iva'] = $this->precio($producto['Productotienda']['price'], $producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
+				}
+				
+
+				// Criterio del precio específico del producto
+				foreach ($producto['SpecificPricePriority'] as $criterio) {
+					$precioEspecificoPrioridad = explode(';', $criterio['priority']);
+				}
+
+				$producto['Productotienda']['valor_final'] = $producto['Productotienda']['valor_iva'];
+
+				// Retornar último precio espeficico según criterio del producto
+				foreach ($producto['SpecificPrice'] as $precio) {
+					if ( $precio['reduction'] == 0 ) {
+						$producto['Productotienda']['valor_final'] = $producto['Productotienda']['valor_iva'];
+
+					}else{
+
+						$producto['Productotienda']['valor_final'] = $this->precio($producto['Productotienda']['valor_iva'], ($precio['reduction'] * 100 * -1) );
+						$producto['Productotienda']['descuento'] = ($precio['reduction'] * 100 * -1 );
+
+					}
+				}
+
+
+	    		$arrayProducto['id'] = $producto['Productotienda']['id_product'];
+				$arrayProducto['nombre'] = sprintf('%s', $producto['Lang'][0]['ProductotiendaIdioma']['name']);
+				$arrayProducto['imagen'] = sprintf('%s', $producto[0]['url_image_large']);
+				$arrayProducto['precio'] = sprintf('%s', $producto['Productotienda']['valor_final']);
+				//$arrayProducto[$index]['name'] = $producto['Lang'][0]['ProductotiendaIdioma']['name'];
+				//$arrayProducto[$index]['image'] = $producto[0]['url_image'];
+				//$arrayProducto[$index]['description'] = $producto['Lang'][0]['ProductotiendaIdioma']['description_short'];
+				//$arrayProducto[$index]['spec'] = $producto['Especificacion'];
+	    	}
+
+			return $arrayProducto;
+		}
 	}
 }
