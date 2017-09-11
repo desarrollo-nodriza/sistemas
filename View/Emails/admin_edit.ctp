@@ -30,7 +30,7 @@
 									<th><?= $this->Form->label('descripcion', 'Descripcion'); ?></th>
 									<td>
 										<label>La descripción se mostrará al final del newsletter</label>
-										<?= $this->Form->input('descripcion'); ?></td>
+										<?= $this->Form->input('descripcion', array('class' => 'summernote')); ?></td>
 								</tr>
 								<tr>
 									<th><?= $this->Form->label('fecha', 'Fecha'); ?></th>
@@ -66,6 +66,11 @@
 								<tr>
 									<th><?= $this->Form->label('cuotas', 'Número de cuotas'); ?></th>
 									<td><?= $this->Form->input('cuotas'); ?></td>
+								</tr>
+								<tr>
+									<th><?= $this->Form->label('html_cuotas', 'Html para mostrar cuotas'); ?></th>
+									<td><label>Utilice el símbolo %d para agregar el número de cuotas y %s para el monto de las cuotas.</label>
+										<?= $this->Form->input('html_cuotas', array('class' => 'summernote')); ?></td>
 								</tr>
 								<tr>
 									<th><?= $this->Form->label('plantilla_id', 'Plantilla'); ?></th>
