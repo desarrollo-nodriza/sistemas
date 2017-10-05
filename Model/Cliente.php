@@ -37,6 +37,32 @@ Class Cliente extends AppModel {
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'ClienteHilo' => array(
+			'className'				=> 'ClienteHilo',
+			'foreignKey'			=> 'id_customer',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'Orden' => array(
+			'className'				=> 'Orden',
+			'foreignKey'			=> 'id_customer',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 }

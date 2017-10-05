@@ -45,6 +45,36 @@ class MercadoLibresController extends AppController
 		}
 	}
 
+	public function admin_getOrders() 
+	{
+		# Contacto
+		#$json = json_decode(file_get_contents(APP . 'webroot' . DS . 'ordenes-meli.json'), true);
+		
+		# DUmma
+		$json = json_decode(file_get_contents(APP . 'webroot' . DS . 'ordenes-dum.json'), true);
+		
+		$newArr = array();
+		
+		foreach ($json['results'] as $indice => $orden) {
+			$newArr[$indice]['id_orden'] = $orden['id'];
+			$newArr[$indice]['estado'] = $orden['status'];
+			$newArr[$indice]['fecha_creacion'] = $orden['date_created'];
+			$newArr[$indice]['total_pagado'] = $orden['total_amount'];
+			
+			foreach ($orden['order_items'] as $key => $value) {
+				$newArr[$indice]['productos'][$key]['nombre'] = $value['item']['title'];
+				$newArr[$indice]['productos'][$key]['precio_unitario'] = $value['unit_price'];
+				$newArr[$indice]['productos'][$key]['cantidad'] = $value['quantity'];
+				$newArr[$indice]['productos'][$key]['para_meli'] = $value['sale_fee'];
+			}
+		}
+
+		header('Content-Type: application/json; charset=utf-8'); 
+		echo json_encode($newArr, JSON_UNESCAPED_UNICODE);
+		exit;
+
+	}
+
 
 	public function autorizacionMeli($callback = '')
 	{	

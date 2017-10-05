@@ -13,9 +13,9 @@ Class SpecificPrice extends AppModel {
 	/**
 	 * Use Toolmania Connect
 	 */
-	public $useDbConfig = 'toolmania';
+	#public $useDbConfig = 'toolmania';
 
-	public $belongsTo = array(
+	/*public $belongsTo = array(
 		'SpecificPrice' => array(
 			'className'				=> 'SpecificPrice',
 			'foreignKey'			=> 'id_product',
@@ -25,6 +25,6 @@ Class SpecificPrice extends AppModel {
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		)
-	);
+	);*/
 
 }

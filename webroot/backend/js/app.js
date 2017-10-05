@@ -616,6 +616,13 @@ $.extend({
 
 					$this.append(tablaClonada);
 
+					if (tablaClonada.find('.datepicker').length) {
+						tablaClonada.find('.datepicker').datepicker({
+							language	: 'es',
+							format		: 'yyyy-mm-dd'
+						});
+					}
+
 					$.app.clonarTabla.reindexar();
 				});
 			},

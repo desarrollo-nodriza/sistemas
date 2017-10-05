@@ -305,6 +305,7 @@ class AppController extends Controller
 		$categorias = ClassRegistry::init('Categoria')->find('list', array('conditions' => array('Categoria.activo' => 1)));
 		return $categorias;
 	}
+	
 
 	/**
 	* Calular IVA
@@ -322,6 +323,32 @@ class AppController extends Controller
 
 			return round($precio);
 		}
+	}
+
+
+	public function precio_neto($precio = null, $iva = 19)
+	{
+		if (!is_null($precio)) {
+
+			$iva = ($iva / 100) +1;
+
+			return round( $precio / $iva );
+		}
+
+		return;
+	}
+
+
+	public function precio_bruto($precio = null, $iva = 19)
+	{
+		if (!is_null($precio)) {
+
+			$iva = ($iva / 100) +1;
+
+			return round( $precio * $iva );
+		}
+		
+		return;
 	}
 
 	/**
@@ -367,12 +394,14 @@ class AppController extends Controller
 		ClassRegistry::init('TaxLang')->useDbConfig 			= $tiendaConf;
 		ClassRegistry::init('Lang')->useDbConfig 				= $tiendaConf;
 		ClassRegistry::init('SpecificPrice')->useDbConfig 		= $tiendaConf;
+		ClassRegistry::init('SpecificPricePriority')->useDbConfig 		= $tiendaConf;
 		ClassRegistry::init('Cliente')->useDbConfig 			= $tiendaConf;
 		ClassRegistry::init('Clientedireccion')->useDbConfig 	= $tiendaConf;
 		ClassRegistry::init('Paise')->useDbConfig 				= $tiendaConf;
 		ClassRegistry::init('PaisIdioma')->useDbConfig 			= $tiendaConf;
 		ClassRegistry::init('Region')->useDbConfig 				= $tiendaConf;
-		ClassRegistry::init('Orders')->useDbConfig 				= $tiendaConf;
+		ClassRegistry::init('Orden')->useDbConfig 				= $tiendaConf;
+		ClassRegistry::init('OrdenDetalle')->useDbConfig 		= $tiendaConf;
 		ClassRegistry::init('OrdenEstado')->useDbConfig 		= $tiendaConf;
 		ClassRegistry::init('OrdenEstadoIdioma')->useDbConfig 	= $tiendaConf;
 		ClassRegistry::init('ProductotiendaIdioma')->useDbConfig 	= $tiendaConf;
@@ -382,7 +411,9 @@ class AppController extends Controller
 		ClassRegistry::init('EspecificacionValor')->useDbConfig 	= $tiendaConf;
 		ClassRegistry::init('EspecificacionValorIdioma')->useDbConfig 	= $tiendaConf;
 		ClassRegistry::init('EspecificacionValorProductotienda')->useDbConfig 	= $tiendaConf;
-		
+		ClassRegistry::init('ClienteHilo')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('ClienteMensaje')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('Empleado')->useDbConfig 	= $tiendaConf;
     }
 	
 	/**
@@ -522,6 +553,78 @@ class AppController extends Controller
 			
 			return round($monto);
 		}
+	}
+
+	public function tiendaInfo( $tienda_id = '') {
+		
+		$tiendaConf = ClassRegistry::init('Tienda')->find('first', array('conditions' => array(
+				'Tienda.id' => $tienda_id,
+			)
+		));
+
+		# Virificar existencia de la tienda
+		if (empty($tiendaConf['Tienda'])) {
+			throw new Exception('La tienda seleccionada no existe', 400);
+			
+			$this->Session->setFlash('La tienda seleccionada no existe' , null, array(), 'danger');
+			$this->redirect('/');
+		}else{
+
+			$semaforo = true;
+
+			# Verificar que la tienda esté configurada
+			foreach ($tiendaConf['Tienda'] as $campo => $valor) {
+				if (empty($valor) ) {
+					$semaforo = false;
+					throw new Exception('La tienda no está configurada correctamente. Verifiquela y vuelva a intentarlo', 400);
+				}
+			}
+
+			# Si la tienda está correctamente configurada se devuelve su información
+			if ($semaforo) {
+				return $tiendaConf;
+			}
+		}
+	}
+
+	public function verificarTienda() {
+		try {
+			$tienda = $this->tiendaInfo($this->Session->read('Tienda.id'));
+		} catch (Exception $e) {
+			$this->Session->setFlash($e->getMessage() , null, array(), 'danger');
+			$this->redirect(array('controller' => $this->request->params['controller'], '/'));
+		}
+
+		if (!empty($tienda)) {
+			$this->Session->write($tienda);
+		}
+	}
+
+
+	/**
+	 * Método que agrega un datasource a los modelos pasados en el arreglo, según la ´tienda que se esté trabajando.
+	 * @param  array  $modelos Nombres de los modelos
+	 * @return void
+	 */
+	public function cambiarDatasource( $modelos = array() ) {
+
+		foreach ($modelos as $instancia) {
+			ClassRegistry::init($instancia)->useDbConfig = $this->Session->read('Tienda.configuracion');
+		}
+		
+	}
+
+	public function rutSinDv($rut = '') {
+		if (!empty($rut)) {
+			$posGuion = strpos($rut, '-');
+			if ($posGuion) {
+				$rut = substr($rut, 0, $posGuion);	
+			}else{
+				$rut = substr($rut, -1);
+			}
+			return str_replace('.', '', $rut);
+		}
+		return $rut;
 	}
 
 }
