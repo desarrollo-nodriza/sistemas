@@ -359,7 +359,7 @@ class EmailsController extends AppController
 
 			$htmlEmail = $this->Email->find('first', array(
 				'conditions' => array('Email.id' => $id), 
-				'fields' => array('html','nombre', 'sitio_url', 'tienda_id', 'mostrar_cuotas', 'cuotas', 'descripcion'),
+				'fields' => array('html','nombre', 'sitio_url', 'tienda_id', 'mostrar_cuotas', 'cuotas', 'html_cuotas', 'descripcion'),
 				'contain'	=> array('Categoria', 'Tienda')	
 				)
 			);
@@ -378,6 +378,7 @@ class EmailsController extends AppController
 			// Cuotas
 			$MostrarCuotasEmail = $htmlEmail['Email']['mostrar_cuotas'];
 			$CuotasEmail = $htmlEmail['Email']['cuotas'];
+			$htmlCuotas = $htmlEmail['Email']['html_cuotas'];
 
 			$categoriasId = Hash::extract($htmlEmail['Categoria'], '{n}.id');
 
@@ -605,7 +606,7 @@ class EmailsController extends AppController
 					}
 
 					// Mostrar cuotas si viene activa
-					if ($MostrarCuotasEmail && ! empty($CuotasEmail)) {
+					if ($MostrarCuotasEmail && ! empty($CuotasEmail) && !empty($htmlCuotas)) {
 						$producto['Productotienda']['valor_cuotas'] = ($producto['Productotienda']['valor_final'] / $CuotasEmail);
 					}
 
@@ -616,10 +617,10 @@ class EmailsController extends AppController
 					$porcentaje_descuento 	= ( !empty($producto['Productotienda']['descuento']) ) ? $producto['Productotienda']['descuento'] . '%' : '<font size="2">Oferta</font>' ;
 					$nombre_producto		= CakeText::truncate($producto['pl']['name'], 40, array('exact' => false));
 					$modelo_producto		= $producto['Productotienda']['reference'];
-					$valor_producto			= ( !empty($producto['Productotienda']['descuento']) ) ? '<font style="text-decoration: line-through;">' . CakeNumber::currency($producto['Productotienda']['valor_iva'], 'CLP') . '</font>' : '' ;
+					$valor_producto			= ( !empty($producto['Productotienda']['descuento']) ) ? CakeNumber::currency($producto['Productotienda']['valor_iva'], 'CLP') : '' ;
 					$oferta_producto		= CakeNumber::currency($producto['Productotienda']['valor_final'] , 'CLP');
 					$url_producto			= sprintf('%s%s-%s.html', $SitioUrl, $producto['pl']['link_rewrite'], $producto['Productotienda']['id_product']);
-					$cuotas_producto 		= ( isset($producto['Productotienda']['valor_cuotas']) ) ? sprintf('<font style="background-color:#EA3A3A; display: block;line-height: 25px;color: #fff;margin: 4px 5px;">%s cuotas de %s</font>', $CuotasEmail, CakeNumber::currency($producto['Productotienda']['valor_cuotas'] , 'CLP') ) : '';
+					$cuotas_producto 		= ( isset($producto['Productotienda']['valor_cuotas']) ) ? sprintf($htmlCuotas, $CuotasEmail, CakeNumber::currency($producto['Productotienda']['valor_cuotas'] , 'CLP') ) : '';
 					
 					/**
 					* Agregamos la información al HTML del email

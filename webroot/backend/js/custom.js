@@ -298,11 +298,14 @@ jQuery(document).ready(function($)
 			height		: 200,
 			focus		: true,
 			toolbar		: [
+				['color', ['color']],
 				['style', ['bold', 'italic', 'underline', 'clear']],
+				['fontsize', ['fontsize']],
+				['font', ['strikethrough', 'superscript', 'subscript']],
 				['insert', []],
+				['table', ['table']],
 				['para', ['ul', 'ol', 'paragraph']],
-				['font', ['strikethrough']],
-                ['fontsize', ['fontsize']],
+				['misc', ['codeview']]
 			]
 		});
 	}
