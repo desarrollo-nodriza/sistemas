@@ -48,6 +48,7 @@
 			'/backend/js/dashboard',
 			'/backend/js/app',
 			'/backend/js/meli',
+			'/backend/js/dte',
 			//'/backend/js/plugins',
 			//'/backend/js/demo_charts_nvd3'
 			//'/backend/js/demo_charts_morris'

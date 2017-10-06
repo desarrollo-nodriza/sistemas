@@ -13,9 +13,9 @@ Class SpecificPricePriority extends AppModel {
 	/**
 	 * Use Toolmania Connect
 	 */
-	public $useDbConfig = 'toolmania';
+	#public $useDbConfig = 'toolmania';
 
-	public $belongsTo = array(
+	/*public $belongsTo = array(
 		'SpecificPricePriority' => array(
 			'className'				=> 'SpecificPricePriority',
 			'foreignKey'			=> 'id_product',
@@ -25,6 +25,6 @@ Class SpecificPricePriority extends AppModel {
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		)
-	);
+	);*/
 
 }

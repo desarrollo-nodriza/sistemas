@@ -26,8 +26,8 @@ Class OrdenEstado extends AppModel {
 	 */
 	
 	public $hasMany = array(
-		'Orders' => array(
-			'className'				=> 'Orders',
+		'Orden' => array(
+			'className'				=> 'Orden',
 			'foreignKey'			=> 'current_state',
 			'dependent'				=> false,
 			'conditions'			=> '',

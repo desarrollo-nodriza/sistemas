@@ -107,6 +107,38 @@ Class Lang extends AppModel {
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
 		),
+		'CustomField' => array(
+			'className'				=> 'CustomField',
+			'joinTable'				=> 'fmm_custom_fields_lang',
+			'foreignKey'			=> 'id_lang',
+			'associationForeignKey'	=> 'id_custom_field',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> '',
+			'finderQuery'			=> 'CustomFieldLang',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		),
 
+	);
+
+	public $hasMany = array(
+		'ClienteHilo' => array(
+			'className'				=> 'ClienteHilo',
+			'foreignKey'			=> 'id_lang',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		)
 	);
 }

@@ -178,3 +178,11 @@ function getDashboard($rol_id)
 
 	return false;
 }
+
+function retornarDescuento($monto_total, $monto_oferta)
+{
+	if ( ! empty($monto_total) && ! empty($monto_oferta) ) {
+		$dscto = ($monto_oferta*100) / $monto_total;
+		return round($dscto);
+	}
+}
