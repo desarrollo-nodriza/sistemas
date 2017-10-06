@@ -54,7 +54,7 @@
 								<tr>
 									<th><?= $this->Form->label('html_cuotas', 'Html para mostrar cuotas'); ?></th>
 									<td><label>Utilice el símbolo %d para agregar el número de cuotas y %s para el monto de las cuotas.</label>
-										<?= $this->Form->input('html_cuotas', array('class' => 'summernote')); ?></td>
+										<?= $this->Form->input('html_cuotas', array('class' => 'summernote', 'value' => '<font style="display: block;line-height: 25px;color: #FB5A00;margin: 4px 0;">%d cuotas de %s</font>')); ?></td>
 								</tr>
 								<tr>
 									<th><?= $this->Form->label('plantilla_id', 'Plantilla'); ?></th>
