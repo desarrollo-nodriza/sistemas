@@ -574,7 +574,7 @@ class AppController extends Controller
 
 			# Verificar que la tienda esté configurada
 			foreach ($tiendaConf['Tienda'] as $campo => $valor) {
-				if (empty($valor) ) {
+				if (empty($valor) && $campo != 'principal') {
 					$semaforo = false;
 					throw new Exception('La tienda no está configurada correctamente. Verifiquela y vuelva a intentarlo', 400);
 				}
