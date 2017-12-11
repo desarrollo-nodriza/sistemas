@@ -813,7 +813,10 @@
 
 <!-- Enviar DTE por email -->
 <? if ( $this->request->data['Dte']['estado'] == 'dte_real_emitido' && !empty($this->request->data['Dte']['pdf']) ) : ?>
-<?= $this->Form->create('Orden', array('action' => 'enviarDteViaEmail', 'method' => 'post' ,'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+<?= $this->Form->create('Orden', array(
+	'url' => array(
+		'action' => 'enviarDteViaEmail',
+	), 'method' => 'post' ,'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 	<?= $this->Form->input('id_dte', array('type' => 'hidden', 'value' => $this->request->data['Dte']['id'])); ?>
 	<?= $this->Form->input('id_orden', array('type' => 'hidden', 'value' => $this->request->data['Dte']['id_order'])); ?>
 	<?= $this->Form->input('dte', array('type' => 'hidden', 'value' => $this->request->data['Dte']['tipo_documento'])); ?>

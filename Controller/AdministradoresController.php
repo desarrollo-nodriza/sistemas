@@ -100,7 +100,8 @@ class AdministradoresController extends AppController
 				/**
 				 * Verificamos que tenemos el email
 				 */
-				if ( empty($me->getEmails()) )
+				$meEmail = $me->getEmails();
+				if ( empty($meEmail) )
 				{
 					$this->Session->setFlash('No tienes acceso a esta aplicación.', null, array(), 'danger');
 				}

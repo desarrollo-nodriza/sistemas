@@ -1,6 +1,6 @@
 <?php
 
-App::uses('AppController', 'Controller');
+App::uses('AppController', 'Controller', 'Chilexpress');
 
 App::import('Vendor', 'LibreDTE', array('file' => 'LibreDte/autoload.php'));
 App::import('Vendor', 'LibreDTE', array('file' => 'LibreDte/sasco/libredte-sdk-php/sdk/LibreDTE.php'));
@@ -11,7 +11,9 @@ class OrdenesController extends AppController
 	public $name = 'Ordenes';    
     public $uses = array('Orden');
 
-
+    public $components = array(
+    	'Chilexpress.GeoReferencia'
+    );
     /**
      * Obtiene y lista los medios de pago disponibles en u array único
      * @return 	array 	Array unidimensional que contiene e nombre del medio de pago
@@ -205,6 +207,8 @@ class OrdenesController extends AppController
 
 		# Informacion del contribuyente
 		#$contribuyente = $this->getContribuyenteInfo($this->rutSinDv($this->Session->read('Tienda.rut')));
+		
+		#$this->GeoReferencia->obtenerRegiones();
 
 		BreadcrumbComponent::add('Ordenes de compra ');
 
@@ -375,7 +379,7 @@ class OrdenesController extends AppController
 	public function admin_editar($id_dte = '', $id_orden = '')
 	{
 		$this->verificarTienda();
-
+		
 		if ( ! $this->Orden->exists($id_orden) )
 		{
 			$this->Session->setFlash('No existe la orden seleccionada.', null, array(), 'danger');
@@ -509,7 +513,7 @@ class OrdenesController extends AppController
 		}
 
 		# Consultar por DTE Emitido
-		if (!empty($this->request->data['Dte'] && $this->request->data['Dte']['estado'] == 'dte_real_emitido')) {
+		if (!empty($this->request->data['Dte']) && $this->request->data['Dte']['estado'] == 'dte_real_emitido' ) {
 			try {
 				$this->consultarDteLibreDte($this->request->data['Dte']['emisor'], $this->request->data['Dte']['tipo_documento'], $this->request->data['Dte']['folio'], $this->request->data['Dte']['fecha'], $this->request->data['Dte']['total']);
 			} catch (Exception $e) {
@@ -709,7 +713,7 @@ class OrdenesController extends AppController
 
 
 		# Consultar por DTE Emitido
-		if (!empty($this->request->data['Dte'] && $this->request->data['Dte'][0]['estado'] == 'dte_real_emitido')) {
+		if (!empty($this->request->data['Dte']) && $this->request->data['Dte'][0]['estado'] == 'dte_real_emitido' ) {
 			try {
 				$this->consultarDteLibreDte($this->request->data['Dte'][0]['emisor'], $this->request->data['Dte'][0]['tipo_documento'], $this->request->data['Dte'][0]['folio'], $this->request->data['Dte'][0]['fecha'], $this->request->data['Dte'][0]['total']);
 			} catch (Exception $e) {

@@ -78,7 +78,8 @@ class MercadoLibresController extends AppController
 
 	public function autorizacionMeli($callback = '')
 	{	
-		if ( ! empty($this->request->query['code']) || ($this->Session->check('Meli.access_token') && !empty($this->Session->read('Meli.access_token'))) ) {
+		$token = $this->Session->read('Meli.access_token');
+		if ( ! empty($this->request->query['code']) || ($this->Session->check('Meli.access_token') && !empty($token)) ) {
 			if( isset($this->request->query['code']) && !$this->Session->check('Meli.access_token') ) {
 				if (!empty($callback)) {
 					$this->Meli->login($this->request->query['code'], $callback, true);
@@ -444,7 +445,8 @@ class MercadoLibresController extends AppController
 
 	public function admin_validar_meli($id)
 	{	
-		if (!empty($this->autorizacionMeli())) {
+		$auth = $this->autorizacionMeli();
+		if (!empty($auth)) {
 			$this->Session->setFlash('Error al publicar en Mercado libre. Detalles del error:<br> La sesión de Mercado libre expiró. Conecte nuevamente la aplicación.', null, array(), 'danger');
 			$this->redirect(array('action' => 'edit', $id));
 		}
@@ -499,7 +501,9 @@ class MercadoLibresController extends AppController
 	public function admin_usuario()
 	{
 		$miCuenta = array();
-		if ($this->Session->check('Meli.access_token') && empty($this->autorizacionMeli())) {
+		$auth = $this->autorizacionMeli();
+
+		if ($this->Session->check('Meli.access_token') && empty($auth)) {
 			$miCuenta =  to_array($this->Meli->getMyAccountInfo());
 
 			if ($miCuenta['httpCode'] != 200) {
@@ -511,8 +515,8 @@ class MercadoLibresController extends AppController
 
 		$url = '';
 		
-		if (!empty($this->autorizacionMeli())) {
-			$url = $this->autorizacionMeli();
+		if (!empty($auth)) {
+			$url = $auth;
 		}
 
 		BreadcrumbComponent::add('Mercado Libre Productos', '/mercadoLibres');
@@ -538,9 +542,9 @@ class MercadoLibresController extends AppController
 		);
 
 		$url = '';
-		
-		if (!empty($this->autorizacionMeli())) {
-			$url = $this->autorizacionMeli();
+		$auth = $this->autorizacionMeli();
+		if (!empty($auth)) {
+			$url = $auth;
 		}
 
 		BreadcrumbComponent::add('Mercado Libre Productos ');
@@ -586,9 +590,9 @@ class MercadoLibresController extends AppController
 		}
 
 		$url = '';
-		
-		if (!empty($this->autorizacionMeli())) {
-			$url = $this->autorizacionMeli();
+		$auth = $this->autorizacionMeli();
+		if (!empty($auth)) {
+			$url = $auth;
 		}
 
 		BreadcrumbComponent::add('Mercado Libre Productos', '/mercadoLibres');
@@ -666,9 +670,9 @@ class MercadoLibresController extends AppController
 		}
 		
 		$url = '';
-		
-		if (!empty($this->autorizacionMeli())) {
-			$url = $this->autorizacionMeli();
+		$auth = $this->autorizacionMeli();
+		if (!empty($auth)) {
+			$url = $auth;
 		}
 
 		$tipoPublicacionesMeli = $this->Meli->listing_types();
@@ -1099,7 +1103,8 @@ class MercadoLibresController extends AppController
 				$code = $this->Meli->getCode($url);
 			}
 		}else{
-			if (!empty($this->autorizacionMeli())) {
+			$auth = $this->autorizacionMeli();
+			if (!empty($auth)) {
 				$this->Session->setFlash('Imposible actualizar los precios en Mercado libre. Detalles del error:<br> La sesión de Mercado libre expiró. Conecte nuevamente la aplicación.', null, array(), 'danger');
 				$this->redirect(array('action' => 'index'));
 			}

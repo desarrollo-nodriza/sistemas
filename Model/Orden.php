@@ -29,6 +29,15 @@ Class Orden extends AppModel {
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
+		'Carro' => array(
+			'className'				=> 'Carro',
+			'foreignKey'			=> 'id_cart',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		)
 	);
 
@@ -85,7 +94,6 @@ Class Orden extends AppModel {
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
 		)
-
 	);
 
 
