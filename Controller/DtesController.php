@@ -269,6 +269,10 @@ class DtesController extends AppController
 
 			# Identificador de la/s transacciones
 			$newData[$indice]['Dte']['id_transaccion']            = implode(Hash::extract($valor['Orden'], 'OrdenPago.{n}.transaction_id'));
+
+			# Webpay
+			$newData[$indice]['Dte']['authorization_code_webpay'] = implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.authorization_code'));
+
 			$newData[$indice]['Dte']['metodo']                    = $valor['Orden']['payment'];
 			$newData[$indice]['Dte']['total']                     = CakeNumber::currency($valor['Orden']['total_paid'], 'CLP');
 			$newData[$indice]['Dte']['envio']                     = CakeNumber::currency($valor['Orden']['total_shipping'], 'CLP');
@@ -279,7 +283,6 @@ class DtesController extends AppController
 			$newData[$indice]['Dte']['fecha']                     = $valor['Dte']['fecha'];
 			
 			# Webpay
-			$newData[$indice]['Dte']['authorization_code_webpay'] = implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.authorization_code'));
 			$newData[$indice]['Dte']['amount_webpay']             = implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.amount'));
 			$newData[$indice]['Dte']['payment_type_webpay']       = implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.payment_type'));
 			$newData[$indice]['Dte']['create_webpay']             = implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.create'));
@@ -393,6 +396,7 @@ class DtesController extends AppController
 			'Pedido',
 			'Referencia',
 			'ID Transacción/es',
+			'Autorización Webpay',
 			'Medio de pago',
 			'Total pagado',
 			'Total envio',
@@ -401,7 +405,6 @@ class DtesController extends AppController
 			'Rut del receptor DTE',
 			'Estado DTE',
 			'Fecha emisión DTE',
-			'Autorización Webpay',
 			'Monto pagado Webpay',
 			'Tipo de pago Webpay',
 			'Fecha de pago Webpay',
