@@ -120,7 +120,7 @@ class DtesController extends AppController
 		}
 
 		$paginate = array_replace_recursive($paginate, array(
-			'limit' => 5,
+			'limit' => 20,
 			'conditions' => array(),
 			'order' => array('Dte.fecha' => 'DESC'),
 			'contain' => array('Orden')
