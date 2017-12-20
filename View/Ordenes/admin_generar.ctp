@@ -310,6 +310,13 @@
 								<?=$this->Form->select('medio_de_pago', $medioDePago , array('class' => 'form-control', 'escape' => false, 'empty' => 'Sin medio de pago'));?>
 							</div>
 						</div>
+						<div class="col-xs-12 col-sm-4">
+							<div class="form-group">
+								<br>
+								<label><?=__('Fecha');?></label>
+								<?=$this->Form->input('fecha', array('class' => 'form-control datepicker', 'escape' => false, 'value' => date('Y-m-d')));?>
+							</div>
+						</div>
 					</div>
 				</div>
 				<div class="panel-body">

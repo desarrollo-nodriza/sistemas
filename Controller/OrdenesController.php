@@ -971,6 +971,17 @@ class OrdenesController extends AppController
 		      
 		);
 
+		# Fecha
+		if (!empty($this->request->data['Dte']['fecha'])) {
+			$dte = array_replace_recursive($dte, array(
+				'Encabezado' => array(
+					'IdDoc' => array(
+						'FchEmis' => $this->request->data['Dte']['fecha']
+					)
+				)
+			));
+		}
+
 		# Items
 		if (!empty($this->request->data['Detalle'])) {
 
