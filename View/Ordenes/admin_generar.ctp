@@ -403,6 +403,17 @@
 						</div>
 					</div>
 				</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="col-xs-12">
+							<div class="form-group">
+								<br>
+								<label><?=__('Glosa (opcional)');?></label>
+								<?=$this->Form->input('glosa', array('class' => 'form-control', 'escape' => false, 'placeholder' => 'Máximo 100 carácteres'));?>
+							</div>
+						</div>
+					</div>
+				</div>
 				<div class="panel-footer">
 					<div class="pull-right">
 						<button type="submit" class="btn btn-primary"><i class="fa fa-file-text" aria-hidden="true"></i> Generar DTE</button>

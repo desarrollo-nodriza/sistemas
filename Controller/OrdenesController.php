@@ -971,6 +971,17 @@ class OrdenesController extends AppController
 		      
 		);
 
+		# Glosa
+		if (!empty($this->request->data['Dte']['glosa'])) {
+			$dte = array_replace_recursive($dte, array(
+				'Encabezado' => array(
+					'IdDoc' => array(
+						'TermPagoGlosa' => $this->request->data['Dte']['glosa']
+					)
+				)
+			));
+		}
+
 		# Fecha
 		if (!empty($this->request->data['Dte']['fecha'])) {
 			$dte = array_replace_recursive($dte, array(
