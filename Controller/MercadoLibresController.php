@@ -791,7 +791,8 @@ class MercadoLibresController extends AppController
 				'pl.link_rewrite', 
 				'Productotienda.reference', 
 				'Productotienda.show_price',
-				'Productotienda.quantity'
+				'Productotienda.quantity',
+				'StockDisponible.quantity'
 			),
 			'joins' => array(
 				array(
@@ -817,7 +818,15 @@ class MercadoLibresController extends AppController
 		            'alias' => 'CategoriaProducto',
 		            'type'  => 'LEFT',
 		            'conditions' => array(
-		                'CategoriaProducto.id_product' => 'Productotienda.id_product'
+		                'Productotienda.id_product = CategoriaProducto.id_product'
+		            )
+	        	),
+	        	array(
+		            'table' => sprintf('%sstock_available', $store['Tienda']['prefijo']),
+		            'alias' => 'StockDisponible',
+		            'type'  => 'LEFT',
+		            'conditions' => array(
+		                'Productotienda.id_product = StockDisponible.id_product'
 		            )
 	        	)
 			),
@@ -896,12 +905,17 @@ class MercadoLibresController extends AppController
 				}
 			}
 
+			# Stock
+			$stock = $producto['Productotienda']['quantity'];
+			if (!empty($producto['StockDisponible']['quantity'])) {
+				$stock = $producto['StockDisponible']['quantity'];
+			}
 
     		$arrayProductos[$index]['id'] = $producto['Productotienda']['id_product'];
 			$arrayProductos[$index]['value'] = sprintf('%s', $producto['Lang'][0]['ProductotiendaIdioma']['name']);
 			$arrayProductos[$index]['imagen'] = sprintf('%s', $producto[0]['url_image_large']);
 			$arrayProductos[$index]['precio'] = sprintf('%s', $producto['Productotienda']['valor_final']);
-			$arrayProductos[$index]['stock'] = sprintf('%s', $producto['Productotienda']['quantity']);
+			$arrayProductos[$index]['stock'] = sprintf('%s', $stock);
 			//$arrayProductos[$index]['name'] = $producto['Lang'][0]['ProductotiendaIdioma']['name'];
 			//$arrayProductos[$index]['image'] = $producto[0]['url_image'];
 			//$arrayProductos[$index]['description'] = $producto['Lang'][0]['ProductotiendaIdioma']['description_short'];
@@ -1165,7 +1179,7 @@ class MercadoLibresController extends AppController
 
 				# Actualizamos el precio interno
 				$this->MercadoLibr->id = $producto['MercadoLibr']['id'];
-				if ( ! $this->MercadoLibr->saveField('precio', $producto['Productotienda']['precio']) || $this->MercadoLibr->saveField('cantidad_disponible', $producto['Productotienda']['stock']) ) {
+				if ( ! $this->MercadoLibr->saveField('precio', $producto['Productotienda']['precio']) || ! $this->MercadoLibr->saveField('cantidad_disponible', $producto['Productotienda']['stock']) ) {
 					$out['Interno']['res'] = 0;
 					$out['Interno']['errors'][$i]['id'] = $producto['MercadoLibr']['id'];
 					$out['Interno']['errors'][$i]['producto'] = $producto['MercadoLibr']['producto'];
@@ -1228,7 +1242,7 @@ class MercadoLibresController extends AppController
 			foreach ($productos as $i => $producto) {
 				$productos[$i]['Productotienda'] = $this->getProductPriceFromStore($producto['MercadoLibr']['id_product'], $store);
 			}
-
+			
 			return $productos;
 		}
 	}
@@ -1256,7 +1270,8 @@ class MercadoLibresController extends AppController
 					'pl.link_rewrite', 
 					'Productotienda.reference', 
 					'Productotienda.show_price',
-					'Productotienda.quantity'
+					'Productotienda.quantity',
+					'StockDisponible.quantity'
 				),
 				'joins' => array(
 					array(
@@ -1282,7 +1297,15 @@ class MercadoLibresController extends AppController
 			            'alias' => 'CategoriaProducto',
 			            'type'  => 'LEFT',
 			            'conditions' => array(
-			                'CategoriaProducto.id_product' => 'Productotienda.id_product'
+			                'Productotienda.id_product = CategoriaProducto.id_product'
+			            )
+		        	),
+		        	array(
+			            'table' => sprintf('%sstock_available', $store['Tienda']['prefijo']),
+			            'alias' => 'StockDisponible',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Productotienda.id_product = StockDisponible.id_product'
 			            )
 		        	)
 				),
@@ -1326,6 +1349,7 @@ class MercadoLibresController extends AppController
 
 			if (!empty($producto)) {
 
+				
 	    		if ( !isset($producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']) ) {
 					$producto['Productotienda']['valor_iva'] = $producto['Productotienda']['price'];	
 				}else{
@@ -1352,13 +1376,19 @@ class MercadoLibresController extends AppController
 
 					}
 				}
+				
+				# Stock
+				$stock = $producto['Productotienda']['quantity'];
+				if (!empty($producto['StockDisponible']['quantity'])) {
 
+					$stock = $producto['StockDisponible']['quantity'];
+				}
 
 	    		$arrayProducto['id'] = $producto['Productotienda']['id_product'];
 				$arrayProducto['nombre'] = sprintf('%s', $producto['Lang'][0]['ProductotiendaIdioma']['name']);
 				$arrayProducto['imagen'] = sprintf('%s', $producto[0]['url_image_large']);
 				$arrayProducto['precio'] = sprintf('%s', $producto['Productotienda']['valor_final']);
-				$arrayProducto['stock'] = sprintf('%s', $producto['Productotienda']['quantity']);
+				$arrayProducto['stock'] = sprintf('%s', $stock);
 				//$arrayProducto[$index]['name'] = $producto['Lang'][0]['ProductotiendaIdioma']['name'];
 				//$arrayProducto[$index]['image'] = $producto[0]['url_image'];
 				//$arrayProducto[$index]['description'] = $producto['Lang'][0]['ProductotiendaIdioma']['description_short'];
