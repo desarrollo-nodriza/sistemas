@@ -30,7 +30,7 @@ class ActualizarPreciosShell extends AppShell
 		# Actualizamos de los productos publicados, tanto interna como en MELI
 		#$result = $Meli->actualizarPrecios($productos);
 
-		if($Meli->verificarCambiosDePrecios(true)) {
+		if($Meli->verificarCambiosDePreciosStock(true)) {
 			$this->guardarEmail();
 		}
 	}

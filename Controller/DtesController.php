@@ -121,7 +121,9 @@ class DtesController extends AppController
 
 		$paginate = array_replace_recursive($paginate, array(
 			'limit' => 20,
-			'conditions' => array(),
+			'conditions' => array(
+				'Dte.tienda_id' => $this->Session->read('Tienda.id')
+			),
 			'order' => array('Dte.fecha' => 'DESC'),
 			'contain' => array('Orden')
 			));
@@ -297,11 +299,13 @@ class DtesController extends AppController
 	public function admin_exportar()
 	{	
 		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
-		set_time_limit(300);
+		set_time_limit(600);
 
 		$this->verificarTienda();
 
 		$query = array(
+			'conditions' => array(),
+			'order' => array('Dte.folio' => 'DESC'),
 			'fields' => array(
 				'Dte.id_order',
 				'Dte.folio',
@@ -309,27 +313,39 @@ class DtesController extends AppController
 				'Dte.rut_receptor',
 				'Dte.estado',
 				'Dte.fecha'
-			),
-			'contain' => array(
-				'Orden' => array(
-					'fields' => array(
-						'Orden.payment',
-						'Orden.reference',
-						'Orden.total_paid',
-						'Orden.total_shipping'),
-					'Carro' => array(
-						'WebpayStore'
+			)
+		);
+    	
+		$modulosExternos = $this->Dte->Orden->Carro->validarModulosExternos();
+		if ($modulosExternos) {
+			$query = array_replace_recursive($query, array(
+				'contain' => array(
+					'Orden' => array(
+						'fields' => array(
+							'Orden.payment',
+							'Orden.reference',
+							'Orden.total_paid',
+							'Orden.total_shipping'),
+						'Carro' => array('WebpayStore')
 					)
 				)
-			)
-		); 
-    	
-		$query = array_replace_recursive($query, array(
-			'conditions' => array(),
-			'order' => array('Dte.folio' => 'DESC')
 			));
+		}else{
+			$query = array_replace_recursive($query, array(
+				'contain' => array(
+					'Orden' => array(
+						'fields' => array(
+							'Orden.payment',
+							'Orden.reference',
+							'Orden.total_paid',
+							'Orden.total_shipping'),
+						'Carro'
+					)
+				)
+			));
+		}
 
-
+		
 		# Filtrar
 		if ( isset($this->request->params['named']) ) {
 			foreach ($this->request->params['named'] as $campo => $valor) {
@@ -415,7 +431,7 @@ class DtesController extends AppController
 		$datos  = $this->prepararExcel($datos);
 		$campos = $cabeceras;
 		$modelo = $this->Dte->alias;
-
+		
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}
 }

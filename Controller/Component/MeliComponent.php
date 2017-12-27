@@ -474,10 +474,11 @@ class MeliComponent extends Component
 	 * Método encargado de actualizar el precio de un item publicado
 	 * @param 		$id 		string 		Identificador del item en MELI
 	 * @param 		$price 		bigint 		Precio a actualizar
+	 * @param 		$stock 		int 		Stock a actualizar
 	 * @param 		$store_id 	int 		Identificador de la tienda
 	 * @return 		Object
 	 */
-	public function updatePrice($id, $price, $store_id = '')
+	public function updatePriceAndStock($id, $price, $stock, $store_id = '')
 	{
 		if (!empty($id) && !empty($price)) {
 			if (!empty($store_id)) {
@@ -491,7 +492,8 @@ class MeliComponent extends Component
 			$this->meli = new Meli($this->client_id, $this->client_secret);
 
 			$item = array(
-				"price" => $price
+				"price" => $price,
+				"available_quantity" => $stock
 			);
 			
 			// We call the post request to list a item

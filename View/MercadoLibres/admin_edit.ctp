@@ -142,7 +142,7 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('cantidad_disponible', 'Stock Mercado libre'); ?></th>
-								<td><?= $this->Form->input('cantidad_disponible'); ?></td>
+								<td><?= $this->Form->input('cantidad_disponible', array('class' => 'form-control js-stock')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('tipo_publicacion', 'Tipo de publicación'); ?></th>

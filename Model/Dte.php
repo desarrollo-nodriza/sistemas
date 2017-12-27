@@ -45,6 +45,15 @@ class Dte extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
+		'Tienda' => array(
+			'className'				=> 'Tienda',
+			'foreignKey'			=> 'tienda_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		)
 	);
 
@@ -76,4 +85,12 @@ class Dte extends AppModel
 			'counterQuery'			=> ''
 		)
 	);
+
+
+	public function beforeSave($options = array())
+	{	
+		if (!isset($this->data['Dte']['tienda_id'])) {
+			$this->data['Dte']['tienda_id'] = CakeSession::read('Tienda.id');
+		}
+	}
 }

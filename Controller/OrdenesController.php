@@ -183,7 +183,7 @@ class OrdenesController extends AppController
 		}
 
 		# Modelos que requieren agregar configuración
-		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'Lang'));
+		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'Lang', 'CustomUserdata'));
 
 		$this->paginate = $paginate;
 
@@ -227,17 +227,19 @@ class OrdenesController extends AppController
 		}
 
 		# Modelos que requieren agregar configuración
-		$this->cambiarDatasource(array('CustomUserdata', 'CustomField', 'CustomFieldLang'));
+		$this->cambiarDatasource(array('Orden','CustomUserdata', 'CustomField', 'CustomFieldLang'));
 
-		$this->request->data	= $this->Orden->find('first', array(
+		$opt = array(
 			'conditions'	=> array('Orden.id_order' => $id),
 			'contain' => array(
 				'OrdenEstado' => array('Lang'),
 				'OrdenDetalle',
-				'Dte',
-				'CustomUserdata' => array('CustomField' => array('Lang'))
+				'Dte'
 				)
-		));
+		);
+
+
+		$this->request->data	= $this->Orden->find('first', $opt);
 
 		BreadcrumbComponent::add('Ordenes de compra', '/ordenes');
 		BreadcrumbComponent::add('Ver Dte´s ');
@@ -334,7 +336,8 @@ class OrdenesController extends AppController
 			}
 
 		}else{
-			$this->request->data	= $this->Orden->find('first', array(
+
+			$opt = array(
 				'conditions'	=> array('Orden.id_order' => $id_orden),
 				'contain' => array(
 					'OrdenEstado' => array('Lang'),
@@ -342,8 +345,20 @@ class OrdenesController extends AppController
 					'Dte',
 					'Cliente',
 					'ClienteHilo' => array('ClienteMensaje' => array('Empleado')),
-					'CustomUserdata' => array('CustomField' => array('Lang')))
-			));
+				),
+			);
+
+			$modulosExternos = $this->Orden->validarModulosExternos();
+			if ($modulosExternos) {
+				$opt = array_replace_recursive($opt, array(
+					'contain' => array(
+						'CustomUserdata' => array('CustomField' => array('Lang'))
+					)
+				));
+			}
+
+			$this->request->data	= $this->Orden->find('first', $opt);
+
 		}
 		
 		# Array de tipos de documentos
@@ -488,7 +503,8 @@ class OrdenesController extends AppController
 		}
 		else
 		{
-			$this->request->data	= $this->Orden->Dte->find('first', array(
+
+			$opt = array(
 				'conditions'	=> array('Dte.id' => $id_dte),
 				'contain' => array(
 					'DteReferencia',
@@ -498,10 +514,22 @@ class OrdenesController extends AppController
 						'Dte',
 						'Cliente',
 						'ClienteHilo' => array('ClienteMensaje' => array('Empleado')),
-						'CustomUserdata' => array('CustomField' => array('Lang'))
 					)
 				)
-			));
+			);
+
+			$modulosExternos = $this->Orden->validarModulosExternos();
+			if ($modulosExternos) {
+				$opt = array_replace_recursive($opt, array(
+					'contain' => array(
+						'Orden' => array(
+							'CustomUserdata' => array('CustomField' => array('Lang'))
+						)
+					)
+				));
+			}
+
+			$this->request->data	= $this->Orden->Dte->find('first', $opt);
 
 		}
 		

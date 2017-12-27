@@ -538,7 +538,7 @@ class MercadoLibresController extends AppController
 				'MercadoLibr.tienda_id' => $this->Session->read('Tienda.id')
 				),
 			'order' => array('MercadoLibr.id' => 'DESC'),
-			'limit' => 10
+			'limit' => 20
 		);
 
 		$url = '';
@@ -550,10 +550,10 @@ class MercadoLibresController extends AppController
 		BreadcrumbComponent::add('Mercado Libre Productos ');
 
 		# Se lanza mensaje de actualizar precios
-		if($this->verificarCambiosDePrecios()) {
-			$this->Session->setFlash('¡Tienes precios desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
+		if($this->verificarCambiosDePreciosStock()) {
+			$this->Session->setFlash('¡Tienes productos desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
 		}else{
-			$this->Session->setFlash('¡Bien! Todos los productos tienen sus precios sincronizados.', null, array(), 'success');
+			$this->Session->setFlash('¡Bien! Todos los productos estan sincronizados.', null, array(), 'success');
 		}
 
 		$mercadoLibres	= $this->paginate();
@@ -901,6 +901,7 @@ class MercadoLibresController extends AppController
 			$arrayProductos[$index]['value'] = sprintf('%s', $producto['Lang'][0]['ProductotiendaIdioma']['name']);
 			$arrayProductos[$index]['imagen'] = sprintf('%s', $producto[0]['url_image_large']);
 			$arrayProductos[$index]['precio'] = sprintf('%s', $producto['Productotienda']['valor_final']);
+			$arrayProductos[$index]['stock'] = sprintf('%s', $producto['Productotienda']['quantity']);
 			//$arrayProductos[$index]['name'] = $producto['Lang'][0]['ProductotiendaIdioma']['name'];
 			//$arrayProductos[$index]['image'] = $producto[0]['url_image'];
 			//$arrayProductos[$index]['description'] = $producto['Lang'][0]['ProductotiendaIdioma']['description_short'];
@@ -1065,7 +1066,7 @@ class MercadoLibresController extends AppController
 		return $html;
 	}
 
-	public function verificarCambiosDePrecios($console = false)
+	public function verificarCambiosDePreciosStock($console = false)
 	{
 		if (!$console && $this->Session->check('Tienda.id')) {
 			# Obtenemos las tiendas configuradas
@@ -1085,7 +1086,7 @@ class MercadoLibresController extends AppController
 		# Comparamos los precios para ver si hay alguna diferencia. En la primera diferencia se detiene y retorna true; 
 		foreach ($t as $ix => $productos) {
 			foreach ($productos as $producto) {
-				if ($producto['MercadoLibr']['precio'] != $producto['Productotienda']['precio']) {
+				if ($producto['MercadoLibr']['precio'] != $producto['Productotienda']['precio'] || $producto['MercadoLibr']['cantidad_disponible'] != $producto['Productotienda']['stock'] ) {
 					return true;
 				}
 			}
@@ -1095,10 +1096,10 @@ class MercadoLibresController extends AppController
 
 	}
 
-	public function admin_actualizarPrecios($console = false)
+	public function admin_actualizarPreciosStock($console = false)
 	{	
 		if ($console) {
-			$url = $this->autorizacionMeli(Router::url(array('controller' => 'mercadoLibres', 'action' => 'actualizarPrecios', 1)));
+			$url = $this->autorizacionMeli(Router::url(array('controller' => 'mercadoLibres', 'action' => 'actualizarPreciosStock', 1)));
 			if ( !empty($url) ) {
 				$code = $this->Meli->getCode($url);
 			}
@@ -1126,7 +1127,7 @@ class MercadoLibresController extends AppController
 		}
 		
 		# Actualizamos de los productos publicados, tanto interna como en MELI
-		$result = $this->sincronizarPrecios($productos);
+		$result = $this->sincronizarPreciosStock($productos);
 
 		/*if (!$result['Interno']['res'] && !$result['Meli']['res']) {
 			$this->Session->setFlash('Imposible actualizar los precios en Mercado libre. Intente nuevamente.', null, array(), 'danger');
@@ -1155,7 +1156,7 @@ class MercadoLibresController extends AppController
 	}
 
 
-	public function sincronizarPrecios($tiendas = array())
+	public function sincronizarPreciosStock($tiendas = array())
 	{	
 		$out = array();
 		foreach ($tiendas as $k => $productos) {
@@ -1164,7 +1165,7 @@ class MercadoLibresController extends AppController
 
 				# Actualizamos el precio interno
 				$this->MercadoLibr->id = $producto['MercadoLibr']['id'];
-				if ( ! $this->MercadoLibr->saveField('precio', $producto['Productotienda']['precio']) ) {
+				if ( ! $this->MercadoLibr->saveField('precio', $producto['Productotienda']['precio']) || $this->MercadoLibr->saveField('cantidad_disponible', $producto['Productotienda']['stock']) ) {
 					$out['Interno']['res'] = 0;
 					$out['Interno']['errors'][$i]['id'] = $producto['MercadoLibr']['id'];
 					$out['Interno']['errors'][$i]['producto'] = $producto['MercadoLibr']['producto'];
@@ -1181,7 +1182,7 @@ class MercadoLibresController extends AppController
 				if (!empty($producto['MercadoLibr']['id_meli'])) {
 					
 					# Actualizamos publicación existente en mercado libre
-					$meliRespuesta = $this->Meli->updatePrice($producto['MercadoLibr']['id_meli'], $producto['Productotienda']['precio']);
+					$meliRespuesta = $this->Meli->updatePriceAndStock($producto['MercadoLibr']['id_meli'], $producto['Productotienda']['precio'], $producto['Productotienda']['stock']);
 					
 					$res = to_array($meliRespuesta);
 
@@ -1217,7 +1218,7 @@ class MercadoLibresController extends AppController
 
 			# Listamos productos de mercadolibre
 			$productos = $this->MercadoLibr->find('all', array(
-				'fields' => array('id', 'id_product', 'producto' ,'precio', 'id_meli'),
+				'fields' => array('id', 'id_product', 'producto' ,'precio', 'id_meli', 'cantidad_disponible'),
 				'conditions' => array(
 					'MercadoLibr.tienda_id' => $store['Tienda']['id'],
 					'MercadoLibr.id_product !=' => null
@@ -1357,6 +1358,7 @@ class MercadoLibresController extends AppController
 				$arrayProducto['nombre'] = sprintf('%s', $producto['Lang'][0]['ProductotiendaIdioma']['name']);
 				$arrayProducto['imagen'] = sprintf('%s', $producto[0]['url_image_large']);
 				$arrayProducto['precio'] = sprintf('%s', $producto['Productotienda']['valor_final']);
+				$arrayProducto['stock'] = sprintf('%s', $producto['Productotienda']['quantity']);
 				//$arrayProducto[$index]['name'] = $producto['Lang'][0]['ProductotiendaIdioma']['name'];
 				//$arrayProducto[$index]['image'] = $producto[0]['url_image'];
 				//$arrayProducto[$index]['description'] = $producto['Lang'][0]['ProductotiendaIdioma']['description_short'];

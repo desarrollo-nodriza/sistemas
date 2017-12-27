@@ -10,6 +10,13 @@ Class Orden extends AppModel {
 	public $useTable = 'orders';
 	public $primaryKey = 'id_order';
 
+	# Módulos externos de PS
+	public $externalTables = array(
+		'fmm_custom_userdata',
+		'fmm_custom_fields',
+		'fmm_custom_fields_lang',
+		'webpay_detail_order'
+	);
 
 	public $belongsTo = array(
 		'OrdenEstado' => array(
@@ -81,21 +88,59 @@ Class Orden extends AppModel {
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
 		),
-		'CustomUserdata' => array(
-			'className'				=> 'CustomUserdata',
-			'foreignKey'			=> 'id_order',
-			'dependent'				=> false,
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'limit'					=> '',
-			'offset'				=> '',
-			'exclusive'				=> '',
-			'finderQuery'			=> '',
-			'counterQuery'			=> ''
-		)
 	);
 
+	public function beforeFind($options = array()) {
+		parent::beforeFind($options);
+		
+		$this->validarModulosExternos();
+		
+	}
+
+
+	/**
+	 * Valida la existencia de las tablas en la bas de datos de la tienda PS
+	 * @return bool 
+	 */
+	public function validarModulosExternos()
+	{
+		$conf = CakeSession::read('Tienda.configuracion');
+		$prefix = CakeSession::read('Tienda.prefijo');
+
+		$sf = false;
+
+		# Verificamos existencia de tablas externas en PS
+		$db = ConnectionManager::getDataSource($conf);
+		$tables = $db->listSources();
+		
+		foreach ($this->externalTables as $it => $table) {
+			if (in_array(sprintf('%s%s', $prefix, $table), $tables)) {
+				$sf = true;
+			}else{
+				$sf = false;
+			}
+		}
+
+		if ($sf) {
+			$this->hasMany = array_replace_recursive($this->hasMany, array(
+				'CustomUserdata' => array(
+					'className'				=> 'CustomUserdata',
+					'foreignKey'			=> 'id_order',
+					'dependent'				=> false,
+					'conditions'			=> '',
+					'fields'				=> '',
+					'order'					=> '',
+					'limit'					=> '',
+					'offset'				=> '',
+					'exclusive'				=> '',
+					'finderQuery'			=> '',
+					'counterQuery'			=> ''
+				)
+			));
+		}
+
+		return $sf;	
+	}
 
 	/*public function getUniqReference($id_cart = '') {
 		$referencia = $this->find('first', array(
