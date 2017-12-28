@@ -32,6 +32,9 @@ class ActualizarPreciosShell extends AppShell
 
 		if($Meli->verificarCambiosDePreciosStock(true)) {
 			$this->guardarEmail();
+			$this->out('Email guardado');
+		}else{
+			$this->out('No existen cambios');
 		}
 	}
 
