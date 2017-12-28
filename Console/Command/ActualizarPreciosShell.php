@@ -65,7 +65,7 @@ class ActualizarPreciosShell extends AppShell
 			'asunto'					=> '[MELI] ¡Los precios en Mercado libre están desactualizados!',
 			'destinatario_email'		=> 'ventas@toolmania.cl',
 			'destinatario_nombre'		=> '',
-			'remitente_email'			=> 'no-reply@nodriza.cl',
+			'remitente_email'			=> 'cristian.rojas@nodriza.cl',
 			'remitente_nombre'			=> 'Sistemas - Nodriza Spa',
 			'cc_email'					=> '',
 			'bcc_email'					=> 'cristian.rojas@nodriza.cl',
