@@ -24,9 +24,79 @@
 <div class="page-content-wrap">
 	<div class="row">
 		<div class="col-xs-12">
+			<?= $this->Form->create('Filtro', array('url' => array('controller' => 'mercadoLibres', 'action' => 'index'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
+			<? 
+				$by  = (isset($this->request->params['named']['by'])) ? $this->request->params['named']['by'] : '' ;
+				$txt = (isset($this->request->params['named']['txt'])) ? $this->request->params['named']['txt'] : '' ;
+			?>
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3 class="panel-title">Listado de productos</h3>
+					<h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
+				</div>
+				<div class="panel-body">
+					<div class="col-sm-4 col-xs-12">
+						<div class="form-group">
+							<label>Buscar por:</label>
+							<?=$this->Form->select('by',
+								array(
+									'ide' => 'ID de producto', 
+									'idm' => 'ID MEli',
+									'nam' => 'Nombre'),
+								array(
+								'class' => 'form-control js-select-value',
+								'empty' => 'Seleccione',
+								'value' => $by
+								)
+							);?>
+						</div>
+					</div>
+					<div class="col-sm-8 col-xs-12">
+						<div class="form-group">
+							<label>Coincidencia:</label>
+							<?=$this->Form->input('txt', array(
+								'type' => 'text',
+								'class' => 'form-control',
+								'value' => $txt
+								));?>
+						</div>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="col-xs-12">
+						<div class="pull-right">
+							<?= $this->Form->button('<i class="fa fa-search" aria-hidden="true"></i> Filtrar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
+						</div>
+						<div class="pull-left">
+							<?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtro', array('action' => 'index'), array('class' => 'btn btn-buscar btn-primary btn-block', 'escape' => false)); ?>
+						</div>
+					</div>
+				</div>
+				<?= $this->Form->end(); ?>
+			</div>
+		</div>
+	</div>
+
+	<? if (isset($this->request->params['named']['txt'])) : ?>
+	<!-- Resultados de la búsqueda -->
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="alert <?=$cls = ($total == 0) ? 'alert-danger' : 'alert-success'; ?>">
+				<a class="close" data-dismiss="alert">&times;</a>
+				<? if ($total == 1) : ?>
+				<?=$total;?> item encontrado para <b>"<?=$this->request->params['named']['txt'];?>"</b>
+				<? else : ?>
+				<?=$total;?> items encontrados para <b>"<?=$this->request->params['named']['txt'];?>"</b>
+				<? endif; ?>
+			</div>
+		</div>
+	</div>	
+	<? endif; ?>
+
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Listado de productos <small>(<?=$total;?> encontrados)</small></h3>
 					<div class="btn-group pull-right">
 					<? if ($permisos['add']) : ?>
 						<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Producto', array('action' => 'add'), array('class' => 'btn btn-success', 'escape' => false)); ?>
@@ -57,13 +127,13 @@
 									<td><?= h($mercadoLibr['MercadoLibrePlantilla']['nombre']); ?>&nbsp;</td>
 									<td><?= $publicado = (!empty($mercadoLibr['MercadoLibr']['id_meli'])) ? '<i class="fa fa-check-circle text-success fa-lg"></i>' : '<i class="fa fa-times-circle text-danger fa-lg"></i>' ;?></td>
 									<td>
-										<? if ($mercadoLibr['MercadoLibr']['estado'] == 'closed' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
+										<? if ($mercadoLibr['MeliItem']['status'] == 'closed' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
 											<label class="label label-danger">Cerrada</label>
 										<? endif; ?>
-										<? if ($mercadoLibr['MercadoLibr']['estado'] == 'paused' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
+										<? if ($mercadoLibr['MeliItem']['status'] == 'paused' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
 											<label class="label label-warning">Pausada</label>
 										<? endif; ?>
-										<? if ($mercadoLibr['MercadoLibr']['estado'] == 'active' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
+										<? if ($mercadoLibr['MeliItem']['status'] == 'active' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
 											<label class="label label-success">Abierta</label>
 										<? endif; ?>
 										<? if ( empty($mercadoLibr['MercadoLibr']['id_meli']) ) : ?>
@@ -84,21 +154,21 @@
 										<? if (!empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
 											<li><?= $this->Html->link('Ver publicación en MELI', $mercadoLibr['MercadoLibr']['url_meli'], array('class' => '', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false, 'target' => '_blank')); ?>
 											</li>
-											<? if ($mercadoLibr['MercadoLibr']['estado'] == 'closed') : ?>
+											<? if ($mercadoLibr['MeliItem']['status'] == 'closed') : ?>
 											<li><?= $this->Html->link('Abrir', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'active'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Activar item', 'escape' => false)); ?>
 											</li>
 											<li><?= $this->Html->link('Pausar', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'paused'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Pausar item', 'escape' => false)); ?>
 											</li>
 											<? endif; ?>
 
-											<? if ($mercadoLibr['MercadoLibr']['estado'] == 'paused') : ?>
+											<? if ($mercadoLibr['MeliItem']['status'] == 'paused') : ?>
 											<li><?= $this->Html->link('Abrir', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'active'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Activar item', 'escape' => false)); ?>
 											</li>
 											<li><?= $this->Html->link('Cerrar', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'closed'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Cerrar item', 'escape' => false)); ?>
 											</li>
 											<? endif; ?>
 
-											<? if ($mercadoLibr['MercadoLibr']['estado'] == 'active') : ?>
+											<? if ($mercadoLibr['MeliItem']['status'] == 'active') : ?>
 											<li><?= $this->Html->link('Pausar', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'paused'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Pausar item', 'escape' => false)); ?>
 											</li>
 											<li><?= $this->Html->link('Cerrar', array('action' => 'cambiarEstado', $mercadoLibr['MercadoLibr']['id'], $mercadoLibr['MercadoLibr']['id_meli'], 'closed'), array('class' => '', 'rel' => 'tooltip', 'title' => 'Cerrar item', 'escape' => false)); ?>

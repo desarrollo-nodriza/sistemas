@@ -494,10 +494,11 @@ $.extend({
 						description = '',
 						specs = '',
 						stock = '';
-					console.log($esto);
+					
 					$esto.autocomplete({
 					   	source: function(request, response) {
 					      	$.get( webroot + 'mercadoLibres/obtener_productos/' + request.term, function(respuesta){
+					      		console.info(respuesta);
 								response( $.parseJSON(respuesta) );
 					      	})
 					      	.fail(function(){

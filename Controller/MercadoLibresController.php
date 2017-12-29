@@ -530,16 +530,82 @@ class MercadoLibresController extends AppController
 	}
 
 
+	/**
+     * Crea un redirect y agrega a la URL los parámetros del filtro
+     * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
+     * @param 		$accion 		String 		Nombre del método receptor de la petición
+     * @return 		void
+     */
+    public function filtrar($controlador = '', $accion = '')
+    {
+    	$redirect = array(
+    		'controller' => $controlador,
+    		'action' => $accion
+    		);
+
+		foreach ($this->request->data['Filtro'] as $campo => $valor) {
+			if (!empty($valor)) {
+				$redirect[$campo] = $valor;
+			}
+		}
+
+    	$this->redirect($redirect);
+
+    }
+
+
 	public function admin_index()
-	{
-		$this->paginate		= array(
-			'recursive'			=> 0,
+	{	
+
+		$paginate = array(); 
+    	$conditions = array();
+    	$total = 0;
+    	$totalMostrados = 0;
+
+		// Filtrado por formulario
+		if ( $this->request->is('post') ) {
+
+			$this->filtrar('mercadoLibres', 'index');
+
+		}
+
+		$paginate = array_replace_recursive($paginate, array(
+			'recursive'		=> 0,
 			'conditions' => array(
 				'MercadoLibr.tienda_id' => $this->Session->read('Tienda.id')
 				),
 			'order' => array('MercadoLibr.id' => 'DESC'),
 			'limit' => 20
+			)
 		);
+
+
+		# Filtrar
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'by':
+						if ($valor == 'ide' && isset($this->request->params['named']['txt'])) {
+							$paginate = array_replace_recursive($paginate, array(
+							'conditions' => array('MercadoLibr.id LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
+						}
+
+						if ($valor == 'idm' && isset($this->request->params['named']['txt'])) {
+							$paginate = array_replace_recursive($paginate, array(
+							'conditions' => array('MercadoLibr.id_meli LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
+						}
+
+						if ($valor == 'nam' && isset($this->request->params['named']['txt'])) {
+							$paginate = array_replace_recursive($paginate, array(
+							'conditions' => array('MercadoLibr.nombre LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
+						}
+						
+						break;
+				}
+			}
+		}
+
+		$this->paginate = $paginate;
 
 		$url = '';
 		$auth = $this->autorizacionMeli();
@@ -556,8 +622,16 @@ class MercadoLibresController extends AppController
 			$this->Session->setFlash('¡Bien! Todos los productos estan sincronizados.', null, array(), 'success');
 		}
 
+		$total =  $this->MercadoLibr->find('count', $paginate);
+
 		$mercadoLibres	= $this->paginate();
-		$this->set(compact('mercadoLibres', 'url'));
+		
+		# Se agrega el item de merado libre
+		foreach ($mercadoLibres as $im => $itm) {
+			$mercadoLibres[$im]['MeliItem'] = $this->admin_verProducto($itm['MercadoLibr']['id_meli']);
+		}	
+
+		$this->set(compact('mercadoLibres', 'url', 'total', 'totalMostrados'));
 	}
 
 
@@ -822,7 +896,7 @@ class MercadoLibresController extends AppController
 		            )
 	        	),
 	        	array(
-		            'table' => sprintf('%sstock_available', $store['Tienda']['prefijo']),
+		            'table' => sprintf('%sstock_available', $tienda['Tienda']['prefijo']),
 		            'alias' => 'StockDisponible',
 		            'type'  => 'LEFT',
 		            'conditions' => array(
