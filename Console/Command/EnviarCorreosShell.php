@@ -14,7 +14,7 @@ class EnviarCorreosShell extends AppShell
 		 */
 		if ( ! $this->CakeEmail || ! $this->View )
 		{
-			$this->CakeEmail = new CakeEmail();
+			$this->CakeEmail = new CakeEmail('gmail');
 		}
 
 		/**
