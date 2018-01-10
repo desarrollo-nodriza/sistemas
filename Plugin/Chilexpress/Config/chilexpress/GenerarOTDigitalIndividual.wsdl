@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WL5G3N0:definitions name="GenerarOTDigitalIndividual" targetNamespace="http://www.chilexpress.cl/GenerarOTDigitalIndividual/" xmlns:WL5G3N0="http://schemas.xmlsoap.org/wsdl/" xmlns:WL5G3N1="http://www.chilexpress.cl/GenerarOTDigitalIndividual/" xmlns:WL5G3N2="http://schemas.xmlsoap.org/wsdl/soap/">
+  <WL5G3N0:types>
+    <xs:schema elementFormDefault="qualified" targetNamespace="http://www.chilexpress.cl/GenerarOTDigitalIndividual/" xmlns:cfhrp="http://ws.chilexpress.cl/OSB/INTERNO/IMP/GenerarOTDigitalIndividualResp" xmlns:cfhrq="http://ws.chilexpress.cl/OSB/INTERNO/IMP/GenerarOTDigitalIndividualReq" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://www.chilexpress.cl/GenerarOTDigitalIndividual/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:import namespace="http://ws.chilexpress.cl/OSB/INTERNO/IMP/GenerarOTDigitalIndividualReq" schemaLocation="http://ws.ssichilexpress.cl:80/OSB/GenerarOTDigitalIndividual?SCHEMA%2FPX300031_OrquestaOTIndividualEXP%2FResources%2FSchemas%2FGenerarOTDigitalIndividualReq"/>
+      <xs:import namespace="http://ws.chilexpress.cl/OSB/INTERNO/IMP/GenerarOTDigitalIndividualResp" schemaLocation="http://ws.ssichilexpress.cl:80/OSB/GenerarOTDigitalIndividual?SCHEMA%2FPX300031_OrquestaOTIndividualEXP%2FResources%2FSchemas%2FGenerarOTDigitalIndividualResp"/>
+      <xs:element name="GenerarOTDigitalIndividualRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="cfhrq:reqGenerarOTDigitalIndividual"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="GenerarOTDigitalIndividualResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="cfhrp:respGenerarOTDigitalIndividual"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:schema>
+  </WL5G3N0:types>
+  <WL5G3N0:message name="GenerarOTDigitalIndividualReq">
+    <WL5G3N0:part element="WL5G3N1:GenerarOTDigitalIndividualRequest" name="GenerarOTDigitalIndividualReqParam"/>
+  </WL5G3N0:message>
+  <WL5G3N0:message name="GenerarOTDigitalIndividualResp">
+    <WL5G3N0:part element="WL5G3N1:GenerarOTDigitalIndividualResponse" name="GenerarOTDigitalIndividualRespParam"/>
+  </WL5G3N0:message>
+  <WL5G3N0:portType name="GenerarOTDigitalIndividual">
+    <WL5G3N0:operation name="GenerarOTDigitalIndividualOp">
+      <WL5G3N0:input message="WL5G3N1:GenerarOTDigitalIndividualReq"/>
+      <WL5G3N0:output message="WL5G3N1:GenerarOTDigitalIndividualResp"/>
+    </WL5G3N0:operation>
+  </WL5G3N0:portType>
+  <WL5G3N0:binding name="GenerarOTDigitalIndividualSOAP" type="WL5G3N1:GenerarOTDigitalIndividual">
+    <WL5G3N2:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <WL5G3N0:operation name="GenerarOTDigitalIndividualOp">
+      <WL5G3N2:operation style="document"/>
+      <WL5G3N0:input>
+        <WL5G3N2:body use="literal"/>
+      </WL5G3N0:input>
+      <WL5G3N0:output>
+        <WL5G3N2:body use="literal"/>
+      </WL5G3N0:output>
+    </WL5G3N0:operation>
+  </WL5G3N0:binding>
+  <WL5G3N0:service name="GenerarOTDigitalIndividual">
+    <WL5G3N0:port binding="WL5G3N1:GenerarOTDigitalIndividualSOAP" name="GenerarOTDigitalIndividualSOAP">
+      <WL5G3N2:address location="http://ws.ssichilexpress.cl/OSB/GenerarOTDigitalIndividual"/>
+    </WL5G3N0:port>
+  </WL5G3N0:service>
+</WL5G3N0:definitions>

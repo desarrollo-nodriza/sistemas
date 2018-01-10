@@ -2,70 +2,132 @@
 
 App::import('Vendor', 'Chilexpress.ChilexpressSoapClient', array('file' => 'soap/ChilexpressSoapClient.php'));
 
+##
+# Regiones
+#
 class ConsultarRegiones{
+	var $reqObtenerRegion;
 }
 
-class ConsultarRegionesResponse{
+class reqObtenerRegion{
 	var $CodEstado;//int
 	var $GlsEstado;//String
-	var $idRegion;//string
+	var $Regiones;
+	
+}
+
+class Regiones {
+	var $idRegion;
 	var $GlsRegion;//String
 }
 
+##
+# Fin regiones
+# 
+
+
+##
+# Comunas / Coberturas
+# 
 class ConsultarCoberturas{
-	var $CodTipoCobertura;//string
-	var $CodRegion;//string
+	var $reqObtenerCobertura;
 }
 
-class ConsultarCoberturasResponse{
+class reqObtenerCobertura{
 	var $CodEstado;//int
 	var $GlsEstado;//string
+	var $CodTipoCobertura;//string
+	var $CodRegion;//string
+	var $Comunas;
+}
+
+Class Comunas {
 	var $CodComuna;//string
 	var $GLsComuna;//string
 	var $CodRegion;//String
 	var $CodComunalne;//int
 }
 
+##
+# Fin Comunas
+# 
 
+
+##
+# Calles
+# 
 class ConsultarCalles{
-	var $GlsComuna;//string
-	var $GlsCalle;//string
+	var $reqObtenerCalle;
 }
 
-class ConsultarCallesResponse{
+class reqObtenerCalle{
+	var $GlsComuna;//string
+	var $GlsCalle;//string
+
 	var $CodEstado;//int
 	var $GlsEstado;//string
 	var $Calles;//Calles
+}
+
+class Calles {
 	var $idNombreCalle;//string
 	var $GlsComuna;//string
 	var $GlsCalle;//string
 }
 
+##
+# Fin calles
+# 
+
+
+##
+# Numeracion
+# 
 class ConsultarNumeros{
+   	var $reqObtenerNumero;
+}
+
+class reqObtenerNumero{
+	var $CodEstado;//int
+	var $GlsEstado;//string
+
 	var $idNombreCalle;//string
-	var $NumNumeracion;//int
+	var $Numeracion;//int
+	var $Numeros;
 }
 
-class ConsultarNumerosResponse{
+class Numeros {
+	var $CaN;//string
+	var $Numeracion;//int
+	var $CpN;//string
+}
+
+##
+# Fin números
+# 
+
+
+##
+# Validar direccion
+# 
+class ConsultarDirecciones{
+	var $reqObtenerDireccion;
+}
+
+class reqObtenerDireccion{
 	var $CodEstado;//int
 	var $GlsEstado;//string
-	var $CodCAN;//string
-	var $NumNumeracion;//int
-	var $CodCPN;//string
-}
-
-class ValidacionDireccion{
+	
 	var $GlsComuna;//string
-	var $CodCalle;//string
-	var $CodCAN;//string
-	var $NumNumeracion;//int
-	var $CodCPN;//string
-	var $CodComplemento;//string
+	var $GlsCalle;//string
+	var $CaN;//string
+	var $Numeracion;//int
+	var $CpN;//string
+	var $Complemento;//string
+	var $Direcciones;
 }
 
-class ValidacionDireccionResponse{
-	var $CodEstado;//int
-	var $GlsEstado;//string
+class Direcciones {
 	var $CodResultado;//int
 	var $Iddireccion;//int
 	var $idBlock;//int
@@ -73,128 +135,170 @@ class ValidacionDireccionResponse{
 	var $Lon;//float
 }
 
+##
+# Fin validar dirección
+# 
 
+
+##
+# Consultar direcciones
 class ConsultarOficinas{
 	var $GlsComuna;//string
+
 }
 
-class ConsultarOficinasResponse{
+class reqObtenerOficinas{
 	var $lpResultado;//int
-	var $NombreCalle;//string
-	var $NombreOficina;//string
-	var $Numeracion;//int
-	var $CaN;//string
-	var $CpN;//string
-	var $NombreComuna;//string
-	var $Iddireccion;//int
-	var $idBlock;//int
-	var $Lat;//float
-	var $Lon;//float
+	var $Oficinas;
 }
 
+class Oficinas {
+
+}
+##
+# Fin oficinas comuna
+# 
+
+
+
+##
+# Consultar oficinas por región
+# 
 class ConsultarOficinas_REG{
 	var $CodRegion;//string
 }
 
-class ConsultarOficinas_REGResponse{
+class reqObtenerOficinas_REG{
 	var $lpResultado;//int
-	var $NombreCalle;//string
-	var $NombreOficina;//string
-	var $Numeracion;//int
-	var $CaN;//string
-	var $CpN;//string
-	var $NombreComuna;//string
-	var $Iddireccion;//int
-	var $idBlock;//int
-	var $Lat;//float
-	var $Lon;//float
-	var $GlsCalle;//string
-	var $GlsComuna;//string
-	var $CodComunaCar;//string
-	var $GlsAliasOficina;//string
+	var $CodRegion;
+	var $OficinasRegion;
+}
+
+Class OficinasRegion {
+	
 }
 
 
 class GeoReferenciaWS {
+
 	var $soapClient;
+
+	var $headerSoap;
 	 
 	private static $classmap = array(
+		'ConsultarRegiones'=>'ConsultarRegiones',
+		'reqObtenerRegion'=>'reqObtenerRegion',
+		'Regiones'=>'Regiones',
 		'ConsultarCoberturas'=>'ConsultarCoberturas',
-		'ConsultarCoberturasResponse'=>'ConsultarCoberturasResponse',
+		'reqObtenerCobertura'=>'reqObtenerCobertura',
+		'Comunas' => 'Comunas',
 		'ConsultarCalles' => 'ConsultarCalles',
-		'ConsultarCallesResponse' => 'ConsultarCallesResponse',
-		'ConsultarNumeros' => 'ConsultarNumeros',
-		'ConsultarNumerosResponse' => 'ConsultarNumerosResponse',
-		'ValidacionDireccion' => 'ValidacionDireccion',
-		'ValidacionDireccionResponse' => 'ValidacionDireccionResponse',
+		'reqObtenerCalle' => 'reqObtenerCalle',
+		'Calles' => 'Calles',
+		'ConsultarNumeracion' => 'ConsultarNumeros',
+		'reqObtenerNumero' => 'reqObtenerNumero',
+		'Numeros' => 'Numeros',
+		'ConsultarDirecciones' => 'ConsultarDirecciones',
+		'reqObtenerDireccion' => 'reqObtenerDireccion',
 		'ConsultarOficinas' => 'ConsultarOficinas',
-		'ConsultarOficinasResponse' => 'ConsultarOficinasResponse',
+		'reqObtenerOficinas' => 'reqObtenerOficinas',
+		'Oficinas' => 'Oficinas',
 		'ConsultarOficinas_REG' => 'ConsultarOficinas_REG',
-		'ConsultarOficinas_REGResponse' => 'ConsultarOficinas_REGResponse'
+		'reqObtenerOficinas_REG' => 'reqObtenerOficinas_REG',
+		'OficinasRegion' => 'OficinasRegion'
 	);
 
 	function __construct($url='http://qaws.ssichilexpress.cl/GeoReferencia?wsdl')
 	{
-		$this->soapClient = new ChilexpressSoapClient($url,array("classmap"=>self::$classmap,"trace" => true,"exceptions" => true));
+		$this->soapClient = new ChilexpressSoapClient(
+			$url,
+			array(
+				'classmap'     => self::$classmap, 
+				'trace'        => true,
+				'exceptions'   => true,
+			)
+		);
+
+		$this->addSoapHeaderWS();
+	}
+
+
+	function setSoapHeaderWS( array $data )
+	{
+		$this->headerSoap = $data;
+	}
+
+
+	function addSoapHeaderWS()
+	{	
+		$this->headerSoap = array(
+			'transaccion' => array(
+				'fechaHora'            => date(DATE_ATOM),
+				'idTransaccionNegocio' => Configure::read('Chilexpress.georeferencia.negocio'),
+				'sistema'              => Configure::read('Chilexpress.georeferencia.sistema'), 
+				'login'                => Configure::read('Chilexpress.georeferencia.username'),
+				'password'             => Configure::read('Chilexpress.georeferencia.password'),
+				'soap_version'         => Configure::read('Chilexpress.georeferencia.soap')
+			)
+		);
+
+		$headerBody = new SOAPHeader(Configure::read('Chilexpress.georeferencia.namespace'), 'headerRequest', $this->headerSoap);  
+
+		return $this->soapClient->__setSoapHeaders($headerBody);
 	}
 
 	function ConsultarCoberturas($ConsultarCoberturas)
 	{
 
-		$ConsultarCoberturasResponse = $this->soapClient->ConsultarCoberturas($ConsultarCoberturas);
-		return $ConsultarCoberturasResponse;
+		$reqObtenerCobertura = $this->soapClient->ConsultarCoberturas($ConsultarCoberturas);
+		return $reqObtenerCobertura;
 
 	}
 
 	function ConsultarRegiones($ConsultarRegiones)
-	{
-		try {
-			$ConsultarRegionesResponse = $this->soapClient->ConsultarRegiones($ConsultarRegiones);
-		} catch (Exception $e) {
-			$ConsultarRegionesResponse = $e->getMessage();
-		}
-		
-		return $ConsultarRegionesResponse;
+	{	
+		$reqObtenerRegion = $this->soapClient->ConsultarRegiones($ConsultarRegiones);
+		return $reqObtenerRegion;
 
 	}
 
 	function ConsultarCalles($ConsultarCalles)
 	{
 
-		$ConsultarCallesResponse = $this->soapClient->ConsultarCalles($ConsultarCalles);
-		return $ConsultarCallesResponse;
+		$reqObtenerCalle = $this->soapClient->ConsultarCalles($ConsultarCalles);
+		return $reqObtenerCalle;
 
 	}
 
 	function ConsultarNumeros($ConsultarNumeros)
 	{
 
-		$ConsultarNumerosResponse = $this->soapClient->ConsultarNumeros($ConsultarNumeros);
-		return $ConsultarNumerosResponse;
+		$reqObtenerNumero = $this->soapClient->ConsultarNumeros($ConsultarNumeros);
+		return $reqObtenerNumero;
 
 	}
 
-	function ValidacionDireccion($ValidacionDireccion)
+	function ConsultarDirecciones($ConsultarDirecciones)
 	{
 
-		$ValidacionDireccionResponse = $this->soapClient->ValidacionDireccion($ValidacionDireccion);
-		return $ValidacionDireccionResponse;
+		$reqObtenerDireccion = $this->soapClient->ConsultarDirecciones($ConsultarDirecciones);
+		return $reqObtenerDireccion;
 
 	}
 
 	function ConsultarOficinas($ConsultarOficinas)
 	{
 
-		$ConsultarOficinasResponse = $this->soapClient->ConsultarOficinas($ConsultarOficinas);
-		return $ConsultarOficinasResponse;
+		$reqObtenerOficinas = $this->soapClient->ConsultarOficinas($ConsultarOficinas);
+		return $reqObtenerOficinas;
 
 	}
 
 	function ConsultarOficinas_REG($ConsultarOficinas_REG)
 	{
 
-		$ConsultarOficinas_REGResponse = $this->soapClient->ConsultarOficinas_REG($ConsultarOficinas_REG);
-		return $ConsultarOficinas_REGResponse;
+		$reqObtenerOficinas_REG = $this->soapClient->ConsultarOficinas_REG($ConsultarOficinas_REG);
+		return $reqObtenerOficinas_REG;
 
 	}
 }

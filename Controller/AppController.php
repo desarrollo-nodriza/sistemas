@@ -41,13 +41,23 @@ class AppController extends Controller
 				array('', null),
 				array('Inicio', '/'),
 			)
-		)
+		),
+		'Chilexpress.GeoReferencia',
+		'Chilexpress.Tarificacion'
 		//'Facebook.Connect'	=> array('model' => 'Usuario'),
 		//'Facebook'
 	);
 
 	public function beforeFilter()
-	{
+	{	
+
+		# Geo rferencia
+		# $this->ejemploGeolocalizacionChilexpress();
+
+
+		#Tarificacion
+		# $this->ejemploTarificacion();
+		
 		/**
 		 * Layout administracion y permisos publicos
 		 */
@@ -625,6 +635,85 @@ class AppController extends Controller
 			return str_replace('.', '', $rut);
 		}
 		return $rut;
+	}
+
+
+
+
+
+	public function ejemploGeolocalizacionChilexpress()
+	{
+		$resultado = array();
+
+		# TST Chilexpress
+		 
+		
+		/* Obtener regiones */
+		try {
+			$resultado['Regiones'] = $this->GeoReferencia->obtenerRegiones();
+		} catch (Exception $e) {
+			$resultado['Regiones'] = $e;
+		}
+		
+
+		/* Obtener coberturas */
+		try {
+			$resultado['Coberturas'] = $this->GeoReferencia->obtenerCoberturas('3', 'RM');
+		} catch (Exception $e) {
+			$resultado['Coberturas'] = $e;
+		}
+
+		/* Obtener calles */
+		try {
+			$resultado['Calles'] = $this->GeoReferencia->obtenerCalles('SANTIAGO CENTRO', 'Vicuña mackenna');
+		} catch (Exception $e) {
+			$resultado['Calles'] = $e;
+		}
+		
+		/* Obtener numeración calle  */
+		try {
+			$resultado['Numeracion'] = $this->GeoReferencia->obtenerNumeracionCalles('175309', 1725);
+		} catch (Exception $e) {
+			$resultado['Numeracion'] = $e;
+		}
+
+		/* Validar direcciones  */
+		try {
+			$resultado['Vdireccion'] = $this->GeoReferencia->validarDireccion('SANTIAGO CENTRO', 'Avenida vicuña mackenna', '' , 1725, '', '');
+		} catch (Exception $e) {
+			$resultado['Vdireccion'] = $e;
+		}
+
+
+		/* Consultar oficinas chilexpress por comuna */
+		try {
+			$resultado['OficinasC'] = $this->GeoReferencia->obtenerDireccionOficinasComuna('Curico');
+		} catch (Exception $e) {
+			$resultado['OficinasC'] = $e;
+		}
+
+		/* Consultar oficinas chilexpress  por región */
+		try {
+			$resultado['OficinasR'] = $this->GeoReferencia->obtenerDireccionOficinasRegion('R7');
+		} catch (Exception $e) {
+			$resultado['OficinasR'] = $e;
+		}
+		
+
+		return $resultado;
+	}
+
+
+	public function ejemploTarificacion()
+	{
+		try {
+			# Origen - Destino - Peso - Alto - Ancho - Largo
+			$resultado = $this->Tarificacion->obtenerTarifaPaquete('STGO', 'CURI', 3.5, 40, 40, 50);
+		} catch (Exception $e) {
+			$resultado = $e;
+		}
+
+		return $resultado;
 	}
 
 }
