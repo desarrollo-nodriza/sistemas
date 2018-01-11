@@ -43,7 +43,8 @@ class AppController extends Controller
 			)
 		),
 		'Chilexpress.GeoReferencia',
-		'Chilexpress.Tarificacion'
+		'Chilexpress.Tarificacion',
+		'Chilexpress.Ot'
 		//'Facebook.Connect'	=> array('model' => 'Usuario'),
 		//'Facebook'
 	);
@@ -52,12 +53,46 @@ class AppController extends Controller
 	{	
 
 		# Geo rferencia
-		# $this->ejemploGeolocalizacionChilexpress();
+		#prx($this->ejemploGeolocalizacionChilexpress());
 
 
 		#Tarificacion
-		# $this->ejemploTarificacion();
+		# prx($this->ejemploTarificacion());
+		# 
+		# OT
+
+		/*try {
+			$resultado = $this->Ot->generarOt(3,
+			3,
+			'RENCA',
+			22106942,
+			'123456789',
+			'Compra1',
+			10000,
+			0,
+			'Mario Moyano',
+			'mmoyano@chilexpress.cl',
+			'84642291',
+			'Alexis Erazo',
+			'aerazo@chilexpress.cl',
+			'84642291',
+			'PENALOLEN',
+			'Camino de las Camelias',
+			'7909',
+			'Casa 33',
+			'PUDAHUEL',
+			'Jose Joaquin Perez',
+			'1376',
+			'Piso 2',
+			5,
+			1,
+			1,
+			1);
+		} catch (Exception $e) {
+			$resultado = $e;
+		}*/
 		
+		#prx($resultado);
 		/**
 		 * Layout administracion y permisos publicos
 		 */

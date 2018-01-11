@@ -30,30 +30,13 @@ class reqValorizarCourier{
 }
 
 
-class datosConsumidor{
-}
 
 
-class datosTransaccion{
-	
-}
+
 	
 
 
-class nodoHeader{
-	var $_;//anyNode
-}
 
-
-class anyNode{
-	var $_;//anyType
-	var $any;//<anyXML>
-}
-
-
-class datosHeaderRequest{
-	var $transaccion;//datosTransaccion
-}
 
 
 class TarificarCourier{

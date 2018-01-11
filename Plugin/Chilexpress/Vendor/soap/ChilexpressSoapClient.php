@@ -14,14 +14,12 @@ class ChilexpressSoapClient extends SoapClient
 		CakeLog::write('debug', $location);
 		
 		$objWSSE = new WSSESoap($doc);
-		#$objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA1, array('type' => 'private'));
-		#$objKey->loadKey(Configure::read('Chilexpress.private_key'), true);
-		#$options = array('insertBefore' => false);
-		#$objWSSE->signSoapDoc($objKey, $options);
-		#$objWSSE->addIssuerSerial(Configure::read('Chilexpress.cert_file'));
-		#$objKey = new XMLSecurityKey(XMLSecurityKey::AES256_CBC);
-		#$objKey->generateSessionKey();
-		$retVal = parent::__doRequest($request, $location, $saction, $version, $one_way);
+		$objWSSE->signAllHeaders = true;
+		$objWSSE->addTimestamp();
+		if (isset($this->_login, $this->_password)) {
+			$objWSSE->addUserToken($this->_login, $this->_password);	
+		}
+		$retVal = parent::__doRequest($objWSSE->saveXML(), $location, $saction, $version, $one_way);
 
 		$doc = new DOMDocument();
 		$doc->loadXML($retVal);
