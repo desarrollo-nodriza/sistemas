@@ -44,7 +44,8 @@ class AppController extends Controller
 		),
 		'Chilexpress.GeoReferencia',
 		'Chilexpress.Tarificacion',
-		'Chilexpress.Ot'
+		'Chilexpress.Ot',
+		'Chilexpress.Tracking'
 		//'Facebook.Connect'	=> array('model' => 'Usuario'),
 		//'Facebook'
 	);
@@ -54,45 +55,19 @@ class AppController extends Controller
 
 		# Geo rferencia
 		#prx($this->ejemploGeolocalizacionChilexpress());
-
+ 
 
 		#Tarificacion
-		# prx($this->ejemploTarificacion());
+		 #prx($this->ejemploTarificacion());
 		# 
 		# OT
+		#$data = $this->ejemploOT();
 
-		/*try {
-			$resultado = $this->Ot->generarOt(3,
-			3,
-			'RENCA',
-			22106942,
-			'123456789',
-			'Compra1',
-			10000,
-			0,
-			'Mario Moyano',
-			'mmoyano@chilexpress.cl',
-			'84642291',
-			'Alexis Erazo',
-			'aerazo@chilexpress.cl',
-			'84642291',
-			'PENALOLEN',
-			'Camino de las Camelias',
-			'7909',
-			'Casa 33',
-			'PUDAHUEL',
-			'Jose Joaquin Perez',
-			'1376',
-			'Piso 2',
-			5,
-			1,
-			1,
-			1);
-		} catch (Exception $e) {
-			$resultado = $e;
-		}*/
+
+		# Seguimiento
+		#$this->ejemploTracking();
 		
-		#prx($resultado);
+
 		/**
 		 * Layout administracion y permisos publicos
 		 */
@@ -192,16 +167,17 @@ class AppController extends Controller
 
 	public function beforeRender(){
 
+		# Avatar del usuario
 		$avatar = $this->obtenerAvatar();
 
-		// Capturar permisos de usuario
+		# Capturar permisos de usuario
 		try {
 			$permisos = $this->hasPermission();
 		} catch (Exception $e) {
 			$permisos = $e;
 		}
 		
-		// Permisos públicos
+		# Permisos públicos
 		if ( is_object($permisos) && $permisos->getCode() != 66 ) {
 			$this->Session->setFlash($permisos->getMessage(), null, array(), 'danger');
 			$this->redirect('/');
@@ -209,15 +185,16 @@ class AppController extends Controller
 		
 		$modulosDisponibles = $this->getModuleByRole();
 
-		// Camino de migas
+		# Camino de migas
 		$breadcrumbs	= BreadcrumbComponent::get();
 		if ( ! empty($breadcrumbs) && count($breadcrumbs) > 2 ) {
 			$this->set(compact('breadcrumbs'));
 		}
 
-		// Tiendas
+		# Tiendas
 		$tiendasList = $this->obtenerTiendas();
 		
+		# Semaforo que indica si mostrar o no la información del Dashboard
 		$showDashboard = getDashboard($this->Auth->user('rol_id'));
 		
 		$this->set(compact('avatar', 'modulosDisponibles', 'permisos', 'tiendasList', 'showDashboard'));
@@ -693,7 +670,7 @@ class AppController extends Controller
 
 		/* Obtener coberturas */
 		try {
-			$resultado['Coberturas'] = $this->GeoReferencia->obtenerCoberturas('3', 'RM');
+			$resultado['Coberturas'] = $this->GeoReferencia->obtenerCoberturas('1', 'RM');
 		} catch (Exception $e) {
 			$resultado['Coberturas'] = $e;
 		}
@@ -751,4 +728,52 @@ class AppController extends Controller
 		return $resultado;
 	}
 
+
+	public function ejemploOT()
+	{
+		try {
+			$resultado = $this->Ot->generarOt(3,
+			3,
+			'RENCA',
+			22106942,
+			'123456789',
+			'Compra1',
+			10000,
+			0,
+			'Mario Moyano',
+			'mmoyano@chilexpress.cl',
+			'84642291',
+			'Alexis Erazo',
+			'aerazo@chilexpress.cl',
+			'84642291',
+			'PENALOLEN',
+			'Camino de las Camelias',
+			'7909',
+			'Casa 33',
+			'PUDAHUEL',
+			'Jose Joaquin Perez',
+			'1376',
+			'Piso 2',
+			5,
+			1,
+			1,
+			1);
+		} catch (Exception $e) {
+			$resultado = $e->getMessage();
+		}
+
+		return $resultado;
+	}
+
+	public function ejemploTracking()
+	{
+		$ruta = Configure::read('Chilexpress.seguimiento.path');
+		$archivo = 'ejemplo.csv';
+		
+		$fullpath = $ruta . $archivo;
+
+		$arr = $this->Tracking->leer_excel_tracking($fullpath, '99574733764');
+
+		return $arr;
+	}
 }

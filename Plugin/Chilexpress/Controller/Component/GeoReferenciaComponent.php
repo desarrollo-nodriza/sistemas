@@ -2,7 +2,7 @@
 App::uses('Component', 'Controller');
 App::import('Vendor', 'Chilexpress.GeoReferenciaWS', array('file' => 'georeferencia/GeoReferenciaWS.php'));
 
-
+ini_set('memory_limit', '256M');
 class GeoReferenciaComponent extends Component
 {	
 	private $GeoReferenciaWS;
@@ -43,7 +43,7 @@ class GeoReferenciaComponent extends Component
 	 * @param  array  	$header 	cabeceras
 	 * @return void
 	 */
-	public function setCabecerasSoap( array $header )
+	public function setCabecerasSoap( $header = array() )
 	{
 		$this->GeoReferenciaWS->setSoapHeaderWS($header);
 	}
@@ -60,7 +60,7 @@ class GeoReferenciaComponent extends Component
 		$ConsultarRegiones         = new ConsultarRegiones();
 		
 		$ConsultarRegionesResponse = $this->GeoReferenciaWS->ConsultarRegiones($ConsultarRegiones);
-		
+
 		return $ConsultarRegionesResponse;
 	}
 
@@ -70,19 +70,20 @@ class GeoReferenciaComponent extends Component
 	 * Esta operación permite extraer todas las coberturas válidas para Chilexpress, el resultado 
 	 * entrega una lista de “Comunas” válidas como coberturas.
 	 * @param  string 	$tipocobertura  	1 Admisión, 2 Entrega, 3 Ambas 		ej: 3
-	 * @param  string 	$region        		Código de Región
+	 * @param  string 	$region        		Código de Región 					EJ: RM
 	 * @return Obj 							Objeto con el resultado de la operación 	ej: 99 Todos/ R2
 	 */
-	public function obtenerCoberturas(string $tipocobertura, string $region)
+	public function obtenerCoberturas( $tipocobertura = '' , $region = '')
 	{
 		$this->conectar();
 		
 		$ConsultarCoberturas                                        = new ConsultarCoberturas();
+
 		$ConsultarCoberturas->reqObtenerCobertura                   = new \stdClass();
 		
 		$ConsultarCoberturas->reqObtenerCobertura->CodTipoCobertura = $tipocobertura;
 		$ConsultarCoberturas->reqObtenerCobertura->CodRegion        = $region;
-		
+
 		$ConsultarCoberturasResponse                                = $this->GeoReferenciaWS->ConsultarCoberturas($ConsultarCoberturas);
 		
 		return $ConsultarCoberturasResponse;
@@ -97,7 +98,7 @@ class GeoReferenciaComponent extends Component
 	 * @param  string 	$calle  	Nombre de la calle, puede ser parcial
 	 * @return Obj 					Objeto con el resultado de la operación
 	 */
-	public function obtenerCalles(string $comuna, string $calle)
+	public function obtenerCalles( $comuna = '', $calle = '')
 	{
 		$this->conectar();
 		
@@ -106,7 +107,7 @@ class GeoReferenciaComponent extends Component
 		
 		$ConsultarCalles->reqObtenerCalle->GlsComuna = $comuna;
 		$ConsultarCalles->reqObtenerCalle->GlsCalle  = $calle;
-		
+	
 		$ConsultarCallesResponse                     = $this->GeoReferenciaWS->ConsultarCalles($ConsultarCalles);
 		return $ConsultarCallesResponse;
 	}
@@ -119,7 +120,7 @@ class GeoReferenciaComponent extends Component
 	 * @param  int    	$numero  	Numeración de la Calle 		ej: 225
 	 * @return Obj 					Objeto con el resultado de la operación
 	 */
-	public function obtenerNumeracionCalles(string $idCalle, int $numero)
+	public function obtenerNumeracionCalles($idCalle = '', $numero = null)
 	{
 		$this->conectar();
 		
@@ -144,7 +145,7 @@ class GeoReferenciaComponent extends Component
 	 * @param  string $complemtento Complemento de la dirección
 	 * @return Obj               	Respuesta de la petición
 	 */
-	public function validarDireccion(string $comuna, string $calle, string $can, int $numero, string $cpn, string $complemtento)
+	public function validarDireccion($comuna = '', $calle = '', $can = '', $numero = null, $cpn = '', $complemtento = '')
 	{
 		$this->conectar();
 		
@@ -168,7 +169,7 @@ class GeoReferenciaComponent extends Component
 	 * @param  string $comuna      	Nombre de Comuna 	ej: TEMUCO
 	 * @return Obj               	Respuesta de la petición
 	 */
-	public function obtenerDireccionOficinasComuna(string $comuna)
+	public function obtenerDireccionOficinasComuna($comuna = '')
 	{
 		$this->conectar();
 		
@@ -190,7 +191,7 @@ class GeoReferenciaComponent extends Component
 	 * @param  string 	$region 	Código de región 	ej: RM
 	 * @return Obj               	Respuesta de la petición
 	 */
-	public function obtenerDireccionOficinasRegion(string $region)
+	public function obtenerDireccionOficinasRegion($region = '')
 	{
 		$this->conectar();
 		

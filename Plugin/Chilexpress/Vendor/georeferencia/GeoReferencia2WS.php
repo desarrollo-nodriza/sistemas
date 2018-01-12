@@ -16,12 +16,9 @@ var $GlsComuna;//string
 var $CodRegion;//string
 var $CodComunaIne;//int
 }
+
 class ConsultarRegiones{
-}
-class ConsultarRegiones{
-var $CodEstado;//int
-var $GlsEstado;//string
-var $Regiones;//Regiones
+
 }
 class Regiones{
 var $idRegion;//string
@@ -192,6 +189,9 @@ var $respObtenerCobertura;//ConsultarCoberturas
 class ConsultarRegiones{
 var $reqObtenerRegion;//ConsultarRegiones
 }
+class reqObtenerRegion {
+
+}
 class ConsultarRegionesResponse{
 var $respObtenerRegion;//ConsultarRegiones
 }
@@ -246,7 +246,8 @@ private static $classmap = array('ConsultarCoberturas'=>'ConsultarCoberturas'
 ,'ConsultarCoberturas'=>'ConsultarCoberturas'
 ,'Coberturas'=>'Coberturas'
 ,'ConsultarRegiones'=>'ConsultarRegiones'
-,'ConsultarRegiones'=>'ConsultarRegiones'
+,'ConsultarRegiones'=>'ConsultarRegiones',
+'reqObtenerRegion' => 'reqObtenerRegion'
 ,'Regiones'=>'Regiones'
 ,'ConsultarCalles'=>'ConsultarCalles'
 ,'ConsultarCalles'=>'ConsultarCalles'
@@ -299,7 +300,7 @@ private static $classmap = array('ConsultarCoberturas'=>'ConsultarCoberturas'
 
  function __construct($url='http://qaws.ssichilexpress.cl/GeoReferencia?wsdl')
  {
-  $this->soapClient = new ChilexpressSoapClient(
+ 		$this->soapClient = new ChilexpressSoapClient(
 			$url,
 			array(
 				'login'                => Configure::read('Chilexpress.georeferencia.username'),
@@ -321,9 +322,9 @@ private static $classmap = array('ConsultarCoberturas'=>'ConsultarCoberturas'
 				'fechaHora'            => date(DATE_ATOM),
 				'idTransaccionNegocio' => Configure::read('Chilexpress.georeferencia.negocio'),
 				'sistema'              => Configure::read('Chilexpress.georeferencia.sistema'), 
-				'login'                => Configure::read('Chilexpress.georeferencia.username'),
-				'password'             => Configure::read('Chilexpress.georeferencia.password'),
-				'soap_version'         => Configure::read('Chilexpress.georeferencia.soap')
+				'usuario'				=> Configure::read('Chilexpress.georeferencia.usuario'),
+				'oficinaCaja'				=> Configure::read('Chilexpress.georeferencia.oficinaCaja'),
+				'soap_version' => SOAP_1_2
 			)
 		);
 

@@ -20,6 +20,11 @@ class Servicios{
 }
 
 
+class TarificarCourier{
+	var $reqValorizarCourier;//reqValorizarCourier
+}
+
+
 class reqValorizarCourier{
 	var $CodCoberturaOrigen;//string
 	var $CodCoberturaDestino;//string
@@ -27,20 +32,6 @@ class reqValorizarCourier{
 	var $DimAltoPza;//int
 	var $DimAnchoPza;//int
 	var $DimLargoPza;//int
-}
-
-
-
-
-
-	
-
-
-
-
-
-class TarificarCourier{
-	var $reqValorizarCourier;//reqValorizarCourier
 }
 
 
@@ -76,9 +67,13 @@ class TarificacionWS
 		$this->soapClient = new ChilexpressSoapClient(
 			$url,
 			array(
+				'login'        => Configure::read('Chilexpress.tarificacion.username'),
+				'password'     => Configure::read('Chilexpress.tarificacion.password'),
 				'classmap'     => self::$classmap, 
 				'trace'        => true,
 				'exceptions'   => true,
+				'soap_version' => Configure::read('Chilexpress.tarificacion.soap'),
+				'location'     => $url,
 			)
 		);
 
@@ -110,10 +105,8 @@ class TarificacionWS
 
 	function TarificarCourier($TarificarCourier)
 	{
-
 		$TarificarCourierResponse = $this->soapClient->TarificarCourier($TarificarCourier);
 		return $TarificarCourierResponse;
-
 	}
 }
 

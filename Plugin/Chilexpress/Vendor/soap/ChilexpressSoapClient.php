@@ -5,7 +5,7 @@ App::import('Vendor', 'Chilexpress.WSSESoap', array('file' => 'soap/wss/soap-wss
 class ChilexpressSoapClient extends SoapClient
 {
 	function __doRequest($request, $location, $saction, $version, $one_way = null)
-	{
+	{	
 		$doc = new DOMDocument('1.0');
 		$doc->loadXML($request);
 
