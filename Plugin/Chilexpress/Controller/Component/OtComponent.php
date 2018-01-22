@@ -28,11 +28,9 @@ class OtComponent extends Component
 	 */
 	public function conectar()
 	{	
-		if (Configure::read('Chilexpress.ot.USAR_WSDL')) {
-			$this->OtWS = new OtWS(Configure::read('Chilexpress.ot.wsdl'));
-		}else{
-			$this->OtWS = new OtWS(Configure::read('Chilexpress.ot.endpoint'));
-		}
+		
+		$this->OtWS = new OtWS(Configure::read('Chilexpress.ot.endpoint'));
+		
 	}
 
 
@@ -44,36 +42,6 @@ class OtComponent extends Component
 	public function setCabecerasSoap( $header = array() )
 	{
 		$this->OtWS->setSoapHeaderWS($header);
-	}
-
-
-	/**
-	 * Esta operación permite obtener los precios de los servicios Courier de Chilexpress.
-	 * @param  string 	$origen  	Código cobertura de origen 		ej: PUDA
-	 * @param  string	$destino 	Código cobertura Despacho 		ej: VALP
-	 * @param  float  	$peso    	Peso de la Pieza (KG) 			ej: 1.5
-	 * @param  float    $alto    	Alto (cm) 						ej: 15.5
-	 * @param  float    $ancho   	Ancho (cm) 						ej: 10
-	 * @param  float    $largo   	Largo (cm)						ej: 20
-	 * @return Obj 					Objeto con el resultado de la operación
-	 */
-	public function obtenerTarifaPaquete($origen = '', $destino = '', $peso = null, $alto = null, $ancho = null, $largo = null)
-	{	
-		$this->conectar();
-		
-		$TarificarCourier                                           = new TarificarCourier();
-		$TarificarCourier->reqValorizarCourier                      = new \stdClass();
-		
-		$TarificarCourier->reqValorizarCourier->CodCoberturaOrigen  = $origen;
-		$TarificarCourier->reqValorizarCourier->CodCoberturaDestino = $destino;
-		$TarificarCourier->reqValorizarCourier->PesoPza             = $peso;
-		$TarificarCourier->reqValorizarCourier->DimAltoPza          = $alto;
-		$TarificarCourier->reqValorizarCourier->DimAnchoPza         = $ancho;
-		$TarificarCourier->reqValorizarCourier->DimLargoPza         = $largo;
-		
-		$TarificarCourierResponse                                   = $this->OtWS->TarificarCourier($TarificarCourier);
-		
-		return $TarificarCourierResponse;
 	}
 
 
@@ -160,4 +128,44 @@ class OtComponent extends Component
 
 		return $IntegracionAsistidaOpResponse;
 	}
+
+
+	public function verEtiqueta($imagen = '', $ot = '', $barcode = '')
+	{
+		if (!empty($imagen) && !empty($ot) && !empty($barcode)) {
+			if ($this->rutaEtiqueta($ot)) {
+
+				$rutaEtiqueta = Configure::read('Chilexpress.ot.pathEtiquetas') . $ot . DS . $barcode . '.jpg';
+				$rutaPublica = Configure::read('Chilexpress.ot.pathPublica') . $ot . DS . $barcode . '.jpg';
+				
+				
+				if (file_put_contents($rutaEtiqueta , $imagen) === false) {
+					return '';
+				}
+				
+				return $rutaPublica;
+			}
+		}
+	}
+
+
+	private function rutaEtiqueta($ot = '')
+	{
+		if (!empty($ot)) {
+			
+			$pathEtiquetas = Configure::read('Chilexpress.ot.pathEtiquetas') . $ot . DS; 
+
+			if (!is_dir($pathEtiquetas)) {
+				if(mkdir($pathEtiquetas, 0755, true)){
+					return true;
+				}
+			}else{
+				return true;
+			}
+
+		}
+
+		return false;
+	}
+
 }

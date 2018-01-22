@@ -201,6 +201,7 @@ class ProductotiendasController extends AppController {
 					'SpecificPricePriority'
 				),
 				'conditions' => array(
+					'Productotienda.on_sale' => 1,
 					'Productotienda.active' => 1,
 					'Productotienda.available_for_order' => 1,
 					'Productotienda.id_shop_default' => 1
@@ -270,6 +271,200 @@ class ProductotiendasController extends AppController {
 		$this->set('_serialize', array('out'));
     	
     }
+
+
+
+    public function google_feed()
+    {
+    	$out = array();
+
+    	if (isset($this->request->params['google']) && isset($this->request->params['tienda']) ) 
+		{
+			//Buscamos el prefijo de la tienda
+			$tienda = ClassRegistry::init('Tienda')->find('first', array(
+			'conditions' => array(
+				'Tienda.configuracion' => $this->request->params['tienda']
+				)
+			));
+		}else{
+
+			$out = array('error' => array('code' => 400, 'message' => 'Tienda no válida'));
+		
+		}
+
+		// Virificar existencia de la tienda
+		if (empty($tienda)) {
+			$out = array('error' => array('code' => 404, 'message' => 'Tienda no válida'));	
+		}else if (empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['configuracion']) || empty($tienda['Tienda']['url'])) {
+			$out = array('error' => array('code' => 500, 'message' => 'La tienda no está configurada completamente. Verifiquela y vuelva a intentarlo'));
+		}else{
+			# Url de la tienda
+			$sitioUrl = $this->formatear_url($tienda['Tienda']['url'], true);
+			
+			# cambiamos el datasource de las modelos externos
+			$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
+	
+			// Buscamos los productos que cumplan con el criterio
+			$productos	= $this->Productotienda->find('all', array(
+				'fields' => array(
+					'concat(\'http://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-home_default.jpg\' ) AS url_image_thumb',
+					'concat(\'http://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'.jpg\' ) AS url_image_large',
+					'Productotienda.id_product',
+					'Productotienda.id_category_default',
+					'pl.name', 
+					'pl.description_short',
+					'Productotienda.price', 
+					'pl.link_rewrite', 
+					'Productotienda.reference', 
+					'Productotienda.show_price',
+					'Productotienda.quantity',
+					'Productotienda.id_manufacturer',
+					'Productotienda.condition',
+					'Productotienda.supplier_reference',
+					'Marca.id_manufacturer',
+					'Marca.name'
+				),
+				'joins' => array(
+					array(
+			            'table' => sprintf('%sproduct_lang', $tienda['Tienda']['prefijo']),
+			            'alias' => 'pl',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Productotienda.id_product=pl.id_product'
+			            )
+
+		        	),
+		        	array(
+			            'table' => sprintf('%simage', $tienda['Tienda']['prefijo']),
+			            'alias' => 'im',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Productotienda.id_product = im.id_product',
+	                		'im.cover' => 1
+			            )
+		        	),
+		        	array(
+			            'table' => sprintf('%scategory_product', $tienda['Tienda']['prefijo']),
+			            'alias' => 'CategoriaProducto',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Productotienda.id_product = CategoriaProducto.id_product'
+			            )
+		        	),
+		        	array(
+			            'table' => sprintf('%smanufacturer', $tienda['Tienda']['prefijo']),
+			            'alias' => 'Marca',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Productotienda.id_manufacturer = Marca.id_manufacturer'
+			            )
+		        	)
+				),
+				'contain' => array(
+					'TaxRulesGroup' => array(
+						'TaxRule' => array(
+							'Tax'
+						)
+					),
+					'SpecificPrice' => array(
+						'conditions' => array(
+							'OR' => array(
+								array(
+									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+								),
+								array(
+									'SpecificPrice.from' => '0000-00-00 00:00:00',
+									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+								),
+								array(
+									'SpecificPrice.from' => '0000-00-00 00:00:00',
+									'SpecificPrice.to' => '0000-00-00 00:00:00'
+								),
+								array(
+									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+									'SpecificPrice.to' => '0000-00-00 00:00:00'
+								)
+							)
+						)
+					),
+					'SpecificPricePriority'
+				),
+				'conditions' => array(
+					'Productotienda.on_sale' => 1,
+					'Productotienda.active' => 1,
+					'Productotienda.available_for_order' => 1,
+					'Productotienda.id_shop_default' => 1
+				)
+			));
+			
+			$google = array();
+			
+			foreach ($productos as $key => $value) {
+				$cate = $this->getParentCategory($value['Productotienda']['id_category_default'], $tienda['Tienda']['prefijo']);
+				$cate = $this->categoriesTree($cate);
+
+
+				if ( !isset($value['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']) ) {
+					$value['Productotienda']['valor_iva'] = $value['Productotienda']['price'];	
+				}else{
+					$value['Productotienda']['valor_iva'] = $this->precio($value['Productotienda']['price'], $value['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
+				}
+				
+
+				// Criterio del precio específico del producto
+				foreach ($value['SpecificPricePriority'] as $criterio) {
+					$precioEspecificoPrioridad = explode(';', $criterio['priority']);
+				}
+
+				$value['Productotienda']['valor_final'] = $value['Productotienda']['valor_iva'];
+
+				// Retornar último precio espeficico según criterio del producto
+				foreach ($value['SpecificPrice'] as $precio) {
+					if ( $precio['reduction'] == 0 ) {
+						$value['Productotienda']['valor_final'] = $value['Productotienda']['valor_iva'];
+
+					}else{
+
+						$value['Productotienda']['valor_final'] = $this->precio($value['Productotienda']['valor_iva'], ($precio['reduction'] * 100 * -1) );
+						$value['Productotienda']['descuento'] = ($precio['reduction'] * 100 * -1 );
+
+					}
+				}
+
+				$google[$key]['id']             = $value['Productotienda']['reference'];
+				$google[$key]['title']          = $value['pl']['name'];
+				$google[$key]['description']    = strip_tags($value['pl']['description_short']);
+				$google[$key]['link']           = sprintf('%s%s-%s.html', $sitioUrl, $value['pl']['link_rewrite'], $value['Productotienda']['id_product']);
+				$google[$key]['image_​​link']   	= $value[0]['url_image_large'];
+				$google[$key]['availability']   = ($value['Productotienda']['quantity'] > 0) ? 'in_stock' : 'out_of_stock';
+				$google[$key]['price']          = CakeNumber::currency($value['Productotienda']['valor_final'], 'CLP') . ' CLP';
+				$google[$key]['product_​​type'] = $this->tree($cate);
+				$google[$key]['brand']          = (empty($value['Productotienda']['id_manufacturer'])) ? 'No especificado' : $value['Marca']['name'] ;
+				$google[$key]['gtin']           = $value['Productotienda']['supplier_reference'];
+				$google[$key]['condition']      = $value['Productotienda']['condition'];
+				$google[$key]['adult']          = 'no';
+				$google[$key]['age_group']      = 'adult';
+				
+			}
+
+			$out = $google;
+		}
+
+		$this->layout = 'ajax';
+		
+		$out = str_replace('"', '\\\"', $out);
+
+		header('Content-Type: application/json; charset=utf-8'); 
+		echo json_encode($out, JSON_UNESCAPED_UNICODE);
+		exit;
+
+		$this->set(compact('out'));
+		$this->set('_serialize', array('out'));
+    }
+
+
+
 
     public function admin_index() 
     {

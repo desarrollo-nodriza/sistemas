@@ -88,6 +88,19 @@ Class Orden extends AppModel {
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
 		),
+		'OrdenTransporte' => array(
+			'className'				=> 'OrdenTransporte',
+			'foreignKey'			=> 'id_order',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
 	);
 
 	public function beforeFind($options = array()) {

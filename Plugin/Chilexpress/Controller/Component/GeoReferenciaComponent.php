@@ -29,11 +29,9 @@ class GeoReferenciaComponent extends Component
 	 */
 	public function conectar()
 	{	
-		if (Configure::read('Chilexpress.georeferencia.USAR_WSDL')) {
-			$this->GeoReferenciaWS = new GeoReferenciaWS(Configure::read('Chilexpress.georeferencia.wsdl'));
-		}else{
-			$this->GeoReferenciaWS = new GeoReferenciaWS(Configure::read('Chilexpress.georeferencia.endpoint'));
-		}
+		
+		$this->GeoReferenciaWS = new GeoReferenciaWS(Configure::read('Chilexpress.georeferencia.endpoint'));
+		
 	}
 
 

@@ -58,12 +58,19 @@ class AppController extends Controller
  
 
 		#Tarificacion
-		 #prx($this->ejemploTarificacion());
+		#$this->ejemploTarificacion());
+		
 		# 
 		# OT
-		#$data = $this->ejemploOT();
+		
+		/*$data = $this->ejemploOT();
+		prx($data);
+		$imagen = $data->respGenerarIntegracionAsistida->DatosEtiqueta->imagenEtiqueta;
+		$ot = $data->respGenerarIntegracionAsistida->DatosEtiqueta->numeroOT;
+		$barcode = $data->respGenerarIntegracionAsistida->DatosEtiqueta->barcode;
 
-
+		$etiqueta = $this->Ot->verEtiqueta($imagen, $ot, $barcode);
+		
 		# Seguimiento
 		#$this->ejemploTracking();
 		
@@ -720,7 +727,7 @@ class AppController extends Controller
 	{
 		try {
 			# Origen - Destino - Peso - Alto - Ancho - Largo
-			$resultado = $this->Tarificacion->obtenerTarifaPaquete('STGO', 'CURI', 3.5, 40, 40, 50);
+			$resultado = $this->Tarificacion->obtenerTarifaPaquete('STGO', 'STGO', 0.75, 0, 0, 0);
 		} catch (Exception $e) {
 			$resultado = $e;
 		}

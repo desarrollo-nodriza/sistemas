@@ -2,7 +2,7 @@
 App::uses('AppController', 'Controller');
 class ChilexpressController extends ChilexpressAppController
 {	
-	public function index(){
-		prx('index');
+	public function admin_index(){
+		
 	}
 }

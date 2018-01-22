@@ -1,4 +1,7 @@
 <?php
+
+CakePlugin::routes();
+
 Router::connect('/', array('controller' => 'pages', 'action' => 'dashboard', 'admin' => true));
 
 /**
@@ -36,6 +39,24 @@ Router::connect(
     )
 );
 
+
+/**
+ * Google
+ */
+Router::connect('/google', array('controller' => 'productotiendas', 'action' => 'feed', 'google' => true, 'prefix' => 'google'));
+Router::connect(
+    '/google/:tienda', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'productotiendas', 
+        'action' => 'feed',
+        'google' => true,
+        'prefix' => 'google'),
+    array(
+        'pass' => array('tienda'),
+        'tienda' => '[a-z]+'
+    )
+);
+
 Router::connect('/login', array('controller' => 'administradores', 'action' => 'login', 'admin' => true));
 Router::connect('/logout', array('controller' => 'administradores', 'action' => 'logout', 'admin' => true));
 
@@ -48,5 +69,7 @@ Router::connect('/:controller', array('admin' => true, 'prefix' => 'admin'));
 Router::connect('/:controller/:action/*', array('admin' => true, 'prefix' => 'admin'));
 
 
-CakePlugin::routes();
+
+
+
 require CAKE . 'Config' . DS . 'routes.php';

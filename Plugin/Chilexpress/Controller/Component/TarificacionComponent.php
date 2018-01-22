@@ -28,11 +28,9 @@ class TarificacionComponent extends Component
 	 */
 	public function conectar()
 	{	
-		if (Configure::read('Chilexpress.tarificacion.USAR_WSDL')) {
-			$this->TarificacionWS = new TarificacionWS(Configure::read('Chilexpress.tarificacion.wsdl'));
-		}else{
-			$this->TarificacionWS = new TarificacionWS(Configure::read('Chilexpress.tarificacion.endpoint'));
-		}
+		
+		$this->TarificacionWS = new TarificacionWS(Configure::read('Chilexpress.tarificacion.endpoint'));
+		
 	}
 
 
