@@ -73,7 +73,6 @@ class AppController extends Controller
 		
 		# Seguimiento
 		#$this->ejemploTracking();
-		
 
 		/**
 		 * Layout administracion y permisos publicos
@@ -174,17 +173,16 @@ class AppController extends Controller
 
 	public function beforeRender(){
 
-		# Avatar del usuario
 		$avatar = $this->obtenerAvatar();
 
-		# Capturar permisos de usuario
+		// Capturar permisos de usuario
 		try {
 			$permisos = $this->hasPermission();
 		} catch (Exception $e) {
 			$permisos = $e;
 		}
 		
-		# Permisos públicos
+		// Permisos públicos
 		if ( is_object($permisos) && $permisos->getCode() != 66 ) {
 			$this->Session->setFlash($permisos->getMessage(), null, array(), 'danger');
 			$this->redirect('/');
@@ -192,16 +190,15 @@ class AppController extends Controller
 		
 		$modulosDisponibles = $this->getModuleByRole();
 
-		# Camino de migas
+		// Camino de migas
 		$breadcrumbs	= BreadcrumbComponent::get();
 		if ( ! empty($breadcrumbs) && count($breadcrumbs) > 2 ) {
 			$this->set(compact('breadcrumbs'));
 		}
 
-		# Tiendas
+		// Tiendas
 		$tiendasList = $this->obtenerTiendas();
 		
-		# Semaforo que indica si mostrar o no la información del Dashboard
 		$showDashboard = getDashboard($this->Auth->user('rol_id'));
 		
 		$this->set(compact('avatar', 'modulosDisponibles', 'permisos', 'tiendasList', 'showDashboard'));
@@ -656,10 +653,6 @@ class AppController extends Controller
 		return $rut;
 	}
 
-
-
-
-
 	public function ejemploGeolocalizacionChilexpress()
 	{
 		$resultado = array();
@@ -727,7 +720,7 @@ class AppController extends Controller
 	{
 		try {
 			# Origen - Destino - Peso - Alto - Ancho - Largo
-			$resultado = $this->Tarificacion->obtenerTarifaPaquete('STGO', 'STGO', 0.75, 0, 0, 0);
+			$resultado = $this->Tarificacion->obtenerTarifaPaquete('STGO', 'CURI', 3.5, 40, 40, 50);
 		} catch (Exception $e) {
 			$resultado = $e;
 		}
@@ -783,4 +776,5 @@ class AppController extends Controller
 
 		return $arr;
 	}
+
 }

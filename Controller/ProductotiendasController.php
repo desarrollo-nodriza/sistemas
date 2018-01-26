@@ -1,10 +1,21 @@
 <?
 App::uses('AppController', 'Controller');
- 
+
+App::import('Vendor', 'GoogleShopping', array('file' => 'google-shopping-feed/vendor/autoload.php'));
+App::import('Vendor', 'GoogleShopping', array('file' => 'google-shopping-feed/src/LukeSnowden/GoogleShoppingFeed/Containers/GoogleShopping.php'));
+
+use LukeSnowden\GoogleShoppingFeed\Containers\GoogleShopping;
+
 class ProductotiendasController extends AppController {
  
     public $name = 'Productotiendas';    
     public $uses = array('Productotienda');
+    public $helpers = array('Text');
+    private $formatosGoogle = array(
+    	'json',
+    	'xml'
+    );
+
 
 
     function beforeFilter() {
@@ -97,6 +108,12 @@ class ProductotiendasController extends AppController {
 		return $s;
 	}
 
+
+	/**
+	 * Genera un JSON con todos los productos de la tienda seleccionada 
+	 * por la url.
+	 * @return json 
+	 */
     public function knasta_feed()
     {	
     	$out = array();
@@ -262,7 +279,7 @@ class ProductotiendasController extends AppController {
 		$this->layout = 'ajax';
 		
 		$out = str_replace('"', '\\\"', $out);
-
+		
 		header('Content-Type: application/json; charset=utf-8'); 
 		echo json_encode($out, JSON_UNESCAPED_UNICODE);
 		exit;
@@ -273,30 +290,54 @@ class ProductotiendasController extends AppController {
     }
 
 
+    /**
+     * Reemplaza los carácteres no permitiods en un XML
+     * @param  [type] $cadena [description]
+     * @return [type]         [description]
+     */
+    public function limpioCaracteresXML($cadena){
+	    $search  = array("<", ">", "&", "'");
+	    $replace = array("&lt;", "&gt", "&amp;", "&apos");
+	    $final = str_replace($search, $replace, $cadena);
+	    return $final;
+	}
 
+
+
+	/**
+	 * Genera XML con todos los productos de la tienda seleccionada por URL,
+	 * @return XML  impreso en pantalla.
+	 */
     public function google_feed()
     {
     	$out = array();
-
-    	if (isset($this->request->params['google']) && isset($this->request->params['tienda']) ) 
+    	$tienda = array();
+    	if (!isset($this->request->params['google']) || !isset($this->request->params['tienda']) ) 
 		{
+			
+			$out = array('error' => array('code' => 400, 'message' => 'Tienda o formato no válido'));
+			header('Content-Type: application/json; charset=utf-8'); 
+			echo json_encode($out, JSON_UNESCAPED_UNICODE);
+			exit;
+
+		}else{
+
 			//Buscamos el prefijo de la tienda
 			$tienda = ClassRegistry::init('Tienda')->find('first', array(
 			'conditions' => array(
 				'Tienda.configuracion' => $this->request->params['tienda']
 				)
 			));
-		}else{
-
-			$out = array('error' => array('code' => 400, 'message' => 'Tienda no válida'));
-		
 		}
 
 		// Virificar existencia de la tienda
-		if (empty($tienda)) {
-			$out = array('error' => array('code' => 404, 'message' => 'Tienda no válida'));	
-		}else if (empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['configuracion']) || empty($tienda['Tienda']['url'])) {
-			$out = array('error' => array('code' => 500, 'message' => 'La tienda no está configurada completamente. Verifiquela y vuelva a intentarlo'));
+		if (empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['configuracion']) || empty($tienda['Tienda']['url'])) {
+			$out = array('error' => array('code' => 500, 'message' => 'La tienda no está configurada completamente. Contacte al administrador del sistema.'));
+
+			header('Content-Type: application/json; charset=utf-8'); 
+			echo json_encode($out, JSON_UNESCAPED_UNICODE);
+			exit;
+
 		}else{
 			# Url de la tienda
 			$sitioUrl = $this->formatear_url($tienda['Tienda']['url'], true);
@@ -307,8 +348,8 @@ class ProductotiendasController extends AppController {
 			// Buscamos los productos que cumplan con el criterio
 			$productos	= $this->Productotienda->find('all', array(
 				'fields' => array(
-					'concat(\'http://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-home_default.jpg\' ) AS url_image_thumb',
-					'concat(\'http://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'.jpg\' ) AS url_image_large',
+					'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-home_default.jpg\' ) AS url_image_thumb',
+					'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'.jpg\' ) AS url_image_large',
 					'Productotienda.id_product',
 					'Productotienda.id_category_default',
 					'pl.name', 
@@ -348,7 +389,7 @@ class ProductotiendasController extends AppController {
 			            'alias' => 'CategoriaProducto',
 			            'type'  => 'LEFT',
 			            'conditions' => array(
-			                'Productotienda.id_product = CategoriaProducto.id_product'
+			                'CategoriaProducto.id_product' => 'Productotienda.id_product'
 			            )
 		        	),
 		        	array(
@@ -397,9 +438,17 @@ class ProductotiendasController extends AppController {
 					'Productotienda.id_shop_default' => 1
 				)
 			));
+
+
+			# Feed de Google
+			GoogleShopping::title('Feed Google Shopping');
+			GoogleShopping::link(FULL_BASE_URL);
+			GoogleShopping::description('Feed generado por Nodriza Spa [cristian.rojas@nodriza.cl]');
+
+
 			
 			$google = array();
-			
+
 			foreach ($productos as $key => $value) {
 				$cate = $this->getParentCategory($value['Productotienda']['id_category_default'], $tienda['Tienda']['prefijo']);
 				$cate = $this->categoriesTree($cate);
@@ -432,37 +481,63 @@ class ProductotiendasController extends AppController {
 					}
 				}
 
-				$google[$key]['id']             = $value['Productotienda']['reference'];
-				$google[$key]['title']          = $value['pl']['name'];
-				$google[$key]['description']    = strip_tags($value['pl']['description_short']);
-				$google[$key]['link']           = sprintf('%s%s-%s.html', $sitioUrl, $value['pl']['link_rewrite'], $value['Productotienda']['id_product']);
-				$google[$key]['image_​​link']   	= $value[0]['url_image_large'];
-				$google[$key]['availability']   = ($value['Productotienda']['quantity'] > 0) ? 'in_stock' : 'out_of_stock';
-				$google[$key]['price']          = CakeNumber::currency($value['Productotienda']['valor_final'], 'CLP') . ' CLP';
-				$google[$key]['product_​​type'] = $this->tree($cate);
-				$google[$key]['brand']          = (empty($value['Productotienda']['id_manufacturer'])) ? 'No especificado' : $value['Marca']['name'] ;
-				$google[$key]['gtin']           = $value['Productotienda']['supplier_reference'];
-				$google[$key]['condition']      = $value['Productotienda']['condition'];
-				$google[$key]['adult']          = 'no';
-				$google[$key]['age_group']      = 'adult';
+				$google[$key]['g:id']           = $value['Productotienda']['reference'];
+				$google[$key]['g:title']        = $value['pl']['name'];
+				$google[$key]['g:description']  = strip_tags($value['pl']['description_short']) . '';
+				$google[$key]['g:link']         = sprintf('%s%s-%s.html', $sitioUrl, $value['pl']['link_rewrite'], $value['Productotienda']['id_product']);
+				$google[$key]["g:image_link"]   = $value[0]['url_image_large'];
+				$google[$key]['g:availability'] = ($value['Productotienda']['quantity'] > 0) ? 'in_stock' : 'out_of_stock';
+				$google[$key]['g:price']        = CakeNumber::currency($value['Productotienda']['valor_final'], 'CLP') . ' CLP';
+				$google[$key]['g:product_type'] = $this->tree($cate);
+				$google[$key]['g:brand']        = (empty($value['Productotienda']['id_manufacturer'])) ? 'No especificado' : $value['Marca']['name'] ;
+				$google[$key]['g:mpn']         = $value['Productotienda']['supplier_reference'];
+				$google[$key]['g:condition']    = $value['Productotienda']['condition'];
+				$google[$key]['g:adult']        = 'no';
+				$google[$key]['g:age_group']    = 'adult';
+
+
+				# Se agrega la info del producto al Feed
+				$item = GoogleShopping::createItem();
+				$item->id($google[$key]['g:id']);
+				$item->title($google[$key]['g:title']);
+				$item->description($google[$key]['g:description']);
+				$item->link($google[$key]['g:link']);
+				$item->image_link($google[$key]['g:image_link']);
+				$item->availability($google[$key]['g:availability']);
+				$item->product_type($google[$key]['g:product_type']);
+				$item->brand($google[$key]['g:brand']);
+				$item->mpn($google[$key]['g:mpn']);
+				$item->condition($google[$key]['g:condition']);
+				$item->adult($google[$key]['g:adult']);
+				$item->age_group($google[$key]['g:age_group']);
 				
 			}
 
 			$out = $google;
 		}
 
-		$this->layout = 'ajax';
-		
-		$out = str_replace('"', '\\\"', $out);
 
-		header('Content-Type: application/json; charset=utf-8'); 
-		echo json_encode($out, JSON_UNESCAPED_UNICODE);
+		echo GoogleShopping::asRss(true);
 		exit;
+		/*if ($this->request->params['formato'] == 'xml') {
+			
+			App::uses('Xml', 'Utility');
+			
+			$xml2   = Xml::Build($xmlArray);
+			$salida = $xml2->asXML();
 
-		$this->set(compact('out'));
-		$this->set('_serialize', array('out'));
+			$this->layout = 'empty';
+		}*/
+		
+		
+		
+
+		#file_put_contents('google_feed.xml', $salida);
+		#echo $salida;
+	
+
+		$this->set(compact('salida', 'xmlArray', 'out'));
     }
-
 
 
 

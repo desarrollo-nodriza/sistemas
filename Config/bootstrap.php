@@ -89,7 +89,7 @@ Inflector::rules(
  */
 //CakePlugin::loadAll();
 CakePlugin::load('DebugKit');
-CakePlugin::load('Chilexpress', array('routes' => true));
+CakePlugin::load('Chilexpress');
 
 /**
  * You can attach event listeners to the request lifecycle as Dispatcher Filter . By Default CakePHP bundles two filters:
