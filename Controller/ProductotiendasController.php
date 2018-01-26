@@ -218,7 +218,6 @@ class ProductotiendasController extends AppController {
 					'SpecificPricePriority'
 				),
 				'conditions' => array(
-					'Productotienda.on_sale' => 1,
 					'Productotienda.active' => 1,
 					'Productotienda.available_for_order' => 1,
 					'Productotienda.id_shop_default' => 1
@@ -432,7 +431,6 @@ class ProductotiendasController extends AppController {
 					'SpecificPricePriority'
 				),
 				'conditions' => array(
-					'Productotienda.on_sale' => 1,
 					'Productotienda.active' => 1,
 					'Productotienda.available_for_order' => 1,
 					'Productotienda.id_shop_default' => 1
