@@ -1,4 +1,4 @@
-                                                                    <?php
+<?php
 
 App::import('Vendor', 'Chilexpress.ChilexpressSoapClient', array('file' => 'soap/ChilexpressSoapClient.php'));
 
@@ -370,4 +370,4 @@ class GeoReferenciaWS
 
 	}
 }
-?>                                                            
+                                                        

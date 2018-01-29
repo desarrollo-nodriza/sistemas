@@ -2,7 +2,7 @@
 App::uses('Component', 'Controller');
 App::import('Vendor', 'Chilexpress.GeoReferenciaWS', array('file' => 'georeferencia/GeoReferenciaWS.php'));
 
-ini_set('memory_limit', '256M');
+
 class GeoReferenciaComponent extends Component
 {	
 	private $GeoReferenciaWS;
@@ -52,7 +52,8 @@ class GeoReferenciaComponent extends Component
 	 * Esta operación permite extraer las regiones de Chile, el resultado entrega una lista de Regiones
 	 * @return Obj 		Objeto con el resultado de la operación
 	 */
-	public function obtenerRegiones()	{
+	public function obtenerRegiones()	
+	{
 		$this->conectar();
 		
 		$ConsultarRegiones         = new ConsultarRegiones();

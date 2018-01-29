@@ -442,7 +442,7 @@ class ProductotiendasController extends AppController {
 			GoogleShopping::title('Feed Google Shopping');
 			GoogleShopping::link(FULL_BASE_URL);
 			GoogleShopping::description('Feed generado por Nodriza Spa [cristian.rojas@nodriza.cl]');
-
+			GoogleShopping::setIso4217CountryCode('CLP');
 
 			
 			$google = array();
@@ -479,16 +479,16 @@ class ProductotiendasController extends AppController {
 					}
 				}
 
-				$google[$key]['g:id']           = $value['Productotienda']['reference'];
+				$google[$key]['g:id']           = $value['Productotienda']['id_product'];
 				$google[$key]['g:title']        = $value['pl']['name'];
 				$google[$key]['g:description']  = strip_tags($value['pl']['description_short']) . '';
 				$google[$key]['g:link']         = sprintf('%s%s-%s.html', $sitioUrl, $value['pl']['link_rewrite'], $value['Productotienda']['id_product']);
 				$google[$key]["g:image_link"]   = $value[0]['url_image_large'];
-				$google[$key]['g:availability'] = ($value['Productotienda']['quantity'] > 0) ? 'in_stock' : 'out_of_stock';
-				$google[$key]['g:price']        = CakeNumber::currency($value['Productotienda']['valor_final'], 'CLP') . ' CLP';
+				$google[$key]['g:availability'] = ($value['Productotienda']['quantity'] > 0) ? 'in stock' : 'out of stock';
+				$google[$key]['g:price']        = $value['Productotienda']['valor_final'];
 				$google[$key]['g:product_type'] = $this->tree($cate);
 				$google[$key]['g:brand']        = (empty($value['Productotienda']['id_manufacturer'])) ? 'No especificado' : $value['Marca']['name'] ;
-				$google[$key]['g:mpn']         = $value['Productotienda']['supplier_reference'];
+				$google[$key]['g:mpn']         = $value['Productotienda']['reference'];
 				$google[$key]['g:condition']    = $value['Productotienda']['condition'];
 				$google[$key]['g:adult']        = 'no';
 				$google[$key]['g:age_group']    = 'adult';
@@ -499,6 +499,7 @@ class ProductotiendasController extends AppController {
 				$item->id($google[$key]['g:id']);
 				$item->title($google[$key]['g:title']);
 				$item->description($google[$key]['g:description']);
+				$item->price($google[$key]['g:price']);
 				$item->link($google[$key]['g:link']);
 				$item->image_link($google[$key]['g:image_link']);
 				$item->availability($google[$key]['g:availability']);
@@ -514,8 +515,12 @@ class ProductotiendasController extends AppController {
 			$out = $google;
 		}
 
-
-		echo GoogleShopping::asRss(true);
+		GoogleShopping::asRss(true);
+		#$salida = GoogleShopping::asRss();
+		
+		
+		#file_put_contents('google_feed2.xml', $salida);
+		
 		exit;
 		/*if ($this->request->params['formato'] == 'xml') {
 			

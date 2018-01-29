@@ -1,6 +1,2 @@
 <?php
-	
-	Router::connect('/chilexpress', array('plugin' => 'chilexpress', 'controller' => 'chilexpress', 'action' => 'index', 'admin' => true));
-
-
-?>
+Router::connect('/chilexpress', array('plugin' => 'chilexpress', 'controller' => 'chilexpress', 'action' => 'index', 'admin' => true));

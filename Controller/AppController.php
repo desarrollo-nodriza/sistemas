@@ -63,13 +63,13 @@ class AppController extends Controller
 		# 
 		# OT
 		
-		/*$data = $this->ejemploOT();
-		prx($data);
-		$imagen = $data->respGenerarIntegracionAsistida->DatosEtiqueta->imagenEtiqueta;
-		$ot = $data->respGenerarIntegracionAsistida->DatosEtiqueta->numeroOT;
-		$barcode = $data->respGenerarIntegracionAsistida->DatosEtiqueta->barcode;
+		#$data = $this->ejemploOT();
+		#prx($data);
+		#$imagen = $data->respGenerarIntegracionAsistida->DatosEtiqueta->imagenEtiqueta;
+		#$ot = $data->respGenerarIntegracionAsistida->DatosEtiqueta->numeroOT;
+		#$barcode = $data->respGenerarIntegracionAsistida->DatosEtiqueta->barcode;
 
-		$etiqueta = $this->Ot->verEtiqueta($imagen, $ot, $barcode);
+		#$etiqueta = $this->Ot->verEtiqueta($imagen, $ot, $barcode);
 		
 		# Seguimiento
 		#$this->ejemploTracking();

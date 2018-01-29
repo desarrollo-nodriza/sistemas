@@ -283,7 +283,7 @@
 							<tr>
 								<th><?= $this->Form->label('fecha_finaliza', 'Fecha de finalización'); ?></th>
 								<td>
-									<? 	$fecha = (isset($meliItem['stop_time'])) ? date('Y-m-d H:i:s', strtotime($meliItem['stop_time'])) : 'No especificado'; ?>
+									<? 	$fecha = (isset($meliItem['stop_time'])) ? date('Y-m-d H:i:s', strtotime($meliItem['stop_time'])) : '0000-00-00 00:00:00'; ?>
 									<?= $this->Form->input('fecha_finaliza', array('type' => 'hidden', 'value' => $fecha)); ?>
 									<?= $fecha; ?>
 								</td>

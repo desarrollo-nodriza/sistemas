@@ -1,4 +1,7 @@
 <?php
+
+CakePlugin::routes();
+
 Router::connect('/', array('controller' => 'pages', 'action' => 'dashboard', 'admin' => true));
 
 /**
@@ -66,7 +69,4 @@ Router::connect('/:controller', array('admin' => true, 'prefix' => 'admin'));
 Router::connect('/:controller/:action/*', array('admin' => true, 'prefix' => 'admin'));
 
 
-Router::parseExtensions('rss');
-
-CakePlugin::routes();
 require CAKE . 'Config' . DS . 'routes.php';

@@ -109,5 +109,4 @@ class TarificacionWS
 		return $TarificarCourierResponse;
 	}
 }
-
-?>                            
+                

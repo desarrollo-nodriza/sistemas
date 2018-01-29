@@ -104,7 +104,7 @@ class Item
         /** @var $price - Added hack in for when the variants are being created it passes over the new ISO currency code which breaks number_format */
         $price = (float) preg_replace( "/^([0-9]+\.?[0-9]*)(\s[A-Z]{3})$/", "$1", $price );
         $node = new Node('price');
-        $price = number_format($price, 2, '.', '');
+        $price = number_format($price, 0, ',', '');
         $code = GoogleShopping::getIso4217CountryCode();
         $this->nodes['price'] = $node->value( $price . " {$code}" )->_namespace($this->namespace);
     }
