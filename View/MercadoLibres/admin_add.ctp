@@ -47,12 +47,20 @@
 								<td><?= $this->Form->select('mercado_libre_plantilla_id', $plantillas, array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
 							<tr>
-								<th><label>Producto</label> <small>(referencia)</small></th>
-								<td><?= $this->Form->input('producto', array('type' => 'text', 'class' => 'form-control input-productos-buscar-meli', 'placeholder' => 'ej: DHRT-457')); ?></td>
+								<th><label>Referencia del Producto</label></th>
+								<td><?= $this->Form->input('seller_custom_field', array('type' => 'text', 'class' => 'form-control input-productos-buscar-meli', 'placeholder' => 'ej: DHRT-457')); ?></td>
+							</tr>
+							<tr>
+								<th><label>Nombre del Producto</label></th>
+								<td><?= $this->Form->input('producto', array('type' => 'text', 'class' => 'form-control js-nombre')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('precio', 'Precio en Mercado libre'); ?></th>
 								<td><?= $this->Form->input('precio', array('class' => 'mascara_precio form-control js-precio')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('description', 'Descripción del producto'); ?></th>
+								<td><?= $this->Form->input('description', array('class' => 'form-control js-description')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('imagen_meli', 'Imagen del producto'); ?><?= $this->Form->input('imagen_meli', array('type' => 'hidden', 'class' => 'js-imagen')); ?></th>

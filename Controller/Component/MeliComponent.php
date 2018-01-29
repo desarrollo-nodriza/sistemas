@@ -379,7 +379,7 @@ class MeliComponent extends Component
 	 *
 	 * @return Objeto devuelto por MELI	 
 	 */
-	public function publish($title, $category_id, $price, $currency_id = 'CLP', $available_quantity = 1, $buying_mode = 'buy_it_now', $listing_type_id, $condition = 'new', $description = 'Item de test - No Ofertar', $video_id = '', $warranty = '', $pictures = array(), $shipping = array() )
+	public function publish($title, $category_id, $price, $currency_id = 'CLP', $available_quantity = 1, $buying_mode = 'buy_it_now', $listing_type_id, $condition = 'new', $description = 'Item de test - No Ofertar', $video_id = '', $warranty = '', $pictures = array(), $shipping = array(), $reference_seller = '' )
 	{	
 
 		if (empty($title) ||
@@ -406,10 +406,11 @@ class MeliComponent extends Component
 			"video_id" => $video_id,
 			"warranty" => $warranty,
 			"pictures" => $pictures,
+			"seller_custom_field" => $reference_seller,
 			"tags" => array(
 		        "immediate_payment"
 		    ),
-		    "description" => $description,
+		    "description" => array("plain_text" => $description),
 		    "shipping" => $shipping
 		);
 		
@@ -443,7 +444,7 @@ class MeliComponent extends Component
 	 *
 	 * @return Objeto devuelto por MELI	 
 	 */
-	public function update($id, $title, $price, $available_quantity = 1, $video_id = '', $pictures = array() , $shipping = array())
+	public function update($id, $title, $price, $available_quantity = 1, $video_id = '', $pictures = array() , $shipping = array(), $reference_seller = '')
 	{	
 		# Configuración de la tienda
     	$this->setComponentConfig();
@@ -457,6 +458,7 @@ class MeliComponent extends Component
 			"available_quantity" => $available_quantity,
 			"video_id" => $video_id,
 			"pictures" => $pictures,
+			"seller_custom_field" => $reference_seller,
 			"tags" => array(
 		        "immediate_payment"
 		    ),
@@ -563,7 +565,7 @@ class MeliComponent extends Component
     	$this->setComponentConfig();
 		$this->meli = new Meli($this->client_id, $this->client_secret);
 
-		$body = array('text' => $desc);
+		$body = array('plain_text' => $desc);
 
 		$response = $this->meli->put(sprintf('/items/%s/description', $id), $body,  array('access_token' => $this->Session->read('Meli.access_token')));
 

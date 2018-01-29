@@ -298,7 +298,7 @@ class MercadoLibresController extends AppController
 				}
 				
 				# Actualizamos publicación existente en mercado libre
-				$meliRespuesta = $this->Meli->update($producto['MercadoLibr']['id_meli'], $producto['MercadoLibr']['producto'], $producto['MercadoLibr']['precio'], $producto['MercadoLibr']['cantidad_disponible'], $producto['MercadoLibr']['id_video'], $imagenes, $envios);
+				$meliRespuesta = $this->Meli->update($producto['MercadoLibr']['id_meli'], $producto['MercadoLibr']['producto'], $producto['MercadoLibr']['precio'], $producto['MercadoLibr']['cantidad_disponible'], $producto['MercadoLibr']['id_video'], $imagenes, $envios, $producto['MercadoLibr']['seller_custom_field']);
 			
 				$publicarResponse = to_array($meliRespuesta);
 				if ($meliRespuesta['httpCode'] == 200) {
@@ -306,7 +306,7 @@ class MercadoLibresController extends AppController
 
 					# actualizar Descripción
 
-					$descriptionResponse = $this->Meli->updateDescription($producto['MercadoLibr']['id_meli'], $producto['MercadoLibr']['html']);
+					$descriptionResponse = $this->Meli->updateDescription($producto['MercadoLibr']['id_meli'], $producto['MercadoLibr']['description']);
 
 					$desc = to_array($descriptionResponse);
 
@@ -388,7 +388,7 @@ class MercadoLibresController extends AppController
 
 				}
 				
-				$meliRespuesta = $this->Meli->publish($producto['MercadoLibr']['producto'], $producto['MercadoLibr']['categoria_hoja'], $producto['MercadoLibr']['precio'], 'CLP', $producto['MercadoLibr']['cantidad_disponible'], 'buy_it_now', $producto['MercadoLibr']['tipo_publicacion'], $producto['MercadoLibr']['condicion'], $producto['MercadoLibr']['html'], $producto['MercadoLibr']['id_video'], $producto['MercadoLibr']['garantia'], $imagenes, $envios);
+				$meliRespuesta = $this->Meli->publish($producto['MercadoLibr']['producto'], $producto['MercadoLibr']['categoria_hoja'], $producto['MercadoLibr']['precio'], 'CLP', $producto['MercadoLibr']['cantidad_disponible'], 'buy_it_now', $producto['MercadoLibr']['tipo_publicacion'], $producto['MercadoLibr']['condicion'], $producto['MercadoLibr']['description'], $producto['MercadoLibr']['id_video'], $producto['MercadoLibr']['garantia'], $imagenes, $envios, $producto['MercadoLibr']['seller_custom_field']);
 				
 				if (!empty($meliRespuesta)) {
 					if ($meliRespuesta['httpCode'] >= 300) {
@@ -616,11 +616,11 @@ class MercadoLibresController extends AppController
 		BreadcrumbComponent::add('Mercado Libre Productos ');
 
 		# Se lanza mensaje de actualizar precios
-		if($this->verificarCambiosDePreciosStock()) {
+		/*if($this->verificarCambiosDePreciosStock()) {
 			$this->Session->setFlash('¡Tienes productos desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
 		}else{
 			$this->Session->setFlash('¡Bien! Todos los productos estan sincronizados.', null, array(), 'success');
-		}
+		}*/
 
 		$total =  $this->MercadoLibr->find('count', $paginate);
 
@@ -640,7 +640,7 @@ class MercadoLibresController extends AppController
 		if ( $this->request->is('post') )
 		{	
 
-			$this->request->data['MercadoLibr']['html'] = $this->createHtml();
+			$this->request->data['MercadoLibr']['administrador_id'] = $this->Session->read('Administrador.id');
 
 			for ( $i = 1; $i < 6; $i++ ) { 
 				if (!isset($this->request->data['MercadoLibr']['categoria_0' . $i])) {
@@ -691,7 +691,7 @@ class MercadoLibresController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-			$this->request->data['MercadoLibr']['html'] = $this->createHtml();
+			#$this->request->data['MercadoLibr']['description'] = $this->createHtml();
 
 			for ( $i = 1; $i < 6; $i++ ) { 
 				if (!isset($this->request->data['MercadoLibr']['categoria_0' . $i])) {
@@ -888,14 +888,6 @@ class MercadoLibresController extends AppController
 		            )
 	        	),
 	        	array(
-		            'table' => sprintf('%scategory_product', $tienda['Tienda']['prefijo']),
-		            'alias' => 'CategoriaProducto',
-		            'type'  => 'LEFT',
-		            'conditions' => array(
-		                'Productotienda.id_product = CategoriaProducto.id_product'
-		            )
-	        	),
-	        	array(
 		            'table' => sprintf('%sstock_available', $tienda['Tienda']['prefijo']),
 		            'alias' => 'StockDisponible',
 		            'type'  => 'LEFT',
@@ -906,6 +898,8 @@ class MercadoLibresController extends AppController
 			),
 			'contain' => array(
 				'Lang',
+				'Especificacion' => array('Lang'),
+				'EspecificacionValor' => array('Lang'),
 				'TaxRulesGroup' => array(
 					'TaxRule' => array(
 						'Tax'
@@ -949,8 +943,11 @@ class MercadoLibresController extends AppController
     		echo json_encode(array('0' => array('id' => '', 'value' => 'No se encontraron coincidencias')));
     		exit;
     	}
-    	
+    
+
     	foreach ($productos as $index => $producto) {
+
+    		$textoDescripcion = 'Descripción del artículo' . "\n". "\n";
 
     		if ( !isset($producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']) ) {
 				$producto['Productotienda']['valor_iva'] = $producto['Productotienda']['price'];	
@@ -985,14 +982,32 @@ class MercadoLibresController extends AppController
 				$stock = $producto['StockDisponible']['quantity'];
 			}
 
+			$textoDescripcion .= nl2br(strip_tags($producto['Lang'][0]['ProductotiendaIdioma']['description_short'])) . "\n" . "\n";
+
+			# Especificaciones
+			if (!empty($producto['Especificacion']) && !empty($producto['EspecificacionValor'])) {
+	    		
+				$textoDescripcion .= 'Especificaciones del artículo' . "\n". "\n";
+
+	    		foreach ($producto['Especificacion'] as $indice => $especificacion) {
+	    			foreach ($producto['EspecificacionValor'] as $key => $especificacionvalor) {
+	    				if ($especificacion['id_feature'] == $especificacionvalor['id_feature']) {
+	    					$textoDescripcion .= '-' . $especificacion['Lang'][0]['EspecificacionIdioma']['name'] . ': ' . $especificacionvalor['Lang'][0]['EspecificacionValorIdioma']['value'] . "\n";
+	    				}
+	    			}
+	    		}
+
+    		}
+
     		$arrayProductos[$index]['id'] = $producto['Productotienda']['id_product'];
-			$arrayProductos[$index]['value'] = sprintf('%s', $producto['Lang'][0]['ProductotiendaIdioma']['name']);
+    		$arrayProductos[$index]['value'] = $producto['Productotienda']['reference'];
+			$arrayProductos[$index]['nombre'] = sprintf('%s', $producto['Lang'][0]['ProductotiendaIdioma']['name']);
 			$arrayProductos[$index]['imagen'] = sprintf('%s', $producto[0]['url_image_large']);
 			$arrayProductos[$index]['precio'] = sprintf('%s', $producto['Productotienda']['valor_final']);
 			$arrayProductos[$index]['stock'] = sprintf('%s', $stock);
 			//$arrayProductos[$index]['name'] = $producto['Lang'][0]['ProductotiendaIdioma']['name'];
 			//$arrayProductos[$index]['image'] = $producto[0]['url_image'];
-			//$arrayProductos[$index]['description'] = $producto['Lang'][0]['ProductotiendaIdioma']['description_short'];
+			$arrayProductos[$index]['description'] = $textoDescripcion;
 			//$arrayProductos[$index]['spec'] = $producto['Especificacion'];
     	}
 

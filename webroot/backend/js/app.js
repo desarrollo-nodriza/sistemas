@@ -515,10 +515,12 @@ $.extend({
 					        console.log("Seleccionado: " + ui.item.value + " id " + ui.item.id);
 					        console.info(ui);
 					        $('.id-product').val(ui.item.id);
+					        $('.js-nombre').val(ui.item.nombre);
 					        $('.js-precio').val(ui.item.precio);
 					        $('.js-imagen').val(ui.item.imagen);
 					        $('.js-imagen-preview').attr('src', ui.item.imagen);
 					        $('.js-stock').val(ui.item.stock);
+					        $('.js-description').val(ui.item.description);
 					    }
 					});
 				});

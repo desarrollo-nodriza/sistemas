@@ -109,32 +109,21 @@
 								<th><?= $this->Form->label('mercado_libre_plantilla_id', 'Mercado libre plantilla'); ?></th>
 								<td><?= $this->Form->select('mercado_libre_plantilla_id', $plantillas, array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
-							<? if (!empty($producto)) : ?>
-								<tr>
-									<th><label>Producto</label></th>
-									<td><?= $this->Form->input('producto', array('type' => 'text', 'class' => 'form-control input-productos-buscar-meli')); ?></td>
-								</tr>
-								<!--<tr>
-									<th><label>Producto Actual</label></th>
-									<td>
-										<div class="input-group js-toggle-wrapper">
-                                            <div class="form-control toggle-text"><?=$producto['Productotienda']['reference'] . ' - ' . $this->request->data['MercadoLibr']['producto'];?></div>
-											<?= $this->Form->input('producto', array('type' => 'hidden', 'class' => 'form-control toggle-input input-productos-buscar-meli')); ?>
-                                            <span class="input-group-btn">
-                                                <button class="btn btn-default toggle-button" type="button"><i class="fa fa-chevron-circle-down" aria-hidden="true"></i> Actualizar</button>
-                                            </span>
-                                        </div>
-									</td>
-								</tr>-->
-							<? else : ?>
-								<tr>
-									<th><label>Producto</label></th>
-									<td><?= $this->Form->input('producto', array('type' => 'text', 'class' => 'form-control input-productos-buscar-meli')); ?></td>
-								</tr>
-							<? endif; ?>
+							<tr>
+								<th><label>Referencia del Producto</label></th>
+								<td><?= $this->Form->input('seller_custom_field', array('type' => 'text', 'class' => 'form-control input-productos-buscar-meli', 'placeholder' => 'ej: DHRT-457')); ?></td>
+							</tr>
+							<tr>
+								<th><label>Nombre del Producto</label></th>
+								<td><?= $this->Form->input('producto', array('type' => 'text', 'class' => 'form-control js-nombre')); ?></td>
+							</tr>
 							<tr>
 								<th><?= $this->Form->label('precio', 'Precio en Mercado libre'); ?></th>
 								<td><?= $this->Form->input('precio', array('class' => 'form-control js-precio')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('description', 'Descripción del producto'); ?></th>
+								<td><?= $this->Form->input('description', array('class' => 'form-control js-description')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('imagen_meli', 'Imagen del producto'); ?><?= $this->Form->input('imagen_meli', array('type' => 'hidden', 'class' => 'js-imagen')); ?></th>
