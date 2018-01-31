@@ -201,13 +201,13 @@
 												<? foreach ($meliItemShipping['options'] as $indice => $costo) : ?>
 													<tr>
 														<td>
-															<?= $this->Form->input(sprintf('Envios.costs.%d.description', $indice), array('class' => 'form-control', 'value' => $costo['name'], 'disabled' => true)); ?>
+															<?= $this->Form->input(sprintf('Envios.costs.%d.description', $indice), array('class' => 'form-control', 'value' => $costo['name'])); ?>
 														</td>
 														<td>
-															<?= $this->Form->input(sprintf('Envios.costs.%d.cost', $indice), array('class' => 'form-control', 'value' => $costo['cost'], 'disabled' => true)); ?>
+															<?= $this->Form->input(sprintf('Envios.costs.%d.cost', $indice), array('class' => 'form-control', 'value' => $costo['cost'])); ?>
 														</td>
 														<td>
-															Se debe modificar<br>en Mercado Libre
+															<a href="#" class="btn btn-xs btn-danger js-clon-eliminar"><i class="fa fa-trash"></i> Quitar</a>
 														</td>
 													</tr>
 												<? endforeach; ?>
