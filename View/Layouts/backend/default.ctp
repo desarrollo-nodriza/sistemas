@@ -46,7 +46,7 @@
 			'/backend/js/plugins/summernote/summernote',
 			'/backend/js/custom',
 			'/backend/js/dashboard',
-			'/backend/js/app',
+			'/backend/js/app?v=3',
 			'/backend/js/meli',
 			'/backend/js/dte',
 			//'/backend/js/plugins',

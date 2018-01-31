@@ -620,7 +620,7 @@ class MercadoLibresController extends AppController
 		if($this->verificarCambiosDePreciosStock()) {
 			$this->Session->setFlash('¡Tienes productos desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
 		}else{
-			$this->Session->setFlash('¡Bien! Todos los productos estan sincronizados.', null, array(), 'success');
+			#$this->Session->setFlash('¡Bien! Todos los productos estan sincronizados.', null, array(), 'success');
 		}
 
 		$total =  $this->MercadoLibr->find('count', $paginate);
@@ -701,8 +701,8 @@ class MercadoLibresController extends AppController
 			}
 
 			$this->request->data['MercadoLibr']['nombre'] = $this->request->data['MercadoLibr']['producto'];
-
-
+			
+			
 			if ( $this->MercadoLibr->save($this->request->data) )
 			{	
 				$this->admin_validar_meli($id);

@@ -65,6 +65,13 @@ class MercadoLibr extends AppModel
 				//'required'		=> false,
 				//'on'			=> 'update', // Solo valida en operaciones de 'create' o 'update'
 			),
+			'maxLength' => array(
+				'rule'			=> array('maxLength', 60),
+				//'message'		=> 'Mensaje de validación personalizado',
+				//'allowEmpty'	=> true,
+				//'required'		=> false,
+				//'on'			=> 'update', // Solo valida en operaciones de 'create' o 'update'
+			),
 		),
 		'id_product' => array(
 			'notBlank' => array(

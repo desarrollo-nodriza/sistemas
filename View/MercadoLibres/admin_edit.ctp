@@ -115,7 +115,7 @@
 							</tr>
 							<tr>
 								<th><label>Nombre del Producto</label></th>
-								<td><?= $this->Form->input('producto', array('type' => 'text', 'class' => 'form-control js-nombre')); ?></td>
+								<td><?= $this->Form->input('producto', array('maxlength' => '60', 'minlength' =>'1', 'type' => 'text', 'class' => 'form-control js-nombre')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('precio', 'Precio en Mercado libre'); ?></th>
