@@ -615,12 +615,13 @@ class MercadoLibresController extends AppController
 
 		BreadcrumbComponent::add('Mercado Libre Productos ');
 
+
 		# Se lanza mensaje de actualizar precios
-		/*if($this->verificarCambiosDePreciosStock()) {
+		if($this->verificarCambiosDePreciosStock()) {
 			$this->Session->setFlash('¡Tienes productos desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
 		}else{
 			$this->Session->setFlash('¡Bien! Todos los productos estan sincronizados.', null, array(), 'success');
-		}*/
+		}
 
 		$total =  $this->MercadoLibr->find('count', $paginate);
 

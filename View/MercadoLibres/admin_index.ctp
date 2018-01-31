@@ -127,6 +127,9 @@
 									<td><?= h($mercadoLibr['MercadoLibrePlantilla']['nombre']); ?>&nbsp;</td>
 									<td><?= $publicado = (!empty($mercadoLibr['MercadoLibr']['id_meli'])) ? '<i class="fa fa-check-circle text-success fa-lg"></i>' : '<i class="fa fa-times-circle text-danger fa-lg"></i>' ;?></td>
 									<td>
+										<? if ($mercadoLibr['MeliItem']['status'] == 'under_review' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
+											<label class="label label-default">En revisión</label>
+										<? endif; ?>
 										<? if ($mercadoLibr['MeliItem']['status'] == 'closed' && !empty($mercadoLibr['MercadoLibr']['id_meli'])) : ?>
 											<label class="label label-danger">Cerrada</label>
 										<? endif; ?>
