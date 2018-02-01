@@ -1,12 +1,12 @@
 <div class="page-title">
 	<h2><span class="fa fa-money"></span> <?=__('Orden de compra #' . $this->request->data['Orden']['id_order']); ?></h2>
 	<div class="pull-right">
-		<button class="btn btn-warning" onclick="$('html, body').animate({scrollTop:$('#dte').offset().top},1000);">Generar DTE</button>
+		<button class="btn btn-warning" onclick="$('html, body').animate({scrollTop:$('#ot').offset().top},1000);">Generar OT</button>
 	</div>
 </div>
-<?= $this->Form->create('Dte', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+<?= $this->Form->create('OrdenTransporte', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 <?= $this->Form->input('id_order', array('type' => 'hidden', 'value' => $this->request->data['Orden']['id_order'])); ?>
-<?= $this->Form->input('estado', array('type' => 'hidden', 'value' => __('no_generado'))); ?>
+
 
 <div class="page-content-wrap">
 	<div class="row">
@@ -116,11 +116,6 @@
 						</table>
 					</div>
 				</div>
-				<div class="panel-footer">
-					<div class="pull-right">
-						<?= $this->Html->link('Volver', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
-					</div>
-				</div>
 			</div>
 		</div> <!-- end col -->
 	</div> <!-- end row -->
@@ -222,17 +217,134 @@
 	<!-- Fin Mensajes -->
 
 	
-	<!-- Dte -->
+	<!-- OT -->
 	<div class="row">
 		<div class="col-xs-12">
-			<h2 id="dte"><i class="fa fa-truck" aria-hidden="true"></i> <?=__('Generar OT'); ?></h2>
+			<h2 id="ot"><i class="fa fa-truck" aria-hidden="true"></i> <?=__('Generar OT'); ?></h2>
 			<div class="panel panel-default">
 				<div class="panel-body">
 					<div class="row">
-						<div class="col-xs-12 col-sm-6 form-group">
-							<?= $this->Form->label('')?>
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.transporte'); ?>
+							<?= $this->Form->select('OrdenTransporte.transporte', $curriers, array('class' => 'form-control select', 'empty' => false)); ?>
+						</div>
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_codigo_producto', 'Tipo de producto'); ?>
+							<?= $this->Form->select('OrdenTransporte.e_codigo_producto', $codigoProductosChilexpress, array('class' => 'form-control select', 'empty' => 'Seleccione')); ?>
+						</div>
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_codigo_servicio', 'Tipo de servicio'); ?>
+							<?= $this->Form->select('OrdenTransporte.e_codigo_servicio', $codigosServicio, array('class' => 'form-control select', 'empty' => 'Seleccione')); ?>
+						</div>
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_eoc', 'Tipo de despacho'); ?>
+							<?= $this->Form->select('OrdenTransporte.e_eoc', array(
+								0 => 'Despacho a domicilio',
+								1 => 'Cliente retira en sucursal'), 
+								array('class' => 'form-control select', 'empty' => 'Seleccione')); ?>
 						</div>
 					</div>
+				</div>
+				<div class="panel-body">
+					<h3>Datos del remitente</h3>
+					<br>
+					<div class="row">
+						<div class="col-xs-12 col-sm-6 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_numero_tcc', 'Identificador de cliente (TCC)'); ?>
+							<?= $this->Form->select('OrdenTransporte.e_numero_tcc', $tcc, array('class' => 'form-control select', 'empty' => false)); ?>
+						</div>
+						<div class="col-xs-12 col-sm-6 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_comuna_origen', 'Comuna de origen'); ?>
+							<?= $this->Form->select('OrdenTransporte.e_comuna_origen', $comunas, array('class' => 'form-control select', 'empty' => false, 'data-live-search' => 'true')); ?>
+						</div>	
+					</div>
+					<div class="row">
+						<div class="col-xs-12 col-sm-4 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_remitente_nombre', 'Nombre del remitente'); ?>
+							<? if (empty($this->request->data['OrdenTransporte']['e_remitente_nombre'])) :  ?>
+								<?= $this->Form->input('OrdenTransporte.e_remitente_nombre', array('class' => 'form-control', 'placeholder' => 'Ingrese nombre del remitente', 'value' => 'Toolmania')); ?>
+							<? else : ?>
+								<?= $this->Form->input('OrdenTransporte.e_remitente_nombre', array('class' => 'form-control', 'placeholder' => 'Ingrese nombre del remitente')); ?>
+							<? endif; ?>
+						</div>
+						<div class="col-xs-12 col-sm-4 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_remitente_email', 'Email del remitente'); ?>
+							<? if (empty($this->request->data['OrdenTransporte']['e_remitente_email'])) :  ?>
+								<?= $this->Form->input('OrdenTransporte.e_remitente_email', array('class' => 'form-control', 'placeholder' => 'Ingrese email del remitente', 'value' => 'ventas@toolmania.cl')); ?>
+							<? else : ?>
+								<?= $this->Form->input('OrdenTransporte.e_remitente_email', array('class' => 'form-control', 'placeholder' => 'Ingrese email del remitente')); ?>
+							<? endif; ?>
+						</div>
+						<div class="col-xs-12 col-sm-4 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_remitente_celular', 'Fono del remitente'); ?>
+							<? if (empty($this->request->data['OrdenTransporte']['e_remitente_celular'])) :  ?>
+								<?= $this->Form->input('OrdenTransporte.e_remitente_celular', array('class' => 'form-control', 'placeholder' => 'Ingrese fono del remitente', 'value' => '+562 23792180')); ?>
+							<? else : ?>
+								<?= $this->Form->input('OrdenTransporte.e_remitente_celular', array('class' => 'form-control', 'placeholder' => 'Ingrese fono del remitente')); ?>
+							<? endif; ?>
+						</div>
+					</div>
+				</div>
+				<div class="panel-body">
+					<h3>Datos del destinatario</h3>
+					<br>
+					<div class="row">
+						<div class="col-xs-12 col-sm-4 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_destinatario_nombre', 'Nombre del destinatario'); ?>
+							<?= $this->Form->input('OrdenTransporte.e_destinatario_nombre', array('class' => 'form-control', 'placeholder' => 'Ingrese nombre del destinatario')); ?>
+						</div>
+						<div class="col-xs-12 col-sm-4 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_destinatario_email', 'Email del destinatario'); ?>
+							<?= $this->Form->input('OrdenTransporte.e_destinatario_email', array('class' => 'form-control', 'placeholder' => 'Ingrese email del destinatario')); ?>
+						</div>
+						<div class="col-xs-12 col-sm-4 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_destinatario_celular', 'Fono del destinatario'); ?>
+							<?= $this->Form->input('OrdenTransporte.e_destinatario_celular', array('class' => 'form-control', 'placeholder' => 'Ingrese fono del destinatario')); ?>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_direccion_comuna', 'Comuna de destino'); ?>
+							<?= $this->Form->select('OrdenTransporte.e_direccion_comuna', $comunas, array('class' => 'form-control select', 'empty' => false, 'data-live-search' => 'true')); ?>
+						</div>
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_direccion_calle', 'Calle de destino'); ?>
+							<?= $this->Form->input('OrdenTransporte.e_direccion_calle', array('class' => 'form-control', 'placeholder' => 'Ingrese nombre de la calle')); ?>
+						</div>
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_direccion_numero', 'Número de casa/dpto de destino'); ?>
+							<?= $this->Form->input('OrdenTransporte.e_direccion_numero', array('class' => 'form-control', 'placeholder' => 'Ingrese número de casa/dpto')); ?>
+						</div>
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_direccion_complemento', 'Complemento de la dirección'); ?>
+							<?= $this->Form->input('OrdenTransporte.e_direccion_complemento', array('class' => 'form-control', 'placeholder' => 'Ingrese un complemento')); ?>
+						</div>
+					</div>
+				</div>
+				<div class="panel-body">
+					<h3>Datos para devolución</h3>
+					<br>
+					<div class="row">
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_direccion_d_comuna', 'Comuna para devolución'); ?>
+							<?= $this->Form->select('OrdenTransporte.e_direccion_d_comuna', $comunas, array('class' => 'form-control select', 'empty' => false, 'data-live-search' => 'true')); ?>
+						</div>
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_direccion_d_calle', 'Calle para devolución'); ?>
+							<?= $this->Form->input('OrdenTransporte.e_direccion_d_calle', array('class' => 'form-control', 'placeholder' => 'Ingrese calle para devolución')); ?>
+						</div>
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_direccion_d_numero', 'Número de casa/dpto para devolución'); ?>
+							<?= $this->Form->input('OrdenTransporte.e_direccion_d_numero', array('class' => 'form-control', 'placeholder' => 'Ingrese número de casa/dpto')); ?>
+						</div>
+						<div class="col-xs-12 col-sm-3 form-group">
+							<?= $this->Form->label('OrdenTransporte.e_direccion_d_complemento', 'Complemento de la dirección'); ?>
+							<?= $this->Form->input('OrdenTransporte.e_direccion_d_complemento', array('class' => 'form-control', 'placeholder' => 'Ingrese complemento')); ?>
+						</div>
+					</div>
+				</div>
+				<div class="panel-body">
+					<h2>Precio del transporte: <?=CakeNumber::currency($this->request->data['Orden']['total_shipping_tax_incl'], 'CLP');?></h2>
 				</div>
 				<div class="panel-footer">
 					<div class="pull-right">
@@ -243,6 +355,6 @@
 			</div>
 		</div> <!-- end col -->
 	</div> <!-- end row -->
-	<!-- Fin Dte -->
+	<!-- Fin OT -->
 </div>
 <?= $this->Form->end(); ?>
