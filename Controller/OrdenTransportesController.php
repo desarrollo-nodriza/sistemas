@@ -94,7 +94,7 @@ class OrdenTransportesController extends AppController
 
     	$textoBuscar = null;
 
-		// Filtrado de ordenes por formulario
+		# Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
 
 			$this->filtrar('ordenes', 'index');
@@ -112,13 +112,13 @@ class OrdenTransportesController extends AppController
 		}
 
 		$estadosId = Hash::extract($estados, '{n}.OrdenEstado.id_order_state');
-		$estados = Hash::extract($estados, '{n}.Lang.0.OrdenEstadoIdioma.name');
+		$estados   = Hash::extract($estados, '{n}.Lang.0.OrdenEstadoIdioma.name');
 
 		$paginate = array_replace_recursive($paginate, array(
-			'limit' => 20,
-			'contain' => array('OrdenEstado' => array('Lang'), 'OrdenTransporte'),
+			'limit'      => 20,
+			'contain'    => array('OrdenEstado' => array('Lang'), 'OrdenTransporte'),
 			'conditions' => array('Orden.current_state' => $estadosId),
-			'order' => array('Orden.id_order' => 'DESC')
+			'order'      => array('Orden.id_order' => 'DESC')
 			));
 
 
@@ -165,16 +165,16 @@ class OrdenTransportesController extends AppController
 		# Modelos que requieren agregar configuración
 		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'Lang', 'CustomField' ,'CustomUserdata'));
 
-		$this->paginate = $paginate;
-
-		$ordenes	= $this->paginate();
-		$totalMostrados = $this->Orden->find('count');
+		$this->paginate  = $paginate;
+		
+		$ordenes         = $this->paginate();
+		$totalMostrados  = $this->Orden->find('count');
 		
 		# Medios de pago
-		$medios_de_pago = $this->obtenerMediosDePago();
+		$medios_de_pago  = $this->obtenerMediosDePago();
 		
-		$rangosPagado = $this->obtenerRangoPrecios('total_paid', 500000);
-		$rangosEnvio = $this->obtenerRangoPrecios('total_shipping', 1000);
+		$rangosPagado    = $this->obtenerRangoPrecios('total_paid', 500000);
+		$rangosEnvio     = $this->obtenerRangoPrecios('total_shipping', 1000);
 		$rangosDescuento = $this->obtenerRangoPrecios('total_discounts', 50000);
 
 		# Estados del DTE
@@ -239,7 +239,7 @@ class OrdenTransportesController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-
+			prx($this->request->data);
 			try {
 				$resultado = $this->Ot->generarOt(3,
 				3,
@@ -273,7 +273,7 @@ class OrdenTransportesController extends AppController
 
 			return $resultado;
 
-			prx($this->request->data);
+			
 			# Guardamos OT
 			if($this->Orden->OrdenTransporte->saveAll($this->request->data)) {
 
@@ -354,6 +354,7 @@ class OrdenTransportesController extends AppController
 
 
 			$this->request->data	= $this->Orden->find('first', $opt);
+
 			#prx($this->request->data);
 		}
 
@@ -364,8 +365,8 @@ class OrdenTransportesController extends AppController
 
 		# Servicios Chilexpress
 		$codigosServicio = array(
-			3 => 'DIA HABIL SIGUIENTE',
-			2 => 'OVERNIGHT'
+			3 => 'Chilexpress normal',
+			2 => 'Overnight'
 		);
 
 		# Productos Chilexpress
@@ -374,7 +375,6 @@ class OrdenTransportesController extends AppController
 			#2 => 'VALIJA',
 			#1 => 'DOCUMENTO'
  		);
-
 
  		# TCC
  		$tcc = array(
@@ -389,6 +389,17 @@ class OrdenTransportesController extends AppController
  				$comunas[$cobertura['GlsComuna']] = $cobertura['GlsComuna'];	
  			}
  		}
+
+ 		# Se agrega id de servicio para usarlo en el front
+ 		if (isset($this->request->data['Transportista']) && empty($this->request->data['OrdenTransporte']['e_codigo_servicio'])) {
+			$this->request->data['OrdenTransporte']['e_codigo_servicio'] = array_search($this->request->data['Transportista']['name'], $codigosServicio);
+		}
+
+		# Se agrega comuna de destino
+		if (isset($this->request->data['DireccionEntrega']) && empty($this->request->data['OrdenTransporte']['e_direccion_comuna'])) {
+			$this->request->data['OrdenTransporte']['e_direccion_comuna'] = array_search($this->request->data['DireccionEntrega']['city'], $comunas);
+		}
+		
 
  		/*
  			Definir si es despachoa domicilio o retiro en sucursal

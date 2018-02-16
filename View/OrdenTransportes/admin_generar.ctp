@@ -291,15 +291,27 @@
 					<div class="row">
 						<div class="col-xs-12 col-sm-4 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_destinatario_nombre', 'Nombre del destinatario'); ?>
+							<? if(empty($this->request->data['OrdenTransporte']['e_destinatario_nombre'])) : ?>
+							<?= $this->Form->input('OrdenTransporte.e_destinatario_nombre', array('class' => 'form-control', 'placeholder' => 'Ingrese nombre del destinatario', 'value' => $this->request->data['DireccionEntrega']['firstname'] . ' ' . $this->request->data['DireccionEntrega']['lastname'] )); ?>
+							<? else : ?>
 							<?= $this->Form->input('OrdenTransporte.e_destinatario_nombre', array('class' => 'form-control', 'placeholder' => 'Ingrese nombre del destinatario')); ?>
+							<? endif; ?>
 						</div>
 						<div class="col-xs-12 col-sm-4 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_destinatario_email', 'Email del destinatario'); ?>
+							<? if(empty($this->request->data['OrdenTransporte']['e_destinatario_email'])) : ?>
+							<?= $this->Form->input('OrdenTransporte.e_destinatario_email', array('class' => 'form-control', 'placeholder' => 'Ingrese email del destinatario', 'value' => $this->request->data['Cliente']['email'])); ?>
+							<? else : ?>
 							<?= $this->Form->input('OrdenTransporte.e_destinatario_email', array('class' => 'form-control', 'placeholder' => 'Ingrese email del destinatario')); ?>
+							<? endif; ?>
 						</div>
 						<div class="col-xs-12 col-sm-4 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_destinatario_celular', 'Fono del destinatario'); ?>
+							<? if(empty($this->request->data['OrdenTransporte']['e_destinatario_celular'])) : ?>
+							<?= $this->Form->input('OrdenTransporte.e_destinatario_celular', array('class' => 'form-control', 'placeholder' => 'Ingrese fono del destinatario', 'value' => $this->request->data['DireccionEntrega']['phone_mobile'])); ?>
+							<? else : ?>
 							<?= $this->Form->input('OrdenTransporte.e_destinatario_celular', array('class' => 'form-control', 'placeholder' => 'Ingrese fono del destinatario')); ?>
+							<? endif; ?>
 						</div>
 					</div>
 					<div class="row">
@@ -309,7 +321,11 @@
 						</div>
 						<div class="col-xs-12 col-sm-3 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_direccion_calle', 'Calle de destino'); ?>
+							<? if(empty($this->request->data['OrdenTransporte']['e_direccion_calle'])) : ?>
+							<?= $this->Form->input('OrdenTransporte.e_direccion_calle', array('class' => 'form-control', 'placeholder' => 'Ingrese nombre de la calle', 'value' => $this->request->data['DireccionEntrega']['address1'])); ?>
+							<? else : ?>
 							<?= $this->Form->input('OrdenTransporte.e_direccion_calle', array('class' => 'form-control', 'placeholder' => 'Ingrese nombre de la calle')); ?>
+							<? endif; ?>
 						</div>
 						<div class="col-xs-12 col-sm-3 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_direccion_numero', 'Número de casa/dpto de destino'); ?>

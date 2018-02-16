@@ -359,7 +359,7 @@ class EmailsController extends AppController
 
 			$htmlEmail = $this->Email->find('first', array(
 				'conditions' => array('Email.id' => $id), 
-				'fields' => array('html','nombre', 'sitio_url', 'tienda_id', 'mostrar_cuotas', 'cuotas', 'html_cuotas', 'descripcion'),
+				'fields' => array('html','nombre', 'sitio_url', 'tienda_id', 'mostrar_cuotas', 'cuotas', 'html_cuotas', 'descripcion', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'),
 				'contain'	=> array('Categoria', 'Tienda')	
 				)
 			);
@@ -370,17 +370,22 @@ class EmailsController extends AppController
 			}
 
 			// Nombre del Newsletter
-			$htmlNombre = $htmlEmail['Email']['nombre'];
-
+			$htmlNombre         = $htmlEmail['Email']['nombre'];
+			
 			// Url del sitio que corresponde el newsletter
-			$SitioUrl = $htmlEmail['Email']['sitio_url'];
-
+			$SitioUrl           = $htmlEmail['Email']['sitio_url'];
+			
+			// UTMS
+			$utmSource          = $htmlEmail['Email']['utm_source'];
+			$utmMedium          = $htmlEmail['Email']['utm_medium'];
+			$utmCampaign        = $htmlEmail['Email']['utm_campaign'];
+			
 			// Cuotas
 			$MostrarCuotasEmail = $htmlEmail['Email']['mostrar_cuotas'];
-			$CuotasEmail = $htmlEmail['Email']['cuotas'];
-			$htmlCuotas = $htmlEmail['Email']['html_cuotas'];
-
-			$categoriasId = Hash::extract($htmlEmail['Categoria'], '{n}.id');
+			$CuotasEmail        = $htmlEmail['Email']['cuotas'];
+			$htmlCuotas         = $htmlEmail['Email']['html_cuotas'];
+			
+			$categoriasId       = Hash::extract($htmlEmail['Categoria'], '{n}.id');
 
 			$categorias = ClassRegistry::init('Categoria')->find('all', array(
 					'conditions' => array(
@@ -614,12 +619,30 @@ class EmailsController extends AppController
 					* Información del producto
 					*/
 					$urlProducto 			= $producto[0]['url_image'];
+
+					/**
+					 * UTMs
+					 */
+					$utms = '';
+					if (!empty($utmSource)) {
+						$utms .= '?utm_source=' . strtolower(Inflector::slug($utmSource));
+					}
+
+					if (!empty($utmMedium)) {
+						$utms .= '?utm_medium=' . strtolower(Inflector::slug($utmMedium));
+					}
+
+					if (!empty($utmCampaign)) {
+						$utms .= '?utm_campaign=' . strtolower(Inflector::slug($utmCampaign));
+					}
+
+					
 					$porcentaje_descuento 	= ( !empty($producto['Productotienda']['descuento']) ) ? $producto['Productotienda']['descuento'] . '%' : '<font size="2">Oferta</font>' ;
 					$nombre_producto		= CakeText::truncate($producto['pl']['name'], 40, array('exact' => false));
 					$modelo_producto		= $producto['Productotienda']['reference'];
 					$valor_producto			= ( !empty($producto['Productotienda']['descuento']) ) ? CakeNumber::currency($producto['Productotienda']['valor_iva'], 'CLP') : '' ;
 					$oferta_producto		= CakeNumber::currency($producto['Productotienda']['valor_final'] , 'CLP');
-					$url_producto			= sprintf('%s%s-%s.html', $SitioUrl, $producto['pl']['link_rewrite'], $producto['Productotienda']['id_product']);
+					$url_producto			= sprintf('%s%s-%s.html%s', $SitioUrl, $producto['pl']['link_rewrite'], $producto['Productotienda']['id_product'], $utms);
 					$cuotas_producto 		= ( isset($producto['Productotienda']['valor_cuotas']) ) ? sprintf($htmlCuotas, $CuotasEmail, CakeNumber::currency($producto['Productotienda']['valor_cuotas'] , 'CLP') ) : '';
 					
 					/**
