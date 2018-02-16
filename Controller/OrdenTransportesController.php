@@ -94,7 +94,7 @@ class OrdenTransportesController extends AppController
 
     	$textoBuscar = null;
 
-		// Filtrado de ordenes por formulario
+		# Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
 
 			$this->filtrar('ordenes', 'index');
@@ -112,13 +112,13 @@ class OrdenTransportesController extends AppController
 		}
 
 		$estadosId = Hash::extract($estados, '{n}.OrdenEstado.id_order_state');
-		$estados = Hash::extract($estados, '{n}.Lang.0.OrdenEstadoIdioma.name');
+		$estados   = Hash::extract($estados, '{n}.Lang.0.OrdenEstadoIdioma.name');
 
 		$paginate = array_replace_recursive($paginate, array(
-			'limit' => 20,
-			'contain' => array('OrdenEstado' => array('Lang'), 'OrdenTransporte'),
+			'limit'      => 20,
+			'contain'    => array('OrdenEstado' => array('Lang'), 'OrdenTransporte'),
 			'conditions' => array('Orden.current_state' => $estadosId),
-			'order' => array('Orden.id_order' => 'DESC')
+			'order'      => array('Orden.id_order' => 'DESC')
 			));
 
 
@@ -165,16 +165,16 @@ class OrdenTransportesController extends AppController
 		# Modelos que requieren agregar configuración
 		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'Lang', 'CustomField' ,'CustomUserdata'));
 
-		$this->paginate = $paginate;
-
-		$ordenes	= $this->paginate();
-		$totalMostrados = $this->Orden->find('count');
+		$this->paginate  = $paginate;
+		
+		$ordenes         = $this->paginate();
+		$totalMostrados  = $this->Orden->find('count');
 		
 		# Medios de pago
-		$medios_de_pago = $this->obtenerMediosDePago();
+		$medios_de_pago  = $this->obtenerMediosDePago();
 		
-		$rangosPagado = $this->obtenerRangoPrecios('total_paid', 500000);
-		$rangosEnvio = $this->obtenerRangoPrecios('total_shipping', 1000);
+		$rangosPagado    = $this->obtenerRangoPrecios('total_paid', 500000);
+		$rangosEnvio     = $this->obtenerRangoPrecios('total_shipping', 1000);
 		$rangosDescuento = $this->obtenerRangoPrecios('total_discounts', 50000);
 
 		# Estados del DTE
@@ -239,57 +239,43 @@ class OrdenTransportesController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-			# Rut sin puntos
-			if (!empty($this->request->data['Dte']['rut_receptor'])) {
-				$this->request->data['Dte']['rut_receptor'] = str_replace('.', '', $this->request->data['Dte']['rut_receptor']);
+			prx($this->request->data);
+			try {
+				$resultado = $this->Ot->generarOt(3,
+				3,
+				'RENCA',
+				22106942,
+				'123456789',
+				'Compra1',
+				10000,
+				0,
+				'Mario Moyano',
+				'mmoyano@chilexpress.cl',
+				'84642291',
+				'Alexis Erazo',
+				'aerazo@chilexpress.cl',
+				'84642291',
+				'PENALOLEN',
+				'Camino de las Camelias',
+				'7909',
+				'Casa 33',
+				'PUDAHUEL',
+				'Jose Joaquin Perez',
+				'1376',
+				'Piso 2',
+				5,
+				1,
+				1,
+				1);
+			} catch (Exception $e) {
+				$resultado = $e->getMessage();
 			}
 
-			# Rut Transportista sin puntos
-			if (isset($this->request->data['Dte']['rut_transportista']) && !empty($this->request->data['Dte']['rut_transportista'])) {
-				$this->request->data['Dte']['rut_transportista'] = str_replace('.', '', $this->request->data['Dte']['rut_transportista']);
-			}
+			return $resultado;
 
-			# Rut chofer sin puntos
-			if (isset($this->request->data['Dte']['rut_chofer']) && !empty($this->request->data['Dte']['rut_chofer'])) {
-				$this->request->data['Dte']['rut_chofer'] = str_replace('.', '', $this->request->data['Dte']['rut_chofer']);
-			}
-		
-			# Si existe costo de transporte se agrega como ITEM
-			if (intval($this->request->data['Dte']['Transporte']) > 0) {
-				$cantidadItem = (count($this->request->data['Detalle']) + 1);
-				$this->request->data['Detalle'][$cantidadItem]['VlrCodigo'] = "COD-Trns";
-				$this->request->data['Detalle'][$cantidadItem]['NmbItem'] = "Transporte";
-
-				# Para boleta se envia el valor bruto y así evitar que el monto aumente o disminuya por el calculo de iva
-				if ($this->request->data['Dte']['tipo_documento'] == 39) {
-					$this->request->data['Detalle'][$cantidadItem]['PrcItem'] = round($this->request->data['Dte']['Transporte']);
-				}else{
-					$this->request->data['Detalle'][$cantidadItem]['PrcItem'] = $this->precio_neto($this->request->data['Dte']['Transporte']);
-				}
-				$this->request->data['Detalle'][$cantidadItem]['QtyItem'] = 1;
-			}
-				
-			# Si el DTE es boleta enviamos los precios Brutos de los items
-			if ($this->request->data['Dte']['tipo_documento'] == 39) {
-				foreach ($this->request->data['Detalle'] as $k => $item) {
-
-					# Precio de transporte viene Bruto
-					if ($item['NmbItem'] != 'Transporte') {
-						$this->request->data['Detalle'][$k]['PrcItem'] = $this->precio_bruto($item['PrcItem']);
-					}
-					
-				}
-			}else{
-				# se envia el descuento en Bruto
-				if (isset($this->request->data['DscRcgGlobal']['ValorDR']) && $this->request->data['DscRcgGlobal']['ValorDR'] > 0) {
-					$this->request->data['DscRcgGlobal']['ValorDR'] = $this->precio_neto($this->request->data['DscRcgGlobal']['ValorDR']);	
-				}
-			}
-
-			$this->request->data['DteReferencia'] = $this->clear($this->request->data['DteReferencia'], 'folio');
-
-			# Guardar información del DTE en base de datos local
-			if($this->Orden->Dte->saveAll($this->request->data)) {
+			
+			# Guardamos OT
+			if($this->Orden->OrdenTransporte->saveAll($this->request->data)) {
 
 				try {
 					# Enviar DTE a LibreDTE
@@ -303,7 +289,7 @@ class OrdenTransportesController extends AppController
 					}
 				}	
 
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
+				$this->redirect(array('controller' => 'ordenTransporte', 'action' => 'orden', $id_orden));
 
 			}else{
 				$this->Session->setFlash('Error al guardar la información en la base de detos local. Intente nuevamente.' , null, array(), 'warning');
@@ -313,33 +299,117 @@ class OrdenTransportesController extends AppController
 		}else{
 
 			$opt = array(
+				'fields' => array(
+					'Orden.*',
+					'OrdenEstado.*',
+					'OrdenTransportista.*',
+					'Transportista.*',
+					'DireccionEntrega.*',
+					'RegionEntrega.*',
+					'Cliente.*'
+				),
 				'conditions'	=> array('Orden.id_order' => $id_orden),
+				'joins' => array(
+					array(
+			            'table' => sprintf('%sorder_carrier', $this->Session->read('Tienda.prefijo')),
+			            'alias' => 'OrdenTransportista',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'OrdenTransportista.id_order =' . $id_orden
+			            )
+		        	),
+		        	array(
+			            'table' => sprintf('%scarrier', $this->Session->read('Tienda.prefijo')),
+			            'alias' => 'Transportista',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'OrdenTransportista.id_carrier = Transportista.id_carrier'
+			            )
+		        	),
+		        	array(
+			            'table' => sprintf('%saddress', $this->Session->read('Tienda.prefijo')),
+			            'alias' => 'DireccionEntrega',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Orden.id_address_delivery = DireccionEntrega.id_address'
+			            )
+		        	),
+		        	array(
+			            'table' => sprintf('%sstate', $this->Session->read('Tienda.prefijo')),
+			            'alias' => 'RegionEntrega',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'DireccionEntrega.id_state = RegionEntrega.id_state'
+			            )
+		        	),
+				),
 				'contain' => array(
 					'OrdenEstado' => array('Lang'),
 					'OrdenDetalle',
-					'Dte',
+					'OrdenTransporte',
 					'Cliente',
 					'ClienteHilo' => array('ClienteMensaje' => array('Empleado')),
 				),
 			);
 
-			$modulosExternos = $this->Orden->validarModulosExternos();
-			if ($modulosExternos) {
-				$opt = array_replace_recursive($opt, array(
-					'contain' => array(
-						'CustomUserdata' => array('CustomField' => array('Lang'))
-					)
-				));
-			}
 
 			$this->request->data	= $this->Orden->find('first', $opt);
 
+			#prx($this->request->data);
 		}
+
+		# Transportistas	
+		$curriers = array(
+			'Chilexpress' => 'Chilexpress'
+		);
+
+		# Servicios Chilexpress
+		$codigosServicio = array(
+			3 => 'Chilexpress normal',
+			2 => 'Overnight'
+		);
+
+		# Productos Chilexpress
+		$codigoProductosChilexpress = array(
+			3 => 'ENCOMIENDA',
+			#2 => 'VALIJA',
+			#1 => 'DOCUMENTO'
+ 		);
+
+ 		# TCC
+ 		$tcc = array(
+ 			22106942 => 22106942
+ 		);
+
+ 		$comunasCobertura = to_array($this->GeoReferencia->obtenerCoberturas());
+ 		$comunas = array();
+
+ 		if ($comunasCobertura['respObtenerCobertura']['CodEstado'] == 0) {
+ 			foreach ($comunasCobertura['respObtenerCobertura']['Coberturas'] as $ico => $cobertura) {
+ 				$comunas[$cobertura['GlsComuna']] = $cobertura['GlsComuna'];	
+ 			}
+ 		}
+
+ 		# Se agrega id de servicio para usarlo en el front
+ 		if (isset($this->request->data['Transportista']) && empty($this->request->data['OrdenTransporte']['e_codigo_servicio'])) {
+			$this->request->data['OrdenTransporte']['e_codigo_servicio'] = array_search($this->request->data['Transportista']['name'], $codigosServicio);
+		}
+
+		# Se agrega comuna de destino
+		if (isset($this->request->data['DireccionEntrega']) && empty($this->request->data['OrdenTransporte']['e_direccion_comuna'])) {
+			$this->request->data['OrdenTransporte']['e_direccion_comuna'] = array_search($this->request->data['DireccionEntrega']['city'], $comunas);
+		}
+		
+
+ 		/*
+ 			Definir si es despachoa domicilio o retiro en sucursal
+ 		 */
 		
 		BreadcrumbComponent::add('Ordenes de transporte', '/ordenTransporte');
 		BreadcrumbComponent::add('Ver OT´s', '/ordenTransporte/orden/'.$id_orden);
 		BreadcrumbComponent::add('Generar OT ');
 
+		$this->set(compact('curriers', 'codigosServicio', 'codigoProductosChilexpress', 'comunas', 'tcc'));
 	}
 
 

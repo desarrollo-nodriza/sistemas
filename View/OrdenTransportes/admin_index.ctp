@@ -144,7 +144,6 @@
 									<th><?= $this->Paginator->sort('payment', 'Medio de pago', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('total_paid', 'T. Pagado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('total_shipping', 'T. Envío', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('total_discounts', 'T. Descuento', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('date_add', 'Creado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('ot', 'OT', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
@@ -159,7 +158,6 @@
 									<td><?= h($orden['Orden']['payment']); ?>&nbsp;</td>
 									<td><?= CakeNumber::currency($orden['Orden']['total_paid'], 'CLP'); ?>&nbsp;</td>
 									<td><?= CakeNumber::currency($orden['Orden']['total_shipping'], 'CLP'); ?>&nbsp;</td>
-									<td><?= CakeNumber::currency($orden['Orden']['total_discounts'], 'CLP'); ?>&nbsp;</td>
 									<td><?= h($orden['Orden']['date_add']); ?>&nbsp;</td>
 									<td><?= $dte = (!empty($orden['OrdenTransporte'])) ? '<label class="label label-success">' . count($orden['OrdenTransporte']) . ' OT emitida/s' . '</label>' : 'No emitido'; ?>&nbsp;</td>
 									<td>

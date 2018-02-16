@@ -58,7 +58,7 @@ class AppController extends Controller
  
 
 		#Tarificacion
-		#$this->ejemploTarificacion());
+		#prx($this->ejemploTarificacion());
 		
 		# 
 		# OT

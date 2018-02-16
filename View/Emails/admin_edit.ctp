@@ -60,6 +60,18 @@
 									<td><?= $this->Form->input('sitio_url'); ?></td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('utm_source', 'Origen de la campaña'); ?></th>
+									<td><?= $this->Form->input('utm_source', array('placeholder' => 'newsletter')); ?></td>
+								</tr>
+								<tr>
+									<th><?= $this->Form->label('utm_medium', 'Medio de la campaña'); ?></th>
+									<td><?= $this->Form->input('utm_medium', array('placeholder' => 'email')); ?></td>
+								</tr>
+								<tr>
+									<th><?= $this->Form->label('utm_campaign', 'Nombre de la campaña'); ?></th>
+									<td><?= $this->Form->input('utm_campaign', array('placeholder' => 'ofertas_de_mes')); ?></td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('mostrar_cuotas', 'Mostrar Cuotas'); ?></th>
 									<td><?= $this->Form->input('mostrar_cuotas', array('class' => 'icheckbox')); ?></td>
 								</tr>

@@ -58,4 +58,12 @@ class OrdenTransporte extends AppModel
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		)
 	);
+
+
+
+	public function beforeSave($options = array())
+	{
+		$this->data['OrdenTransporte']['administrador_id'] = CakeSession::read('Auth.Administrador.id');
+		prx($this->data);
+	}
 }

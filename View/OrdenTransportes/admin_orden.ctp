@@ -1,7 +1,7 @@
 <div class="page-title">
 	<h2><span class="fa fa-money"></span> <?=__('Orden de compra #' . $this->request->data['Orden']['id_order']); ?></h2>
 	<div class="pull-right">
-		<?= $this->Html->link('<i class="fa fa-file"></i> Generar Dte para esta Orden', array('action' => 'generar', $this->request->data['Orden']['id_order']), array('class' => 'btn btn-warning', 'rel' => 'tooltip', 'title' => 'Generar Ot', 'escape' => false)); ?>
+		<?= $this->Html->link('<i class="fa fa-trucks"></i> Generar OT para esta Orden', array('action' => 'generar', $this->request->data['Orden']['id_order']), array('class' => 'btn btn-warning', 'rel' => 'tooltip', 'title' => 'Generar Ot', 'escape' => false)); ?>
 	</div>
 </div>
 <div class="page-content-wrap">
