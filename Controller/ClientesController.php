@@ -171,9 +171,9 @@ class ClientesController extends AppController {
     }
 
     public function admin_exportar()
-
     {
-
+        set_time_limit(0);
+        
         $datos          = $this->Cliente->find('all', array(
 
             'recursive'             => -1
