@@ -379,6 +379,8 @@ class EmailsController extends AppController
 			$utmSource          = $htmlEmail['Email']['utm_source'];
 			$utmMedium          = $htmlEmail['Email']['utm_medium'];
 			$utmCampaign        = $htmlEmail['Email']['utm_campaign'];
+			$utmTerm 			= $htmlEmail['Email']['utm_term'];
+			$utmContent 		= $htmlEmail['Email']['utm_content'];
 			
 			// Cuotas
 			$MostrarCuotasEmail = $htmlEmail['Email']['mostrar_cuotas'];
@@ -634,6 +636,12 @@ class EmailsController extends AppController
 
 					if (!empty($utmCampaign)) {
 						$utms .= '?utm_campaign=' . strtolower(Inflector::slug($utmCampaign));
+					}
+
+
+					if (!empty($utmTerm) && !empty($utmContent)) {
+						$utms .= '?utm_term=' . strtolower(Inflector::slug($utmTerm));
+						$utms .= '?utm_content=' . $utmContent;
 					}
 
 					

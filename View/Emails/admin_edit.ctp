@@ -72,6 +72,20 @@
 									<td><?= $this->Form->input('utm_campaign', array('placeholder' => 'ofertas_de_mes')); ?></td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('utm_term', 'Término de la campaña'); ?></th>
+									<td><?= $this->Form->select('utm_term', array(
+										'nombre' => 'Nombre y apellido',
+										'email' => 'Email'
+										), array(
+										'empty' => 'Seleccione',
+										'class' => 'form-control')
+									); ?></td>
+								</tr>
+								<tr>
+									<th><?= $this->Form->label('utm_content', 'Etiqueta de la campaña'); ?></th>
+									<td><?= $this->Form->input('utm_content', array('placeholder' => '*|EMAIL|*')); ?></td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('mostrar_cuotas', 'Mostrar Cuotas'); ?></th>
 									<td><?= $this->Form->input('mostrar_cuotas', array('class' => 'icheckbox')); ?></td>
 								</tr>
