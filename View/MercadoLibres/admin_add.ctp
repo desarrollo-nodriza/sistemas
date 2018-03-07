@@ -33,6 +33,8 @@
 					<div class="col-xs-12">
 						<h4>Categoría Mercadolibre</h4>
 					</div>
+					<div id="categoriSugerida">
+					</div>
 					<div class="col-xs-12 col-sm-3 js-base">
 						<?=$this->Form->select('categoria_00', $categoriasRoot, array('empty' => 'Seleccione categoria raiz', 'class' => 'form-control js-cat', 'id' => 'BaseCat', 'required' => true));?>
 						<span class="help-block"></span>

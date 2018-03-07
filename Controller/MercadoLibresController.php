@@ -284,7 +284,7 @@ class MercadoLibresController extends AppController
 						$envios['free_methods'] = array();
 					}
 
-					if (isset($this->request->data['Envios']['custom'])) {
+					if (isset($this->request->data['Envios']['custom']) && isset($this->request->data['Envios']['costs'][0]) && !empty($this->request->data['Envios']['costs'][0])) {
 						$envios['mode'] = 'custom';
 						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
 						$envios['free_shipping'] = false;
@@ -375,7 +375,7 @@ class MercadoLibresController extends AppController
 						$envios['free_methods'] = array();
 					}
 
-					if (isset($this->request->data['Envios']['custom'])) {
+					if (isset($this->request->data['Envios']['custom']) && isset($this->request->data['Envios']['costs'][0]) && !empty($this->request->data['Envios']['costs'][0])) {
 						$envios['mode'] = 'custom';
 						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
 						$envios['free_shipping'] = false;
@@ -575,7 +575,7 @@ class MercadoLibresController extends AppController
 				'MercadoLibr.tienda_id' => $this->Session->read('Tienda.id')
 				),
 			'order' => array('MercadoLibr.id' => 'DESC'),
-			'limit' => 20
+			'limit' => 1
 			)
 		);
 
@@ -615,13 +615,13 @@ class MercadoLibresController extends AppController
 
 		BreadcrumbComponent::add('Mercado Libre Productos ');
 
-		
+		/*
 		# Se lanza mensaje de actualizar precios
 		if($this->verificarCambiosDePreciosStock()) {
 			$this->Session->setFlash('¡Tienes productos desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
 		}else{
 			#$this->Session->setFlash('¡Bien! Todos los productos estan sincronizados.', null, array(), 'success');
-		}
+		}*/
 
 		$total =  $this->MercadoLibr->find('count', $paginate);
 
@@ -1487,5 +1487,44 @@ class MercadoLibresController extends AppController
 
 			return $arrayProducto;
 		}
+	}
+
+
+	public function admin_obtener_prediccion_categoria($titulo, $categoria = '', $precio = '')
+	{	
+		$out = array();
+
+		$miCuenta = array();
+		$vendedor = '';
+		$auth = $this->autorizacionMeli();
+
+		if ($this->Session->check('Meli.access_token') && empty($auth)) {
+			$miCuenta =  to_array($this->Meli->getMyAccountInfo());
+
+			if ($miCuenta['httpCode'] != 200) {
+				$vendedor = '';
+			}else{
+				$vendedor = $miCuenta['body']['id'];
+			}
+		}
+
+		
+		$categoriasResponse = $this->Meli->getCategoriesByPredictor($titulo, $categoria, $precio, $vendedor);
+		
+		$categoria = '';
+		
+		if ($categoriasResponse['httpCode'] == 200) {
+			foreach ($categoriasResponse['body']->path_from_root as $ir => $cat) {
+				if (count($categoriasResponse['body']->path_from_root) -1 == $ir) {
+					$categoria .= $cat->name;
+				}else{
+					$categoria .= $cat->name . ' > ';
+				}
+				
+			}
+		}
+		
+		echo $categoria;
+		exit;
 	}
 }
