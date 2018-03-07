@@ -498,8 +498,9 @@ $.extend({
 					$esto.autocomplete({
 					   	source: function(request, response) {
 					      	$.get( webroot + 'mercadoLibres/obtener_productos/' + request.term, function(respuesta){
-					      		console.info(respuesta);
+					      		
 								response( $.parseJSON(respuesta) );
+
 					      	})
 					      	.fail(function(){
 								$.app.loader.ocultar();
@@ -513,7 +514,7 @@ $.extend({
 					    },
 					    select: function( event, ui ) {
 					        console.log("Seleccionado: " + ui.item.value + " id " + ui.item.id);
-					        console.info(ui);
+					   
 					        $('.id-product').val(ui.item.id);
 					        $('.js-nombre').val(ui.item.nombre);
 					        $('.js-precio').val(ui.item.precio);
@@ -521,6 +522,8 @@ $.extend({
 					        $('.js-imagen-preview').attr('src', ui.item.imagen);
 					        $('.js-stock').val(ui.item.stock);
 					        $('.js-description').val(ui.item.description);
+
+					        $.meli.predictor.init();
 					    }
 					});
 				});

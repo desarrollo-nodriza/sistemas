@@ -248,6 +248,54 @@ $.extend({
 				$.meli.shipping();
 			});
 		},
+		predictor : {
+			request: function(nombre, precio){
+
+				if (nombre != ''){
+					var requestUrl 	= webroot + 'mercadoLibres/obtener_prediccion_categoria/' + nombre + '' + precio;
+					var html = "";
+					$.get(requestUrl, function(result){
+						console.log(result);
+						if(result != ''){
+							html += '<div class="col-xs-12">';
+							html += '<div class="alert alert-info">';
+							html += 'Categoría sugerida: ' + result;
+							html += '</div>';
+							html += '</div>';
+							$('#categoriSugerida').html(html);
+						}else{
+							html += '<div class="col-xs-12">';
+							html += '<div class="alert alert-danger">';
+							html += 'La categoría sugerida no está disponible. Intente modificar el nombre del producto y luego dar click en <button class="btn btn-default btn-xs" id="refreshPredictor"><i class="fa fa-refresh"></i> Refrescar</button>';
+							html += '</div>';
+							html += '</div>';
+							$('#categoriSugerida').html(html);
+						}
+					});
+				}
+
+			},
+			refresh : function(){
+				$('body').on('click', '#refreshPredictor', function(event){
+
+					event.preventDefault();
+
+					var nombre   = $('#MercadoLibrProducto').val();
+					var precio = $('#MercadoLibrPrecio').val();
+
+					$.meli.predictor.request(nombre, precio);
+					
+				});
+			},
+			init: function(){
+
+				var nombre   = $('#MercadoLibrProducto').val();
+				var precio = $('#MercadoLibrPrecio').val();
+
+				$.meli.predictor.request(nombre, precio);
+
+			}
+		},
 		shipping: function(){
 
 			$('.meli-custom-shipment').on('change', function(){
@@ -333,6 +381,9 @@ $.extend({
 			}
 
 			$.graficosMeli.init();
+
+
+			$.meli.predictor.refresh();
 
 		}
 	}

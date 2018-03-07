@@ -61,7 +61,7 @@ class MeliComponent extends Component
     	if( $this->Session->read('Meli.expires_in') < time()) {
     		try {
 
-    			$this->meli = new Meli($this->client_id, $this->client_secret);
+    			$this->meli = new Meli($this->client_id, $this->client_secret, $this->Session->read('Meli.access_token'), $this->Session->read('Meli.refresh_token'));
 
 				// Make the refresh proccess
 				$refresh = to_array($this->meli->refreshAccessToken());
@@ -74,6 +74,8 @@ class MeliComponent extends Component
 				$this->Session->write('Meli.access_token', $refresh['body']['access_token']);
 				$this->Session->write('Meli.expires_in', time() + $refresh['body']['expires_in']);
 				$this->Session->write('Meli.refresh_token', $refresh['body']['refresh_token']);
+				$this->Session->write('Meli.refresh_token_datetime', date('Y-m-d h:i:s'));
+				$this->Session->write('Meli.expire_token_datetime', date('Y-m-d h:i:s', time() + $refresh['body']['expires_in']));
 
 			} catch (Exception $e) {
 			  	echo "Exception: ",  $e->getMessage(), "\n";
@@ -105,6 +107,7 @@ class MeliComponent extends Component
 		$this->Session->write('Meli.access_token', $user['body']['access_token']);
 		$this->Session->write('Meli.expires_in', time() + $user['body']['expires_in']);
 		$this->Session->write('Meli.refresh_token', $user['body']['refresh_token']);
+		$this->Session->write('Meli.expire_token_datetime', date('Y-m-d h:i:s', time() + $user['body']['expires_in']));
 
 	}
 
