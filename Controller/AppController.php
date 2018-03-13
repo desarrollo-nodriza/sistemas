@@ -52,7 +52,6 @@ class AppController extends Controller
 
 	public function beforeFilter()
 	{	
-
 		# Geo rferencia
 		#prx($this->ejemploGeolocalizacionChilexpress());
  

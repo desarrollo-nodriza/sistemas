@@ -492,4 +492,76 @@ class OrdenTransportesController extends AppController
 
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}
+
+
+	public function admin_obtener_sucursales_comuna($comuna = 'SANTIAGO CENTRO')
+	{	
+		if (empty($comuna)) {
+			$res = array(
+				'code'    => 300,
+				'message' => 'Seleccione comuna destino.',
+				'lista'   => '',
+				'tabla'   => ''
+			);
+		
+			echo json_encode($res);
+			exit;
+		}
+
+
+		$htmlOptions = '';
+		$htmlDiv     = '<div id="comunasGlosario" class="hide">';
+		$htmlDiv     .= '<table class="table table-bordered">';
+		$htmlDiv     .= '<thead>';
+		$htmlDiv     .= '<th>Nombre Oficina</th>';
+		$htmlDiv     .= '<th>Nombre Calle</th>';
+		$htmlDiv     .= '<th>Número Oficina</th>';
+		$htmlDiv     .= '<th>Comuna</th>';
+		$htmlDiv     .= '</thead>';
+
+		$oficinas = to_array($this->GeoReferencia->obtenerDireccionOficinasComuna($comuna));
+		
+		if (!isset($oficinas['respObtenerOficinas']['CodEstado']) || $oficinas['respObtenerOficinas']['CodEstado'] != 0) {
+			$res = array(
+				'code'    => 300,
+				'message' => 'Ocurrió un error al obtener los datos.',
+				'lista'   => '',
+				'tabla'   => ''
+			);
+		
+			echo json_encode($res);
+			exit;
+		}
+
+
+		$htmlDiv .= '<tbody>';
+
+		foreach($oficinas['respObtenerOficinas']['Calles'] as $ic => $calle) {
+			# Options
+			$htmlOptions .= '<option value="' . $calle['NombreOficina'] . '">' . $calle['NombreOficina'] . '</option>';
+			
+			# Tabla
+			$htmlDiv .= '<tr>';
+			$htmlDiv .= '<td>' . $calle['NombreOficina'] . '</td>';
+			$htmlDiv .= '<td>' . $calle['NombreCalle'] . '</td>';
+			$htmlDiv .= '<td>' . $calle['Numeracion'] . '</td>';
+			$htmlDiv .= '<td>' . $calle['NombreComuna'] . '</td>';
+			$htmlDiv .= '<tr>';
+
+		}
+
+		$htmlDiv .= '</tbody>';
+		$htmlDiv .= '</ul>';
+		$htmlDiv .= '</div>';
+
+		$res = array(
+			'code'    => 400,
+			'message' => 'Solicitud procesada con éxito',
+			'lista'   => $htmlOptions,
+			'tabla'   => $htmlDiv
+		);
+		
+		echo json_encode($res);
+		exit;
+	}
 }
