@@ -41,6 +41,12 @@ Router::connect(
 
 
 /**
+ * Prisync
+ */
+Router::connect('/prisyncProductos/obtener_productos', array('controller' => 'prisyncProductos', 'action' => 'obtener_productos', 'admin' => false));
+
+
+/**
  * Google
  */
 Router::connect('/google', array('controller' => 'productotiendas', 'action' => 'feed', 'google' => true, 'prefix' => 'google'));
