@@ -11,7 +11,7 @@
 </div>
 <div class="page-content-wrap" id="dashboard">
     <div class="row">
-        <div class="col-xs-12 col-sm-4">
+        <div class="col-xs-12 col-sm-3">
             <div class="widget widget-success widget-carousel">
                 <div class="owl-carousel" id="ventas_del_periodo">
                 	<div>                                    
@@ -29,7 +29,7 @@
                 </div>                                                        
             </div>
         </div>
-        <!--<div class="col-xs-6 col-sm-4">
+        <!--<div class="col-xs-6 col-sm-3">
             <div class="widget widget-info widget-carousel">
                 <div class="owl-carousel" id="pedidos_del_periodo">
                     <div>                                    
@@ -47,9 +47,9 @@
                 </div>                                                      
             </div>
         </div>-->
-        <div class="col-xs-12 col-sm-4">
+        <div class="col-xs-12 col-sm-3">
             <div class="widget widget-info widget-carousel">
-                <div class="owl-carousel" id="pedidos_del_periodo">
+                <div class="owl-carousel" id="tickets_del_periodo">
                     <? foreach ($tickets as $ticket) : ?>
                         <div>                                    
                             <div class="widget-title">Valor ticket promedio del mes</div>
@@ -60,7 +60,7 @@
                 </div>                                                      
             </div>
         </div>
-        <div class="col-xs-12 col-sm-4">
+        <div class="col-xs-12 col-sm-3">
             <div class="widget widget-primary widget-carousel">
                 <div class="owl-carousel" id="pedidos_del_periodo">
                     <div>                                    
@@ -73,6 +73,26 @@
                             <div class="widget-title">Total Pedidos del mes</div>
                             <div class="widget-subtitle"><?=$pedido['tienda']?></div>                                                                       
                             <div class="widget-int"><?=$pedido['Total'];?></div>
+                        </div>
+                    <? endforeach; ?>
+                </div>                                                      
+            </div>
+        </div>
+        <div class="col-xs-6 col-sm-3">
+            <div class="widget widget-warning widget-carousel">
+                <div class="owl-carousel" id="prisync">
+                    <? foreach ($prisync as $ip => $precio) : ?>
+                        <div>                                    
+                            <div class="widget-title"><?=$ip; ?></div>
+                            <? if (isset($precio['Bajo'])) : ?>
+                                <div class="widget-subtitle"><?=$precio['Bajo']['total']; ?> productos más baratos</div>
+                            <? endif; ?>
+                            <? if (isset($precio['Alto'])) : ?>
+                                <div class="widget-subtitle"><?=$precio['Alto']['total']; ?> productos más caros</div>
+                            <? endif; ?>
+                            <? if (isset($precio['Igual'])) : ?>
+                                <div class="widget-subtitle"><?=$precio['Igual']['total']; ?> productos igual precio</div>
+                            <? endif; ?>                                                                      
                         </div>
                     <? endforeach; ?>
                 </div>                                                      

@@ -1,122 +1,95 @@
 <?php
 App::uses('AppController', 'Controller');
 
-App::import('Vendor', 'Prisync', array('file' => 'Prisync/Prisync.php'));
-
 class PrisyncProductosController extends AppController {
-	
-	public $Prisync;
 
-	public function obtener_productos_shell(){
-		return $this->obtener_productos();
-	}
-
-	public function obtener_productos()
+	public function admin_ver_resultados_productos()
 	{
-		$errors = array();
-		$productos = array();
+		$productos = $this->PrisyncProducto->find('all', array(
+			'contain' => array(
+				'PrisyncRuta'
+			)
+		));
 
-		try {
-			$productos = $this->obtenerProductos();
-		} catch (Exception $e) {
-			$errors['Productos'][] = $e->getMessage();
+		if (empty($productos)) {
+			$response = array(
+				'code'    => 200,
+				'message' => 'No se encontraron productos',
+				'value'   => 0
+			);
+
+			echo json_encode($response);
+			exit;
 		}
 
-		if (isset($productos['results'])) {
-			foreach ($productos['results'] as $ip => $producto) {
-	
-				$productoDetalle = $this->obtenerProductoPorId($producto['id']);
-				$urls = array();
-				if (!empty($productoDetalle['urls'])){
-					foreach ($productoDetalle['urls'] as $ipu => $urlId) {
-						$urls[] = $this->obtenerCompetidoresPorProducto($urlId);
+		$resultados		= array();
+		$productosAlta  = array();
+		$productosBaja  = array();
+		$productosIgual = array();
+		$contAlta       = 0;
+		$contBaja       = 0;
+		$contIgual      = 0;
+
+		$competidores = array();
+		$micompania = 'toolmania';
+
+		foreach ($productos as $ip => $producto) {
+			foreach ($producto['PrisyncRuta'] as $ir => $competidor) {
+				$url      = parse_url($competidor['url']);
+				$compania = explode('.', str_replace('www.', '', $url['host']));
+				
+				$competidores[$ip][$compania[0]]['url']          = $compania[0];
+				$competidores[$ip][$compania[0]]['product_id'] 	= $producto['PrisyncProducto']['id'];
+				$competidores[$ip][$compania[0]]['product_name'] = $producto['PrisyncProducto']['name'];
+				$competidores[$ip][$compania[0]]['product_code'] = $producto['PrisyncProducto']['internal_code'];
+				$competidores[$ip][$compania[0]]['price']        = $competidor['price'];
+				
+			}	
+		}
+
+
+		if (!empty($competidores)) {
+			
+			$base = (int) 0;
+			
+			foreach ($competidores as $ic => $competidor) {
+
+				if (array_key_exists($micompania, $competidor)) {
+					
+					$base = $competidor[$micompania]['price'];
+
+					foreach ($competidor as $ico => $comp) {
+						if ($ico != $micompania) {
+							if ($comp['price'] > $base) {
+								$contBaja                    = $contBaja + 1;
+								$resultados[$ico]['Alto']['total'] = $contBaja;		
+							}
+
+							if ($comp['price'] < $base) {
+								$contAlta                    = $contAlta + 1;
+								$resultados[$ico]['Bajo']['total'] = $contAlta;		
+							}
+
+							if ($comp['price'] == $base) {
+								$contIgual                    = $contIgual + 1;
+								$resultados[$ico]['Igual']['total'] = $contIgual;		
+							}
+						}
 					}
 				}
-
-				$productos['results'][$ip]['urls'] = $urls;
+							
 			}
-			return $productos;
-		}else{
-			return $errors;
+			
 		}
 
+		$response = array(
+			'code'    => 200,
+			'message' => 'Resultados de la operación',
+			'value'   => $resultados
+		);
+
+		echo json_encode($response);
 		exit;
-	}
-
-
-	public function autenticacion()
-	{	
-		$activo = Configure::read('Prisync.activo');
-
-		if (!$activo) {
-			return false;
-		}
-
-		$api_key   = Configure::read('Prisync.prisync_key');
-		$api_token = Configure::read('Prisync.prisync_token');
-
-		if (empty($api_key) || empty($api_token)) {
-			return false;
-		}
-
-		$this->Prisync = new Prisync($api_key, $api_token);
-	
-	}
-
-
-
-	public function obtenerProductos($url = '/api/v2/list/product/startFrom/0')
-	{	
-		$this->autenticacion();
-
-		$productos = $this->Prisync->get($url);
-		
-		if ($productos['httpCode'] >= 300) {
-			throw new Exception( sprintf('%s. Código de error: %d', $productos['body']->error, $productos['body']->errorCode));
-			return;
-		}else{
-			return to_array($productos['body']);
-		}
-	}
-
-
-	public function obtenerProductoPorId($id = '')
-	{	
-		if (!empty($id)) {
-
-			$this->autenticacion();
-			
-			$url = '/api/v2/get/product/id/' . $id;
-			$producto = $this->Prisync->get($url);
-			
-			if ($producto['httpCode'] >= 300) {
-				throw new Exception( sprintf('%s. Código de error: %d', $producto['body']->error, $producto['body']->errorCode));
-				return;
-			}else{
-				return to_array($producto['body']);
-			}
-		}
-	}
-
-
-	public function obtenerCompetidoresPorProducto($id = '')
-	{
-		if (!empty($id)) {
-
-			$this->autenticacion();
-
-			$url  = '/api/v2/get/url/id/' . $id;
-			
-			$urls = $this->Prisync->get($url);
-			
-			if ($urls['httpCode'] >= 300) {
-				throw new Exception( sprintf('%s. Código de error: %d', $urls['body']->error, $urls['body']->errorCode));
-				return;
-			}else{
-				return to_array($urls['body']);
-			}
-
-		}
 	}
 
 }
