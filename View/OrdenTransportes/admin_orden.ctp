@@ -1,7 +1,9 @@
 <div class="page-title">
 	<h2><span class="fa fa-money"></span> <?=__('Orden de compra #' . $this->request->data['Orden']['id_order']); ?></h2>
 	<div class="pull-right">
-		<?= $this->Html->link('<i class="fa fa-trucks"></i> Generar OT para esta Orden', array('action' => 'generar', $this->request->data['Orden']['id_order']), array('class' => 'btn btn-warning', 'rel' => 'tooltip', 'title' => 'Generar Ot', 'escape' => false)); ?>
+		<? if (empty($this->request->data['OrdenTransporte'])) : ?>
+		<?= $this->Html->link('<i class="fa fa-trucks"></i> Generar OT para esta Orden', array('action' => 'generar_chilexpress', $this->request->data['Orden']['id_order']), array('class' => 'btn btn-warning', 'rel' => 'tooltip', 'title' => 'Generar Ot Chilexpress', 'escape' => false)); ?>
+		<? endif; ?>
 	</div>
 </div>
 <div class="page-content-wrap">
@@ -21,7 +23,6 @@
 									<th><?= __('Nombre Destiniatario'); ?></th>
 									<th><?= __('Comuna destino'); ?></th>
 									<th><?= __('Región destino'); ?></th>
-									<th><?= __('Barra'); ?></th>
 									<th><?= __('Sucursal de Destino'); ?></th>
 									<th><?= __('Monto pagado'); ?></th>
 									<th><?= __('Fecha creación'); ?></th>
@@ -32,19 +33,28 @@
 								<?php foreach ( $this->request->data['OrdenTransporte'] as $ot ) : ?>
 								<tr>
 									<td><?= Inflector::humanize($ot['transporte']); ?>&nbsp;</td>
-									<td><?= h($ot['numero_ot']); ?>&nbsp;</td>
-									<td><?= h($ot['nombre_destinatario']); ?>&nbsp;</td>
-									<td><?= h($ot['glosa_cobertura']); ?>&nbsp;</td>
-									<td><?= $this->Chilexpress->obtenerRegion($ot['codigo_region']); ?>&nbsp;</td>
-									<td><?= h($ot['barcode']); ?>&nbsp;</td>
-									<td><?= $sd = (!empty($ot['centro_distribucion_destino'])) ? $ot['centro_distribucion_destino'] : 'A domicilio' ; ?>&nbsp;</td>
+									<td><?= h($ot['r_numero_ot']); ?>&nbsp;</td>
+									<td><?= h($ot['r_nombre_destinatario']); ?>&nbsp;</td>
+									<td><?= h($ot['r_glosa_cobertura']); ?>&nbsp;</td>
+									<td><?= $this->Chilexpress->obtenerRegion($ot['r_codigo_region']); ?>&nbsp;</td>
+									<td><?= $sd = (!empty($ot['r_centro_distribucion_destino'])) ? $ot['r_centro_distribucion_destino'] : 'A domicilio' ; ?>&nbsp;</td>
 									<td><?= CakeNumber::currency($this->request->data['Orden']['total_shipping_tax_incl'], 'CLP'); ?>&nbsp;</td>
-									<td><?= h($ot['fecha_impresion']); ?>&nbsp;</td>
+									<td><?= h($ot['r_fecha_impresion']); ?>&nbsp;</td>
 									<td>
-										<?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('action' => 'editar', $ot['id'], $this->request->data['Orden']['id_order']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
-										<? if (!empty($ot['imagen_etiqueta'])) : ?>
-										<?= $this->Html->link('<i class="fa fa-barcode"></i> Ver etiqueta', array('action' => 'verEtiqueta', $ot['imagen_etiqueta'], $ot['numero_ot'], $ot['barcode']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ver etiqueta', 'escape' => false)); ?>
-										<? endif; ?>
+									<? if ($permisos['edit']) : ?>
+									<div class="btn-group">
+                                        <a href="#" data-toggle="dropdown" class="btn btn-primary btn-xs dropdown-toggle" aria-expanded="true"><span class="fa fa-cog"></span> Acciones</a>
+                                        <ul class="dropdown-menu dropdown-menu-left" role="menu">
+                                            <li role="presentation" class="dropdown-header">Seleccione</li>
+                                            <? if (!empty($ot['r_imagen_etiqueta'])) : ?>
+                                            <li>
+											<a class="btn-imprimir-ot" data-etiqueta="<?= $this->Chilexpress->verEtiqueta($ot['r_imagen_etiqueta'], $ot['r_numero_ot'], $ot['r_barcode']); ?>"><i class="fa fa-print"></i> Imprimir etiqueta</a>
+											</li>
+											<? endif; ?>
+                                            <li><?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('action' => 'view_chilexpress', $this->request->data['Orden']['id_order']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?></li>
+                                        </ul>
+                                    </div>
+									<? endif; ?>
 									</td>
 								</tr>
 								<?php endforeach; ?>

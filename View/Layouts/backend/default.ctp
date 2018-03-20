@@ -11,6 +11,7 @@
 			'/backend/css/icheck/skins/flat/red',
 			'/backend/css/jstree/jstree.min',
 			'/backend/css/custom',
+			'/backend/css/print_js/print.min',
 			/*
 			'/backend/css/ion/ion.rangeSlider',
 			'/backend/css/ion/ion.rangeSlider.skinFlat',
@@ -49,6 +50,8 @@
 			'/backend/js/app',
 			'/backend/js/meli',
 			'/backend/js/dte',
+			'/backend/js/print_js/print.min',
+			'/backend/js/logistica',
 			//'/backend/js/plugins',
 			//'/backend/js/demo_charts_nvd3'
 			//'/backend/js/demo_charts_morris'
