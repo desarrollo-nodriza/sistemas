@@ -177,14 +177,6 @@ class OrdenTransportesController extends AppController
 		$rangosEnvio     = $this->obtenerRangoPrecios('total_shipping', 1000);
 		$rangosDescuento = $this->obtenerRangoPrecios('total_discounts', 50000);
 
-		# Estados del DTE
-		# OBtener cantidad de folios facturas
-		#$this->getFolioInfo(33, 76381142);
-
-		# Informacion del contribuyente
-		#$contribuyente = $this->getContribuyenteInfo($this->rutSinDv($this->Session->read('Tienda.rut')));
-		
-		#$this->GeoReferencia->obtenerRegiones();
 
 		BreadcrumbComponent::add('Ordenes para transporte ');
 
@@ -220,11 +212,73 @@ class OrdenTransportesController extends AppController
 		BreadcrumbComponent::add('Ordenes para transporte', '/ordenTransportes');
 		BreadcrumbComponent::add('Ver OT´s ');
 
-		$this->set(compact('dtes'));
 	}
 
 
-	public function admin_generar($id_orden = '')
+	public function admin_imprimir_etiqueta($id = '', $id_orden = '')
+	{
+		$this->verificarTienda();
+
+		if ( ! ClassRegistry::init('OrdenTransporte')->exists($id) )
+		{
+			$this->Session->setFlash('No existe la OT consultada.', null, array(), 'danger');
+			$this->redirect(array('action' => 'orden', $id_orden));
+		}
+
+
+		$etiqueta = ClassRegistry::init('OrdenTransporte')->find('first', array(
+			'conditions' => array(
+				'id' => $id
+			),
+			'fields' => array(
+				'OrdenTransporte.r_imagen_etiqueta',
+				'OrdenTransporte.r_numero_ot',
+				'OrdenTransporte.r_barcode'
+			)
+		));
+
+		$etiqueta = $this->Ot->verEtiqueta($etiqueta['OrdenTransporte']['r_imagen_etiqueta'], $etiqueta['OrdenTransporte']['r_numero_ot'], $etiqueta['OrdenTransporte']['r_barcode']);
+		prx($etiqueta);
+	}
+
+
+
+	/**
+	 * suma las dimensiones de un arreglo de productos
+	 * @param  array  $productos Listado de productos
+	 * @param  string $campo     nombre del campo de la dimenison
+	 * @return float  total dimension 
+	 */
+	public function calcularDimension($productos = array(), $campo = '')
+	{	$val = (float) 0.00;
+		foreach ($productos as $ip => $producto) {
+			$val = (float) $val + (float) $producto['Productotienda'][$campo];
+		}
+		return $val;
+	}
+
+
+
+	/**
+	 * Valida que los indices del arreglo tengan un valor
+	 * @param  array  $data Lista de elementos
+	 * @return bool
+	 */
+	public function validarCamposOt($data = array())
+	{
+		if (!empty($data)) {
+			foreach ($data as $ida => $campo) {
+				if (!empty($campo) && $campo != 'e_direccion_complemento') {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+
+	public function admin_generar_chilexpress($id_orden = '')
 	{
 		$this->verificarTienda();
 
@@ -238,63 +292,114 @@ class OrdenTransportesController extends AppController
 		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'OrdenDetalle', 'Lang', 'Cliente', 'ClienteHilo', 'ClienteMensaje', 'Empleado', 'CustomUserdata', 'CustomField', 'CustomFieldLang'));
 
 		if ( $this->request->is('post') || $this->request->is('put') )
-		{	
-			prx($this->request->data);
-			try {
-				$resultado = $this->Ot->generarOt(3,
-				3,
-				'RENCA',
-				22106942,
-				'123456789',
-				'Compra1',
-				10000,
-				0,
-				'Mario Moyano',
-				'mmoyano@chilexpress.cl',
-				'84642291',
-				'Alexis Erazo',
-				'aerazo@chilexpress.cl',
-				'84642291',
-				'PENALOLEN',
-				'Camino de las Camelias',
-				'7909',
-				'Casa 33',
-				'PUDAHUEL',
-				'Jose Joaquin Perez',
-				'1376',
-				'Piso 2',
-				5,
-				1,
-				1,
-				1);
-			} catch (Exception $e) {
-				$resultado = $e->getMessage();
-			}
-
-			return $resultado;
-
+		{	unset($this->request->data['Detalle']);
 			
-			# Guardamos OT
-			if($this->Orden->OrdenTransporte->saveAll($this->request->data)) {
+			$validarCampos = $this->validarCamposOt($this->request->data['OrdenTransporte']);
+
+			if ($validarCampos) {
+				#prx($this->request->data);
+
+				$this->request->data['OrdenTransporte']['tienda_id'] = $this->Session->read('Tienda.id');
+
+				$refEnv = $this->request->data['OrdenTransporte']['e_referencia_envio'];
+				$monCob = $this->request->data['OrdenTransporte']['e_monto_cobrar'];
+				$codPro = $this->request->data['OrdenTransporte']['e_codigo_producto'];
+				$codSer = $this->request->data['OrdenTransporte']['e_codigo_servicio'];
+				$eoc    = $this->request->data['OrdenTransporte']['e_eoc'];
+				$tcc    = $this->request->data['OrdenTransporte']['e_numero_tcc'];
+				$comOri = $this->request->data['OrdenTransporte']['e_comuna_origen'];
+				$remNom = $this->request->data['OrdenTransporte']['e_remitente_nombre'];
+				$remEma = $this->request->data['OrdenTransporte']['e_remitente_email'];
+				$remCel = $this->request->data['OrdenTransporte']['e_remitente_celular'];
+				$desNom = $this->request->data['OrdenTransporte']['e_destinatario_nombre'];
+				$desEma = $this->request->data['OrdenTransporte']['e_destinatario_email'];
+				$desCel = $this->request->data['OrdenTransporte']['e_destinatario_celular'];
+				$desCom = $this->request->data['OrdenTransporte']['e_direccion_comuna'];
+				$desCal = $this->request->data['OrdenTransporte']['e_direccion_calle'];
+				$desNum = $this->request->data['OrdenTransporte']['e_direccion_numero'];
+				$desCop = $this->request->data['OrdenTransporte']['e_direccion_complemento'];
+				$devCom = $this->request->data['OrdenTransporte']['e_direccion_d_comuna'];
+				$devCal = $this->request->data['OrdenTransporte']['e_direccion_d_calle'];
+				$devNum = $this->request->data['OrdenTransporte']['e_direccion_d_numero'];
+				$devCom = $this->request->data['OrdenTransporte']['e_direccion_d_complemento'];
+				$paPeso = $this->request->data['OrdenTransporte']['e_peso'];
+				$paLarg = $this->request->data['OrdenTransporte']['e_largo'];
+				$paAnch = $this->request->data['OrdenTransporte']['e_ancho'];
+				$paAlto = $this->request->data['OrdenTransporte']['e_alto'];
 
 				try {
-					# Enviar DTE a LibreDTE
-					$this->generarDte();
+					$resultado = $this->Ot->generarOt(
+						$codPro,
+						$codSer,
+						$comOri,
+						$tcc,
+						$refEnv,
+						'',
+						$monCob,
+						$eoc,
+						$desNom,
+						$desEma,
+						$desCel,
+						$remNom,
+						$remEma,
+						$remCel,
+						$desCom,
+						$desCal,
+						$desNum,
+						$desCop,
+						$devCom,
+						$devCal,
+						$devNum,
+						$devCom,
+						$paPeso,
+						$paLarg,
+						$paAlto,
+						$paAnch
+					);
 				} catch (Exception $e) {
+					$resultado = $e->getMessage();
+				}
 
-					if($e->getCode() == 200) {
-						$this->Session->setFlash($e->getMessage() , null, array(), 'success');
-					}else{
-						$this->Session->setFlash($e->getMessage() , null, array(), 'warning');
+				if (isset($resultado->respGenerarIntegracionAsistida->DatosEtiqueta)) {
+					
+					$this->request->data['OrdenTransporte']['r_numero_ot']                   = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->numeroOT;
+					$this->request->data['OrdenTransporte']['r_numero_ot_padre']             = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->numeroOTPadre;
+					$this->request->data['OrdenTransporte']['r_glosa_producto']              = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->glosaProductoOT;
+					$this->request->data['OrdenTransporte']['r_glosa_servicio']              = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->glosaServicio;
+					$this->request->data['OrdenTransporte']['r_nombre_destinatario']         = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->nombreDestinatario;
+					$this->request->data['OrdenTransporte']['r_numero_guia']                 = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->numeroGuia;
+					$this->request->data['OrdenTransporte']['r_glosa_cobertura']             = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->glosaCobertura;
+					$this->request->data['OrdenTransporte']['r_direccion']                   = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->direccion;
+					$this->request->data['OrdenTransporte']['r_codigo_region']               = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->codigoRegion;
+					$this->request->data['OrdenTransporte']['r_adicionales']                 = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->adicionales;
+					$this->request->data['OrdenTransporte']['r_peso']                        = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->peso;
+					$this->request->data['OrdenTransporte']['r_alto']                        = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->alto;
+					$this->request->data['OrdenTransporte']['r_ancho']                       = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->ancho;
+					$this->request->data['OrdenTransporte']['r_largo']                       = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->largo;
+					$this->request->data['OrdenTransporte']['r_xml_salida_epl']              = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->xmlSalidaEpl;
+					$this->request->data['OrdenTransporte']['r_barcode']                     = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->barcode;
+					$this->request->data['OrdenTransporte']['r_referencia2']                 = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->referencia2;
+					$this->request->data['OrdenTransporte']['r_informacion_producto']        = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->informacionProducto;
+					$this->request->data['OrdenTransporte']['r_glosa_corta_producto']        = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->GlosaCortaProductoOT;
+					$this->request->data['OrdenTransporte']['r_fecha_impresion']             = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->fechaImpresion;
+					$this->request->data['OrdenTransporte']['r_numero_bulto']                = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->numeroBulto;
+					$this->request->data['OrdenTransporte']['r_centro_distribucion_destino'] = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->centroDistribucionDestino;
+					$this->request->data['OrdenTransporte']['r_imagen_etiqueta']             = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->imagenEtiqueta;
+
+					if (ClassRegistry::init('OrdenTransporte')->save($this->request->data)) {
+						$this->Session->setFlash('OT generada con éxito' , null, array(), 'success');
+						$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'orden', $id_orden));
 					}
-				}	
 
-				$this->redirect(array('controller' => 'ordenTransporte', 'action' => 'orden', $id_orden));
+				}else{
+					$this->Session->setFlash($resultado->getMessage(), null, array(), 'danger');
+					$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'generar_chilexpress', $id_orden));
+				}
 
-			}else{
-				$this->Session->setFlash('Error al guardar la información en la base de detos local. Intente nuevamente.' , null, array(), 'warning');
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
 			}
+
+			$this->Session->setFlash('Error al generar la OT. Verifique los campos e intente nuevamente' , null, array(), 'danger');
+			$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'generar_chilexpress', $id_orden));
 
 		}else{
 
@@ -304,6 +409,7 @@ class OrdenTransportesController extends AppController
 					'OrdenEstado.*',
 					'OrdenTransportista.*',
 					'Transportista.*',
+					'TransportistaIdioma.*',
 					'DireccionEntrega.*',
 					'RegionEntrega.*',
 					'Cliente.*'
@@ -321,9 +427,18 @@ class OrdenTransportesController extends AppController
 		        	array(
 			            'table' => sprintf('%scarrier', $this->Session->read('Tienda.prefijo')),
 			            'alias' => 'Transportista',
+			            'type'  => 'INNER',
+			            'conditions' => array(
+			                'OrdenTransportista.id_carrier = Transportista.id_carrier',
+			                'Transportista.external_module_name = "rg_chilexpress"'
+			            )
+		        	),
+		        	array(
+			            'table' => sprintf('%scarrier_lang', $this->Session->read('Tienda.prefijo')),
+			            'alias' => 'TransportistaIdioma',
 			            'type'  => 'LEFT',
 			            'conditions' => array(
-			                'OrdenTransportista.id_carrier = Transportista.id_carrier'
+			                'Transportista.id_carrier = TransportistaIdioma.id_carrier'
 			            )
 		        	),
 		        	array(
@@ -345,7 +460,7 @@ class OrdenTransportesController extends AppController
 				),
 				'contain' => array(
 					'OrdenEstado' => array('Lang'),
-					'OrdenDetalle',
+					'OrdenDetalle' => array('Productotienda'),
 					'OrdenTransporte',
 					'Cliente',
 					'ClienteHilo' => array('ClienteMensaje' => array('Empleado')),
@@ -354,6 +469,21 @@ class OrdenTransportesController extends AppController
 
 
 			$this->request->data	= $this->Orden->find('first', $opt);
+
+			if (empty($this->request->data)) {
+				$this->Session->setFlash('No es posible generar una OT de Chilexpress para ésta orden de compra.' , null, array(), 'warning');
+				$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'index'));
+			}
+
+			if(!empty($this->request->data['OrdenDetalle'])){
+				$this->request->data['OrdenTransporte']['e_alto'] = $this->calcularDimension($this->request->data['OrdenDetalle'], 'height');
+				$this->request->data['OrdenTransporte']['e_largo'] = $this->calcularDimension($this->request->data['OrdenDetalle'], 'depth');
+				$this->request->data['OrdenTransporte']['e_ancho'] = $this->calcularDimension($this->request->data['OrdenDetalle'], 'width');
+			}
+
+			if (!empty($this->request->data['OrdenTransportista'])){
+				$this->request->data['OrdenTransporte']['e_peso'] = $this->request->data['OrdenTransportista']['weight'];
+			}
 
 			#prx($this->request->data);
 		}
@@ -381,6 +511,12 @@ class OrdenTransportesController extends AppController
  			22106942 => 22106942
  		);
 
+ 		# EOC
+ 		$codigoEoc = array(
+			0 => 'Despacho a domicilio',
+			1 => 'Cliente retira en sucursal'
+		);
+
  		$comunasCobertura = to_array($this->GeoReferencia->obtenerCoberturas());
  		$comunas = array();
 
@@ -399,17 +535,151 @@ class OrdenTransportesController extends AppController
 		if (isset($this->request->data['DireccionEntrega']) && empty($this->request->data['OrdenTransporte']['e_direccion_comuna'])) {
 			$this->request->data['OrdenTransporte']['e_direccion_comuna'] = array_search($this->request->data['DireccionEntrega']['city'], $comunas);
 		}
-		
 
  		/*
  			Definir si es despachoa domicilio o retiro en sucursal
  		 */
 		
-		BreadcrumbComponent::add('Ordenes de transporte', '/ordenTransporte');
-		BreadcrumbComponent::add('Ver OT´s', '/ordenTransporte/orden/'.$id_orden);
+		BreadcrumbComponent::add('Ordenes de transporte', '/ordenTransportes');
+		BreadcrumbComponent::add('Ver OT´s', '/ordenTransportes/orden/'.$id_orden);
 		BreadcrumbComponent::add('Generar OT ');
 
-		$this->set(compact('curriers', 'codigosServicio', 'codigoProductosChilexpress', 'comunas', 'tcc'));
+		$this->set(compact('curriers', 'codigosServicio', 'codigoProductosChilexpress', 'comunas', 'tcc', 'codigoEoc'));
+	}
+
+
+	public function admin_view_chilexpress($id_orden = '')
+	{
+		$this->verificarTienda();
+
+		if ( ! $this->Orden->exists($id_orden) )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		# Modelos que requieren agregar configuración
+		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'OrdenDetalle', 'Lang', 'Cliente', 'ClienteHilo', 'ClienteMensaje', 'Empleado', 'CustomUserdata', 'CustomField', 'CustomFieldLang'));
+
+		$opt = array(
+			'fields' => array(
+				'Orden.*',
+				'OrdenEstado.*',
+				'OrdenTransportista.*',
+				'Transportista.*',
+				'TransportistaIdioma.*',
+				'DireccionEntrega.*',
+				'RegionEntrega.*',
+				'Cliente.*'
+			),
+			'conditions'	=> array('Orden.id_order' => $id_orden),
+			'joins' => array(
+				array(
+		            'table' => sprintf('%sorder_carrier', $this->Session->read('Tienda.prefijo')),
+		            'alias' => 'OrdenTransportista',
+		            'type'  => 'LEFT',
+		            'conditions' => array(
+		                'OrdenTransportista.id_order =' . $id_orden
+		            )
+	        	),
+	        	array(
+		            'table' => sprintf('%scarrier', $this->Session->read('Tienda.prefijo')),
+		            'alias' => 'Transportista',
+		            'type'  => 'LEFT',
+		            'conditions' => array(
+		                'OrdenTransportista.id_carrier = Transportista.id_carrier'
+		            )
+	        	),
+	        	array(
+		            'table' => sprintf('%scarrier_lang', $this->Session->read('Tienda.prefijo')),
+		            'alias' => 'TransportistaIdioma',
+		            'type'  => 'LEFT',
+		            'conditions' => array(
+		                'Transportista.id_carrier = TransportistaIdioma.id_carrier'
+		            )
+	        	),
+	        	array(
+		            'table' => sprintf('%saddress', $this->Session->read('Tienda.prefijo')),
+		            'alias' => 'DireccionEntrega',
+		            'type'  => 'LEFT',
+		            'conditions' => array(
+		                'Orden.id_address_delivery = DireccionEntrega.id_address'
+		            )
+	        	),
+	        	array(
+		            'table' => sprintf('%sstate', $this->Session->read('Tienda.prefijo')),
+		            'alias' => 'RegionEntrega',
+		            'type'  => 'LEFT',
+		            'conditions' => array(
+		                'DireccionEntrega.id_state = RegionEntrega.id_state'
+		            )
+	        	),
+			),
+			'contain' => array(
+				'OrdenEstado' => array('Lang'),
+				'OrdenDetalle' => array('Productotienda'),
+				'OrdenTransporte' => array(
+					'conditions' => array(
+						'OrdenTransporte.transporte' => 'Chilexpress'
+					)
+				),
+				'Cliente',
+				'ClienteHilo' => array('ClienteMensaje' => array('Empleado')),
+			),
+		);
+
+
+		$this->request->data	= $this->Orden->find('first', $opt);
+		#prx($this->request->data);
+
+		# Transportistas	
+		$curriers = array(
+			'Chilexpress' => 'Chilexpress'
+		);
+
+		# Servicios Chilexpress
+		$codigosServicio = array(
+			3 => 'Chilexpress normal',
+			2 => 'Overnight'
+		);
+
+		# Productos Chilexpress
+		$codigoProductosChilexpress = array(
+			3 => 'ENCOMIENDA',
+			#2 => 'VALIJA',
+			#1 => 'DOCUMENTO'
+ 		);
+
+ 		# TCC
+ 		$tcc = array(
+ 			22106942 => 22106942
+ 		);
+
+ 		# EOC
+ 		$codigoEoc = array(
+			0 => 'Despacho a domicilio',
+			1 => 'Cliente retira en sucursal'
+		);
+
+ 		$comunasCobertura = to_array($this->GeoReferencia->obtenerCoberturas());
+ 		$comunas = array();
+
+ 		if ($comunasCobertura['respObtenerCobertura']['CodEstado'] == 0) {
+ 			foreach ($comunasCobertura['respObtenerCobertura']['Coberturas'] as $ico => $cobertura) {
+ 				$comunas[$cobertura['GlsComuna']] = $cobertura['GlsComuna'];	
+ 			}
+ 		}
+
+
+ 		/*
+ 			Definir si es despachoa domicilio o retiro en sucursal
+ 		 */
+		
+		BreadcrumbComponent::add('Ordenes de transporte', '/ordenTransportes');
+		BreadcrumbComponent::add('Ver OT´s', '/ordenTransportes/orden/'.$id_orden);
+		BreadcrumbComponent::add('Detalle OT ');
+
+		$this->set(compact('curriers', 'codigosServicio', 'codigoProductosChilexpress', 'comunas', 'tcc', 'codigoEoc'));
 	}
 
 
@@ -417,8 +687,8 @@ class OrdenTransportesController extends AppController
 	{
 		if ( $this->request->is('post') )
 		{
-			$this->OrdenTransporte->create();
-			if ( $this->OrdenTransporte->save($this->request->data) )
+			ClassRegistry::init('OrdenTransporte')->create();
+			if ( ClassRegistry::init('OrdenTransporte')->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');
 				$this->redirect(array('action' => 'index'));
@@ -434,7 +704,7 @@ class OrdenTransportesController extends AppController
 
 	public function admin_edit($id = null)
 	{
-		if ( ! $this->OrdenTransporte->exists($id) )
+		if ( ! ClassRegistry::init('OrdenTransporte')->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
@@ -442,7 +712,7 @@ class OrdenTransportesController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{
-			if ( $this->OrdenTransporte->save($this->request->data) )
+			if ( ClassRegistry::init('OrdenTransporte')->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
 				$this->redirect(array('action' => 'index'));
@@ -454,7 +724,7 @@ class OrdenTransportesController extends AppController
 		}
 		else
 		{
-			$this->request->data	= $this->OrdenTransporte->find('first', array(
+			$this->request->data	= ClassRegistry::init('OrdenTransporte')->find('first', array(
 				'conditions'	=> array('Transporte.id' => $id)
 			));
 		}
@@ -465,15 +735,15 @@ class OrdenTransportesController extends AppController
 
 	public function admin_delete($id = null)
 	{
-		$this->OrdenTransporte->id = $id;
-		if ( ! $this->OrdenTransporte->exists() )
+		ClassRegistry::init('OrdenTransporte')->id = $id;
+		if ( ! ClassRegistry::init('OrdenTransporte')->exists() )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
 
 		$this->request->onlyAllow('post', 'delete');
-		if ( $this->OrdenTransporte->delete() )
+		if ( ClassRegistry::init('OrdenTransporte')->delete() )
 		{
 			$this->Session->setFlash('Registro eliminado correctamente.', null, array(), 'success');
 			$this->redirect(array('action' => 'index'));
@@ -484,11 +754,11 @@ class OrdenTransportesController extends AppController
 
 	public function admin_exportar()
 	{
-		$datos			= $this->OrdenTransporte->find('all', array(
+		$datos			= ClassRegistry::init('OrdenTransporte')->find('all', array(
 			'recursive'				=> -1
 		));
-		$campos			= array_keys($this->OrdenTransporte->_schema);
-		$modelo			= $this->OrdenTransporte->alias;
+		$campos			= array_keys(ClassRegistry::init('OrdenTransporte')->_schema);
+		$modelo			= ClassRegistry::init('OrdenTransporte')->alias;
 
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}
@@ -510,56 +780,130 @@ class OrdenTransportesController extends AppController
 
 
 		$htmlOptions = '';
-		$htmlDiv     = '<div id="comunasGlosario" class="hide">';
+		$htmlDiv     = '<div class="row">';
+		$htmlDiv     .= '<div class="col-xs-12">';
+		$htmlDiv     .= '<h3>Sucrusales disponibles en ' . $comuna . '</h3>';
+		$htmlDiv     .= '<div id="comunasGlosario" class="table-responsive" style="height: 200px; overflow-y: scroll;">';
 		$htmlDiv     .= '<table class="table table-bordered">';
 		$htmlDiv     .= '<thead>';
+		$htmlDiv     .= '<th>Usar</th>';
 		$htmlDiv     .= '<th>Nombre Oficina</th>';
 		$htmlDiv     .= '<th>Nombre Calle</th>';
 		$htmlDiv     .= '<th>Número Oficina</th>';
 		$htmlDiv     .= '<th>Comuna</th>';
+		$htmlDiv     .= '<th>Complemento</th>';
 		$htmlDiv     .= '</thead>';
+
+		$htmlDivNoResult = '<div class="row">';
+		$htmlDivNoResult .= '<div class="col-xs-12">';
+		$htmlDivNoResult .= '<h3>No hay oficinas disponibles en '.$comuna.'</h3>';
+		$htmlDivNoResult .= '</div>';
+		$htmlDivNoResult .= '</div>';
 
 		$oficinas = to_array($this->GeoReferencia->obtenerDireccionOficinasComuna($comuna));
 		
 		if (!isset($oficinas['respObtenerOficinas']['CodEstado']) || $oficinas['respObtenerOficinas']['CodEstado'] != 0) {
+
 			$res = array(
-				'code'    => 300,
-				'message' => 'Ocurrió un error al obtener los datos.',
+				'code'    => 404,
+				'message' => 'Solicitud procesada con éxito',
 				'lista'   => '',
-				'tabla'   => ''
+				'tabla'   => $htmlDivNoResult
 			);
-		
+			
 			echo json_encode($res);
 			exit;
 		}
 
-
 		$htmlDiv .= '<tbody>';
 
-		foreach($oficinas['respObtenerOficinas']['Calles'] as $ic => $calle) {
+		if (isset($oficinas['respObtenerOficinas']['Calles'][0])) {
+
+			foreach($oficinas['respObtenerOficinas']['Calles'] as $ic => $calle) {
+				# Options
+				$htmlOptions .= '<option value="' . $calle['NombreOficina'] . '">' . $calle['NombreOficina'] . '</option>';
+				
+				# Tabla
+				$htmlDiv .= '<tr>';
+				$htmlDiv .= '<td><input type="radio" name="usar_sucursal" class="icheckbox js-select-sucursal"></td>';
+				$htmlDiv .= '<td>' . $calle['NombreOficina'] . '</td>';
+				$htmlDiv .= '<td>' . $calle['NombreCalle'] . '</td>';
+				$htmlDiv .= '<td>' . $calle['Numeracion'] . '</td>';
+				$htmlDiv .= '<td>' . $calle['NombreComuna'] . '</td>';
+				$htmlDiv .= '<td>Chilexpress</td>';
+				$htmlDiv .= '<tr>';
+			}	
+
+		}else{
+
 			# Options
-			$htmlOptions .= '<option value="' . $calle['NombreOficina'] . '">' . $calle['NombreOficina'] . '</option>';
+			$htmlOptions .= '<option value="' . $oficinas['respObtenerOficinas']['Calles']['NombreOficina'] . '">' . $oficinas['respObtenerOficinas']['Calles']['NombreOficina'] . '</option>';
 			
 			# Tabla
 			$htmlDiv .= '<tr>';
-			$htmlDiv .= '<td>' . $calle['NombreOficina'] . '</td>';
-			$htmlDiv .= '<td>' . $calle['NombreCalle'] . '</td>';
-			$htmlDiv .= '<td>' . $calle['Numeracion'] . '</td>';
-			$htmlDiv .= '<td>' . $calle['NombreComuna'] . '</td>';
+			$htmlDiv .= '<td><input type="radio" name="usar_sucursal" class="icheckbox js-select-sucursal"></td>';
+			$htmlDiv .= '<td>' . $oficinas['respObtenerOficinas']['Calles']['NombreOficina'] . '</td>';
+			$htmlDiv .= '<td>' . $oficinas['respObtenerOficinas']['Calles']['NombreCalle'] . '</td>';
+			$htmlDiv .= '<td>' . $oficinas['respObtenerOficinas']['Calles']['Numeracion'] . '</td>';
+			$htmlDiv .= '<td>' . $oficinas['respObtenerOficinas']['Calles']['NombreComuna'] . '</td>';
+			$htmlDiv .= '<td>Chilexpress</td>';
 			$htmlDiv .= '<tr>';
 
 		}
 
 		$htmlDiv .= '</tbody>';
 		$htmlDiv .= '</ul>';
-		$htmlDiv .= '</div>';
+		$htmlDiv .= '</div><!-- Endtable div -->';
+		$htmlDiv .= '</div><!-- End col -->';
+		$htmlDiv .= '</div><!-- End row -->';
 
 		$res = array(
-			'code'    => 400,
+			'code'    => 200,
 			'message' => 'Solicitud procesada con éxito',
 			'lista'   => $htmlOptions,
 			'tabla'   => $htmlDiv
 		);
+		
+		echo json_encode($res);
+		exit;
+	}
+
+
+
+	public function admin_validar_direccion($comuna = '', $calle = '', $numero = '')
+	{	
+		if (empty($comuna) || empty($calle) || empty($numero)) {
+			$res = array(
+				'code'    => 300,
+				'message' => 'Ingrese Comuna, Calle y número.'
+			);
+		
+			echo json_encode($res);
+			exit;
+		}	
+
+		$direccion = to_array($this->GeoReferencia->validarDireccion($comuna, $calle, '' , $numero, '', ''));
+		
+		if (!isset($direccion['respObtenerDireccion']['CodEstado']) || $direccion['respObtenerDireccion']['CodEstado'] != 0) {
+
+			$res = array(
+				'code'    => 404,
+				'message' => $direccion['respObtenerDireccion']['GlsEstado']
+			);
+			
+			echo json_encode($res);
+			exit;
+		}
+
+
+		if (isset($direccion['respObtenerDireccion']['Direcciones']['CodResultado']) && $direccion['respObtenerDireccion']['CodEstado'] == 0 ) {
+
+			$res = array(
+				'code'    => 200,
+				'message' => $direccion['respObtenerDireccion']['GlsEstado']
+			);
+
+		}
 		
 		echo json_encode($res);
 		exit;

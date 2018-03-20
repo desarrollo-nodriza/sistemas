@@ -159,10 +159,14 @@
 									<td><?= CakeNumber::currency($orden['Orden']['total_paid'], 'CLP'); ?>&nbsp;</td>
 									<td><?= CakeNumber::currency($orden['Orden']['total_shipping'], 'CLP'); ?>&nbsp;</td>
 									<td><?= h($orden['Orden']['date_add']); ?>&nbsp;</td>
-									<td><?= $dte = (!empty($orden['OrdenTransporte'])) ? '<label class="label label-success">' . count($orden['OrdenTransporte']) . ' OT emitida/s' . '</label>' : 'No emitido'; ?>&nbsp;</td>
+									<td><?= $ot = (!empty($orden['OrdenTransporte'])) ? '<label class="label label-success">' . count($orden['OrdenTransporte']) . ' OT emitida/s' . '</label>' : 'No emitido'; ?>&nbsp;</td>
 									<td>
 									<? if ($permisos['edit']) : ?>
-									<?= $this->Html->link('<i class="fa fa-eye"></i> Ver OT´s', array('action' => 'orden', $orden['Orden']['id_order']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Ver OT´s', 'escape' => false)); ?>
+										<? if (!empty($orden['OrdenTransporte'])) : ?>
+										<?= $this->Html->link('<i class="fa fa-eye"></i> Ver OT´s', array('action' => 'orden', $orden['Orden']['id_order']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Ver OT´s', 'escape' => false)); ?>
+										<? else :?>
+										<?= $this->Html->link('<i class="fa fa-eye"></i> Crear OT´s', array('action' => 'orden', $orden['Orden']['id_order']), array('class' => 'btn btn-xs btn-primary', 'rel' => 'tooltip', 'title' => 'Crear OT´s', 'escape' => false)); ?>
+										<? endif; ?>
 									<? endif; ?>
 					
 									</td>

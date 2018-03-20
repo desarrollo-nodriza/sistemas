@@ -34,6 +34,15 @@ Class OrdenDetalle extends AppModel {
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
+		'Productotienda' => array(
+			'className'				=> 'Productotienda',
+			'foreignKey'			=> 'product_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		)
 	);
 }

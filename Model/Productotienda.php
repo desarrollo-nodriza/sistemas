@@ -182,6 +182,19 @@ Class Productotienda extends AppModel {
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'OrdenDetalle' => array(
+			'className'				=> 'OrdenDetalle',
+			'foreignKey'			=> 'product_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 	

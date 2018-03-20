@@ -29,5 +29,21 @@
 
 			return $r;
 		}
+
+
+		public function verEtiqueta($imagen = '', $otcode = '', $barcode = '')
+		{	
+			$collection = new ComponentCollection();
+        	$ot = new OtComponent($collection);
+
+        	if (!empty($imagen) && !empty($otcode) && !empty($barcode)){
+        		$etiqueta = $ot->verEtiqueta($imagen, $otcode, $barcode);
+
+        		return $etiqueta;
+        	}
+        	
+		}
+
+		
 	}
 ?>
