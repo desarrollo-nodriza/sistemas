@@ -1,11 +1,89 @@
 <?php
 App::uses('Component', 'Controller');
 App::import('Vendor', 'Chilexpress.OtWS', array('file' => 'ot/OtWS.php'));
-
+App::import('Vendor', 'Chilexpress.ChilexpressLAFFPack', array('file' => 'ChilexpressLAFFPack.php'));
 
 class OtComponent extends Component
 {	
 	private $OtWS;
+
+	private static $servicios = array(
+        array(
+            'code' => 1,
+            'grade' => 9,
+            'desc' => array(
+                'en' => 'Ultra fast',
+                'es' => 'Ultra rapido'
+            )
+        ),
+        array(
+            'code' => 2,
+            'grade' => 8,
+            'desc' => array(
+                'en' => 'Overnight',
+                'es' => 'Overnight'
+            )
+        ),
+        array(
+            'code' => 3,
+            'grade' => 7,
+            'desc' => array(
+                'en' => 'Next business day',
+                'es' => 'Dia habil siguiente'
+            )
+        ),
+        array(
+            'code' => 4,
+            'grade' => 6,
+            'desc' => array(
+                'en' => 'Subsequent business day',
+                'es' => 'Dia habil subsiguiente'
+            )
+        ),
+        array(
+            'code' => 5,
+            'grade' => 5,
+            'desc' => array(
+                'en' => 'Third day',
+                'es' => 'Tercer dia'
+            )
+        ),
+        array(
+            'code' => 8,
+            'grade' => 9,
+            'desc' => array(
+                'en' => 'Am / pm',
+                'es' => 'Am / pm'
+            )
+        ),
+        array(
+            'code' => 11,
+            'grade' => 4,
+            'desc' => array(
+                'en' => 'Delivery day saturday',
+                'es' => 'Entrega dia sabado'
+            )
+        ),
+        array(
+            'code' => 12,
+            'grade' => 8,
+            'desc' => array(
+                'en' => 'Overnight priority',
+                'es' => 'Overnight prioritario'
+            )
+    	)
+	);
+
+	private static $productos = array(
+		3 => 'ENCOMIENDA',
+		#2 => 'VALIJA',
+		#1 => 'DOCUMENTO'
+	);
+
+	private static $eoc = array(
+		0 => 'Despacho a domicilio',
+		1 => 'Cliente retira en sucursal'
+	);
 
 
 	public function initialize(Controller $controller)
@@ -168,4 +246,82 @@ class OtComponent extends Component
 		return false;
 	}
 
+
+	public function obtenerListaServicios()
+	{
+		$serviciosLista = array();
+		$servicios = self::$servicios;
+
+		foreach ($servicios as $is => $servicio) {
+			$serviciosLista[$servicio['code']] = $servicio['desc']['es'];
+		}
+
+		return $serviciosLista;
+	}
+
+
+	public function obtenerListaProductos()
+	{
+		return self::$productos;
+	}
+
+
+	public function obtenerListaTCC()
+	{
+		$tcc = Configure::read('Chilexpress.tcc');
+		
+		if (!empty($tcc)) {
+			return array($tcc => $tcc);
+		}
+
+		return array();
+	}
+
+
+	public function obtenerListaEoc()
+	{
+		return self::$eoc;
+	}
+
+	/**
+	 * Crea una arreglo con las cajas de los productos segun sis dimensiones
+	 * @param  array  $productos 	Listado de productos
+	 * @param  string $modelo     	Nombre del modelo de los productos
+	 * @return array
+	 */
+	public function obtenerCajasProductos($productos = array(), $modelo = '')
+	{	
+		foreach ($productos as $ip => $producto) {
+			$product_width  = (float) $producto[$modelo]['width'];
+			$product_height = (float) $producto[$modelo]['height'];
+			$product_depth  = (float) $producto[$modelo]['depth'];
+			$values = array(
+                $product_width,
+                $product_height,
+                $product_depth
+            );
+            
+            sort($values);
+
+            $boxes[] = array_combine(array('height', 'width', 'length'), $values);
+		}
+
+		return $boxes;
+	}
+
+
+	public function obtenerDimensionesPaquete($cajas = array())
+	{	
+		# Inicia Clase LAFF
+        $LAFF = new ChilexpressLAFFPack();
+
+        # Se empaquetan las cajas en un paquete
+        $LAFF->pack($cajas);
+        
+        # Se obtienen las dimensiones del paquete
+        $paquete = $LAFF->get_container_dimensions();
+
+        return $paquete;
+        
+	}
 }

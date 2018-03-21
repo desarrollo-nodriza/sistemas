@@ -1,5 +1,6 @@
 <?php
 App::uses('AppController', 'Controller');
+
 class OrdenTransportesController extends AppController
 {	
 	public $uses = array('Orden');
@@ -238,23 +239,7 @@ class OrdenTransportesController extends AppController
 		));
 
 		$etiqueta = $this->Ot->verEtiqueta($etiqueta['OrdenTransporte']['r_imagen_etiqueta'], $etiqueta['OrdenTransporte']['r_numero_ot'], $etiqueta['OrdenTransporte']['r_barcode']);
-		prx($etiqueta);
-	}
-
-
-
-	/**
-	 * suma las dimensiones de un arreglo de productos
-	 * @param  array  $productos Listado de productos
-	 * @param  string $campo     nombre del campo de la dimenison
-	 * @return float  total dimension 
-	 */
-	public function calcularDimension($productos = array(), $campo = '')
-	{	$val = (float) 0.00;
-		foreach ($productos as $ip => $producto) {
-			$val = (float) $val + (float) $producto['Productotienda'][$campo];
-		}
-		return $val;
+		return $etiqueta;
 	}
 
 
@@ -326,7 +311,7 @@ class OrdenTransportesController extends AppController
 				$paLarg = $this->request->data['OrdenTransporte']['e_largo'];
 				$paAnch = $this->request->data['OrdenTransporte']['e_ancho'];
 				$paAlto = $this->request->data['OrdenTransporte']['e_alto'];
-
+				
 				try {
 					$resultado = $this->Ot->generarOt(
 						$codPro,
@@ -412,7 +397,8 @@ class OrdenTransportesController extends AppController
 					'TransportistaIdioma.*',
 					'DireccionEntrega.*',
 					'RegionEntrega.*',
-					'Cliente.*'
+					'Cliente.*',
+					'MensajeInterno.*'
 				),
 				'conditions'	=> array('Orden.id_order' => $id_orden),
 				'joins' => array(
@@ -457,6 +443,14 @@ class OrdenTransportesController extends AppController
 			                'DireccionEntrega.id_state = RegionEntrega.id_state'
 			            )
 		        	),
+		        	array(
+			            'table' => sprintf('%smessage', $this->Session->read('Tienda.prefijo')),
+			            'alias' => 'MensajeInterno',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Orden.id_cart = MensajeInterno.id_cart'
+			            )
+		        	),
 				),
 				'contain' => array(
 					'OrdenEstado' => array('Lang'),
@@ -475,10 +469,22 @@ class OrdenTransportesController extends AppController
 				$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'index'));
 			}
 
+			# Valor por defecto de las medidas
+			$this->request->data['OrdenTransporte']['e_alto'] = 0;
+			$this->request->data['OrdenTransporte']['e_largo'] = 0;
+			$this->request->data['OrdenTransporte']['e_ancho'] = 0;
+
 			if(!empty($this->request->data['OrdenDetalle'])){
-				$this->request->data['OrdenTransporte']['e_alto'] = $this->calcularDimension($this->request->data['OrdenDetalle'], 'height');
-				$this->request->data['OrdenTransporte']['e_largo'] = $this->calcularDimension($this->request->data['OrdenDetalle'], 'depth');
-				$this->request->data['OrdenTransporte']['e_ancho'] = $this->calcularDimension($this->request->data['OrdenDetalle'], 'width');
+
+				# Se obtienen los tamaños de los productos
+				$cajasProductos = $this->Ot->obtenerCajasProductos($this->request->data['OrdenDetalle'], 'Productotienda');
+
+				# Se Arma un paquete de productos con el algoritmo LAFF y se obtienen sus medidas
+				$paqueteProductos = $this->Ot->obtenerDimensionesPaquete($cajasProductos);
+
+				$this->request->data['OrdenTransporte']['e_alto']  = (!empty($paqueteProductos['height'])) ? $paqueteProductos['height'] : 0 ;
+				$this->request->data['OrdenTransporte']['e_largo'] = (!empty($paqueteProductos['length'])) ? $paqueteProductos['length'] : 0 ;
+				$this->request->data['OrdenTransporte']['e_ancho'] = (!empty($paqueteProductos['width'])) ? $paqueteProductos['width'] : 0 ;
 			}
 
 			if (!empty($this->request->data['OrdenTransportista'])){
@@ -494,28 +500,16 @@ class OrdenTransportesController extends AppController
 		);
 
 		# Servicios Chilexpress
-		$codigosServicio = array(
-			3 => 'Chilexpress normal',
-			2 => 'Overnight'
-		);
+		$codigosServicio = $this->Ot->obtenerListaServicios();
 
 		# Productos Chilexpress
-		$codigoProductosChilexpress = array(
-			3 => 'ENCOMIENDA',
-			#2 => 'VALIJA',
-			#1 => 'DOCUMENTO'
- 		);
+		$codigoProductosChilexpress = $this->Ot->obtenerListaProductos();
 
  		# TCC
- 		$tcc = array(
- 			22106942 => 22106942
- 		);
+ 		$tcc = $this->Ot->obtenerListaTCC();
 
  		# EOC
- 		$codigoEoc = array(
-			0 => 'Despacho a domicilio',
-			1 => 'Cliente retira en sucursal'
-		);
+ 		$codigoEoc = $this->Ot->obtenerListaEoc();
 
  		$comunasCobertura = to_array($this->GeoReferencia->obtenerCoberturas());
  		$comunas = array();
@@ -528,17 +522,13 @@ class OrdenTransportesController extends AppController
 
  		# Se agrega id de servicio para usarlo en el front
  		if (isset($this->request->data['Transportista']) && empty($this->request->data['OrdenTransporte']['e_codigo_servicio'])) {
-			$this->request->data['OrdenTransporte']['e_codigo_servicio'] = array_search($this->request->data['Transportista']['name'], $codigosServicio);
+			$this->request->data['OrdenTransporte']['e_codigo_servicio'] = array_search($this->request->data['TransportistaIdioma']['delay'], $codigosServicio);
 		}
 
 		# Se agrega comuna de destino
 		if (isset($this->request->data['DireccionEntrega']) && empty($this->request->data['OrdenTransporte']['e_direccion_comuna'])) {
 			$this->request->data['OrdenTransporte']['e_direccion_comuna'] = array_search($this->request->data['DireccionEntrega']['city'], $comunas);
 		}
-
- 		/*
- 			Definir si es despachoa domicilio o retiro en sucursal
- 		 */
 		
 		BreadcrumbComponent::add('Ordenes de transporte', '/ordenTransportes');
 		BreadcrumbComponent::add('Ver OT´s', '/ordenTransportes/orden/'.$id_orden);
@@ -630,7 +620,12 @@ class OrdenTransportesController extends AppController
 
 
 		$this->request->data	= $this->Orden->find('first', $opt);
-		#prx($this->request->data);
+		
+		if ( empty($this->request->data['OrdenTransporte']) )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
 
 		# Transportistas	
 		$curriers = array(
@@ -638,28 +633,16 @@ class OrdenTransportesController extends AppController
 		);
 
 		# Servicios Chilexpress
-		$codigosServicio = array(
-			3 => 'Chilexpress normal',
-			2 => 'Overnight'
-		);
+		$codigosServicio = $this->Ot->obtenerListaServicios();
 
 		# Productos Chilexpress
-		$codigoProductosChilexpress = array(
-			3 => 'ENCOMIENDA',
-			#2 => 'VALIJA',
-			#1 => 'DOCUMENTO'
- 		);
+		$codigoProductosChilexpress = $this->Ot->obtenerListaProductos();
 
  		# TCC
- 		$tcc = array(
- 			22106942 => 22106942
- 		);
+ 		$tcc = $this->Ot->obtenerListaTCC();
 
  		# EOC
- 		$codigoEoc = array(
-			0 => 'Despacho a domicilio',
-			1 => 'Cliente retira en sucursal'
-		);
+ 		$codigoEoc = $this->Ot->obtenerListaEoc();
 
  		$comunasCobertura = to_array($this->GeoReferencia->obtenerCoberturas());
  		$comunas = array();

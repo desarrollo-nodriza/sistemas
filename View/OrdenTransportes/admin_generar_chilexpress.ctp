@@ -167,6 +167,24 @@
 		<div class="col-xs-12 col-sm-6">
 			<h2><i class="fa fa-envelope" aria-hidden="true"></i> <?=__('Mensajes'); ?> <small>(<?=$mensajes = (isset($this->request->data['ClienteHilo'][0]['ClienteMensaje'])) ? count($this->request->data['ClienteHilo'][0]['ClienteMensaje']) : 0 ; ?>)</small></h2>
 			<div class="panel panel-default">
+				<? if(!empty($this->request->data['MensajeInterno'])) : ?>
+				<div class="panel-body">
+					<div class="messages messages-img">
+						<div class="item in">
+		                    <div class="image">
+		                        <img src="http://lorempixel.com/200/200/abstract/">
+		                    </div>
+		                    <div class="text">
+		                        <div class="heading">
+		                            <a href="#">Mensaje generado por sistema <?= ($this->request->data['MensajeInterno']['private']) ? '<label class="label label-info">Privado</label>' : '' ; ?></a>
+		                            <span class="date"><?= $this->request->data['MensajeInterno']['date_add']; ?></span>
+		                        </div>
+		                        <?= nl2br($this->request->data['MensajeInterno']['message']); ?>
+		                    </div>
+		                </div>
+		            </div>
+		        </div>
+				<? endif; ?>
 				<? if (isset($this->request->data['ClienteHilo'][0]['ClienteMensaje'])) : ?>
 				<div class="panel-body">
 					<div class="messages messages-img">
@@ -371,19 +389,31 @@
 					<div class="row">
 						<div class="col-xs-12 col-sm-3 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_peso', 'Peso del paquete'); ?>
-							<?= $this->Form->input('OrdenTransporte.e_peso', array('class' => 'form-control', 'placeholder' => '')); ?>
+							<div class="input-group">
+                                <?= $this->Form->input('OrdenTransporte.e_peso', array('class' => 'form-control', 'placeholder' => '')); ?>
+                                <span class="input-group-addon">kg</span>
+                            </div>
 						</div>
 						<div class="col-xs-12 col-sm-3 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_largo', 'Largo del paquete'); ?>
-							<?= $this->Form->input('OrdenTransporte.e_largo', array('class' => 'form-control', 'placeholder' => '')); ?>
+							<div class="input-group">
+                                <?= $this->Form->input('OrdenTransporte.e_largo', array('class' => 'form-control', 'placeholder' => '')); ?>
+                                <span class="input-group-addon">cm</span>
+                            </div>
 						</div>
 						<div class="col-xs-12 col-sm-3 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_ancho', 'Ancho del paquete'); ?>
-							<?= $this->Form->input('OrdenTransporte.e_ancho', array('class' => 'form-control', 'placeholder' => '')); ?>
+							<div class="input-group">
+                                <?= $this->Form->input('OrdenTransporte.e_ancho', array('class' => 'form-control', 'placeholder' => '')); ?>
+                                <span class="input-group-addon">cm</span>
+                            </div>
 						</div>
 						<div class="col-xs-12 col-sm-3 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_alto', 'Alto del paquete'); ?>
-							<?= $this->Form->input('OrdenTransporte.e_alto', array('class' => 'form-control', 'placeholder' => '')); ?>
+							<div class="input-group">
+                                <?= $this->Form->input('OrdenTransporte.e_alto', array('class' => 'form-control', 'placeholder' => '')); ?>
+                                <span class="input-group-addon">cm</span>
+                            </div>
 						</div>
 					</div>
 				</div>
