@@ -127,8 +127,8 @@ $(function() {
 
 			return {
 				init: function(){
-					if($('#OrdenTransporteAdminGenerarForm').length){
-						validar($('#OrdenTransporteAdminGenerarForm'));
+					if($('#OrdenTransporteAdminGenerarChilexpressForm').length){
+						validar($('#OrdenTransporteAdminGenerarChilexpressForm'));
 					}
 				}
 			}

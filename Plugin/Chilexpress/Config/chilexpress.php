@@ -1,6 +1,7 @@
 <?php
 $config = array(
 	'Chilexpress' => array(
+		'tcc' => '22106942',
 		'georeferencia' => array(
 			'negocio' 		=> '0',
 			'sistema'		=> 'XX',
@@ -11,7 +12,7 @@ $config = array(
 			'endpoint'		=> 'http://qaws.ssichilexpress.cl/GeoReferencia?wsdl',
 			'namespace'		=> 'http://www.chilexpress.cl/CorpGR/',
 			'soap'			=> SOAP_1_1,
-			),
+		),
 		'tarificacion' => array(
 			'negocio' 		=> '0',
 			'sistema'		=> 'XX',
@@ -22,10 +23,10 @@ $config = array(
 			'endpoint'		=> 'http://qaws.ssichilexpress.cl/TarificarCourier?wsdl',
 			'namespace'		=> 'http://www.chilexpress.cl/TarificaCourier/',
 			'soap'			=> SOAP_1_1,
-			),
+		),
 		'seguimiento' => array(
 			'path' 			=> WWW_ROOT . 'Tracking' . DS // Ruta FTP donde se guardarán el documento de seguimientos entregado por  Chilexpress
-			),
+		),
 		'ot' => array(
 			'negocio' 		=> '0',
 			'sistema'		=> 'XX',
@@ -38,6 +39,6 @@ $config = array(
 			'endpoint'		=> 'http://qaws.ssichilexpress.cl/OSB/GenerarOTDigitalIndividualC2C?wsdl',
 			'namespace'		=> 'http://www.chilexpress.cl/IntegracionAsistida/',
 			'soap'			=> SOAP_1_1,
-			)
 		)
-	);
+	)
+);

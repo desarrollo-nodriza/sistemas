@@ -335,19 +335,31 @@
 					<div class="row">
 						<div class="col-xs-12 col-sm-3 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_peso', 'Peso del paquete'); ?>
-							<div class="form-control"><?=$this->request->data['OrdenTransporte'][0]['e_peso']; ?></div>
+							<div class="input-group">
+                                <div class="form-control"><?=$this->request->data['OrdenTransporte'][0]['e_peso']; ?></div>
+                                <span class="input-group-addon">kg</span>
+                            </div>
 						</div>
 						<div class="col-xs-12 col-sm-3 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_largo', 'Largo del paquete'); ?>
-							<div class="form-control"><?=$this->request->data['OrdenTransporte'][0]['e_largo']; ?></div>
+							<div class="input-group">
+                                <div class="form-control"><?=$this->request->data['OrdenTransporte'][0]['e_largo']; ?></div>
+                                <span class="input-group-addon">cm</span>
+                            </div>
 						</div>
 						<div class="col-xs-12 col-sm-3 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_ancho', 'Ancho del paquete'); ?>
-							<div class="form-control"><?=$this->request->data['OrdenTransporte'][0]['e_ancho']; ?></div>
+							<div class="input-group">
+                                <div class="form-control"><?=$this->request->data['OrdenTransporte'][0]['e_ancho']; ?></div>
+                                <span class="input-group-addon">cm</span>
+                            </div>
 						</div>
 						<div class="col-xs-12 col-sm-3 form-group">
 							<?= $this->Form->label('OrdenTransporte.e_alto', 'Alto del paquete'); ?>
-							<div class="form-control"><?=$this->request->data['OrdenTransporte'][0]['e_alto']; ?></div>
+							<div class="input-group">
+                                <div class="form-control"><?=$this->request->data['OrdenTransporte'][0]['e_alto']; ?></div>
+                                <span class="input-group-addon">cm</span>
+                            </div>
 						</div>
 					</div>
 				</div>
