@@ -248,6 +248,27 @@ class OrdenesController extends AppController
 
 	}
 
+	/**
+	 * Verifica si una orden tiene DTE emitido correctamente
+	 * @return bool 
+	 */
+	public function unico()
+	{
+		$dts = ClassRegistry::init('Dte')->find('count', array(
+			'conditions' => array(
+				'Dte.id_order' => $this->request->data['Dte']['id_order'],
+				'Dte.estado' => 'dte_real_emitido'
+			)
+		));
+		
+		if ($dts > 0) {
+			return false;
+		}
+
+		return true;
+		
+	}
+
 
 	public function admin_generar($id_orden = '')
 	{
@@ -264,6 +285,12 @@ class OrdenesController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
+			if(!$this->unico())
+			{
+				$this->Session->setFlash('Ya ha generado un DTE válido para ésta orden de compra.' , null, array(), 'warning');
+				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
+			}
+
 			# Rut sin puntos
 			if (!empty($this->request->data['Dte']['rut_receptor'])) {
 				$this->request->data['Dte']['rut_receptor'] = str_replace('.', '', $this->request->data['Dte']['rut_receptor']);
@@ -412,6 +439,12 @@ class OrdenesController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
+			if(!$this->unico())
+			{
+				$this->Session->setFlash('Ya ha generado un DTE válido para ésta orden de compra.' , null, array(), 'warning');
+				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
+			}
+
 			# Rut sin puntos
 			if (!empty($this->request->data['Dte']['rut_receptor'])) {
 				$this->request->data['Dte']['rut_receptor'] = str_replace('.', '', $this->request->data['Dte']['rut_receptor']);
@@ -613,6 +646,13 @@ class OrdenesController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
+
+			if(!$this->unico())
+			{
+				$this->Session->setFlash('Ya ha generado un DTE válido para ésta orden de compra.' , null, array(), 'warning');
+				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
+			}
+
 			# Rut sin puntos
 			if (!empty($this->request->data['Dte']['rut_receptor'])) {
 				$this->request->data['Dte']['rut_receptor'] = str_replace('.', '', $this->request->data['Dte']['rut_receptor']);
