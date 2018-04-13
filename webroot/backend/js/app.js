@@ -729,6 +729,51 @@ $.extend({
 				
 			}
 		},
+		generarNombreUsuario: {
+			toSlug: function(text) {
+				return text
+				        .toLowerCase()
+				        .replace(/ /g,'_')
+				        .replace(/[^\w-]+/g,'')
+				        ;
+			},
+			bind: function(){
+
+				$('#SocioUsuario').focus(function(){
+					return false;
+				});
+				
+				$('#SocioNombre').on('focusout', function(){
+					if ($(this).val() == '') {
+						$('.generar_usuario').attr('disabled', 'disabled');
+					}else{
+						$('.generar_usuario').removeAttr('disabled');
+					}
+				});
+
+
+				$('.generar_usuario').on('click', function(){
+					var ran 	= Math.floor((Math.random() * 1000) + 1),
+						nombre 	= $('#SocioNombre').val();
+
+
+					if (nombre != '') {
+						
+						nombre = $.app.generarNombreUsuario.toSlug(nombre);
+
+						$('#SocioUsuario').val(nombre + '_' + ran);
+					}
+
+				});
+
+
+			},
+			init: function(){
+				if ($('.generar_usuario').length) {
+					$.app.generarNombreUsuario.bind();
+				}
+			}
+		},
 		init: function(){
 			$.app.clonarTabla.init();
 			$.app.toggle.init();
@@ -742,6 +787,7 @@ $.extend({
 			$.app.seleccionDireccion.init();
 			$.app.clienteExistente();
 			$.app.dataValor.init();
+			$.app.generarNombreUsuario.init();
 			
 		}
 	}

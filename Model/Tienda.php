@@ -178,5 +178,18 @@ class Tienda extends AppModel
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
 		),
+		'Socio' => array(
+			'className'				=> 'Socio',
+			'foreignKey'			=> 'tienda_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
 	);
 }

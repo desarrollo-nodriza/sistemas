@@ -411,34 +411,36 @@ class AppController extends Controller
 	 * @return void
 	 */
 	public function cambiarConfigDB( $tiendaConf = '' ) {
+		
     	// Cambiamos la configuración de la base de datos
-		ClassRegistry::init('Productotienda')->useDbConfig 		= $tiendaConf;
-		ClassRegistry::init('TaxRulesGroup')->useDbConfig 		= $tiendaConf;
-		ClassRegistry::init('TaxRule')->useDbConfig 			= $tiendaConf;
-		ClassRegistry::init('Tax')->useDbConfig 				= $tiendaConf;
-		ClassRegistry::init('TaxLang')->useDbConfig 			= $tiendaConf;
-		ClassRegistry::init('Lang')->useDbConfig 				= $tiendaConf;
-		ClassRegistry::init('SpecificPrice')->useDbConfig 		= $tiendaConf;
-		ClassRegistry::init('SpecificPricePriority')->useDbConfig 		= $tiendaConf;
-		ClassRegistry::init('Cliente')->useDbConfig 			= $tiendaConf;
-		ClassRegistry::init('Clientedireccion')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('Paise')->useDbConfig 				= $tiendaConf;
-		ClassRegistry::init('PaisIdioma')->useDbConfig 			= $tiendaConf;
-		ClassRegistry::init('Region')->useDbConfig 				= $tiendaConf;
-		ClassRegistry::init('Orden')->useDbConfig 				= $tiendaConf;
-		ClassRegistry::init('OrdenDetalle')->useDbConfig 		= $tiendaConf;
-		ClassRegistry::init('OrdenEstado')->useDbConfig 		= $tiendaConf;
-		ClassRegistry::init('OrdenEstadoIdioma')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('ProductotiendaIdioma')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('Especificacion')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('EspecificacionIdioma')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('EspecificacionProductotienda')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('EspecificacionValor')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('EspecificacionValorIdioma')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('EspecificacionValorProductotienda')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('ClienteHilo')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('ClienteMensaje')->useDbConfig 	= $tiendaConf;
-		ClassRegistry::init('Empleado')->useDbConfig 	= $tiendaConf;
+		ClassRegistry::init('Productotienda')->useDbConfig                    = $tiendaConf;
+		ClassRegistry::init('TaxRulesGroup')->useDbConfig                     = $tiendaConf;
+		ClassRegistry::init('TaxRule')->useDbConfig                           = $tiendaConf;
+		ClassRegistry::init('Tax')->useDbConfig                               = $tiendaConf;
+		ClassRegistry::init('TaxLang')->useDbConfig                           = $tiendaConf;
+		ClassRegistry::init('Lang')->useDbConfig                              = $tiendaConf;
+		ClassRegistry::init('SpecificPrice')->useDbConfig                     = $tiendaConf;
+		ClassRegistry::init('SpecificPricePriority')->useDbConfig             = $tiendaConf;
+		ClassRegistry::init('Cliente')->useDbConfig                           = $tiendaConf;
+		ClassRegistry::init('Clientedireccion')->useDbConfig                  = $tiendaConf;
+		ClassRegistry::init('Paise')->useDbConfig                             = $tiendaConf;
+		ClassRegistry::init('PaisIdioma')->useDbConfig                        = $tiendaConf;
+		ClassRegistry::init('Region')->useDbConfig                            = $tiendaConf;
+		ClassRegistry::init('Orden')->useDbConfig                             = $tiendaConf;
+		ClassRegistry::init('OrdenDetalle')->useDbConfig                      = $tiendaConf;
+		ClassRegistry::init('OrdenEstado')->useDbConfig                       = $tiendaConf;
+		ClassRegistry::init('OrdenEstadoIdioma')->useDbConfig                 = $tiendaConf;
+		ClassRegistry::init('ProductotiendaIdioma')->useDbConfig              = $tiendaConf;
+		ClassRegistry::init('Especificacion')->useDbConfig                    = $tiendaConf;
+		ClassRegistry::init('EspecificacionIdioma')->useDbConfig              = $tiendaConf;
+		ClassRegistry::init('EspecificacionProductotienda')->useDbConfig      = $tiendaConf;
+		ClassRegistry::init('EspecificacionValor')->useDbConfig               = $tiendaConf;
+		ClassRegistry::init('EspecificacionValorIdioma')->useDbConfig         = $tiendaConf;
+		ClassRegistry::init('EspecificacionValorProductotienda')->useDbConfig = $tiendaConf;
+		ClassRegistry::init('ClienteHilo')->useDbConfig                       = $tiendaConf;
+		ClassRegistry::init('ClienteMensaje')->useDbConfig                    = $tiendaConf;
+		ClassRegistry::init('Empleado')->useDbConfig                          = $tiendaConf;
+		ClassRegistry::init('Fabricante')->useDbConfig                        = $tiendaConf;
     }
 	
 	/**
