@@ -2,6 +2,7 @@
 	<h2><span class="fa fa-beer"></span> Editar Socio</h2>
 </div>
 <?= $this->Form->create('Socio', array('id' => 'formularioSocios', 'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+<?= $this->Form->input('id');?>
 <?= $this->Form->input('tienda_id', array('type' => 'hidden', 'value' => $this->Session->read('Tienda.id')));?>
 <div class="page-content-wrap">
 	<div class="row">
@@ -15,7 +16,7 @@
 				<div class="panel-body">
 					<div class="row">
 						<div class="col-xs-12">
-							<p><?=Router::url('/', true);?>socio/<?=$this->request->data['Socio']['tienda_id'];?>/<?=$this->request->data['Socio']['usuario'];?></p>
+							<p><?=Router::url('/', true);?>socio</p>
 						</div>
 					</div>
 				</div>
@@ -39,6 +40,10 @@
 						<div class="col-xs-12 col-sm-12 form-group">
 							<?= $this->Form->label('email', 'Email'); ?>
 							<?= $this->Form->input('email'); ?>
+						</div>
+						<div class="col-xs-12 col-sm-12 form-group">
+							<?= $this->Form->label('clave', 'Contraseña'); ?>
+							<?= $this->Form->input('clave', array('type' => 'password', 'autocomplete' => 'off', 'value' => '')); ?>
 						</div>
 						<div class="col-xs-12 col-sm-12 form-group">
 							<?= $this->Form->label('usuario', 'Usuario'); ?>

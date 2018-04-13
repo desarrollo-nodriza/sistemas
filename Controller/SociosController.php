@@ -6,7 +6,7 @@ class SociosController extends AppController
 	    parent::beforeFilter();
 
 	    if (isset($this->request->params['socio'])) {
-	    	$this->Auth->allow('prisync');	
+	    	#$this->Auth->allow('prisync');	
 	    }
 	}
 
@@ -59,7 +59,7 @@ class SociosController extends AppController
 		}
 
 		if ( $this->request->is('post') || $this->request->is('put') )
-		{
+		{	
 			if ( $this->Socio->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
@@ -160,10 +160,13 @@ class SociosController extends AppController
 	 * API Socios
 	 *  Permite acceder al método por un usuario dado unico
 	 */
-	public function socio_prisync($tienda = '', $usuario = '')
+	public function socio_prisync()
 	{	
+		$tienda_id = $this->Auth->user('tienda_id');
+		$usuario   = $this->Auth->user('usuario');
+		
 		# Comprobamos la tienda
-		$tienda = $this->tiendaConf($tienda);
+		$tienda = $this->tiendaConf($tienda_id);
 
 		if (!empty($tienda)) {
 
@@ -228,11 +231,12 @@ class SociosController extends AppController
 
 			$productos = $this->prepararTabla($prisyncProductos);
 
-			$this->layout = 'backend/socio';
+			$this->layout = 'socio';
 
 			$this->set(compact('socio', 'productos' ,'prisyncProductos'));
 
 		}else{
+
 			$out = array(
 				'code' => 500,
 				'message' => 'La petición no se ejecutó correctamente'
@@ -245,5 +249,26 @@ class SociosController extends AppController
 			echo json_encode($out, JSON_UNESCAPED_UNICODE);
 			exit;	
 		}	
+	}
+
+
+	public function socio_login()
+	{	
+		if ( $this->request->is('post') )
+		{
+			if ($this->Auth->login()) {
+	            return $this->redirect($this->Auth->redirect());
+	        } else {
+	        	$this->Session->setFlash('Nombre de usuario y/o clave incorrectos.', null, array(), 'danger');
+	        }
+	    }
+	    
+	    $this->layout = 'login';
+	}
+
+
+	public function socio_logout()
+	{	
+		$this->redirect($this->Auth->logout());
 	}
 }

@@ -99,4 +99,14 @@ class Socio extends AppModel
 			'insertQuery'			=> ''
 		)
 	);
+
+
+	public function beforeSave($options = array())
+	{
+		if ( isset($this->data[$this->alias]['clave']) )
+		{
+			$this->data[$this->alias]['clave']	= AuthComponent::password($this->data[$this->alias]['clave']);
+		}
+		return true;
+	}
 }

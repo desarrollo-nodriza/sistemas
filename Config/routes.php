@@ -9,11 +9,13 @@ Router::connect('/', array('controller' => 'pages', 'action' => 'dashboard', 'ad
  * Socios
  */
 Router::connect('/socio', array('controller' => 'socios', 'action' => 'prisync', 'socio' => true, 'prefix' => 'socio'));
-Router::connect(
+Router::connect('/socio/login', array('controller' => 'socios', 'action' => 'login', 'socio' => true, 'prefix' => 'socio'));
+Router::connect('/socio/logout', array('controller' => 'socios', 'action' => 'logout', 'socio' => true, 'prefix' => 'socio'));
+/*Router::connect(
     '/socio/:tienda/:usuario', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'socios', 
-        'action' => 'prisync',
+        'action' => 'login',
         'socio' => true,
         'prefix' => 'socio'),
     array(
@@ -21,7 +23,7 @@ Router::connect(
         'tienda' => '[0-9]+',
         'usuario' => '[a-z0-9-_]+'
     )
-);
+);*/
 
 
 /**
