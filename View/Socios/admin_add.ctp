@@ -23,6 +23,11 @@
 							<?= $this->Form->input('email'); ?>
 						</div>
 						<div class="col-xs-12 col-sm-12 form-group">
+							<?= $this->Form->label('clave', 'Contraseña'); ?>
+							<?= $this->Form->input('clave', array('type' => 'password', 'autocomplete' => 'off', 'value' => '')); ?>
+						</div>
+						<div class="col-xs-12 col
+						<div class="col-xs-12 col-sm-12 form-group">
 							<?= $this->Form->label('usuario', 'Usuario'); ?>
 							<div class="input-group">
 								<?= $this->Form->input('usuario', array('readonly' => true)); ?>

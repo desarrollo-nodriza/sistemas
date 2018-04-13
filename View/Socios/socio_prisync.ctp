@@ -5,7 +5,7 @@
         <?=$this->Html->image('../backend/img/logo-grey.png', array('alt' => 'Nodriza Spa', 'class' => 'img-responsive'));?>
       </a> 
     </div>
-    <div class="collapse navbar-collapse"> <p class="navbar-text navbar-right"><?=date('d/m/Y');?></p></div>
+    <div class="collapse navbar-collapse"> <p class="navbar-text navbar-right"><?=date('d/m/Y');?> - <?= $this->Html->link('<span class="fa fa-sign-out"></span> Cerrar Sesión', array('action' => 'logout'), array('class' => 'btn btn-default btn-xs', 'escape' => false)); ?></p></div>
   </div>
 </nav>
 <div class="row">

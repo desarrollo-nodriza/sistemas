@@ -10,17 +10,10 @@ class AppController extends Controller
 	public $components	= array(
 		'Session',
 		'Auth'		=> array(
-			'loginAction'		=> array('controller' => 'administradores', 'action' => 'login', 'admin' => true),
-			'loginRedirect'		=> '/',
-			'logoutRedirect'	=> '/',
-			'authError'			=> 'No tienes permisos para entrar a esta sección.',
-			'authenticate'		=> array(
-				'Form'				=> array(
-					'userModel'			=> 'Usuario',
-					'fields'			=> array(
-						'username'			=> 'email',
-						'password'			=> 'clave'
-					)
+			'Form'				=> array(
+				'fields' => array(
+					'username'	=> 'email',
+					'password'	=> 'clave'
 				)
 			)
 		),
@@ -72,41 +65,86 @@ class AppController extends Controller
 		
 		# Seguimiento
 		#$this->ejemploTracking();
+		
 
 		/**
-		 * Layout administracion y permisos publicos
+		 * Layout y permisos públicos
+		 */
+		if ( ! isset($this->request->params['prefix']) ) {
+			//prx($this->request->params);
+			$this->Auth->allow();
+		}
+
+		/**
+		 * Layout administracion
 		 */
 		if ( ! empty($this->request->params['admin']) )
 		{
 			$this->layoutPath				= 'backend';
 			AuthComponent::$sessionKey		= 'Auth.Administrador';
+
+			// Login action config
+			$this->Auth->loginAction['controller'] 	= 'administradores';
+			$this->Auth->loginAction['action'] 		= 'login';
+			$this->Auth->loginAction['admin'] 		= true;
+
+			// Login redirect and logout redirect
+			$this->Auth->loginRedirect = '/';
+			$this->Auth->logoutRedirect = '/';
+
+			// Login Form config
 			$this->Auth->authenticate['Form']['userModel']		= 'Administrador';
+			$this->Auth->authenticate['Form']['fields']['username'] = 'email';
+			$this->Auth->authenticate['Form']['fields']['password'] = 'clave';
+
+
+			/**
+			 * OAuth Google
+			 */
+			$this->Google->cliente->setRedirectUri(Router::url(array('controller' => 'administradores', 'action' => 'login'), true));
+			$this->Google->oauth();
+
+			if ( ! empty($this->request->query['code']) && $this->Session->read('Google.code') != $this->request->query['code'] )
+			{
+				$this->Google->oauth->authenticate($this->request->query['code']);
+				$this->Session->write('Google', array(
+					'code'		=> $this->request->query['code'],
+					'token'		=> $this->Google->oauth->getAccessToken()
+				));
+			}
+
+			if ( $this->Session->check('Google.token') )
+			{
+				$this->Google->cliente->setAccessToken($this->Session->read('Google.token'));
+			}
+
 		}
-		else
-		{
-			AuthComponent::$sessionKey	= 'Auth.Usuario';
-			$this->Auth->allow();
-		}
+
 
 		/**
-		 * OAuth Google
+		 * Layout administracion
 		 */
-		$this->Google->cliente->setRedirectUri(Router::url(array('controller' => 'administradores', 'action' => 'login'), true));
-		$this->Google->oauth();
-		
-		if ( ! empty($this->request->query['code']) && $this->request->params['controller'] == 'administradores' && $this->request->params['action'] == 'admin_login')
+		if ( ! empty($this->request->params['socio']) )
 		{
-			$this->Google->oauth->authenticate($this->request->query['code']);
-			$this->Session->write('Google', array(
-				'code'		=> $this->request->query['code'],
-				'token'		=> $this->Google->oauth->getAccessToken()
-			));
+			$this->layoutPath				= 'backend';
+			AuthComponent::$sessionKey		= 'Auth.Socio';
+
+			// Login action config
+			$this->Auth->loginAction['controller'] 	= 'socios';
+			$this->Auth->loginAction['action'] 		= 'login';
+			$this->Auth->loginAction['socio'] 		= true;
+
+			// Login redirect and logout redirect
+			$this->Auth->loginRedirect = '/socio';
+			$this->Auth->logoutRedirect = '/socio';
+
+			// Login Form config
+			$this->Auth->authenticate['Form']['userModel']		= 'Socio';
+			$this->Auth->authenticate['Form']['fields']['username'] = 'usuario';
+			$this->Auth->authenticate['Form']['fields']['password'] = 'clave';
+
 		}
 
-		if ( $this->Session->check('Google.token') )
-		{
-			$this->Google->cliente->setAccessToken($this->Session->read('Google.token'));
-		}
 
 		/**
 		 * Logout FB
