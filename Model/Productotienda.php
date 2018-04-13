@@ -127,6 +127,15 @@ Class Productotienda extends AppModel {
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
+		'Fabricante' => array(
+			'className'				=> 'Fabricante',
+			'foreignKey'			=> 'id_manufacturer',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		)
 	);
 

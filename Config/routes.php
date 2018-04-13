@@ -4,6 +4,26 @@ CakePlugin::routes();
 
 Router::connect('/', array('controller' => 'pages', 'action' => 'dashboard', 'admin' => true));
 
+
+/**
+ * Socios
+ */
+Router::connect('/socio', array('controller' => 'socios', 'action' => 'prisync', 'socio' => true, 'prefix' => 'socio'));
+Router::connect(
+    '/socio/:tienda/:usuario', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'socios', 
+        'action' => 'prisync',
+        'socio' => true,
+        'prefix' => 'socio'),
+    array(
+        'pass' => array('tienda', 'usuario'),
+        'tienda' => '[0-9]+',
+        'usuario' => '[a-z0-9-_]+'
+    )
+);
+
+
 /**
 * MELI
 */
@@ -65,6 +85,7 @@ Router::connect(
 
 Router::connect('/login', array('controller' => 'administradores', 'action' => 'login', 'admin' => true));
 Router::connect('/logout', array('controller' => 'administradores', 'action' => 'logout', 'admin' => true));
+
 
 Router::connect('/seccion/*', array('controller' => 'pages', 'action' => 'display'));
 
