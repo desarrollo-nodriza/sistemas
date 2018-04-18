@@ -50,4 +50,20 @@ class PrisyncRuta extends AppModel
 			//'counterScope'			=> array('Asociado.modelo' => 'PrisyncProducto')
 		)
 	);
+
+	public $hasMany = array(
+		'PrisyncHistorico' => array(
+			'className'				=> 'PrisyncHistorico',
+			'foreignKey'			=> 'ruta_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		)
+	);
 }

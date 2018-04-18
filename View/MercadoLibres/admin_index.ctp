@@ -9,6 +9,7 @@
 	            </ul>
 	        </div>
 		<? else : ?>
+			<button class="btn btn-warning" role="button" data-toggle="collapse" href="#criteriosPanel" aria-expanded="false" aria-controls="criteriosPanel"><i class="fa fa-refresh"></i> Actualizar precios con criterios</button>
 			<?= $this->Html->link('<i class="fa fa-refresh"></i> Sincronizar precios & stock', array('action' => 'actualizarPreciosStock'), array('escape' => false, 'class' => 'btn btn-info meli-loading')); ?>
 			<div class="btn-group">
 	            <a href="#" data-toggle="dropdown" class="btn btn-success dropdown-toggle" aria-expanded="false">Aplicación Conectada <span class="caret"></span></a>
@@ -22,6 +23,65 @@
 </div>
 
 <div class="page-content-wrap">
+	<div class="row">
+		<div class="col-xs-12">
+			<?= $this->Form->create('Criterio', array('url' => array('controller' => 'mercadoLibres', 'action' => 'actualizarPrecioPorCriterio'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
+			<div id="criteriosPanel" class="panel panel-default collapse">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-refresh" aria-hidden="true"></i> Actualizar precios por criterios</h3>
+				</div>
+				<div class="panel-body">
+					
+					<div class="table-responsive">
+						<table class="table js-clon-scope" data-limit="10">
+							<thead>
+								<tr>
+									<th>Criterio</th>
+									<th>Condición</th>
+									<th>Valor</th>
+									<th>Lógica</th>
+									<th>Acciones</th>
+								</tr>
+							</thead>
+							<tbody class="js-clon-contenedor meli-custom-list">
+								<tr class="js-clon-base hidden">
+									<td><?= $this->Form->select('criterios.999.criterio', array('precio' => 'Precio'),array('disabled' => true, 'class' => 'form-control', 'empty' => false )); ?></td>
+									<td><?= $this->Form->select('criterios.999.condicion', array(
+											'<=' => '<= (Menor o igual)',
+											'>=' => '>= (Mayor o igual)',
+											'<'       => '< (Menor)',
+											'>'       => '> (Mayor)',
+											'='       => '== (Igual)',
+											), array('disabled' => true, 'class' => 'form-control', 'empty' => 'Seleccione' )); ?></td>
+									<td><?= $this->Form->input('criterios.999.valor', array('disabled' => true, 'class' => 'form-control', 'required' => true, 'placeholder' => '50000')); ?></td>
+									<td><?= $this->Form->select('criterios.999.criterio', array('AND' => 'Y'), array('disabled' => true, 'class' => 'form-control', 'empty' => false )); ?></td>
+									<td>
+										<a href="#" class="btn btn-xs btn-danger js-clon-eliminar"><i class="fa fa-trash"></i> Quitar</a>
+										<!--<a href="#" class="btn btn-xs btn-primary js-clon-clonar"><i class="fa fa-clone"></i> Duplicar</a>-->
+									</td>
+								</tr>
+							</tbody>
+							<tfoot>
+								<tr>
+									<td><label>Sumar al precio</label></td>
+									<td colspan="3"><?=$this->Form->input('valor', array('class' => 'form-control', 'placeholder' => '1200'))?></td>
+									<td><a href="#" class="btn btn-xs btn-success js-clon-agregar"><i class="fa fa-plus"></i> Agregar otro criterio</a></td>
+								</tr>
+							</tfoot>
+						</table>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="col-xs-12">
+						<div class="pull-right">
+							<?= $this->Form->button('<i class="fa fa-refresh" aria-hidden="true"></i> Actualizar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
+						</div>
+					</div>
+				</div>
+				<?= $this->Form->end(); ?>
+			</div>
+		</div>
+	</div>
 	<div class="row">
 		<div class="col-xs-12">
 			<?= $this->Form->create('Filtro', array('url' => array('controller' => 'mercadoLibres', 'action' => 'index'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>

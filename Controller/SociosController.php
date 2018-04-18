@@ -137,8 +137,10 @@ class SociosController extends AppController
 				if (isset($url['host']) && !empty($url['host'])) {
 					$competidores[] = $url['host'];
 					if ($competidor['price'] > 0) {
-						$data[$ip]['PrisyncProducto'][$url['host']] = $competidor['price'];
-						$data[$ip]['PrisyncProducto'][$url['host'] . '_old'] = $competidor['old_price'];
+						$data[$ip]['PrisyncProducto'][$url['host'] . '_id']        = $competidor['id'];
+						$data[$ip]['PrisyncProducto'][$url['host'] . '_price']     = $competidor['price'];
+						$data[$ip]['PrisyncProducto'][$url['host'] . '_old']       = $competidor['old_price'];
+						$data[$ip]['PrisyncProducto'][$url['host'] . '_available'] = $competidor['in_stock'];
 					}elseif (count($producto['PrisyncRuta']) > 1){
 						unset($producto['PrisyncRuta'][$ic]);
 					}
@@ -162,6 +164,8 @@ class SociosController extends AppController
 	 */
 	public function socio_prisync()
 	{	
+		ini_set('memory_limit', '-1');
+
 		$tienda_id = $this->Auth->user('tienda_id');
 		$usuario   = $this->Auth->user('usuario');
 		
@@ -230,7 +234,7 @@ class SociosController extends AppController
 			));
 
 			$productos = $this->prepararTabla($prisyncProductos);
-
+			#prx($productos);
 			$this->layout = 'socio';
 
 			$this->set(compact('socio', 'productos' ,'prisyncProductos'));
@@ -270,5 +274,74 @@ class SociosController extends AppController
 	public function socio_logout()
 	{	
 		$this->redirect($this->Auth->logout());
+	}
+
+
+	public function obtener_historico($id = null, $f_inicio = null, $f_final = null, $group_by = null)
+	{
+		$jsonArray = array();
+
+		if (is_null($f_inicio) || is_null($f_final) || empty($f_inicio) || empty($f_final) || $f_inicio == 'undefined' || $f_final == 'undefined' ) {
+			$f_inicio = date('Y-m-01 00:00:00');
+			$f_final = date('Y-m-t 23:59:59');
+		}else{
+			$f_inicio = sprintf('%s 00:00:00', $f_inicio);
+			$f_final = sprintf('%s 23:59:59', $f_final);
+		}
+
+		//Normalizar fechas
+		$f_inicio = sprintf("'%s'", $f_inicio);
+		$f_final = sprintf("'%s'", $f_final);
+
+		if (is_null($group_by) || empty($group_by) || $group_by == 'undefined') {
+			$group_by = 'dia';
+		}
+
+		$query = array(
+			'conditions' => array(
+				'PrisyncHistorico.ruta_id' => $id,
+				'PrisyncHistorico.created BETWEEN ' . $f_inicio . ' AND ' . $f_final
+			)
+		);
+
+		switch ($group_by) {
+			case 'dia':
+				$query = array_replace_recursive($query, array(
+					'fields' => array(
+						'DATE_FORMAT(PrisyncHistorico.created, "%Y-%m-%d") AS Fecha',
+						'PrisyncHistorico.precio'
+					),
+					'group' => array('DAY(PrisyncHistorico.created)'),
+					'order' => array('PrisyncHistorico.created' => 'DESC')
+				));
+				break;
+			case 'semana':
+
+				$query = array_replace_recursive($query, array(
+					'fields' => array(
+						'DATE_FORMAT(PrisyncHistorico.created, "%Y-%m-%d") AS Fecha',
+						'PrisyncHistorico.precio'
+					),
+					'group' => array('WEEK(PrisyncHistorico.created)'),
+					'order' => array('PrisyncHistorico.precio' => 'DESC')
+				));
+
+				break;
+		}
+		#prx($query);
+		$precios = ClassRegistry::init('PrisyncHistorico')->find('all', $query);
+
+		#prx($precios);
+		
+
+		# Normalizamos
+		foreach ($precios as $ip => $precio) {
+			$jsonArray[$ip]['y'] = $precio[0]['Fecha'];
+			$jsonArray[$ip]['a'] = round($precio['PrisyncHistorico']['precio']);
+		}
+
+		echo json_encode($jsonArray);
+		exit;
+		prx($precios);
 	}
 }
