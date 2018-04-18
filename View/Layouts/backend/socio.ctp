@@ -16,8 +16,12 @@
 			'/backend/js/plugins/jquery/jquery.min',
 			'/backend/js/plugins/jquery/jquery-ui.min',
 			'/backend/js/plugins/bootstrap/bootstrap.min',
+			'/backend/js/plugins/bootstrap/bootstrap-datepicker',
 			'/backend/js/plugins/datatables/jquery.dataTables.min',
-			'/backend/js/custom'
+			'/backend/js/plugins/morris/raphael-min',
+			'/backend/js/plugins/morris/morris.min',
+			'/backend/js/custom',
+			'/backend/js/socios'
 		)); ?>
 		<?= $this->fetch('meta'); ?>
 		<?= $this->fetch('css'); ?>

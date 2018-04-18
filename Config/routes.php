@@ -11,6 +11,18 @@ Router::connect('/', array('controller' => 'pages', 'action' => 'dashboard', 'ad
 Router::connect('/socio', array('controller' => 'socios', 'action' => 'prisync', 'socio' => true, 'prefix' => 'socio'));
 Router::connect('/socio/login', array('controller' => 'socios', 'action' => 'login', 'socio' => true, 'prefix' => 'socio'));
 Router::connect('/socio/logout', array('controller' => 'socios', 'action' => 'logout', 'socio' => true, 'prefix' => 'socio'));
+Router::connect(
+    '/socio/historico/:id/:fechai/:fechaf/:agrupar', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'socios', 
+        'action' => 'obtener_historico',
+        'socio' => false,
+        'prefix' => null),
+    array(
+        'pass' => array('id', 'fechai', 'fechaf', 'agrupar'),
+        'id' => '[0-9]+'
+    )
+);
 /*Router::connect(
     '/socio/:tienda/:usuario', // E.g. /blog/3-CakePHP_Rocks
     array(

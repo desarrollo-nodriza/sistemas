@@ -618,7 +618,7 @@ class MercadoLibresController extends AppController
 		
 		# Se lanza mensaje de actualizar precios
 		if($this->verificarCambiosDePreciosStock()) {
-			$this->Session->setFlash('¡Tienes productos desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
+		#	$this->Session->setFlash('¡Tienes productos desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
 		}else{
 			#$this->Session->setFlash('¡Bien! Todos los productos estan sincronizados.', null, array(), 'success');
 		}
@@ -1310,6 +1310,91 @@ class MercadoLibresController extends AppController
 
 		return $out;
 	}
+
+
+	public function admin_actualizarPrecioPorCriterio()
+	{	
+		$tienda 	= $this->tiendaInfo($this->Session->read('Tienda.id'));
+
+		$resultadosOperacion = array();
+
+		#$opts['limit'] = 5;
+
+		$opts['fields'] = array(
+			'MercadoLibr.id', 
+			'MercadoLibr.id_product', 
+			'MercadoLibr.producto',
+			'MercadoLibr.precio', 
+			'MercadoLibr.id_meli', 
+			'MercadoLibr.cantidad_disponible');
+
+		$opts['conditions'] = array(
+			'MercadoLibr.tienda_id' => $tienda['Tienda']['id'],
+			'MercadoLibr.id_product !=' => null
+		);
+
+		foreach ($this->request->data['criterios'] as $ic => $criterio) {
+			
+			if (empty($criterio['criterio']) || empty($criterio['condicion']) || empty($criterio['valor'])) {
+				$this->Session->setFlash('No es posible ejecutar la operación, ya que hay errores en la instrucción. Verifique que los campos estan completos.', null, array(), 'danger');
+				$this->redirect(array('action' => 'index'));
+			}
+
+			if ($criterio['criterio'] == 'OR') {
+				/*
+				if ($criterio['condicion'] == '=') {
+					$opts['conditions'] = array_replace_recursive($opts['conditions'], array(
+						sprintf("%s", $criterio['criterio']) => array('MercadoLibr.precio' => $criterio['valor'])
+					));
+				}else{
+					$opts['conditions'] = array_replace_recursive($opts['conditions'], array(
+						sprintf("%s", $criterio['criterio']) => array(sprintf('MercadoLibr.precio %s', $criterio['condicion']) => $criterio['valor'])
+					));
+				}*/
+				
+			}else{
+
+				if ($criterio['condicion'] == '=') {
+					$opts['conditions'] = array_replace_recursive($opts['conditions'], array( 'MercadoLibr.precio' => $criterio['valor'] ));
+				}else{
+					$opts['conditions'] = array_replace_recursive($opts['conditions'], array( sprintf('MercadoLibr.precio %s', $criterio['condicion']) => $criterio['valor'] ));
+				}
+
+			}
+
+			
+
+		}
+
+		# Cambiamos la configuración de los modelos externos según la tienda
+		$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
+
+		# Listamos productos de mercadolibre
+		$productos = $this->MercadoLibr->find('all', $opts);
+		
+		#$log = $this->MercadoLibr->getDataSource()->getLog(false, false);
+
+		foreach ($productos as $i => $producto) {
+			$productos[$i]['Productotienda'] = $this->getProductPriceFromStore($producto['MercadoLibr']['id_product'], $tienda);
+
+			# Agregamos el valor adicional a los productos
+			if (isset($this->request->data['Criterio']['valor']) && !empty($this->request->data['Criterio']['valor'])) {
+				$productos[$i]['Productotienda']['precio'] = $productos[$i]['Productotienda']['precio'] + $this->request->data['Criterio']['valor'];				
+			}
+			
+		}
+
+
+		# Actualizamos de los productos publicados, tanto interna como en MELI
+		$result = $this->sincronizarPreciosStock($productos);
+		
+		$urlReponse = $this->htmlResponse($result);	
+
+		$this->Session->setFlash('Resultados de la operación: <br>' . $urlReponse , null, array(), 'flash');
+		$this->redirect(array('action' => 'index'));
+
+	}
+
 
 	public function getProductsMeli($store = array())
 	{

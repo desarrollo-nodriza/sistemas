@@ -36,6 +36,18 @@ class SincronizarPrisyncShell extends AppShell
 		try {
 
 			do {
+
+				$log = array('Log' => array(
+					'administrador' => 'Demonio',
+					'modulo' => 'Prisync',
+					'modulo_accion' => 'Inicia proceso de actualización: ' . date('Y-m-d H:i:s')
+				));
+
+				if(ClassRegistry::init('Log')->save($log)){			
+					$this->out('Log guardado: Inicia proceso de actualización a las ' . date('Y-m-d H:i:s'));	
+				}else{	
+					$this->out('Error al guardar el Log');	
+				}
 					
 				$productos = $this->obtenerProductos($url);
 				$productosArr = array();
@@ -73,6 +85,22 @@ class SincronizarPrisyncShell extends AppShell
 						}
 						
 						$productosArr['PrisyncRuta'] = $urls;
+						$historicoArr = array(); 
+
+						foreach ($productosArr['PrisyncRuta'] as $ipr => $ruta) {
+							$historicoArr[$ipr]['PrisyncHistorico']['ruta_id'] 	= $ruta['id'];
+							$historicoArr[$ipr]['PrisyncHistorico']['precio'] 	= $ruta['price'];
+						}
+
+						# guardar historico
+						if (ClassRegistry::init('PrisyncHistorico')->saveAll($historicoArr)) {
+							$this->out('Historico guardado');
+						}else{
+							$this->out('Historico NO guardado');
+						}
+
+						#print_r($productosArr);
+						#exit;
 
 						$this->hr();
 						$this->hr();
@@ -83,33 +111,10 @@ class SincronizarPrisyncShell extends AppShell
 							$this->out('Producto Guardado: ' . $productosArr['PrisyncProducto']['name']);
 							$this->out('URLS Guardadas: ' . count($productosArr['PrisyncRuta']));
 
-							$log = array('Log' => array(
-								'administrador' => 'Demonio',
-								'modulo' => 'Prisync',
-								'modulo_accion' => 'Producto Guardado: ' . $productosArr['PrisyncProducto']['name'] . ' | ID: ' . $productosArr['PrisyncProducto']['id']
-							));
-
-							if(ClassRegistry::init('Log')->save($log)){			
-								$this->out('Log guardado correctamente.');	
-							}else{	
-								$this->out('Error al guardar el Log');	
-							}
-
 						}else{
 
 							$this->out('Producto NO guardado: ' . $productosArr['PrisyncProducto']['name']);
 
-							$log = array('Log' => array(
-								'administrador' => 'Demonio',
-								'modulo' => 'Prisync',
-								'modulo_accion' => 'Producto NO guardado: ' . $productosArr['PrisyncProducto']['name'] . ' | ID: ' . $productosArr['PrisyncProducto']['id']
-							));
-
-							if(ClassRegistry::init('Log')->save($log)){
-								$this->out('Log guardado correctamente.');
-							}else{
-								$this->out('Error al guardar el Log');
-							}
 						}
 
 						$countProductos++;
@@ -144,10 +149,35 @@ class SincronizarPrisyncShell extends AppShell
 			$this->hr();
 			$this->out('Productos obtenidos correctamente: ' . count($productosArr));
 			$this->hr();
+
+			$log = array('Log' => array(
+				'administrador' => 'Demonio',
+				'modulo' => 'Prisync',
+				'modulo_accion' => count($productosArr) . ' productos procesados con éxito'
+			));
+
+			if(ClassRegistry::init('Log')->save($log)){			
+				$this->out('Log guardado: ' . count($productosArr) . ' productos procesados con éxito');	
+			}else{	
+				$this->out('Error al guardar el Log');	
+			}
+
 		}else{
 			$this->hr();
-			$this->out('Errores: ' . implode(' | ',$errores));
+			$this->out('Errores: ' . implode(' | ',$errors['Productos']));
 			$this->hr();
+
+			$log = array('Log' => array(
+				'administrador' => 'Demonio',
+				'modulo' => 'Prisync',
+				'modulo_accion' => 'Errores en el proceso: ' . implode(' | ', $errors['Productos'])
+			));
+
+			if(ClassRegistry::init('Log')->save($log)){			
+				$this->out('Log guardado correctamente.');	
+			}else{	
+				$this->out('Error al guardar el Log');	
+			}
 		}
 
 		exit;
