@@ -575,7 +575,7 @@ class MercadoLibresController extends AppController
 				'MercadoLibr.tienda_id' => $this->Session->read('Tienda.id')
 				),
 			'order' => array('MercadoLibr.id' => 'DESC'),
-			'limit' => 2
+			'limit' => 20
 			)
 		);
 
@@ -1216,13 +1216,13 @@ class MercadoLibresController extends AppController
 		$productos = array();
 
 		# Obtenemos productos por tiendas
-		$productos = $this->getProductsMeli($tienda);
+		$productos[$tienda['Tienda']['configuracion']] = $this->getProductsMeli($tienda);
 
-		foreach ($productos as $ip => $producto) {
+		foreach ($productos[$tienda['Tienda']['configuracion']] as $ip => $producto) {
 			$costoEnvio = $this->Meli->getShippingCost($producto['MercadoLibr']['id_meli'], 'free');
-			$productos[$ip]['Productotienda']['precio'] = $productos[$ip]['Productotienda']['precio'] + $costoEnvio;
+			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio'] = $producto['Productotienda']['precio'] + $costoEnvio;
 		}
-
+		#prx($productos);
 		# Actualizamos de los productos publicados, tanto interna como en MELI
 		$result = $this->sincronizarPreciosStock($productos);
 		
@@ -1441,7 +1441,6 @@ class MercadoLibresController extends AppController
 			# Listamos productos de mercadolibre
 			$productos = $this->MercadoLibr->find('all', array(
 				'fields' => array('id', 'id_product', 'producto' ,'precio', 'id_meli', 'cantidad_disponible'),
-				'limit' => 10, #borrar luego
 				'conditions' => array(
 					'MercadoLibr.tienda_id' => $store['Tienda']['id'],
 					'MercadoLibr.id_product !=' => null
