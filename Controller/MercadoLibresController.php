@@ -575,7 +575,7 @@ class MercadoLibresController extends AppController
 				'MercadoLibr.tienda_id' => $this->Session->read('Tienda.id')
 				),
 			'order' => array('MercadoLibr.id' => 'DESC'),
-			'limit' => 20
+			'limit' => 2
 			)
 		);
 
@@ -617,11 +617,11 @@ class MercadoLibresController extends AppController
 
 		
 		# Se lanza mensaje de actualizar precios
-		if($this->verificarCambiosDePreciosStock()) {
+		#if($this->verificarCambiosDePreciosStock()) {
 		#	$this->Session->setFlash('¡Tienes productos desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
-		}else{
+		#}else{
 			#$this->Session->setFlash('¡Bien! Todos los productos estan sincronizados.', null, array(), 'success');
-		}
+		#}
 
 		$total =  $this->MercadoLibr->find('count', $paginate);
 
@@ -1200,6 +1200,39 @@ class MercadoLibresController extends AppController
 
 	}
 
+
+	public function admin_actualizarPreciosEnvio()
+	{
+		$auth = $this->autorizacionMeli();
+		if (!empty($auth)) {
+			$this->Session->setFlash('Imposible actualizar los precios en Mercado libre. Detalles del error:<br> La sesión de Mercado libre expiró. Conecte nuevamente la aplicación.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		# Tienda
+		$tienda 	= $this->tiendaInfo($this->Session->read('Tienda.id'));	
+
+		# Variable que almacena los productos
+		$productos = array();
+
+		# Obtenemos productos por tiendas
+		$productos = $this->getProductsMeli($tienda);
+
+		foreach ($productos as $ip => $producto) {
+			$costoEnvio = $this->Meli->getShippingCost($producto['MercadoLibr']['id_meli'], 'free');
+			$productos[$ip]['Productotienda']['precio'] = $productos[$ip]['Productotienda']['precio'] + $costoEnvio;
+		}
+
+		# Actualizamos de los productos publicados, tanto interna como en MELI
+		$result = $this->sincronizarPreciosStock($productos);
+		
+		$urlReponse = $this->htmlResponse($result);	
+
+		$this->Session->setFlash('Resultados de la operación: <br>' . $urlReponse , null, array(), 'flash');
+		$this->redirect(array('action' => 'index'));
+	}
+
+
 	public function admin_actualizarPreciosStock($console = false)
 	{	
 		if ($console) {
@@ -1408,6 +1441,7 @@ class MercadoLibresController extends AppController
 			# Listamos productos de mercadolibre
 			$productos = $this->MercadoLibr->find('all', array(
 				'fields' => array('id', 'id_product', 'producto' ,'precio', 'id_meli', 'cantidad_disponible'),
+				'limit' => 10, #borrar luego
 				'conditions' => array(
 					'MercadoLibr.tienda_id' => $store['Tienda']['id'],
 					'MercadoLibr.id_product !=' => null
