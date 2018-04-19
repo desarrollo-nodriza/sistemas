@@ -125,7 +125,7 @@ class SociosController extends AppController
 	 * @param  array  $data [description]
 	 * @return [type]       [description]
 	 */
-	private function prepararTabla($data = array())
+	private function prepararTabla($data = array(), $socio = array())
 	{
 		$competidores = array();
 		$respuesta = array();
@@ -198,7 +198,7 @@ class SociosController extends AppController
 						'Productotienda' => array(
 							'fields' => array(
 								'Productotienda.id_product',
-								'Productotienda.reference'
+								'Productotienda.reference',
 							)
 						)
 					)
@@ -207,17 +207,8 @@ class SociosController extends AppController
 
 			# Mensaje en caso de que no exista el socio
 			if (empty($socio)) {
-				$out = array(
-					'code' => 404,
-					'message' => 'No existe el socio consultado'
-				);
-
-				$this->layout = 'ajax';
-
-				$out = str_replace('"', '\\\"', $out);
-				header('Content-Type: application/json; charset=utf-8');
-				echo json_encode($out, JSON_UNESCAPED_UNICODE);
-				exit;	
+				$this->Session->setFlash('Socio no existe o no está activo.', null, array(), 'danger');
+				$this->logout();
 			}
 
 			# Buscamos los productos de la tabla Prisync que tengan 
@@ -233,25 +224,16 @@ class SociosController extends AppController
 				)
 			));
 
-			$productos = $this->prepararTabla($prisyncProductos);
-			#prx($productos);
+			$productos = $this->prepararTabla($prisyncProductos, $socio);
+			
 			$this->layout = 'socio';
 
 			$this->set(compact('socio', 'productos' ,'prisyncProductos'));
 
 		}else{
 
-			$out = array(
-				'code' => 500,
-				'message' => 'La petición no se ejecutó correctamente'
-			);
-
-			$this->layout = 'ajax';
-
-			$out = str_replace('"', '\\\"', $out);
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode($out, JSON_UNESCAPED_UNICODE);
-			exit;	
+			$this->Session->setFlash('Ocurrió un error inesperado. Contacte al administrador del sistema.', null, array(), 'danger');
+			$this->logout();
 		}	
 	}
 

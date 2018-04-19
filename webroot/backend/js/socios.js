@@ -72,6 +72,13 @@
 
 	}();
 
+	var tablaSocios = function(){
+		$(".datatable-socios").dataTable({
+        	ordering:  false,
+        	scrollY: "500px",
+  			scrollCollapse: false,
+        });
+	}
 
   	var mostrarGrafico = function($data, $xlabel)
   	{
@@ -187,6 +194,7 @@
   				if ($('#procesarGrafico').length) {
   					obtenerHistoricoPersonalizado();
   				}
+
   			}
   		}
 
@@ -194,6 +202,11 @@
 
   $(document).ready(function(){
     modalGraficos.init();
+
+    if ($('.datatable-socios').length) {
+		tablaSocios();
+	}
+
   });
 
 })(jQuery);

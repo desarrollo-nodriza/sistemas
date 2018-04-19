@@ -28,7 +28,7 @@
 		<?= $this->fetch('script'); ?>
 	</head>
     <body>
-		<div id="socio" class="container">
+		<div id="socio" class="container-fluid">
 			<?= $this->fetch('content'); ?>
         </div>
     </body>

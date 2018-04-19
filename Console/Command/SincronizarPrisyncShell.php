@@ -56,7 +56,7 @@ class SincronizarPrisyncShell extends AppShell
 						
 						$productoDetalle = $this->obtenerProductoPorId($producto['id']);
 						$productosArr['PrisyncProducto'] = $productoDetalle;
-
+						
 						# Se fragmenta el código del producto registrado en prisync
 						if (strpos($productoDetalle['product_code'], '|') === false) {
 							$productosArr['PrisyncProducto']['internal_code'] = $productoDetalle['product_code'];							
@@ -74,6 +74,11 @@ class SincronizarPrisyncShell extends AppShell
 							if (isset($splitCode[0]) && isset($splitCode[1])) {
 								$productosArr['PrisyncProducto']['internal_code'] = $splitCode[1];
 							}
+						}
+
+						# Marca
+						if (isset($productoDetalle['brand']['name']) && !empty($productoDetalle['brand']['name'])) {
+							$productosArr['PrisyncProducto']['brand'] = $productoDetalle['brand']['name'];
 						}
 
 						$urls = array();

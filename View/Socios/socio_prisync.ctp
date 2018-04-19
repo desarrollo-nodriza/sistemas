@@ -22,10 +22,11 @@
         <div class="panel panel-default">
             <div class="panel-body">
                 <div class="table-responsive">
-                    <table class="table table-striped table-bordered datatable">
+                    <table class="table table-striped table-bordered datatable-socios">
                         <thead>
                             <tr>
                                 <th>Modelo</th>
+                                <th>Marca</th>
                             	<? foreach($productos['competidores'] as $ic => $competidor) : ?>
 								<th><?=$competidor;?></th>
                             	<? endforeach ?>
@@ -35,9 +36,10 @@
                         	<? foreach ($productos['productos'] as $ip => $producto) : ?>
                         	<tr>
                         		<td data-toggle="tooltip" data-placement="top" title="<?=$producto['PrisyncProducto']['name'];?>"><?= (empty($producto['PrisyncProducto']['internal_code'])) ? $producto['PrisyncProducto']['name'] : $producto['PrisyncProducto']['internal_code'] ;?></td>
+                                <td><?= (empty($producto['PrisyncProducto']['brand'])) ? 'No especificado' : $producto['PrisyncProducto']['brand'] ;?></td>
                         		<? foreach($productos['competidores'] as $ic => $competidor) : ?>
 									<? if (isset($producto['PrisyncProducto'][$competidor . '_price'])) : ?>
-										<td data-titulo="<?=$competidor;?> - <?=$producto['PrisyncProducto']['name']; ?>" data-competidor="<?=$producto['PrisyncProducto'][$competidor . '_id'];?>" class="js-mostrar-grafico <?= ($producto['PrisyncProducto']['min_price'] == $producto['PrisyncProducto'][$competidor . '_price']) ? 'success' : '' ; ?>" ><?=($producto['PrisyncProducto'][$competidor  . '_available']) ? '<span>' : '<span class="text-red"><i class="fa fa-close"></i>' ;?> <?=CakeNumber::currency($producto['PrisyncProducto'][$competidor . '_price'], 'CLP');?></span></td>
+										<td <?= ($producto['PrisyncProducto']['min_price'] == $producto['PrisyncProducto'][$competidor . '_price']) ? 'data-toggle="tooltip" data-placement="top" title="Más barato"' : '' ; ?> data-titulo="<?=$competidor;?> - <?=$producto['PrisyncProducto']['name']; ?>" data-competidor="<?=$producto['PrisyncProducto'][$competidor . '_id'];?>" class="js-mostrar-grafico <?= ($producto['PrisyncProducto']['min_price'] == $producto['PrisyncProducto'][$competidor . '_price']) ? 'success' : '' ; ?>" ><?=($producto['PrisyncProducto'][$competidor  . '_available']) ? '<span>' : '<span class="text-red"><i class="fa fa-close"></i>' ;?> <?=CakeNumber::currency($producto['PrisyncProducto'][$competidor . '_price'], 'CLP');?></span></td>
 									<? else : ?>
 										<td>--</td>
 									<? endif; ?>
