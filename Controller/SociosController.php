@@ -121,6 +121,38 @@ class SociosController extends AppController
 
 
 	/**
+	 * Obtiene al fabricante del producto según su referencia
+	 * @param  string $referencia  referencia del producto
+	 * @return string 	nombre del fabricante
+	 */
+	public function obtenerMarcaPorReferencia($referencia = '')
+	{
+		$marca = ClassRegistry::init('Productotienda')->find('first', array(
+			'conditions' => array(
+				'Productotienda.reference' => $referencia
+			),
+			'fields' => array(
+				'Productotienda.reference'
+			),
+			'contain' => array(
+				'Fabricante' => array(
+					'fields' => array(
+						'Fabricante.name'
+					)
+				)
+			)
+		));
+
+		if (isset($marca['Fabricante']['name'])) {
+			return $marca['Fabricante']['name'];
+		}else{
+			return '';
+		}
+
+	}
+
+
+	/**
 	 * Arma un arreglo con los nombres de los competidores
 	 * @param  array  $data [description]
 	 * @return [type]       [description]
@@ -145,6 +177,13 @@ class SociosController extends AppController
 						unset($producto['PrisyncRuta'][$ic]);
 					}
 				}
+			}
+
+			# Seteamos la marca
+			$marca = $this->obtenerMarcaPorReferencia($producto['PrisyncProducto']['internal_code']);
+
+			if (!empty($marca)) {
+				$data[$ip]['PrisyncProducto']['brand'] = $marca;
 			}
 
 			# Minimo valor
