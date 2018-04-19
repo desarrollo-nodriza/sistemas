@@ -9,13 +9,14 @@
 	            </ul>
 	        </div>
 		<? else : ?>
-			<button class="btn btn-warning" role="button" data-toggle="collapse" href="#criteriosPanel" aria-expanded="false" aria-controls="criteriosPanel"><i class="fa fa-refresh"></i> Actualizar precios con criterios</button>
 			<?= $this->Html->link('<i class="fa fa-refresh"></i> Sincronizar precios & stock', array('action' => 'actualizarPreciosStock'), array('escape' => false, 'class' => 'btn btn-info meli-loading')); ?>
 			<div class="btn-group">
 	            <a href="#" data-toggle="dropdown" class="btn btn-success dropdown-toggle" aria-expanded="false">Aplicación Conectada <span class="caret"></span></a>
 	            <ul class="dropdown-menu pull-right" role="menu">
-	                <li><?= $this->Html->link('Ver mi cuenta', array('action' => 'usuario'), array('escape' => false)); ?></li>
-	                <li><?= $this->Html->link('Desconectar aplicación', array('action' => 'desconectar'), array('escape' => false)); ?></li>                                                    
+	            	<li><?= $this->Html->link('<i class="fa fa-refresh"></i> Agregar valor envios', array('action' => 'actualizarPreciosEnvio'), array('escape' => false, 'class' => 'meli-loading')); ?></li>
+	            	<!--<li><a role="button" data-toggle="collapse" href="#criteriosPanel" aria-expanded="false" aria-controls="criteriosPanel"><i class="fa fa-refresh"></i> Actualizar precios con criterios</a></li>-->
+	                <li><?= $this->Html->link('<i class="fa fa-user"></i> Ver mi cuenta', array('action' => 'usuario'), array('escape' => false)); ?></li>
+	                <li><?= $this->Html->link('<i class="fa fa-sign-out"></i> Desconectar aplicación', array('action' => 'desconectar'), array('escape' => false)); ?></li>                                                    
 	            </ul>
 	        </div>
 		<? endif; ?>

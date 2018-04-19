@@ -689,6 +689,31 @@ class MeliComponent extends Component
 		}
 	}
 
+	/**
+	 * Calcula los costos de envío gratis por artículo
+	 * 
+	 * Más información : http://developers.mercadolibre.com/es/enviogratis/
+	 * 
+	 * @param  string  	$id   Identificador del item
+	 * @param  string   $type   tipo de envio
+	 * @return float       Precio del envío
+	 */
+	public function getShippingCost($id, $type = 'free')
+	{
+		# Configuración de la tienda
+    	$this->setComponentConfig();
+
+		$this->meli = new Meli($this->client_id, $this->client_secret);
+	
+		$result = to_array($this->meli->get('items/'.$id.'/shipping_options/' . $type));
+		
+		if ($result['httpCode'] != 200) {
+			return;
+		}else{
+			return $result['body']['coverage']['all_country']['list_cost'];
+		}
+	}
+
 
 
 	/**
