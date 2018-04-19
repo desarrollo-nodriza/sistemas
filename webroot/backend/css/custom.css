@@ -241,6 +241,14 @@ tfoot > tr > td, tfoot > tr:first-child > td {
     background-color: #dff0d8 !important;
 }
 
+#socio {
+    max-width: 1500px;
+}
+
+#socio .table th, #socio .table td {
+    font-size: 11px;
+}
+
 #modalSocios {
     background-color: rgba(0,0,0,0.7);
 }
