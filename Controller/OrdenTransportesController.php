@@ -373,6 +373,28 @@ class OrdenTransportesController extends AppController
 
 					if (ClassRegistry::init('OrdenTransporte')->save($this->request->data)) {
 						$this->Session->setFlash('OT generada con éxito' , null, array(), 'success');
+
+						$dataEmail = array(
+							'nombre_cliente' => $this->request->data['OrdenTransporte']['e_destinatario_nombre'],
+							'to'			 => $this->request->data['OrdenTransporte']['e_destinatario_email'],
+							'currier'        => $this->request->data['OrdenTransporte']['transporte'],
+							'ot'             => $this->request->data['OrdenTransporte']['r_numero_ot'],
+							'tracking_url'   => Configure::read('Chilexpress.seguimiento.tracking_url'),
+							'Tienda'         => $this->Session->read('Tienda'),
+							'Vendedor' 		 => array(
+								'email' => $this->Auth->user('email')
+							)
+						);
+
+
+						$enviar = $this->enviarEmail($dataEmail);
+
+						if ($enviar['code'] == 200) {
+							$this->Session->setFlash($enviar['message'] , null, array(), 'success');
+						}else{
+							$this->Session->setFlash($enviar['message'] , null, array(), 'warning');
+						}
+
 						$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'orden', $id_orden));
 					}
 
@@ -618,6 +640,32 @@ class OrdenTransportesController extends AppController
 			),
 		);
 
+		if ($this->request->is('post')) {
+
+ 			$dataEmail = array(
+				'nombre_cliente' => $this->request->data['OrdenTransporte']['nombre'],
+				'to' 			 => $this->request->data['OrdenTransporte']['email'],
+				'currier'        => $this->request->data['OrdenTransporte']['transporte'],
+				'ot'             => $this->request->data['OrdenTransporte']['ot'],
+				'tracking_url'   => Configure::read('Chilexpress.seguimiento.tracking_url'),
+				'Tienda'         => $this->Session->read('Tienda'),
+				'Vendedor' 		 => array(
+					'email' => $this->Auth->user('email')
+				)
+			);
+
+ 			#prx($dataEmail);
+			$enviar = $this->enviarEmail($dataEmail);
+
+			if ($enviar['code'] == 200) {
+				$this->Session->setFlash($enviar['message'] , null, array(), 'success');
+			}else{
+				$this->Session->setFlash($enviar['message'] , null, array(), 'warning');
+			}
+
+			$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'orden', $id_orden));
+ 		}
+
 
 		$this->request->data	= $this->Orden->find('first', $opt);
 		
@@ -654,6 +702,11 @@ class OrdenTransportesController extends AppController
  		}
 
 
+ 		$tracking = array();
+ 		if (isset($this->request->data['OrdenTransporte'][0]['r_numero_ot'])) {
+ 			$tracking = $this->trackingChilexpress($this->request->data['OrdenTransporte'][0]['r_numero_ot']);
+ 		}
+
  		/*
  			Definir si es despachoa domicilio o retiro en sucursal
  		 */
@@ -662,7 +715,26 @@ class OrdenTransportesController extends AppController
 		BreadcrumbComponent::add('Ver OT´s', '/ordenTransportes/orden/'.$id_orden);
 		BreadcrumbComponent::add('Detalle OT ');
 
-		$this->set(compact('curriers', 'codigosServicio', 'codigoProductosChilexpress', 'comunas', 'tcc', 'codigoEoc'));
+		$this->set(compact('curriers', 'codigosServicio', 'codigoProductosChilexpress', 'comunas', 'tcc', 'codigoEoc', 'tracking'));
+	}
+
+
+
+	public function trackingChilexpress($ot = '')
+	{	
+		if (empty($ot)) {
+			return array();
+		}
+
+		$ruta    = Configure::read('Chilexpress.seguimiento.path');
+		$archivo = Configure::read('Chilexpress.seguimiento.filename');
+		
+		$fullpath = $ruta . $archivo;
+
+		//$arr = $this->Tracking->leer_excel_tracking($fullpath, '99574733764');
+		$arr = $this->Tracking->leer_excel_tracking($fullpath, $ot);
+
+		return $arr;
 	}
 
 
@@ -891,4 +963,66 @@ class OrdenTransportesController extends AppController
 		echo json_encode($res);
 		exit;
 	}
+
+
+
+	public function enviarEmail($data = array())
+	{
+		$result = array();
+
+
+		foreach ($data as $id => $d) {
+			if (empty($d)) {
+
+				$result = array(
+					'code' => 400,
+					'message' => 'No se logró enviar el email al cliente ya que no se completaron todos los campos.'
+				);
+
+				return $result;
+			}
+		}
+		
+		App::uses('CakeEmail', 'Network/Email');
+
+		$bccArray = array();
+		# BCC
+		if ( !empty($data['Tienda']['emails_bcc']) ) {
+			$bcc = explode( ',', trim($data['Tienda']['emails_bcc']) );
+			$bccArray = array();
+			foreach ($bcc as $key => $value) {
+				$bccArray[$value] = $value;
+			}
+		}
+		
+		$Email = new CakeEmail();
+		$Email->viewVars('datos', $data);
+		$Email->from(array($data['Vendedor']['email'] => sprintf('Ventas %s', $data['Tienda']['nombre']) ));
+		$Email->to($data['to']);
+		$Email->subject('[NDRZ] Código de seguimiento de su pedido en ' . $data['Tienda']['nombre']);
+		$Email->addBcc($bcc);
+		$Email->emailFormat('html');
+		$Email->template('tracking');	
+
+		if( $Email->send() ) {
+
+			$result = array(
+				'code' => 200,
+				'message' => "Email enviado con éxito."
+			);
+
+			return $result;
+
+		}else{
+
+			$result = array(
+				'code' => 500,
+				'message' => "Error al enviar la cotización al cliente. Intente enviarla manualmente."
+			);
+
+			return $result;
+		}
+
+	}	
+
 }

@@ -33,6 +33,7 @@ class TrackingComponent extends Component
 		if (($handle = fopen($file, "r")) !== FALSE && !empty($tracking_number)) {
 		  while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
 		    $num = count($data);
+		    $data = array_map("utf8_encode", $data);
 
 		    if (in_array($tracking_number, $data)) {
 				for ($c=0; $c < $num; $c++) {
