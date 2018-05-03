@@ -2,6 +2,8 @@
 	<h2><span class="fa fa-money"></span> <?=__('Orden de compra #' . $this->request->data['Orden']['id_order']); ?></h2>
 	<div class="pull-right">
 		<button class="btn btn-warning" onclick="$('html, body').animate({scrollTop:$('#ot').offset().top},1000);">Ver información OT</button>
+		<button class="btn btn-info" onclick="$('html, body').animate({scrollTop:$('#tracking').offset().top},1000);"> <i class="fa fa-truck"></i> Seguimiento</button>
+		<button class="btn btn-primary" onclick="$('html, body').animate({scrollTop:$('#email').offset().top},1000);"> <i class="fa fa-envelope"></i> Enviar Email</button>
 	</div>
 </div>
 
@@ -366,6 +368,49 @@
 				<div class="panel-body">
 					<h2>Precio del transporte: <?=CakeNumber::currency($this->request->data['Orden']['total_shipping_tax_incl'], 'CLP');?></h2>
 				</div>
+			</div>
+		</div> <!-- end col -->
+	</div> <!-- end row -->
+	<!-- Fin OT -->
+
+	<!-- Tracking -->
+	<div class="row" id="tracking">
+		<div class="col-xs-12">
+			<h2><i class="fa fa-truck" aria-hidden="true"></i> <?=__('Seguimiento del paquete'); ?></h2>
+			<div class="panel panel-default">
+				<div class="panel-body">
+					<div class="row">
+						<div class="col-xs-12">
+							<div class="table-responsive">
+								<? if (!empty($tracking)) : ?>
+								<table class="table table-bordered table-striped">
+									<caption>Seguimiento del paquete</caption>
+									<thead>
+										<tr>
+											<th>Estado</th>
+											<th>Ubicación</th>
+											<th>Fecha y hora</th>
+										</tr>
+									</thead>
+									<tbody>
+										<? foreach ($tracking as$it => $track) : ?>
+										<tr>
+											<td><?=$track[4];?></td>
+											<td><?=$track[9];?></td>
+											<td><?=$track[5];?></td>
+										</tr>
+										<? endforeach; ?>
+									</tbody>
+								</table>
+								<? else : ?>
+								<table class="table table-bordered table-striped">
+									<caption>Esta OT no registra datos de seguimiento</caption>
+								</table>
+								<? endif; ?>
+							</div>
+						</div>
+					</div>
+				</div>
 				<div class="panel-footer">
 					<div class="pull-right">
 						<?= $this->Html->link('Volver a la orden de compra', array('action' => 'orden', $this->request->data['Orden']['id_order']), array('class' => 'btn btn-success')); ?>
@@ -373,7 +418,41 @@
 					</div>
 				</div>
 			</div>
-		</div> <!-- end col -->
-	</div> <!-- end row -->
-	<!-- Fin OT -->
+		</div>
+	</div>
+	<!-- Fin tracking -->
+	
+	<!-- Enviar -->
+	<div class="row" id="email">
+		<div class="col-xs-12">
+			<h2><i class="fa fa-envelope" aria-hidden="true"></i> <?=__('Enviar N° de seguimiento a Cliente'); ?></h2>
+			<div class="panel panel-primary">
+				<?= $this->Form->create('OrdenTransporte', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+				<?= $this->Form->input('transporte', array('type' => 'hidden', 'value' => $this->request->data['OrdenTransporte'][0]['transporte'])); ?>
+				<div class="panel-body">
+					<div class="row">
+
+						<div class="col-xs-12 col-sm-6 form-group">
+							<?=$this->Form->label('email', 'Email de destinatario'); ?>
+							<?=$this->Form->input('email', array('type' => 'text', 'class' => 'form-control', 'value' => $this->request->data['OrdenTransporte'][0]['e_destinatario_email'])); ?>
+						</div>
+						<div class="col-xs-12 col-sm-6 form-group">
+							<?=$this->Form->label('nombre', 'Nombre de destinatario'); ?>
+							<?=$this->Form->input('nombre', array('type' => 'text', 'class' => 'form-control', 'value' => $this->request->data['OrdenTransporte'][0]['e_destinatario_nombre'])); ?>
+						</div>
+						<div class="col-xs-12 col-sm-6 form-group">
+							<?=$this->Form->label('ot', 'Número de OT'); ?>
+							<?=$this->Form->input('ot', array('type' => 'text', 'class' => 'form-control', 'value' => $this->request->data['OrdenTransporte'][0]['r_numero_ot'], 'readonly' => true)); ?>
+						</div>
+
+					</div>
+				</div>
+				<div class="panel-footer">
+					<button type="submit" class="btn btn-primary pull-right">Enviar</button>
+				</div>
+				<?= $this->Form->end(); ?>
+			</div>
+		</div>
+	</div>
+	<!-- Fin enviar -->
 </div>

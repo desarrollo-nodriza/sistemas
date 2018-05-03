@@ -1,0 +1,52 @@
+img.img-tienda {
+	max-width: 130px;
+	display: block;
+	margin: 50px auto 30px auto;
+}
+
+.title {
+    font-size: 30px;
+    text-align: center;
+    margin: 10px 0 20px 0;
+}
+
+.no-padding {
+	padding-left: 0;
+	padding-right: 0;	
+}
+
+ul.tiendas {
+	list-style: none;
+	display: table;
+	padding: 0;
+	width: 100%;
+}
+
+ul.tiendas > li {
+	display: table-cell;
+}
+
+form label {
+	display: block;
+	font-size: 20px;
+	font-weight: 200;
+	text-align: center;
+}
+
+.btn-send {
+	background-color: #E46110;
+	border-color: #E46110;
+	color: #fff;
+}
+
+.btn-send:hover, .btn-send:active{
+	background-color: #423F40;
+	border-color: #423F40;
+	color: #fff;
+}
+
+label.error {
+	color: red;
+	font-size: 13px;
+	text-align: center;
+}

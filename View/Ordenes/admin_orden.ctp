@@ -42,7 +42,13 @@
 									<td><?= CakeNumber::currency($dte['total'], 'CLP'); ?>&nbsp;</td>
 									<td><?= h($dte['fecha']); ?>&nbsp;</td>
 									<td><?= $dteestado = (isset($dte['estado'])) ? $this->Html->dteEstado($dte['estado']) : $this->Html->dteEstado() ; ?>&nbsp;</td>
-									<td><?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('action' => 'editar', $dte['id'], $this->request->data['Orden']['id_order']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+									<td>
+										<? if (!empty($dte['estado'])) : ?>
+										<?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('action' => 'editar', $dte['id'], $this->request->data['Orden']['id_order']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+										<? endif; ?>
+										<? if ($permisos['delete'] && !empty($dte['estado'])) : ?>
+										<?= $this->Html->link('<i class="fa fa-undo"></i> Invalidar', array('action' => 'invalidar', $dte['id'], $this->request->data['Orden']['id_order']), array('class' => 'btn btn-xs btn-warning', 'rel' => 'tooltip', 'title' => 'Invalidar este registro', 'escape' => false)); ?>
+										<? endif; ?>
 									</td>
 								</tr>
 								<?php endforeach; ?>

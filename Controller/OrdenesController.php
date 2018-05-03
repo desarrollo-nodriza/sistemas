@@ -248,6 +248,22 @@ class OrdenesController extends AppController
 
 	}
 
+
+	public function admin_invalidar($id_dte = '', $id_orden = '')
+	{	
+
+		$this->Orden->Dte->id = $id_dte;
+
+		if ($this->Orden->Dte->saveField('estado', '')) {
+			$this->Session->setFlash('DTE invalidado con éxito.', null, array(), 'info');
+		}else{
+			$this->Session->setFlash('No fue posible invalidar el DTE.', null, array(), 'danger');
+		}
+
+		$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
+	}
+
+
 	/**
 	 * Verifica si una orden tiene DTE emitido correctamente
 	 * @return bool 
