@@ -481,14 +481,14 @@ class OrdenTransportesController extends AppController
 							)
 						);
 
-						/*
+						
 						$enviar = $this->enviarEmail($dataEmail);
 
 						if ($enviar['code'] == 200) {
 							$this->Session->setFlash($enviar['message'] , null, array(), 'success');
 						}else{
 							$this->Session->setFlash($enviar['message'] , null, array(), 'warning');
-						}*/
+						}
 
 
 						# Se genera el PDF con la etiqueta
