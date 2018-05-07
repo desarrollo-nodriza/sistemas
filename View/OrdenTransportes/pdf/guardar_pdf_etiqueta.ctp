@@ -1,0 +1,1 @@
+<img src="<?=$etiqueta;?>" style="width: 100%;">

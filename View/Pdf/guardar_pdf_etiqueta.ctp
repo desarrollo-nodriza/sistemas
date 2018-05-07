@@ -1,0 +1,1 @@
+<?=$this->Html->image(sprintf('../OT/%s/%s.jpg', $data['OrdenTransporte']['r_numero_ot'], $data['OrdenTransporte']['r_barcode']), array('class' => 'img-responsive', 'fullBase' => true));?>		
