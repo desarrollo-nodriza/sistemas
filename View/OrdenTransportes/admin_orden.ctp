@@ -46,9 +46,16 @@
                                         <a href="#" data-toggle="dropdown" class="btn btn-primary btn-xs dropdown-toggle" aria-expanded="true"><span class="fa fa-cog"></span> Acciones</a>
                                         <ul class="dropdown-menu dropdown-menu-left" role="menu">
                                             <li role="presentation" class="dropdown-header">Seleccione</li>
-                                            <? if (!empty($ot['r_imagen_etiqueta'])) : ?>
+                                            <? if (!empty($ot['pdf'])) : ?>
                                             <li>
-											<a class="btn-imprimir-ot" data-etiqueta="<?= $this->Chilexpress->verEtiqueta($ot['r_imagen_etiqueta'], $ot['r_numero_ot'], $ot['r_barcode']); ?>"><i class="fa fa-print"></i> Imprimir etiqueta</a>
+											<a class="btn-imprimir-ot" data-etiqueta="<?= $ot['pdf']; ?>"><i class="fa fa-print"></i> Imprimir etiqueta</a>
+											</li>
+											<li>
+												<a class="btn-imprimir-ot" target="_blank" href="<?= $ot['pdf']; ?>"><i class="fa fa-tag"></i> Ver etiqueta</a>
+											</li>
+											<? else : ?>
+											<li>
+												<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Generar PDF', array('action' => 'generar_pdf', $this->request->data['Orden']['id_order']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Generar Pdf', 'escape' => false)); ?>
 											</li>
 											<? endif; ?>
                                             <li><?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('action' => 'view_chilexpress', $this->request->data['Orden']['id_order']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?></li>

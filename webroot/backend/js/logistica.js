@@ -393,7 +393,7 @@ $(function() {
 					console.info(etiqueta);
 					printJS({
 						printable: etiqueta, 
-						type: 'image'
+						type: 'pdf'
 					});
 				});
 				

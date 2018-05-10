@@ -5,6 +5,7 @@ class OrdenTransportesController extends AppController
 {	
 	public $uses = array('Orden');
 	public $helpers = array('Chilexpress.Chilexpress');
+	public $components = array('RequestHandler');
 
 	/**
      * Obtiene y lista los medios de pago disponibles en u array único
@@ -216,6 +217,49 @@ class OrdenTransportesController extends AppController
 	}
 
 
+
+	public function guardar_pdf_etiqueta($etiqueta = '', $data = array())
+	{
+
+		App::uses('CakePdf', 'Plugin/CakePdf/Pdf');
+
+		# Ruta absoluta del pdf
+		$absoluta = APP . 'webroot' . DS . 'Pdf' . DS . 'Etiquetas' . DS . $data['OrdenTransporte']['id'] . DS . 'etiqueta_' . $data['OrdenTransporte']['r_numero_ot'] . '.pdf';
+
+		# Ruta para guardar en la Base de datos
+		$archivo = Router::url('/', true) . 'Pdf/Etiquetas/' . $data['OrdenTransporte']['id'] . '/etiqueta_' . $data['OrdenTransporte']['r_numero_ot'] . '.pdf';
+
+		if (file_exists($absoluta)) {
+			return $archivo;
+		}
+
+		$this->pdfConfig = array(
+			'download' => true,
+			'margin' => array(
+				'bottom' => 0,
+				'left' => 0,
+				'right' => 0,
+				'top' => 0
+			)
+		);
+		
+		$this->CakePdf = new CakePdf();
+		$this->CakePdf->template('guardar_pdf_etiqueta', 'logistica');
+		$this->CakePdf->viewVars(compact('etiqueta', 'data'));
+		$this->CakePdf->write($absoluta);
+
+		ClassRegistry::init('OrdenTransporte')->id = $data['OrdenTransporte']['id'];
+		
+		if( ! ClassRegistry::init('OrdenTransporte')->saveField('pdf', $archivo)) {
+			return '';
+		}
+
+		return $archivo;
+
+	}
+
+
+
 	public function admin_imprimir_etiqueta($id = '', $id_orden = '')
 	{
 		$this->verificarTienda();
@@ -227,21 +271,79 @@ class OrdenTransportesController extends AppController
 		}
 
 
-		$etiqueta = ClassRegistry::init('OrdenTransporte')->find('first', array(
+		$etiquetaRes = ClassRegistry::init('OrdenTransporte')->find('first', array(
 			'conditions' => array(
 				'id' => $id
 			),
 			'fields' => array(
 				'OrdenTransporte.r_imagen_etiqueta',
 				'OrdenTransporte.r_numero_ot',
-				'OrdenTransporte.r_barcode'
+				'OrdenTransporte.r_barcode',
+				'OrdenTransporte.id',
+				'OrdenTransporte.pdf'
 			)
 		));
 
-		$etiqueta = $this->Ot->verEtiqueta($etiqueta['OrdenTransporte']['r_imagen_etiqueta'], $etiqueta['OrdenTransporte']['r_numero_ot'], $etiqueta['OrdenTransporte']['r_barcode']);
-		return $etiqueta;
+		$etiqueta = $this->Ot->verEtiqueta($etiquetaRes['OrdenTransporte']['r_imagen_etiqueta'], $etiquetaRes['OrdenTransporte']['r_numero_ot'], $etiquetaRes['OrdenTransporte']['r_barcode']);
+
+		$pdf = $this->guardar_pdf_etiqueta($etiqueta, $etiquetaRes);
+		
+		return $pdf;
+
 	}
 
+
+
+	public function generarPdf($id = null)
+	{
+
+		if ( ! ClassRegistry::init('Orden')->exists($id) )
+		{
+			$result = array(
+				'code' => 400,
+				'message' => 'No existe orden para generar Etiqueta.'
+			);
+
+			return $result;
+
+		}
+
+		$etiquetaRes = ClassRegistry::init('OrdenTransporte')->find('first', array(
+			'conditions' => array(
+				'OrdenTransporte.id_order' => $id
+			),
+			'fields' => array(
+				'OrdenTransporte.r_imagen_etiqueta',
+				'OrdenTransporte.r_numero_ot',
+				'OrdenTransporte.r_barcode',
+				'OrdenTransporte.id',
+				'OrdenTransporte.pdf'
+			),
+			'order' => array(
+				'OrdenTransporte.id' => 'DESC'
+			)
+		));
+
+
+		$etiqueta = $this->Ot->verEtiqueta($etiquetaRes['OrdenTransporte']['r_imagen_etiqueta'], $etiquetaRes['OrdenTransporte']['r_numero_ot'], $etiquetaRes['OrdenTransporte']['r_barcode']);
+		
+		$pdf      = $this->guardar_pdf_etiqueta($etiqueta, $etiquetaRes);
+
+		if (empty($pdf)) {
+			$result = array(
+				'code' => 500,
+				'message' => 'No fue posible crear la etiqueta para impresión'
+			);
+		}else{
+			$result = array(
+				'code' => 200,
+				'message' => 'Etiqueta creada con éxito. <br> Para ver la etiqueta pinche <a href="'.$pdf.'" target="_blank" class="btn btn-xs btn-primary">AQUÍ</a>',
+				'pdfPath' => $pdf
+			);
+		}
+
+		return $result;
+	}
 
 
 	/**
@@ -260,6 +362,27 @@ class OrdenTransportesController extends AppController
 		}
 
 		return false;
+	}
+
+
+	public function admin_generar_pdf($id_orden = null)
+	{
+		if (empty($id_orden) || is_null($id_orden)) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'orden', $id_order));
+		}
+
+		# Se genera el PDF con la etiqueta
+		$generarPdf = $this->generarPdf($id_orden);
+
+		if ($generarPdf['code'] == 200) {
+			$this->Session->setFlash($generarPdf['message'] , null, array(), 'success');
+		}else{
+			$this->Session->setFlash($generarPdf['message'] , null, array(), 'warning');
+		}
+		
+		
+		$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'orden', $id_orden));
 	}
 
 
@@ -372,8 +495,10 @@ class OrdenTransportesController extends AppController
 					$this->request->data['OrdenTransporte']['r_imagen_etiqueta']             = $resultado->respGenerarIntegracionAsistida->DatosEtiqueta->imagenEtiqueta;
 
 					if (ClassRegistry::init('OrdenTransporte')->save($this->request->data)) {
+						
 						$this->Session->setFlash('OT generada con éxito' , null, array(), 'success');
 
+						# Se envia el mensaje al cliente
 						$dataEmail = array(
 							'nombre_cliente' => $this->request->data['OrdenTransporte']['e_destinatario_nombre'],
 							'to'			 => $this->request->data['OrdenTransporte']['e_destinatario_email'],
@@ -386,7 +511,7 @@ class OrdenTransportesController extends AppController
 							)
 						);
 
-
+						
 						$enviar = $this->enviarEmail($dataEmail);
 
 						if ($enviar['code'] == 200) {
@@ -395,6 +520,16 @@ class OrdenTransportesController extends AppController
 							$this->Session->setFlash($enviar['message'] , null, array(), 'warning');
 						}
 
+
+						# Se genera el PDF con la etiqueta
+						$generarPdf = $this->generarPdf($id_orden);
+
+						if ($generarPdf['code'] == 200) {
+							$this->Session->setFlash($generarPdf['message'] , null, array(), 'success');
+						}else{
+							$this->Session->setFlash($generarPdf['message'] , null, array(), 'warning');
+						}
+						#prx($this->request->data);
 						$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'orden', $id_orden));
 					}
 
@@ -513,7 +648,7 @@ class OrdenTransportesController extends AppController
 				$this->request->data['OrdenTransporte']['e_peso'] = $this->request->data['OrdenTransportista']['weight'];
 			}
 
-			#prx($this->request->data);
+			
 		}
 
 		# Transportistas	
@@ -996,7 +1131,8 @@ class OrdenTransportesController extends AppController
 		}
 		
 		$Email = new CakeEmail();
-		$Email->viewVars('datos', $data);
+		$Email->config('gmail');
+		$Email->viewVars(array('datos' => $data));
 		$Email->from(array($data['Vendedor']['email'] => sprintf('Ventas %s', $data['Tienda']['nombre']) ));
 		$Email->to($data['to']);
 		$Email->subject('[NDRZ] Código de seguimiento de su pedido en ' . $data['Tienda']['nombre']);
@@ -1008,7 +1144,7 @@ class OrdenTransportesController extends AppController
 
 			$result = array(
 				'code' => 200,
-				'message' => "Email enviado con éxito."
+				'message' => "Email enviado con éxito a " . $data['to']
 			);
 
 			return $result;

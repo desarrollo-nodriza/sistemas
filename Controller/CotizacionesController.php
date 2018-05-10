@@ -562,6 +562,7 @@ class CotizacionesController extends AppController
 		
 			$this->Email = new CakeEmail();
 			$this->Email
+			->config('gmail')
 			->viewVars(compact('cotizacion', 'tienda'))
 			->emailFormat('html')
 			->from(array($cotizacion['Cotizacion']['email_vendedor'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
