@@ -315,6 +315,9 @@ class OrdenTransportesController extends AppController
 				'OrdenTransporte.r_barcode',
 				'OrdenTransporte.id',
 				'OrdenTransporte.pdf'
+			),
+			'order' => array(
+				'OrdenTransporte.id' => 'DESC'
 			)
 		));
 
@@ -499,7 +502,7 @@ class OrdenTransportesController extends AppController
 						}else{
 							$this->Session->setFlash($generarPdf['message'] , null, array(), 'warning');
 						}
-
+						#prx($this->request->data);
 						$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'orden', $id_orden));
 					}
 
@@ -618,7 +621,7 @@ class OrdenTransportesController extends AppController
 				$this->request->data['OrdenTransporte']['e_peso'] = $this->request->data['OrdenTransportista']['weight'];
 			}
 
-			#prx($this->request->data);
+			
 		}
 
 		# Transportistas	
