@@ -1,5 +1,8 @@
 <div class="page-title">
-	<h2><span class="fa fa-file"></span> DTE</h2>
+	<h2 class="pull-left"><span class="fa fa-file"></span> DTE</h2>
+	<div class="pull-right">
+		<?= $this->Html->link('<i class="fa fa-file-pdf-o" aria-hidden="true"></i> Ver PDF Maestros', array('action' => 'generarpdf'), array('class' => 'btn btn-info btn-block', 'escape' => false)); ?>
+	</div>
 </div>
 
 <div class="page-content-wrap">
