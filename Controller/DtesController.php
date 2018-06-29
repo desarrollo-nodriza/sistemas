@@ -1,5 +1,6 @@
 <?php
 App::uses('AppController', 'Controller');
+
 class DtesController extends AppController
 {	
 	public $tipoDocumento = array(
@@ -433,5 +434,221 @@ class DtesController extends AppController
 		$modelo = $this->Dte->alias;
 		
 		$this->set(compact('datos', 'campos', 'modelo'));
+	}
+
+
+	public function admin_generarpdf()
+	{	
+
+		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
+		set_time_limit(0);
+		ini_set('memory_limit', '5120M');
+		$this->verificarTienda();
+
+		$resultados = array(
+			'success' => array(
+				'total' => 0,
+				'messages' => array(
+				)
+			),
+			'errors' => array(
+				'total' => 0,
+				'messages' => array(
+				)
+			)
+		);
+
+		// Filtrado de dtes por formulario
+		if ( $this->request->is('post') ) {
+
+			$this->filtrar('dtes', 'generarpdf');
+
+		}
+
+		if (isset($this->request->params['named']['generarpdf'])) {
+
+			$query = array(
+				'conditions' => array(),
+				'order' => array('Dte.folio' => 'DESC'),
+				'fields' => array(
+					'Dte.id',
+					'Dte.id_order',
+					'Dte.folio',
+					'Dte.tipo_documento',
+					'Dte.rut_receptor',
+					'Dte.estado',
+					'Dte.fecha',
+					'Dte.pdf'
+				)
+			);
+
+			# Filtrar
+			if ( isset($this->request->params['named']) ) {
+				foreach ($this->request->params['named'] as $campo => $valor) {
+					switch ($campo) {
+						case 'by':
+							if ($valor == 'fol' && isset($this->request->params['named']['txt'])) {
+								$query = array_replace_recursive($query, array(
+								'conditions' => array('Dte.folio LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
+							}
+
+							if ($valor == 'ord' && isset($this->request->params['named']['txt'])) {
+								$query = array_replace_recursive($query, array(
+								'conditions' => array('Dte.id_order LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
+							}
+
+							if ($valor == 'rut' && isset($this->request->params['named']['txt'])) {
+								$query = array_replace_recursive($query, array(
+								'conditions' => array('Dte.rut_receptor LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
+							}
+							
+							break;
+						case 'tyd':
+							$query = array_replace_recursive($query, array(
+								'conditions' => array('Dte.tipo_documento' => $valor)));
+							break;
+						case 'sta':
+							$query = array_replace_recursive($query, array(
+								'conditions' => array('Dte.estado' => $valor)));
+							break;
+						case 'dtf':
+							$query = array_replace_recursive($query, array(
+								'conditions' => array('Dte.fecha >=' => trim($valor))));
+							break;
+						case 'dtt':
+							$query = array_replace_recursive($query, array(
+								'conditions' => array('Dte.fecha <=' => trim($valor))));
+							break;
+					}
+				}
+			}
+
+
+			$datos = $this->Dte->find('all', $query);
+
+			$pdfs       = array();
+			$limite     = 500;
+			$lote = 0;
+			$ii = 1;
+
+			foreach ($datos as $i => $dato) {
+				if (!empty($dato['Dte']['pdf']) && !empty($dato['Dte']['id_order']) ) {
+
+					$pdfFile = APP . 'webroot' . DS. 'Dte' . DS . $dato['Dte']['id_order'] . DS . $dato['Dte']['id'] . DS . $dato['Dte']['pdf']; 
+
+					if (file_exists($pdfFile)) {
+						
+						$pdfs[$lote][$ii] = $pdfFile;
+
+						if ($ii%$limite == 0) {
+							$lote++;
+						}	
+						
+						$resultados['success']['total'] = $resultados['success']['total'] + 1;
+						$resultados['success']['messages'][] = 'DTE folio n° '.$dato['Dte']['folio'].' listo para procesar.';
+					}else{
+						$resultados['errors']['total'] = $resultados['errors']['total'] + 1;
+						$resultados['errors']['messages'][] = 'No se encontró pdf para el DTE folio n°' . $dato['Dte']['folio'] . '. Debe ser generado manualmente.';
+					}
+
+				}else{
+					$resultados['errors']['total'] = $resultados['errors']['total'] + 1;
+					if (!empty($dato['Dte']['folio'])) {
+						$resultados['errors']['messages'][] = 'El DTE folio n°' . $dato['Dte']['folio'] . ' no tiene PDF generado.';
+					}else{
+						$resultados['errors']['messages'][] = 'El DTE identificador n°' . $dato['Dte']['id'] . ' no tiene PDF generado.';
+					}
+					
+				}
+
+				$ii++;
+			}
+			
+			include '../Vendor/PDFMerger/PDFMerger.php';
+
+			# Se procesan por Lotes de 500 documentos para no volcar la memoria
+			foreach ($pdfs as $ip => $lote) {
+				$pdf = new PDFMerger;
+				foreach ($lote as $id => $document) {
+					$pdf->addPDF($document, 'all');	
+				}
+				try {
+					
+					$pdfname = 'maestro-' . date('YmdHis') .'.pdf';
+
+					$res = $pdf->merge('file', APP . 'webroot' . DS. 'DteMaestros' . DS . $pdfname);
+					if ($res) {
+						$resultados['pdf']['result']['lote_'.$ip]['document'] = Router::url('/', true) . 'DteMaestros/' . $pdfname;
+					}
+
+				} catch (Exception $e) {
+					$resultados['errors']['messages'][] = $e->getMessage();
+				}
+			}
+		} // End generar pdf request
+
+
+		// Listar todos los PDFS
+		$archivos = $this->obtenerListadoDeArchivos(APP . 'webroot' . DS. 'DteMaestros' . DS);
+		
+		$archivos = Hash::sort($archivos, '{n}.Modificado', 'DESC');
+
+
+		BreadcrumbComponent::add('DTE´s', '/dtes');
+		BreadcrumbComponent::add('Ver PDF Maestros ');
+
+
+		$this->set(compact('resultados', 'archivos'));
+
+	}
+
+
+	public function obtenerListadoDeArchivos($directorio){
+ 
+	  // Array en el que obtendremos los resultados
+	  $res = array();
+	 
+	  // Agregamos la barra invertida al final en caso de que no exista
+	  if(substr($directorio, -1) != DS) $directorio .= DS;
+	 
+	  // Creamos un puntero al directorio y obtenemos el listado de archivos
+	  $dir = @dir($directorio) or die("getFileList: Error abriendo el directorio $directorio para leerlo");
+	  while(($archivo = $dir->read()) !== false) {
+	      // Obviamos los archivos ocultos
+	      if($archivo[0] == ".") continue;
+	      if(is_dir($directorio . $archivo)) {
+	          $res[] = array(
+	            "Nombre" => $archivo . DS,
+	            "Directorio" => $directorio,
+	            "Tamaño" => 0,
+	            "Modificado" => filemtime($directorio . $archivo)
+	          );
+	      } else if (is_readable($directorio . $archivo)) {
+	          $res[] = array(
+	            "Nombre" => $archivo,
+	            "Ruta_completa" => Router::url('/', true) . 'DteMaestros/' . $archivo,
+	            "Directorio" => $directorio,
+	            "Tamaño" => $this->formatBytes(filesize($directorio . $archivo), 2),
+	            "Modificado" => date('Y-m-d H:i:s',filemtime($directorio . $archivo))
+	          );
+	      }
+	  }
+	  $dir->close();
+	  return $res;
+	}
+
+
+	public function formatBytes($bytes, $precision = 2) { 
+	    $units = array('B', 'KB', 'MB', 'GB', 'TB'); 
+
+	    $bytes = max($bytes, 0); 
+	    $pow = floor(($bytes ? log($bytes) : 0) / log(1024)); 
+	    $pow = min($pow, count($units) - 1); 
+
+	    // Uncomment one of the following alternatives
+	     $bytes /= pow(1024, $pow);
+	    // $bytes /= (1 << (10 * $pow)); 
+
+	    return round($bytes, $precision) . ' ' . $units[$pow]; 
 	}
 }

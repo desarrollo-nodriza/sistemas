@@ -106,6 +106,37 @@
 					<h3 class="panel-title">Listado de DTE´S</h3>
 					<? if ($permisos['view']) : ?>
 					<div class="btn-group pull-right">
+						<a href="#" class="mb-control  btn btn-danger" data-box="#mb-alerta-pdf"><i class="fa fa-file-pdf-o" aria-hidden="true"></i> Generar PDF Maestro</a>
+
+						<div class="message-box message-box-banger animated fadeIn" data-sound="alert" id="mb-alerta-pdf">
+							<div class="mb-container">
+								<div class="mb-middle">
+									<div class="mb-title"><span class="fa fa-floppy-o"></span>¿Generar <strong>PDF Maestro</strong>?</div>
+									<div class="mb-content">
+										<p>Se generará un PDF que contenga todos los DTES emitidos.</p>
+										<p><i>Considere que si usted filtra los DTES, el resultado del PDF Maestro tambien será afectado.</i></p>
+										<p>Para cancelar presiona No</p>
+									</div>
+									<div class="mb-footer">
+										<div class="pull-right">
+											<? 
+
+											$exportpdf = array(
+												'action' => 'generarpdf',
+												'generarpdf' => 1
+											);
+
+											if (isset($this->request->params['named'])) {
+												$exportpdf = array_replace_recursive($exportpdf, $this->request->params['named']);
+											}?>
+											<?= $this->Html->link('<i class="fa fa-file-pdf-o" aria-hidden="true"></i> Sí, Generar PDF Maestro', $exportpdf, array('class' => 'btn btn-warning btn-lg js-procesar', 'escape' => false)); ?>
+											<button class="btn btn-default btn-lg mb-control-close">No</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
 						<? $export = array(
 							'action' => 'exportar'
 							);
@@ -168,3 +199,12 @@
 		</div> <!-- end col -->
 	</div> <!-- end row -->
 </div>
+
+<script type="text/javascript">
+	
+	$('.js-procesar').on('click', function(){
+		$(this).attr('disabled', 'disabled');
+		$('.mb-control-close').attr('disabled', 'disabled');
+	});
+
+</script>
