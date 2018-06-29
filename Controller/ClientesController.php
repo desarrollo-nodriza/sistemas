@@ -172,14 +172,18 @@ class ClientesController extends AppController {
 
     public function admin_exportar()
     {
-        set_time_limit(0);
+        # Aumentamos el tiempo máxmimo de ejecución para evitar caídas
+        set_time_limit(600);
         
+        $this->verificarTienda();
+
         $datos          = $this->Cliente->find('all', array(
 
             'recursive'             => -1
 
         ));
 
+        
         $campos         = array_keys($this->Cliente->_schema);
 
         $modelo         = $this->Cliente->alias;
