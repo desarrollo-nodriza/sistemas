@@ -53,6 +53,10 @@
 											<li>
 												<a class="btn-imprimir-ot" target="_blank" href="<?= $ot['pdf']; ?>"><i class="fa fa-tag"></i> Ver etiqueta</a>
 											</li>
+											<? else : ?>
+											<li>
+												<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Generar PDF', array('action' => 'generar_pdf', $this->request->data['Orden']['id_order']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Generar Pdf', 'escape' => false)); ?>
+											</li>
 											<? endif; ?>
                                             <li><?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('action' => 'view_chilexpress', $this->request->data['Orden']['id_order']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?></li>
                                         </ul>

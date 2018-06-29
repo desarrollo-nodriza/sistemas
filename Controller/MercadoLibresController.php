@@ -1220,9 +1220,12 @@ class MercadoLibresController extends AppController
 
 		foreach ($productos[$tienda['Tienda']['configuracion']] as $ip => $producto) {
 			$costoEnvio = $this->Meli->getShippingCost($producto['MercadoLibr']['id_meli'], 'free');
-			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio'] = $producto['Productotienda']['precio'] + $costoEnvio;
+
+			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio_tienda'] = $producto['Productotienda']['precio'];
+			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['despacho']      = $costoEnvio;
+			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio']        = $producto['Productotienda']['precio'] + $costoEnvio;
 		}
-		#prx($productos);
+		
 		# Actualizamos de los productos publicados, tanto interna como en MELI
 		$result = $this->sincronizarPreciosStock($productos);
 		

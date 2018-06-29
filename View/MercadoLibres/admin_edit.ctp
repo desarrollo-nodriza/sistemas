@@ -77,7 +77,7 @@
 					</div>
 					<div class="col-xs-12 col-sm-3 js-base">
 						<? if (!empty($this->request->data['MercadoLibr']['categoria_00']) && !empty($this->request->data['MercadoLibr']['id_meli'])) : ?>
-						<?=$this->Form->select('categoria_00', $categoriasRoot, array('empty' => 'Seleccione categoria raiz', 'class' => 'form-control', 'id' => 'BaseCat', 'required' => true, 'disabled' => true));?>
+						<?=$this->Form->select('categoria_00', $categoriasRoot, array('empty' => 'Seleccione categoria raiz', 'class' => 'form-control js-cat', 'id' => 'BaseCat', 'required' => true, 'disabled' => true));?>
 						<? else : ?>
 						<?=$this->Form->select('categoria_00', $categoriasRoot, array('empty' => 'Seleccione categoria raiz', 'class' => 'form-control js-cat', 'id' => 'BaseCat', 'required' => true));?>
 						<? endif; ?>
@@ -88,9 +88,9 @@
 						<div class="col-xs-12 col-sm-3">
 							
 							<? if (!empty($this->request->data['MercadoLibr']['id_meli'])) : ?>
-								<?=$this->Form->select('categoria_0' . $index, $categoriasHoja, array('empty' => 'Seleccione categoria', 'class' => 'form-control', 'required' => true, 'disabled' => true));?>
+								<?=$this->Form->select('categoria_0' . $index, $categoriasHoja, array('empty' => 'Seleccione categoria', 'class' => 'js-cat form-control', 'required' => true, 'disabled' => true));?>
 							<? else : ?>
-								<?=$this->Form->select('categoria_0' . $index, $categoriasHoja, array('empty' => 'Seleccione categoria', 'class' => 'form-control', 'required' => true));?>
+								<?=$this->Form->select('categoria_0' . $index, $categoriasHoja, array('empty' => 'Seleccione categoria', 'class' => 'js-cat form-control', 'required' => true));?>
 							<? endif; ?>
 							
 							<? if (end($categoriasHojas) == $categoriasHojas[$index]) : ?>
