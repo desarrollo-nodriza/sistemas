@@ -1,6 +1,32 @@
 <div class="page-title">
 	<h2><span class="fa fa-money"></span> <?=__('DTE #' . $this->request->data['Dte']['id']); ?> <small><?=$this->Html->dteEstado($this->request->data['Dte']['estado'])?></small></h2>
 	<div class="pull-right">
+
+		<? if (!empty($this->request->data['Dte']['pdf'])) : ?>
+			
+			<?= $this->Html->link(
+				'<i class="fa fa-eye"></i> Ver PDF DTE',
+				sprintf('/Dte/%d/%d/%s', $this->request->data['Orden']['id_order'], $this->request->data['Dte']['id'], $this->request->data['Dte']['pdf']),
+				array(
+					'class' => 'btn btn-success', 
+					'target' => '_blank', 
+					'fullbase' => true,
+					'escape' => false) 
+				); ?>
+
+		<? else : ?>
+			
+			<?= $this->Html->link(
+				'<i class="fa fa-eye"></i> Generar PDF DTE',
+				array('action' => 'editar', $this->request->data['Dte']['id'], $this->request->data['Orden']['id_order']),
+				array(
+					'class' => 'btn btn-info', 
+					'fullbase' => true,
+					'escape' => false) 
+				); ?>
+					
+		<? endif; ?>
+		
 		<button class="btn btn-warning" onclick="$('html, body').animate({scrollTop:$('#dte').offset().top},1000);">Información del DTE</button>
 		<? if ($this->request->data['Dte']['estado'] == 'dte_temporal_emitido' || $this->request->data['Dte']['estado'] == 'dte_real_no_emitido') : ?>
 		<?= $this->Form->postLink('Eliminar Dte temporal', array('action' => 'eliminarDteTemporal', $this->request->data['Dte']['id'], $this->request->data['Dte']['id_order']), array('class' => 'btn btn-danger', 'rel' => 'tooltip', 'title' => 'Eliminar este DTE', 'escape' => false)); ?>
@@ -836,7 +862,7 @@
 								</tr>
 								<tr>
 									<th><?=__('Mensaje');?></th>
-									<td><?=$this->Form->textarea('mensaje', array('value' => sprintf('Estimado/a %s. Hemos emitido su %s exitosamente para su compra referencia #%s. El documento los encontrará adjunto a este email.', $this->request->data['Orden']['Cliente']['firstname'], $this->Html->tipoDocumento[$this->request->data['Dte']['tipo_documento']], $this->request->data['Orden']['reference']), 
+									<td><?=$this->Form->textarea('mensaje', array('value' => sprintf('Estimado/a %s. Hemos emitido su %s exitosamente para su compra referencia #%s. El documento los encontrará adjunto a este email. Por favor NO RESPONDA ESTE EMAIL ya que es generado automáticamente.', $this->request->data['Orden']['Cliente']['firstname'], $this->Html->tipoDocumento[$this->request->data['Dte']['tipo_documento']], $this->request->data['Orden']['reference']), 
 										'class' => 'form-control', 
 										'placeholder' => 'Agregue un mensaje personalizado para este email.'));?></td>
 								</tr>

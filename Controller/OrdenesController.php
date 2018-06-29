@@ -369,7 +369,17 @@ class OrdenesController extends AppController
 					}else{
 						$this->Session->setFlash($e->getMessage() , null, array(), 'warning');
 					}
-				}	
+				}
+
+				$id_dte = $this->Orden->Dte->find('first', array(
+					'conditions' => array('Dte.id_order' => $id_orden),
+					'order' => array('Dte.id' => 'DESC')
+					)
+				);
+
+				if (!empty($id_dte)) {
+					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte['Dte']['id'], $id_orden));
+				}
 
 				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
 
@@ -384,7 +394,11 @@ class OrdenesController extends AppController
 				'conditions'	=> array('Orden.id_order' => $id_orden),
 				'contain' => array(
 					'OrdenEstado' => array('Lang'),
-					'OrdenDetalle',
+					'OrdenDetalle' => array(
+						'conditions' => array(
+							'OrdenDetalle.product_quantity_refunded' => 0
+						)
+					),
 					'Dte',
 					'Cliente',
 					'ClienteHilo' => array('ClienteMensaje' => array('Empleado')),
@@ -546,7 +560,7 @@ class OrdenesController extends AppController
 
 			}else{
 				$this->Session->setFlash('Error al guardar la información en la base de detos local. Intente nuevamente.' , null, array(), 'warning');
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'edit', $id_dte));
+				$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte));
 			}
 
 		}
@@ -559,7 +573,11 @@ class OrdenesController extends AppController
 					'DteReferencia',
 					'Orden' => array(
 						'OrdenEstado' => array('Lang'),
-						'OrdenDetalle',
+						'OrdenDetalle' => array(
+							'conditions' => array(
+								'OrdenDetalle.product_quantity_refunded' => 0
+							)
+						),
 						'Dte',
 						'Cliente',
 						'ClienteHilo' => array('ClienteMensaje' => array('Empleado')),
@@ -615,6 +633,9 @@ class OrdenesController extends AppController
 					$this->Session->setFlash($e->getMessage() , null, array(), 'danger');
 				}
 			}
+
+			# Se redirecciona a si mismo
+			$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte, $id_orden));
 		}
 
 		# Array de tipos de documentos
@@ -759,7 +780,11 @@ class OrdenesController extends AppController
 				'conditions'	=> array('Orden.id_order' => $id),
 				'contain' => array(
 					'OrdenEstado' => array('Lang'),
-					'OrdenDetalle',
+					'OrdenDetalle' => array(
+						'conditions' => array(
+							'OrdenDetalle.product_quantity_refunded' => 0
+						)
+					),
 					'Dte',
 					'Cliente',
 					'ClienteHilo' => array('ClienteMensaje' => array('Empleado')))
@@ -1623,7 +1648,7 @@ class OrdenesController extends AppController
 			
 			if ($enviar['status']['code'] == 200) {
 				$this->Session->setFlash('Correo enviado existosamente al cliente.', null, array(), 'success');
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $this->request->data['Orden']['id_orden']));
+				$this->redirect(array('controller' => 'ordenes', 'action' => 'index'));
 			}else{
 				$this->Session->setFlash('Error al enviar el email al cliente. Error:' . $enviar['body'], null, array(), 'danger');
 				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $this->request->data['Orden']['id_orden']));
