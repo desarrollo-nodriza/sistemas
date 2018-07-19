@@ -620,7 +620,7 @@ class OrdenTransportesController extends AppController
 
 
 			$this->request->data	= $this->Orden->find('first', $opt);
-
+			
 			if (empty($this->request->data)) {
 				$this->Session->setFlash('No es posible generar una OT de Chilexpress para ésta orden de compra.' , null, array(), 'warning');
 				$this->redirect(array('controller' => 'ordenTransportes', 'action' => 'index'));

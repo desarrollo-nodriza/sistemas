@@ -1,6 +1,6 @@
 # CakePHP 3
 
-/vendor/*
+
 /config/app.php
 
 /tmp/cache/models/*
@@ -20,7 +20,7 @@
 # CakePHP 2
 
 /tmp/*
-/Config/core.php
+#/Config/core.php
 /Config/database.php
-/webroot/Pdf/*
-/webroot/img/*
+#/webroot/Pdf/*
+#/webroot/img/*
