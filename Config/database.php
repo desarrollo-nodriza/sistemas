@@ -43,7 +43,7 @@ class DATABASE_CONFIG
 		'host' => '69.164.205.133',
 		'login' => 'nodriza',
 		'password' => 'IgP_8111980_IgP',
-		'database' => 'toolmania2',
+		'database' => 'dev_toolmania',
 		'prefix' => 'tm_',
 		'encoding' => 'utf8',
 	);
