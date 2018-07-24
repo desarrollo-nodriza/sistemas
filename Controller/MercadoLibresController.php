@@ -650,6 +650,15 @@ class MercadoLibresController extends AppController
 			}
 
 			$this->request->data['MercadoLibr']['nombre'] = $this->request->data['MercadoLibr']['producto'];
+			
+			if (empty($this->request->data['MercadoLibr']['description']) && !empty($this->request->data['MercadoLibr']['id_product'])) {
+				$descripcionGenerada = to_array(json_decode($this->crearDescripcion($this->request->data['MercadoLibr']['id_product'], false)));
+
+				if ($descripcionGenerada['code'] == 200) {
+					$this->request->data['MercadoLibr']['description'] = $descripcionGenerada['result'];
+				}
+			}
+
 
 			$this->MercadoLibr->create();
 			if ( $this->MercadoLibr->save($this->request->data) )
@@ -700,8 +709,13 @@ class MercadoLibresController extends AppController
 				}
 			}
 
+			$descripcionGeneradaSave = to_array(json_decode($this->crearDescripcion($this->request->data['MercadoLibr']['id_product'], false)));
+		
+			if ($descripcionGeneradaSave['code'] == 200 && empty($this->request->data['MercadoLibr']['description'])) {
+				$this->request->data['MercadoLibr']['description'] = $descripcionGeneradaSave['result'];
+			}
+
 			$this->request->data['MercadoLibr']['nombre'] = $this->request->data['MercadoLibr']['producto'];
-			
 			
 			if ( $this->MercadoLibr->save($this->request->data) )
 			{	
@@ -727,6 +741,12 @@ class MercadoLibresController extends AppController
 			'conditions' => array('Productotienda.id_product' => $this->request->data['MercadoLibr']['id_product']),
 			'contain' => array('Lang')
 			));
+
+		$descripcionGenerada = to_array(json_decode($this->crearDescripcion($this->request->data['MercadoLibr']['id_product'], false)));
+		
+		if ($descripcionGenerada['code'] == 200 && empty($this->request->data['MercadoLibr']['description'])) {
+			$this->request->data['MercadoLibr']['description'] = $descripcionGenerada['result'];
+		}
 		
 
 		$categoriasRoot = $this->admin_obtenerCategorias(false);
@@ -1016,6 +1036,124 @@ class MercadoLibresController extends AppController
     	exit;
     }
 
+    public function crearDescripcion($id = null, $ajax = true)
+    {
+    	if (empty($id)) {
+    		if ($ajax) {
+    			echo json_encode(array('result' => '', 'code' => 404, 'message' => 'El Producto selecconado no existe'));
+    			exit;	
+    		}else{
+    			return json_encode(array('result' => '', 'code' => 404, 'message' => 'El Producto selecconado no existe'));
+    		}
+    	}
+
+    	// Obtenemos la información de a tienda
+		$tienda = ClassRegistry::init('Tienda')->find('first', array(
+			'conditions' => array('Tienda.activo' => 1, 'Tienda.id' => $this->Session->read('Tienda.id'))
+			));
+		
+		// Virificar existencia de la tienda
+		if (empty($tienda)) {
+			if ($ajax) {
+				echo json_encode(array('result' => '', 'code' => 500, 'message' => 'Error a obtener datos'));
+    			exit;	
+			}else{
+				return json_encode(array('result' => '', 'code' => 500, 'message' => 'Error a obtener datos'));
+			}
+		}
+
+		// Verificar que la tienda esté configurada
+		if (empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['prefijo']) || empty($tienda['Tienda']['configuracion'])) {
+			if ($ajax) {
+				echo json_encode(array('result' => '', 'code' => 501, 'message' => 'Error a obtener datos, verifique la configuración de la tienda'));
+    			exit;
+			}else{
+				return json_encode(array('result' => '', 'code' => 501, 'message' => 'Error a obtener datos, verifique la configuración de la tienda')); 
+			}
+			
+		}
+
+   		$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
+
+   		// Buscamos el producto
+		$producto	= $this->MercadoLibr->Productotienda->find('first', array(
+			'fields' => array(
+				'Productotienda.id_product',
+				'pl.name', 
+				'pl.description_short',
+				'pl.description',
+				'Productotienda.reference'
+			),
+			'joins' => array(
+				array(
+		            'table' => sprintf('%sproduct_lang', $tienda['Tienda']['prefijo']),
+		            'alias' => 'pl',
+		            'type'  => 'LEFT',
+		            'conditions' => array(
+		                'Productotienda.id_product=pl.id_product'
+		            )
+
+	        	)
+			),
+			'contain' => array(
+				'Lang',
+				'Especificacion' => array('Lang'),
+				'EspecificacionValor' => array('Lang'),
+			),
+			'conditions' => array(
+				'Productotienda.id_product' => $id
+			)
+		));
+
+   		
+   		if (empty($producto)) {
+   			if ($ajax) {
+   				echo json_encode(array('result' => '', 'code' => 401, 'message' => 'No se encontraró el producto'));
+    			exit;	
+   			}else{
+   				return json_encode(array('result' => '', 'code' => 401, 'message' => 'No se encontraró el producto'));
+   			}
+    		
+    	}
+    
+
+		$textoDescripcion = 'Descripción del artículo' . "\n". "\n";
+
+		$textoDescripcion .= nl2br(strip_tags($producto['Lang'][0]['ProductotiendaIdioma']['description_short'])) . "\n" . "\n";
+
+
+		$textoDescripcion .= nl2br(strip_tags($producto['Lang'][0]['ProductotiendaIdioma']['description'])) . "\n" . "\n";
+
+		# Especificaciones
+		if (!empty($producto['Especificacion']) && !empty($producto['EspecificacionValor'])) {
+    		
+			$textoDescripcion .= 'Especificaciones del artículo' . "\n". "\n";
+
+    		foreach ($producto['Especificacion'] as $indice => $especificacion) {
+    			foreach ($producto['EspecificacionValor'] as $key => $especificacionvalor) {
+    				if ($especificacion['id_feature'] == $especificacionvalor['id_feature']) {
+    					$textoDescripcion .= '-' . $especificacion['Lang'][0]['EspecificacionIdioma']['name'] . ': ' . $especificacionvalor['Lang'][0]['EspecificacionValorIdioma']['value'] . "\n";
+    				}
+    			}
+    		}
+
+		}
+
+
+		$arrayProductos = array(
+			'result'  => $textoDescripcion,
+			'code'    => 200,
+			'message' => 'Descricpión generada con éxito'
+		);
+
+		if ($ajax) {
+			echo json_encode($arrayProductos, JSON_FORCE_OBJECT);
+    		exit;
+		}else{
+			return json_encode($arrayProductos, JSON_FORCE_OBJECT); 
+		}
+    }
+
 
 	public function createHtml()
 	{	
@@ -1217,18 +1355,27 @@ class MercadoLibresController extends AppController
 
 		# Obtenemos productos por tiendas
 		$productos[$tienda['Tienda']['configuracion']] = $this->getProductsMeli($tienda);
-
+		
 		foreach ($productos[$tienda['Tienda']['configuracion']] as $ip => $producto) {
 			$costoEnvio = $this->Meli->getShippingCost($producto['MercadoLibr']['id_meli'], 'free');
 
+			# Actualizamos la descripción html a texto plano
+			if (empty($producto['MercadoLibr']['description'])) {
+				$descripcionGenerada = to_array(json_decode($this->crearDescripcion($producto['MercadoLibr']['id_product'], false)));
+				if ($descripcionGenerada['code'] == 200) {
+					$this->Meli->updateDescription($producto['MercadoLibr']['id_meli'], $descripcionGenerada['result']);
+				}
+			}
+			
 			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio_tienda'] = $producto['Productotienda']['precio'];
 			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['despacho']      = $costoEnvio;
 			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio']        = $producto['Productotienda']['precio'] + $costoEnvio;
+			
 		}
-		
+
 		# Actualizamos de los productos publicados, tanto interna como en MELI
 		$result = $this->sincronizarPreciosStock($productos);
-		
+
 		$urlReponse = $this->htmlResponse($result);	
 
 		$this->Session->setFlash('Resultados de la operación: <br>' . $urlReponse , null, array(), 'flash');
@@ -1420,7 +1567,6 @@ class MercadoLibresController extends AppController
 			
 		}
 
-
 		# Actualizamos de los productos publicados, tanto interna como en MELI
 		$result = $this->sincronizarPreciosStock($productos);
 		
@@ -1443,7 +1589,8 @@ class MercadoLibresController extends AppController
 
 			# Listamos productos de mercadolibre
 			$productos = $this->MercadoLibr->find('all', array(
-				'fields' => array('id', 'id_product', 'producto' ,'precio', 'id_meli', 'cantidad_disponible'),
+				'order' => array('MercadoLibr.id' => 'ASC'),
+				'fields' => array('id', 'id_product', 'producto' ,'precio', 'id_meli', 'cantidad_disponible', 'description'),
 				'conditions' => array(
 					'MercadoLibr.tienda_id' => $store['Tienda']['id'],
 					'MercadoLibr.id_product !=' => null
