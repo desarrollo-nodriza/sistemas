@@ -1,0 +1,35 @@
+{
+	"administradores" : {
+		"index" : 0, "add": 0, "edit" : 0, "delete" : 0, "view" : 0, "generate" : 0, "activate" : 0, "login" : 0, "logout": 0
+	},
+	"modulos" : {
+		"index" : 0, "add": 0, "edit" : 0, "delete" : 0, "view" : 0, "generate" : 0, "activate" : 0
+	},
+	"roles" : {
+		"index" : 0, "add": 0, "edit" : 0, "delete" : 0, "view" : 0, "generate" : 0, "activate" : 0
+	},
+	"emails" : {
+		"index" : 1, "add": 1, "edit" : 1, "delete" : 0, "view" : 1, "generate" : 1, "activate" : 1, "generarHtml" : 1
+	},
+	"plantillas" : {
+		"index" : 1, "add": 1, "edit" : 1, "delete" : 0, "view" : 1, "generate" : 1, "activate" : 1
+	},
+	"categorias" : {
+		"index" : 1, "add": 1, "edit" : 1, "delete" : 0, "view" : 1, "generate" : 1, "activate" : 1
+	},
+	"toolmanias" : {
+		"index" : 1, "add": 1, "edit" : 1, "delete" : 0, "view" : 1, "generate" : 1, "activate" : 1, "associate" : 1
+	},
+	"graficos" : {
+		"index" : 1, "add": 1, "edit" : 1, "delete" : 0, "view" : 1, "generate" : 1, "activate" : 1
+	},
+	"pages" : {
+		"index" : 1, "add": 1, "edit" : 1, "delete" : 0, "view" : 1, "generate" : 1, "activate" : 1
+	},
+	"reportes" : {
+		"index" : 1, "add": 1, "edit" : 1, "delete" : 0, "view" : 1, "generate" : 1, "activate" : 1
+	},
+	"tiendas" : {
+		"index" : 1, "add": 1, "edit" : 1, "delete" : 0, "view" : 1, "generate" : 1, "activate" : 1
+	}
+}

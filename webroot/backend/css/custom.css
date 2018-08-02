@@ -1,0 +1,275 @@
+@charset 'utf-8';
+
+.query-historial-versiones pre.query {
+	display: none;
+	font-size: 10px;
+}
+.lockscreen-container .lockscreen-box {
+    width: 240px;
+}
+.lockscreen-container .lockscreen-box .lsb-form {
+	width: 100%;
+}
+.lockscreen-container .alert {
+	margin-top: 15px;
+	padding: 4px;
+}
+.lockscreen-container .alert a {
+	display: none;
+}
+.fila-filtro {
+	margin-bottom: 20px;
+}
+.btn.btn-limpiar {
+	padding: 1px 5px;
+	line-height: normal;
+	margin-left: 5px;
+}
+
+.table > tbody > tr > td, .table > tbody > tr > th, .table > tfoot > tr > td, .table > tfoot > tr > th, .table > thead > tr > td, .table > thead > tr > th {
+    border-top: 0;
+}
+
+.alert {border: none; border-radius: 0;}
+
+.btn.btn-buscar.btn-success {
+    margin-top: 22px;
+}
+
+.btn.btn-buscar.btn-primary {
+    margin-top: 22px;
+}
+.icons-list li {width: 50%;}
+.select-icon {cursor: pointer;}
+.table-responsive {overflow-x: inherit; }
+.dropdown-menu-left {float: right; right: 0; left: inherit;}
+.wizard .stepContainer, .wizard .actionBar {height: auto !important;}
+
+.widget , .tile {min-height: 120px !important;}
+.tile {padding: 20px 10px !important;}
+.description-graph {float: left; width: 100%; margin-left: 7px;}
+.input-group {max-width: 197px;}
+.js-toggle-wrapper {max-width: 100% !important;}
+.input-group .form-control.datepicker {max-width: 80px; padding: 8px;}
+.control-label {margin-right: 5px; margin-left: 5px;}
+
+/* ui autocomplete */
+
+.ui-helper-hidden-accessible {
+	display: none !important;
+}
+.ui-autocomplete {
+    background: #FFF;
+    border: 1px solid #D5D5D5;
+    -moz-border-radius: 0px;
+    -webkit-border-radius: 0px;
+    border-radius: 0px;
+    list-style: none;
+    padding-left: 0;
+}
+
+.ui-autocomplete .ui-menu-item {
+    background: #FFF;
+    border-bottom: 1px solid #D5D5D5;
+    line-height: 20px;
+    padding: 8px 15px;
+}
+
+.ui-autocomplete .ui-menu-item:hover {
+	cursor: pointer;
+	background-color: #4B4A4A;
+    color: #fff;
+}
+
+.loader {
+    display: none;
+    background: rgba(255,255,255,0.5);
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+}
+
+.loader > .fa {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}
+
+.panel-toggled .panel-body, .panel-toggled .panel-footer {
+    display: block !important;
+}
+
+.rut-error{
+    color: #b64645;
+    margin-bottom: 0px;
+    margin-top: 3px;
+    font-size: 11px;
+    font-weight: normal;
+    width: 100%;
+}
+
+.js-clon-agregar.btn.btn-success {
+    margin-bottom: 20px;
+}
+
+.pull-right.seccion-botones {
+    margin: 0px 0 20px 0;
+}
+
+#tablaProductos{
+    margin-top: 60px;
+}
+
+#tablaProductos tfoot {
+    background: #ECECEC;
+}
+
+#tablaProductos tfoot tr > td {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+#tablaProductos tfoot tr > td label {
+    vertical-align: middle;
+    margin: 0;
+    line-height: 30px;
+}
+
+textarea {
+    resize: none;
+}
+
+.x-navigation .xn-search::before {
+    content: '\f290' !important;
+    color: #fff;
+}
+
+.txt-tienda {
+    color: #fff;
+    padding-left: 30px;
+    line-height: 30px;
+    margin: 0;
+    padding-right: 10px;
+}
+
+@media screen and (max-width: 768px) {
+    .x-navigation .form-inline .form-group {
+        display: inline-block;
+        margin-bottom: 0;
+        vertical-align: middle;
+    }
+}
+
+.x-navigation.x-navigation-horizontal {
+    margin-bottom: 0;
+}
+
+.logo-cotizacion {
+    width: 225px;
+}
+
+.nombre-cotizacion {
+    width: 100%;
+    margin-bottom: 10px !important;
+}
+
+.nombre-cotizacion label {
+    font-size: 20px;
+    padding: 20px 0;
+    width: 15%;
+}
+
+.nombre-cotizacion input.form-control {
+    width: 85%;
+    padding: 10px;
+    height: auto;
+    font-size: 20px;
+}
+
+.tabla-cotizacion table {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 20px;
+}
+
+
+.tabla-cotizacion table > tbody > tr > td, .tabla-cotizacion table > tbody > tr > th, .tabla-cotizacion table > tfoot > tr > td, .tabla-cotizacion table > tfoot > tr > th, .tabla-cotizacion table > thead > tr > td, .tabla-cotizacion table > thead > tr > th {
+    padding: 8px;
+    line-height: 1.42857143;
+    vertical-align: top;
+    border-top: 1px solid #ddd;
+}
+
+.tabla-cotizacion table > thead > tr > th, .tabla-cotizacion table > tbody > tr > th, .tabla-cotizacion table > tfoot > tr > th, .tabla-cotizacion table > thead > tr > td, .tabla-cotizacion table > tbody > tr > td, .tabla-cotizacion table > tfoot > tr > td {
+    border-color: #E5E5E5;
+    border-width: 1px;
+}
+
+.tabla-cotizacion > table {
+    border: 1px solid #ddd;
+}
+
+.tabla-cotizacion > table > tbody > tr > td, .tabla-cotizacion > table > tbody > tr > th, .tabla-cotizacion > table > tfoot > tr > td, .tabla-cotizacion > table > tfoot > tr > th, .tabla-cotizacion > table > thead > tr > td, .tabla-cotizacion > table > thead > tr > th {
+    border: 1px solid #ddd;
+}
+
+.tabla-cotizacion table > tbody > tr > td, .tabla-cotizacion table > tbody > tr > th, .tabla-cotizacion table > tfoot > tr > td, .tabla-cotizacion table > tfoot > tr > th, .tabla-cotizacion table > thead > tr > td, .tabla-cotizacion table > thead > tr > th {
+    border-top: 0;
+}
+
+.tabla-cotizacion table > thead > tr > th {
+    background: #FFF;
+    color: #333;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+tfoot > tr > td, tfoot > tr:first-child > td {
+    border: 1px solid #ddd !important;
+}
+
+#formularioSocios .input-group {max-width: 100%;}
+
+#socio .navbar-brand {
+   padding: 0;
+}
+
+.table>tbody>tr.success>td, .table>tbody>tr.success>th, .table>tbody>tr>td.success, .table>tbody>tr>th.success, .table>tfoot>tr.success>td, .table>tfoot>tr.success>th, .table>tfoot>tr>td.success, .table>tfoot>tr>th.success, .table>thead>tr.success>td, .table>thead>tr.success>th, .table>thead>tr>td.success, .table>thead>tr>th.success {
+    background-color: #dff0d8 !important;
+}
+
+#socio {
+    max-width: 1500px;
+}
+
+#socio .table th, #socio .table td {
+    font-size: 11px;
+}
+
+#modalSocios {
+    background-color: rgba(0,0,0,0.7);
+}
+
+
+.full-input-group {max-width: 100%;}
+.full-input-group .form-control.datepicker { max-width: 100%; }
+
+.logo-socios {
+    max-height: 40px;
+    display: block;
+    margin: 5px 15px;
+}
+
+@media screen and (max-width: 768px) {
+    .logo-socios {
+        margin-right: auto;
+        margin-left: auto;
+    }
+}
+
+.text-red {
+    color: red;
+}
