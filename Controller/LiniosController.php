@@ -327,14 +327,14 @@ class LiniosController extends AppController {
 				//se considera solo los marcados para sincronizar
 				if (isset($producto['seleccionado'])) {
 
-					$ArrayReferencias[] = $producto['Product']['ProductData']['Model'];
+					$ArrayReferencias[] = $producto['Product']['SellerSku'];
 					$ArrayProductoData[] = $producto;
 
 					if ($StrReferencias != "") {
 						$StrReferencias .= "|";
 					}
 
-					$StrReferencias .= $producto['Product']['ProductData']['Model'];
+					$StrReferencias .= $producto['Product']['SellerSku'];
 
 				}
 
@@ -348,7 +348,7 @@ class LiniosController extends AppController {
 				
 				$opt['resource'] = 'products';
 				$opt['display'] = '[id,reference,price,id_tax_rules_group]';
-				$opt['filter[reference]'] = '[' .$StrReferencias. ']';
+				$opt['filter[id]'] = '[' .$StrReferencias. ']';
 
 				$xml = $webService->get($opt);
 
@@ -396,7 +396,7 @@ class LiniosController extends AppController {
 					$json = json_encode($producto);
 					$DataProducto = json_decode($json, true);
 
-					$pos = array_search($DataProducto['reference'], $ArrayReferencias);
+					$pos = array_search($DataProducto['id'], $ArrayReferencias);
 
 					$PrecioFinal = $this->calcular_precio_final($DataProducto, $tienda);
 
@@ -522,14 +522,14 @@ class LiniosController extends AppController {
 			//se preparan las referencias para consultar a prestashop
 			foreach ($ListaProductos as $producto) {
 
-				$ArrayReferencias[] = $producto['ProductData']['Model'];
+				$ArrayReferencias[] = $producto['SellerSku'];
 				$ArrayProductoData[] = $producto;
 
 				if ($StrReferencias != "") {
 					$StrReferencias .= "|";
 				}
 
-				$StrReferencias .= $producto['ProductData']['Model'];
+				$StrReferencias .= $producto['SellerSku'];
 
 			}
 
@@ -539,7 +539,7 @@ class LiniosController extends AppController {
 				
 				$opt['resource'] = 'products';
 				$opt['display'] = '[id,reference,price,id_tax_rules_group]';
-				$opt['filter[reference]'] = '[' .$StrReferencias. ']';
+				$opt['filter[id]'] = '[' .$StrReferencias. ']';
 
 				$xml = $webService->get($opt);
 
@@ -587,7 +587,7 @@ class LiniosController extends AppController {
 					$json = json_encode($producto);
 					$DataProducto = json_decode($json, true);
 
-					$pos = array_search($DataProducto['reference'], $ArrayReferencias);
+					$pos = array_search($DataProducto['id'], $ArrayReferencias);
 
 					$PrecioFinal = $this->calcular_precio_final($DataProducto, $tienda);
 

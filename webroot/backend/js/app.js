@@ -456,7 +456,13 @@ $.extend({
 					
 					$esto.autocomplete({
 					   	source: function(request, response) {
-					      	$.get( webroot + 'productotiendas/obtener_productos/' + tienda + '/' + request.term, function(respuesta){
+
+					   		var data = {
+					   			'store' : tienda,
+					   			'value' : request.term
+					   		}
+
+					      	$.post( webroot + 'productotiendas/obtener_productos/', data, function(respuesta){
 								response( $.parseJSON(respuesta) );
 					      	})
 					      	.fail(function(){

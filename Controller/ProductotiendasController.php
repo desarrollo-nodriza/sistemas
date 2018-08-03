@@ -891,7 +891,13 @@ class ProductotiendasController extends AppController {
     }
 
 
-    public function admin_obtener_productos( $tienda = '', $palabra = '') {
+    public function admin_obtener_productos($tienda = '', $palabra = '') {
+
+    	if ($this->request->is('post')) {
+    		$tienda = $this->request->data['store'];
+    		$palabra = $this->request->data['value'];	
+    	}
+
     	if (empty($tienda) || empty($palabra)) {
     		echo json_encode(array('0' => array('value' => '', 'label' => 'Ingrese referencia')));
     		exit;

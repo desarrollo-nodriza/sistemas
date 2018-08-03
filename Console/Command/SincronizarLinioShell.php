@@ -68,14 +68,14 @@ class SincronizarLinioShell extends AppShell {
                 //se preparan las referencias para consultar a prestashop
                 foreach ($ListaProductos as $producto) {
 
-                    $ArrayReferencias[] = $producto['ProductData']['Model'];
+                    $ArrayReferencias[] = $producto['SellerSku'];
                     $ArrayProductoData[] = $producto;
 
                     if ($StrReferencias != "") {
                         $StrReferencias .= "|";
                     }
 
-                    $StrReferencias .= $producto['ProductData']['Model'];
+                    $StrReferencias .= $producto['SellerSku'];
 
                 }
 
@@ -85,7 +85,7 @@ class SincronizarLinioShell extends AppShell {
                     
                     $opt['resource'] = 'products';
                     $opt['display'] = '[id,reference,price,id_tax_rules_group]';
-                    $opt['filter[reference]'] = '[' .$StrReferencias. ']';
+                    $opt['filter[id]'] = '[' .$StrReferencias. ']';
 
                     $xml = $webService->get($opt);
 
@@ -135,8 +135,8 @@ class SincronizarLinioShell extends AppShell {
                         //para cambiar el objeto xml a un array
                         $json = json_encode($producto);
                         $DataProducto = json_decode($json, true);
-
-                        $pos = array_search($DataProducto['reference'], $ArrayReferencias);
+                        
+                        $pos = array_search($DataProducto['id'], $ArrayReferencias);
 
                         //----------------------------------------------------------------------------------------------------
                         //se calcula el precio final con sus descuentos
