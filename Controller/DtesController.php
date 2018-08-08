@@ -267,18 +267,19 @@ class DtesController extends AppController
 		$newData = array();
 
 		foreach ($data as $indice => $valor) {
+				
 			$newData[$indice]['Dte']['id_order']                  = $valor['Dte']['id_order'];
-			$newData[$indice]['Dte']['referencia']                = $valor['Orden']['reference'];
+			$newData[$indice]['Dte']['referencia']                = (!empty($valor['Orden'])) ? $valor['Orden']['reference'] : 'Nulo';
 
 			# Identificador de la/s transacciones
-			$newData[$indice]['Dte']['id_transaccion']            = implode(Hash::extract($valor['Orden'], 'OrdenPago.{n}.transaction_id'));
+			$newData[$indice]['Dte']['id_transaccion']            = (!empty($valor['Orden'])) ? implode(Hash::extract($valor['Orden'], 'OrdenPago.{n}.transaction_id')) : 'Nulo';
 
 			# Webpay
-			$newData[$indice]['Dte']['authorization_code_webpay'] = implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.authorization_code'));
+			$newData[$indice]['Dte']['authorization_code_webpay'] = (!empty($valor['Orden'])) ? implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.authorization_code')) : 'Nuelo';
 
-			$newData[$indice]['Dte']['metodo']                    = $valor['Orden']['payment'];
-			$newData[$indice]['Dte']['total']                     = CakeNumber::currency($valor['Orden']['total_paid'], 'CLP');
-			$newData[$indice]['Dte']['envio']                     = CakeNumber::currency($valor['Orden']['total_shipping'], 'CLP');
+			$newData[$indice]['Dte']['metodo']                    = (!empty($valor['Orden'])) ? $valor['Orden']['payment'] : 'Nulo';
+			$newData[$indice]['Dte']['total']                     = (!empty($valor['Orden'])) ? CakeNumber::currency($valor['Orden']['total_paid'], 'CLP') : 'Nuelo';
+			$newData[$indice]['Dte']['envio']                     = (!empty($valor['Orden'])) ? CakeNumber::currency($valor['Orden']['total_shipping'], 'CLP') : 'Nulo';
 			$newData[$indice]['Dte']['folio']                     = (!empty($valor['Dte']['folio'])) ? $valor['Dte']['folio'] : 'No aplica';
 			$newData[$indice]['Dte']['tipo_documento']            = $this->tipoDocumento[$valor['Dte']['tipo_documento']];
 			$newData[$indice]['Dte']['rut_receptor']              = (!empty($valor['Dte']['rut_receptor'])) ? $valor['Dte']['rut_receptor'] : 'No aplica';
@@ -286,10 +287,10 @@ class DtesController extends AppController
 			$newData[$indice]['Dte']['fecha']                     = $valor['Dte']['fecha'];
 			
 			# Webpay
-			$newData[$indice]['Dte']['amount_webpay']             = implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.amount'));
-			$newData[$indice]['Dte']['payment_type_webpay']       = implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.payment_type'));
-			$newData[$indice]['Dte']['create_webpay']             = implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.create'));
-			$newData[$indice]['Dte']['reponse_code']              = implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.reponse_code'));
+			$newData[$indice]['Dte']['amount_webpay']             = (!empty($valor['Orden'])) ? implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.amount')) : 'Nulo';
+			$newData[$indice]['Dte']['payment_type_webpay']       = (!empty($valor['Orden'])) ? implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.payment_type')) : 'Nulo';
+			$newData[$indice]['Dte']['create_webpay']             = (!empty($valor['Orden'])) ? implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.create')) : 'Nulo';
+			$newData[$indice]['Dte']['reponse_code']              = (!empty($valor['Orden'])) ? implode(Hash::extract($valor['Orden'], 'Carro.WebpayStore.{n}.reponse_code')) : 'Nulo';
 
 		}
 
