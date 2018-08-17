@@ -70,7 +70,7 @@ class AppController extends Controller
 		/**
 		 * Layout y permisos públicos
 		 */
-		if ( ! isset($this->request->params['prefix']) ) {
+		if ( ! isset($this->request->params['prefix']) || isset($this->request->params['google']) || isset($this->request->params['knasta']) ) {
 			//prx($this->request->params);
 			$this->Auth->allow();
 		}
