@@ -108,7 +108,7 @@ class ManifiestosController extends AppController {
 				$dte = new DtesController();
 
 				$dataToSave['Orden'][$io]['folio_dte'] = $orden['Dte'][0]['folio'];
-				$dataToSave['Orden'][$io]['tipo_dte'] = $dte->tipoDocumento[$orden['Dte']['tipo_documento']];
+				$dataToSave['Orden'][$io]['tipo_dte'] = $dte->tipoDocumento[$orden['Dte'][0]['tipo_documento']];
 			}
 			
 			$direccionEnvio = ClassRegistry::init('Clientedireccion')->find('first', array(
@@ -122,12 +122,12 @@ class ManifiestosController extends AppController {
 			
 			if (!empty($direccionEnvio)) {
 				$dataToSave['Orden'][$io]['nombre_receptor'] = $direccionEnvio['Clientedireccion']['firstname'] . ' ' . $direccionEnvio['Clientedireccion']['lastname'];
-				$dataToSave['Orden'][$io]['direccion_envio'] = $direccionEnvio['Clientedireccion']['address1'] . ', ' . $direccionEnvio['Clientedireccion']['address1'];
+				$dataToSave['Orden'][$io]['direcion_envio']  = $direccionEnvio['Clientedireccion']['address1'] . ', ' . $direccionEnvio['Clientedireccion']['address1'];
 				$dataToSave['Orden'][$io]['comuna']          = $direccionEnvio['Clientedireccion']['city'];
 			}
 			
 		}		
-			debug($dataToSave);
+			
 		if ($created) {
 			$this->Manifiesto->create();	
 		}
