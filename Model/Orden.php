@@ -103,10 +103,30 @@ Class Orden extends AppModel {
 		),
 	);
 
+
+	public $hasAndBelongsToMany = array(
+		'Manifiesto' => array(
+			'className'				=> 'Manifiesto',
+			'joinTable'				=> 'manifiestos_ventas',
+			'foreignKey'			=> 'id_order',
+			'associationForeignKey'	=> 'manifiesto_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'ManifiestosVenta',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		)
+	);
+
 	public function beforeFind($options = array()) {
 		parent::beforeFind($options);
 		
-		$this->validarModulosExternos();
+		//$this->validarModulosExternos();
 		
 	}
 

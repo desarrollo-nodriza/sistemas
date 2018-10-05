@@ -43,8 +43,7 @@ class AdministradoresController extends AppController
 					$this->admin_logout();
 				}else {
 					$this->Session->setFlash('Su tienda principal es ' . $tiendaPrincipal['Tienda']['nombre'], null, array(), 'success');
-					$this->Session->write('Tienda.id', $tiendaPrincipal['Tienda']['id']);
-					$this->Session->write('Tienda.tema', $tiendaPrincipal['Tienda']['tema']);
+					$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
 				}
 
 				$this->Session->delete('Google.token');
@@ -162,8 +161,7 @@ class AdministradoresController extends AppController
 							$this->admin_logout();
 						}else {
 							$this->Session->setFlash('Su tienda principal es ' . $tiendaPrincipal['Tienda']['nombre'], null, array(), 'success');
-							$this->Session->write('Tienda.id', $tiendaPrincipal['Tienda']['id']);
-							$this->Session->write('Tienda.tema', $tiendaPrincipal['Tienda']['tema']);
+							$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
 						}
 
 						/**

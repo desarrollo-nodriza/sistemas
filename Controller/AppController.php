@@ -479,6 +479,7 @@ class AppController extends Controller
 		ClassRegistry::init('ClienteMensaje')->useDbConfig                    = $tiendaConf;
 		ClassRegistry::init('Empleado')->useDbConfig                          = $tiendaConf;
 		ClassRegistry::init('Fabricante')->useDbConfig                        = $tiendaConf;
+		ClassRegistry::init('WebpayStore')->useDbConfig                        	  = $tiendaConf;
     }
 	
 	/**
@@ -594,16 +595,16 @@ class AppController extends Controller
 			if ( !empty($this->request->params['pass']) ) {
 
 				# Cambiamos Session Tienda
-				$this->Session->write('Tienda.id', $tienda['Tienda']['id']);
-				$this->Session->write('Tienda.tema', $tienda['Tienda']['tema']);
+				$this->Session->write('Tienda', $tienda['Tienda']);
+			
 				
 				# Redireccionamos
 				$this->redirect(array('action' => 'index'));
 			}
 
 			# Cambiamos Session Tienda
-			$this->Session->write('Tienda.id', $tienda['Tienda']['id']);
-			$this->Session->write('Tienda.tema', $tienda['Tienda']['tema']);
+			$this->Session->write('Tienda', $tienda['Tienda']);
+			
 
 			$this->redirect(array('action' => $action));
 		}
@@ -649,7 +650,7 @@ class AppController extends Controller
 			# Verificar que la tienda esté configurada
 			foreach ($tiendaConf['Tienda'] as $campo => $valor) {
 				if (empty($valor) && !in_array($campo, $camposVacios)) {
-					print_r('Campo vacio');
+					
 					$semaforo = false;
 					throw new Exception('La tienda no está configurada correctamente. Verifiquela y vuelva a intentarlo', 400);
 				}
