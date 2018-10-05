@@ -246,7 +246,7 @@ class ManifiestosController extends AppController {
 		$transportes     = $this->Manifiesto->Transporte->find('list');
 		$administradores = $this->Manifiesto->Administrador->find('list');
 		$tiendas         = $this->Manifiesto->Tienda->find('list');
-		$ventas          = $this->Manifiesto->Venta->find('list');
+		//$ventas          = $this->Manifiesto->Venta->find('list');
 		$ordenes         = $this->Manifiesto->Orden->find('list');
 
 		
@@ -285,7 +285,7 @@ class ManifiestosController extends AppController {
 		$transportes     = $this->Manifiesto->Transporte->find('list');
 		$administradores = $this->Manifiesto->Administrador->find('list');
 		$tiendas         = $this->Manifiesto->Tienda->find('list');
-		$ventas          = $this->Manifiesto->Venta->find('list');
+		//$ventas          = $this->Manifiesto->Venta->find('list');
 		$ordenes         = $this->Manifiesto->Orden->find('list');
 
 		BreadcrumbComponent::add('Manifiestos ', '/manifiestos');

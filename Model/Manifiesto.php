@@ -90,7 +90,7 @@ class Manifiesto extends AppModel
 	);
 
 	public $hasAndBelongsToMany = array(
-		'Venta' => array(
+		/*'Venta' => array(
 			'className'				=> 'Venta',
 			'joinTable'				=> 'manifiestos_ventas',
 			'foreignKey'			=> 'manifiesto_id',
@@ -105,7 +105,7 @@ class Manifiesto extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
-		),
+		),*/
 		'Orden' => array(
 			'className'				=> 'Orden',
 			'joinTable'				=> 'manifiestos_ventas',
