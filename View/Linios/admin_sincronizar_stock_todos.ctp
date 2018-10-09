@@ -23,68 +23,58 @@
 
 						<div class="row">
 
-							<?php //-------------------------------------------------- Configuración Prestashop -------------------------------------------------- ?>
-							<div class="col-md-6 col-sm-12 col-xs-12">
-						    	
-					            <div class="form-horizontal">
-
-						            <div class="panel panel-primary" style="height: 255px;">
-
-						                <div class="panel-heading">
-						                    <h3 class="panel-title"><span class="fa fa-cogs"></span> Config Actual Prestashop</h3>
-						                </div>
-
-						                <div class="panel-body">
-
-						                	<table class="table">
-												<tr>
-													<th><label>Api Url</label></th>
-													<td><?= $tienda['Tienda']['apiurl_prestashop']; ?></td>
-												</tr>
-												<tr>
-													<th><label>Api Key</label></th>
-													<td><?= $tienda['Tienda']['apikey_prestashop']; ?></td>
-												</tr>
-											</table>
-
-						                </div>
-
-						            </div>
-
-					            </div>
-
-							</div>
-
-							<?php //-------------------------------------------------- Configuración Linio -------------------------------------------------- ?>
-							<div class="col-md-6 col-sm-12 col-xs-12">
+							<?php //-------------------------------------------------- Resultados de Sincronización -------------------------------------------------- ?>
+							<div class="col-md-6 col-md-offset-3 col-sm-12 col-xs-12">
 						    	
 					            <div class="form-horizontal">
 
 						            <div class="panel panel-primary">
 
 						                <div class="panel-heading">
-						                    <h3 class="panel-title"><span class="fa fa-cogs"></span> Config Actual Linio</h3>
+						                    <h3 class="panel-title"><span class="fa fa-refresh"></span> Reporte de Sincronización</h3>
 						                </div>
 
 						                <div class="panel-body">
 
 						                	<table class="table">
+
 												<tr>
-													<th><label>Api Url</label></th>
-													<td><?= $tienda['Tienda']['apiurl_linio']; ?></td>
+													<th><label>Resultado</label></th>
+													<td>
+														<?php if ($ResultadoSincronizacion['resultado']) { ?>
+															<span class="btn btn-success">Sincronización Exitosa</span>
+														<?php } else { ?>
+															<span class="btn btn-danger">Error en Sincronización</span>
+														<?php } ?>
+													</td>
 												</tr>
-												<tr>
-													<th><label>Api User</label></th>
-													<td><?= $tienda['Tienda']['apiuser_linio']; ?></td>
-												</tr>
-												<tr>
-													<th><label>Api Key</label></th>
-													<td><?= $tienda['Tienda']['apikey_linio']; ?></td>
-												</tr>
-												<tr>
-													<th><label>Sincronización Automática</label></th>
-													<td><span class="btn btn-xs btn-<?php if (!empty($tienda['Tienda']['sincronizacion_automatica_linio'])) {echo "success";} else {echo "danger";} ?>"><?php if (!empty($tienda['Tienda']['sincronizacion_automatica_linio'])) {echo "Activa";} else {echo "Inactiva";} ?></span></td>
-												</tr>
+
+												<?php if ($ResultadoSincronizacion['resultado']) { ?>
+
+													<tr>
+														<th><label>Total Productos</label></th>
+														<td><?= $ResultadoSincronizacion['total']; ?> producto<?php if ($ResultadoSincronizacion['total'] != 1) {echo "s";} ?></td>
+													</tr>
+
+													<tr>
+														<th><label>Coincidencias</label></th>
+														<td><?= $ResultadoSincronizacion['coincidencias']; ?> producto<?php if ($ResultadoSincronizacion['coincidencias'] != 1) {echo "s";} ?></td>
+													</tr>
+
+													<tr>
+														<th><label>Actualizados</label></th>
+														<td><?= $ResultadoSincronizacion['actualizados']; ?> producto<?php if ($ResultadoSincronizacion['actualizados'] != 1) {echo "s";} ?></td>
+													</tr>
+
+												<?php } else { ?>
+
+													<tr>
+														<th><label>Detalles</label></th>
+														<td><?= $ResultadoSincronizacion['error']; ?></td>
+													</tr>
+
+												<?php } ?>
+
 											</table>
 
 						                </div>
@@ -135,6 +125,7 @@
 		</div>
 	</div>
 </div>
+
 
 <div id="mb-sincronizando-productos" class="message-box animated fadeIn" data-sound="alert">
 	<div class="mb-container">

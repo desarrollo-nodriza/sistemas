@@ -648,4 +648,171 @@ class LiniosController extends AppController {
 
 	}
 
+
+	public function admin_sincronizar_stock_todos()
+	{
+		set_time_limit(0);
+
+		//info de la tienda que contiene la configuración
+		$tienda = $this->config_tienda();
+
+		//----------------------------------------------------------------------------------------------------
+		//Se obtienen los productos de linio
+
+		$ResultadoSincronizacion = array(); //para mostrar los resultados de la sincronización
+
+		$client = Client::create(new Configuration($tienda['Tienda']['apiurl_linio'], $tienda['Tienda']['apiuser_linio'], $tienda['Tienda']['apikey_linio']));
+
+		$response = $client->call(
+		    (new GenericRequest(
+		        Client::GET,
+		        'GetProducts',
+		        GenericRequest::V1
+		    ))
+		);
+
+		//si la consulta a linio fue correcta
+		if ($response instanceof SuccessResponseInterface) {
+
+			//productos obtenidos de linio
+			$ListaProductos = $response->getBody()['Products']['Product'];
+
+			$ResultadoSincronizacion['resultado'] = true;
+
+			$ResultadoSincronizacion['total'] = count($ListaProductos);
+
+			//----------------------------------------------------------------------------------------------------
+			//se buscan los productos de linio en prestashop
+			$ArrayReferencias = array(); //para verificar existencia en prestashop
+			$ArrayProductoData = array(); //complementa al anterior
+			$StrReferencias = ""; //para consultar en prestashop
+
+			//se preparan las referencias para consultar a prestashop
+			foreach ($ListaProductos as $producto) {
+
+				$ArrayReferencias[] = $producto['SellerSku'];
+				$ArrayProductoData[] = $producto;
+
+				if ($StrReferencias != "") {
+					$StrReferencias .= "|";
+				}
+
+				$StrReferencias .= $producto['SellerSku'];
+
+			}
+
+			try {
+
+				$webService = new PrestaShopWebservice($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'], false);
+				
+				$opt['resource'] = 'products';
+				$opt['display'] = '[id,reference,price,id_tax_rules_group]';
+				$opt['filter[id]'] = '[' .$StrReferencias. ']';
+
+				$xml = $webService->get($opt);
+
+				$PrestashopResources = $xml->children()->children();
+
+				$ResultadoSincronizacion['resultado'] = true;
+
+			}
+
+			catch (PrestaShopWebserviceException $e) {
+
+				$ResultadoSincronizacion['resultado'] = false;
+				
+				$trace = $e->getTrace();
+
+				if ($trace[0]['args'][0] == 404) {
+					$ResultadoSincronizacion['error'] = "Api User Incorrecto";
+				}
+				else {
+					if ($trace[0]['args'][0] == 401) {
+						$ResultadoSincronizacion['error'] = "Api Key Incorrecta";
+					}
+					else {
+						$ResultadoSincronizacion['error'] = $e->getMessage();
+					}
+				}
+
+			}
+
+			//----------------------------------------------------------------------------------------------------
+			//si la búsqueda en prestashop es correcta se hace la actualización a linio
+			if ($ResultadoSincronizacion['resultado']) {
+
+				$ResultadoSincronizacion['coincidencias'] = count($PrestashopResources->product); //cantidad de productos de linio que se encontraron en prestashop
+
+				$ResultadoSincronizacion['actualizados'] = 0; //cantidad de productos que se actualizaron
+
+				//productos para actualizar
+				$productCollectionRequest = Endpoints::product()->productUpdate();
+
+				//se preparan los productos para actualizar a linio
+				foreach ($PrestashopResources as $producto) {
+
+					//para cambiar el objeto xml a un array
+					$json = json_encode($producto);
+					$DataProducto = json_decode($json, true);
+
+					$pos = array_search($DataProducto['id'], $ArrayReferencias);
+
+					//$PrecioFinal = $this->calcular_precio_final($DataProducto, $tienda);
+
+					$DataProducto['quantity'] = $this->obtener_stock($DataProducto, $tienda);
+
+					//si se actualiza el producto (comparación de precio y cantidad entre prestashop y linio)
+					if (($ArrayProductoData[$pos]['Quantity'] != $DataProducto['quantity'])) {
+
+						$productCollectionRequest->updateProduct($ArrayProductoData[$pos]['SellerSku'])
+						//->setPrice($PrecioFinal)
+					    ->setQuantity($DataProducto['quantity']);
+
+						$ResultadoSincronizacion['actualizados']++;
+
+					}
+					
+				}
+
+				//se llama a la actualización de linio solo si hay productos para actualizar
+				if ($ResultadoSincronizacion['actualizados'] > 0) {
+
+					$client = Client::create(new Configuration($tienda['Tienda']['apiurl_linio'], $tienda['Tienda']['apiuser_linio'], $tienda['Tienda']['apikey_linio']));
+				
+					$response = $productCollectionRequest->build()->call($client);
+
+					//si la actualización a linio es correcta
+					if ($response instanceof SuccessResponseInterface) {
+						$ResultadoSincronizacion['resultado'] = true;
+					}
+
+					//si hubo un error en la actualización a linio
+					else {
+						$ResultadoSincronizacion['resultado'] = false;
+						$ResultadoSincronizacion['error'] = "Error actualizando los productos en Linio.";
+					}
+
+				}
+
+				//si no habían productos para actualizar igual el proceso es correcto
+				else {
+					$ResultadoSincronizacion['resultado'] = true;
+				}
+				
+			}
+
+		}
+
+		//si hubo un error leyendo los productos de linio
+		else {
+			$ResultadoSincronizacion['resultado'] = false;
+			$ResultadoSincronizacion['error'] = "Error obteniendo los productos de Linio.";
+		}
+
+		BreadcrumbComponent::add('Linio');
+		BreadcrumbComponent::add('Sincronización de Productos');
+
+		$this->set(compact('tienda', 'ResultadoSincronizacion'));
+	}
+
 }

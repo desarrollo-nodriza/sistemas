@@ -360,15 +360,14 @@ class ManifiestosController extends AppController {
 		
 		$campos = array(
 			'N° Documento',
-			'Código de Referencia',
+			'Cód Referencia',
 			'OT Transporte',
 			'N° folio',
-			'Tipo documento',
+			'T documento',
 			'Nombre',
 			'Dirección',
 			'Comuna',
-			'Recepticón física',
-			'Transportista'
+			'Recepticón física'
 		);
 
 		$modelo = $this->Manifiesto->alias;
@@ -387,12 +386,55 @@ class ManifiestosController extends AppController {
 				$datos[$io]['Manifiesto']['direccion']      = $detalle['ManifiestosVenta']['direcion_envio'];	
 				$datos[$io]['Manifiesto']['comuna']         = strtoupper($detalle['ManifiestosVenta']['comuna']);
 				$datos[$io]['Manifiesto']['f_recepcion']    = $manifiesto['Manifiesto']['fecha_entregado'];
-				$datos[$io]['Manifiesto']['transporte']     = $manifiesto['Transporte']['nombre'];
+				//$datos[$io]['Manifiesto']['transporte']     = $manifiesto['Transporte']['nombre'];
 			}
 
 		}
+
+		/*try {
+				
+		} catch (Exception $e) {
+			$this->Session->setFlash('Error:' . $e->getMessage(), null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}*/
 		
+		$this->generar_pdf($datos, $campos, $manifiesto);
+
 		$this->set(compact('datos', 'campos', 'modelo'));
 
+	}
+
+
+
+	public function generar_pdf($datos, $campos, $manifiesto)
+	{
+		App::uses('CakePdf', 'Plugin/CakePdf/Pdf');
+
+		$this->CakePdf = new CakePdf();
+		$this->CakePdf->template('manifiesto', 'default');
+		$this->CakePdf->viewVars(compact('datos', 'campos', 'manifiesto'));
+
+		$nombreArchivo = 'manifiesto_' . $manifiesto['Manifiesto']['id'] . '_' . Inflector::slug($manifiesto['Manifiesto']['created']) . '.pdf';
+
+		$this->CakePdf->write(APP . 'webroot' . DS . 'Pdf' . DS . 'Manifiestos' . DS . $manifiesto['Manifiesto']['id'] . DS . $nombreArchivo);
+
+		# Ruta para guardar en la Base de manifiesto
+		$archivo = Router::url('/', true) . 'Pdf/Manifiestos/' . $manifiesto['Manifiesto']['id'] . '/' . $nombreArchivo;
+
+
+		$this->Manifiesto->id = $manifiesto['Manifiesto']['id'];
+		if( ! $this->Manifiesto->saveField('archivo', $archivo)) {
+			throw new Exception("Error al generar el PDF. No se pudo guardar el archivo", 411);
+		}
+
+		header("Content-type:application/pdf");
+
+		// It will be called downloaded.pdf
+		header("Content-Disposition:attachment;filename=".$nombreArchivo);
+
+		// The PDF source is in original.pdf
+		readfile($archivo);
+		exit;
+		return;
 	}
 }
