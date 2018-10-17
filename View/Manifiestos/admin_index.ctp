@@ -55,7 +55,9 @@
 												
 												<? else : ?>
 													
-													<?= $this->Html->link('<i class="fa fa-eye" aria-hidden="true"></i> Ver documento', array('action' => 'view', $manifiesto['Manifiesto']['id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+													<?= $this->Html->link('<i class="fa fa-file-excel-o" aria-hidden="true"></i> Ver Excel', array('action' => 'view', $manifiesto['Manifiesto']['id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+
+													<?= $this->Html->link('<i class="fa fa-file-pdf-o" aria-hidden="true"></i> Ver Pdf', array('action' => 'view_pdf', $manifiesto['Manifiesto']['id']), array('class' => 'btn btn-xs btn-primary', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
 
 												<? endif; ?>
 											<? endif; ?>

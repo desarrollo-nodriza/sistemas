@@ -97,10 +97,11 @@ class ManifiestosController extends AppController {
 			$dataToSave['Orden'][$io]['items']             = array_sum(Hash::extract($orden['OrdenDetalle'], '{n}.product_quantity'));
 			$dataToSave['Orden'][$io]['referencia_pedido'] = $orden['Orden']['reference'];
 			$dataToSave['Orden'][$io]['id_order']          = $orden['Orden']['id_order'];
-			$dataToSave['Orden'][$io]['folio_dte']         = null;
+			$dataToSave['Orden'][$io]['folio_dte']         = 0;
 			$dataToSave['Orden'][$io]['tipo_dte']          = 'Vacio';
 			$dataToSave['Orden'][$io]['nombre_receptor']   = 'Vacio';
-			$dataToSave['Orden'][$io]['direccion_envio']   = 'Vacio';
+			$dataToSave['Orden'][$io]['fono_receptor']     = 'Vacio';
+			$dataToSave['Orden'][$io]['direcion_envio']    = 'Vacio';
 			$dataToSave['Orden'][$io]['comuna']            = 'Vacio';
 
 			if (!empty($orden['Dte'])) {
@@ -113,17 +114,23 @@ class ManifiestosController extends AppController {
 			
 			$direccionEnvio = ClassRegistry::init('Clientedireccion')->find('first', array(
 				'fields' => array(
-					'Clientedireccion.firstname', 'Clientedireccion.lastname', 'Clientedireccion.address1', 'Clientedireccion.address2', 'Clientedireccion.other', 'Clientedireccion.city'
+					'Clientedireccion.firstname', 'Clientedireccion.lastname', 'Clientedireccion.address1', 'Clientedireccion.address2', 'Clientedireccion.other', 'Clientedireccion.city', 'Clientedireccion.phone', 'Clientedireccion.phone_mobile'
 				),
 				'conditions' => array(
 					'Clientedireccion.id_address' => $orden['Orden']['id_address_delivery']
+				),
+				'contain' => array(
+					'Region' => array(
+						'fields' => array('Region.name')
+					)
 				)
 			));
 			
 			if (!empty($direccionEnvio)) {
 				$dataToSave['Orden'][$io]['nombre_receptor'] = $direccionEnvio['Clientedireccion']['firstname'] . ' ' . $direccionEnvio['Clientedireccion']['lastname'];
-				$dataToSave['Orden'][$io]['direcion_envio']  = $direccionEnvio['Clientedireccion']['address1'] . ', ' . $direccionEnvio['Clientedireccion']['address1'];
-				$dataToSave['Orden'][$io]['comuna']          = $direccionEnvio['Clientedireccion']['city'];
+				$dataToSave['Orden'][$io]['fono_receptor']   = $direccionEnvio['Clientedireccion']['phone'] . ', ' . $direccionEnvio['Clientedireccion']['phone_mobile'];
+				$dataToSave['Orden'][$io]['direcion_envio']  = $direccionEnvio['Clientedireccion']['address1'] . ', ' . $direccionEnvio['Clientedireccion']['address2'] . '. ' . $direccionEnvio['Clientedireccion']['city'];
+				$dataToSave['Orden'][$io]['comuna']          = $direccionEnvio['Region']['name'];
 			}
 			
 		}		
@@ -365,6 +372,7 @@ class ManifiestosController extends AppController {
 			'N° folio',
 			'T documento',
 			'Nombre',
+			'Fonos',
 			'Dirección',
 			'Comuna',
 			'Recepticón física'
@@ -379,10 +387,11 @@ class ManifiestosController extends AppController {
 			if (!empty($detalle['ManifiestosVenta'])) {
 				$datos[$io]['Manifiesto']['n_documento']    = $manifiesto['Manifiesto']['id'];
 				$datos[$io]['Manifiesto']['cod_referencia'] = $detalle['ManifiestosVenta']['referencia_pedido'];
-				$datos[$io]['Manifiesto']['ot_transporte']  = $manifiesto['Manifiesto']['ot_manual'];
+				$datos[$io]['Manifiesto']['ot_transporte']  = (!empty($manifiesto['Manifiesto']['ot_manual'])) ? $manifiesto['Manifiesto']['ot_manual'] : 0 ;
 				$datos[$io]['Manifiesto']['n_folio']        = $detalle['ManifiestosVenta']['folio_dte'];
 				$datos[$io]['Manifiesto']['t_documento']    = $detalle['ManifiestosVenta']['tipo_dte'];	
 				$datos[$io]['Manifiesto']['nombre']         = $detalle['ManifiestosVenta']['nombre_receptor'];	
+				$datos[$io]['Manifiesto']['fono']           = $detalle['ManifiestosVenta']['fono_receptor'];	
 				$datos[$io]['Manifiesto']['direccion']      = $detalle['ManifiestosVenta']['direcion_envio'];	
 				$datos[$io]['Manifiesto']['comuna']         = strtoupper($detalle['ManifiestosVenta']['comuna']);
 				$datos[$io]['Manifiesto']['f_recepcion']    = $manifiesto['Manifiesto']['fecha_entregado'];
@@ -398,43 +407,100 @@ class ManifiestosController extends AppController {
 			$this->redirect(array('action' => 'index'));
 		}*/
 		
-		$this->generar_pdf($datos, $campos, $manifiesto);
+		
 
 		$this->set(compact('datos', 'campos', 'modelo'));
 
 	}
 
 
-
-	public function generar_pdf($datos, $campos, $manifiesto)
+	public function admin_view_pdf($id = null)
 	{
-		App::uses('CakePdf', 'Plugin/CakePdf/Pdf');
-
-		$this->CakePdf = new CakePdf();
-		$this->CakePdf->template('manifiesto', 'default');
-		$this->CakePdf->viewVars(compact('datos', 'campos', 'manifiesto'));
-
-		$nombreArchivo = 'manifiesto_' . $manifiesto['Manifiesto']['id'] . '_' . Inflector::slug($manifiesto['Manifiesto']['created']) . '.pdf';
-
-		$this->CakePdf->write(APP . 'webroot' . DS . 'Pdf' . DS . 'Manifiestos' . DS . $manifiesto['Manifiesto']['id'] . DS . $nombreArchivo);
-
-		# Ruta para guardar en la Base de manifiesto
-		$archivo = Router::url('/', true) . 'Pdf/Manifiestos/' . $manifiesto['Manifiesto']['id'] . '/' . $nombreArchivo;
-
-
-		$this->Manifiesto->id = $manifiesto['Manifiesto']['id'];
-		if( ! $this->Manifiesto->saveField('archivo', $archivo)) {
-			throw new Exception("Error al generar el PDF. No se pudo guardar el archivo", 411);
+		$this->Manifiesto->id = $id;
+		if (!$this->Manifiesto->exists()) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
 		}
 
-		header("Content-type:application/pdf");
+		$this->Manifiesto->saveField('impreso', 1);
 
-		// It will be called downloaded.pdf
-		header("Content-Disposition:attachment;filename=".$nombreArchivo);
+		$manifiesto = $this->Manifiesto->find('first', array(
+			'conditions' => array(
+				'Manifiesto.id' => $id
+			),
+			'contain' => array(
+				'Transporte',
+				'Orden' => array(
+					'ManifiestosVenta',
+					'order' => array('Orden.date_add' => 'DESC'),
+					'fields' => array('Orden.id_order')
+				)
+			)
+		));
 
-		// The PDF source is in original.pdf
-		readfile($archivo);
+		
+		$campos = array(
+			'N° Documento',
+			'Cód Referencia',
+			'OT Transporte',
+			'N° folio',
+			'T documento',
+			'Nombre',
+			'Fonos',
+			'Dirección',
+			'Comuna',
+			'Recepticón física'
+		);
+
+		$modelo = $this->Manifiesto->alias;
+
+		$datos = array();
+		
+		foreach ($manifiesto['Orden'] as $io => $detalle) {
+			
+			if (!empty($detalle['ManifiestosVenta'])) {
+				$datos[$io]['Manifiesto']['n_documento']    = $manifiesto['Manifiesto']['id'];
+				$datos[$io]['Manifiesto']['cod_referencia'] = $detalle['ManifiestosVenta']['referencia_pedido'];
+				$datos[$io]['Manifiesto']['ot_transporte']  = (!empty($manifiesto['Manifiesto']['ot_manual'])) ? $manifiesto['Manifiesto']['ot_manual'] : 0 ;
+				$datos[$io]['Manifiesto']['n_folio']        = $detalle['ManifiestosVenta']['folio_dte'];
+				$datos[$io]['Manifiesto']['t_documento']    = $detalle['ManifiestosVenta']['tipo_dte'];	
+				$datos[$io]['Manifiesto']['nombre']         = $detalle['ManifiestosVenta']['nombre_receptor'];	
+				$datos[$io]['Manifiesto']['fono']           = $detalle['ManifiestosVenta']['fono_receptor'];	
+				$datos[$io]['Manifiesto']['direccion']      = $detalle['ManifiestosVenta']['direcion_envio'];	
+				$datos[$io]['Manifiesto']['comuna']         = strtoupper($detalle['ManifiestosVenta']['comuna']);
+				$datos[$io]['Manifiesto']['f_recepcion']    = $manifiesto['Manifiesto']['fecha_entregado'];
+				//$datos[$io]['Manifiesto']['transporte']     = $manifiesto['Transporte']['nombre'];
+			}
+
+		}
+		
+		$this->generar_pdf($datos, $campos, $manifiesto);
+
+	}
+
+
+
+	private function generar_pdf($datos, $campos, $manifiesto)
+	{	
+
+		$nombreArchivo   = 'manifiesto_' . $manifiesto['Manifiesto']['id'] . '_' . Inflector::slug($manifiesto['Manifiesto']['created']) . '.pdf';
+		
+		# Ruta para guardar en la Base de manifiesto
+		$archivo         = Router::url('/', true) . 'Pdf/Manifiestos/' . $manifiesto['Manifiesto']['id'] . '/' . $nombreArchivo;
+		
+		# Ruta para guardar PDF
+		$archivoAbsoluto = APP . 'webroot' . DS . 'Pdf' . DS . 'Manifiestos' . DS . $manifiesto['Manifiesto']['id'] . DS . $nombreArchivo;
+		
+		App::uses('CakePdf', 'Plugin/CakePdf/Pdf');
+
+		if (!file_exists($archivoAbsoluto)) {
+			$this->CakePdf = new CakePdf();
+			$this->CakePdf->template('manifiesto', 'default');
+			$this->CakePdf->viewVars(compact('datos', 'campos', 'manifiesto'));
+			$this->CakePdf->write($archivoAbsoluto);	
+		}
+
+		header('Location: ' . $archivo);
 		exit;
-		return;
 	}
 }
