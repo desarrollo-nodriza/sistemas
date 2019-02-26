@@ -5,14 +5,20 @@ App::uses('AppController', 'Controller', 'Chilexpress');
 App::import('Vendor', 'LibreDTE', array('file' => 'LibreDte/autoload.php'));
 App::import('Vendor', 'LibreDTE', array('file' => 'LibreDte/sasco/libredte-sdk-php/sdk/LibreDTE.php'));
 
-class OrdenesController extends AppController
-{
+App::import('Vendor', 'Mercadolibre', array('file' => 'Meli/meli.php'));
+App::import('Controller', 'Ventas');
 
+require_once (__DIR__ . '/../Vendor/PSWebServiceLibrary/PSWebServiceLibrary.php');
+
+class OrdenesController extends AppController
+{		
 	public $name = 'Ordenes';    
     public $uses = array('Orden');
 
     public $components = array(
-    	'Chilexpress.GeoReferencia'
+    	'Chilexpress.GeoReferencia',
+    	'Toolmania',
+    	'MeliMarketplace'
     );
     /**
      * Obtiene y lista los medios de pago disponibles en u array único
@@ -255,12 +261,12 @@ class OrdenesController extends AppController
 		$this->Orden->Dte->id = $id_dte;
 
 		if ($this->Orden->Dte->saveField('estado', '')) {
-			$this->Session->setFlash('DTE invalidado con éxito.', null, array(), 'info');
+			$this->Session->setFlash('DTE invalidado con éxito.', null, array(), 'success');
 		}else{
 			$this->Session->setFlash('No fue posible invalidar el DTE.', null, array(), 'danger');
 		}
 
-		$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
+		$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
 	}
 
 
@@ -268,12 +274,13 @@ class OrdenesController extends AppController
 	 * Verifica si una orden tiene DTE emitido correctamente
 	 * @return bool 
 	 */
-	public function unico()
+	public function unico($tipo = '')
 	{
 		$dts = ClassRegistry::init('Dte')->find('count', array(
 			'conditions' => array(
-				'Dte.id_order' => $this->request->data['Dte']['id_order'],
-				'Dte.estado' => 'dte_real_emitido'
+				'Dte.venta_id' => $this->request->data['Dte']['venta_id'],
+				'Dte.estado' => 'dte_real_emitido',
+				'Dte.tipo_documento' => $tipo
 			)
 		));
 		
@@ -286,26 +293,46 @@ class OrdenesController extends AppController
 	}
 
 
-	public function admin_generar($id_orden = '')
+	public function admin_delete_dte($id_dte = '', $id_orden = '')
+	{	
+
+		$this->Orden->Dte->id = $id_dte;
+
+		if ($this->Orden->Dte->delete()) {
+			$this->Session->setFlash('DTE eliminado con éxito.', null, array(), 'success');
+		}else{
+			$this->Session->setFlash('No fue posible elimnar el DTE.', null, array(), 'danger');
+		}
+
+		$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
+	}
+
+
+	public function admin_generar($id_orden = '', $id_dte = '')
 	{
 		$this->verificarTienda();
 
-		if ( ! $this->Orden->exists($id_orden) )
+		$this->loadModel('Venta');
+
+		if ( ! $this->Venta->exists($id_orden) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
 
 		# Modelos que requieren agregar configuración
-		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'OrdenDetalle', 'Lang', 'Cliente', 'ClienteHilo', 'ClienteMensaje', 'Empleado', 'CustomUserdata', 'CustomField', 'CustomFieldLang'));
+		#$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'OrdenDetalle', 'Lang', 'Cliente', 'ClienteHilo', 'ClienteMensaje', 'Empleado', 'CustomUserdata', 'CustomField', 'CustomFieldLang'));
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-			if(!$this->unico())
+			if(!$this->unico($this->request->data['Dte']['tipo_documento']))
 			{
-				$this->Session->setFlash('Ya ha generado un DTE válido para ésta orden de compra.' , null, array(), 'warning');
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
+				$this->Session->setFlash('Ya ha generado un DTE válido para ésta venta.' , null, array(), 'warning');
+				$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
 			}
+
+			# Administrador
+			$this->request->data['Dte']['administrador_id'] = $this->Session->read('Auth.Administrador.id');
 
 			# Rut sin puntos
 			if (!empty($this->request->data['Dte']['rut_receptor'])) {
@@ -327,18 +354,27 @@ class OrdenesController extends AppController
 				$cantidadItem = (count($this->request->data['Detalle']) + 1);
 				$this->request->data['Detalle'][$cantidadItem]['VlrCodigo'] = "COD-Trns";
 				$this->request->data['Detalle'][$cantidadItem]['NmbItem'] = "Transporte";
+				$this->request->data['DteDetalle'][$cantidadItem]['VlrCodigo'] = "COD-Trns";
+				$this->request->data['DteDetalle'][$cantidadItem]['NmbItem'] = "Transporte";
 
 				# Para boleta se envia el valor bruto y así evitar que el monto aumente o disminuya por el calculo de iva
 				if ($this->request->data['Dte']['tipo_documento'] == 39) {
 					$this->request->data['Detalle'][$cantidadItem]['PrcItem'] = round($this->request->data['Dte']['Transporte']);
+					$this->request->data['DteDetalle'][$cantidadItem]['PrcItem'] = round($this->request->data['Dte']['Transporte']);
 				}else{
 					$this->request->data['Detalle'][$cantidadItem]['PrcItem'] = $this->precio_neto($this->request->data['Dte']['Transporte']);
+					$this->request->data['DteDetalle'][$cantidadItem]['PrcItem'] = $this->precio_neto($this->request->data['Dte']['Transporte']);
 				}
 				$this->request->data['Detalle'][$cantidadItem]['QtyItem'] = 1;
+				$this->request->data['DteDetalle'][$cantidadItem]['QtyItem'] = 1;
 			}
 				
 			# Si el DTE es boleta enviamos los precios Brutos de los items
 			if ($this->request->data['Dte']['tipo_documento'] == 39) {
+
+				# Se agrega un rut por defecto
+				$this->request->data['Dte']['rut_receptor'] = '66666666-6';
+
 				foreach ($this->request->data['Detalle'] as $k => $item) {
 
 					# Precio de transporte viene Bruto
@@ -347,15 +383,24 @@ class OrdenesController extends AppController
 					}
 					
 				}
-			}else{
-				# se envia el descuento en Bruto
-				if (isset($this->request->data['DscRcgGlobal']['ValorDR']) && $this->request->data['DscRcgGlobal']['ValorDR'] > 0) {
-					$this->request->data['DscRcgGlobal']['ValorDR'] = $this->precio_neto($this->request->data['DscRcgGlobal']['ValorDR']);	
+
+				// Descuento Bruto en boletas
+				if ($this->request->data['DscRcgGlobal']['ValorDR'] > 0) {
+					$this->request->data['DscRcgGlobal']['ValorDR'] = $this->request->data['editDiscount'];	
 				}
 			}
 
-			$this->request->data['DteReferencia'] = $this->clear($this->request->data['DteReferencia'], 'folio');
-
+			if (isset($this->request->data['DteReferencia'])) {
+				$this->request->data['DteReferencia'] = $this->clear($this->request->data['DteReferencia'], 'folio');	
+			}
+			
+			# Limpiar detalle Dte si corresponde
+			if (isset($this->request->data['Dte']['id'])) {
+				ClassRegistry::init('DteDetalle')->deleteAll(array(
+					'DteDetalle.dte_id' => $this->request->data['Dte']['id']
+				), false);
+			}
+			
 			# Guardar información del DTE en base de datos local
 			if($this->Orden->Dte->saveAll($this->request->data)) {
 
@@ -371,17 +416,25 @@ class OrdenesController extends AppController
 					}
 				}
 
-				$id_dte = $this->Orden->Dte->find('first', array(
-					'conditions' => array('Dte.id_order' => $id_orden),
-					'order' => array('Dte.id' => 'DESC')
-					)
-				);
+				if (!isset($this->request->data['Dte']['id'])) {
+					$id_dte = $this->Orden->Dte->find('first', array(
+						'conditions' => array('Dte.venta_id' => $id_orden),
+						'order' => array('Dte.id' => 'DESC')
+						)
+					);	
+				}else{
+					$id_dte = $this->Orden->Dte->find('first', array(
+						'conditions' => array('Dte.id' => $this->request->data['Dte']['id']),
+						'order' => array('Dte.id' => 'DESC')
+						)
+					);
+				}
 
 				if (!empty($id_dte)) {
 					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte['Dte']['id'], $id_orden));
 				}
 
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
+				$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
 
 			}else{
 				$this->Session->setFlash('Error al guardar la información en la base de detos local. Intente nuevamente.' , null, array(), 'warning');
@@ -390,34 +443,150 @@ class OrdenesController extends AppController
 
 		}else{
 
-			$opt = array(
-				'conditions'	=> array('Orden.id_order' => $id_orden),
-				'contain' => array(
-					'OrdenEstado' => array('Lang'),
-					'OrdenDetalle' => array(
-						'conditions' => array(
-							'OrdenDetalle.product_quantity_refunded' => 0
+			$venta = $this->request->data = $this->Venta->find(
+				'first',
+				array(
+					'conditions' => array(
+						'Venta.id' => $id_orden
+					),
+					'contain' => array(
+						'VentaDetalle' => array(
+							'VentaDetalleProducto' => array(
+								'fields' => array(
+									'VentaDetalleProducto.id', 'VentaDetalleProducto.nombre'
+								)
+							),
+							'conditions' => array(
+								'VentaDetalle.activo' => 1
+							),
+							'fields' => array(
+								'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id'
+							)
+						),
+						'VentaEstado' => array(
+							'VentaEstadoCategoria' => array(
+								'fields' => array(
+									'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo'
+								)
+							),
+							'fields' => array(
+								'VentaEstado.id', 'VentaEstado.venta_estado_categoria_id'
+							)
+						),
+						'Tienda' => array(
+							'fields' => array(
+								'Tienda.id', 'Tienda.nombre', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop'
+							)
+						),
+						'Marketplace' => array(
+							'fields' => array(
+								'Marketplace.id', 'Marketplace.nombre', 'Marketplace.marketplace_tipo_id',
+								'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key',
+								'Marketplace.refresh_token', 'Marketplace.expires_token', 'Marketplace.access_token'
+							)
+						),
+						'MedioPago' => array(
+							'fields' => array(
+								'MedioPago.id', 'MedioPago.nombre'
+							)
+						),
+						'VentaCliente' => array(
+							'fields' => array(
+								'VentaCliente.nombre', 'VentaCliente.apellido', 'VentaCliente.rut', 'VentaCliente.email', 'VentaCliente.telefono', 'VentaCliente.created'
+							)
+						),
+						'Dte' => array(
+							'conditions' => array(
+								'Dte.id' => $id_dte
+							),
+							'DteReferencia' => array(
+								'fields' => array(
+									'DteReferencia.id', 'DteReferencia.dte_id', 'DteReferencia.dte_referencia', 'DteReferencia.folio', 'DteReferencia.fecha',
+									'DteReferencia.tipo_documento', 'DteReferencia.razon'
+								)
+							),
+							'DteDetalle' => array(
+								'fields' => array(
+									'DteDetalle.*'
+								)
+							),
+							'fields' => array(
+								'Dte.id', 'Dte.folio', 'Dte.tipo_documento', 'Dte.rut_receptor', 'Dte.razon_social_receptor', 'Dte.giro_receptor', 'Dte.neto', 'Dte.iva',
+								'Dte.total', 'Dte.fecha', 'Dte.estado'
+							),
+							'order' => 'Dte.fecha DESC'
 						)
 					),
-					'Dte',
-					'Cliente',
-					'ClienteHilo' => array('ClienteMensaje' => array('Empleado')),
-				),
+					'fields' => array(
+						'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
+						'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id'
+					)
+				)
 			);
 
-			$modulosExternos = $this->Orden->validarModulosExternos();
-			if ($modulosExternos) {
-				$opt = array_replace_recursive($opt, array(
-					'contain' => array(
-						'CustomUserdata' => array('CustomField' => array('Lang'))
-					)
-				));
+			//carga de mensajes de la venta
+			$venta['VentaMensaje'] = array();
+			
+			//----------------------------------------------------------------------------------------------------
+			//carga de mensajes de prestashop
+			if (empty($venta['Marketplace']['id'])) {
+
+				$ConexionPrestashop = new PrestaShopWebservice($venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'], false);
+
+				$venta['VentaMensaje'] = VentasController::prestashop_obtener_venta_mensajes($ConexionPrestashop, $venta['Venta']['id_externo']);
+
 			}
 
-			$this->request->data	= $this->Orden->find('first', $opt);
+			else {
+
+				//----------------------------------------------------------------------------------------------------
+				//carga de mensajes de mercado libre
+				if ($venta['Marketplace']['marketplace_tipo_id'] == 2) {
+					
+					$this->MeliMarketplace->crearCliente( $venta['Marketplace']['api_user'], $venta['Marketplace']['api_key'], $venta['Marketplace']['access_token'], $venta['Marketplace']['refresh_token'] );
+
+					$mensajes = $this->MeliMarketplace->mercadolibre_obtener_mensajes($venta['Marketplace']['access_token'], $venta['Venta']['id']);
+
+					foreach ($mensajes as $mensaje) {
+
+						$data = array();
+						$data['mensaje'] = $mensaje['text']['plain'];
+						$data['fecha'] = CakeTime::format($mensaje['date'], '%d-%m-%Y %H:%M:%S');
+						$data['asunto'] = $mensaje['subject'];
+
+						$venta['VentaMensaje'][] = $data;
+					}
+
+				}
+
+			}
 
 		}
-		
+
+		$documentos = array();
+
+		if (empty($venta['Marketplace']['id'])) {
+			# Datos de facturación para compras por Prestashop
+			ToolmaniaComponent::$api_url = $this->Session->read('Tienda.apiurl_prestashop');
+			//$webpay                      = $this->Toolmania->obtenerWebpayInfo($this->request->data['Orden']['id_cart'], $this->Session->read('Tienda.apikey_prestashop'));
+			$documentos                  = $this->Toolmania->obtenerDocumento($venta['Venta']['id_externo'], null, $this->Session->read('Tienda.apikey_prestashop'));
+			
+			$this->request->data['Dte'] = array(
+					'tipo_documento' => 39, # Boleta por defecto
+			);
+
+			if (!empty($documentos['content'])) {
+				$this->request->data['Dte'] = array(
+					'tipo_documento'        => 33, # Factura
+					'rut_receptor'          => $documentos['content'][0]['rut'],
+					'razon_social_receptor' => $documentos['content'][0]['empresa'],
+					'giro_receptor'         => $documentos['content'][0]['giro'],
+					'direccion_receptor'    => $documentos['content'][0]['calle'] . ' #' . $documentos['content'][0]['numero'],
+					'comuna_receptor'       => $documentos['content'][0]['comuna']
+				);
+			}
+		}
+
 		# Array de tipos de documentos
 		$tipoDocumento = $this->dtePermitidos($this->rutSinDv($this->Session->read('Tienda.rut')));
 
@@ -434,17 +603,21 @@ class OrdenesController extends AppController
 		$medioDePago = $this->medioDePago;
 
 		# DTE´s para referenciar
-		$dteEmitidos = $this->Orden->Dte->find('list', array('conditions' => array(
-			'Dte.id_order' => $id_orden,
-			'Dte.estado' => 'dte_real_emitido'
+		$dteEmitidos = $this->Venta->Dte->find(
+			'list',
+			array(
+				'conditions' => array(
+					'Dte.venta_id' => $id_orden,
+					'Dte.estado' => 'dte_real_emitido'
+				)
 			)
-		));
+		);
 		
-		BreadcrumbComponent::add('Ordenes de compra', '/ordenes');
-		BreadcrumbComponent::add('Ver Dte´s', '/ordenes/orden/'.$id_orden);
+		BreadcrumbComponent::add('Listado de ventas', '/ventas');
+		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');
 		
-		$this->set(compact('comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago'));
+		$this->set(compact('venta', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos'));
 
 	}
 
@@ -452,161 +625,24 @@ class OrdenesController extends AppController
 	{
 		$this->verificarTienda();
 		
-		if ( ! $this->Orden->exists($id_orden) )
-		{
-			$this->Session->setFlash('No existe la orden seleccionada.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index'));
-		}
-
 		if ( ! $this->Orden->Dte->exists($id_dte) )
 		{
 			$this->Session->setFlash('No existe el dte seleccionado.', null, array(), 'danger');
-			$this->redirect(array('action' => 'orden', $id_orden));
+			$this->redirect(array('controller' => 'ventas', 'action' => 'index'));
 		}
 
-		# Modelos que requieren agregar configuración
-		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'OrdenDetalle', 'Lang', 'Cliente', 'ClienteHilo', 'ClienteMensaje', 'Empleado', 'CustomUserdata', 'CustomField', 'CustomFieldLang'));
-
-		if ( $this->request->is('post') || $this->request->is('put') )
-		{	
-			if(!$this->unico())
-			{
-				$this->Session->setFlash('Ya ha generado un DTE válido para ésta orden de compra.' , null, array(), 'warning');
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
-			}
-
-			# Rut sin puntos
-			if (!empty($this->request->data['Dte']['rut_receptor'])) {
-				$this->request->data['Dte']['rut_receptor'] = str_replace('.', '', $this->request->data['Dte']['rut_receptor']);
-			}
-		
-			# Si existe costo de transporte se agrega como ITEM
-			if (intval($this->request->data['Dte']['Transporte']) > 0) {
-				$cantidadItem = (count($this->request->data['Detalle']) + 1);
-				$this->request->data['Detalle'][$cantidadItem]['NmbItem'] = "Transporte";
-
-				# Para boleta se envia el valor bruto y así evitar que el monto aumente o disminuya por el calculo de iva
-				if ($this->request->data['Dte']['tipo_documento'] == 39) {
-					$this->request->data['Detalle'][$cantidadItem]['PrcItem'] = round($this->request->data['Dte']['Transporte']);
-				}else{
-					$this->request->data['Detalle'][$cantidadItem]['PrcItem'] = $this->precio_neto($this->request->data['Dte']['Transporte']);
-				}
-				$this->request->data['Detalle'][$cantidadItem]['QtyItem'] = 1;
-			}
-				
-			# Si el DTE es boleta enviamos los precios Brutos de los items
-			if ($this->request->data['Dte']['tipo_documento'] == 39) {
-				foreach ($this->request->data['Detalle'] as $k => $item) {
-
-					# Precio de transporte viene Bruto
-					if ($item['NmbItem'] != 'Transporte') {
-						$this->request->data['Detalle'][$k]['PrcItem'] = $this->precio_bruto($item['PrcItem']);
-					}
-					
-				}
-			}else{
-				# se envia el descuento en Bruto
-				if (isset($this->request->data['DscRcgGlobal']['ValorDR']) && $this->request->data['DscRcgGlobal']['ValorDR'] > 0) {
-					$this->request->data['DscRcgGlobal']['ValorDR'] = $this->precio_neto($this->request->data['DscRcgGlobal']['ValorDR']);	
-				}
-			}
-
-			$this->request->data['DteReferencia'] = $this->clear($this->request->data['DteReferencia'], 'folio');
-
-			# Se eliminan las referencias
-			$this->Orden->Dte->DteReferencia->deleteAll(array('DteReferencia.dte_id' => $id_dte));
-
-			
-			# Guardar información del DTE en base de datos local
-			if($this->Orden->Dte->saveAll($this->request->data)) {
-				
-				# Se genera DTE Real desde uno temporal
-				if ( $this->request->data['Dte']['estado'] == 'dte_temporal_emitido' || $this->request->data['Dte']['estado'] == 'dte_real_no_emitido' ) {
-					try {
-						# Enviar DTE a LibreDTE
-						$this->generarDteRealDesdeTemporal($this->request->data['Dte']['id']);
-
-					} catch (Exception $e) {
-
-						if($e->getCode() == 200) {
-							$this->Session->setFlash($e->getMessage() , null, array(), 'success');
-						}else{
-							$this->Session->setFlash($e->getMessage() , null, array(), 'warning');
-						}
-					}	
-				}
-
-				# Se genera DTE desde el cominezo
-				if ( $this->request->data['Dte']['estado'] == 'no_generado' || $this->request->data['Dte']['estado'] == 'dte_temporal_no_emitido' ) {
-					try {
-						# Enviar DTE a LibreDTE
-						if (isset($this->request->data['Dte']['id']) && !empty($this->request->data['Dte']['id'])) {
-							$this->generarDte($this->request->data['Dte']['id']);
-						}else{
-							$this->generarDte();
-						}
-
-					} catch (Exception $e) {
-
-						if($e->getCode() == 200) {
-							$this->Session->setFlash($e->getMessage() , null, array(), 'success');
-						}else{
-							$this->Session->setFlash($e->getMessage() , null, array(), 'warning');
-						}
-					}	
-				}
-
-				$this->redirect(array('action' => 'orden', $id_orden));
-
-			}else{
-				$this->Session->setFlash('Error al guardar la información en la base de detos local. Intente nuevamente.' , null, array(), 'warning');
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte));
-			}
-
-		}
-		else
-		{
-
-			$opt = array(
-				'conditions'	=> array('Dte.id' => $id_dte),
-				'contain' => array(
-					'DteReferencia',
-					'Orden' => array(
-						'OrdenEstado' => array('Lang'),
-						'OrdenDetalle' => array(
-							'conditions' => array(
-								'OrdenDetalle.product_quantity_refunded' => 0
-							)
-						),
-						'Dte',
-						'Cliente',
-						'ClienteHilo' => array('ClienteMensaje' => array('Empleado')),
-					)
+		$dte = $this->request->data = $this->Orden->Dte->find(
+			'first',
+			array(
+				'conditions' => array(
+					'Dte.id' => $id_dte
+				),
+				'fields' => array(
+					'Dte.*'
 				)
-			);
-
-			$modulosExternos = $this->Orden->validarModulosExternos();
-			if ($modulosExternos) {
-				$opt = array_replace_recursive($opt, array(
-					'contain' => array(
-						'Orden' => array(
-							'CustomUserdata' => array('CustomField' => array('Lang'))
-						)
-					)
-				));
-			}
-
-			$this->request->data	= $this->Orden->Dte->find('first', $opt);
-
-		}
-		
-		$estadoSii = '';
-
-		# Estado del dte Emitido en el SII
-		if ($this->request->data['Dte']['estado'] == 'dte_real_emitido' && $this->request->data['Dte']['tipo_documento'] == 33) {
-			$estadoSii = $this->consultarDteSii($this->request->data['Dte']['tipo_documento'], $this->request->data['Dte']['folio'], $this->request->data['Dte']['emisor']);
-		}
-
+			)
+		);
+	
 		# Consultar por DTE Emitido
 		if (!empty($this->request->data['Dte']) && $this->request->data['Dte']['estado'] == 'dte_real_emitido' ) {
 			try {
@@ -617,11 +653,12 @@ class OrdenesController extends AppController
 				}else{
 					$this->Session->setFlash($e->getMessage() , null, array(), 'warning');
 				}
-			}
+			}			
 		}
 
 		# Si no se ha generado el PDF de un documento emitido se intenta generar
 		if (empty($this->request->data['Dte']['pdf']) && $this->request->data['Dte']['estado'] == 'dte_real_emitido' ) {
+
 			try {
 				$this->generarPDFDteEmitido($id_orden, $id_dte, $this->request->data['Dte']['tipo_documento'], $this->request->data['Dte']['folio'], $this->request->data['Dte']['emisor'] );
 			} catch (Exception $e) {
@@ -634,176 +671,179 @@ class OrdenesController extends AppController
 				}
 			}
 
-			# Se redirecciona a si mismo
-			$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte, $id_orden));
+			# Se redirecciona a vista
+			$this->redirect(array('controller' => 'ordenes', 'action' => 'view', $id_dte, $id_orden));
+
+		}else if(!empty($this->request->data['Dte']['pdf']) && $this->request->data['Dte']['estado'] == 'dte_real_emitido'){
+			$this->redirect(array('controller' => 'ordenes', 'action' => 'view', $id_dte, $id_orden));
 		}
 
-		# Array de tipos de documentos
-		$tipoDocumento = $this->dtePermitidos($this->rutSinDv($this->Session->read('Tienda.rut')));
-
-		# Array de comunas actualizadas
-		$comunas = $this->obtener_comunas_actualizadas();
-
-		# Tipos de traslados
-		$traslados = $this->tipoTraslado;
-
-		# Códigos d referencia Libre DTE
-		$codigoReferencia = $this->codigoReferencia;
-
-		# Medio de pago
-		$medioDePago = $this->medioDePago;
-
-		# DTE´s para referenciar
-		$dteEmitidos = $this->Orden->Dte->find('list', array('conditions' => array(
-			'Dte.id_order' => $id_orden,
-			'Dte.estado' => 'dte_real_emitido'
-			)
-		));
+		// Eliminamos DTE
+		if ($this->request->data['Dte']['estado'] != 'dte_real_emitido') {
+			$this->admin_eliminarDteTemporal($id_dte, $id_orden);
+		}
 		
-		BreadcrumbComponent::add('Ordenes de compra', '/ordenes');
-		BreadcrumbComponent::add('Ver Dte´s', '/ordenes/orden/'.$id_orden);
-		BreadcrumbComponent::add('Editar Dte ');
-		
-		$this->set(compact('comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'estadoSii'));
+		$this->Session->setFlash('El DTE no ha sido emitido correctamente. vuelva a intentarlo.', null, array(), 'warning');
+		$this->redirect(array('controller' => 'ordenes', 'action' => 'generar', $id_orden, $id_dte));
+
 	}
 
 
-	public function admin_view($id = '') {
+	public function admin_view($id_dte = '', $id_venta = '') {
 
 		$this->verificarTienda();
 
-		if ( ! $this->Orden->exists($id) )
+		if ( ! ClassRegistry::init('Venta')->exists($id_venta) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index'));
+			$this->redirect(array('controller' => 'ventas', 'action' => 'index', $id_venta));
 		}
 
 		# Modelos que requieren agregar configuración
-		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'OrdenDetalle', 'Lang', 'Cliente', 'ClienteHilo', 'ClienteMensaje', 'Empleado'));
+		#$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'OrdenDetalle', 'Lang', 'Cliente', 'ClienteHilo', 'ClienteMensaje', 'Empleado'));
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
 
-			if(!$this->unico())
-			{
-				$this->Session->setFlash('Ya ha generado un DTE válido para ésta orden de compra.' , null, array(), 'warning');
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_orden));
-			}
-
-			# Rut sin puntos
-			if (!empty($this->request->data['Dte']['rut_receptor'])) {
-				$this->request->data['Dte']['rut_receptor'] = str_replace('.', '', $this->request->data['Dte']['rut_receptor']);
-			}
-		
-			# Si existe costo de transporte se agrega como ITEM
-			if (intval($this->request->data['Dte']['Transporte']) > 0) {
-				$cantidadItem = (count($this->request->data['Detalle']) + 1);
-				$this->request->data['Detalle'][$cantidadItem]['NmbItem'] = "Transporte";
-
-				# Para boleta se envia el valor bruto y así evitar que el monto aumente o disminuya por el calculo de iva
-				if ($this->request->data['Dte']['tipo_documento'] == 39) {
-					$this->request->data['Detalle'][$cantidadItem]['PrcItem'] = round($this->request->data['Dte']['Transporte']);
-				}else{
-					$this->request->data['Detalle'][$cantidadItem]['PrcItem'] = $this->precio_neto($this->request->data['Dte']['Transporte']);
-				}
-				$this->request->data['Detalle'][$cantidadItem]['QtyItem'] = 1;
-			}
-				
-			# Si el DTE es boleta enviamos los precios Brutos de los items
-			if ($this->request->data['Dte']['tipo_documento'] == 39) {
-				foreach ($this->request->data['Detalle'] as $k => $item) {
-
-					# Precio de transporte viene Bruto
-					if ($item['NmbItem'] != 'Transporte') {
-						$this->request->data['Detalle'][$k]['PrcItem'] = $this->precio_bruto($item['PrcItem']);
-					}
-					
-				}
-			}else{
-				# se envia el descuento en Bruto
-				if (isset($this->request->data['DscRcgGlobal']['ValorDR']) && $this->request->data['DscRcgGlobal']['ValorDR'] > 0) {
-					$this->request->data['DscRcgGlobal']['ValorDR'] = $this->precio_neto($this->request->data['DscRcgGlobal']['ValorDR']);	
-				}
-			}
-
 			
-			# Guardar información del DTE en base de datos local
-			if($this->Orden->Dte->save($this->request->data)) {
-				
-				# Se genera DTE Real desde uno temporal
-				if ( $this->request->data['Dte']['estado'] == 'dte_temporal_emitido' || $this->request->data['Dte']['estado'] == 'dte_real_no_emitido' ) {
-					try {
-						# Enviar DTE a LibreDTE
-						$this->generarDteRealDesdeTemporal($this->request->data['Dte']['id']);
-
-					} catch (Exception $e) {
-
-						if($e->getCode() == 200) {
-							$this->Session->setFlash($e->getMessage() , null, array(), 'success');
-						}else{
-							$this->Session->setFlash($e->getMessage() , null, array(), 'warning');
-						}
-					}	
-				}
-
-				# Se genera DTE desde el cominezo
-				if ( $this->request->data['Dte']['estado'] == 'no_generado' || $this->request->data['Dte']['estado'] == 'dte_temporal_no_emitido' ) {
-					try {
-						# Enviar DTE a LibreDTE
-						if (isset($this->request->data['Dte']['id']) && !empty($this->request->data['Dte']['id'])) {
-							$this->generarDte($this->request->data['Dte']['id']);
-						}else{
-							$this->generarDte();
-						}
-
-					} catch (Exception $e) {
-
-						if($e->getCode() == 200) {
-							$this->Session->setFlash($e->getMessage() , null, array(), 'success');
-						}else{
-							$this->Session->setFlash($e->getMessage() , null, array(), 'warning');
-						}
-					}	
-				}
-
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'view', $id));
-
-			}else{
-				$this->Session->setFlash('Error al guardar la información en la base de detos local. Intente nuevamente.' , null, array(), 'warning');
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'view', $id));
-			}
-
 		}
 		else
 		{
-			$this->request->data	= $this->Orden->find('first', array(
-				'conditions'	=> array('Orden.id_order' => $id),
-				'contain' => array(
-					'OrdenEstado' => array('Lang'),
-					'OrdenDetalle' => array(
-						'conditions' => array(
-							'OrdenDetalle.product_quantity_refunded' => 0
+			$venta = $this->request->data = ClassRegistry::init('Venta')->find(
+				'first',
+				array(
+					'conditions' => array(
+						'Venta.id' => $id_venta
+					),
+					'contain' => array(
+						'VentaDetalle' => array(
+							'VentaDetalleProducto' => array(
+								'fields' => array(
+									'VentaDetalleProducto.id', 'VentaDetalleProducto.nombre'
+								)
+							),
+							'conditions' => array(
+								'VentaDetalle.activo' => 1
+							),
+							'fields' => array(
+								'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id'
+							)
+						),
+						'VentaEstado' => array(
+							'VentaEstadoCategoria' => array(
+								'fields' => array(
+									'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo'
+								)
+							),
+							'fields' => array(
+								'VentaEstado.id', 'VentaEstado.venta_estado_categoria_id'
+							)
+						),
+						'Tienda' => array(
+							'fields' => array(
+								'Tienda.id', 'Tienda.nombre', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop'
+							)
+						),
+						'Marketplace' => array(
+							'fields' => array(
+								'Marketplace.id', 'Marketplace.nombre', 'Marketplace.marketplace_tipo_id',
+								'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key',
+								'Marketplace.refresh_token', 'Marketplace.expires_token', 'Marketplace.access_token'
+							)
+						),
+						'MedioPago' => array(
+							'fields' => array(
+								'MedioPago.id', 'MedioPago.nombre'
+							)
+						),
+						'VentaCliente' => array(
+							'fields' => array(
+								'VentaCliente.nombre', 'VentaCliente.apellido', 'VentaCliente.rut', 'VentaCliente.email', 'VentaCliente.telefono', 'VentaCliente.created'
+							)
+						),
+						'Dte' => array(
+							'conditions' => array(
+								'Dte.id' => $id_dte
+							),
+							'DteReferencia' => array(
+								'fields' => array(
+									'DteReferencia.id', 'DteReferencia.dte_id', 'DteReferencia.dte_referencia', 'DteReferencia.folio', 'DteReferencia.fecha',
+									'DteReferencia.tipo_documento', 'DteReferencia.razon'
+								)
+							),
+							'DteDetalle' => array(
+								'fields' => array(
+									'DteDetalle.*'
+								)
+							),
+							'fields' => array(
+								'Dte.*'
+							),
+							'order' => 'Dte.fecha DESC'
 						)
 					),
-					'Dte',
-					'Cliente',
-					'ClienteHilo' => array('ClienteMensaje' => array('Empleado')))
-			));
-		}
-		
-		# DTE no creado
-		if (empty($this->request->data['Dte']) || $this->request->data['Dte'][0]['estado'] == 'no_generado') {
-			$this->Session->setFlash('Aún no se ha emitido del DTE para esta orden de compra.' , null, array(), 'danger');
-		}
-		
-		# Array de tipos de documentos
-		$tipoDocumento = $this->dtePermitidos($this->rutSinDv($this->Session->read('Tienda.rut')));
+					'fields' => array(
+						'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
+						'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id'
+					)
+				)
+			);
 
-		# Array de comunas actualizadas
-		$comunas = $this->obtener_comunas_actualizadas();
-		
-		BreadcrumbComponent::add('Ordenes de compra', '/ordenes');
-		BreadcrumbComponent::add('Ver ');
+			//carga de mensajes de la venta
+			$venta['VentaMensaje'] = array();
+			
+			//----------------------------------------------------------------------------------------------------
+			//carga de mensajes de prestashop
+			if (empty($venta['Marketplace']['id'])) {
+
+				$ConexionPrestashop = new PrestaShopWebservice($venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'], false);
+
+				$venta['VentaMensaje'] = VentasController::prestashop_obtener_venta_mensajes($ConexionPrestashop, $venta['Venta']['id_externo']);
+
+			}
+
+			else {
+
+				//----------------------------------------------------------------------------------------------------
+				//carga de mensajes de mercado libre
+				if ($venta['Marketplace']['marketplace_tipo_id'] == 2) {
+					
+					$this->MeliMarketplace->crearCliente( $venta['Marketplace']['api_user'], $venta['Marketplace']['api_key'], $venta['Marketplace']['access_token'], $venta['Marketplace']['refresh_token'] );
+
+					$mensajes = $this->MeliMarketplace->mercadolibre_obtener_mensajes($venta['Marketplace']['access_token'], $venta['Venta']['id']);
+
+					foreach ($mensajes as $mensaje) {
+
+						$data = array();
+						$data['mensaje'] = $mensaje['text']['plain'];
+						$data['fecha'] = CakeTime::format($mensaje['date'], '%d-%m-%Y %H:%M:%S');
+						$data['asunto'] = $mensaje['subject'];
+
+						$venta['VentaMensaje'][] = $data;
+					}
+
+				}
+
+			}
+		}
+
+		# Estado del dte Emitido en el SII
+		if ($this->request->data['Dte'][0]['estado'] == 'dte_real_emitido' ) {
+			$venta['Dte'][0]['estado_sii'] = $this->consultarDteSii($this->request->data['Dte'][0]['tipo_documento'], $this->request->data['Dte'][0]['folio'], $this->request->data['Dte'][0]['emisor']);
+		}
+
+		# Consultar por DTE Emitido
+		if (!empty($this->request->data['Dte'][0]) && $this->request->data['Dte'][0]['estado'] == 'dte_real_emitido' ) {
+			try {
+				$this->consultarDteLibreDte($this->request->data['Dte'][0]['emisor'], $this->request->data['Dte'][0]['tipo_documento'], $this->request->data['Dte'][0]['folio'], $this->request->data['Dte'][0]['fecha'], $this->request->data['Dte'][0]['total']);
+			} catch (Exception $e) {
+				if ($e->getCode() == 400) {
+					$this->Session->setFlash($e->getMessage() , null, array(), 'danger');
+				}else{
+					$this->Session->setFlash($e->getMessage() , null, array(), 'warning');
+				}
+			}
+		}	
 
 		# Si no se ha generado el PDF de un documento emitido se intenta generar
 		if (!empty($this->request->data['Dte']) && empty($this->request->data['Dte'][0]['pdf']) && !empty($this->request->data['Dte'][0]['folio']) ) {
@@ -820,22 +860,13 @@ class OrdenesController extends AppController
 			}
 		}
 
-
-		# Consultar por DTE Emitido
-		if (!empty($this->request->data['Dte']) && $this->request->data['Dte'][0]['estado'] == 'dte_real_emitido' ) {
-			try {
-				$this->consultarDteLibreDte($this->request->data['Dte'][0]['emisor'], $this->request->data['Dte'][0]['tipo_documento'], $this->request->data['Dte'][0]['folio'], $this->request->data['Dte'][0]['fecha'], $this->request->data['Dte'][0]['total']);
-			} catch (Exception $e) {
-				if ($e->getCode() == 400) {
-					$this->Session->setFlash($e->getMessage() , null, array(), 'danger');
-				}else{
-					$this->Session->setFlash($e->getMessage() , null, array(), 'warning');
-				}
-			}
-		}
+		BreadcrumbComponent::add('Listado de ventas', '/ventas');
+		BreadcrumbComponent::add('Venta #' . $id_venta, '/ventas/view/'.$id_venta);
+		BreadcrumbComponent::add('Ver Dte ');
 		
-		$this->set(compact('comunas', 'tipoDocumento'));
+		$this->set(compact('venta'));
 	}
+
 
 	/**
 	 * Función que limpia un array según su índice
@@ -954,7 +985,7 @@ class OrdenesController extends AppController
 
 	/**
 	 * Obtiene las comunas de Chile actualiadas desde la API disponible en http://apis.digital.gob.cl
-	 * @return 		Array 	Arreglo con las Comunas
+	 * @return 		Array 	Arreglo con las Comunas key:par
 	 */
 	public function obtener_comunas_actualizadas()
 	{	
@@ -1126,10 +1157,13 @@ class OrdenesController extends AppController
 
 
 		# Incluye Receptor
-		if (!empty($this->request->data['Dte']['rut_receptor'])) {
+		if (!empty($this->request->data['Dte']['rut_receptor']) && $this->request->data['Dte']['rut_receptor'] != '66666666-6' ) {
+
+			$rut = number_format( substr ( $this->request->data['Dte']['rut_receptor'], 0 , -1 ) , 0, "", "") . '-' . substr ( $this->request->data['Dte']['rut_receptor'], strlen($this->request->data['Dte']['rut_receptor']) -1 , 1 );
+
 			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
 				'Receptor' => array(
-					'RUTRecep' => $this->request->data['Dte']['rut_receptor']
+					'RUTRecep' => $rut
 					)
 			));
 		}else{
@@ -1190,6 +1224,11 @@ class OrdenesController extends AppController
 			        'ValorDR' => $this->request->data['DscRcgGlobal']['ValorDR']
 				)
 			));
+
+			# si el descuento es 0 se elimina
+			if ($this->request->data['DscRcgGlobal']['ValorDR'] == 0) {
+				unset($dte['DscRcgGlobal']);
+			}
 		}
 		
 		# Incluye Tipo de transporte
@@ -1304,6 +1343,7 @@ class OrdenesController extends AppController
 
 		// crear DTE temporal
 		$emitir = $LibreDTE->post('/dte/documentos/emitir', $dte);
+
 		if ($emitir['status']['code'] != 200) {
 
 			# Guardamos el estado
@@ -1359,6 +1399,10 @@ class OrdenesController extends AppController
 			$dteInterno['Dte']['revision_detalle'] 	= !empty($generar['body']['revision_detalle']) ? $generar['body']['revision_detalle'] : '';
 
 			$this->Orden->Dte->save($dteInterno);
+
+			// Se marca como atendida
+			ClassRegistry::init('Venta')->id = $dteInterno['Dte']['venta_id'];
+			ClassRegistry::init('Venta')->saveField('atendida', 1);
 
 			# Mensaje de retorno
 			throw new Exception("DTE generado con éxito.", $emitir['status']['code']);
@@ -1527,8 +1571,9 @@ class OrdenesController extends AppController
 		];
 
 		$consultar = $LibreDTE->post('/dte/dte_emitidos/consultar?getXML='.$getXML, $datos);
+		
 		if ($consultar['status']['code']!=200) {
-		    throw new Exception('Ocurrió un error al obtener el DTE desde el SII', 400);
+		    throw new Exception('Ocurrió un error al obtener el DTE desde el SII: ' . $consultar['body'], 400);
 		}
 
 		if ($consultar['body']['anulado'] || $consultar['body']['iva_fuera_plazo']) {
@@ -1615,8 +1660,8 @@ class OrdenesController extends AppController
 	 */
 	public function admin_enviarDteViaEmail()
 	{	
-		if ($this->request->is('put')
-			&& !empty($this->request->data['Orden']['id_orden']) 
+		if ($this->request->is('post')
+			&& !empty($this->request->data['Orden']['venta_id']) 
 			&& !empty($this->request->data['Orden']['dte'])
 			&& !empty($this->request->data['Orden']['folio'])
 			&& !empty($this->request->data['Orden']['emisor'])
@@ -1648,14 +1693,14 @@ class OrdenesController extends AppController
 			
 			if ($enviar['status']['code'] == 200) {
 				$this->Session->setFlash('Correo enviado existosamente al cliente.', null, array(), 'success');
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'index'));
+				$this->redirect(array('controller' => 'ventas', 'action' => 'view', $this->request->data['Orden']['venta_id']));
 			}else{
 				$this->Session->setFlash('Error al enviar el email al cliente. Error:' . $enviar['body'], null, array(), 'danger');
-				$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $this->request->data['Orden']['id_orden']));
+				$this->redirect(array('controller' => 'ordenes', 'action' => 'view', $this->request->data['Orden']['id_dte'], $this->request->data['Orden']['venta_id']));
 			}	
 		}else{
 			$this->Session->setFlash('Error al enviar el email. Existen campos no válidos.' , null, array(), 'warning');
-			$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $this->request->data['Orden']['id_dte'], $this->request->data['Orden']['id_orden']));
+			$this->redirect(array('controller' => 'ordenes', 'action' => 'view', $this->request->data['Orden']['id_dte'], $this->request->data['Orden']['venta_id']));
 		}
 	} 
 
@@ -1705,11 +1750,11 @@ class OrdenesController extends AppController
 		if ( ! $this->Orden->Dte->exists($id_dte) )
 		{
 			$this->Session->setFlash('Dte no existe.' , null, array(), 'warning');
-			$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', 
+			$this->redirect(array('controller' => 'ventas', 'action' => 'view', 
 				$id_order));
 		}
 
-		if ($this->request->is('post')) {
+		if ($this->request->is('GET')) {
 			
 			$dte = $this->Orden->Dte->find('first', array('conditions' => array('Dte.id' => $id_dte)));
 			
@@ -1730,31 +1775,32 @@ class OrdenesController extends AppController
 					if ( $this->Orden->Dte->delete($id_dte) )
 					{
 						$this->Session->setFlash('DTE eliminado correctamente de Libre DTE.', null, array(), 'success');
-						$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_order));
+						$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_order));
 					}else{
 						$this->Session->setFlash('No se logró eliminar el DTE. Intentelo nuevamente.', null, array(), 'danger');
-						$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte, $id_order));
+						$this->redirect(array('controller' => 'ventas', 'action' => 'editar', $id_dte, $id_order));
 					}
 				}else{
 					if ($eliminar['body'] == 'No existe el DTE temporal solicitado' && $this->Orden->Dte->delete($id_dte)) {
 						$this->Session->setFlash('DTE eliminado correctamente de Libre DTE.', null, array(), 'success');
-						$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_order));
+						$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_order));
 					}else{
 						$this->Session->setFlash($eliminar['body'] . '. Intentelo nuevamente.', null, array(), 'danger');
-						$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte, $id_order));
+						$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_order));
 					}
 					
 				}
 			}else{
 				# Borramos el DTE
-				if ( $this->Orden->Dte->delete($id_dte) )
+				/*if ( $this->Orden->Dte->delete($id_dte) )
 				{
-					$this->Session->setFlash('DTE eliminado correctamente.', null, array(), 'success');
-					$this->redirect(array('controller' => 'ordenes', 'action' => 'orden', $id_order));
+					$this->Session->setFlash('DTE no ha sido generado. Vuelva a intentarlo.', null, array(), 'danger');
+					$this->redirect(array('controller' => 'ordenes', 'action' => 'generar', $id_order));
 				}else{
-					$this->Session->setFlash('No se logró eliminar el DTE. Intentelo nuevamente.', null, array(), 'danger');
-					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte, $id_order));
-				}
+					$this->Session->setFlash('No se logró eliminar el DTE. Intentelo nuevamente.', null, array(), 'warning');
+					$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_order));
+				}*/
+				return;
 			}
 
 		}	
