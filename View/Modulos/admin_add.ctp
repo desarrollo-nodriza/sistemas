@@ -17,7 +17,7 @@
 									<td><?= $this->Form->input('parent_id', array(
 										    'options' => $parentModulos,
 										    'empty' => 'Sin categoría padre',
-										    'class' => 'form-control select'
+										    'class' => 'form-control'
 										)); ?>
 									</td>
 								</tr>
@@ -26,7 +26,7 @@
 									<td><?= $this->Form->input('nombre'); ?></td>
 								</tr>
 								<tr>
-									<th><?= $this->Form->label('url', 'URL'); ?></th>
+									<th><?= $this->Form->label('url_controlador', 'Controlador'); ?></th>
 									<?  
 										$options = array(); 
 
@@ -43,7 +43,12 @@
 
 										   endforeach; ?>
 									
-									<td><?= $this->Form->select('url', $options,array('empty' => 'Seleccione', 'class' => 'form-control select', 'data-live-search' => 'true')); ?></td>
+									<td><?= $this->Form->select('url_controlador', $options,array('empty' => 'Seleccione', 'class' => 'form-control js-controlador')); ?></td>
+								</tr>
+								<tr>
+									<th><?= $this->Form->label('url_method', 'Método'); ?></th>
+		
+									<td><?= $this->Form->select('url_action', array(),array('empty' => 'Seleccione', 'class' => 'form-control js-metodo')); ?></td>
 								</tr>
 								<tr>
 									<th><?= $this->Form->label('icono', 'Icono'); ?></th>

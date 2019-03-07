@@ -17,7 +17,9 @@ class ModulosController extends AppController
 	public function admin_add()
 	{
 		if ( $this->request->is('post') )
-		{
+		{	
+			$this->request->data['Modulo']['url'] = $this->request->data['Modulo']['url_controlador'] . '/' . $this->request->data['Modulo']['url_action'];
+
 			$this->Modulo->create();
 			if ( $this->Modulo->save($this->request->data) )
 			{
@@ -47,7 +49,9 @@ class ModulosController extends AppController
 		}
 
 		if ( $this->request->is('post') || $this->request->is('put') )
-		{
+		{	
+			$this->request->data['Modulo']['url'] = $this->request->data['Modulo']['url_controlador'] . '/' . $this->request->data['Modulo']['url_action'];
+
 			if ( $this->Modulo->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
@@ -71,8 +75,28 @@ class ModulosController extends AppController
 
 		$parentModulos	= $this->Modulo->ParentModulo->find('list', array('conditions' => array('parent_id' => NULL)));
 
+		$actions = array();
+
+		if (!empty($this->request->data['Modulo']['url_controlador'])) {
+
+			$controlador = ucfirst($this->request->data['Modulo']['url_controlador']) . 'Controller';
+
+			App::import('Controller', ucfirst($this->request->data['Modulo']['url_controlador']));
+
+			$metodos = get_class_methods($controlador);
+	
+			if (!empty($metodos)) {
+				foreach ($metodos as $value) {
+
+					if ( is_int(strpos($value, 'admin_')) ) {
+						$actions[str_replace('admin_', '', $value)] = str_replace('admin_', '', $value);
+					}
+				}
+			}	
+		}
+
 		$roles	= $this->Modulo->Rol->find('list');
-		$this->set(compact('parentModulos', 'roles'));
+		$this->set(compact('parentModulos', 'roles', 'actions'));
 	}
 
 	public function admin_delete($id = null)
@@ -103,5 +127,27 @@ class ModulosController extends AppController
 		$modelo			= $this->Modulo->alias;
 
 		$this->set(compact('datos', 'campos', 'modelo'));
+	}
+
+
+	public function admin_obtener_metodos($controlador = '')
+	{	
+
+		App::import('Controller', ucfirst($controlador));
+
+		$html = '<option value="">Seleccione</option>';	
+		$metodos = get_class_methods(ucfirst($controlador) . 'Controller');
+		
+		if (!empty($metodos)) {
+			foreach ($metodos as $value) {
+
+				if ( is_int(strpos($value, 'admin_')) ) {
+					$html  .= '<option value="'.str_replace('admin_', '', $value).'">'.str_replace('admin_', '', $value).'</option>';
+				}
+			}
+		}
+
+		echo $html;
+		exit;
 	}
 }
