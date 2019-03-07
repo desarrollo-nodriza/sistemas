@@ -1,3 +1,8 @@
+$.validator.addMethod( "time", function( value, element ) {
+	return this.optional( element ) || /^([01]\d|2[0-3]|[0-9])(:[0-5]\d){1,2}$/.test( value );
+}, "Please enter a valid time, between 00:00 and 23:59" );
+
+
 $.extend({
 	app: {
 		seleccionDireccion: {
@@ -161,7 +166,7 @@ $.extend({
 				}
 			},
 			bind: function(){
-				$('.mascara_fono').mask('99999-9999', {clearIfNotMatch: true, placeholder: "xxxxx-xxxx"});
+				//$('.mascara_fono').mask('99999-9999', {clearIfNotMatch: true, placeholder: "xxxxx-xxxx"});
 			}
 		},
 		toggle: {
@@ -641,6 +646,43 @@ $.extend({
 					$.app.clonarTabla.reindexar();
 				});
 			},
+			clonarNormal: function($ths) {
+				var context  = $ths.parents('.js-clon-scope').eq(0),
+					limite 	= context.data('limit'),
+					trs 	= context.find('.js-clon-contenedor').find('tr').length;
+				
+				if (typeof(limite) != 'undefined' && typeof(trs) != 'undefined') {
+					console.log(trs-1);
+					if ((trs - 1) == limite) {
+						noty({text: 'Solo se permite agregar ' + limite + ' elemento/s.', layout: 'topRight', type: 'error'});
+						return;
+					}
+				}
+
+				var $this 			= context.find('.js-clon-contenedor').eq(0),
+					tablaInicial 	= context.find('.js-clon-base'),
+					tablaClonada 	= tablaInicial.clone();
+					
+				console.log('Contenedor clonar disparado');
+				
+				tablaClonada.removeClass('js-clon-base');
+				tablaClonada.removeClass('hidden');
+				tablaClonada.addClass('js-clon-clonada');
+				tablaClonada.find('.js-pais').addClass('js-pais-valida');
+				tablaClonada.find('input, select, textarea').removeAttr('disabled');
+				tablaClonada.find('.js-direccion-utilizar').attr('checked', 'checked');
+
+				$this.append(tablaClonada);
+
+				if (tablaClonada.find('.datepicker').length) {
+					tablaClonada.find('.datepicker').datepicker({
+						language	: 'es',
+						format		: 'yyyy-mm-dd'
+					});
+				}
+
+				$.app.clonarTabla.reindexar();
+			},
 			init: function(){
 				if($('.js-clon-contenedor').length) {
 					$.app.clonarTabla.clonar();
@@ -653,7 +695,11 @@ $.extend({
 				// Agregar tabla click
 				$(document).on('click', '.js-clon-agregar', function(event){
 					event.preventDefault();
-					$.app.clonarTabla.clonar();
+					if ($(this).parents('.js-clon-scope').eq(0).hasClass('js-clone-normal')) {
+						$.app.clonarTabla.clonarNormal($(this));
+					}else{
+						$.app.clonarTabla.clonar();
+					}
 				});
 
 			},
@@ -694,6 +740,26 @@ $.extend({
 				});
 
 				$contenedor.find('.table').each(function(index)
+				{	console.log('Reindexar');
+					$(this).find('input, select, textarea').each(function()
+					{
+						var $that		= $(this),
+							nombre		= $that.attr('name').replace(/[(\d)]/, (index));
+
+						$that.attr('name', nombre);
+					});
+
+					$(this).find('label').each(function()
+					{
+						var $that		= $(this),
+							nombre		= $that.attr('for').replace(/[(\d)]/, (index));
+
+						$that.attr('for', nombre);
+					});
+				});
+
+
+				$contenedor.find('tr').each(function(index)
 				{	console.log('Reindexar');
 					$(this).find('input, select, textarea').each(function()
 					{
@@ -780,6 +846,49 @@ $.extend({
 				}
 			}
 		},
+		generarSecreto: {
+			bind: function(){
+				$('#generar_secreto').on('click', function(e){
+					e.preventDefault();
+
+					var text = "";
+					var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+					var largo = (typeof($('.sectret_input').data('lenght')) != 'undefined') ? $('.sectret_input').data('lenght') : 30 ;
+
+					for (var i = 0; i < largo; i++)
+						text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+					$('.sectret_input').val(text);
+
+				});
+			},
+			init: function(){
+				if ($('#generar_secreto').length) {
+					$.app.generarSecreto.bind();
+				}
+			}
+		},
+		obtenerMetodos: function(){
+			$('.js-controlador').on('change', function(){
+				if ($(this).val() == '') {
+					return;
+				}
+
+				$.ajax({
+					url: webroot + 'modulos/obtener_metodos/' + $(this).val()
+				})
+				.done(function(res) {
+					$('.js-metodo').html(res);
+				})
+				.fail(function() {
+					console.log("error");
+				})
+				.always(function() {
+					console.log("complete");
+				});
+
+			});
+		},
 		init: function(){
 			$.app.clonarTabla.init();
 			$.app.toggle.init();
@@ -794,6 +903,9 @@ $.extend({
 			$.app.clienteExistente();
 			$.app.dataValor.init();
 			$.app.generarNombreUsuario.init();
+			$.app.generarSecreto.init();
+
+			$.app.obtenerMetodos();
 			
 		}
 	}
