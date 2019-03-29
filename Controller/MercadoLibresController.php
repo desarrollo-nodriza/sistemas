@@ -825,7 +825,7 @@ class MercadoLibresController extends AppController
 
 	public function admin_obtener_productos( $palabra = '') {
     	if (empty($palabra)) {
-    		echo json_encode(array('0' => array('value' => '', 'label' => 'Ingrese referencia')));
+    		echo json_encode(array('0' => array('value' => '', 'label' => 'Ingrese id del producto')));
     		exit;
     	}
 
@@ -934,7 +934,7 @@ class MercadoLibresController extends AppController
 				'Productotienda.active' => 1,
 				'Productotienda.available_for_order' => 1,
 				'Productotienda.id_shop_default' => 1,
-				'Productotienda.reference LIKE' => $palabra . '%'
+				'Productotienda.id_product' => $palabra
 			),
 			'limit' => 3
 		));
@@ -1322,7 +1322,7 @@ class MercadoLibresController extends AppController
 				if (!empty($producto['MercadoLibr']['id_meli'])) {
 					
 					# Actualizamos publicación existente en mercado libre
-					$meliRespuesta = $this->Meli->updatePriceAndStock($producto['MercadoLibr']['id_meli'], $producto['Productotienda']['precio'], $producto['Productotienda']['stock']);
+					$meliRespuesta = $this->Meli->updatePriceAndStockAndCustomField($producto['MercadoLibr']['id_meli'], $producto['Productotienda']['precio'], $producto['Productotienda']['stock'], $producto['Productotienda']['id']);
 					
 					$res = to_array($meliRespuesta);
 

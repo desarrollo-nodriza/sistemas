@@ -13,7 +13,21 @@ class ImageBehavior extends ModelBehavior
 	 * @var				array
 	 * @access			public
 	 */
-	public $image_types		= array('jpg', 'jpeg', 'png', 'gif');
+	public $image_types		= array(
+		'jpg', 'jpeg', 'png', 'gif',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/plain',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/pdf',
+        'application/vnd.oasis.opendocument.tex',
+        'application/rar',
+        'application/zip',
+        'pdf'
+    );
 
 
 	/**
@@ -71,8 +85,18 @@ class ImageBehavior extends ModelBehavior
 
 			$settings['fields'][$field]		= $conf;
 		}
-
+		
 		$this->settings[$model->name] = $settings;
+	}
+
+
+	/**
+	 * Random name
+	 * @param  integer $length Largo de la cadena
+	 * @return string  Cadena de texto random
+	 */
+	public function generateRandomString($length = 10) {
+	    return substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$length);
 	}
 
 
@@ -88,7 +112,7 @@ class ImageBehavior extends ModelBehavior
 	{
 		$tempData	= array();
 		extract($this->settings[$model->name]);
-
+		
 		foreach ( $fields as $key => $value )
 		{
 			$field		= (is_numeric($key) ? $value : $key);
@@ -97,8 +121,8 @@ class ImageBehavior extends ModelBehavior
 				$ext		= explode('.', $model->data[$model->name][$field]['name']);
 				$ext		= end($ext);
 				// @TODO - Parametrizar renombramiento de archivo via config de usuario
-				$model->data[$model->name][$field]['name'] = preg_replace('/[^a-z0-9_\.]/', '', str_replace(array(' ', '-'), array('_', '_'), strtolower($model->data[$model->name][$field]['name'])));
-
+				//$model->data[$model->name][$field]['name'] = preg_replace('/[^a-z0-9_\.]/', '', str_replace(array(' ', '-'), array('_', '_'), strtolower($model->data[$model->name][$field]['name'])));
+				$model->data[$model->name][$field]['name'] = preg_replace('/[^a-z0-9_\.]/', '', str_replace(array(' ', '-'), array('_', '_'), strtolower('adjunto_' . $this->generateRandomString() . '.' . $ext)));
 				if ( $this->__isUploadFile($model->data[$model->name][$field] ) &&
 					 $this->__isValidExtension($this->settings[$model->name]['fields'][$field]['image_types'], $model->data[$model->name][$field]) )
 				{
@@ -241,9 +265,10 @@ class ImageBehavior extends ModelBehavior
 	 */
 	private function __isUploadFile($file)
 	{
-		if ( ! isset($file['tmp_name']) || ( isset($file['error']) && $file['error'] > 0 ) || ! is_uploaded_file($file['tmp_name']) )
+		#if ( ! isset($file['tmp_name']) || ( isset($file['error']) && $file['error'] > 0 ) || ! is_uploaded_file($file['tmp_name']) )
+		#	return false;
+		if ( ! isset($file['tmp_name']) || ( isset($file['error']) && $file['error'] > 0 ) )
 			return false;
-
 		return file_exists($file['tmp_name']);
 	}
 

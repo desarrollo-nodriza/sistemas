@@ -229,27 +229,27 @@
 								<button class="btn btn-primary button-productos-buscar"><span class="fa fa-plus"></span> Agregar</button>
 							</div>
 						</div>
-					</div>
-					<div class="table-responsive">
-						<table class="table table-stripped" id="tablaProductos">
-							<thead>
-								<th>ID</th>
-								<th>Referencia</th>
-								<th>Nombre</th>
-								<th>Precio venta</th>
-								<th>Cantidad</th>
-								<th>Acciones</th>
-							</thead>
-							<tbody>
-								
-							</tbody>
-							<tfoot>
-								<tr>
-									<td colspan="4"><?= $this->Form->label('descuento', 'Descuento global (1-100 %)'); ?></td>
-									<td colspan="2"><?= $this->Form->input('descuento', array('style' => 'max-width: 70px;', 'min' => 0, 'max' => 10000)); ?></td>
-								</tr>
-							</tfoot>
-						</table>
+						<div class="table-responsive">
+							<table class="table table-stripped" id="tablaProductos">
+								<thead>
+									<th>ID</th>
+									<th>Referencia</th>
+									<th>Nombre</th>
+									<th>Precio venta</th>
+									<th>Cantidad</th>
+									<th>Acciones</th>
+								</thead>
+								<tbody>
+									
+								</tbody>
+								<tfoot>
+									<tr>
+										<td colspan="4"><?= $this->Form->label('descuento', 'Descuento global (1-100 %)'); ?></td>
+										<td colspan="2"><?= $this->Form->input('descuento', array('style' => 'max-width: 70px;', 'min' => 0, 'max' => 10000)); ?></td>
+									</tr>
+								</tfoot>
+							</table>
+						</div>
 					</div>
 				</div>
 				<div class="panel-footer">

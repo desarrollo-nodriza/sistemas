@@ -158,8 +158,8 @@
 								<tr class="sort">
 									<th><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('folio', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('id_order', 'Pedido', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('Orden.payment', 'Método de pago', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('venta_id', 'Venta', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('Venta.MedioPago.nombre', 'Método de pago', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('tipo_documento', 'Tipo de documento', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('rut_receptor', 'Rut receptor', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('estado', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -172,14 +172,18 @@
 								<tr>
 									<td><?= h($dte['Dte']['id']); ?>&nbsp;</td>
 									<td><?= $folio = (!empty($dte['Dte']['folio'])) ? $dte['Dte']['folio'] : 'No aplica' ; ?></td>
-									<td><?= h($dte['Dte']['id_order']); ?>&nbsp;</td>
-									<td><?= h($dte['Orden']['payment']); ?>&nbsp;</td>
+									<td><?= h($dte['Dte']['venta_id']); ?>&nbsp;</td>
+									<td><?= h($dte['Venta']['MedioPago']['nombre']); ?>&nbsp;</td>
 									<td><?= $this->Html->tipoDocumento[$dte['Dte']['tipo_documento']]; ?>&nbsp;</td>
 									<td><?= $rut = (!empty($dte['Dte']['rut_receptor'])) ? $dte['Dte']['rut_receptor'] : 'No aplica' ; ?>&nbsp;</td>
 									<td><?= $this->Html->dteEstado($dte['Dte']['estado']) ?>&nbsp;</td>
 									<td><?= h($dte['Dte']['fecha']); ?>&nbsp;</td>
 									<? if ($permisos['edit']) : ?>
-									<td><?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('controller' => 'ordenes','action' => 'editar', $dte['Dte']['id'], $dte['Dte']['id_order']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?></td>
+										<? if ($dte['Dte']['estado'] == 'dte_real_emitido') : ?>
+										<td><?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('controller' => 'ordenes','action' => 'view', $dte['Dte']['id'], $dte['Dte']['venta_id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?></td>
+										<? else : ?>
+										<td><?= $this->Html->link('<i class="fa fa-edit"></i> Editar dte', array('controller' => 'ordenes','action' => 'editar', $dte['Dte']['id'], $dte['Dte']['venta_id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?></td>
+										<? endif; ?>
 									<? endif; ?>
 								</tr>
 								<?php endforeach; ?>

@@ -4,8 +4,8 @@ class EmailConfig
 	public $gmail	= array(
 		'host'				=> 'ssl://smtp.gmail.com',
 		'port'				=> 465,
-		'username'			=> 'cristian.rojas@nodriza.cl',
-		'password'			=> 'cristian18',
+		'username'			=> 'clientes@toolmania.cl',
+		'password'			=> 'IgP_5659',
 		'transport'			=> 'Smtp'
 	);
 }

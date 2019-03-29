@@ -362,40 +362,40 @@
 								<button class="btn btn-primary button-productos-buscar"><span class="fa fa-plus"></span> Agregar</button>
 							</div>
 						</div>
-					</div>
-					<div class="table-responsive">
-						<table class="table table-stripped" id="tablaProductos">
-							<thead>
-								<th>ID</th>
-								<th>Referencia</th>
-								<th>Nombre</th>
-								<th>Precio venta</th>
-								<th>Cantidad</th>
-								<th>Acciones</th>
-							</thead>
-							<tbody>
-							<? if (isset($this->request->data['Productotienda'])) : ?>
-								<? foreach ($this->request->data['Productotienda'] as $indice => $producto) : ?>
+						<div class="table-responsive">
+							<table class="table table-stripped" id="tablaProductos">
+								<thead>
+									<th>ID</th>
+									<th>Referencia</th>
+									<th>Nombre</th>
+									<th>Precio venta</th>
+									<th>Cantidad</th>
+									<th>Acciones</th>
+								</thead>
+								<tbody>
+								<? if (isset($this->request->data['Productotienda'])) : ?>
+									<? foreach ($this->request->data['Productotienda'] as $indice => $producto) : ?>
+										<tr>
+									    	<td>
+									    		<?=$this->Form->hidden(sprintf('Productotienda.%d.id_product', $indice), array('value' => $producto['Productotienda']['id_product'])); 
+									    		echo $producto['Productotienda']['id_product'];?></td>
+									    	<td><?=$producto['Productotienda']['reference'];?></td>
+									    	<td><?=$producto['Lang'][0]['ProductotiendaIdioma']['name'];?></td>
+									    	<td><label class="label label-form label-success"><?=CakeNumber::currency($producto['Productotienda']['precio'], 'CLP');?></label></td>
+									    	<td><?=$this->Form->input(sprintf('Productotienda.%d.cantidad', $indice), array('type' => 'number', 'class' => 'form-control js-number', 'min' => 0, 'max' => 100, 'style' => 'max-width: 70px;', 'value' => $producto['Productotienda']['cantidad'])); ?></td>
+									    	<td><button class="quitar btn btn-danger">Quitar</button></td>
+								    	</tr>
+									<? endforeach; ?>
+								<? endif; ?>
+								</tbody>
+								<tfoot>
 									<tr>
-								    	<td>
-								    		<?=$this->Form->hidden(sprintf('Productotienda.%d.id_product', $indice), array('value' => $producto['Productotienda']['id_product'])); 
-								    		echo $producto['Productotienda']['id_product'];?></td>
-								    	<td><?=$producto['Productotienda']['reference'];?></td>
-								    	<td><?=$producto['Lang'][0]['ProductotiendaIdioma']['name'];?></td>
-								    	<td><label class="label label-form label-success"><?=CakeNumber::currency($producto['Productotienda']['precio'], 'CLP');?></label></td>
-								    	<td><?=$this->Form->input(sprintf('Productotienda.%d.cantidad', $indice), array('type' => 'number', 'class' => 'form-control js-number', 'min' => 0, 'max' => 100, 'style' => 'max-width: 70px;', 'value' => $producto['Productotienda']['cantidad'])); ?></td>
-								    	<td><button class="quitar btn btn-danger">Quitar</button></td>
-							    	</tr>
-								<? endforeach; ?>
-							<? endif; ?>
-							</tbody>
-							<tfoot>
-								<tr>
-									<td colspan="4"><?= $this->Form->label('descuento', 'Descuento global (1-100 %)'); ?></td>
-									<td colspan="2"><?= $this->Form->input('descuento', array('style' => 'max-width: 70px;', 'min' => 0, 'max' => 10000)); ?></td>
-								</tr>
-							</tfoot>
-						</table>
+										<td colspan="4"><?= $this->Form->label('descuento', 'Descuento global (1-100 %)'); ?></td>
+										<td colspan="2"><?= $this->Form->input('descuento', array('style' => 'max-width: 70px;', 'min' => 0, 'max' => 10000)); ?></td>
+									</tr>
+								</tfoot>
+							</table>
+						</div>
 					</div>
 				</div>
 				<div class="panel-footer">

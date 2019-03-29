@@ -126,7 +126,11 @@ class DtesController extends AppController
 				'Dte.tienda_id' => $this->Session->read('Tienda.id')
 			),
 			'order' => array('Dte.fecha' => 'DESC'),
-			'contain' => array('Orden')
+			'contain' => array(
+				'Venta' => array(
+					'MedioPago'
+				)
+			)
 			));
 
 
@@ -142,7 +146,7 @@ class DtesController extends AppController
 
 						if ($valor == 'ord' && isset($this->request->params['named']['txt'])) {
 							$paginate = array_replace_recursive($paginate, array(
-							'conditions' => array('Dte.id_order LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
+							'conditions' => array('Dte.venta_id LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
 						}
 
 						if ($valor == 'rut' && isset($this->request->params['named']['txt'])) {
@@ -188,75 +192,35 @@ class DtesController extends AppController
 		$this->set(compact('dtes', 'estados'));
 	}
 
-	public function admin_add()
-	{
-		if ( $this->request->is('post') )
-		{
-			$this->Dte->create();
-			if ( $this->Dte->save($this->request->data) )
-			{
-				$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');
-				$this->redirect(array('action' => 'index'));
-			}
-			else
-			{
-				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
-			}
-		}
-		$ordenes	= $this->Dte->Orden->find('list');
-		$this->set(compact('ordenes'));
-	}
 
-	public function admin_edit($id = null)
+	public function admin_invalidar($id = null)
 	{
 		if ( ! $this->Dte->exists($id) )
 		{
-			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->Session->setFlash('DTE no encontrado.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
+		
+		$this->request->data = $this->Dte->find('first', array(
+			'conditions' => array(
+				'Dte.id' => $id
+			),
+			'contain' => array(
+				'Venta',
+				'DteDetalle',
+				'DteReferencia'
+			)
+		));
 
-		if ( $this->request->is('post') || $this->request->is('put') )
-		{
-			if ( $this->Dte->save($this->request->data) )
-			{
-				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
-				$this->redirect(array('action' => 'index'));
-			}
-			else
-			{
-				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
-			}
-		}
-		else
-		{
-			$this->request->data	= $this->Dte->find('first', array(
-				'conditions'	=> array('Dte.id' => $id)
-			));
-		}
-		$ordenes	= $this->Dte->Orden->find('list');
-		$this->set(compact('ordenes'));
+		# Solo disponible NTC o NTD
+		$tipoDocumento = array(
+			56 => $this->tipoDocumento[56],
+			61 => $this->tipoDocumento[61]
+		);
+
 	}
 
-	public function admin_delete($id = null)
-	{
-		$this->Dte->id = $id;
-		if ( ! $this->Dte->exists() )
-		{
-			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index'));
-		}
-
-		$this->request->onlyAllow('post', 'delete');
-		if ( $this->Dte->delete() )
-		{
-			$this->Session->setFlash('Registro eliminado correctamente.', null, array(), 'success');
-			$this->redirect(array('action' => 'index'));
-		}
-		$this->Session->setFlash('Error al eliminar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
-		$this->redirect(array('action' => 'index'));
-	}
-
-
+	
 	/**
 	 * Método encargado de ajustar los datos al excel.
 	 * @param  array  $data DTES
@@ -307,46 +271,33 @@ class DtesController extends AppController
 
 		$query = array(
 			'conditions' => array(),
-			'order' => array('Dte.folio' => 'DESC'),
+			'contain' => array(
+				'Venta' => array(
+					'MedioPago' => array(
+						'fields' => array(
+							'MedioPago.id', 'MedioPago.nombre'
+						)
+					),
+					'VentaTransaccion' => array(
+						'fields' => array(
+							'VentaTransaccion.id', 'VentaTransaccion.nombre'
+						)
+					),
+					/*'WebpayStore' => array(
+						'fields' => array(
+							'WebpayStore.id_webpay_detail_order', 'WebpayStore.authorization_code', 'WebpayStore.amount', 'WebpayStore.payment_type', 'WebpayStore.create', 'WebpayStore.reponse_code'
+						)
+					),*/
+					'fields' => array(
+						'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.total', 'Venta.costo_envio'
+					)
+				)
+			),
 			'fields' => array(
-				'Dte.id_order',
-				'Dte.folio',
-				'Dte.tipo_documento',
-				'Dte.rut_receptor',
-				'Dte.estado',
-				'Dte.fecha'
-			)
+				'Dte.venta_id', 'Dte.folio', 'Dte.tipo_documento', 'Dte.rut_receptor', 'Dte.estado', 'Dte.fecha'
+			),
+			'order' => array('Dte.folio' => 'DESC')
 		);
-    	
-		$modulosExternos = $this->Dte->Orden->Carro->validarModulosExternos();
-		if ($modulosExternos) {
-			$query = array_replace_recursive($query, array(
-				'contain' => array(
-					'Orden' => array(
-						'fields' => array(
-							'Orden.payment',
-							'Orden.reference',
-							'Orden.total_paid',
-							'Orden.total_shipping'),
-						'Carro' => array('WebpayStore')
-					)
-				)
-			));
-		}else{
-			$query = array_replace_recursive($query, array(
-				'contain' => array(
-					'Orden' => array(
-						'fields' => array(
-							'Orden.payment',
-							'Orden.reference',
-							'Orden.total_paid',
-							'Orden.total_shipping'),
-						'Carro'
-					)
-				)
-			));
-		}
-
 		
 		# Filtrar
 		if ( isset($this->request->params['named']) ) {
@@ -360,7 +311,7 @@ class DtesController extends AppController
 
 						if ($valor == 'ord' && isset($this->request->params['named']['txt'])) {
 							$query = array_replace_recursive($query, array(
-							'conditions' => array('Dte.id_order LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
+							'conditions' => array('Dte.venta_id LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
 						}
 
 						if ($valor == 'rut' && isset($this->request->params['named']['txt'])) {
@@ -389,52 +340,12 @@ class DtesController extends AppController
 			}
 		}
 
-
-		# Modelos que requieren agregar configuración
-		$this->cambiarDatasource(array('Orden', 'Carro' , 'WebpayStore', 'OrdenPago'));
-
 		$datos = $this->Dte->find('all', $query);
 
+		$TiposDocs = $this->tipoDocumento;
 		
-		$pagos = ClassRegistry::init('OrdenPago')->find('all', array(
-			'conditions' => array(
-				'OrdenPago.order_reference' => Hash::extract($datos, '{n}.Orden.reference')
-			)			
-		));
+		$this->set(compact('datos', 'TiposDocs'));
 
-		foreach ($datos as $id => $vd) {
-			foreach ($pagos as $ip => $vp) {
-				if ($vd['Orden']['reference'] == $vp['OrdenPago']['order_reference']) {
-					$datos[$id]['Orden']['OrdenPago'][] =  $vp['OrdenPago'];
-				}
-			}
-		}
-
-		$cabeceras =  array(
-			'Pedido',
-			'Referencia',
-			'ID Transacción/es',
-			'Autorización Webpay',
-			'Medio de pago',
-			'Total pagado',
-			'Total envio',
-			'Folio DTE',
-			'Tipo de documento DTE',
-			'Rut del receptor DTE',
-			'Estado DTE',
-			'Fecha emisión DTE',
-			'Monto pagado Webpay',
-			'Tipo de pago Webpay',
-			'Fecha de pago Webpay',
-			'Código de respuesta Webpay'
-		);
-		
-		
-		$datos  = $this->prepararExcel($datos);
-		$campos = $cabeceras;
-		$modelo = $this->Dte->alias;
-		
-		$this->set(compact('datos', 'campos', 'modelo'));
 	}
 
 
@@ -652,4 +563,5 @@ class DtesController extends AppController
 
 	    return round($bytes, $precision) . ' ' . $units[$pow]; 
 	}
+
 }

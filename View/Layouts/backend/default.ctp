@@ -5,7 +5,7 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<?= $this->Html->meta('icon'); ?>
+		<?= $this->Html->meta('icon', '/backend/img/logo-small.png', array('type' => 'png')); ?>
 		<?= $this->Html->css(array(
 			sprintf('/backend/css/theme-%s', $this->Session->read('Tienda.tema')),
 			'/backend/css/icheck/skins/flat/red',
@@ -34,6 +34,7 @@
 			'/backend/js/plugins/smartwizard/jquery.smartWizard-2.0.min',
 			'/backend/js/plugins/jquery-validation/jquery.validate',
 			'/backend/js/plugins/bootstrap/bootstrap-datepicker',
+			'/backend/js/plugins/bootstrap/bootstrap-timepicker.min',
 			'/backend/js/plugins/morris/raphael-min',
 			'/backend/js/plugins/morris/morris.min',
 			'/backend/js/plugins/nvd3/lib/d3.v3',
@@ -42,14 +43,21 @@
 			'/backend/js/plugins/noty/jquery.noty',
 			'/backend/js/plugins/noty/layouts/topRight',
 			'/backend/js/plugins/noty/themes/default',
-			'/backend/js/plugins/maskedinput/jquery.maskedinput.min',
+			//'/backend/js/plugins/maskedinput/jquery.maskedinput.min',
 			'/backend/js/plugins/jquery.rut.min',
 			'/backend/js/plugins/summernote/summernote',
+			'/backend/js/plugins/currencyFormatter.min',
+			'/backend/js/plugins/mask.min',
 			'/backend/js/custom',
 			'/backend/js/dashboard',
 			'/backend/js/app',
 			'/backend/js/meli',
 			'/backend/js/dte',
+			'/backend/js/productos',
+			'/backend/js/marcas',
+			'/backend/js/proveedor',
+			'/backend/js/roles',
+			'/backend/js/orden_compra',
 			'/backend/js/print_js/print.min',
 			'/backend/js/logistica',
 			//'/backend/js/plugins',

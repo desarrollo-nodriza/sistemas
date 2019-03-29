@@ -94,4 +94,18 @@ class Rol extends AppModel
 			'insertQuery'			=> ''
 		)
 	);
+
+
+	public function afterFind($results, $primary = false) {
+
+
+		# Convertimos los permisos en un "Modelo"
+		foreach ($results as $key => $val) {
+
+	        if (isset($val['Rol']['permisos'])) {
+	            $results[$key]['Rol']['permisos'] = json_decode($results[$key]['Rol']['permisos'], true);
+	        }
+	    }
+	    return $results;
+	}
 }

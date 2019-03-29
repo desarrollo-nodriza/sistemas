@@ -1,5 +1,6 @@
 <?php
 App::uses('Model', 'Model');
+App::uses('ApiResponse', 'Lib');
 class AppModel extends Model
 {
 	public $recursive		= -1;
@@ -76,5 +77,55 @@ class AppModel extends Model
 			}
 		}
 		return false;
+	}
+
+
+	public $apiCode				= null;
+	public $apiCodeMessage		= null;
+
+	/**
+	 * API - Respuestas
+	 */
+	public function apiResponse($code = null)
+	{
+		return ApiResponse::code($code);
+	}
+
+
+	/**
+	 * API - Autenticacion
+	 */
+	public function apiAuth($data = array())
+	{
+		ApiResponse::init($this);
+		/**
+		 * Valida al cliente
+		 */
+		if ( empty($data) || empty($data['email']) || empty($data['secreto']) )
+		{
+			return ApiResponse::code('AUTH_INCOMPLETO');
+			return $this->apiResponse('AUTH_INCOMPLETO');
+		}
+
+		$admin		= ClassRegistry::init('Administrador')->find('first', array(
+			'fields'		=> array('Administrador.id', 'Administrador.email', 'Administrador.secret_key', 'Administrador.activo'),
+			'conditions'	=> array('Administrador.email' => $data['email']),
+			'recursive'		=> -1,
+			'callbacks'		=> false
+		));
+		if ( ! $admin )
+		{
+			return $this->apiResponse('AUTH_CLIENTE_INEXISTENTE');
+		}
+		if ( $admin['Administrador']['secret_key'] !== $data['secreto'] )
+		{
+			return $this->apiResponse('AUTH_CLIENTE_CLAVE_ERRONEA');
+		}
+		if ( ! $admin['Administrador']['activo'] )
+		{
+			return $this->apiResponse('AUTH_CLIENTE_INACTIVO');
+		}
+
+		return true;
 	}
 }

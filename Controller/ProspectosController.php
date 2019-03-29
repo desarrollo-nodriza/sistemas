@@ -122,15 +122,16 @@ class ProspectosController extends AppController
 			}
 			
 			if ( ! empty($this->request->data['Cliente'])) {
-	
+				
 				// Verificamos si el cliente es nuevo o existente
 				if ( ! $this->request->data['Prospecto']['existente'] && ! empty($this->request->data['Cliente'][1]['email']) ) {
-
+					
 					# Se crea un password para el cliente default y la fecha de creación y actualización
 					$this->request->data['Cliente'][1]['id_lang'] 			= 1; 							# Idioma español por defeco
 					$this->request->data['Cliente'][1]['id_risk'] 			= 0;							# Valor default de prestashop
 					$this->request->data['Cliente'][1]['id_default_group'] 	= 3; 							# Grupo de clientes por defecto
-					$this->request->data['Cliente'][1]['passwd'] 			= 'cliente123456'; 				# Contraseña defecto
+					$this->request->data['Cliente'][1]['passwd'] 			= md5('cliente123456'); 				# Contraseña defecto
+					$this->request->data['Cliente'][1]['passwd_old_wp']     = ''; 	
 					$this->request->data['Cliente'][1]['date_add'] 			= date('Y-m-d H:i:s');			# Fecha creación
 					$this->request->data['Cliente'][1]['date_upd'] 			= date('Y-m-d H:i:s'); 			# fecha de actualización
 					$this->request->data['Cliente'][1]['active'] 			= 1;							# Dejar activo al cliente
@@ -272,7 +273,8 @@ class ProspectosController extends AppController
 					$this->request->data['Cliente'][1]['id_lang'] 			= 1; 							# Idioma español por defeco
 					$this->request->data['Cliente'][1]['id_risk'] 			= 0;							# Valor default de prestashop
 					$this->request->data['Cliente'][1]['id_default_group'] 	= 3; 							# Grupo de clientes por defecto
-					$this->request->data['Cliente'][1]['passwd'] 			= 'cliente123456'; 				# Contraseña defecto
+					$this->request->data['Cliente'][1]['passwd'] 			= md5('cliente123456'); 				# Contraseña defecto
+					$this->request->data['Cliente'][1]['passwd_old_wp']     = ''; 	
 					$this->request->data['Cliente'][1]['date_add'] 			= date('Y-m-d H:i:s');			# Fecha creación
 					$this->request->data['Cliente'][1]['date_upd'] 			= date('Y-m-d H:i:s'); 			# fecha de actualización
 					$this->request->data['Cliente'][1]['active'] 			= 1;							# Dejar activo al cliente

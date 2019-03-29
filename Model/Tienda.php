@@ -229,6 +229,19 @@ class Tienda extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'OrdenCompra' => array(
+			'className'				=> 'OrdenCompra',
+			'foreignKey'			=> 'tienda_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 }

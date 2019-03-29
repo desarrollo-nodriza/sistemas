@@ -1,5 +1,82 @@
 <?php
 
+/**
+ * API
+ */
+
+Router::connect(
+    '/api/productos', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'index',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+
+Router::connect(
+    '/api/producto/add', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'add',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+
+Router::connect(
+    '/api/producto/test', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'test',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+
+Router::connect(
+    '/api/producto/view/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'view',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/api/producto/edit/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'edit',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+Router::connect(
+    '/api/producto/delete/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'delete',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+Router::parseExtensions('json');
+
 CakePlugin::routes();
 
 Router::connect('/', array('controller' => 'pages', 'action' => 'dashboard', 'admin' => true));
@@ -22,6 +99,29 @@ Router::connect(
         'pass' => array('id', 'fechai', 'fechaf', 'agrupar'),
         'id' => '[0-9]+'
     )
+);
+Router::connect(
+    '/socio/comparativa/:id/:mandatory', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'socios', 
+        'action' => 'obtener_comparativa',
+        'socio' => false,
+        'prefix' => null),
+    array(
+        'pass' => array('id', 'mandatory'),
+        'id' => '[0-9]+',
+        'mandatory' => '[a-z]+'
+    )
+);
+
+
+Router::connect(
+    '/socio/comparativa/', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'socios', 
+        'action' => 'obtener_comparativa',
+        'socio' => false,
+        'prefix' => null)
 );
 /*Router::connect(
     '/socio/:tienda/:usuario', // E.g. /blog/3-CakePHP_Rocks
@@ -108,6 +208,9 @@ Router::connect('/seccion/*', array('controller' => 'pages', 'action' => 'displa
  */
 Router::connect('/:controller', array('admin' => true, 'prefix' => 'admin'));
 Router::connect('/:controller/:action/*', array('admin' => true, 'prefix' => 'admin'));
+
+
+
 
 
 require CAKE . 'Config' . DS . 'routes.php';

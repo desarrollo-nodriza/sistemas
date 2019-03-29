@@ -148,4 +148,30 @@ class AppHelper extends Helper
         }
         return $field_value;
     }
+
+
+    /**
+     * Se encarga de definir cuantos días de retraso tiene la venta según su fecha de venta.
+     * @param  string $fecha [description]
+     * @return string        Mensaje
+     */
+    public function calcular_retraso($fecha = '')
+    {
+    	if (!empty($fecha)) {
+    		
+    		$fechaVenta = new DateTime($fecha);
+			$hoy = new DateTime(date('Y-m-d H:i:s'));
+			$retraso = $hoy->diff($fechaVenta);
+
+			$retrasoHoras = $fechaVenta->diff($hoy);
+			
+			if ($retrasoHoras->days > 0) {
+				return ($retrasoHoras->days > 1) ? sprintf('<label class="label btn-block label-danger label-form"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> %d días de retraso</label>', $retrasoHoras->days) : sprintf('<label class="label label-warning label-form"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> %d día de retraso</label>', $retrasoHoras->days);
+			}else{
+				return sprintf('<span class="text-muted btn-block"><small>Creada hace %d horas</small></span>', $retraso->h);
+			}
+
+			return '';
+    	}
+    }
 }

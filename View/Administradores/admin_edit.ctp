@@ -31,6 +31,10 @@
 									<td><?= $this->Form->input('repetir_clave', array('type' => 'password', 'autocomplete' => 'off', 'value' => '')); ?></td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('notificaciones', 'Json de notificaciones'); ?></th>
+									<td><?= $this->Form->input('notificaciones'); ?></td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 									<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 								</tr>
@@ -40,6 +44,17 @@
 									<td><?= $this->Form->input('rol_id', array('class' => 'form-control select', 'empty' => 'Seleccione Rol')); ?></td>
 								</tr>
 							<? endif; ?>
+								<tr>
+									<th><?= $this->Form->label('secret_key', 'Secreto'); ?></th>
+									<td>
+										<div class="input-group" style="max-width: 100%;">
+		                                    <?= $this->Form->input('secret_key', array('type' => 'text', 'class' => 'form-control sectret_input', 'data-lenght' => 25)); ?>
+		                                    <span class="input-group-btn">
+                                                <button class="btn btn-default" id="generar_secreto" type="button"><i class="fa fa-cogs"></i> Generar</button>
+                                            </span>
+		                                </div>
+									</td>
+								</tr>
 							</table>
 
 							<div class="pull-right">

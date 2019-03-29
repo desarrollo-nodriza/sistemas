@@ -42,7 +42,7 @@
 						<p>Seleccione los pedidos que contendrá el manifiesto</p>
 
 						<div id="wrapper-ordenes" style="max-height: 400px;">
-							<div class="table-responsive">
+							<div class="table-responsive overflow-x">
 								<table class="table table-bordered table-stripped ctm-datatables">
 									<thead>
 										<th></th>
@@ -136,7 +136,7 @@
 
 				$('.loader').css('display', 'none');
 
-				noty({text: 'Ocurrió un error al obtener las ordenes. Intente nuevamente.', layout: 'topRight', type: 'error'});
+				noty({text: 'Ocurrió un error al obtener las ventas. Intente nuevamente.', layout: 'topRight', type: 'error'});
 
 				setTimeout(function(){
 					$.noty.closeAll();
@@ -170,7 +170,7 @@
 
 	function crearInput()
 	{	
-		$("#ManifiestoAdminAddForm").append('<input id="venta_' + $seleccionado.val() + '" type="hidden" name="data[Orden][][venta_id]"/ value="' + $seleccionado.val() + '">');
+		$("#ManifiestoAdminAddForm").append('<input id="venta_' + $seleccionado.val() + '" type="hidden" name="data[Venta][][venta_id]"/ value="' + $seleccionado.val() + '">');
 	}
 
 
@@ -179,7 +179,7 @@
 		/* MESSAGE BOX */
         var box = $('#modal_alertas');
 
-        	$('#mensajeModal').html('La orden id #' + $seleccionado.data('id') + ' Ya ha sido agregada a ' + $seleccionado.data('manifiestos') + ' manifiestos');
+        	$('#mensajeModal').html('La venta id #' + $seleccionado.data('id') + ' Ya ha sido agregada a ' + $seleccionado.data('manifiestos') + ' manifiestos');
         
             box.toggleClass("open");
 

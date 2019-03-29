@@ -28,6 +28,8 @@ Class CrucesController extends AppController {
 		$datos = array();
 
 		if ($this->request->is('post') || $this->request->is('put')) {
+
+			ini_set('max_execution_time', 0);
 			
 			if ($this->request->data['Cruzar']['archivo']['error'] != 0 
 				&& isset($this->request->data['Cruzar']['cabecera']) 
@@ -86,9 +88,9 @@ Class CrucesController extends AppController {
 				);
 				
 				// Activar en versión 2
-				//$transacciones = ClassRegistry::init('VentaTransaccion')->find('all', $qry);
+				$transacciones = ClassRegistry::init('VentaTransaccion')->find('all', $qry);
 				
-				$transacciones = $this->metodoAntiguo($columnaValores);
+				//$transacciones = $this->metodoAntiguo($columnaValores);
 				
 				if (empty($transacciones)) {
 					$this->Session->setFlash('No se encontraron coincidencia.', null, array(), 'warning');

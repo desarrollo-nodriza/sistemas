@@ -97,6 +97,38 @@ class Moneda extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'OrdenCompra' => array(
+			'className'				=> 'OrdenCompra',
+			'foreignKey'			=> 'moneda_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		)
+	);
+
+	public $hasAndBelongsToMany = array(
+		'Proveedor' => array(
+			'className'				=> 'Proveedor',
+			'joinTable'				=> 'monedas_proveedores',
+			'foreignKey'			=> 'moneda_id',
+			'associationForeignKey'	=> 'proveedor_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'width'					=> 'MonedasProveedor',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 }

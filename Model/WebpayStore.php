@@ -10,6 +10,8 @@ Class WebpayStore extends AppModel {
 	public $useTable = 'webpay_detail_order';
 	public $primaryKey = 'id_webpay_detail_order';
 
+	public $useDbConfig = 'toolmania';
+
 	/**
 	* Config
 	*/
@@ -34,6 +36,15 @@ Class WebpayStore extends AppModel {
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
+		'Venta' => array(
+			'className'				=> 'Venta',
+			'foreignKey'			=> 'id_order',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Venta')
 		)
 	);
 }

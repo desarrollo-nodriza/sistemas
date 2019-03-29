@@ -17,7 +17,24 @@ class RolesController extends AppController
 	public function admin_add()
 	{
 		if ( $this->request->is('post') )
-		{
+		{	
+
+			# Guardamos los permisos en un objeto json
+			if (isset($this->request->data['Permisos'])) {
+
+				$permisos = array();
+
+				foreach ($this->request->data['Permisos'] as $key => $value) {
+					if (!isset($value['controlador'])) {
+						continue;
+					}
+					$permisos[$value['controlador']] = json_decode($value['json'], true);
+				}
+
+				$this->request->data['Rol']['permisos'] = json_encode($permisos, true);
+			}
+
+
 			$this->Rol->create();
 			if ( $this->Rol->save($this->request->data) )
 			{
@@ -46,6 +63,22 @@ class RolesController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
+
+			# Guardamos los permisos en un objeto json
+			if (isset($this->request->data['Permisos'])) {
+
+				$permisos = array();
+
+				foreach ($this->request->data['Permisos'] as $key => $value) {
+					if (!isset($value['controlador'])) {
+						continue;
+					}
+					$permisos[$value['controlador']] = json_decode($value['json'], true);
+				}
+
+				$this->request->data['Rol']['permisos'] = json_encode($permisos, true);
+			}
+			
 			if ( $this->Rol->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');

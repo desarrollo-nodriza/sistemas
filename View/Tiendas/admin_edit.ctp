@@ -84,6 +84,10 @@
 								<td><?= $this->Form->input('apikey_linio'); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('facturacion_apikey', 'Api Key Libredte'); ?></th>
+								<td><?= $this->Form->input('facturacion_apikey'); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('sincronizacion_automatica_linio', 'Sincronización Automática de Linio'); ?></th>
 								<td><?= $this->Form->input('sincronizacion_automatica_linio', array('class' => 'icheckbox')); ?></td>
 							</tr>

@@ -483,9 +483,9 @@ class MeliComponent extends Component
 	 * @param 		$store_id 	int 		Identificador de la tienda
 	 * @return 		Object
 	 */
-	public function updatePriceAndStock($id, $price, $stock, $store_id = '')
+	public function updatePriceAndStockAndCustomField($id, $price, $stock, $custom_field, $store_id = '')
 	{
-		if (!empty($id) && !empty($price)) {
+		if (!empty($id) && !empty($price) && !empty($custom_field)) {
 			if (!empty($store_id)) {
 				# Configuración de la tienda
 	    		$this->setComponentConfig($store_id);
@@ -497,6 +497,7 @@ class MeliComponent extends Component
 			$this->meli = new Meli($this->client_id, $this->client_secret);
 
 			$item = array(
+				"seller_custom_field" => $custom_field,
 				"price" => $price,
 				"available_quantity" => $stock
 			);

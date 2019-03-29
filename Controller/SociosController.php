@@ -365,4 +365,103 @@ class SociosController extends AppController
 		exit;
 		prx($precios);
 	}
+
+
+	public function obtener_comparativa($id = null, $mandatory = '')
+	{
+		$jsonArray = array();
+
+		if (empty($id) || empty($mandatory)) {
+			echo json_encode($jsonArray);
+			exit;
+		}
+
+		$producto = ClassRegistry::init('PrisyncProducto')->find(
+			'first', array(
+				'conditions' => array(
+					'PrisyncProducto.product_code REGEXP' => sprintf('(^%d\\|)', $id)
+				),
+				'contain' => array(
+					'PrisyncRuta' => array(
+						'fields' => array(
+							'PrisyncRuta.url',
+							'PrisyncRuta.price'					
+						)
+					)
+				),
+				'fields' => array(
+					'PrisyncProducto.id',
+					'PrisyncProducto.name',
+				)
+			)
+		);
+
+		if (empty($producto)) {
+			echo json_encode($jsonArray);
+			exit;
+		}
+
+
+		$resultados		= array();
+		$productosAlta  = array();
+		$productosBaja  = array();
+		$productosIgual = array();
+		$contAlta       = 0;
+		$contBaja       = 0;
+		$contIgual      = 0;
+
+		$competidores = array();
+		$micompania = $mandatory;
+
+		
+		foreach ($producto['PrisyncRuta'] as $ir => $competidor) {
+			$url      = parse_url($competidor['url']);
+			$compania = explode('.', str_replace('www.', '', $url['host']));
+			
+			$competidores[$compania[0]]['url']          = $compania[0];
+			$competidores[$compania[0]]['product_id'] 	 = $producto['PrisyncProducto']['id'];
+			$competidores[$compania[0]]['product_name'] = $producto['PrisyncProducto']['name'];
+			$competidores[$compania[0]]['price']        = $competidor['price'];
+			
+		}	
+	
+
+		if (!empty($competidores)) {
+			
+			$base = (int) 0;
+			
+			foreach ($competidores as $ic => $competidor) {
+
+				if (array_key_exists($micompania, $competidores)) {
+					
+					$base = $competidores[$micompania]['price'];
+					
+					if ($ic != $micompania) {
+
+						if ($competidor['price'] < $base && $competidor['price'] != 0) {
+							$competidores[$ic]['inexpensive'] = 1;
+						}else{
+							$competidores[$ic]['inexpensive'] = 0;
+						}
+
+						$competidores[$ic]['store'] = 0;
+					
+					}else{
+						
+						$competidores[$ic]['store']       = 1;
+						$competidores[$ic]['inexpensive'] = 0;
+					
+					}
+					
+				}
+							
+			}
+			
+		}
+
+		header('Content-type: application/json');
+		echo json_encode($competidores);
+		exit;
+
+	}
 }

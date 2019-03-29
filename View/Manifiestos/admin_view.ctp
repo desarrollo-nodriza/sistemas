@@ -27,4 +27,4 @@ foreach ( $datos as $dato )
  * Cierra la tabla y crea el archivo
  */
 $this->PhpExcel->addTableFooter();
-$this->PhpExcel->output(sprintf('Listado_%s_%s.xls', $modelo, date('Y_m_d-H_i_s')));
+$this->PhpExcel->output(sprintf('Manifiesto_%s_%s.xls', $modelo, date('Y_m_d-H_i_s')));

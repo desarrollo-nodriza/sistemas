@@ -110,8 +110,8 @@
 								<td><?= $this->Form->select('mercado_libre_plantilla_id', $plantillas, array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
 							<tr>
-								<th><label>Referencia del Producto</label></th>
-								<td><?= $this->Form->input('seller_custom_field', array('type' => 'text', 'class' => 'form-control input-productos-buscar-meli', 'placeholder' => 'ej: DHRT-457')); ?></td>
+								<th><label>ID del Producto</label></th>
+								<td><?= $this->Form->input('seller_custom_field', array('type' => 'text', 'class' => 'form-control input-productos-buscar-meli', 'placeholder' => 'ej: 12422')); ?></td>
 							</tr>
 							<tr>
 								<th><label>Nombre del Producto</label></th>

@@ -136,25 +136,25 @@ class PagesController extends AppController
 		
 		switch ($group_by) {
 			case 'anno':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y") AS Fecha';
-				$group_by = 'GROUP BY YEAR(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y") AS Fecha';
+				$group_by = 'GROUP BY YEAR(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			case 'mes':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m") AS Fecha';
-				$group_by = 'GROUP BY MONTH(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS Fecha';
+				$group_by = 'GROUP BY MONTH(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			case 'dia':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m-%d") AS Fecha';
-				$group_by = 'GROUP BY DAY(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d") AS Fecha';
+				$group_by = 'GROUP BY DAY(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			case 'hora':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m-%d %H:00:00") AS Fecha';
-				$group_by = 'GROUP BY HOUR(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d %H:00:00") AS Fecha';
+				$group_by = 'GROUP BY HOUR(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			
 			default:
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m") AS Fecha';
-				$group_by = 'GROUP BY MONTH(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS Fecha';
+				$group_by = 'GROUP BY MONTH(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 		}
 		
@@ -172,23 +172,24 @@ class PagesController extends AppController
 			$arrayQuery = str_replace('[*PREFIX*]', $tienda['Tienda']['prefijo'], $query['Grafico']['descipcion']);
 			
 			// Sobreescribimos la configuración de la base de datos a utilizar
-			ClassRegistry::init('Orders')->useDbConfig = $tienda['Tienda']['configuracion'];
-			$OCPagadas = ClassRegistry::init('Orders');
+			
+			$OCPagadas = ClassRegistry::init('Venta');
 			try {
-				$arrayResultado[$indice] = $OCPagadas->query($arrayQuery);
+				$arrayResultado[$indice] = $OCPagadas->query($query['Grafico']['descipcion']);
 				foreach ($arrayResultado[$indice] as $indx => $val) {
 					$arrayResultado[$indice][$indx][0]['tienda'] = $tienda['Tienda']['nombre'];
 				}
 			} catch (Exception $e) {
 				$arrayResultado[$indice] = $e->getMessage();
 			}
-		endforeach;
 
+		endforeach;
+		
 		$arrayResultado = Hash::extract($arrayResultado, '{n}.{n}.{n}');
 		if ($json) {
 			echo json_encode($this->admin_formatoGrafico($arrayResultado));
 			exit;
-		}else{
+		}else{ 
 			return $arrayResultado;
 		}	
 	}
@@ -238,25 +239,25 @@ class PagesController extends AppController
 		
 		switch ($group_by) {
 			case 'anno':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y") AS Fecha';
-				$group_by = 'GROUP BY YEAR(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y") AS Fecha';
+				$group_by = 'GROUP BY YEAR(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			case 'mes':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m") AS Fecha';
-				$group_by = 'GROUP BY MONTH(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS Fecha';
+				$group_by = 'GROUP BY MONTH(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			case 'dia':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m-%d") AS Fecha';
-				$group_by = 'GROUP BY DAY(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d") AS Fecha';
+				$group_by = 'GROUP BY DAY(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			case 'hora':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m-%d %H:00:00") AS Fecha';
-				$group_by = 'GROUP BY HOUR(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d %H:00:00") AS Fecha';
+				$group_by = 'GROUP BY HOUR(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			
 			default:
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m") AS Fecha';
-				$group_by = 'GROUP BY MONTH(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS Fecha';
+				$group_by = 'GROUP BY MONTH(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 		}
 		
@@ -274,8 +275,8 @@ class PagesController extends AppController
 			$arrayQuery = str_replace('[*PREFIX*]', $tienda['Tienda']['prefijo'], $query['Grafico']['descipcion']);
 			
 			// Sobreescribimos la configuración de la base de datos a utilizar
-			ClassRegistry::init('Orders')->useDbConfig = $tienda['Tienda']['configuracion'];
-			$OCPagadas = ClassRegistry::init('Orders');
+			///ClassRegistry::init('Venta')->useDbConfig = $tienda['Tienda']['configuracion'];
+			$OCPagadas = ClassRegistry::init('Venta');
 			try {
 				$arrayResultado[$indice] = $OCPagadas->query($arrayQuery);
 				foreach ($arrayResultado[$indice] as $indx => $val) {
@@ -285,7 +286,7 @@ class PagesController extends AppController
 				$arrayResultado[$indice] = $e->getMessage();
 			}
 		endforeach;
-
+		
 		$arrayResultado = Hash::extract($arrayResultado, '{n}.{n}.{n}');
 		if ($json) {
 			echo json_encode($this->admin_formatoGrafico($arrayResultado));
@@ -339,25 +340,25 @@ class PagesController extends AppController
 		
 		switch ($group_by) {
 			case 'anno':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y") AS Fecha';
-				$group_by = 'GROUP BY YEAR(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y") AS Fecha';
+				$group_by = 'GROUP BY YEAR(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			case 'mes':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m") AS Fecha';
-				$group_by = 'GROUP BY MONTH(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS Fecha';
+				$group_by = 'GROUP BY MONTH(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			case 'dia':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m-%d") AS Fecha';
-				$group_by = 'GROUP BY DAY(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d") AS Fecha';
+				$group_by = 'GROUP BY DAY(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			case 'hora':
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m-%d %H:00:00") AS Fecha';
-				$group_by = 'GROUP BY HOUR(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d %H:00:00") AS Fecha';
+				$group_by = 'GROUP BY HOUR(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 			
 			default:
-				$group_by_col = 'DATE_FORMAT(Orden.date_add, "%Y-%m") AS Fecha';
-				$group_by = 'GROUP BY MONTH(Orden.date_add) ORDER BY Orden.date_add ASC';
+				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS Fecha';
+				$group_by = 'GROUP BY MONTH(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
 				break;
 		}
 		
@@ -374,16 +375,17 @@ class PagesController extends AppController
 			$arrayQuery = str_replace('[*PREFIX*]', $tienda['Tienda']['prefijo'], $query['Grafico']['descipcion']);
 			
 			// Sobreescribimos la configuración de la base de datos a utilizar
-			ClassRegistry::init('Orders')->useDbConfig = $tienda['Tienda']['configuracion'];
-			$OCPagadas = ClassRegistry::init('Orders');
+			//ClassRegistry::init('Orders')->useDbConfig = $tienda['Tienda']['configuracion'];
+			$OCPagadas = ClassRegistry::init('Venta');
 			try {
-				$arrayResultado[$indice] = $OCPagadas->query($arrayQuery);
+				$arrayResultado[$indice] = $OCPagadas->query($arrayQuery); 
 				foreach ($arrayResultado[$indice] as $indx => $val) {
 					$arrayResultado[$indice][$indx][0]['tienda'] = $tienda['Tienda']['nombre'];
 				}
 			} catch (Exception $e) {
 				$arrayResultado[$indice] = $e->getMessage();
 			}
+
 		endforeach;
 	
 		$arrayResultado = Hash::extract($arrayResultado, '{n}.{n}.{n}');
@@ -964,11 +966,87 @@ class PagesController extends AppController
 	}
 
 
+
+	public function obtener_grafico_ventas($f_inicio = '', $f_final = '', $group_by = '', $json = false)
+	{	
+
+		$tiendas = ClassRegistry::init('Tienda')->find('all', array('conditions' => array('Tienda.activo' => 1)));
+
+		if (is_null($f_inicio) || is_null($f_final) || empty($f_inicio) || empty($f_final)) {
+			$f_inicio = date('Y-m-01 00:00:00');
+			$f_final = date('Y-m-t 23:59:59');
+		}else{
+			$f_inicio = sprintf('%s 00:00:00', $f_inicio);
+			$f_final = sprintf('%s 23:59:59', $f_final);
+		}
+
+		// Query options
+		$opts = array(
+			'fields' => array(
+				'SUM(Venta.total) as TotalVentas'
+			),
+			'order' => array(
+				'Venta.fecha_venta' => 'ASC'
+			),
+			'conditions' => array(
+				'Venta.fecha_venta BETWEEN ? AND ?' => array($f_inicio, $f_final)
+			)
+		);
+
+
+		// Agrupar
+		$group_by_col = '';
+
+		
+		switch ($group_by) {
+			case 'anno':
+				$opts['group']    = array( 'YEAR(Venta.fecha_venta)' );
+				$opts['fields'][] = 'DATE_FORMAT(Venta.fecha_venta, "%Y") AS y';
+				break;
+			case 'mes':
+				$opts['group']    = array( 'MONTH(Venta.fecha_venta)' );
+				$opts['fields'][] = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS y';
+				break;
+			case 'dia':
+				$opts['group']    = array('DAY(Venta.fecha_venta)');				
+				$opts['fields'][] = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d") AS y';
+				break;
+			case 'hora':
+				$opts['group']    = array('HOUR(Venta.fecha_venta)');
+				$opts['fields'][] = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d %H:00:00") AS y';
+				break;
+			default:
+				$opts['group']    = array('DAY(Venta.fecha_venta)');
+				$opts['fields'][] = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d") AS y';
+				break;
+		}
+
+		$ventasTiendas =  array();
+
+		foreach ($tiendas as $it => $tienda) {
+			$ventas = ClassRegistry::init('Venta')->find('all', $opts);
+
+			foreach ($ventas as $iv => $venta) {
+				$ventasTiendas[$iv]['y'] = $venta['Venta'][0]['y'];
+				$ventasTiendas[$iv][strtolower(Inflector::slug($tienda['Tienda']['nombre'],'_'))] = round($venta['Venta'][0]['TotalVentas'], 0);
+			}
+
+		}
+		
+
+		
+
+
+	}
+
+
 	public function admin_dashboard() {
 		BreadcrumbComponent::add('');
 
+		//$this->obtener_grafico_ventas($this->Session->read('Tienda.id'));
+
 		// Obtener ventas de los comercios
-		$ventas = $this->admin_get_all_sales();
+		$ventas = $this->admin_get_all_sales(); 
 		// Obtener descuentos e los comercios
 		$descuentos = $this->admin_get_all_discount();
 		// Obtener pedidos de los comercios

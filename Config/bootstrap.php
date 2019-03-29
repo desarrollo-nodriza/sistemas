@@ -187,3 +187,51 @@ function retornarDescuento($monto_total, $monto_oferta)
 		return round($dscto);
 	}
 }
+
+// (d1+d2) - (d1*d2)
+function calcularDescuentoCompuesto($sum = array(), $base = null)
+{	
+	$base = $base/100;
+
+	foreach ($sum as $i => $d) {
+		$base = ($base + ($d / 100)) - ( $base * ($d / 100) );
+	}
+
+	return $base;
+}
+
+function abecedario($indice, $min = false)
+{
+	$abc = array();
+	for ($i=65;$i<=90;$i++) {
+	  $abc[] = chr($i);                 
+	}
+
+	if (isset($abc[$indice])) {
+		return ($min) ? strtolower($abc[$indice]) : $abc[$indice];
+	}
+
+	return null;
+}
+
+function monto_bruto($precio = null, $iva = 19)
+{
+	if (!is_null($precio)) {
+
+		$iva = ($iva / 100) +1;
+
+		return round( $precio * $iva, 2 );
+	}
+	
+	return 0;
+}
+
+
+function random_color_part() {
+    return str_pad( dechex( mt_rand( 0, 255 ) ), 2, '0', STR_PAD_LEFT);
+}
+
+
+function random_color() {
+    return random_color_part() . random_color_part() . random_color_part();
+}

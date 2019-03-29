@@ -18,7 +18,8 @@ class OrdenesController extends AppController
     public $components = array(
     	'Chilexpress.GeoReferencia',
     	'Toolmania',
-    	'MeliMarketplace'
+    	'MeliMarketplace',
+    	'LibreDte'
     );
     /**
      * Obtiene y lista los medios de pago disponibles en u array único
@@ -271,7 +272,7 @@ class OrdenesController extends AppController
 
 
 	/**
-	 * Verifica si una orden tiene DTE emitido correctamente
+	 * Verifica si una orden tiene DTE emitido correctamente y que no esté anulado
 	 * @return bool 
 	 */
 	public function unico($tipo = '')
@@ -280,7 +281,8 @@ class OrdenesController extends AppController
 			'conditions' => array(
 				'Dte.venta_id' => $this->request->data['Dte']['venta_id'],
 				'Dte.estado' => 'dte_real_emitido',
-				'Dte.tipo_documento' => $tipo
+				'Dte.tipo_documento' => $tipo,
+				'Dte.invalidado' => 0
 			)
 		));
 		
@@ -293,12 +295,34 @@ class OrdenesController extends AppController
 	}
 
 
+	public function unicoDteValido($id_venta)
+	{
+		$dts = ClassRegistry::init('Dte')->find('count', array(
+			'conditions' => array(
+				'Dte.venta_id' => $id_venta,
+				'Dte.estado' => 'dte_real_emitido',
+				'Dte.tipo_documento' => array(33, 39), // Boletas o facturas
+				'Dte.invalidado' => 0
+			)
+		));
+		
+		if ($dts > 0) {
+			return false;
+		}
+
+		return true;
+	}
+
+
 	public function admin_delete_dte($id_dte = '', $id_orden = '')
 	{	
 
 		$this->Orden->Dte->id = $id_dte;
 
 		if ($this->Orden->Dte->delete()) {
+
+			$this->admin_eliminarDteTemporal($id_dte, $id_orden);
+
 			$this->Session->setFlash('DTE eliminado con éxito.', null, array(), 'success');
 		}else{
 			$this->Session->setFlash('No fue posible elimnar el DTE.', null, array(), 'danger');
@@ -325,9 +349,9 @@ class OrdenesController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-			if(!$this->unico($this->request->data['Dte']['tipo_documento']))
-			{
-				$this->Session->setFlash('Ya ha generado un DTE válido para ésta venta.' , null, array(), 'warning');
+
+			if (!$this->unicoDteValido($id_orden)) {
+				$this->Session->setFlash('¡ERROR! No puedes generar 2 documentos válidos de venta. Debes solicitar una Nota de crédito.' , null, array(), 'danger');
 				$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
 			}
 
@@ -390,9 +414,10 @@ class OrdenesController extends AppController
 				}
 			}
 
-			if (isset($this->request->data['DteReferencia'])) {
+			// Se quitan las referencia que no tienen folio.
+			/*if (isset($this->request->data['DteReferencia'])) {
 				$this->request->data['DteReferencia'] = $this->clear($this->request->data['DteReferencia'], 'folio');	
-			}
+			}*/
 			
 			# Limpiar detalle Dte si corresponde
 			if (isset($this->request->data['Dte']['id'])) {
@@ -470,7 +495,7 @@ class OrdenesController extends AppController
 								)
 							),
 							'fields' => array(
-								'VentaEstado.id', 'VentaEstado.venta_estado_categoria_id'
+								'VentaEstado.id', 'VentaEstado.nombre', 'VentaEstado.venta_estado_categoria_id'
 							)
 						),
 						'Tienda' => array(
@@ -566,41 +591,100 @@ class OrdenesController extends AppController
 		$documentos = array();
 
 		if (empty($venta['Marketplace']['id'])) {
+
 			# Datos de facturación para compras por Prestashop
 			ToolmaniaComponent::$api_url = $this->Session->read('Tienda.apiurl_prestashop');
 			//$webpay                      = $this->Toolmania->obtenerWebpayInfo($this->request->data['Orden']['id_cart'], $this->Session->read('Tienda.apikey_prestashop'));
 			$documentos                  = $this->Toolmania->obtenerDocumento($venta['Venta']['id_externo'], null, $this->Session->read('Tienda.apikey_prestashop'));
 			
 			$this->request->data['Dte'] = array(
-					'tipo_documento' => 39, # Boleta por defecto
+				'tipo_documento' => 39, # Boleta por defecto
 			);
-
+			
 			if (!empty($documentos['content'])) {
 				$this->request->data['Dte'] = array(
-					'tipo_documento'        => 33, # Factura
+					'tipo_documento'        => ($documentos['content'][0]['boleta']) ? 39 : 33,
 					'rut_receptor'          => $documentos['content'][0]['rut'],
 					'razon_social_receptor' => $documentos['content'][0]['empresa'],
 					'giro_receptor'         => $documentos['content'][0]['giro'],
-					'direccion_receptor'    => $documentos['content'][0]['calle'] . ' #' . $documentos['content'][0]['numero'],
-					'comuna_receptor'       => $documentos['content'][0]['comuna']
+					'direccion_receptor'    => $documentos['content'][0]['calle']
 				);
+
+				if ($this->request->data['Dte']['tipo_documento'] == 33) {
+					// Obtenemos la información del contribuyente desde el SII
+					$info = $this->admin_getContribuyenteInfo($documentos['content'][0]['rut']);
+					
+					// Agregamos comuna
+					if (isset($info['comuna_glosa'])) {
+						$this->request->data['Dte']['comuna_receptor'] = $info['comuna_glosa'];
+					}
+
+					if (empty($documentos['content'][0]['empresa']) && isset($info['razon_social'])) {
+						$this->request->data['Dte']['razon_social_receptor'] = $info['razon_social'];
+					}
+
+					if (empty($documentos['content'][0]['giro']) && isset($info['giro'])) {
+						$this->request->data['Dte']['giro_receptor'] = $info['giro'];
+					}	
+				}elseif (isset($documentos['content'][0]['rut'])){
+					
+					# Guardamos el rut de la persona
+					ClassRegistry::init('VentaCliente')->id = $this->request->data['VentaCliente']['id'];
+					ClassRegistry::init('VentaCliente')->saveField('rut', $documentos['content'][0]['rut']);
+
+					$this->request->data['VentaCliente']['rut'] = $documentos['content'][0]['rut'];
+				}
 			}
 		}
+		
+		// cliente para hacer consultas a la api de libredte
+		$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
 
 		# Array de tipos de documentos
-		$tipoDocumento = $this->dtePermitidos($this->rutSinDv($this->Session->read('Tienda.rut')));
+		$tipoDocumento = $this->LibreDte->dtePermitidos($this->rutSinDv($this->Session->read('Tienda.rut')));
+
+		# Mostramos solo los permitidos para el usuario
+		$rol = ClassRegistry::init('Rol')->find('first', array('conditions' => array('Rol.id' => $this->Auth->user('rol_id')), 'fields' => array('permitir_boleta', 'permitir_factura', 'permitir_ndc', 'permitir_ndd', 'permitir_gdd', 'permitir_fc')));
+
+		# Quitamos boleta
+		if (!$rol['Rol']['permitir_boleta'])
+			unset($tipoDocumento['39']);
+
+		# Quitamos factura
+		if (!$rol['Rol']['permitir_factura'])
+			unset($tipoDocumento['33']);
+
+		# Quitamos nota de crédito
+		if (!$rol['Rol']['permitir_ndc'])
+			unset($tipoDocumento['61']);
+
+		# Quitamos nota de débito
+		if (!$rol['Rol']['permitir_ndd'])
+			unset($tipoDocumento['56']);
+
+		# Quitamos guia de despacho
+		if (!$rol['Rol']['permitir_gdd'])
+			unset($tipoDocumento['52']);
+
+		# Quitamos factura de compra
+		if (!$rol['Rol']['permitir_fc'])
+			unset($tipoDocumento['46']);
 
 		# Array de comunas actualizadas
-		$comunas = $this->obtener_comunas_actualizadas();
+		$comunasResult = ClassRegistry::init('Comuna')->find('list', array('order' => array('nombre' => 'ASC')));
+
+		foreach ($comunasResult as $id => $comuna) {
+			$comunas[$comuna] = $comuna;
+		}
 
 		# Tipos de traslados
-		$traslados = $this->tipoTraslado;
+		$traslados = $this->LibreDte->tipoTraslado;
 
 		# Códigos d referencia Libre DTE
-		$codigoReferencia = $this->codigoReferencia;
+		$codigoReferencia = $this->LibreDte->codigoReferencia;
 
 		# Medio de pago
-		$medioDePago = $this->medioDePago;
+		$medioDePago = $this->LibreDte->medioDePago;
 
 		# DTE´s para referenciar
 		$dteEmitidos = $this->Venta->Dte->find(
@@ -643,10 +727,12 @@ class OrdenesController extends AppController
 			)
 		);
 	
+		$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
+
 		# Consultar por DTE Emitido
 		if (!empty($this->request->data['Dte']) && $this->request->data['Dte']['estado'] == 'dte_real_emitido' ) {
 			try {
-				$this->consultarDteLibreDte($this->request->data['Dte']['emisor'], $this->request->data['Dte']['tipo_documento'], $this->request->data['Dte']['folio'], $this->request->data['Dte']['fecha'], $this->request->data['Dte']['total']);
+				$this->LibreDte->consultarDteLibreDte($this->request->data['Dte']['emisor'], $this->request->data['Dte']['tipo_documento'], $this->request->data['Dte']['folio'], $this->request->data['Dte']['fecha'], $this->request->data['Dte']['total']);
 			} catch (Exception $e) {
 				if ($e->getCode() == 400) {
 					$this->Session->setFlash($e->getMessage() , null, array(), 'danger');
@@ -660,7 +746,7 @@ class OrdenesController extends AppController
 		if (empty($this->request->data['Dte']['pdf']) && $this->request->data['Dte']['estado'] == 'dte_real_emitido' ) {
 
 			try {
-				$this->generarPDFDteEmitido($id_orden, $id_dte, $this->request->data['Dte']['tipo_documento'], $this->request->data['Dte']['folio'], $this->request->data['Dte']['emisor'] );
+				$this->LibreDte->generarPDFDteEmitido($id_orden, $id_dte, $this->request->data['Dte']['tipo_documento'], $this->request->data['Dte']['folio'], $this->request->data['Dte']['emisor'] );
 			} catch (Exception $e) {
 				if($e->getCode() < 300) {
 					$this->Session->setFlash($e->getMessage() , null, array(), 'success');
@@ -827,15 +913,18 @@ class OrdenesController extends AppController
 			}
 		}
 
+		// Cliente para obtener información desde libredte
+		$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
+
 		# Estado del dte Emitido en el SII
 		if ($this->request->data['Dte'][0]['estado'] == 'dte_real_emitido' ) {
-			$venta['Dte'][0]['estado_sii'] = $this->consultarDteSii($this->request->data['Dte'][0]['tipo_documento'], $this->request->data['Dte'][0]['folio'], $this->request->data['Dte'][0]['emisor']);
+			$venta['Dte'][0]['estado_sii'] = $this->LibreDte->consultarDteSii($this->request->data['Dte'][0]['tipo_documento'], $this->request->data['Dte'][0]['folio'], $this->request->data['Dte'][0]['emisor']);
 		}
 
 		# Consultar por DTE Emitido
 		if (!empty($this->request->data['Dte'][0]) && $this->request->data['Dte'][0]['estado'] == 'dte_real_emitido' ) {
 			try {
-				$this->consultarDteLibreDte($this->request->data['Dte'][0]['emisor'], $this->request->data['Dte'][0]['tipo_documento'], $this->request->data['Dte'][0]['folio'], $this->request->data['Dte'][0]['fecha'], $this->request->data['Dte'][0]['total']);
+				$this->LibreDte->consultarDteLibreDte($this->request->data['Dte'][0]['emisor'], $this->request->data['Dte'][0]['tipo_documento'], $this->request->data['Dte'][0]['folio'], $this->request->data['Dte'][0]['fecha'], $this->request->data['Dte'][0]['total']);
 			} catch (Exception $e) {
 				if ($e->getCode() == 400) {
 					$this->Session->setFlash($e->getMessage() , null, array(), 'danger');
@@ -848,7 +937,7 @@ class OrdenesController extends AppController
 		# Si no se ha generado el PDF de un documento emitido se intenta generar
 		if (!empty($this->request->data['Dte']) && empty($this->request->data['Dte'][0]['pdf']) && !empty($this->request->data['Dte'][0]['folio']) ) {
 			try {
-				$this->generarPDFDteEmitido($id, $this->request->data['Dte'][0]['id'], $this->request->data['Dte'][0]['tipo_documento'], $this->request->data['Dte'][0]['folio'], $this->request->data['Dte'][0]['emisor'] );
+				$this->LibreDte->generarPDFDteEmitido($id, $this->request->data['Dte'][0]['id'], $this->request->data['Dte'][0]['tipo_documento'], $this->request->data['Dte'][0]['folio'], $this->request->data['Dte'][0]['emisor'] );
 			} catch (Exception $e) {
 				if($e->getCode() < 300) {
 					$this->Session->setFlash($e->getMessage() , null, array(), 'success');
@@ -886,87 +975,6 @@ class OrdenesController extends AppController
 		return $arr;
 	}
 
-
-	/**
-	 * Tipos de documentos permitidios por el SII
-	 */
-	public $tipoDocumento = array(
-		30 => 'factura',
-		32 => 'factura de venta bienes y servicios no afectos o exentos de IVA',
-		35 => 'Boleta',
-		38 => 'Boleta exenta',
-		45 => 'factura de compra',
-		55 => 'nota de débito',
-		60 => 'nota de crédito',
-		103 => 'Liquidación',
-		40 => 'Liquidación Factura',
-		43 => 'Liquidación - Factura Electrónica',
-		33 => 'Factura Electrónica',
-		34 => 'Factura No Afecta o Exenta Electrónica',
-		39 => 'Boleta Electrónica',
-		41 => 'Boleta Exenta Electrónica',
-		46 => 'Factura de Compra Electrónica',
-		56 => 'Nota de Débito Electrónica',
-		61 => 'Nota de Crédito Electrónica',
-		50 => 'Guía de Despacho',
-		52 => 'Guía de Despacho Electrónica',
-		110 => 'Factura de Exportación Electrónica',
-		111 => 'Nota de Débito de Exportación Electrónica',
-		112 => 'Nota de Crédito de Exportación Electrónica',
-		801 => 'Orden de Compra', 
-		802 => 'Nota de pedido',
-		803 => 'Contrato',
-		804 => 'Resolución',
-		805 => 'Proceso ChileCompra',
-		806 => 'Ficha ChileCompra',
-		807 => 'DUS',
-		808 => 'B/L (Conocimiento de embarque)',
-		809 => 'AWB (Air Will Bill)',
-		810 => 'MIC/DTA',
-		811 => 'Carta de Porte',
-		812 => 'Resolución del SNA donde califica Servicios de Exportación',
-		813 => 'Pasaporte',
-		814 => 'Certificado de Depósito Bolsa Prod. Chile',
-		815 => 'Vale de Prenda Bolsa Prod. Chile'
-	);
-
-
-	/**
-	 * Tipos de traslado permitidios por el SII
-	 */
-	public $tipoTraslado = array(
-		1 => 'Operación constituye venta',
-		2 => 'Ventas por efectuar',
-		3 => 'Consignaciones',
-		4 => 'Entrega gratuita',
-		5 => 'Traslados internos',
-		6 => 'Otros traslados no venta',
-		7 => 'Guía de devolución',
-		8 => 'Traslado para exportación. (no venta)',
-		9 => 'Venta para exportación'
-	);
-
-
-	/**
-	 * Tipos de códigos de referencia
-	 */
-	public $codigoReferencia = array(
-		1 => 'Anula documento',
-		2 => 'Corrige montos',
-		3 => 'Corrige texto'
-	);
-
-
-	/**
-	 * Tipos de medios de pago
-	 */
-	public $medioDePago = array(
-		1 => 'Contado',
-		2 => 'Crédito',
-		3 => 'Sin costo (entrega gratuita)'
- 	);
-
-
 	/**
 	 * Método que imprime un json del dte por id
 	 * @param 		$id 	int 	Idetificador del DTE
@@ -982,109 +990,25 @@ class OrdenesController extends AppController
 	}
 
 
-
-	/**
-	 * Obtiene las comunas de Chile actualiadas desde la API disponible en http://apis.digital.gob.cl
-	 * @return 		Array 	Arreglo con las Comunas key:par
-	 */
-	public function obtener_comunas_actualizadas()
-	{	
-		$comunas = json_decode(file_get_contents('http://apis.digital.gob.cl/dpa/comunas'));
-		$nwComunas = array();	
-		foreach ($comunas as $k => $comuna) {
-			$nwComunas[$comuna->nombre] = $comuna->nombre;
-		}
-
-		return $nwComunas;
-	}
-
-
-	/**
-	 * Método encragado de obtener el PDF de un DTE temporal
-	 */
-	public function admin_getPdfDteTemporal($receptor, $tipo , $temporal, $emisor) 
-	{
-		// datos a utilizar
-		$url = 'https://libredte.cl';
-		$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-
-		// crear cliente
-		$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-		$LibreDTE->setSSL(false, false); ///< segundo parámetro =false desactiva verificación de SSL
-
-		# Obtenemos el PDFasd
-		$pdf = $LibreDTE->get('/dte/dte_tmps/pdf/'.$receptor.'/'.$tipo.'/'.$temporal.'/'.$emisor);
-		
-		if ($pdf['status']['code'] == 200) {
-			header($pdf['header'][0]);
-			header( sprintf('Date: %s', $pdf['header']['Date']) );
-			header( sprintf('Content-Type: %s', $pdf['header']['Content-Type']) );
-			header( sprintf('Content-Disposition: %s', $pdf['header']['Content-Disposition']) );
-			header( sprintf('Vary: %s', $pdf['header']['Vary']) );
-			header( sprintf('Date: %s', $pdf['header']['Date']) );
-			echo $pdf['body'];
-			exit;
-		}
-	}
-
-
-	/**
-	 * Retorna la cantidad de folios disponibles que tiene el usuario
-	 */
-	public function getFolioInfo($tipo_dte, $rut_contribuyente ,$ajax = false) 
-	{
-		// datos a utilizar
-		$url = 'https://libredte.cl';
-		$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-
-		// crear cliente
-		$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-		$LibreDTE->setSSL(false, false); ///< segundo parámetro =false desactiva verificación de SSL
-
-		# Obtenemos información de los folios
-		$folios = $LibreDTE->get('/dte/admin/dte_folios/info/'.$tipo_dte.'/'.$rut_contribuyente);
-		
-		if ($folios['status']['code'] == 200) {
-			if ($ajax) {
-				return json_encode($folios['body']);
-			}
-			
-			return $folios['body'];
-		}
-
-		return;
-	}
-
-
 	/**
 	 * Retorna los datos del rut del contribuyente consultado
-	 * @param 		$rut_contribuyente 		int 		Rut a buscar
+	 * @param 		$rut_contribuyente 		int 		Rut a buscar sin dv
 	 * @param 		$ajax 					bool 		Determina el tipo de retorno del la información
 	 * @return 		array/json
 	 */
 	public function admin_getContribuyenteInfo($rut_contribuyente, $ajax = false) 
 	{
-		// datos a utilizar
-		$url = 'https://libredte.cl';
-		$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-
-		// crear cliente
-		$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-		$LibreDTE->setSSL(false, false); ///< segundo parámetro =false desactiva verificación de SSL
-
-		# Obtenemos información del contribuyente
-		$contribuyente = $LibreDTE->get('/dte/contribuyentes/info/'.$rut_contribuyente);
+		$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
 		
-		if ($contribuyente['status']['code'] == 200) {
-			if ($ajax) {
-				echo json_encode($contribuyente['body']);
-				exit;
-			}
-
-			return $contribuyente['body'];
+		$contribuyente = $this->LibreDte->obtenerContribuyente($this->rutSinDv($rut_contribuyente));
+		
+		if ($ajax) {
+			echo json_encode($contribuyente);
+			exit;
 		}
 
-		return;
+		return $contribuyente;
+
 	}
 
 
@@ -1094,10 +1018,6 @@ class OrdenesController extends AppController
 	 */
 	public function generarDte($id_dte = '')
 	{	
-		// datos a utilizar
-		$url = 'https://libredte.cl';
-		$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-		
 		# Arreglo Base
 		$dte = array(
 		    'Encabezado' => array(
@@ -1159,8 +1079,8 @@ class OrdenesController extends AppController
 		# Incluye Receptor
 		if (!empty($this->request->data['Dte']['rut_receptor']) && $this->request->data['Dte']['rut_receptor'] != '66666666-6' ) {
 
-			$rut = number_format( substr ( $this->request->data['Dte']['rut_receptor'], 0 , -1 ) , 0, "", "") . '-' . substr ( $this->request->data['Dte']['rut_receptor'], strlen($this->request->data['Dte']['rut_receptor']) -1 , 1 );
-
+			$rut = @number_format( substr ( $this->request->data['Dte']['rut_receptor'], 0 , -1 ) , 0, "", "") . '-' . substr ( $this->request->data['Dte']['rut_receptor'], strlen($this->request->data['Dte']['rut_receptor']) -1 , 1 );
+			
 			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
 				'Receptor' => array(
 					'RUTRecep' => $rut
@@ -1309,17 +1229,22 @@ class OrdenesController extends AppController
 		if ( isset($this->request->data['DteReferencia']) && !empty($this->request->data['DteReferencia']) ) {
 
 			$DteReferencia = array();
-			$count = 0;
+			$count = 1;
 			foreach ($this->request->data['DteReferencia'] as $i => $ref) {
-				if ($count == 0) {
-					$DteReferencia = array(
-						'TpoDocRef' => $ref['tipo_documento'],
-						'FolioRef' => $ref['folio'],
-						'FchRef' => $ref['fecha'],
-						'CodRef' => $ref['codigo_referencia'],
-						'RazonRef' => $ref['razon']
-					);
+				
+				if (empty($ref['razon'])) {
+					continue;
 				}
+
+				$DteReferencia[$count] = array(
+					'NroLinRef' => $count,
+					'TpoDocRef' => $ref['tipo_documento'],
+					'FolioRef' => $ref['folio'],
+					'FchRef' => $ref['fecha'],
+					'CodRef' => $ref['codigo_referencia'],
+					'RazonRef' => $ref['razon']
+				);
+
 				$count++;
 			}
 
@@ -1328,7 +1253,7 @@ class OrdenesController extends AppController
 				)
 			);
 		}
-		
+
 		if (!empty($id_dte)) {
 			# Obtener DTE interno por id
 			$dteInterno = $this->Orden->Dte->find('first', array('conditions' => array('id' => $id_dte)));
@@ -1338,318 +1263,17 @@ class OrdenesController extends AppController
 		}
 		
 		// crear cliente
-		$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-		$LibreDTE->setSSL(false, false); ///< segundo parámetro =false desactiva verificación de SSL
+		$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
 
 		// crear DTE temporal
-		$emitir = $LibreDTE->post('/dte/documentos/emitir', $dte);
+		$dte_temporal = $this->LibreDte->crearDteTemporal($dte, $dteInterno);
 
-		if ($emitir['status']['code'] != 200) {
-
-			# Guardamos el estado
-		    $dteInterno['Dte']['estado'] = 'dte_temporal_no_emitido';
-		    $this->Orden->Dte->save($dteInterno);
-
-		    # Mensaje de retorno
-		    throw new Exception("Error al generar el DTE temporal: " . $emitir['body'], $emitir['status']['code']);
-		    
-		}else{
-
-			# Guardamos el estado
-			$dteInterno['Dte']['estado'] = 'dte_temporal_emitido';
-			$dteInterno['Dte']['dte_temporal'] = $emitir['body']['codigo'];
-			$dteInterno['Dte']['emisor'] = $emitir['body']['emisor'];
-			$dteInterno['Dte']['receptor'] = $emitir['body']['receptor'];
-			$this->Orden->Dte->save($dteInterno);
-
-			# Mensaje de retorno
-			# throw new Exception("DTE temporal Emitido.", $emitir['status']['code']);
+		if (empty($dte_temporal)) {
+			return;
 		}
 
 		// crear DTE real
-		$generar = $LibreDTE->post('/dte/documentos/generar', $emitir['body']);
-		
-		if ($generar['status']['code']!=200) {
-
-		    # Guardamos el estado
-		    $dteInterno['Dte']['estado'] = 'dte_real_no_emitido';
-		    $this->Orden->Dte->save($dteInterno);
-
-		    # Mensaje de retorno
-		    throw new Exception("Error al generar el DTE Real: " . $generar['body'], $generar['status']['code']);
-		    
-		}else{
-
-			# Registramos los datos retornados por Libre DTE
-			$dteInterno['Dte']['estado'] 			= 'dte_real_emitido';
-			$dteInterno['Dte']['emisor'] 			= $generar['body']['emisor'];
-			$dteInterno['Dte']['folio'] 			= $generar['body']['folio'];
-			$dteInterno['Dte']['certificacion'] 	= $generar['body']['certificacion'];
-			$dteInterno['Dte']['tasa'] 				= !empty($generar['body']['tasa']) ? $generar['body']['tasa'] : '';;
-			$dteInterno['Dte']['fecha'] 			= $generar['body']['fecha'];
-			$dteInterno['Dte']['sucursal_sii'] 		= !empty($generar['body']['sucursal_sii']) ? $generar['body']['sucursal_sii'] : '';
-			$dteInterno['Dte']['receptor'] 			= $generar['body']['receptor'];
-			$dteInterno['Dte']['exento'] 			= !empty($generar['body']['exento']) ? $generar['body']['exento'] : '';
-			$dteInterno['Dte']['neto'] 				= !empty($generar['body']['neto']) ? $generar['body']['neto'] : '';
-			$dteInterno['Dte']['iva'] 				= !empty($generar['body']['iva']) ? $generar['body']['iva'] : '';
-			$dteInterno['Dte']['total'] 			= $generar['body']['total'];
-			$dteInterno['Dte']['usuario'] 			= $generar['body']['usuario'];
-			$dteInterno['Dte']['track_id'] 			= !empty($generar['body']['track_id']) ? $generar['body']['track_id'] : '';
-			$dteInterno['Dte']['revision_estado'] 	= !empty($generar['body']['revision_estado']) ? $generar['body']['revision_estado'] : '';
-			$dteInterno['Dte']['revision_detalle'] 	= !empty($generar['body']['revision_detalle']) ? $generar['body']['revision_detalle'] : '';
-
-			$this->Orden->Dte->save($dteInterno);
-
-			// Se marca como atendida
-			ClassRegistry::init('Venta')->id = $dteInterno['Dte']['venta_id'];
-			ClassRegistry::init('Venta')->saveField('atendida', 1);
-
-			# Mensaje de retorno
-			throw new Exception("DTE generado con éxito.", $emitir['status']['code']);
-		}
-
-		return;
-	}
-
-
-	/**
-	 * Generar un DTE real desde un DTE temporal
-	 * @param 		int 	$id_dte 	Identificador del DTE interno
-	 */
-	public function generarDteRealDesdeTemporal($id_dte)
-	{
-		// datos a utilizar
-		$url = 'https://libredte.cl';
-		$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-
-		$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-		$LibreDTE->setSSL(false, false);
-
-		# Dte temporal
-		$dte_tmp = $this->Orden->Dte->find('first', array('conditions' => array('Dte.id' => $id_dte)));
-
-		if (!empty($dte_tmp) && !empty($dte_tmp['Dte']['dte_temporal'])) {
-			
-			if ($dte_tmp['Dte']['estado'] == 'dte_temporal_emitido' || $dte_tmp['Dte']['estado'] == 'dte_real_no_emitido') {
-				
-				$data = array(
-					'emisor' => $dte_tmp['Dte']['emisor'],
-					'receptor' => $dte_tmp['Dte']['receptor'],
-					'dte' => $dte_tmp['Dte']['tipo_documento'],
-					'codigo' => $dte_tmp['Dte']['dte_temporal']
-				);
-
-				// crear DTE real
-				$generar = $LibreDTE->post('/dte/documentos/generar', $data);
-				
-				if ($generar['status']['code']!=200) {
-
-				    # Guardamos el estado
-				    $dte_tmp['Dte']['estado'] = 'dte_real_no_emitido';
-				    $this->Orden->Dte->save($dte_tmp);
-
-				    # Mensaje de retorno
-				    throw new Exception("Error al generar el DTE Real: " . $generar['body'], $generar['status']['code']);
-				    
-				}else{
-
-					# Registramos los datos retornados por Libre DTE
-					$dte_tmp['Dte']['estado'] 			= 'dte_real_emitido';
-					$dte_tmp['Dte']['emisor'] 			= $generar['body']['emisor'];
-					$dte_tmp['Dte']['folio'] 			= $generar['body']['folio'];
-					$dte_tmp['Dte']['certificacion'] 	= $generar['body']['certificacion'];
-					$dte_tmp['Dte']['tasa'] 				= !empty($generar['body']['tasa']) ? $generar['body']['tasa'] : '';;
-					$dte_tmp['Dte']['fecha'] 			= $generar['body']['fecha'];
-					$dte_tmp['Dte']['sucursal_sii'] 		= !empty($generar['body']['sucursal_sii']) ? $generar['body']['sucursal_sii'] : '';
-					$dte_tmp['Dte']['receptor'] 			= $generar['body']['receptor'];
-					$dte_tmp['Dte']['exento'] 			= !empty($generar['body']['exento']) ? $generar['body']['exento'] : '';
-					$dte_tmp['Dte']['neto'] 				= !empty($generar['body']['neto']) ? $generar['body']['neto'] : '';
-					$dte_tmp['Dte']['iva'] 				= !empty($generar['body']['iva']) ? $generar['body']['iva'] : '';
-					$dte_tmp['Dte']['total'] 			= $generar['body']['total'];
-					$dte_tmp['Dte']['usuario'] 			= $generar['body']['usuario'];
-					$dte_tmp['Dte']['track_id'] 			= !empty($generar['body']['track_id']) ? $generar['body']['track_id'] : '';
-					$dte_tmp['Dte']['revision_estado'] 	= !empty($generar['body']['revision_estado']) ? $generar['body']['revision_estado'] : '';
-					$dte_tmp['Dte']['revision_detalle'] 	= !empty($generar['body']['revision_detalle']) ? $generar['body']['revision_detalle'] : '';
-
-					$this->Orden->Dte->save($dte_tmp);
-
-					# Mensaje de retorno
-					throw new Exception("DTE generado con éxito.", $generar['status']['code']);
-				}
-			}
-		}
-
-		# Mensaje de retorno
-		throw new Exception("Error al generar el DTE Real. No estan todos los campos completos.", 402);
-	}
-
-
-	/**
-	 * Generar el PDF desde un DTE real emitido
-	 * @param 		int 		$id_orden 	Identificador de la Orden de compra
-	 * @param 		int 		$id_dte 	Identificador del DTE interno
-	 * @param 		int 		$tipo_dte 	Tipo de DTE
-	 * @param 		string 		$folio 		Folio del DTE real retornado desde el SII
-	 * @param 		string 		$emisor 	Rut del emisor sin digito verificador
-	 */
-	public function generarPDFDteEmitido($id_orden = '', $id_dte = '', $tipo_dte = '', $folio = '', $emisor = '')
-	{
-		if (!empty($tipo_dte) && !empty($folio) && !empty($emisor)) {
-
-			$url = 'https://libredte.cl';
-			$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-
-			$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-			$LibreDTE->setSSL(false, false);
-
-			# Generar PDF
-			$generar_pdf = $LibreDTE->get('/dte/dte_emitidos/pdf/'.$tipo_dte.'/'.$folio.'/'.$emisor);
-			
-			if ($generar_pdf['status']['code'] != 200) {
-			    throw new Exception("No se pudo generar el PDF.");
-			}
-
-		 	if (!empty($id_orden) && !empty($id_dte)) {
-		 		# Ruta para el nuevo PDF
-		 		$rutaAbsoluta = APP . 'webroot' . DS. 'Dte' . DS . $id_orden . DS . $id_dte . DS;
-
-		 		# Creamos la ruta absoluta
-		 		if( !mkdir($rutaAbsoluta, 0777, true) ) {
-		 			throw new Exception("El PDF ya fue generado.", 201);
-		 		}
-
-		 		$rutaPdf = 'Dte' . DS . $id_orden . DS . $id_dte . DS;
-		 		$archivoPdf = 'documento-' . date('Y-m-d') . '.pdf';
-
-		 		$rutaCompleta = $rutaAbsoluta . $archivoPdf;
-
-		 		# Guardar PDF
-				if (file_put_contents($rutaCompleta, $generar_pdf['body']) == E_WARNING) {
-					throw new Exception("El PDF ya fue generado.", 201);
-				}else{
-					# Guardamos en DB
-					ClassRegistry::init('Dte')->id = $id_dte;
-					if (!ClassRegistry::init('Dte')->saveField('pdf', $archivoPdf)) {
-						throw new Exception("No se logró guardar de Pdf en nuestros registros.", 401);
-					}
-				}
-
-		 	}
-			
-		}else{
-			throw new Exception("No es posible generar el PDF. El DTE Real no ha sido creado.", 402);
-		}
-	}
-
-
-	/**
-	 * Consultar estado de un DTE emitido a libredte
-	 * @param 		int 		$rut 		Rut sin punto ni dv
-	 * @param 		int 		$dte 		Tipo de documento
-	 * @param 		int 		$folio 		Folio del DTE
-	 * @param 		string 		$fecha 		Fecha de emisión del DTE
-	 * @param 		int 		$total 		Monto total del DTE
-	 * @param 		bool 		$getXML 	Semáforo que define si necesitamos el XML o no 	
-	 */
-	public function consultarDteLibreDte($rut = 0, $dte = 0, $folio = 0, $fecha = '', $total = 0, $getXML = 0)
-	{
-		# datos a utilizar
-		$url = 'https://libredte.cl';
-		$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-
-		# crear cliente
-		$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-		$LibreDTE->setSSL(false, false);
-		
-		# obtener el PDF del DTE
-		$datos = [
-		    'emisor' => $rut,
-		    'dte' => $dte,
-		    'folio' => $folio,
-		    'fecha' => $fecha,
-		    'total' => $total,
-		];
-
-		$consultar = $LibreDTE->post('/dte/dte_emitidos/consultar?getXML='.$getXML, $datos);
-		
-		if ($consultar['status']['code']!=200) {
-		    throw new Exception('Ocurrió un error al obtener el DTE desde el SII: ' . $consultar['body'], 400);
-		}
-
-		if ($consultar['body']['anulado'] || $consultar['body']['iva_fuera_plazo']) {
-			throw new Exception('Este DTE ha sido anulado por el SII o el IVA se encentra fuera de plazo. Estado de la revisión:' . $consultar['body']['revision_estado'] , 200);
-		}
-
-		return;
-	}
-
-
-	public function consultarDteSii($dte, $folio, $emisor)
-	{
-		# datos a utilizar
-		$url = 'https://libredte.cl';
-		$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-
-		# crear cliente
-		$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-		$LibreDTE->setSSL(false, false);
-
-		$res = array(
-			'estado' => '',
-			'detalle' => ''
-			);
-
-		$consultar = $LibreDTE->get('/dte/dte_emitidos/actualizar_estado/'.$dte.'/'.$folio.'/'.$emisor);
-		if ($consultar['status']['code']!=200) {
-			$res = array(
-				'estado' => 'Sin información',
-				'detalle' => 'No se obtuvo información desde el SII para este DTE'
-				);
-		}else{
-			$res = array(
-				'estado' => $consultar['body']['revision_estado'],
-				'detalle' => $consultar['body']['revision_detalle']
-				);
-		}
-
-		return $res;
-	}
-
-
-	/**
-	 * Retorna una lista ordenada de los documentos autorizados en LibreDte
-	 * @param 		int 		$rut_contribuyente 		Rut de la empresa
-	 * @param 		bool 		$ajax 					Define el formato de la respuesta
-	 * @return 		json o array 
-	 */
-	public function dtePermitidos($rut_contribuyente, $ajax = false)
-	{
-		// datos a utilizar
-		$url = 'https://libredte.cl';
-		$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-
-		// crear cliente
-		$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-		$LibreDTE->setSSL(false, false); ///< segundo parámetro =false desactiva verificación de SSL
-
-		# Obtenemos información del contribuyente
-		$contribuyente = $LibreDTE->get('/dte/contribuyentes/config/'.$rut_contribuyente);
-		
-		if ($contribuyente['status']['code'] == 200) {
-			
-			$newArray = array();	
-
-			foreach ($contribuyente['body']['documentos_autorizados'] as $k => $documento) {
-				$newArray[$documento['codigo']] = $documento['tipo'];
-			}
-
-			if ($ajax) {
-				echo json_encode($newArray['body']);
-				exit;
-			}
-			
-			return $newArray;
-		}
+		$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
 
 		return;
 	}
@@ -1671,31 +1295,21 @@ class OrdenesController extends AppController
 
 			$emails = explode(',', trim($this->request->data['Orden']['emails']));
 
-			# Esquema para datos
-			$datos = array(
-				'emails' => $emails,
-				'asunto' => $this->request->data['Orden']['asunto'],
-				'mensaje' => $this->request->data['Orden']['mensaje'],
-				'pdf' => true,
-				'cedible' => true,
-				'papelContinuo' => false
-			);
+			$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
 
-			// datos a utilizar
-			$url = 'https://libredte.cl';
-			$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-
-			// crear cliente
-			$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-			$LibreDTE->setSSL(false, false); ///< segundo parámetro =false desactiva verificación de SSL
+			$enviar = $thsi->LibreDte->enviarDteEmail(
+				$emails, 
+				$this->request->data['Orden']['dte'], 
+				$this->request->data['Orden']['folio'], 
+				$this->request->data['Orden']['emisor'],
+				$this->request->data['Orden']['asunto'],
+				$this->request->data['Orden']['mensaje']);
 			
-			$enviar = $LibreDTE->post('/dte/dte_emitidos/enviar_email/'.$this->request->data['Orden']['dte'].'/'.$this->request->data['Orden']['folio'].'/'.$this->request->data['Orden']['emisor'], $datos);
-			
-			if ($enviar['status']['code'] == 200) {
+			if ($enviar) {
 				$this->Session->setFlash('Correo enviado existosamente al cliente.', null, array(), 'success');
 				$this->redirect(array('controller' => 'ventas', 'action' => 'view', $this->request->data['Orden']['venta_id']));
 			}else{
-				$this->Session->setFlash('Error al enviar el email al cliente. Error:' . $enviar['body'], null, array(), 'danger');
+				$this->Session->setFlash('Error al enviar el email al cliente. Error:' . $enviar, null, array(), 'danger');
 				$this->redirect(array('controller' => 'ordenes', 'action' => 'view', $this->request->data['Orden']['id_dte'], $this->request->data['Orden']['venta_id']));
 			}	
 		}else{
@@ -1703,41 +1317,6 @@ class OrdenesController extends AppController
 			$this->redirect(array('controller' => 'ordenes', 'action' => 'view', $this->request->data['Orden']['id_dte'], $this->request->data['Orden']['venta_id']));
 		}
 	} 
-
-
-	public function otroEnvio(){
-		// datos a utilizar
-		$url = 'https://libredte.cl';
-		$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
-
-		$emisor = $this->request->data['Orden']['emisor'];
-		$dte = $this->request->data['Orden']['dte'];
-		$folio = $this->request->data['Orden']['folio'];
-		$datos = [
-		    'emails' => ['cristian.rojas@nodriza.cl'],
-		    'asunto' => 'Envío de factura',
-		    'mensaje' => 'Esta es su factura',
-		    'pdf' => true,
-		    'cedible' => true,
-		    'papelContinuo' => false,
-		];
-		debug($emisor);
-		debug($dte);
-		debug($folio);
-		print_r($datos);
-		exit;
-		// crear cliente
-		$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-		$LibreDTE->setSSL(false, false);
-		// enviar email
-		$envio = $LibreDTE->post('/dte/dte_emitidos/enviar_email/'.$dte.'/'.$folio.'/'.$emisor, $datos);
-		if ($envio['status']['code']!=200) {
-		    die('Error al enviar el correo del DTE emitido: '.$envio['body']."\n");
-		}
-		echo $envio['body']."\n";
-	} 
-
-
 
 	/**
 	 * Método encargado de eliminar un dte temporal desde Libre DTE
@@ -1749,7 +1328,7 @@ class OrdenesController extends AppController
 	{	
 		if ( ! $this->Orden->Dte->exists($id_dte) )
 		{
-			$this->Session->setFlash('Dte no existe.' , null, array(), 'warning');
+			$this->Session->setFlash('Dte Temporal no existe.' , null, array(), 'warning');
 			$this->redirect(array('controller' => 'ventas', 'action' => 'view', 
 				$id_order));
 		}
@@ -1760,17 +1339,10 @@ class OrdenesController extends AppController
 			
 			if ( !empty($dte['Dte']['receptor']) && !empty($dte['Dte']['tipo_documento']) && !empty($dte['Dte']['dte_temporal']) && !empty($dte['Dte']['emisor']) ) {
 				
-				// datos a utilizar
-				$url = 'https://libredte.cl';
-				$hash = '62hoFgnBkcOllRuV2FxtR2Mqd6m9EII0';
+				$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
+				$eliminar = $this->LibreDte->eliminarDteTemporal($dte['Dte']['receptor'], $dte['Dte']['tipo_documento'], $dte['Dte']['dte_temporal'], $dte['Dte']['emisor']);
 
-				// crear cliente
-				$LibreDTE = new \sasco\LibreDTE\SDK\LibreDTE($hash, $url);
-				$LibreDTE->setSSL(false, false); ///< segundo parámetro =false desactiva verificación de SSL
-
-				$eliminar = $LibreDTE->get('/dte/dte_tmps/eliminar/'.$dte['Dte']['receptor'].'/'.$dte['Dte']['tipo_documento'].'/'.$dte['Dte']['dte_temporal'].'/'.$dte['Dte']['emisor']);
-
-				if ($eliminar['status']['code'] == 200) {
+				if (empty($eliminar)) {
 					# Borramos el DTE
 					if ( $this->Orden->Dte->delete($id_dte) )
 					{
@@ -1781,25 +1353,25 @@ class OrdenesController extends AppController
 						$this->redirect(array('controller' => 'ventas', 'action' => 'editar', $id_dte, $id_order));
 					}
 				}else{
-					if ($eliminar['body'] == 'No existe el DTE temporal solicitado' && $this->Orden->Dte->delete($id_dte)) {
+					if ($eliminar == 'No existe el DTE temporal solicitado' && $this->Orden->Dte->delete($id_dte)) {
 						$this->Session->setFlash('DTE eliminado correctamente de Libre DTE.', null, array(), 'success');
 						$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_order));
 					}else{
-						$this->Session->setFlash($eliminar['body'] . '. Intentelo nuevamente.', null, array(), 'danger');
+						$this->Session->setFlash($eliminar . '. Intentelo nuevamente.', null, array(), 'danger');
 						$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_order));
 					}
 					
 				}
 			}else{
 				# Borramos el DTE
-				/*if ( $this->Orden->Dte->delete($id_dte) )
+				if ( $this->Orden->Dte->delete($id_dte) )
 				{
 					$this->Session->setFlash('DTE no ha sido generado. Vuelva a intentarlo.', null, array(), 'danger');
 					$this->redirect(array('controller' => 'ordenes', 'action' => 'generar', $id_order));
 				}else{
 					$this->Session->setFlash('No se logró eliminar el DTE. Intentelo nuevamente.', null, array(), 'warning');
 					$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_order));
-				}*/
+				}
 				return;
 			}
 

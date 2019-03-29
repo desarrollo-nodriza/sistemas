@@ -30,6 +30,10 @@
 									<td><?= $this->Form->input('repetir_clave', array('type' => 'password', 'autocomplete' => 'off', 'value' => '')); ?></td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('notificaciones', 'Json de notificaciones'); ?></th>
+									<td><?= $this->Form->input('notificaciones'); ?></td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 									<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 								</tr>

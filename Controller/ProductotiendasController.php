@@ -63,10 +63,12 @@ class ProductotiendasController extends AppController {
 			
 		$parentCategory = $this->Productotienda->query($q);
 		
-		for ( $i = $parentCategory[0]['c']['level_depth'] ; $i > 1 ; $i--) {
-			if ($i == $parentCategory[0]['c']['level_depth']) {
-				$categories[$i] = $this->formatTree($parentCategory[0]['c']['id_category'], $parentCategory[0]['cl']['name'], $parentCategory[0]['c']['level_depth'], $this->getParentCategory($parentCategory[0]['c']['id_parent'], $prefix));	
-			}
+		if (isset($parentCategory[0])) {
+			for ( $i = $parentCategory[0]['c']['level_depth'] ; $i > 1 ; $i--) {
+				if ($i == $parentCategory[0]['c']['level_depth']) {
+					$categories[$i] = $this->formatTree($parentCategory[0]['c']['id_category'], $parentCategory[0]['cl']['name'], $parentCategory[0]['c']['level_depth'], $this->getParentCategory($parentCategory[0]['c']['id_parent'], $prefix));	
+				}
+			}	
 		}
 	
 		return $categories;
@@ -228,7 +230,10 @@ class ProductotiendasController extends AppController {
 			
 			foreach ($productos as $key => $value) {
 				$cate = $this->getParentCategory($value['Productotienda']['id_category_default'], $tienda['Tienda']['prefijo']);
-				$cate = $this->categoriesTree($cate);
+				
+				if (!empty($cate)) {
+					$cate = $this->categoriesTree($cate);
+				}				
 
 
 				if ( !isset($value['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']) ) {
@@ -265,7 +270,7 @@ class ProductotiendasController extends AppController {
 				$knasta[$key]['ProductViewImages'] = array($value[0]['url_image_large']);
 				$knasta[$key]['ProductUrl'] = sprintf('%s%s-%s.html', $sitioUrl, $value['pl']['link_rewrite'], $value['Productotienda']['id_product']);;
 				$knasta[$key]['CategoryId'] = $value['Productotienda']['id_category_default'];
-				$knasta[$key]['CategoryName'] = $this->tree($cate);
+				$knasta[$key]['CategoryName'] = (!empty($cate)) ? $this->tree($cate) : 'Sin categoría';
 				$knasta[$key]['Stock'] = '1';
 				#$knasta[$key]['Stock'] = ($value['Productotienda']['quantity'] > 0) ? '1' : '0';
 				$knasta[$key]['InternetPrice'] = CakeNumber::currency($value['Productotienda']['valor_final'], 'CLP');
@@ -362,7 +367,8 @@ class ProductotiendasController extends AppController {
 					'Productotienda.condition',
 					'Productotienda.supplier_reference',
 					'Marca.id_manufacturer',
-					'Marca.name'
+					'Marca.name',
+					'Stockdisponible.quantity'
 				),
 				'joins' => array(
 					array(
@@ -397,6 +403,14 @@ class ProductotiendasController extends AppController {
 			            'type'  => 'LEFT',
 			            'conditions' => array(
 			                'Productotienda.id_manufacturer = Marca.id_manufacturer'
+			            )
+		        	),
+		        	array(
+			            'table' => sprintf('%sstock_available', $tienda['Tienda']['prefijo']),
+			            'alias' => 'Stockdisponible',
+			            'type'  => 'LEFT',
+			            'conditions' => array(
+			                'Productotienda.id_product = Stockdisponible.id_product'
 			            )
 		        	)
 				),
@@ -437,7 +451,7 @@ class ProductotiendasController extends AppController {
 				)
 			));
 
-
+		
 			# Feed de Google
 			GoogleShopping::title('Feed Google Shopping');
 			GoogleShopping::link(FULL_BASE_URL);
@@ -449,7 +463,10 @@ class ProductotiendasController extends AppController {
 
 			foreach ($productos as $key => $value) {
 				$cate = $this->getParentCategory($value['Productotienda']['id_category_default'], $tienda['Tienda']['prefijo']);
-				$cate = $this->categoriesTree($cate);
+				
+				if (!empty($cate)) {
+					$cate = $this->categoriesTree($cate);
+				}
 
 
 				if ( !isset($value['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']) ) {
@@ -484,11 +501,11 @@ class ProductotiendasController extends AppController {
 				$google[$key]['g:description']  = strip_tags($value['pl']['description_short']) . '';
 				$google[$key]['g:link']         = sprintf('%s%s-%s.html', $sitioUrl, $value['pl']['link_rewrite'], $value['Productotienda']['id_product']);
 				$google[$key]["g:image_link"]   = $value[0]['url_image_large'];
-				$google[$key]['g:availability'] = ($value['Productotienda']['quantity'] > 0) ? 'in stock' : 'out of stock';
+				$google[$key]['g:availability'] = ($value['Stockdisponible']['quantity'] > 0) ? 'in stock' : 'out of stock';
 				$google[$key]['g:price']        = $value['Productotienda']['valor_final'];
-				$google[$key]['g:product_type'] = $this->tree($cate);
+				$google[$key]['g:product_type'] = (!empty($cate)) ? $this->tree($cate) : 'Sin categoría';
 				$google[$key]['g:brand']        = (empty($value['Productotienda']['id_manufacturer'])) ? 'No especificado' : $value['Marca']['name'] ;
-				$google[$key]['g:mpn']         = $value['Productotienda']['reference'];
+				$google[$key]['g:mpn']          = $value['Productotienda']['reference'];
 				$google[$key]['g:condition']    = $value['Productotienda']['condition'];
 				$google[$key]['g:adult']        = 'no';
 				$google[$key]['g:age_group']    = 'adult';

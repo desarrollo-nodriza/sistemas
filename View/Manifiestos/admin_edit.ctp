@@ -42,7 +42,7 @@
 						<p>Seleccione los pedidos que contendrá el manifiesto</p>
 
 						<div id="wrapper-ordenes" style="max-height: 400px;">
-							<div class="table-responsive">
+							<div class="table-responsive overflow-x">
 								<table class="table table-bordered table-stripped ctm-datatables">
 									<thead>
 										<th></th>
@@ -77,7 +77,7 @@
 <div class="message-box message-box-danger animated fadeIn" data-sound="alert" id="modal_alertas">
     <div class="mb-container">
         <div class="mb-middle">
-            <div class="mb-title" id="modal_alertas_label"><i class="fa fa-alert"></i> Confirmar orden</div>
+            <div class="mb-title" id="modal_alertas_label"><i class="fa fa-alert"></i> Confirmar venta</div>
             <div class="mb-content">
                 <p id="mensajeModal"></p>                    
             </div>
@@ -148,7 +148,7 @@
 
 				$('.loader').css('display', 'none');
 
-				noty({text: 'Ocurrió un error al obtener las ordenes. Intente nuevamente.', layout: 'topRight', type: 'error'});
+				noty({text: 'Ocurrió un error al obtener las ventas. Intente nuevamente.', layout: 'topRight', type: 'error'});
 
 				setTimeout(function(){
 					$.noty.closeAll();
@@ -182,7 +182,7 @@
 
 	function crearInput()
 	{	
-		$("#ManifiestoAdminEditForm").append('<input id="venta_' + $seleccionado.val() + '" type="hidden" name="data[Orden][][venta_id]"/ value="' + $seleccionado.val() + '">');
+		$("#ManifiestoAdminEditForm").append('<input id="venta_' + $seleccionado.val() + '" type="hidden" name="data[Venta][][venta_id]"/ value="' + $seleccionado.val() + '">');
 	}
 
 
@@ -191,7 +191,7 @@
 		/* MESSAGE BOX */
         var box = $('#modal_alertas');
 
-        	$('#mensajeModal').html('La orden id #' + $seleccionado.data('id') + ' Ya ha sido agregada a ' + $seleccionado.data('manifiestos') + ' manifiestos');
+        	$('#mensajeModal').html('La venta id #' + $seleccionado.data('id') + ' Ya ha sido agregada a ' + $seleccionado.data('manifiestos') + ' manifiestos');
         
             box.toggleClass("open");
 

@@ -46,6 +46,15 @@ class Dte extends AppModel
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		),
+		'Administrador' => array(
+			'className'				=> 'Administrador',
+			'foreignKey'			=> 'administrador_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
 		'Tienda' => array(
 			'className'				=> 'Tienda',
 			'foreignKey'			=> 'tienda_id',
@@ -54,6 +63,15 @@ class Dte extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
+		'Venta' => array(
+			'className'				=> 'Venta',
+			'foreignKey'			=> 'venta_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Venta')
 		)
 	);
 
