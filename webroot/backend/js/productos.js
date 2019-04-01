@@ -74,7 +74,7 @@ $.extend({
 					},
 					'data[PrecioEspecificoProducto][0][descuento]' : {
 						required: true,
-				        digits : true,
+				        number : true,
 				        min: 1,
 					},
 					'data[PrecioEspecificoProducto][0][fecha_inicio]' : {
@@ -211,11 +211,11 @@ $.extend({
 					if ($that.hasClass('js-descuento-input')) {
 						$that.rules("add", {
 					        required: true,
-					        digits : true,
+					        number : true,
 					        min: 1,
 					        messages: {
 					        	required: 'Ingrese nombre del descuento',
-					        	digits: 'Solo números',
+					        	number: 'Solo números',
 					        	min: 'Descuento debe ser mayor a 0'
 					        }
 					    });

@@ -250,6 +250,10 @@ class ProveedoresController extends AppController
 
 			if (!empty($productos)) {
 				foreach ($productos['product'] as $ip => $producto) {
+
+					if (!isset($producto['id'])) {
+						continue;
+					}
 					
 					$data = array(
 						'VentaDetalleProducto' => array(
@@ -261,7 +265,9 @@ class ProveedoresController extends AppController
 						)
 					);
 
-					$this->Proveedor->VentaDetalleProducto->save($data);
+					if (ClassRegistry::init('VentaDetalleProducto')->exists($producto['id'])){
+						$this->Proveedor->VentaDetalleProducto->save($data);
+					}
 
 				}	
 			}

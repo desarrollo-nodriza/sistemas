@@ -246,6 +246,10 @@ class MarcasController extends AppController
 			if (!empty($productos)) {
 				foreach ($productos['product'] as $ip => $producto) {
 
+					if (!isset($producto['id'])) {
+						continue;
+					}
+
 					$data = array(
 						'VentaDetalleProducto' => array(
 							'id' => $producto['id'],
