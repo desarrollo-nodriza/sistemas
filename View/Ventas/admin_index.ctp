@@ -156,7 +156,9 @@
 					<h3 class="panel-title">Listado de Ventas</h3>
 
 					<div class="btn-group pull-right">
+						<? if ($permisos['generate']) : ?>
 						<a class="btn btn-success" onclick="$('#mb-confirmar-actualizacion').css('display', 'block');"><i class="fa fa-refresh"></i> Actualizar Ventas</a>
+						<? endif; ?>
 						<a class="btn btn-primary" onclick="VentasExportarExcel();"><i class="fa fa-file-excel-o"></i> Exportar a Excel</a>
 					</div>
 
@@ -275,7 +277,7 @@
 
 												<?= $this->Html->link('<i class="fa fa-eye"></i> Ver Detalles', array('action' => 'view', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-info btn-block', 'rel' => 'tooltip', 'title' => 'Ver detalles de este registro', 'escape' => false)); ?>
 												
-												<? if (isset($permisos['storage']) && $venta['VentaEstado']['permitir_retiro_oc']) : ?>
+												<? if ($permisos['storage'] && $venta['VentaEstado']['permitir_retiro_oc']) : ?>
 												
 												<?= $this->Html->link('<i class="fa fa-ban"></i> Procesar', array('action' => 'procesar_ventas', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-warning btn-block', 'rel' => 'tooltip', 'title' => 'Procesar este registro', 'escape' => false)); ?>
 

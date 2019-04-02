@@ -2882,18 +2882,19 @@ class VentasController extends AppController {
 				$enBodegas = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($detalle['venta_detalle_producto_id']);
 
 				# Guardar resultados del detalle
-				$this->request->data['VentaDetalle'][$id]['cantidad_pendiente_entrega'] = $detalle['cantidad'] - $detalle['cantidad_entregar'];
 
 				if ($enBodega < $detalle['cantidad_entregar']) {
 					$errores[] = 'Item ' . ClassRegistry::init('VentaDetalleProducto')->field('nombre', $detalle['venta_detalle_producto_id']) . ' no puede ser retirado: Stock bodega principal ('.$enBodega.') - Stock global ('.$enBodegas.') - Vendidos ('.$detalle['cantidad_entregar'].')';
 					continue;
 				}elseif ($detalle['cantidad_entregar'] > 0) {
 
+					$this->request->data['VentaDetalle'][$id]['cantidad_pendiente_entrega'] = $detalle['cantidad'] - $detalle['cantidad_entregar'];
+
 					if (ClassRegistry::init('Bodega')->crearSalidaBodega($detalle['venta_detalle_producto_id'], null, $detalle['cantidad_entregar'], 'OC')) {
 						$aceptados[] = 'Item ' . ClassRegistry::init('VentaDetalleProducto')->field('nombre', $detalle['venta_detalle_producto_id']) . ': Se descontaron ' . $detalle['cantidad_entregar'] . ' items de bodega principal';
 
 						
-						$this->request->data['VentaDetalle'][$id]['cantidad_entregada']         = $detalle['cantidad_entregar'];
+						$this->request->data['VentaDetalle'][$id]['cantidad_entregada'] = $detalle['cantidad_entregar'];
 
 						# si no quedan pendientes se marca como completado
 						if (!$this->request->data['VentaDetalle'][$id]['cantidad_pendiente_entrega']) {

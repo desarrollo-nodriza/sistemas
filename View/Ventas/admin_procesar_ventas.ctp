@@ -48,7 +48,7 @@
 										0
 									<? endif; ?>
 									</td>
-									<td <? ($detalle['cantidad_entregada'] <  $detalle['cantidad']); ?>class="fecha_llegada hidden">
+									<td <? if ($detalle['cantidad_entregada'] <  $detalle['cantidad']) : ?> class="fecha_llegada hidden" <? endif; ?>>
 										<?=$this->Form->input(sprintf('VentaDetalle.%d.fecha_llegada', $detalle['id']), array('class' => 'form-control datepicker not-blank', 'type' => 'text', 'value' => $detalle['fecha_llegada'])); ?>
 									</td>
 								</tr>	
