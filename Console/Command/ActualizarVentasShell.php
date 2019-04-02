@@ -9,6 +9,15 @@ class ActualizarVentasShell extends AppShell {
 	
 	public function main() {
 
+		$log = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'Venta',
+			'modulo_accion' => 'Inicia proceso de actualización: ' . date('Y-m-d H:i:s')
+		));
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
+
 		$this->out('Inicia obtener ventas nuevas: ' . date('Y-m-d H:i:s'));
 		$this->hr();
 
@@ -20,6 +29,15 @@ class ActualizarVentasShell extends AppShell {
 		$this->out('Finaliza obtener ventas nuevas: ' . date('Y-m-d H:i:s'));
 		$this->hr();
 		$this->hr();
+
+		$log = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'Venta',
+			'modulo_accion' => 'Finaliza proceso de actualización: ' . date('Y-m-d H:i:s')
+		));
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
 	}
 
 }

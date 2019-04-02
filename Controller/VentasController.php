@@ -201,17 +201,20 @@ class VentasController extends AppController {
 
 		if (isset($permisos['storage'])) {
 
-			$joins[] = array(
-				'table' => 'rp_venta_estados',
-				'alias' => 'ventas_estados',
-				'type' => 'INNER',
-				'conditions' => array(
-					'ventas_estados.id = Venta.venta_estado_id',
-					"ventas_estados.permitir_retiro_oc"  => 1
-				)
-			);
+			if ($permisos['storage']) {
 
-			$condiciones["Venta.subestado_oc !="] = 'entregado';
+				$joins[] = array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'ventas_estados',
+					'type' => 'INNER',
+					'conditions' => array(
+						'ventas_estados.id = Venta.venta_estado_id',
+						"ventas_estados.permitir_retiro_oc"  => 1
+					)
+				);
+
+				$condiciones["Venta.subestado_oc !="] = 'entregado';	
+			}
 		}
 
 
@@ -269,7 +272,6 @@ class VentasController extends AppController {
 			'direction' => 'DESC',
 			'limit' => 10
 		);
-
 
 		//----------------------------------------------------------------------------------------------------
 		$this->paginate = $paginate;
@@ -483,7 +485,7 @@ class VentasController extends AppController {
 				'order' => 'Venta.id_externo DESC'
 			)
 		);
-
+		
 		//$venta['Venta']['id_externo'] = 8300;
 
 		if (!empty($venta)) {
@@ -491,7 +493,7 @@ class VentasController extends AppController {
 		}
 
 		# Se descartan las ventas que no tienen cliente
-		$opt['filter[id_customer]'] = '>[0]';
+		#$opt['filter[id_customer]'] = '>[0]';
 
 		$xml = $ConexionPrestashop->get($opt);
 
