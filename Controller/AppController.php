@@ -339,7 +339,8 @@ class AppController extends Controller
 			            )
 					)
 				),
-				'fields' => array('Modulo.id', 'Modulo.parent_id', 'Modulo.nombre', 'Modulo.url', 'Modulo.icono')));
+				'fields' => array('Modulo.id', 'Modulo.parent_id', 'Modulo.nombre', 'Modulo.url', 'Modulo.icono'),
+				'order' => array('Modulo.id' => 'ASC')));
 		$data = array();
 		foreach ($modulos as $padre) {
 			$data[] = array(
@@ -361,7 +362,8 @@ class AppController extends Controller
 					            )
 							)
 						),
-						'fields' => array('Modulo.id', 'Modulo.parent_id', 'Modulo.nombre', 'Modulo.url', 'Modulo.icono')
+						'fields' => array('Modulo.id', 'Modulo.parent_id', 'Modulo.nombre', 'Modulo.url', 'Modulo.icono'),
+						'order' => array('Modulo.id' => 'ASC')
 					)
 				)
 			);

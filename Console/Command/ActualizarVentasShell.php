@@ -12,7 +12,7 @@ class ActualizarVentasShell extends AppShell {
 		$log = array('Log' => array(
 			'administrador' => 'Demonio',
 			'modulo' => 'Venta',
-			'modulo_accion' => 'Inicia proceso de actualización: ' . date('Y-m-d H:i:s')
+			'modulo_accion' => 'Inicia proceso de actualización de ventas: ' . date('Y-m-d H:i:s')
 		));
 
 		ClassRegistry::init('Log')->create();
@@ -33,7 +33,7 @@ class ActualizarVentasShell extends AppShell {
 		$log = array('Log' => array(
 			'administrador' => 'Demonio',
 			'modulo' => 'Venta',
-			'modulo_accion' => 'Finaliza proceso de actualización: ' . date('Y-m-d H:i:s')
+			'modulo_accion' => 'Finaliza proceso de actualización de ventas: ' . date('Y-m-d H:i:s')
 		));
 
 		ClassRegistry::init('Log')->create();

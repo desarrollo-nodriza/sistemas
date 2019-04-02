@@ -12,6 +12,15 @@ class ActualizarVentasEstadosShell extends AppShell {
 		$this->out('Inicia actualizar estado ventas no atendidas: ' . date('Y-m-d H:i:s'));
 		$this->hr();
 
+		$log = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'Venta',
+			'modulo_accion' => 'Inicia proceso de actualización de estados: ' . date('Y-m-d H:i:s')
+		));
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
+
 		$controller = new VentasController(new CakeRequest(), new CakeResponse());
 		$controller->shell = true;
 		$controller->admin_verificar_conexion_meli();
@@ -22,6 +31,24 @@ class ActualizarVentasEstadosShell extends AppShell {
 		$this->hr();
 		$this->hr();
 
+		$log = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'Venta',
+			'modulo_accion' => 'Finalizas proceso de actualización de estados: ' . date('Y-m-d H:i:s')
+		));
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
+
+
+		$log = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'Venta',
+			'modulo_accion' => 'Inicia proceso de actualización de ventas revertidas: ' . date('Y-m-d H:i:s')
+		));
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
 
 		$this->hr();
 		$this->out('Inicia ventas_estados_revertidas: ' . date('Y-m-d H:i:s'));
@@ -33,6 +60,26 @@ class ActualizarVentasEstadosShell extends AppShell {
 		$this->out('Finaliza ventas_estados_revertidas: ' . date('Y-m-d H:i:s'));
 		$this->hr();
 		$this->hr();
+
+		$log = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'Venta',
+			'modulo_accion' => 'Finaliza proceso de actualización de ventas revertidas: ' . date('Y-m-d H:i:s')
+		));
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
+
+
+
+		$log = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'Venta',
+			'modulo_accion' => 'Inicia proceso de actualización de ventas atendidas: ' . date('Y-m-d H:i:s')
+		));
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
 
 		$this->hr();
 		$this->out('Inicia ventas_estados_atendidos: ' . date('Y-m-d H:i:s'));
@@ -46,6 +93,15 @@ class ActualizarVentasEstadosShell extends AppShell {
 		$this->out('Finaliza actualizar estado ventas no atendidas: ' . date('Y-m-d H:i:s'));
 		$this->hr();
 		$this->hr();
+
+		$log = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'Venta',
+			'modulo_accion' => 'Finaliza proceso de actualización de ventas atendidas: ' . date('Y-m-d H:i:s')
+		));
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
 	}
 
 }

@@ -612,7 +612,7 @@ class OrdenesController extends AppController
 
 				if ($this->request->data['Dte']['tipo_documento'] == 33) {
 					// Obtenemos la información del contribuyente desde el SII
-					$info = $this->admin_getContribuyenteInfo($documentos['content'][0]['rut']);
+					$info = $this->admin_getContribuyenteInfo($this->rutSinDv($documentos['content'][0]['rut']));
 					
 					// Agregamos comuna
 					if (isset($info['comuna_glosa'])) {
@@ -1000,7 +1000,7 @@ class OrdenesController extends AppController
 	{
 		$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
 		
-		$contribuyente = $this->LibreDte->obtenerContribuyente($this->rutSinDv($rut_contribuyente));
+		$contribuyente = $this->LibreDte->obtenerContribuyente($rut_contribuyente);
 		
 		if ($ajax) {
 			echo json_encode($contribuyente);
