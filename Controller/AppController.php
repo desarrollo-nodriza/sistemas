@@ -695,10 +695,14 @@ class AppController extends Controller
 	 * @param  array  $modelos Nombres de los modelos
 	 * @return void
 	 */
-	public function cambiarDatasource( $modelos = array() ) {
+	public function cambiarDatasource( $modelos = array(), $tienda = array() ) {
 
 		foreach ($modelos as $instancia) {
-			ClassRegistry::init($instancia)->useDbConfig = $this->Session->read('Tienda.configuracion');
+			if (!empty($tienda)) {
+				ClassRegistry::init($instancia)->useDbConfig = $tienda['Tienda']['configuracion'];	
+			}else{
+				ClassRegistry::init($instancia)->useDbConfig = $this->Session->read('Tienda.configuracion');
+			}
 		}
 		
 	}

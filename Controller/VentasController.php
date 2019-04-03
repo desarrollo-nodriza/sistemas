@@ -456,14 +456,14 @@ class VentasController extends AppController {
 					)
 				),
 				'fields' => array(
-					'Tienda.id', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop'
+					'Tienda.id', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.configuracion'
 				)
 			)
 		);
 
 	}
 
-	private function prestashop_obtener_ventas_antiguo($params = array())
+	private function prestashop_obtener_ventas_antiguo($params = array(), $tienda = array())
 	{
 		# Modelos que requieren agregar configuración
 		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'Lang', 'CustomUserdata'));
@@ -542,7 +542,7 @@ class VentasController extends AppController {
 					)
 			);
 
-			$DataVentas = $this->prestashop_obtener_ventas_antiguo($opt);
+			$DataVentas = $this->prestashop_obtener_ventas_antiguo($opt, $tienda);
 		}
 	
 		return $DataVentas;
