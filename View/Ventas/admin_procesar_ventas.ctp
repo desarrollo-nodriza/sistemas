@@ -75,14 +75,18 @@
 	
 	$('.js-cantidad-entregada').on('change', function(){
 		var $ths = $(this),
+			fecha = $ths.parents('tr').eq(0).find('.fecha_llegada').eq(0),
+			thFecha = $ths.parents('table').find('th.fecha_llegada').eq(0),
 			pendiente = $ths.parents('tr').eq(0).find('.js-cantidad-pendiente').data('pendiente');
 
 		if ($ths.val() < pendiente) {
-			$('.fecha_llegada').removeClass('hidden');
-			$('.fecha_llegada > input').removeAttr('disabled');
+			thFecha.removeClass('hidden');
+			fecha.removeClass('hidden');
+			fecha.children('input').removeAttr('disabled');
 		}else{
-			$('.fecha_llegada').addClass('hidden');
-			$('.fecha_llegada > input').attr('disabled', 'disabled');
+			thFecha.addClass('hidden');
+			fecha.addClass('hidden');
+			fecha.children('input').attr('disabled', 'disabled');
 		}
 
 	});

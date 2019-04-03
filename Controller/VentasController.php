@@ -2958,13 +2958,16 @@ class VentasController extends AppController {
 					}else{
 						$errores[] = 'Item ' . ClassRegistry::init('VentaDetalleProducto')->field('nombre', $detalle['venta_detalle_producto_id']) . ' no puede ser retirado: Stock bodega principal ('.$enBodega.') - Stock global ('.$enBodegas.') - Vendidos ('.$detalle['cantidad_entregar'].')';
 					}
+				}else{
+					$this->request->data['VentaDetalle'][$id]['cantidad_pendiente_entrega'] = $detalle['cantidad'];
 				}
 			}
 
-
+			
 			# Sub estados de la venta
 			if (array_sum(Hash::extract($this->request->data['VentaDetalle'], '{n}.cantidad_pendiente_entrega')) > 0 ) {
 				$this->request->data['Venta']['subestado_oc'] = 'parcialmente_entregado';
+				$this->Session->setFlash('La venta se ha marcado como parcialmente entregado. Se recordará vía email la reposición del/los productos faltantes.', null, array(), 'warning');
 			}else{
 				$this->request->data['Venta']['subestado_oc'] = 'entregado';
 			}
