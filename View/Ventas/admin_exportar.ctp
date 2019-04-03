@@ -51,18 +51,22 @@ foreach ($datos as $dato) {
 	}
 
 	$dtes = '';
-	if (!empty($dato['Dte']['folio'])) {
-		$dtes .= "Folio: " . $dato['Dte']['folio'];
+	if (isset($datos['Dte'])) {
+		foreach ($datos['Dte'] as $dte) {
+			if (!empty($dte['folio'])) {
+				$dtes .= "Folio: " . $dte['folio'];
+			}
+			if (!empty($dte['tipo_documento'])) {
+				$dtes .= "\n";
+				$dtes .= "Tipo Dte: " . $this->tipoDocumento[$dte['tipo_documento']];
+			}
+			if (!empty($dte['estado'])) {
+				$dtes .= "\n";
+				$dtes .= "Estado: " . $this->tipoDocumento[$dte['estado']];
+			}	
+		}
 	}
-	if (!empty($dato['Dte']['tipo_documento'])) {
-		$dtes .= "\n";
-		$dtes .= "Tipo Dte: " . $this->tipoDocumento[$dato['Dte']['tipo_documento']];
-	}
-	if (!empty($dato['Dte']['estado'])) {
-		$dtes .= "\n";
-		$dtes .= "Estado: " . $this->tipoDocumento[$dato['Dte']['estado']];
-	}
-
+	
 	$this->PhpExcel->addTableRow(
 		array(
 			$dato['Venta']['id'],
