@@ -466,7 +466,7 @@ class VentasController extends AppController {
 	private function prestashop_obtener_ventas_antiguo($params = array(), $tienda = array())
 	{
 		# Modelos que requieren agregar configuración
-		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'Lang', 'CustomUserdata'), $tienda);
+		$this->cambiarDatasource(array('Orden'), $tienda);
 
 		$ordenes	= ClassRegistry::init('Orden')->find('all', $params);
 
@@ -536,10 +536,19 @@ class VentasController extends AppController {
 
 			$opt = array(
 				'conditions'	=> array('Orden.id_order >' => $venta['Venta']['id_externo']),
-				'contain' => array(
-					'OrdenEstado' => array('Lang'),
-					'OrdenDetalle'
-					)
+				'fields' => array(
+					'Orden.id_order',
+					'Orden.id_address_delivery',
+					'Orden.id_customer',
+					'Orden.current_state',
+					'Orden.date_add',
+					'Orden.payment',
+					'Orden.total_discounts_tax_incl',
+					'Orden.total_paid',
+					'Orden.total_products',
+					'Orden.total_shipping_tax_incl',
+					'Orden.reference'
+				)
 			);
 
 			$DataVentas = $this->prestashop_obtener_ventas_antiguo($opt, $tienda);
