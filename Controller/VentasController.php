@@ -2596,7 +2596,7 @@ class VentasController extends AppController {
 
 			if ($FiltroFechaDesde != "") {
 
-				$ArrayFecha = explode("/", $FiltroFechaDesde);
+				$ArrayFecha = explode("-", $FiltroFechaDesde);
 
 				$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
 
@@ -2618,7 +2618,7 @@ class VentasController extends AppController {
 
 			if ($FiltroFechaHasta != "") {
 
-				$ArrayFecha = explode("/", $FiltroFechaHasta);
+				$ArrayFecha = explode("-", $FiltroFechaHasta);
 
 				$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
 
@@ -2664,6 +2664,11 @@ class VentasController extends AppController {
 						'fields' => array(
 							'VentaCliente.nombre', 'VentaCliente.apellido', 'VentaCliente.rut', 'VentaCliente.email', 'VentaCliente.telefono',
 						)
+					),
+					'Dte' => array(
+						'fields' => array(
+							'Dte.estado', 'Dte.folio', 'Dte.tipo_documento'
+						)
 					)
 				),
 				'conditions' => $condiciones,
@@ -2675,7 +2680,7 @@ class VentasController extends AppController {
 				'order' => 'Venta.fecha_venta DESC'
 			)
 		);
-
+	
 		$this->set(compact('datos'));
 
 	}

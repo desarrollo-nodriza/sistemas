@@ -10,7 +10,7 @@ $this->PhpExcel->createWorksheet();
 $cabeceras		= array();
 $opciones		= array('width' => 'auto', 'filter' => true, 'wrap' => true);
 
-$campos = array("ID", "ID Externo", "Referencia", "Fecha", "Total", "Medio de Pago", "Estado", "Tienda", "Marketplace", "Cliente");
+$campos = array("ID", "ID Externo", "Referencia", "Fecha", "Total", "Medio de Pago", "Estado", "Tienda", "Marketplace", "Cliente", "Dte");
 
 foreach ($campos as $campo) {
 	array_push($cabeceras, array_merge(array('label' => Inflector::humanize($campo)), $opciones));
@@ -50,6 +50,19 @@ foreach ($datos as $dato) {
 		$cliente.= $dato['VentaCliente']['telefono'];
 	}
 
+	$dtes = '';
+	if (!empty($dato['Dte']['folio'])) {
+		$dtes .= "Folio: " . $dato['Dte']['folio'];
+	}
+	if (!empty($dato['Dte']['tipo_documento'])) {
+		$dtes .= "\n";
+		$dtes .= "Tipo Dte: " . $this->tipoDocumento[$dato['Dte']['tipo_documento']];
+	}
+	if (!empty($dato['Dte']['estado'])) {
+		$dtes .= "\n";
+		$dtes .= "Estado: " . $this->tipoDocumento[$dato['Dte']['estado']];
+	}
+
 	$this->PhpExcel->addTableRow(
 		array(
 			$dato['Venta']['id'],
@@ -61,7 +74,8 @@ foreach ($datos as $dato) {
 			$dato['VentaEstado']['VentaEstadoCategoria']['nombre'],
 			$dato['Tienda']['nombre'],
 			$marketplace,
-			$cliente
+			$cliente,
+			$dtes
 		)
 	);
 
