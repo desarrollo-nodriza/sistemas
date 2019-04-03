@@ -51,18 +51,18 @@ foreach ($datos as $dato) {
 	}
 
 	$dtes = '';
-	if (isset($datos['Dte'])) {
-		foreach ($datos['Dte'] as $dte) {
+	if (isset($dato['Dte'])) {
+		foreach ($dato['Dte'] as $dte) {
 			if (!empty($dte['folio'])) {
 				$dtes .= "Folio: " . $dte['folio'];
 			}
 			if (!empty($dte['tipo_documento'])) {
 				$dtes .= "\n";
-				$dtes .= "Tipo Dte: " . $this->tipoDocumento[$dte['tipo_documento']];
+				$dtes .= "Tipo Dte: " . $this->Html->tipoDocumento[$dte['tipo_documento']];
 			}
 			if (!empty($dte['estado'])) {
 				$dtes .= "\n";
-				$dtes .= "Estado: " . $this->tipoDocumento[$dte['estado']];
+				$dtes .= "Estado: " . $dte['estado'];
 			}	
 		}
 	}
