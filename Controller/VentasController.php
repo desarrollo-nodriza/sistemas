@@ -1630,7 +1630,7 @@ class VentasController extends AppController {
 		$dataToSave = array();
 
 		foreach ($ventas as $venta) {
-
+			/*
 			$opt = array();
 			$opt['resource'] = 'orders';
 			$opt['display'] = '[current_state,total_paid]';
@@ -1642,15 +1642,29 @@ class VentasController extends AppController {
 
 			$json = json_encode($PrestashopResources);
 			$data = json_decode($json, true);
-
+			*/
+		
+			# Modelos que requieren agregar configuración
+			$this->cambiarDatasource(array('Orden'), $tienda);
+		
+			$data = ClassRegistry::init('Orden')->find('first', array(
+				'conditions' => array(
+					'Orden.id_order' => $venta['Venta']['id_externo']
+				),
+				'fields' => array(
+					'Orden.current_state',
+					'Orden.total_paid'
+				)
+			));
+			
 			if (empty($data)) {
 				$venta['Venta']['estado_anterior'] = 1;
 				$venta['Venta']['venta_estado_id'] = 1; //Sin Estado
 			}
 			else {
 				$venta['Venta']['estado_anterior'] = $venta['Venta']['venta_estado_id'];
-				$venta['Venta']['venta_estado_id'] = $this->prestashop_obtener_venta_estado($data['order']['current_state'], $ConexionPrestashop);
-				$venta['Venta']['total']           = $data['order']['total_paid'];
+				$venta['Venta']['venta_estado_id'] = $this->prestashop_obtener_venta_estado($data['Orden']['current_state'], $ConexionPrestashop);
+				$venta['Venta']['total']           = $data['Orden']['total_paid'];
 			}
 
 			$dataToSave[] = $venta;
@@ -1681,7 +1695,7 @@ class VentasController extends AppController {
 					'Tienda.apikey_prestashop <>' => ''
 				),
 				'fields' => array(
-					'Tienda.id', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop'
+					'Tienda.id', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.configuracion'
 				)
 			)
 		);
