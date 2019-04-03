@@ -463,6 +463,36 @@ class VentasController extends AppController {
 
 	}
 
+	private function prestashop_obtener_ventas_antiguo($params = array())
+	{
+		# Modelos que requieren agregar configuración
+		$this->cambiarDatasource(array('Orden', 'OrdenEstado', 'Lang', 'CustomUserdata'));
+
+		$ordenes	= ClassRegistry::init('Orden')->find('all', $params);
+
+		$result = array();
+
+		if (!empty($ordenes)) {
+
+			foreach ($ordenes as $key => $value) {
+				$result['order'][$key]['id']                       = $value['Orden']['id_order'];
+				$result['order'][$key]['id_address_delivery']      = $value['Orden']['id_address_delivery'];
+				$result['order'][$key]['id_customer']              = $value['Orden']['id_customer'];
+				$result['order'][$key]['current_state']            = $value['Orden']['current_state'];
+				$result['order'][$key]['date_add']                 = $value['Orden']['date_add'];
+				$result['order'][$key]['payment']                  = $value['Orden']['payment'];
+				$result['order'][$key]['total_discounts_tax_incl'] = $value['Orden']['total_discounts_tax_incl'];
+				$result['order'][$key]['total_paid']               = $value['Orden']['total_paid'];
+				$result['order'][$key]['total_products']           = $value['Orden']['total_products'];
+				$result['order'][$key]['total_shipping_tax_incl']  = $value['Orden']['total_shipping_tax_incl'];
+				$result['order'][$key]['reference']                = $value['Orden']['reference'];
+			}
+		}
+
+		return $result;
+
+	}
+
 	/****************************************************************************************************/
 	//obtiene las órdenes de una tienda
 	private function prestashop_obtener_ventas ($tienda, $ConexionPrestashop) {
@@ -502,6 +532,19 @@ class VentasController extends AppController {
 		$json = json_encode($PrestashopResources);
 		$DataVentas = json_decode($json, true);
 		
+		if (empty($DataVentas) && !empty($venta)) {
+
+			$opt = array(
+				'conditions'	=> array('Orden.id_order >' => $venta['Venta']['id_externo']),
+				'contain' => array(
+					'OrdenEstado' => array('Lang'),
+					'OrdenDetalle'
+					)
+			);
+
+			$DataVentas = $this->prestashop_obtener_ventas_antiguo($opt);
+		}
+	
 		return $DataVentas;
 
 	}
