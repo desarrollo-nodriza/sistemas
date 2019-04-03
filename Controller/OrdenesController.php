@@ -1297,7 +1297,7 @@ class OrdenesController extends AppController
 
 			$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
 
-			$enviar = $thsi->LibreDte->enviarDteEmail(
+			$enviar = $this->LibreDte->enviarDteEmail(
 				$emails, 
 				$this->request->data['Orden']['dte'], 
 				$this->request->data['Orden']['folio'], 

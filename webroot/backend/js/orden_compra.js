@@ -66,6 +66,17 @@ $.extend({
 				    });
 				}
 
+				if ($ths.hasClass('js-precio-producto')) {
+					$ths.rules("add", {
+				        number: true,
+				        min: 1,
+				        messages: {
+				        	number: 'Ingrese solo números',
+				        	min: 'Costo no puede ser 0'
+				        }
+				    });
+				}
+
 			});
 
 		},
@@ -109,7 +120,20 @@ $.extend({
 					}
 
 
-					if ($that.hasClass('js-cantidad-producto') || $that.hasClass('js-precio-producto') || $that.hasClass('js-descuento-producto') || $that.hasClass('js-total-producto')) {
+					if ($that.hasClass('js-cantidad-producto') || $that.hasClass('js-total-producto')) {
+						$that.rules("add", {
+					        required: true,
+					        number: true,
+					        min: 1,
+					        messages: {
+					        	required: 'Campo requerido',
+					        	number: 'Ingrese solo números',
+					        	min: '1 es el mínimo'
+					        }
+					    });
+					}
+
+					if ($that.hasClass('js-descuento-producto')) {
 						$that.rules("add", {
 					        required: true,
 					        number: true,
@@ -118,6 +142,19 @@ $.extend({
 					        	required: 'Campo requerido',
 					        	number: 'Ingrese solo números',
 					        	min: '0 es el mínimo'
+					        }
+					    });
+					}
+
+					if ($that.hasClass('js-precio-producto')) {
+						$that.rules("add", {
+					        required: true,
+					        number: true,
+					        min: 1,
+					        messages: {
+					        	required: 'Campo requerido',
+					        	number: 'Ingrese solo números',
+					        	min: 'Costo no puede ser 0'
 					        }
 					    });
 					}
@@ -188,7 +225,7 @@ $.extend({
 						descuento = (descuento/100).toFixed(2);
 						descuento = Math.round(precio*descuento);
 					}
-					console.log(descuento);
+					
 					nuevoPrecio = precio - descuento;
 
 					if (cantidad > 0) {

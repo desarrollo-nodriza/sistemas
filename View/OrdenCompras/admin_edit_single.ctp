@@ -111,7 +111,7 @@
 										<td><?= $this->Form->input('VentaDetalleProducto.999.codigo', array('disabled' => true, 'type' => 'text', 'class' => 'form-control not-blank js-codigo-producto')); ?></td>
 										<td><?= $this->Form->input('VentaDetalleProducto.999.descripcion', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-descripcion-producto js-buscar-producto not-blank', 'style' =>'width: 200px;')); ?></td>
 										<td><?= $this->Form->input('VentaDetalleProducto.999.cantidad', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-cantidad-producto not-blank js-cantidad-producto not-blank is-number')); ?></td>
-										<td><?= $this->Form->input('VentaDetalleProducto.999.precio_unitario', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-precio-producto not-blank is-number')); ?></td>
+										<td><?= $this->Form->input('VentaDetalleProducto.999.precio_unitario', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-precio-producto not-blank')); ?></td>
 										<td data-toggle="tooltip" data-placement="top" title="" class="js-descuento-valor"><?= $this->Form->input('VentaDetalleProducto.999.descuento_producto', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-descuento-producto not-blank is-number')); ?></td>
 										<td><?= $this->Form->input('VentaDetalleProducto.999.total_neto', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-total-producto not-blank is-number')); ?></td>
 										<td valign="center">
@@ -129,7 +129,7 @@
 								
 										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['cantidad'])); ?></td>
 										
-										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.precio_unitario', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-precio-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['precio_unitario'], 'readonly' => 'readonly')); ?></td>
+										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.precio_unitario', $ipp), array('type' => 'text', 'class' => 'form-control not-blank js-precio-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['precio_unitario'], 'readonly' => 'readonly')); ?></td>
 										
 										
 										<td class="js-descuento-valor">

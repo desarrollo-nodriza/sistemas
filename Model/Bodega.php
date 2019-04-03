@@ -101,7 +101,7 @@ class Bodega extends AppModel
 		));
 
 		$pmp = ClassRegistry::init('VentaDetalleProducto')->field('precio_costo', array('id' => $id_producto));
-
+			
 		if (!empty($historico)) {
 			// Sumatoria de las cantidades
 			$inCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=IN].cantidad'));
@@ -110,7 +110,11 @@ class Bodega extends AppModel
 			$inTotal  = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=IN].total'));
 			$outTotal = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=ED].total'));
 
-			$pmp = ($inTotal - $outTotal) / ($inCantidad - $edCantidad);	
+			$div = ($inCantidad - $edCantidad);
+
+			if ($div != 0) {
+				$pmp = ($inTotal - $outTotal) / $div;	
+			}
 		}
 
 		return $pmp;
