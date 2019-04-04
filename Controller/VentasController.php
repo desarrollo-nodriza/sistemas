@@ -2278,7 +2278,7 @@ class VentasController extends AppController {
 							self::$Mercadolibre = new Meli($marketplace['api_user'], $marketplace['api_key'], $marketplace['access_token'], $marketplace['refresh_token']);
 
 							$ventasMercadolibre = $this->mercadolibre_obtener_ventas($marketplace);
-							prx($ventasMercadolibre);
+							
 							if (count($ventasMercadolibre['ventasMercadolibre']) > 0) {
 								//ciclo de ventas
 								foreach ($ventasMercadolibre['ventasMercadolibre'] as $DataVenta) {
