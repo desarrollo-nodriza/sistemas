@@ -740,7 +740,7 @@ class VentasController extends AppController {
 		# Descontar stock virtual y refrescar canales
 		$productosController = new VentaDetalleProductosController();
 
-		//$productosController->descontar_stock_virtual($DetalleVenta['product_id'], $DetalleVenta['product_id'], $nuevaCantidad, $excluir);
+		$productosController->descontar_stock_virtual($DetalleVenta['product_id'], $DetalleVenta['product_id'], $nuevaCantidad, $excluir);
 
 	}
 
@@ -999,7 +999,7 @@ class VentasController extends AppController {
 		# Descontar stock virtual y refrescar canales
 		$productosController = new VentaDetalleProductosController();
 
-		//$productosController->descontar_stock_virtual($DetalleVenta['Sku'], $DetalleVenta['Sku'], $nuevaCantidad, $excluir);
+		$productosController->descontar_stock_virtual($DetalleVenta['Sku'], $DetalleVenta['Sku'], $nuevaCantidad, $excluir);
 
 		return $DetalleVenta['Sku'];
 
@@ -1844,7 +1844,7 @@ class VentasController extends AppController {
 			
 			# Se refrescan solo una vez cada producto
 			foreach ($productoStocks as $id_producto => $data) {
-				//$productosController->descontar_stock_virtual($id_producto, $data['id_externo'], $data['nueva_cantidad'], $excluir);
+				$productosController->descontar_stock_virtual($id_producto, $data['id_externo'], $data['nueva_cantidad'], $excluir);
 			}
 
 		}
@@ -2278,7 +2278,7 @@ class VentasController extends AppController {
 							self::$Mercadolibre = new Meli($marketplace['api_user'], $marketplace['api_key'], $marketplace['access_token'], $marketplace['refresh_token']);
 
 							$ventasMercadolibre = $this->mercadolibre_obtener_ventas($marketplace);
-							
+							prx($ventasMercadolibre);
 							if (count($ventasMercadolibre['ventasMercadolibre']) > 0) {
 								//ciclo de ventas
 								foreach ($ventasMercadolibre['ventasMercadolibre'] as $DataVenta) {
@@ -2331,14 +2331,14 @@ class VentasController extends AppController {
 											'0' => $VentaDetalles['order_items']
 										);
 									}
-							
+									
 									//ciclo para recorrer el detalle de la venta
 									foreach ($VentaDetalles['order_items'] as $DetalleVenta) {
-										if (!empty($DetalleVenta['item']['seller_custom_field']) ) {
+										if (!empty($DetalleVenta['item']['seller_sku']) ) {
 
 											// Si el seller id es referencia entonces lo reemplazamos por ID
-											if (intval($DetalleVenta['item']['seller_custom_field']) == 0) {
-												$nuevoSellerID = $this->prestashop_obtener_idproducto($DetalleVenta['item']['seller_custom_field'], $ConexionPrestashop);
+											if (intval($DetalleVenta['item']['seller_sku']) == 0) {
+												$nuevoSellerID = $this->prestashop_obtener_idproducto($DetalleVenta['item']['seller_sku'], $ConexionPrestashop);
 
 												// No se logró encontrar el ID
 												if (!isset($nuevoSellerID['product']['id'])) {
@@ -2347,7 +2347,7 @@ class VentasController extends AppController {
 
 												$DetalleVenta['Sku']  = $nuevoSellerID['product']['id'];
 											}else{
-												$DetalleVenta['Sku']  = intval($DetalleVenta['item']['seller_custom_field']);
+												$DetalleVenta['Sku']  = intval($DetalleVenta['item']['seller_sku']);
 											}
 
 											
