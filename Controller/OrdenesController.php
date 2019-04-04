@@ -551,6 +551,21 @@ class OrdenesController extends AppController
 
 			//carga de mensajes de la venta
 			$venta['VentaMensaje'] = array();
+
+			# si no tiene items se crea uno vacio para ser mostrado en el front
+			if (empty($venta['VentaDetalle'])) {
+				$venta['VentaDetalle'][] = array(
+					'VentaDetalleProducto' => array(
+						'id'     => null,
+						'nombre' => null
+					),
+					'id'                        => null,
+					'venta_detalle_producto_id' => null,
+					'precio'                    => null, 
+					'cantidad'                  => null,
+					'venta_id'                  => $id_orden
+				);
+			}
 			
 			//----------------------------------------------------------------------------------------------------
 			//carga de mensajes de prestashop
