@@ -2766,7 +2766,7 @@ class VentasController extends AppController {
 						),
 						'fields' => array(
 							'Dte.id', 'Dte.folio', 'Dte.tipo_documento', 'Dte.rut_receptor', 'Dte.razon_social_receptor', 'Dte.giro_receptor', 'Dte.neto', 'Dte.iva',
-							'Dte.total', 'Dte.fecha', 'Dte.estado', 'Dte.pdf'
+							'Dte.total', 'Dte.fecha', 'Dte.estado', 'Dte.pdf', 'Dte.invalidado'
 						),
 						'order' => 'Dte.fecha DESC'
 					),

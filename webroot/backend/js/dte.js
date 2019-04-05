@@ -325,9 +325,6 @@ $.extend({
 				  			required: true,
 				  			min: 1,
 				  			digits: true
-				  		},
-				  		'data[Dte][glosa]' : {
-				  			max : 100
 				  		}
 				  	},
 				  	messages: {
@@ -403,9 +400,6 @@ $.extend({
 				  			required: 'Ingrese cantidad',
 				  			min: 'Debe ser mayor a 0',
 				  			digits: 'Solo números'
-				  		},
-				  		'data[Dte][glosa]' : {
-				  			max : 'Máximo 100 carácteres'
 				  		}
 				  	}
 

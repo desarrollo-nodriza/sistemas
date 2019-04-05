@@ -1223,7 +1223,8 @@ class MercadoLibresController extends AppController
 
 			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio_tienda'] = $producto['Productotienda']['precio'];
 			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['despacho']      = $costoEnvio;
-			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio']        = $producto['Productotienda']['precio'] + $costoEnvio;
+			$adicional = (float) 0.95;
+			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio']        = round($producto['Productotienda']['precio']/$adicional) + $costoEnvio;
 		}
 		
 		# Actualizamos de los productos publicados, tanto interna como en MELI

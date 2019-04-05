@@ -280,11 +280,12 @@
 												<tr class="sort">
 													<th>Folio</th>
 													<th>Administrador</th>
-													<th>Tipo de Dte</th>
+													<th style="max-width: 150px;">Tipo de Dte</th>
 													<th>Rut Receptor</th>
 													<th>Total</th>
 													<th>Fecha</th>
 													<th>Estado</th>
+													<th>Invalidado</th>
 													<th>Acciones</th>
 												</tr>
 											</thead>
@@ -293,8 +294,7 @@
 												
 												<?php
 													if (!empty($venta['Dte'])) :
-														foreach ($venta['Dte'] as $dte) :
-												?>
+														foreach ($venta['Dte'] as $dte) : ?>
 														<tr>
 															<td><?= h($dte['folio']); ?>&nbsp;</td>
 															<td><small><?= (!empty($dte['Administrador'])) ?  $dte['Administrador']['email'] : 'Sin administrador' ; ?></small>&nbsp;</td>
@@ -303,34 +303,35 @@
 															<td><?= CakeNumber::currency($dte['total'], 'CLP'); ?>&nbsp;</td>
 															<td><?= h($dte['fecha']); ?>&nbsp;</td>
 															<td><?= $dteestado = (isset($dte['estado'])) ? $this->Html->dteEstado($dte['estado']) : $this->Html->dteEstado() ; ?>&nbsp;</td>
+															<td><?= $dteinvalidado = ($dte['invalidado']) ? '<i class="fa fa-check"></i>' : '<i class="fa fa-close"></i>' ; ?>&nbsp;</td>
 															<td>
-			
+															<div class="btn-group">
 																<? if ($dte['estado'] == 'dte_real_emitido' && !empty($dte['pdf'])) : ?>
 																	<?= $this->Html->link(
-																	'<i class="fa fa-file"></i> Ver ' . $this->Html->tipoDocumento[$dte['tipo_documento']],
+																	'<i class="fa fa-file"></i> Ver ' . $this->Text->truncate($this->Html->tipoDocumento[$dte['tipo_documento']], 15),
 																	sprintf('/Dte/%d/%d/%s', $venta['Venta']['id'], $dte['id'], $dte['pdf']),
 																	array(
 																		'class' => 'btn btn-success btn-xs', 
-																		'target' => '_blank', 
+																		'target' => '_blank',
+																		'title' => 'Ver ' . $this->Html->tipoDocumento[$dte['tipo_documento']],
 																		'fullbase' => true,
+																		'data-toggle' => 'tooltip',
+																		'data-placement' => 'top',
+																		'data-original-title' => 'Ver ' . $this->Html->tipoDocumento[$dte['tipo_documento']],
 																		'escape' => false) 
 																	); ?>
 																<? endif; ?>
 
-																<div class="btn-group">
-				                                                    <a href="#" data-toggle="dropdown" class="btn btn-primary btn-xs dropdown-toggle" aria-expanded="false">Opciones <span class="caret"></span></a>
-				                                                    <ul class="dropdown-menu dropdown-menu-left" role="menu">
-				                                                        <li><?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('controller' => 'ordenes', 'action' => 'editar', $dte['id'], $this->request->data['Venta']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?></li>
-				                                                        <? if($permisos['delete']) : ?>
-				                                                        <!--<li>
-																			<?= $this->Html->link('<i class="fa fa-undo"></i> Invalidar', array('controller' => 'ordenes','action' => 'invalidar', $dte['id'], $this->request->data['Venta']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Invalidar este registro', 'escape' => false)); ?>
-																		</li>-->
-																		<? if ($dte['estado'] != 'dte_real_emitido') : ?>
-																			<li>
-																				<?= $this->Html->link('<i class="fa fa-trash"></i> Eliminar', array('controller' => 'ordenes','action' => 'delete_dte', $dte['id'], $this->request->data['Venta']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
-																			</li>
-																		<? endif; ?>
-																		<? endif; ?>                                                  
+																<?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('controller' => 'ordenes', 'action' => 'editar', $dte['id'], $this->request->data['Venta']['id']), array('class' => 'btn btn-info btn-xs', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+
+		                                                        <? if($permisos['delete']) : ?>
+		                                                        <!--<li>
+																	<?= $this->Html->link('<i class="fa fa-undo"></i> Invalidar', array('controller' => 'ordenes','action' => 'invalidar', $dte['id'], $this->request->data['Venta']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Invalidar este registro', 'escape' => false)); ?>
+																</li>-->
+																	<? if ($dte['estado'] != 'dte_real_emitido') : ?>
+																		<?= $this->Html->link('<i class="fa fa-trash"></i> Eliminar', array('controller' => 'ordenes','action' => 'delete_dte', $dte['id'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-xs', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
+																	<? endif; ?>
+																<? endif; ?>                                                  
 				                                                    </ul>
 				                                                </div>
 															</td>

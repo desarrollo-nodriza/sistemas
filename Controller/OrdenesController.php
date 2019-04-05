@@ -350,7 +350,7 @@ class OrdenesController extends AppController
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
 
-			if (!$this->unicoDteValido($id_orden)) {
+			if ( ($this->request->data['Dte']['tipo_documento'] == 33 || $this->request->data['Dte']['tipo_documento'] == 39) && !$this->unicoDteValido($id_orden)) {
 				$this->Session->setFlash('¡ERROR! No puedes generar 2 documentos válidos de venta. Debes solicitar una Nota de crédito.' , null, array(), 'danger');
 				$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
 			}
@@ -1251,14 +1251,32 @@ class OrdenesController extends AppController
 					continue;
 				}
 
-				$DteReferencia[$count] = array(
-					'NroLinRef' => $count,
+				$DteReferencia = array(
 					'TpoDocRef' => $ref['tipo_documento'],
 					'FolioRef' => $ref['folio'],
 					'FchRef' => $ref['fecha'],
 					'CodRef' => $ref['codigo_referencia'],
 					'RazonRef' => $ref['razon']
 				);
+
+				# Al ser nota de crédito invalida un documento de venta especifico...
+				if ($this->request->data['Dte']['tipo_documento'] == 61) {
+					$dteReferenciado = ClassRegistry::init('Dte')->find('first', array(
+						'conditions' => array(
+							'Dte.folio'          => $ref['folio'],
+							'Dte.tipo_documento' => array(33,39),
+							'Dte.venta_id'       => $this->request->data['Dte']['venta_id']
+						),
+						'fields' => array(
+							'Dte.id'
+						)
+					));
+
+					if (!empty($dteReferenciado)) {
+						ClassRegistry::init('Dte')->id = $dteReferenciado['Dte']['id'];
+						ClassRegistry::init('Dte')->saveField('invalidado', 1);
+					}
+				}
 
 				$count++;
 			}
