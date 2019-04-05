@@ -735,7 +735,7 @@ class VentaDetalleProductosController extends AppController
 	}
 
 	public function admin_edit($id = null)
-	{
+	{	
 		if ( ! $this->VentaDetalleProducto->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
@@ -889,42 +889,9 @@ class VentaDetalleProductosController extends AppController
 
 		$bodega = ClassRegistry::init('Bodega')->find('first');
 
-		$save   = array(
-			'VentaDetalleProducto' => array(
-				'id' => $id,
-				'cantidad_virtual' => $nuevaCantidad
-			)
-		);
+		$this->VentaDetalleProducto->id = $id;
 
-		# Devolver a bodega
-		if (!empty($bodega) && !is_null($devueltos)) {
-			$save['Bodega'] = array(
-				'Bodega' => array(
-					'bodega_id' => $bodega['Bodega']['id'],
-					'cantidad'  => $devueltos,
-					'io' 		=> 'IN',
-				)
-			);
-
-			$detalle = $this->VentaDetalleProducto->find('first', array(
-				'conditions' => array(
-					'VentaDetalleProducto.id' => $id
-				),
-				'contain' => array(
-					'Bodega'
-				)
-			));
-
-			if (isset($detalle['VentaDetalleProducto']['Bodega'])) {
-				
-				foreach ($detalle['VentaDetalleProducto']['Bodega'] as $i => $movimiento) {
-					$save['Bodega'][]  = $movimiento['BodegasVentaDetalleProducto'];
-				}
-			}
-
-		}
-		
-		if ($this->VentaDetalleProducto->saveAll($save)) {
+		if ($this->VentaDetalleProducto->saveField('cantidad_virtual', $nuevaCantidad)) {
 			
 			$res = $this->actualizar_canales_stock($id_externo, $nuevaCantidad, $excluir);
 
@@ -1443,7 +1410,7 @@ class VentaDetalleProductosController extends AppController
 	 * 	Obitne los productos desde prestashop
 	 * @return [type] [description]
 	 */
-	public function obtener_productos_base()
+	public function admin_obtener_productos_base()
 	{	
 		# Se carga el componente directamente para ser usado por la consola
 		$this->Prestashop = $this->Components->load('Prestashop');
@@ -1494,7 +1461,7 @@ class VentaDetalleProductosController extends AppController
 				$productosLocales[$ip]['VentaDetalleProducto']['codigo_proveedor'] = $p['supplier_reference'];
 				$productosLocales[$ip]['VentaDetalleProducto']['marca_id'] 		   = $p['id_manufacturer'];
 				$productosLocales[$ip]['VentaDetalleProducto']['nombre']           = $p['name']['language'];
-				$productosLocales[$ip]['VentaDetalleProducto']['cantidad_virtual'] = $stock['stock_available']['quantity'];
+				$productosLocales[$ip]['VentaDetalleProducto']['cantidad_virtual'] = 0;
 
 			}
 

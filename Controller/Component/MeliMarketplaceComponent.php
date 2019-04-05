@@ -426,6 +426,97 @@ class MeliMarketplaceComponent extends Component
 	}
 
 
+	public function obtener_scroll_id($seller_id)
+	{
+		$params = array(
+			'search_type' => 'scan',
+			'access_token' => self::$accessToken,
+		);
+
+		try {
+			$q = self::$MeliConexion->get('/users/' . $seller_id . '/items/search' , $params);
+			$q = to_array($q);
+		} catch (Exception $e) {
+			# 
+		}
+
+		if (isset($q['body']['scroll_id'])) {
+			return $q['body']['scroll_id'];	
+		}
+
+		return '';
+	}
+
+
+	public function mercadolibre_obtener_productos($seller_id = '', $limit = 50, $offset = 0, $scroll_id = '')
+	{
+		$params = array(
+			'access_token' => self::$accessToken,
+			'limit' => $limit,
+			'offset' => $offset
+		);
+
+		if (!empty($scroll_id)) {
+			$params = array(
+				'search_type'  => 'scan',
+				'access_token' => self::$accessToken,
+				'scroll_id'    => $scroll_id
+			);
+		}
+
+		try {
+			$producto = self::$MeliConexion->get('/users/' . $seller_id . '/items/search' , $params);
+			$producto = to_array($producto);
+		} catch (Exception $e) {
+			
+		}
+		
+		if ($producto['httpCode'] == 200) {
+			if (!empty($producto['body']) ) {
+				return $producto['body'];
+			}			
+		}else{
+
+		}
+
+		return array();
+	}
+
+
+	public function mercadolibre_obtener_todos_productos($seller_id)
+	{
+		$productosMeli = $this->mercadolibre_obtener_productos($seller_id);
+		$scroll_id     = $this->obtener_scroll_id($seller_id);
+
+		$misProductos = array();
+
+		if (!empty($productosMeli)) {
+
+			$totalItems = $productosMeli['paging']['total'];
+			$limite     = $productosMeli['paging']['limit'];
+			$salto      = $productosMeli['paging']['offset'];
+			
+			$iteraciones = round($totalItems/$limite, 0)+1;
+
+			for ($i=0; $i < $iteraciones; $i++) {
+				
+				$salto = $salto + $limite;
+
+				$query = $this->mercadolibre_obtener_productos($seller_id, $limite, $salto, $scroll_id);	
+				
+				$misProductos[$i] = (!empty($query['results'])) ? $query['results'] : array();		
+
+				if (count($misProductos[$i]) < 50 && !empty($misProductos[$i])) {
+					break;
+				}
+
+			}
+		}
+
+		return Hash::flatten($misProductos);
+	}
+
+
 
 	public function mercadolibre_actualizar_stock($meli, $stock)
 	{	
@@ -437,4 +528,65 @@ class MeliMarketplaceComponent extends Component
 
 		return $result;
 	}
+
+
+	public function mercadolibre_normalizar_seller_custom_field($seller_id)
+	{
+		$misProductosIds = $this->mercadolibre_obtener_todos_productos($seller_id);
+		$misProductos = array();
+
+		foreach ($misProductosIds as $idMCL) {
+			$misProductos[$idMCL] = $this->mercadolibre_obtener_producto($idMCL);
+		}
+
+		foreach ($misProductos as $item) {
+			
+			# Buscamos en atributos el valor seller_sku
+			$seller_sku = Hash::extract($item['attributes'], '{n}[id=SELLER_SKU].value_name');
+
+			if (isset($seller_sku[0])) {
+
+				$itemGuardar = array("seller_custom_field" => $seller_sku[0]);
+			
+				# Actualizamos el seller_custom_fields si corresponde
+				$guardado = $this->update($item['id'], $itemGuardar);
+				debug($guardado);	
+			}
+
+		}
+
+		echo 'Finalizado';
+		exit;
+	}
+
+
+
+	/**
+	 * Actualizar un item en mercado libre
+	 * 
+	 * @param 	$id 					String 		Identificador de mercado libre del item.
+	 * @param 	$title 					String 		El título es un atributo obligatorio y la clave para que los compradores encuentren 
+	 *												tu producto; por eso, debes ser lo más específico posible.
+	 * @param 	$price 					Bigint 		Éste es un atributo obligatorio: cuando defines un nuevo artículo, debe tener precio.
+	 * @param 	$currency_id 			String 		Además del precio, debes definir una moneda. Este atributo también es obligatorio. 
+	 *												Debes definirla utilizando un ID preestablecido.
+	 * @param 	$available_quantity		String 		Este atributo define el stock, que es la cantidad de productos disponibles para la 
+	 * 												venta de este artículo.
+	 * @param 	$video_id 				String 		Identificador de video de Youtube
+	 * @param  	$pictures 				Array 		Arreglo de imágenes con el formato array(array('source' => 'url_image'), array('source' => 'url_image_"'));
+	 * 
+	 * Más información en:  http://developers.mercadolibre.com/es/producto-sincroniza-modifica-publicaciones/#Actualiza-tu-art%C3%ADculo
+	 *
+	 * @return Arr devuelto por MELI	 
+	 */
+	public function update($id, $item = array())
+	{			
+		// We call the post request to list a item
+		$result = self::$MeliConexion->put('/items/' . $id, $item, array('access_token' => self::$accessToken));
+		$result = to_array($result);
+
+		return $result;
+
+	}
+
 }

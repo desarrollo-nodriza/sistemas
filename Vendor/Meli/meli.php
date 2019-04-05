@@ -158,6 +158,13 @@ class Meli {
         }        
     }
 
+
+    public function get_client_id()
+    {
+        return $this->client_id;
+    }
+
+
     /**
      * Execute a GET Request
      * 
