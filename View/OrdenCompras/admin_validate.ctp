@@ -14,9 +14,9 @@
 					<div class="panel-heading">
 						<h3 class="panel-title"><i class="fa fa-industry"></i> Relacionar proveedor</h3>
 					</div>
-					<div class="panel-body row">
+					<div class="panel-body">
 						<? foreach ($productosIncompletos as $ip => $p) : ?>
-							
+						<div class="row">
 							<?= $this->Form->input(sprintf('%d.VentaDetalleProducto.id', $ip), array('value' => $p['VentaDetalleProducto']['id'], 'type' => 'hidden')); ?>
 
 							<div class="form-group col-xs-12 col-md-4">
@@ -45,8 +45,8 @@
 									'default' => $p['VentaDetalleProducto']['marca_id'])
 									); ?>
 							</div>
+						</div>
 						<? endforeach; ?>
-					</div>
 					<div class="panel-footer">
 						<div class="pull-right">
 							<button type="submit" class="btn btn-primary">Guardar relación y continuar</button>

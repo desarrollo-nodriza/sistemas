@@ -2706,6 +2706,17 @@ class VentasController extends AppController {
 			$this->redirect(array('action' => 'index'));
 		}
 
+
+		if ($this->request->is('post') || $this->request->is('put')) {
+			
+			if ($this->Venta->save($this->request->data)) {
+				$this->Session->setFlash('Cambio de estado realizado con éxito.', null, array(), 'success');
+			}else{
+				$this->Session->setFlash('Error al cambiar el estado.', null, array(), 'danger');
+			}
+
+		}
+
 		$venta = $this->request->data = $this->Venta->find(
 			'first',
 			array(
@@ -2920,11 +2931,13 @@ class VentasController extends AppController {
 			}
 
 		}
+
+		$ventaEstados = ClassRegistry::init('VentaEstado')->find('list', array('conditions' => array('activo' => 1)));
 		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
-		$this->set(compact('venta'));
+		$this->set(compact('venta', 'ventaEstados'));
 
 	}
 

@@ -436,6 +436,35 @@
 			</div>
 		</div>
 	</div>
+	
+	<? if ($permisos['change_state']) : ?>
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="panel panel-danger">
+				<?= $this->Form->create('Venta', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+				<?=$this->Form->input('id');?>
+				<?=$this->Form->hidden('atendida', array('value' => 1)); ?>
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?=__('Cambiar estado'); ?></h3>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table">
+							<tr>
+								<th><?= $this->Form->label('venta_estado_id', 'Estado de la venta'); ?></th>
+								<td><?= $this->Form->input('venta_estado_id'); ?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+				</div>
+				<?= $this->Form->end(); ?>
+			</div>
+		</div>
+	</div>
+	<? endif; ?>
 </div>
 
 

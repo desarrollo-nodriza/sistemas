@@ -1279,11 +1279,11 @@ class OrdenComprasController extends AppController
 
 
 		$fecha_actual = date("Y-m-d H:i:s");
-		$hace_un_mes  = date("Y-m-d H:i:s",strtotime($fecha_actual."- 1 months")); 
+		$hace_un_mes  = date("Y-m-d H:i:s",strtotime($fecha_actual."-1 month")); 
 
 		$ventas          = $this->OrdenCompra->Venta->find('all', array(
 			'conditions' => array(
-				'Venta.fecha_venta BETWEEN ? AND ?' => array($hace_un_mes, $fecha_actual)
+				'Venta.fecha_venta >' => $hace_un_mes
 			),
 			'fields' => array(
 				'Venta.id', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total'

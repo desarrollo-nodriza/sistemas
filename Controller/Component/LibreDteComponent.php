@@ -428,14 +428,14 @@ class LibreDteComponent extends Component
 		# Esquema para datos
 		$datos = array(
 			'emails' => $emails,
-			'asunto' => $this->request->data['Orden']['asunto'],
-			'mensaje' => $this->request->data['Orden']['mensaje'],
+			'asunto' => $asunto,
+			'mensaje' => $mensaje,
 			'pdf' => $pdf,
 			'cedible' => $cedible,
 			'papelContinuo' => $papelContinuo
 		);
 		
-		$enviar = $LibreDTE->post('/dte/dte_emitidos/enviar_email/'.$this->request->data['Orden']['dte'].'/'.$this->request->data['Orden']['folio'].'/'.$this->request->data['Orden']['emisor'], $datos);
+		$enviar = $this->ConexionLibreDte->post('/dte/dte_emitidos/enviar_email/'.$dte.'/'.$folio.'/'.$emisor, $datos);
 
 		if ($enviar['status']['code'] == 200) {
 			return true;
@@ -474,7 +474,7 @@ class LibreDteComponent extends Component
 				);
 
 				// crear DTE real
-				$generar = $LibreDTE->post('/dte/documentos/generar', $data);
+				$generar = $this->ConexionLibreDte->post('/dte/documentos/generar', $data);
 				
 				if ($generar['status']['code']!=200) {
 
