@@ -164,6 +164,107 @@ class PrestashopComponent extends Component
 
 	}
 
+	public function prestashop_obtener_estado_por_nombre($estado)
+	{	
+		try {
+			$opt               = array();
+			$opt['resource']   = 'order_states';
+			$opt['display']    = '[id,name]';
+			$opt['filter[name]'] = '[' .$estado. ']';
+
+			$xml = $this->ConexionPrestashop->get($opt);
+
+			$PrestashopResources = $xml->children()->children();
+
+			$estado = to_array($PrestashopResources);	
+		} catch (PrestaShopWebserviceException $ex) {
+			
+		}
+
+		if (!isset($estado['order_state'])) {
+			return array(); // Sin estado
+		}
+
+		return $estado['order_state'];
+	}
+
+
+	public function prestashop_cambiar_estado_venta($id, $estado_id, $apiurl = '')
+	{	
+		# Cambiamos directamente el estado actual del pedido y hace el envio correspondiente de emails. ¡Wena CTM!
+		return $this->prestashop_cambiar_estado_actual_venta($id, $estado_id);
+
+		# Se crea un registro en orderhistory y luego se setea el campo current_state de la orden o venta
+		$ordenHistoria = false;
+        
+        # Obtenemos el esquema del modelo
+		try {
+			$opt = array('resource' => 'order_histories');			
+			$xml = $this->ConexionPrestashop->get(array('url' => $apiurl.'/api/order_histories?schema=blank'));
+			$resources = $xml->children()->children();
+			
+		} catch (PrestaShopWebserviceException $ex) {
+			return false;
+		}
+
+		foreach ($resources as $nodeKey => $node)
+		{	
+			$resources->id_employee = 1;
+			$resources->id_order_state = $estado_id;
+			$resources->id_order = $id;
+			$resources->date_add = date('Y-m-d H:i:s');
+		}
+
+		try {
+			
+			$opt['postXml'] = $xml->asXML();
+			$xml = $this->ConexionPrestashop->add($opt);
+			
+			$ordenHistoria = true;
+
+		}
+		catch (PrestaShopWebserviceException $ex)
+		{	
+			#prx($ex->getMessage());
+		}
+
+		if ($ordenHistoria) {
+			return true;
+			return $this->prestashop_cambiar_estado_actual_venta($id, $estado_id);
+		}
+
+		return false;
+	}
+
+
+
+	public function prestashop_cambiar_estado_actual_venta($id_venta, $estado_id)
+	{
+		try {
+
+			$opt                       = array();
+			$opt['resource']           = 'orders';
+			$opt['id'] = $id_venta;
+
+			$xml       = $this->ConexionPrestashop->get($opt);
+			$resources = $xml->children()->children();
+			
+			$resources->current_state = $estado_id;
+			
+			$opt           = array('resource' => 'orders');
+			$opt['putXml'] = $xml->asXML();
+			$opt['id'] 	   = $estado_id; 
+			$xml           = $this->ConexionPrestashop->edit($opt);
+			
+		} catch (PrestaShopWebserviceException $ex) {
+			//prx($ex->getMessage());
+			 // No actualizado
+			return false;
+		}
+
+		return true;
+	}
+
 
 	/****************************************************************************************************/
 	//obtiene el id de un medio de pago

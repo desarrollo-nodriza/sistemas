@@ -179,8 +179,9 @@ $.extend({
 		}
 	},
 	meli: {
-		listShipping: function(categoria_hoja){
-			var requestUrl 	= webroot + 'mercadoLibres/envioDisponible/' + categoria_hoja + '/true';
+		listShipping: function(categoria_hoja, $precio = ''){			
+
+			var requestUrl 	= webroot + 'mercadoLibres/envioDisponible/' + categoria_hoja + '/true/' + $precio;
 			var html = "";
 			$.get(requestUrl, function(result){
 
@@ -250,7 +251,7 @@ $.extend({
 		},
 		predictor : {
 			request: function(nombre, precio){
-
+				console.log('Request');
 				if (nombre != ''){
 					var requestUrl 	= webroot + 'mercadoLibres/obtener_prediccion_categoria/' + nombre + '' + precio;
 					var html = "";
@@ -280,8 +281,8 @@ $.extend({
 
 					event.preventDefault();
 
-					var nombre   = $('#MercadoLibrProducto').val();
-					var precio = $('#MercadoLibrPrecio').val();
+					var nombre = $('.js-nombre').eq(0).val();
+					var precio = $('.js-precio').eq(0).val();
 
 					$.meli.predictor.request(nombre, precio);
 					
@@ -289,8 +290,8 @@ $.extend({
 			},
 			init: function(){
 
-				var nombre   = $('#MercadoLibrProducto').val();
-				var precio = $('#MercadoLibrPrecio').val();
+				var nombre = $('.js-nombre').eq(0).val();
+				var precio = $('.js-precio').eq(0).val();
 
 				$.meli.predictor.request(nombre, precio);
 
@@ -312,6 +313,48 @@ $.extend({
 				$('.meli-custom-list').addClass('hide');
 			}
 			
+		},
+		autocompletarBuscar:function(){
+			$('.input-productos-buscar-meli').each(function(){
+				var $esto 	= $(this),
+					image 	= '',
+					name 	= '',
+					description = '',
+					specs = '',
+					stock = '';
+				
+				$esto.autocomplete({
+				   	source: function(request, response) {
+				      	$.get( webroot + 'mercadoLibres/obtener_productos/' + request.term, function(respuesta){
+				      		
+							response( $.parseJSON(respuesta) );
+
+				      	})
+				      	.fail(function(){
+							$.app.loader.ocultar();
+
+							noty({text: 'Ocurrió un error al obtener la información. Intente nuevamente.', layout: 'topRight', type: 'error'});
+
+							setTimeout(function(){
+								$.noty.closeAll();
+							}, 10000);
+						});
+				    },
+				    select: function( event, ui ) {
+				        console.log("Seleccionado: " + ui.item.value + " id " + ui.item.id);
+				   
+				        $('.id-product').val(ui.item.id);
+				        $('.js-nombre').val(ui.item.nombre);
+				        $('.js-precio').val(ui.item.precio);
+				        $('.js-imagen').val(ui.item.imagen);
+				        $('.js-imagen-preview').attr('src', ui.item.imagen);
+				        $('.js-stock').val(ui.item.stock);
+				        $('.js-description').val(ui.item.description);
+
+				        $.meli.predictor.init();
+				    }
+				});
+			});
 		},
 		bind:function(){
 
@@ -356,7 +399,7 @@ $.extend({
 
 						}else{
 
-							$.meli.listShipping($this.val());
+							$.meli.listShipping($this.val(), $('.js-precio').eq(0).val());
 							
 							$.app.loader.ocultar();
 
@@ -379,6 +422,8 @@ $.extend({
 			if ($('.meli-custom-shipment').length) {
 				$.meli.shipping();
 			}
+
+			$.meli.autocompletarBuscar();
 
 			$.graficosMeli.init();
 

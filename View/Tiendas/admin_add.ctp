@@ -61,6 +61,38 @@
 								<th><?= $this->Form->label('emails_bcc', 'Email para <br> Copia oculta'); ?></th>
 								<td><?= $this->Form->input('emails_bcc', array('placeholder' => 'Emails separados por coma (,)')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('apiurl_prestashop', 'Api Url Prestashop'); ?></th>
+								<td><?= $this->Form->input('apiurl_prestashop'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('apikey_prestashop', 'Api Key Prestashop'); ?></th>
+								<td><?= $this->Form->input('apikey_prestashop'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('apiurl_linio', 'Api Url Linio'); ?></th>
+								<td><?= $this->Form->input('apiurl_linio'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('apiuser_linio', 'Api User Linio'); ?></th>
+								<td><?= $this->Form->input('apiuser_linio'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('apikey_linio', 'Api Key Linio'); ?></th>
+								<td><?= $this->Form->input('apikey_linio'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('facturacion_apikey', 'Api Key Libredte'); ?></th>
+								<td><?= $this->Form->input('facturacion_apikey'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('sincronizacion_automatica_linio', 'Sincronización Automática de Linio'); ?></th>
+								<td><?= $this->Form->input('sincronizacion_automatica_linio', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('url_almaceamiento_externo', 'S3 endpoint'); ?></th>
+								<td><?= $this->Form->input('url_almaceamiento_externo'); ?></td>
+							</tr>
 						</table>
 						<div class="pull-right">
 							<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">

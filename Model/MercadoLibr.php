@@ -125,6 +125,15 @@ class MercadoLibr extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Tienda')
+		),
+		'Marketplace' => array(
+			'className'				=> 'Marketplace',
+			'foreignKey'			=> 'marketplace_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Tienda')
 		)
 	);
 

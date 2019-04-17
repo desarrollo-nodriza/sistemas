@@ -91,6 +91,10 @@
 								<th><?= $this->Form->label('sincronizacion_automatica_linio', 'Sincronización Automática de Linio'); ?></th>
 								<td><?= $this->Form->input('sincronizacion_automatica_linio', array('class' => 'icheckbox')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('url_almaceamiento_externo', 'S3 endpoint'); ?></th>
+								<td><?= $this->Form->input('url_almaceamiento_externo'); ?></td>
+							</tr>
 						</table>
 						<div class="pull-right">
 							<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">

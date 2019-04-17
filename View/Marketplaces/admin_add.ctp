@@ -27,6 +27,10 @@
                                     </td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('porcentaje_adicional', 'Porcentaje adicional'); ?></th>
+									<td><?= $this->Form->input('porcentaje_adicional', array('type' => 'text')); ?></td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('api_host', 'Api Host'); ?></th>
 									<td><?= $this->Form->input('api_host'); ?></td>
 								</tr>

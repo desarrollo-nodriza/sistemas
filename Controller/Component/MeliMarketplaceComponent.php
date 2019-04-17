@@ -78,6 +78,10 @@ class MeliMarketplaceComponent extends Component
 
 					self::$accessToken = $marketplace['access_token'];
 
+					if (!isset($marketplace['MarketplaceTipo'])) {
+						$marketplace['MarketplaceTipo']['nombre'] = ClassRegistry::init('MarketplaceTipo')->field('nombre', $marketplace['marketplace_tipo_id']);
+					}
+
 					$response['success'] = sprintf('%s sigue conectado a %s', $marketplace['nombre'], $marketplace['MarketplaceTipo']['nombre']);
 				}
 			}
@@ -86,9 +90,21 @@ class MeliMarketplaceComponent extends Component
 			if (!empty($m) && empty($response[$marketplace['id']]['errors'])) {
 
 				ClassRegistry::init('Marketplace')->id = $marketplace['id'];
+
+				if (!isset($marketplace['MarketplaceTipo'])) {
+					$marketplace['MarketplaceTipo']['nombre'] = ClassRegistry::init('MarketplaceTipo')->field('nombre', $marketplace['marketplace_tipo_id']);
+				}
+
 				if (!ClassRegistry::init('Marketplace')->save($m)) {
 					$response['errors'] = sprintf('%s no se logró conectar a %s', $marketplace['nombre'], $marketplace['MarketplaceTipo']['nombre']);
 				}else{
+
+					# Guardamos los nuevos valores de conexion
+					$this->Session->write('Marketplace.access_token', $m['Marketplace']['access_token']);
+					$this->Session->write('Marketplace.expires_token', $m['Marketplace']['expires_token']);
+					$this->Session->write('Marketplace.refresh_token', $m['Marketplace']['refresh_token']);
+					$this->Session->write('Marketplace.seller_id', $m['Marketplace']['seller_id']);
+
 					$response['success'] = sprintf('%s se ha conectado con éxito a %s', $marketplace['nombre'], $marketplace['MarketplaceTipo']['nombre']);
 				}
 			}
@@ -550,7 +566,7 @@ class MeliMarketplaceComponent extends Component
 			
 				# Actualizamos el seller_custom_fields si corresponde
 				$guardado = $this->update($item['id'], $itemGuardar);
-				debug($guardado);	
+					
 			}
 
 		}
@@ -559,6 +575,196 @@ class MeliMarketplaceComponent extends Component
 		exit;
 	}
 
+
+	/**
+	 * Categorias
+	 */
+
+	/**
+	 * Sites puede ofrecerte la estructura de categorías para un país en particular
+	 * 
+	 * Más info: http://developers.mercadolibre.com/es/categoriza-productos/#Categor%C3%ADas-por-Site
+	 * @return 	Objeto de categorias
+	 */
+	public function mercadolibre_obtener_categorias($siteId = 'MLC')
+	{
+
+		$result = self::$MeliConexion->get('/sites/'.$siteId.'/categories');
+
+		return $result;
+	}
+
+
+	/**
+	 * Tipos de publicación
+	 * Existen diferentes tipos de publicación disponibles para cada país.
+	 * El método obtiene los tipos de publicación disponibles para el pais
+	 *
+	 * Más información: http://developers.mercadolibre.com/es/publica-productos/#Tipos-de-publicacion
+	 *
+	 * @param $type 	$tring 		Identificador del tipo de publicación.
+	 *
+	 * @return 	Objeto de categorias
+	 */
+	public function mercadolibre_tipo_publicacion($type = '', $lista = false)
+	{
+		$result = to_array(self::$MeliConexion->get('/sites/MLC/listing_types/' . $type));
+
+		$listType = array();
+		if ($result['httpCode'] != 200) {
+			return '';
+		}else{
+			foreach ($result['body'] as $k => $type) {
+				$listType[$type['id']] = $type['name'];
+			}
+		}
+
+		if ($lista) {
+			return $listType;
+		}
+
+		return $result['body'];
+	}
+
+
+	/**
+	 * El recurso de predicción de categorías fue creado para ayudar a vendedores y 
+	 * desarrolladores a predecir en qué categoría se debería publicar un artículo determinado. 
+	 * Actualmente se encuentra en funcionamiento en Argentina, Bolivia, Brasil, 
+	 * Chile, Colombia, Costa Rica, Dominicana, Ecuador, Honduras, Guatemala, México, Nicaragua, 
+	 * Paraguay, Panamá, Perú, Portugal, Salvador, Uruguay y Venezuela.
+	 *
+	 * Más info: http://developers.mercadolibre.com/es/api-prediccion-categorias/
+	 * @param 	$title 				String 		El título del artículo a predecir. Debe ser un título completo 
+	 *											en el idioma del sitio. Este parámetro es obligatorio.
+	 * @param 	$category_from		String 		Este parámetro acepta una categoría de nivel 1 y se utiliza para 
+	 *											limitar la predicción al subárbol que abarca desde category_from hasta la raíz. 
+	 *											Este parámetro es opcional.
+	 * @param 	$price 				String 		El precio del artículo a predecir. El objetivo de este parámetro 
+	 * 											es ofrecer información adicional para mejorar la predicción. Este parámetro es opcional.
+	 * @param 	$seller_id 			String 		ID del vendedor del artículo a predecir. El objetivo de este parámetro es ofrecer 
+	 *											información adicional para mejorar la predicción. Este parámetro es opcional.
+	 * @return 	Objeto de categorias
+	 */
+	public function mercadolibre_obtener_categoria_preferida($title, $category_from = '', $price = '', $seller_id = '')
+	{	
+		if (empty($title)) {
+			return;
+		}
+
+		$params = array();
+
+		$params['title'] = str_replace(' ', '%', $title);
+
+		if (!empty($category_from)) {
+			$params['category_from'] = $category_from;
+		}
+
+		if (!empty($price)) {
+			$params['price'] = $price;
+		}
+
+		if (!empty($seller_id)) {
+			$params['seller_id'] = $seller_id;
+		}
+
+		$result = self::$MeliConexion->get('/sites/MLC/category_predictor/predict', $params);
+
+		return $result;
+	}
+
+
+	/**
+	 * Categorías de segundo nivel o información relacionada con categorías específicas, 
+	 * debemos utilizar el recurso Categorías y enviar el ID de categoría como parámetro.
+	 * 
+	 * Más info: http://developers.mercadolibre.com/es/categoriza-productos/#Categor%C3%ADas-por-Site
+	 * @param 	$id 	string 		Identificador de la categoria
+	 * @return 	Objeto de categorias
+ 	 */
+	public function mercadolibre_obtener_categoria_por_id($id =  '')
+	{
+		return self::$MeliConexion->get(sprintf('/categories/%s', $id));
+	}
+
+
+	/************************************************************
+							Envio
+	*************************************************************/
+
+	public function mercadolibre_obtener_modo_envio($category_id, $precio = '', $seller_id)
+	{
+		$params =  array(
+			'category_id' => $category_id,
+			'item_price' => round($precio, 0)
+		);
+
+		$result = to_array(self::$MeliConexion->get('/users/' . $seller_id . '/shipping_modes', $params));
+		
+		if ($result['httpCode'] != 200) {
+			return;
+		}else{
+			return array_reverse($result);
+		}
+	}
+
+
+	/**
+	 * Calcula los costos de envío gratis por artículo
+	 * 
+	 * Más información : http://developers.mercadolibre.com/es/enviogratis/
+	 * 
+	 * @param  string  	$id   Identificador del item
+	 * @param  string   $type   tipo de envio
+	 * @return float       Precio del envío
+	 */
+	public function mercadolibre_obtener_costo_envio($id, $type = 'free')
+	{
+	
+		$result = to_array(self::$MeliConexion->get('items/'.$id.'/shipping_options/' . $type));
+		
+		if ($result['httpCode'] != 200) {
+			return;
+		}else{
+			return $result['body']['coverage']['all_country']['list_cost'];
+		}
+	}
+
+	/**
+	 * Función que retorna la información de envio de un producto
+	 * @param $id 		String 		Identificador del producto en MELI
+	 * @return array 	Arreglo con la información del envio del item
+	 */
+	public function mercadolbre_obtener_metodo_envio_item($id)
+	{
+
+		$result = to_array(self::$MeliConexion->get('items/'.$id.'/shipping_options'));
+		
+		if ($result['httpCode'] != 200) {
+			return;
+		}else{
+			return $result['body'];
+		}
+	}
+
+
+	/************************************************************
+							Mi cuenta
+	*************************************************************/
+
+
+
+	public function admin_obtener_tiendas_oficiales($seller_id)
+	{	
+		
+		$result = self::$MeliConexion->get('/users/' . $seller_id . '/brands');
+		
+		if ($result['httpCode'] != 200) {
+			return array();
+		}
+
+		return to_array($result)['body']['brands'];
+	}
 
 
 	/**
@@ -586,6 +792,225 @@ class MeliMarketplaceComponent extends Component
 		$result = to_array($result);
 
 		return $result;
+
+	}
+
+
+	/**
+	 * Publicar un item en mercado libre
+	 * 
+	 * @param 	$title 					String 		El título es un atributo obligatorio y la clave para que los compradores encuentren 
+	 *												tu producto; por eso, debes ser lo más específico posible.
+	 * @param 	$category_id 			String 		Los vendedores deben definir una categoría en el site de MercadoLibre. 
+	 * 												Este atributo es obligatorio y solo acepta ID preestablecidos.
+	 * @param 	$price 					Bigint 		Éste es un atributo obligatorio: cuando defines un nuevo artículo, debe tener precio.
+	 * @param 	$currency_id 			String 		Además del precio, debes definir una moneda. Este atributo también es obligatorio. 
+	 *												Debes definirla utilizando un ID preestablecido.
+	 * @param 	$available_quantity		String 		Este atributo define el stock, que es la cantidad de productos disponibles para la 
+	 * 												venta de este artículo.
+	 * @param 	$buying_mode			String 		Define el tipo de publicación (Vender ahora/ Subasta)
+	 * @param 	$listing_type_id 		String 		Es otro caso de un atributo obligatorio que solo acepta valores predefinidos y es muy importante que lo entiendas.
+	 *												Existen diferentes tipos de publicación disponibles para cada país. Debes realizar una 
+	 *												llamada mixta a través de los sites y recursos listing_types para conocer los listing_types soportados.
+	 * @param 	$condition 				String 		Nuevo /Usado
+	 * @param 	$description 			Text 		Descripción del prodcuto en HTML o texto plano
+	 * @param 	$video_id 				String 		Identificador de video de Youtube
+	 * @param 	$warranty 				Text 		Texto que describe la garantía del item
+	 * @param  	$pictures 				Array 		Arreglo de imágenes con el formato array(array('source' => 'url_image'), array('source' => 'url_image_"'));
+	 * 
+	 * Más información en:  http://developers.mercadolibre.com/es/publica-productos/#Publica-un-articulo
+	 *
+	 * @return Objeto devuelto por MELI	 
+	 */
+	public function publish($item = array(), $agregarCostoEnvio = true, $precioAdicional = 0)
+	{	
+
+		if (empty($item)) {
+			return '';
+		}
+		
+		# Validate item with MEli validator api
+		$validItem = $this->mercadolibre_validar_item($item);
+		
+		if ($validItem['httpCode'] >= 300) {
+			return $validItem;
+		}else{
+
+			$publicar = to_array(self::$MeliConexion->post('/items', $item, array('access_token' => self::$accessToken)));
+			
+			$actualizar = array();
+
+			# Actualizamos el precio agregandole el costo de envio
+			if ($agregarCostoEnvio && $publicar['httpCode'] < 300) {
+				$costoEnvio = $this->mercadolibre_obtener_costo_envio($publicar['body']['id']);
+				$actualizar['price'] = $publicar['body']['price'] + $costoEnvio;
+			}
+
+			if ($precioAdicional > 0 && $publicar['httpCode'] < 300) {
+				$actualizar['price'] = (!empty($actualizar)) ? round($actualizar['price'] / $precioAdicional, 0) : round($publicar['body']['price'] / $precioAdicional, 0) ;
+			}
+
+
+			# subir imágenes
+			if (!empty($item['pictures'])) {
+				$actualizar['pictures'] =  $item['pictures'];
+			}
+
+
+			if (!empty($actualizar)) {
+				#debug($actualizar);
+				sleep(5);
+				$modificar = $this->update($publicar['body']['id'], $actualizar);
+				return $modificar;
+				#prx($modificar);
+			}else{
+				return $publicar;
+			}
+		}
+
+	}
+
+
+	public function mercadolibre_modificar_descripcion($id, $desc = '')
+	{
+		$body = array('plain_text' => $desc);
+
+		$response = self::$MeliConexion->put(sprintf('/items/%s/description', $id), $body,  array('access_token' => self::$accessToken));
+
+		return $response;
+	}
+
+
+	/**
+	 * Modificar un item en mercado libre
+	 * 
+	 * @param 	$title 					String 		El título es un atributo obligatorio y la clave para que los compradores encuentren 
+	 *												tu producto; por eso, debes ser lo más específico posible.
+	 * @param 	$category_id 			String 		Los vendedores deben definir una categoría en el site de MercadoLibre. 
+	 * 												Este atributo es obligatorio y solo acepta ID preestablecidos.
+	 * @param 	$price 					Bigint 		Éste es un atributo obligatorio: cuando defines un nuevo artículo, debe tener precio.
+	 * @param 	$currency_id 			String 		Además del precio, debes definir una moneda. Este atributo también es obligatorio. 
+	 *												Debes definirla utilizando un ID preestablecido.
+	 * @param 	$available_quantity		String 		Este atributo define el stock, que es la cantidad de productos disponibles para la 
+	 * 												venta de este artículo.
+	 * @param 	$buying_mode			String 		Define el tipo de publicación (Vender ahora/ Subasta)
+	 * @param 	$listing_type_id 		String 		Es otro caso de un atributo obligatorio que solo acepta valores predefinidos y es muy importante que lo entiendas.
+	 *												Existen diferentes tipos de publicación disponibles para cada país. Debes realizar una 
+	 *												llamada mixta a través de los sites y recursos listing_types para conocer los listing_types soportados.
+	 * @param 	$condition 				String 		Nuevo /Usado
+	 * @param 	$description 			Text 		Descripción del prodcuto en HTML o texto plano
+	 * @param 	$video_id 				String 		Identificador de video de Youtube
+	 * @param 	$warranty 				Text 		Texto que describe la garantía del item
+	 * @param  	$pictures 				Array 		Arreglo de imágenes con el formato array(array('source' => 'url_image'), array('source' => 'url_image_"'));
+	 * 
+	 * Más información en:  http://developers.mercadolibre.com/es/publica-productos/#Publica-un-articulo
+	 *
+	 * @return Objeto devuelto por MELI	 
+	 */
+	public function modified_item($id, $item = array(), $agregarCostoEnvio = true, $precioAdicional = 0, $descripcion = '')
+	{	
+
+		if (empty($item) || empty($id)) {
+			return '';
+		}
+
+		$publicar = to_array(self::$MeliConexion->put('/items/' . $id, $item, array('access_token' => self::$accessToken)));
+		
+		$actualizar = array();
+
+		# Actualizamos el precio agregandole el costo de envio
+		if ($agregarCostoEnvio && $publicar['httpCode'] < 300) {
+			$costoEnvio = $this->mercadolibre_obtener_costo_envio($publicar['body']['id']);
+			$actualizar['price'] = $publicar['body']['price'] + $costoEnvio;
+		}
+
+		if ($precioAdicional > 0 && $publicar['httpCode'] < 300) {
+			$actualizar['price'] = (!empty($actualizar)) ? round($actualizar['price'] / $precioAdicional, 0) : round($publicar['body']['price'] / $precioAdicional, 0) ;
+		}
+
+
+		# subir imágenes
+		if (!empty($item['pictures'])) {
+			$actualizar['pictures'] =  $item['pictures'];
+		}
+
+		if (!empty($descripcion)) {
+			$this->mercadolibre_modificar_descripcion($id, $descripcion);
+		}
+
+		if (!empty($actualizar)) {
+			#debug($actualizar);
+			sleep(2);
+			$modificar = $this->update($publicar['body']['id'], $actualizar);
+			return $modificar;
+			#prx($modificar);
+		}else{
+			return $publicar;
+		}
+
+	}
+
+
+	/**
+	 * Valida que un item esté correctamente formateado según 
+	 * la informacion de MELI.
+	 *
+	 * Más información: http://developers.mercadolibre.com/es/validador-de-publicaciones/
+	 *
+	 * @param 	$item 	$array() 	Item para validar
+	 * 
+	 * @return Objeto
+	 */
+	public function mercadolibre_validar_item($item = array())
+	{
+		if (!empty($item)) {
+			return self::$MeliConexion->post('/items/validate', $item, array('access_token' => self::$accessToken));
+		}
+	}
+
+
+	/**
+	 * Más información: https://developers.mercadolibre.cl/es_ar/producto-sincroniza-modifica-publicaciones#Cambiar-los-estados-de-las-publicaciones
+	 * @param  string 	$id     Identificador Meli
+	 * @param  string 	$estado paused, closed, active
+	 * @return array
+	 */
+	public function mercadolibre_cambiar_estado($id, $estado)
+	{	
+		$states = array('closed', 'paused', 'active');
+		
+		if (!in_array($estado, $states)) {
+			return;
+		}
+
+		$item = array(
+			"status" => $estado
+		);
+
+		$res = $this->update($id, $item);
+	
+		if ($estado == 'closed') {
+			return $this->mercadolibre_eliminar_producto($id); // Se elimina de meli
+		}
+
+		return $res;
+
+	}
+
+
+	/**
+	 * Eliminar item desde Meli
+	 * Más información https://developers.mercadolibre.cl/es_ar/producto-sincroniza-modifica-publicaciones#Elimina-publicaciones
+	 * @param  string 	$id 	Id MEli
+	 * @return array  
+	 */
+	public function mercadolibre_eliminar_producto($id)
+	{
+		$item = array(
+			"deleted" => true
+		);
+
+		return $this->update($id, $item);
 
 	}
 

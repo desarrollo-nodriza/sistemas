@@ -498,46 +498,7 @@ $.extend({
 					});
 				});
 
-				$('.input-productos-buscar-meli').each(function(){
-					var $esto 	= $(this),
-						image 	= '',
-						name 	= '',
-						description = '',
-						specs = '',
-						stock = '';
-					
-					$esto.autocomplete({
-					   	source: function(request, response) {
-					      	$.get( webroot + 'mercadoLibres/obtener_productos/' + request.term, function(respuesta){
-					      		
-								response( $.parseJSON(respuesta) );
-
-					      	})
-					      	.fail(function(){
-								$.app.loader.ocultar();
-
-								noty({text: 'Ocurrió un error al obtener la información. Intente nuevamente.', layout: 'topRight', type: 'error'});
-
-								setTimeout(function(){
-									$.noty.closeAll();
-								}, 10000);
-							});
-					    },
-					    select: function( event, ui ) {
-					        console.log("Seleccionado: " + ui.item.value + " id " + ui.item.id);
-					   
-					        $('.id-product').val(ui.item.id);
-					        $('.js-nombre').val(ui.item.nombre);
-					        $('.js-precio').val(ui.item.precio);
-					        $('.js-imagen').val(ui.item.imagen);
-					        $('.js-imagen-preview').attr('src', ui.item.imagen);
-					        $('.js-stock').val(ui.item.stock);
-					        $('.js-description').val(ui.item.description);
-
-					        $.meli.predictor.init();
-					    }
-					});
-				});
+				
 
 				// Botón agregar producto a la lista
 				$('.button-productos-buscar').on('click', function(event) {

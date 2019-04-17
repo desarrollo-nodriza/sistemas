@@ -1,11 +1,12 @@
 <?php
 App::uses('AppController', 'Controller');
+App::uses('VentasController', 'Controller');
 #App::import('Vendor', 'Meli', array('file' => 'Meli/meli.php'));
 
 class MercadoLibresController extends AppController
 {	
 
-	public $components = array('Meli');
+	public $components = array('MeliMarketplace');
 
 	private $envios = array(
 		'me2' => 'Envío por MercadoEnvíos',
@@ -99,12 +100,12 @@ class MercadoLibresController extends AppController
 
 
 	public function admin_obtenerCategorias($json = true)
-	{
-		$response = $this->Meli->getSiteCategories();
+	{	
+		$response = $this->MeliMarketplace->mercadolibre_obtener_categorias();
 		if ($response['httpCode'] != 200) {
 			$response = '';
 		}else{
-			$response = json_decode(json_encode($response['body']), true);
+			$response = to_array($response['body']);
 		}
 		
 		$new = array();
@@ -128,12 +129,15 @@ class MercadoLibresController extends AppController
 			return;
 		}
 
-		$response = $this->Meli->getCategoriesByIdentifier($id);
+		# Creamos cliente Meli
+		$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
+
+		$response = $this->MeliMarketplace->mercadolibre_obtener_categoria_por_id($id);
 
 		if ($response['httpCode'] != 200) {
 			return;
 		}else{
-			$response = json_decode(json_encode($response['body']), true);
+			$response = to_array($response['body']);
 		}
 		
 		$new = array();
@@ -162,32 +166,34 @@ class MercadoLibresController extends AppController
 	}
 
 
-	public function admin_verProducto($id = '')
+	public function admin_verProducto($data = '')
 	{
-		if (empty($id)) {
+		if (empty($data)) {
 			return '';
 		}
 
-		$itemInfo = to_array($this->Meli->viewItem($id));
-		if ($itemInfo['httpCode'] != 200) {
+		if (!$this->Session->check('Marketplace.id')) {
 			return '';
-		}else{
-			return $itemInfo['body'];
 		}
+
+		# Creamos cliente Meli
+		$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
+			
+		return $this->MeliMarketplace->mercadolibre_producto_existe($data['MercadoLibr']['id_product'],$this->Session->read('Marketplace.seller_id'));
+
 	}
 
 
-	public function admin_envioDisponible($categoria = '', $print = false )
+	public function admin_envioDisponible($categoria = '', $print = false, $costo = '' )
 	{
-		if (empty($categoria)) {
-			if ($print) {
-				echo $resultado['httpCode'];
-				exit;
-			}
+		if (empty($categoria)) {			
 			return '';
 		}
 
-		$resultado = $this->Meli->getShippingMode($categoria);
+		# Creamos cliente Meli
+		$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
+
+		$resultado = $this->MeliMarketplace->mercadolibre_obtener_modo_envio($categoria, $costo, $this->Session->read('Marketplace.seller_id'));
 
 		if ($resultado['httpCode'] != 200) {
 			if ($print) {
@@ -234,10 +240,16 @@ class MercadoLibresController extends AppController
 			return '';
 		}
 
-		$stateResponse = to_array($this->Meli->changeState($meli_id, $estado));
+		# Creamos cliente Meli
+		$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
+
+		$this->MeliMarketplace->mercadolibre_conectar('', $this->Session->read('Marketplace'));
+
+		$stateResponse = to_array($this->MeliMarketplace->mercadolibre_cambiar_estado($meli_id, $estado));
+
 		if ($stateResponse['httpCode'] != 200) {
 			
-			$this->Session->setFlash('No fue posible actualizar el estado del item.', null, array(), 'danger');
+			$this->Session->setFlash($stateResponse['body']['message'], null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		
 		}else{
@@ -260,135 +272,43 @@ class MercadoLibresController extends AppController
 
 
 	public function admin_actualizar($producto = array())
-	{
+	{	
+		$urlMeli = '';
+
 		if (!empty($producto)) {
-			$errores = '';
+			
 			# Verificamos que el producto no esté publicado en mercadolibre
 			if (!empty($producto['MercadoLibr']['id_meli'])) {
 
-				# Imagenes del item
 				$imagenes = array(
 					array(
 					'source' => $producto['MercadoLibr']['imagen_meli']
 					)
 				);
 
-				# Envios
-				$envios = array();
-				if (isset($this->request->data['Envios'])) {
-					
-					if (isset($this->request->data['Envios']['me2'])) {
-						$envios['mode'] = 'me2';
-						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
-						$envios['free_shipping'] = false;
-						$envios['free_methods'] = array();
-					}
 
-					if (isset($this->request->data['Envios']['custom']) && isset($this->request->data['Envios']['costs'][0]) && !empty($this->request->data['Envios']['costs'][0])) {
-						$envios['mode'] = 'custom';
-						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
-						$envios['free_shipping'] = false;
-						$envios['free_methods'] = array();
-						foreach ($this->request->data['Envios']['costs'] as $indice => $costo) {
-							$envios['costs'][] = $costo;
-						}
-						
-					}
-
-				}
-				
-				# Actualizamos publicación existente en mercado libre
-				$meliRespuesta = $this->Meli->update($producto['MercadoLibr']['id_meli'], $producto['MercadoLibr']['producto'], $producto['MercadoLibr']['precio'], $producto['MercadoLibr']['cantidad_disponible'], $producto['MercadoLibr']['id_video'], $imagenes, $envios, $producto['MercadoLibr']['seller_custom_field']);
-			
-				$publicarResponse = to_array($meliRespuesta);
-				if ($meliRespuesta['httpCode'] == 200) {
-					$meliRespuesta = 'updated';
-
-					# actualizar Descripción
-
-					$descriptionResponse = $this->Meli->updateDescription($producto['MercadoLibr']['id_meli'], $producto['MercadoLibr']['description']);
-
-					$desc = to_array($descriptionResponse);
-
-					$publicarResponse = to_array($desc);
-					
-					if ($publicarResponse['httpCode'] >= 300) { 
-						$errores .= sprintf('<p>La descripción no pudo ser actualizada: Error %s</p>',$publicarResponse['body']['error']);
-						$errores .= '<ul>';
-						foreach ($publicarResponse['body']['cause'] as $causa) {
-							$errores .= sprintf('<li>%s</li>', $causa['message']);
-						}
-
-						$errores .= '</ul>';
-					}
-
-				}else{
-					$meliRespuesta = to_array($meliRespuesta);
-				}
-			}
-
-			if (is_array($meliRespuesta)) {
-					
-				$errores .= sprintf('<p>%s</p>',$meliRespuesta['body']['error']);
-				$errores .= '<p>Causas:</p><ul>';	
-				
-				foreach ($meliRespuesta['body']['cause'] as $causa) {
-					$errores .= sprintf('<li>%s</li>', $causa['message']);
-				}
-
-				$errores .= '</ul>';
-
-				$this->Session->setFlash('Producto no pudo ser editado en Mercado libre. Detalles del error:<br>' . $errores, null, array(), 'danger');
-				$this->redirect(array('action' => 'edit', $producto['MercadoLibr']['id']));
-
-			}else{
-
-				$this->Session->setFlash('Producto editado correctamente en Mercado libre. <br><p>Recuerde que la actualización en Mercado libre no es inmediata. Ver producto <a href="' . $producto['MercadoLibr']['url_meli'] . '" target="_blank" class="btn btn-default btn-xs">aquí</a></p> ', null, array(), 'success');
-				$this->redirect(array('action' => 'index'));
-			}
-		}
-	}
-
-
-	public function admin_publicar($producto = array())
-	{	
-		$urlMeli = '';
-		if (!empty($producto)) {
-			
-			# Verificamos que el producto no esté publicado en mercadolibre
-			if (empty($producto['MercadoLibr']['id_meli'])) {
-
-				$imagenes = array(
-					array(
-					'source' => $producto['MercadoLibr']['imagen_meli']
-					)
+				// We construct the item to POST
+				$item = array(
+					"title"               => $producto['MercadoLibr']['producto'],
+					"official_store_id"   => $producto['MercadoLibr']['tienda_oficial_id'],
+					"price"               => $producto['MercadoLibr']['precio'],
+					"available_quantity"  => $producto['MercadoLibr']['cantidad_disponible'],
+					"buying_mode"         => 'buy_it_now',
+					"condition"           => $producto['MercadoLibr']['condicion'],
+					"video_id"            => $producto['MercadoLibr']['id_video'],
+					"warranty"            => $producto['MercadoLibr']['garantia'],
+					"pictures"            => $imagenes,
+					"seller_custom_field" => $producto['MercadoLibr']['seller_custom_field'],
 				);
 
-				# Envios
-				$envios = array();
-				if (isset($this->request->data['Envios'])) {
-					
-					if (isset($this->request->data['Envios']['me2'])) {
-						$envios['mode'] = 'me2';
-						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
-						$envios['free_shipping'] = false;
-						$envios['free_methods'] = array();
-					}
-
-					if (isset($this->request->data['Envios']['custom']) && isset($this->request->data['Envios']['costs'][0]) && !empty($this->request->data['Envios']['costs'][0])) {
-						$envios['mode'] = 'custom';
-						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
-						$envios['free_shipping'] = false;
-						$envios['free_methods'] = array();
-						foreach ($this->request->data['Envios']['costs'] as $indice => $costo) {
-							$envios['costs'][] = $costo;
-						}
-						
-					}
-
-				}
+				$agregarEnvio = false;
+				$margenAdicional = $this->Session->read('Marketplace.porcentaje_adicional');
 				
-				$meliRespuesta = $this->Meli->publish($producto['MercadoLibr']['producto'], $producto['MercadoLibr']['categoria_hoja'], $producto['MercadoLibr']['precio'], 'CLP', $producto['MercadoLibr']['cantidad_disponible'], 'buy_it_now', $producto['MercadoLibr']['tipo_publicacion'], $producto['MercadoLibr']['condicion'], $producto['MercadoLibr']['description'], $producto['MercadoLibr']['id_video'], $producto['MercadoLibr']['garantia'], $imagenes, $envios, $producto['MercadoLibr']['seller_custom_field']);
+				if ($producto['MercadoLibr']['agregar_costo_envio']) {
+					$agregarEnvio = true;
+				}
+
+				$meliRespuesta = $this->MeliMarketplace->modified_item($producto['MercadoLibr']['id_meli'], $item, $agregarEnvio, $margenAdicional, $producto['MercadoLibr']['description']);
 				
 				if (!empty($meliRespuesta)) {
 					if ($meliRespuesta['httpCode'] >= 300) {
@@ -420,6 +340,156 @@ class MercadoLibresController extends AppController
 				}
 			}
 
+
+			if (is_array($meliRespuesta)) {
+					
+				$errores = sprintf('<p>%s</p>',$meliRespuesta['body']['error']);
+				$errores .= '<p>Causas:</p><ul>';
+				
+				foreach ($meliRespuesta['body']['cause'] as $causa) {
+					$errores .= sprintf('<li>%s</li>', $causa['message']);
+				}
+
+				$errores .= '</ul>';
+
+				$this->Session->setFlash('Error al publicar en Mercado libre. Detalles del error:<br>' . $errores, null, array(), 'danger');
+				$this->redirect(array('action' => 'edit', $producto['MercadoLibr']['id']));
+
+			}else{
+
+				$this->Session->setFlash('Producto publicado correctamente en Mercado libre. Ver producto <a href="' . $urlMeli . '" target="_blank" class="btn btn-default btn-xs">aquí</a>', null, array(), 'success');
+				$this->redirect(array('action' => 'index'));
+			}
+		}
+	}
+
+
+	public function admin_publicar($producto = array())
+	{	
+		$urlMeli = '';
+
+		if (!empty($producto)) {
+			
+			# Verificamos que el producto no esté publicado en mercadolibre
+			if (empty($producto['MercadoLibr']['id_meli'])) {
+
+				$imagenes = array(
+					array(
+					'source' => $producto['MercadoLibr']['imagen_meli']
+					)
+				);
+
+
+				// We construct the item to POST
+				$item = array(
+					"title"               => $producto['MercadoLibr']['producto'],
+					"official_store_id"   => $producto['MercadoLibr']['tienda_oficial_id'],
+					"category_id"         => $producto['MercadoLibr']['categoria_hoja'],
+					"price"               => $producto['MercadoLibr']['precio'],
+					"currency_id"         => 'CLP',
+					"available_quantity"  => $producto['MercadoLibr']['cantidad_disponible'],
+					"buying_mode"         => 'buy_it_now',
+					"listing_type_id"     => $producto['MercadoLibr']['tipo_publicacion'],
+					"condition"           => $producto['MercadoLibr']['condicion'],
+					"video_id"            => $producto['MercadoLibr']['id_video'],
+					"warranty"            => $producto['MercadoLibr']['garantia'],
+					"pictures"            => $imagenes,
+					"seller_custom_field" => $producto['MercadoLibr']['seller_custom_field'],
+					"tags"                => array("immediate_payment"),
+					"description"         => array("plain_text" => $producto['MercadoLibr']['description']),
+				);
+
+				$agregarEnvio = false;
+				$margenAdicional = $this->Session->read('Marketplace.porcentaje_adicional');
+
+				# Envios
+				$envios = array();
+				if (isset($this->request->data['Envios'])) {
+					
+					if (isset($this->request->data['Envios']['me2'])) {
+
+						$shippingMethods = $this->MeliMarketplace->mercadolibre_obtener_modo_envio($producto['MercadoLibr']['categoria_hoja'], $producto['MercadoLibr']['precio'], $this->Session->read('Marketplace.seller_id'));
+
+						if ($shippingMethods['httpCode'] == 200) {
+							
+							$freeshipping = Hash::extract($shippingMethods['body'], '{n}[mode=me2].shipping_attributes.free')[0];
+
+							$envios['mode'] = 'me2';
+							$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
+							$envios['free_shipping'] = true;
+
+							foreach ($freeshipping['accepted_methods'] as $if => $metodos) {
+								$envios['free_methods'][$if] = array(
+									'id' => $metodos,
+									'rule' => array(
+										'free_mode' => 'country',
+										'value' => null
+									)
+								);
+							}
+
+							$envios['tags'] = array(
+								'mandatory_free_shipping'
+							);
+
+							if ($this->request->data['MercadoLibr']['agregar_costo_envio']) {
+								$agregarEnvio = true;
+							}
+
+						}
+
+					}
+
+					if (isset($this->request->data['Envios']['custom']) && isset($this->request->data['Envios']['costs'][0]) && !empty($this->request->data['Envios']['costs'][0])) {
+						$envios['mode'] = 'custom';
+						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
+						$envios['free_shipping'] = false;
+						$envios['free_methods'] = array();
+						foreach ($this->request->data['Envios']['costs'] as $indice => $costo) {
+							$envios['costs'][] = $costo;
+						}
+						
+					}
+
+					if (!empty($envios)) {
+						$item['shipping'] = $envios;
+					}
+
+				}
+				
+				$meliRespuesta = $this->MeliMarketplace->publish($item, $agregarEnvio, $margenAdicional);
+				
+				if (!empty($meliRespuesta)) {
+					if ($meliRespuesta['httpCode'] >= 300) {
+
+						$meliRespuesta = to_array($meliRespuesta);
+
+					}else{
+						
+						$meliRespuesta = to_array($meliRespuesta);
+						
+						# Actualizamos producto con respuesta de Meli
+						$productoMeli = array(
+							'MercadoLibr' => array(
+								'id' => $producto['MercadoLibr']['id'],
+								'id_meli' => $meliRespuesta['body']['id'],
+								'site_id' => $meliRespuesta['body']['site_id'],
+								'url_meli' => $meliRespuesta['body']['permalink'],
+								'fecha_finaliza' => date('Y-m-d H:i:s', strtotime($meliRespuesta['body']['stop_time'])),
+								'estado' => $meliRespuesta['body']['status'],
+								)
+						);
+
+						$urlMeli = $meliRespuesta['body']['permalink'];
+
+						$this->MercadoLibr->save($productoMeli);
+
+						$meliRespuesta = 'published';
+					}
+				}
+			}
+
+
 			if (is_array($meliRespuesta)) {
 					
 				$errores = sprintf('<p>%s</p>',$meliRespuesta['body']['error']);
@@ -445,11 +515,10 @@ class MercadoLibresController extends AppController
 
 	public function admin_validar_meli($id)
 	{	
-		$auth = $this->autorizacionMeli();
-		if (!empty($auth)) {
-			$this->Session->setFlash('Error al publicar en Mercado libre. Detalles del error:<br> La sesión de Mercado libre expiró. Conecte nuevamente la aplicación.', null, array(), 'danger');
-			$this->redirect(array('action' => 'edit', $id));
-		}
+		# Creamos cliente Meli
+		$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
+		
+		$this->MeliMarketplace->mercadolibre_conectar('', $this->Session->read('Marketplace'));
 
 		if (!empty($id)) {
 			
@@ -498,36 +567,7 @@ class MercadoLibresController extends AppController
 	}
 
 
-	public function admin_usuario()
-	{
-		$miCuenta = array();
-		$auth = $this->autorizacionMeli();
-
-		if ($this->Session->check('Meli.access_token') && empty($auth)) {
-			$miCuenta =  to_array($this->Meli->getMyAccountInfo());
-
-			if ($miCuenta['httpCode'] != 200) {
-				$miCuenta = '';
-			}else{
-				$miCuenta = $miCuenta['body'];
-			}
-		}
-
-		$url = '';
-		
-		if (!empty($auth)) {
-			$url = $auth;
-		}
-
-		BreadcrumbComponent::add('Mercado Libre Productos', '/mercadoLibres');
-		BreadcrumbComponent::add('Mi cuenta ');
-		$items = $this->Meli->getMyItems();
-		#prx($this->admin_otenerDetalleItems($items));
-		$miMarcas = to_array($this->Meli->getMyBrands());
-		$totalVisitasMes = $this->admin_totalVisitas('','',false);
-		
-		$this->set(compact('miCuenta', 'url', 'miMarcas', 'totalVisitasMes'));
-	}
+	
 
 
 	/**
@@ -574,10 +614,28 @@ class MercadoLibresController extends AppController
 			'conditions' => array(
 				'MercadoLibr.tienda_id' => $this->Session->read('Tienda.id')
 				),
+			'contain' => array(
+				'Tienda',
+				'Marketplace' => array(
+					'MarketplaceTipo'
+				)
+			),
 			'order' => array('MercadoLibr.id' => 'DESC'),
 			'limit' => 20
 			)
 		);
+
+
+		if ($this->Session->check('Marketplace.id')) {
+			$paginate = array_replace_recursive($paginate, array(
+				'conditions' => array(
+					'MercadoLibr.marketplace_id' => $this->Session->read('Marketplace.id')
+				)
+			));
+
+			# Creamos cliente Meli
+			$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
+		}
 
 
 		# Filtrar
@@ -601,47 +659,63 @@ class MercadoLibresController extends AppController
 						}
 						
 						break;
+					case 'marketplace_id':
+						
+						$this->Session->write('Marketplace', ClassRegistry::init('Marketplace')->find('first', array('conditions' => array('id' => $valor)))['Marketplace'] );
+						
+						$paginate = array_replace_recursive($paginate, array(
+							'conditions' => array(
+								'MercadoLibr.marketplace_id' => $valor
+							)
+						));
+						break;
 				}
 			}
 		}
 
 		$this->paginate = $paginate;
 
-		$url = '';
-		$auth = $this->autorizacionMeli();
-		if (!empty($auth)) {
-			$url = $auth;
-		}
+		# Mercadolibre conectar
+		$ventasController = new VentasController(new CakeRequest(), new CakeResponse());
+		$meliConexion = $ventasController->admin_verificar_conexion_meli(array('controller' => $this->request->controller, 'action' => $this->request->action));
+		
+		$marketplaces          = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1, 'marketplace_tipo_id' => 2)));
 
 		BreadcrumbComponent::add('Mercado Libre Productos ');
 
-		
-		# Se lanza mensaje de actualizar precios
-		#if($this->verificarCambiosDePreciosStock()) {
-		#	$this->Session->setFlash('¡Tienes productos desactualizados en Mercado Libre! Por favor sincronízalos.', null, array(), 'warning');
-		#}else{
-			#$this->Session->setFlash('¡Bien! Todos los productos estan sincronizados.', null, array(), 'success');
-		#}
 
 		$total =  $this->MercadoLibr->find('count', $paginate);
 
 		$mercadoLibres	= $this->paginate();
-		
+
 		# Se agrega el item de merado libre
 		foreach ($mercadoLibres as $im => $itm) {
-			$mercadoLibres[$im]['MeliItem'] = $this->admin_verProducto($itm['MercadoLibr']['id_meli']);
+			if (!empty($itm['MercadoLibr']['id_meli']) && $this->Session->check('Marketplace')) {
+				$mercadoLibres[$im]['MeliItem'] = $this->MeliMarketplace->mercadolibre_obtener_producto($itm['MercadoLibr']['id_meli']);	
+			}
 		}	
 
-		$this->set(compact('mercadoLibres', 'url', 'total', 'totalMostrados'));
+		$this->set(compact('mercadoLibres', 'total', 'totalMostrados', 'meliConexion', 'marketplaces'));
 	}
 
 
 	public function admin_add()
 	{	
+		if (!$this->Session->check('Marketplace.id')) {
+			$this->Session->setFlash('¡Error!. Debe seleccionar un Marketplace para continuar.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		# Creamos cliente Meli
+		$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
+		
+		$this->MeliMarketplace->mercadolibre_conectar('', $this->Session->read('Marketplace'));
+
+
 		if ( $this->request->is('post') )
 		{	
 
-			$this->request->data['MercadoLibr']['administrador_id'] = $this->Session->read('Administrador.id');
+			$this->request->data['MercadoLibr']['administrador_id'] = $this->Auth->user('id');
 
 			for ( $i = 1; $i < 6; $i++ ) { 
 				if (!isset($this->request->data['MercadoLibr']['categoria_0' . $i])) {
@@ -649,41 +723,53 @@ class MercadoLibresController extends AppController
 				}
 			}
 
-			$this->request->data['MercadoLibr']['nombre'] = $this->request->data['MercadoLibr']['producto'];
-
+			$this->request->data['MercadoLibr']['nombre']              = $this->request->data['MercadoLibr']['producto'];
+			$this->request->data['MercadoLibr']['seller_custom_field'] = $this->request->data['MercadoLibr']['id_product'];
+			
 			$this->MercadoLibr->create();
 			if ( $this->MercadoLibr->save($this->request->data) )
 			{	
-				# Recien creado
-				$ultimo = $this->MercadoLibr->find('first', array('order' => array('id' => 'DESC'), 'limit' => 1));
-				$this->admin_validar_meli($ultimo['MercadoLibr']['id']);
+				$this->admin_validar_meli($this->MercadoLibr->id);
 			}
 			else
 			{
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
 		}
-
-		$url = '';
-		$auth = $this->autorizacionMeli();
-		if (!empty($auth)) {
-			$url = $auth;
-		}
+		
 
 		BreadcrumbComponent::add('Mercado Libre Productos', '/mercadoLibres');
 		BreadcrumbComponent::add('Agregar ');
 
-		$plantillas	= $this->MercadoLibr->MercadoLibrePlantilla->find('list', array('conditions' => array('activo' => 1)));
-		$categoriasRoot = $this->admin_obtenerCategorias(false);
-		$tipoPublicacionesMeli = $this->Meli->listing_types();
-		$condicionProducto = array('new' => 'Nuevo');
+		$categoriasRoot        = $this->admin_obtenerCategorias(false);
+		$tipoPublicacionesMeli = $this->MeliMarketplace->mercadolibre_tipo_publicacion(null, true);
+		$condicionProducto     = array('new' => 'Nuevo');
+		$marketplaces          = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1, 'marketplace_tipo_id' => 2)));
+		$tiendasOficialesRes      = $this->MeliMarketplace->admin_obtener_tiendas_oficiales($this->Session->read('Marketplace.seller_id'));
+			
+		$tiendasOficiales = array();
+		foreach ($tiendasOficialesRes as $i => $tof) {
+			$tiendasOficiales[$tof['official_store_id']] = $tof['name'];
+		}
 
-		$this->set(compact('plantillas', 'url', 'categoriasRoot', 'tipoPublicacionesMeli', 'condicionProducto'));
+		$this->set(compact('plantillas', 'categoriasRoot', 'tipoPublicacionesMeli', 'condicionProducto', 'marketplaces', 'tiendasOficiales'));
+
 	}
 
 
 	public function admin_edit($id = null)
-	{
+	{	
+
+		if (!$this->Session->check('Marketplace.id')) {
+			$this->Session->setFlash('¡Error!. Debe seleccionar un Marketplace para continuar.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		# Creamos cliente Meli
+		$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
+		
+		$this->MeliMarketplace->mercadolibre_conectar('', $this->Session->read('Marketplace'));
+
 		if ( ! $this->MercadoLibr->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
@@ -700,7 +786,8 @@ class MercadoLibresController extends AppController
 				}
 			}
 
-			$this->request->data['MercadoLibr']['nombre'] = $this->request->data['MercadoLibr']['producto'];
+			$this->request->data['MercadoLibr']['nombre']              = $this->request->data['MercadoLibr']['producto'];
+			$this->request->data['MercadoLibr']['seller_custom_field'] = $this->request->data['MercadoLibr']['id_product'];
 			
 			
 			if ( $this->MercadoLibr->save($this->request->data) )
@@ -715,14 +802,24 @@ class MercadoLibresController extends AppController
 		else
 		{
 			$this->request->data	= $this->MercadoLibr->find('first', array(
-				'conditions'	=> array('MercadoLibr.id' => $id)
+				'conditions'	=> array('MercadoLibr.id' => $id),
+				'contain' => array(
+					'Marketplace' => array(
+						'MarketplaceTipo'
+					)
+				)
 			));
 		}
+
+		if (empty($this->request->data['Marketplace'])) {
+			$this->Session->setFlash('¡Error! Item no tiene un Marketplace asociado.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}		
 
 		BreadcrumbComponent::add('Mercado Libre Productos', '/mercadoLibres');
 		BreadcrumbComponent::add('Editar ');
 
-		$plantillas	= $this->MercadoLibr->MercadoLibrePlantilla->find('list', array('conditions' => array('activo' => 1)));
+		
 		$producto = ClassRegistry::init('Productotienda')->find('first', array(
 			'conditions' => array('Productotienda.id_product' => $this->request->data['MercadoLibr']['id_product']),
 			'contain' => array('Lang')
@@ -743,23 +840,25 @@ class MercadoLibresController extends AppController
 				}
 			}
 		}
-		
-		$url = '';
-		$auth = $this->autorizacionMeli();
-		if (!empty($auth)) {
-			$url = $auth;
-		}
 
-		$tipoPublicacionesMeli = $this->Meli->listing_types();
+		$tipoPublicacionesMeli = $this->MeliMarketplace->mercadolibre_tipo_publicacion(null, true);
 		$condicionProducto = array('new' => 'Nuevo');
 
 		# Envio
 		$envio = $this->admin_envioDisponible($this->request->data['MercadoLibr']['categoria_hoja']);
 		
-		$meliItem = $this->admin_verProducto($this->request->data['MercadoLibr']['id_meli']);
-		$meliItemShipping = $this->Meli->getShippingOptions($this->request->data['MercadoLibr']['id_meli']);
+		$meliItem = $this->admin_verProducto($this->request->data);
+		$meliItemShipping = $this->MeliMarketplace->mercadolbre_obtener_metodo_envio_item($this->request->data['MercadoLibr']['id_meli']);
+		$marketplaces = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1, 'marketplace_tipo_id' => 2)));
+		
+		$tiendasOficialesRes      = $this->MeliMarketplace->admin_obtener_tiendas_oficiales($this->Session->read('Marketplace.seller_id'));
+			
+		$tiendasOficiales = array();
+		foreach ($tiendasOficialesRes as $i => $tof) {
+			$tiendasOficiales[$tof['official_store_id']] = $tof['name'];
+		}
 
-		$this->set(compact('plantillas', 'producto', 'categoriasRoot', 'categoriasHojas', 'url', 'tipoPublicacionesMeli', 'condicionProducto', 'meliItem', 'envio', 'meliItemShipping'));
+		$this->set(compact('producto', 'categoriasRoot', 'categoriasHojas', 'tipoPublicacionesMeli', 'condicionProducto', 'meliItem', 'envio', 'meliItemShipping', 'marketplaces', 'tiendasOficiales'));
 	}
 
 
@@ -790,18 +889,28 @@ class MercadoLibresController extends AppController
 	}
 
 
-	public function admin_delete($id = null)
+	public function admin_delete($id = null, $meli = null)
 	{
 		$this->MercadoLibr->id = $id;
 		if ( ! $this->MercadoLibr->exists() )
-		{
+		{		
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
 
+		if (!empty($meli)) {
+			# Creamos cliente Meli
+			$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
+
+			$this->MeliMarketplace->mercadolibre_conectar('', $this->Session->read('Marketplace'));
+
+			# Se cambia el estado a cerrado y se elimina
+			$this->MeliMarketplace->mercadolibre_cambiar_estado($meli, 'closed');
+		}
+
 		$this->request->onlyAllow('post', 'delete');
 		if ( $this->MercadoLibr->delete() )
-		{
+		{	
 			$this->Session->setFlash('Registro eliminado correctamente.', null, array(), 'success');
 			$this->redirect(array('action' => 'index'));
 		}
@@ -853,11 +962,13 @@ class MercadoLibresController extends AppController
 		 ******************************************/
    		$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
 
+   		$hostImagenes = (!empty($tienda['Tienda']['url_almaceamiento_externo'])) ? $tienda['Tienda']['url_almaceamiento_externo'] : $tienda['Tienda']['url'];
+
    		// Buscamos los productos que cumplan con el criterio
 		$productos	= $this->MercadoLibr->Productotienda->find('all', array(
 			'fields' => array(
-				'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-home_default.jpg\' ) AS url_image_thumb',
-				'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-thickbox_default.jpg\' ) AS url_image_large',
+				'concat(\'https://' . $hostImagenes . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-home_default.jpg\' ) AS url_image_thumb',
+				'concat(\'https://' . $hostImagenes . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-full_default.jpg\' ) AS url_image_large',
 				'Productotienda.id_product',
 				'Productotienda.id_category_default',
 				'pl.name', 
@@ -867,7 +978,7 @@ class MercadoLibresController extends AppController
 				'Productotienda.reference', 
 				'Productotienda.show_price',
 				'Productotienda.quantity',
-				'StockDisponible.quantity'
+				'StockDisponible.quantity',
 			),
 			'joins' => array(
 				array(
@@ -938,7 +1049,6 @@ class MercadoLibresController extends AppController
 			),
 			'limit' => 3
 		));
-
    		
    		if (empty($productos)) {
     		echo json_encode(array('0' => array('id' => '', 'value' => 'No se encontraron coincidencias')));
@@ -1616,22 +1726,10 @@ class MercadoLibresController extends AppController
 	{	
 		$out = array();
 
-		$miCuenta = array();
-		$vendedor = '';
-		$auth = $this->autorizacionMeli();
-
-		if ($this->Session->check('Meli.access_token') && empty($auth)) {
-			$miCuenta =  to_array($this->Meli->getMyAccountInfo());
-
-			if ($miCuenta['httpCode'] != 200) {
-				$vendedor = '';
-			}else{
-				$vendedor = $miCuenta['body']['id'];
-			}
-		}
-
+		#Creamos cliente Meli
+		$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
 		
-		$categoriasResponse = $this->Meli->getCategoriesByPredictor($titulo, $categoria, $precio, $vendedor);
+		$categoriasResponse = $this->MeliMarketplace->mercadolibre_obtener_categoria_preferida($titulo, $categoria, $precio, $this->Session->read('Marketplace.seller_id'));
 		
 		$categoria = '';
 		
