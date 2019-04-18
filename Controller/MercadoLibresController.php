@@ -632,9 +632,6 @@ class MercadoLibresController extends AppController
 					'MercadoLibr.marketplace_id' => $this->Session->read('Marketplace.id')
 				)
 			));
-
-			# Creamos cliente Meli
-			$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
 		}
 
 
@@ -691,6 +688,8 @@ class MercadoLibresController extends AppController
 		# Se agrega el item de merado libre
 		foreach ($mercadoLibres as $im => $itm) {
 			if (!empty($itm['MercadoLibr']['id_meli']) && $this->Session->check('Marketplace')) {
+				# Creamos cliente Meli
+				$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
 				$mercadoLibres[$im]['MeliItem'] = $this->MeliMarketplace->mercadolibre_obtener_producto($itm['MercadoLibr']['id_meli']);	
 			}
 		}	
