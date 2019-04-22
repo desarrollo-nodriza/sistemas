@@ -193,6 +193,7 @@ class AdministradoresController extends AppController
 		*/
 		$this->Session->delete('Google.token');
 		$this->Session->delete('Tienda');
+		$this->Session->delete('Marketplace');
 		$this->redirect($this->Auth->logout());
 	}
 
