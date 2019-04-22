@@ -1,13 +1,14 @@
 <?
 
 App::import('Vendor', 'Mercadolibre', array('file' => 'Meli/meli.php'));
+App::uses('Component', 'Controller');
 
 class MeliMarketplaceComponent extends Component
 {	
 
 	public static $MeliConexion;
 	public static $accessToken;
-
+	public $components = array('Session');
 
 
 	public function crearCliente($apiuser, $apikey, $accesstoken, $refreshtoken)
@@ -917,7 +918,7 @@ class MeliMarketplaceComponent extends Component
 		$publicar = to_array(self::$MeliConexion->put('/items/' . $id, $item, array('access_token' => self::$accessToken)));
 		
 		$actualizar = array();
-
+			
 		# Actualizamos el precio agregandole el costo de envio
 		if ($agregarCostoEnvio && $publicar['httpCode'] < 300) {
 			$costoEnvio = $this->mercadolibre_obtener_costo_envio($publicar['body']['id']);

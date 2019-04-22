@@ -303,9 +303,64 @@ class MercadoLibresController extends AppController
 
 				$agregarEnvio = false;
 				$margenAdicional = $this->Session->read('Marketplace.porcentaje_adicional');
-				
+					
 				if ($producto['MercadoLibr']['agregar_costo_envio']) {
 					$agregarEnvio = true;
+				}
+
+				# Envios
+				$envios = array();
+				if (isset($this->request->data['Envios'])) {
+					
+					if (isset($this->request->data['Envios']['me2'])) {
+
+						$shippingMethods = $this->MeliMarketplace->mercadolibre_obtener_modo_envio($producto['MercadoLibr']['categoria_hoja'], $producto['MercadoLibr']['precio'], $this->Session->read('Marketplace.seller_id'));
+
+						if ($shippingMethods['httpCode'] == 200) {
+							
+							$freeshipping = Hash::extract($shippingMethods['body'], '{n}[mode=me2].shipping_attributes.free')[0];
+
+							$envios['mode'] = 'me2';
+							$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
+							$envios['free_shipping'] = true;
+
+							foreach ($freeshipping['accepted_methods'] as $if => $metodos) {
+								$envios['free_methods'][$if] = array(
+									'id' => $metodos,
+									'rule' => array(
+										'free_mode' => 'country',
+										'value' => null
+									)
+								);
+							}
+
+							/*$envios['tags'] = array(
+								'mandatory_free_shipping'
+							);*/
+
+							if ($this->request->data['MercadoLibr']['agregar_costo_envio']) {
+								$agregarEnvio = true;
+							}
+
+						}
+
+					}
+
+					if (isset($this->request->data['Envios']['custom']) && isset($this->request->data['Envios']['costs'][0]) && !empty($this->request->data['Envios']['costs'][0])) {
+						$envios['mode'] = 'custom';
+						$envios['local_pick_up'] = (isset($this->request->data['Envios']['local_pick_up']) && $this->request->data['Envios']['local_pick_up']) ? true : false;
+						$envios['free_shipping'] = false;
+						$envios['free_methods'] = array();
+						foreach ($this->request->data['Envios']['costs'] as $indice => $costo) {
+							$envios['costs'][] = $costo;
+						}
+						
+					}
+
+					if (!empty($envios)) {
+						$item['shipping'] = $envios;
+					}
+
 				}
 
 				$meliRespuesta = $this->MeliMarketplace->modified_item($producto['MercadoLibr']['id_meli'], $item, $agregarEnvio, $margenAdicional, $producto['MercadoLibr']['description']);
