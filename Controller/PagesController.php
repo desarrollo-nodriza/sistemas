@@ -29,34 +29,86 @@ class PagesController extends AppController
 
 	/**
 	 * Función que arma el arreglo con un formato especifico para los gráficos
-	 * @param  Array 	$data 	Datos que contendrá el gráfico
+	 * @param  Array 	$datos 	Datos que contendrá el gráfico
 	 * @return Array    		Arreglo preparado para el gráfico
 	 */
-	public function admin_formatoGrafico($data) {
+	public function admin_formatoGrafico($datos = array(), $indiceValor = '', $indiceNombre = '') {
 
-		// Armamos array por fechas, separando tiendas con su valor total en ventas
-		$nuevoArray = array();
-		foreach ($data as $key => $value) {
-			$nuevoArray[$value['Fecha']][strtolower(Inflector::slug($value['tienda'],'_'))] = $value['Total'];
+		$res = array(
+		#	'data', Formato [{y : '2001', a : '11122', b : '11222', c...}, {y : '2001', a : '11122', b : '11222', c...}]
+		#	'colors', # Formato ['#2B40BC', '#4EAEEA', '#A479EF']
+		#	'xkey', # Indica cual es el indice para el eje X: ej: y
+		#	'ykeys', # Indica cual/es serán los indices valor ej: ['a', 'b', 'c'] 
+		#	'labels', # Nombre para el/los valores del eje y ej: ['2019', '2211', 'Hola']
+		#	'lineColors' # Formato ['#2B40BC', '#4EAEEA', '#A479EF']
+		);
+		
+		$ventasCanales = array();
+		foreach ($datos as $id => $dato) {
+
+			if (empty($dato))
+					continue;
+
+			if (empty($dato['fecha']))
+				continue;
+
+			$ventasCanales[$dato['fecha']][$dato[$indiceNombre]] = $dato[$indiceValor];
+			
 		}
 
-		// Ordenamos el array para ser tomado en el javascript
-		$nuevoArray2 = array();
-		$count = 0;
-		foreach ($nuevoArray as $key => $value) {
-			// Agregamos el total de los comercios al arreglo
-			$total = 0;
+		# Armamos el json para la gráfica
+		$res = array(
+			'xkeys' => 'y'
+		);
+		if (!empty($ventasCanales)) {
+			
+			$pos = 0;
+			foreach ($ventasCanales as $fecha => $canal) {
+				if (empty($canal))
+					continue;
 
-			$nuevoArray2[$count]['y'] = $key;
-			foreach ($value as $key => $value) {
-				$nuevoArray2[$count][$key] = $value;
-				$total = $total + $value;
+				$res['data'][$pos]['y'] = $fecha;
+
+				$posCanal = 0;
+				foreach ($canal as $nombre => $cantidad) {
+					$res['data'][$pos][abecedario($posCanal, true)] = $cantidad;
+					$res['labels'][$posCanal] = $nombre;
+					$res['ykeys'][$posCanal] = abecedario($posCanal, true);
+					$res['lineColors'][$posCanal] = '#'.random_color();
+					$posCanal++;		
+				}	
+				$pos++;
 			}
-			$nuevoArray2[$count]['total'] = $total;
-			$count++;
+
+
 		}
 
-		return  $nuevoArray2;
+		return $res;
+
+		# Armamos el json para la gráfica
+		$res['xkey'] = 'y';
+
+		if (!empty($datos)) {
+			
+			$pos = 0;
+			foreach ($datos as $indice => $canal) {
+				if (empty($canal))
+					continue;
+
+				if (empty($canal['fecha']))
+					continue;
+
+				$res['data'][$pos]['y']                    = $canal['fecha'];
+				
+				$res['labels'][$pos]                       = $canal[$indiceNombre];
+				$res['ykeys'][$pos]                        = abecedario($pos, true);
+				$res['lineColors'][$pos]                   = '#'.random_color();
+				$pos++;
+			}
+
+		}
+		
+		return $res;
 	}
 
 	/**
@@ -79,10 +131,9 @@ class PagesController extends AppController
 	 * @return String                 Monto sumado
 	 */
 	public function admin_get_total_sum( $arrayElementos, $indice , $money = true) {
-		$suma = 0;
-		foreach ($arrayElementos as $elemento) :
-			$suma = $suma + $elemento[$indice];
-		endforeach;
+		
+		$suma = array_sum(Hash::extract($arrayElementos, sprintf('{n}.%s', $indice)));
+
 		if ($money) {
 			App::uses('CakeNumber', 'Utility');
 			return CakeNumber::currency($suma, 'CLP');;
@@ -92,6 +143,7 @@ class PagesController extends AppController
 		
 	}
 
+
 	/**
 	 * Función que muestra las ventas de todas las tiendas registradas segun periodo de tiempo
 	 * @param 	$f_inicio 	String 		Fecha inicial
@@ -99,7 +151,8 @@ class PagesController extends AppController
 	 * @param 	$json 		Boolean		Semáforo que determina si retornará un array o un json
 	 * @return 	Array || Json
 	 */
-	public function admin_get_all_sales($f_inicio = null, $f_final = null, $group_by = '', $json = false) {
+	public function admin_obtener_ventas( $f_inicio = null, $f_final = null, $group_by = null, $json = false)
+	{
 		if (is_null($f_inicio) || is_null($f_final) || empty($f_inicio) || empty($f_final)) {
 			$f_inicio = date('Y-m-01 00:00:00');
 			$f_final = date('Y-m-t 23:59:59');
@@ -108,91 +161,288 @@ class PagesController extends AppController
 			$f_final = sprintf('%s 23:59:59', $f_final);
 		}
 
-		//Normalizar fechas
-		$f_inicio = sprintf("'%s'", $f_inicio);
-		$f_final = sprintf("'%s'", $f_final);
+		# Obtenemos los prestashops
+		$prestashops = Hash::extract(ClassRegistry::init('Tienda')->find('all', array(	
+			'conditions' => array('Tienda.activo' => 1),
+			'fields' => array(
+				'Tienda.nombre AS canal_nombre',
+				'Tienda.id AS canal_id',
+			)
+		)), '{n}.Tienda' );
 
-		$tiendas = ClassRegistry::init('Tienda')->find('all', array(
-			'conditions' => array('activo' => 1)
-			));
+		$prestashops = Hash::insert($prestashops, '{n}', array('tipo' => 'prestashop'));
 
-		// Aloja toda la info retornada de las queries
-		$arrayResultado = array();
-		$arrayQuery = null;
+		# Obtenemos los marketplaces
+		$marketplaces = Hash::extract(ClassRegistry::init('Marketplace')->find('all', array(
+			'conditions' => array(
+				'Marketplace.activo' => 1
+			),
+			'fields' => array(
+				'Marketplace.nombre AS canal_nombre',
+				'Marketplace.id AS canal_id'
+			)
+		)), '{n}.Marketplace' );
 
-		// La query
-		$query = ClassRegistry::init('Grafico')->find('first', array(
-			'conditions' => array('Grafico.slug' => 'total_ventas_del_periodo'),
-			'fields' => array('Grafico.descipcion')
-			));
+		$marketplaces = Hash::insert($marketplaces, '{n}', array('tipo' => 'marketplace'));
 
-		if (empty($query)) {
-			return;
-		}
+		# Unificamos los canales de ventas
+		$canales = array_merge_recursive($prestashops, $marketplaces);
 
-		// Agrupar
-		$group_by_col = '';
+		# Guardamos los resultados
+		$ventas = array();
 
-		
-		switch ($group_by) {
-			case 'anno':
-				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y") AS Fecha';
-				$group_by = 'GROUP BY YEAR(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
-				break;
-			case 'mes':
-				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS Fecha';
-				$group_by = 'GROUP BY MONTH(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
-				break;
-			case 'dia':
-				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d") AS Fecha';
-				$group_by = 'GROUP BY DAY(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
-				break;
-			case 'hora':
-				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d %H:00:00") AS Fecha';
-				$group_by = 'GROUP BY HOUR(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
-				break;
+		# Obtenemos la venta por cada canal
+		foreach ($canales as $ic => $canal) {
 			
-			default:
-				$group_by_col = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS Fecha';
-				$group_by = 'GROUP BY MONTH(Venta.fecha_venta) ORDER BY Venta.fecha_venta ASC';
-				break;
-		}
-		
+			$qry['joins'] = array(
+					array(
+						'table' => 'rp_venta_estados',
+				        'alias' => 'VentaEstado',
+				        'type' => 'INNER',
+				        'conditions' => array(
+				            'VentaEstado.id = Venta.venta_estado_id',
+				        )
+				    ),
+				    array(
+						'table' => 'rp_venta_estado_categorias',
+				        'alias' => 'VentaEstadoCategoria',
+				        'type' => 'INNER',
+				        'conditions' => array(
+				            'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
+				            'VentaEstadoCategoria.venta' => 1
+				        )
+				    )
+				);
 
-		// Rango de fechas
-		$query['Grafico']['descipcion'] = str_replace('[*START_DATE*]', $f_inicio, $query['Grafico']['descipcion']);
-		$query['Grafico']['descipcion'] = str_replace('[*FINISH_DATE*]', $f_final, $query['Grafico']['descipcion']);
-		// campo group
-		$query['Grafico']['descipcion'] = str_replace('[*GROUP_BY_COL*]', $group_by_col, $query['Grafico']['descipcion']);
-		$query['Grafico']['descipcion'] = str_replace('[*GROUP_BY*]', $group_by, $query['Grafico']['descipcion']);
 
+			# Agrupar ventas por criterio
+			$group_by_col = '';
 
-		// Armamos la query por tiendas
-		foreach ($tiendas as $indice => $tienda) :
-			$arrayQuery = str_replace('[*PREFIX*]', $tienda['Tienda']['prefijo'], $query['Grafico']['descipcion']);
-			
-			// Sobreescribimos la configuración de la base de datos a utilizar
-			
-			$OCPagadas = ClassRegistry::init('Venta');
-			try {
-				$arrayResultado[$indice] = $OCPagadas->query($query['Grafico']['descipcion']);
-				foreach ($arrayResultado[$indice] as $indx => $val) {
-					$arrayResultado[$indice][$indx][0]['tienda'] = $tienda['Tienda']['nombre'];
-				}
-			} catch (Exception $e) {
-				$arrayResultado[$indice] = $e->getMessage();
+			switch ($group_by) {
+				case 'anno':
+					
+					$qry['fields'] = array(
+						'DATE_FORMAT(Venta.fecha_venta, "%Y") AS Fecha',
+						'ROUND(SUM(Venta.total)) As Total',
+						'ROUND(SUM(Venta.descuento)) As Descuento',
+						'ROUND(SUM(Venta.costo_envio)) As Transporte',
+						'COUNT(Venta.id) As Cantidad'
+					);
+
+					$qry['group'] = 'YEAR(Venta.fecha_venta)';
+					$qry['order'] = array('Venta.fecha_venta' => 'ASC');
+
+					
+					break;
+				case 'mes':
+
+					$qry['fields'] = array(
+						'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS Fecha',
+						'ROUND(SUM(Venta.total)) As Total',
+						'ROUND(SUM(Venta.descuento)) As Descuento',
+						'ROUND(SUM(Venta.costo_envio)) As Transporte',
+						'COUNT(Venta.id) As Cantidad'
+					);
+
+					$qry['group'] = 'MONTH(Venta.fecha_venta)';
+					$qry['order'] = array('Venta.fecha_venta' => 'ASC');
+
+					break;
+				case 'dia':
+
+					$qry['fields'] = array(
+						'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d") AS Fecha',
+						'ROUND(SUM(Venta.total)) As Total',
+						'ROUND(SUM(Venta.descuento)) As Descuento',
+						'ROUND(SUM(Venta.costo_envio)) As Transporte',
+						'COUNT(Venta.id) As Cantidad'
+					);
+
+					$qry['group'] = 'DAY(Venta.fecha_venta)';
+					$qry['order'] = array('Venta.fecha_venta' => 'ASC');
+
+					break;
+				case 'hora':
+
+					$qry['fields'] = array(
+						'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d %H:00:00") AS Fecha',
+						'ROUND(SUM(Venta.total)) As Total',
+						'ROUND(SUM(Venta.descuento)) As Descuento',
+						'ROUND(SUM(Venta.costo_envio)) As Transporte',
+						'COUNT(Venta.id) As Cantidad'
+					);
+
+					$qry['group'] = 'HOUR(Venta.fecha_venta)';
+					$qry['order'] = array('Venta.fecha_venta' => 'ASC');
+
+					break;
+				
+				default:
+					$qry['fields'] = array(
+						'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS Fecha',
+						'ROUND(SUM(Venta.total)) As Total',
+						'ROUND(SUM(Venta.descuento)) As Descuento',
+						'ROUND(SUM(Venta.costo_envio)) As Transporte',
+						'COUNT(Venta.id) As Cantidad'
+					);
+
+					$qry['group'] = 'MONTH(Venta.fecha_venta)';
+					$qry['order'] = array('Venta.fecha_venta' => 'ASC');
+					break;
 			}
 
-		endforeach;
+
+			# condicionar segun canal de venta
+			switch ($canal['tipo']) {
+				case 'prestashop':
+					
+					$qry['conditions'] = array(
+						'Venta.tienda_id' => $canal['canal_id'],
+						'Venta.marketplace_id' => null,
+						'Venta.fecha_venta BETWEEN ? AND ?' => array($f_inicio, $f_final)
+					);
+					
+					break;
+				
+				case 'marketplace':
+
+					$qry['conditions'] = array(
+						'Venta.marketplace_id' => $canal['canal_id'],
+						'Venta.fecha_venta BETWEEN ? AND ?' => array($f_inicio, $f_final)
+					);
+					
+					break;
+			}
+			
+			$venta = ClassRegistry::init('Venta')->find('all', $qry);
+
+			if (empty($venta)) {
+				
+				$venta[0][0]['Total']      = 0;
+				$venta[0][0]['Fecha']      = null;
+				$venta[0][0]['Cantidad']   = 0;
+				$venta[0][0]['Descuento']  = 0;
+				$venta[0][0]['Transporte'] = 0;
+
+			}
+
+			foreach ($venta as $iv => $v) {
+				$ventas[$ic.$iv]['tienda']     = $canal['canal_nombre'];
+				$ventas[$ic.$iv]['total']      = $v[0]['Total'];
+				$ventas[$ic.$iv]['fecha']      = $v[0]['Fecha'];;
+				$ventas[$ic.$iv]['cantidad']   = $v[0]['Cantidad'];;
+				$ventas[$ic.$iv]['descuento']  = $v[0]['Descuento'];;
+				$ventas[$ic.$iv]['transporte'] = $v[0]['Transporte'];;
+			}
+		}
 		
-		$arrayResultado = Hash::extract($arrayResultado, '{n}.{n}.{n}');
 		if ($json) {
-			echo json_encode($this->admin_formatoGrafico($arrayResultado));
+			echo json_encode($this->admin_formatoGrafico($ventas, 'total', 'tienda'));
 			exit;
 		}else{ 
-			return $arrayResultado;
+			return $ventas;
 		}	
+
 	}
+
+
+
+	/**
+	 * Función que muestra la cantidad de ventas de todas las tiendas registradas segun periodo de tiempo
+	 * @param 	$f_inicio 	String 		Fecha inicial
+	 * @param 	$_f_final 	String 		Fecha Final
+	 * @param 	$json 		Boolean		Semáforo que determina si retornará un array o un json
+	 * @return 	Array || Json
+	 */
+	public function admin_cantidad_ventas( $f_inicio = null, $f_final = null, $group_by = null, $json = false)
+	{
+		if (is_null($f_inicio) || is_null($f_final) || empty($f_inicio) || empty($f_final)) {
+			$f_inicio = date('Y-m-01 00:00:00');
+			$f_final = date('Y-m-t 23:59:59');
+		}else{
+			$f_inicio = sprintf('%s 00:00:00', $f_inicio);
+			$f_final = sprintf('%s 23:59:59', $f_final);
+		}
+
+		$canales = $this->admin_obtener_ventas($f_inicio, $f_final, $group_by);
+		
+		$resultado = array();	
+
+		foreach ($canales as $ic => $canal) {
+			$resultado[$ic]['tienda'] = $canal['tienda'];
+			$resultado[$ic]['fecha'] = $canal['fecha'];
+			$resultado[$ic]['cantidad'] = $canal['cantidad'];
+		}
+		
+		if ($json) {
+			echo json_encode($this->admin_formatoGrafico($resultado, 'cantidad', 'tienda'));
+			exit;
+		}else{ 
+			return $resultado;
+		}	
+
+	}
+
+
+
+	public function admin_obtener_descuentos($f_inicio = null, $f_final = null, $group_by = '', $json = false)
+	{
+		if (is_null($f_inicio) || is_null($f_final) || empty($f_inicio) || empty($f_final)) {
+			$f_inicio = date('Y-m-01 00:00:00');
+			$f_final = date('Y-m-t 23:59:59');
+		}else{
+			$f_inicio = sprintf('%s 00:00:00', $f_inicio);
+			$f_final = sprintf('%s 23:59:59', $f_final);
+		}
+
+		$canales = $this->admin_obtener_ventas($f_inicio, $f_final, $group_by);
+		
+		$resultado = array();	
+
+		foreach ($canales as $ic => $canal) {
+			$resultado[$ic]['tienda'] = $canal['tienda'];
+			$resultado[$ic]['fecha'] = $canal['fecha'];
+			$resultado[$ic]['descuento'] = $canal['descuento'];
+		}
+		
+		if ($json) {
+			echo json_encode($this->admin_formatoGrafico($resultado, 'descuento', 'tienda'));
+			exit;
+		}else{ 
+			return $resultado;
+		}
+	}
+
+
+
+	public function admin_obtener_transporte($f_inicio = null, $f_final = null, $group_by = '', $json = false)
+	{
+		if (is_null($f_inicio) || is_null($f_final) || empty($f_inicio) || empty($f_final)) {
+			$f_inicio = date('Y-m-01 00:00:00');
+			$f_final = date('Y-m-t 23:59:59');
+		}else{
+			$f_inicio = sprintf('%s 00:00:00', $f_inicio);
+			$f_final = sprintf('%s 23:59:59', $f_final);
+		}
+
+		$canales = $this->admin_obtener_ventas($f_inicio, $f_final, $group_by);
+		
+		$resultado = array();	
+
+		foreach ($canales as $ic => $canal) {
+			$resultado[$ic]['tienda'] = $canal['tienda'];
+			$resultado[$ic]['fecha'] = $canal['fecha'];
+			$resultado[$ic]['transporte'] = $canal['transporte'];
+		}
+		
+		if ($json) {
+			echo json_encode($this->admin_formatoGrafico($resultado, 'transporte', 'tienda'));
+			exit;
+		}else{ 
+			return $resultado;
+		}
+	}
+
 
 
 	/**
@@ -737,17 +987,14 @@ class PagesController extends AppController
 	 * @param  array  $pedidos Pedidos total de cada comercio
 	 * @return array          Ticket promedio por comercio
 	 */
-	public function admin_tickets($ventas = array(), $pedidos = array()) {
+	public function admin_tickets($ventas = array()) {
+		
 		$promedio = array();
-		foreach ($ventas as $key => $venta) {
-			foreach ($pedidos as $pedido) {
-				if ($venta['tienda'] == $pedido['tienda']) {
-					$promedio[$key]['tienda'] = $venta['tienda'];
-					$promedio[$key]['total'] = $venta['Total'] / $pedido['Total'];	
-				}
-			}
-		}
 
+		foreach ($ventas as $canal => $venta) {
+			$promedio[$canal]['tienda'] = $venta['tienda'];
+			$promedio[$canal]['total'] = ($venta['cantidad'] > 0) ? $venta['total'] / $venta['cantidad'] : 0;	
+		}
 		return $promedio;
 	}
 
@@ -966,102 +1213,30 @@ class PagesController extends AppController
 	}
 
 
-
-	public function obtener_grafico_ventas($f_inicio = '', $f_final = '', $group_by = '', $json = false)
-	{	
-
-		$tiendas = ClassRegistry::init('Tienda')->find('all', array('conditions' => array('Tienda.activo' => 1)));
-
-		if (is_null($f_inicio) || is_null($f_final) || empty($f_inicio) || empty($f_final)) {
-			$f_inicio = date('Y-m-01 00:00:00');
-			$f_final = date('Y-m-t 23:59:59');
-		}else{
-			$f_inicio = sprintf('%s 00:00:00', $f_inicio);
-			$f_final = sprintf('%s 23:59:59', $f_final);
-		}
-
-		// Query options
-		$opts = array(
-			'fields' => array(
-				'SUM(Venta.total) as TotalVentas'
-			),
-			'order' => array(
-				'Venta.fecha_venta' => 'ASC'
-			),
-			'conditions' => array(
-				'Venta.fecha_venta BETWEEN ? AND ?' => array($f_inicio, $f_final)
-			)
-		);
-
-
-		// Agrupar
-		$group_by_col = '';
-
-		
-		switch ($group_by) {
-			case 'anno':
-				$opts['group']    = array( 'YEAR(Venta.fecha_venta)' );
-				$opts['fields'][] = 'DATE_FORMAT(Venta.fecha_venta, "%Y") AS y';
-				break;
-			case 'mes':
-				$opts['group']    = array( 'MONTH(Venta.fecha_venta)' );
-				$opts['fields'][] = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m") AS y';
-				break;
-			case 'dia':
-				$opts['group']    = array('DAY(Venta.fecha_venta)');				
-				$opts['fields'][] = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d") AS y';
-				break;
-			case 'hora':
-				$opts['group']    = array('HOUR(Venta.fecha_venta)');
-				$opts['fields'][] = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d %H:00:00") AS y';
-				break;
-			default:
-				$opts['group']    = array('DAY(Venta.fecha_venta)');
-				$opts['fields'][] = 'DATE_FORMAT(Venta.fecha_venta, "%Y-%m-%d") AS y';
-				break;
-		}
-
-		$ventasTiendas =  array();
-
-		foreach ($tiendas as $it => $tienda) {
-			$ventas = ClassRegistry::init('Venta')->find('all', $opts);
-
-			foreach ($ventas as $iv => $venta) {
-				$ventasTiendas[$iv]['y'] = $venta['Venta'][0]['y'];
-				$ventasTiendas[$iv][strtolower(Inflector::slug($tienda['Tienda']['nombre'],'_'))] = round($venta['Venta'][0]['TotalVentas'], 0);
-			}
-
-		}
-		
-
-		
-
-
-	}
-
-
 	public function admin_dashboard() {
-		BreadcrumbComponent::add('');
-
-		//$this->obtener_grafico_ventas($this->Session->read('Tienda.id'));
+		BreadcrumbComponent::add('Dashboard');
 
 		// Obtener ventas de los comercios
-		$ventas = $this->admin_get_all_sales(); 
+		#$ventas = $this->admin_get_all_sales(); 
+		$ventas = $this->admin_obtener_ventas();
+
 		// Obtener descuentos e los comercios
 		$descuentos = $this->admin_get_all_discount();
 		// Obtener pedidos de los comercios
-		$pedidos = $this->admin_get_all_orders();
+		$pedidos = $this->admin_cantidad_ventas();
 		// Calculamos Tickets promedios
-		$tickets = $this->admin_tickets($ventas, $pedidos);
+		$tickets = $this->admin_tickets($ventas);
 		// Tabla de ventas por fabricante
 		$tablaMarcas = $this->admin_sales_by_brands('','', $this->Session->read('Tienda.id') );
 
+		$tablaMarcas = array();
+
 		// Obtener total de ventas de los comercios
-		$sumaVentas = $this->admin_get_total_sum($ventas, 'Total');
+		$sumaVentas = $this->admin_get_total_sum($ventas, 'total');
 		// Obtener el total de descuentos e los comercios
-		$sumaDescuentos = $this->admin_get_total_sum($descuentos, 'Total');
+		$sumaDescuentos = $this->admin_get_total_sum($descuentos, 'descuento');
 		// Obtener el total de pedidos e los comercios
-		$sumaPedidos = $this->admin_get_total_sum($pedidos, 'Total', false);
+		$sumaPedidos = $this->admin_get_total_sum($pedidos, 'cantidad', false);
 		// Prisync
 		$prisync = $this->admin_obtener_resultados_prisync();
 		

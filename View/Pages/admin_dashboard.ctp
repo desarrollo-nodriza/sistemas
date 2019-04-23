@@ -11,7 +11,7 @@
 </div>
 <div class="page-content-wrap" id="dashboard">
     <div class="row">
-        <div class="col-xs-12 col-sm-3">
+        <div class="col-xs-12 col-sm-4">
             <div class="widget widget-success widget-carousel">
                 <div class="owl-carousel" id="ventas_del_periodo">
                 	<div>                                    
@@ -23,7 +23,7 @@
                         <div>                                    
                             <div class="widget-title">Total Ventas de mes</div>
                             <div class="widget-subtitle"><?=$venta['tienda']?></div>                                                                       
-                            <div class="widget-int"><?=$this->Number->currency($venta['Total'], 'CLP');?></div>
+                            <div class="widget-int"><?=$this->Number->currency($venta['total'], 'CLP');?></div>
                         </div>
                     <? endforeach; ?>
                 </div>                                                        
@@ -41,18 +41,18 @@
                         <div>                                    
                             <div class="widget-title">Total Descuento del mes</div>
                             <div class="widget-subtitle"><?=$descuento['tienda']?></div>                                                                       
-                            <div class="widget-int"><?=$this->Number->currency($descuento['Total'], 'CLP');?></div>
+                            <div class="widget-int"><?=$this->Number->currency($descuento['total'], 'CLP');?></div>
                         </div>
                     <? endforeach; ?>
                 </div>                                                      
             </div>
         </div>-->
-        <div class="col-xs-12 col-sm-3">
+        <div class="col-xs-12 col-sm-4">
             <div class="widget widget-info widget-carousel">
                 <div class="owl-carousel" id="tickets_del_periodo">
                     <? foreach ($tickets as $ticket) : ?>
                         <div>                                    
-                            <div class="widget-title">Valor ticket promedio del mes</div>
+                            <div class="widget-title">Ticket promedio del mes</div>
                             <div class="widget-subtitle"><?=$ticket['tienda']?></div>                                                                       
                             <div class="widget-int"><?=$this->Number->currency($ticket['total'], 'CLP');?></div>
                         </div>
@@ -60,8 +60,8 @@
                 </div>                                                      
             </div>
         </div>
-        <div class="col-xs-12 col-sm-3">
-            <div class="widget widget-primary widget-carousel">
+        <div class="col-xs-12 col-sm-4">
+            <div class="widget widget-warning widget-carousel">
                 <div class="owl-carousel" id="pedidos_del_periodo">
                     <div>                                    
                         <div class="widget-title">Total Pedidos del mes</div>
@@ -72,13 +72,13 @@
                         <div>                                    
                             <div class="widget-title">Total Pedidos del mes</div>
                             <div class="widget-subtitle"><?=$pedido['tienda']?></div>                                                                       
-                            <div class="widget-int"><?=$pedido['Total'];?></div>
+                            <div class="widget-int"><?=$pedido['cantidad'];?></div>
                         </div>
                     <? endforeach; ?>
                 </div>                                                      
             </div>
         </div>
-        <div class="col-xs-6 col-sm-3">
+        <!--<div class="col-xs-6 col-sm-3">
             <div class="widget widget-warning widget-carousel">
                 <div class="owl-carousel" id="prisync">
                     <? foreach ($prisync as $ip => $precio) : ?>
@@ -97,7 +97,7 @@
                     <? endforeach; ?>
                 </div>                                                      
             </div>
-        </div>
+        </div>-->
     </div>
     <div class="row">
         <div class="col-xs-12">
@@ -202,108 +202,8 @@
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-xs-12 col-sm-6">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Top 10 Productos</h3>
-                    <?= $this->Form->create('Productos', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-                    <ul class="panel-controls">      
-                        <li><label class="control-label">Rango </label></li>
-                        <li>
-                            <div class="input-group">
-                                <?=$this->Form->input('f_inicio', array('class' => 'form-control datepicker'));?>
-                                <span class="input-group-addon add-on"> - </span>
-                                <?=$this->Form->input('f_final', array('class' => 'form-control datepicker'));?>
-                            </div>
-                        </li>
-                        <li><label class="control-label">Tienda</label></li>
-                        <li>
-                            <div class="input-group">
-                                <?=$this->Form->select('tienda', array(), array('empty' => false, 'class' => 'form-control'));?>
-                            </div>
-                        </li>
-                        <li><a id="enviarFormularioProductos" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
-                    <?= $this->Form->end(); ?>
-                </div>
-                <div class="panel-body">
-                    <legend id="totalProductos"></legend>
-                    <div id="GraficoProductosDonuts" style="height: 200px;">
-                        
-                    </div>
-                </div>                             
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-6">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Top 10 Marcas</h3>
-                    <?= $this->Form->create('Marcas', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-                    <ul class="panel-controls">      
-                        <li><label class="control-label">Rango </label></li>
-                        <li>
-                            <div class="input-group">
-                                <?=$this->Form->input('f_inicio', array('class' => 'form-control datepicker'));?>
-                                <span class="input-group-addon add-on"> - </span>
-                                <?=$this->Form->input('f_final', array('class' => 'form-control datepicker'));?>
-                            </div>
-                        </li>
-                        <li><label class="control-label">Tienda</label></li>
-                        <li>
-                            <div class="input-group">
-                                <?=$this->Form->select('tienda', array(), array('empty' => false, 'class' => 'form-control'));?>
-                            </div>
-                        </li>
-                        <li><a id="enviarFormularioMarcas" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
-                    <?= $this->Form->end(); ?>
-                </div>
-                <div class="panel-body">
-                    <legend id="totalMarcas"></legend>
-                    <div id="GraficoMarcasDonuts" style="height: 200px;">
-                        
-                    </div>
-                </div>                             
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-12 col-sm-6">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Top 10 Clientes</h3>
-                    <?= $this->Form->create('Clientes', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-                    <ul class="panel-controls">      
-                        <li><label class="control-label">Rango </label></li>
-                        <li>
-                            <div class="input-group">
-                                <?=$this->Form->input('f_inicio', array('class' => 'form-control datepicker'));?>
-                                <span class="input-group-addon add-on"> - </span>
-                                <?=$this->Form->input('f_final', array('class' => 'form-control datepicker'));?>
-                            </div>
-                        </li>
-                        <li><label class="control-label">Tienda</label></li>
-                        <li>
-                            <div class="input-group">
-                                <?=$this->Form->select('tienda', array(), array('empty' => false, 'class' => 'form-control'));?>
-                            </div>
-                        </li>
-                        <li><a id="enviarFormularioClientes" href="#" class="panel-refresh"><span class="fa fa-refresh"></span></a></li>
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
-                    <?= $this->Form->end(); ?>
-                </div>
-                <div class="panel-body">
-                    <div id="GraficoClientesDonuts" style="height: 200px;">
-                        
-                    </div>
-                </div>                             
-            </div>
-        </div>
-    </div>
+    
+    <!--
     <div class="row">
         <div class="col-xs-12">
             <div class="panel panel-default" id="tablaMarcasVentas">
@@ -344,13 +244,13 @@
                             <? foreach ($tablaMarcas as $marca) : ?>
                                 <tr>
                                     <td><?=$marca['Fabricante']['Marca'];?></td>
-                                    <td><?=$marca[0]['Total'];?>%</td>
+                                    <td><?=$marca[0]['total'];?>%</td>
                                     <td><?=$marca[0]['Cantidad'];?></td>
                                     <td><?=$this->Number->currency($marca[0]['PrecioVenta'], 'CLP');?></td>
                                 </tr>
                             <?  $totalVendidoMarcas = $totalVendidoMarcas + $marca[0]['PrecioVenta']; 
                                 $totalCantidadVendido = $totalCantidadVendido + $marca[0]['Cantidad']; 
-                                $totalPorcentaje = $totalPorcentaje + $marca[0]['Total'];
+                                $totalPorcentaje = $totalPorcentaje + $marca[0]['total'];
                                 $descuentos = $marca[0]['Descuentos'];
                                 $despachos = $marca[0]['Despachos']; ?>
                             <? endforeach; ?>
@@ -381,6 +281,7 @@
             </div>
         </div>
     </div>
+    -->
 
 </div>
 <? endif; ?>

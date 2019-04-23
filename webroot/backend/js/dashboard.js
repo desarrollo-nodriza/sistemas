@@ -135,27 +135,15 @@ $.extend({
 			
 			// Request
 			$.ajax({
-				url: webroot + "pages/get_all_sales/" + $('#VentasFInicio').val() + '/' + $('#VentasFFinal').val() + '/' + $('#VentasAgrupar').val() + '/' + 'true',
+				url: webroot + "pages/obtener_ventas/" + $('#VentasFInicio').val() + '/' + $('#VentasFFinal').val() + '/' + $('#VentasAgrupar').val() + '/' + 'true',
 			    dataType: "json"
 			   
 			})
 			.done(function( data, textStatus, jqXHR ) {
-					console.log(data);
-					var datos = [];
-					var colors = ['#39A23B', '#1C1D1C', '#737473'];
-					var yKeys = [ 'a', 'b', 'c'];
-					var etiquetas = ['Total', 'Toolmania', 'Walko'];
-					var i;
-
-					for (i in data) {
-					    if (data.hasOwnProperty(i)) {
-					    	datos.push({ y : data[i]['y'], a: data[i]['total'], b : data[i]['toolmania'], c: data[i]['walko'] });
-					    }
-					}
 
 					$('#GraficoVentasHistorico').html('');
-
-					$.graficos.graficoLinea(divGrafico, datos, 'y', yKeys, etiquetas, colors);
+					
+					$.graficos.graficoLinea(divGrafico, data.data, data.xkeys, data.ykeys, data.labels, data.lineColors);
 
 			})
 			.fail(function( jqXHR, textStatus, errorThrown ) {
@@ -168,27 +156,15 @@ $.extend({
 			
 			// Request
 			$.ajax({
-				url: webroot + "pages/get_all_discount/" + $('#DescuentosFInicio').val() + '/' + $('#DescuentosFFinal').val() + '/' + $('#DescuentosAgrupar').val() + '/' + 'true',
+				url: webroot + "pages/obtener_descuentos/" + $('#DescuentosFInicio').val() + '/' + $('#DescuentosFFinal').val() + '/' + $('#DescuentosAgrupar').val() + '/' + 'true',
 			    dataType: "json"
 			   
 			})
 			.done(function( data, textStatus, jqXHR ) {
-					console.log(data);
-					var datos = [];
-					var colors = ['#2B40BC', '#4EAEEA', '#A479EF'];
-					var yKeys = [ 'a', 'b', 'c'];
-					var etiquetas = ['Total', 'Toolmania', 'Walko'];
-					var i;
-
-					for (i in data) {
-					    if (data.hasOwnProperty(i)) {
-					    	datos.push({ y : data[i]['y'], a: data[i]['total'], b : data[i]['toolmania'], c: data[i]['walko'] });
-					    }
-					}
 
 					$('#GraficoDescuentosHistorico').html('');
 
-					$.graficos.graficoLinea(divGrafico, datos, 'y', yKeys, etiquetas, colors);
+					$.graficos.graficoLinea(divGrafico, data.data, data.xkeys, data.ykeys, data.labels, data.lineColors);
 
 			})
 			.fail(function( jqXHR, textStatus, errorThrown ) {
@@ -201,27 +177,15 @@ $.extend({
 			
 			// Request
 			$.ajax({
-				url: webroot + "pages/get_all_orders/" + $('#PedidosFInicio').val() + '/' + $('#PedidosFFinal').val() + '/' + $('#PedidosAgrupar').val() + '/' + 'true',
+				url: webroot + "pages/cantidad_ventas/" + $('#PedidosFInicio').val() + '/' + $('#PedidosFFinal').val() + '/' + $('#PedidosAgrupar').val() + '/' + 'true',
 			    dataType: "json"
 			   
 			})
 			.done(function( data, textStatus, jqXHR ) {
-					console.log(data);
-					var datos = [];
-					var colors = ['#5C5C5C', '#819AFC', '#000000'];
-					var yKeys = [ 'a', 'b', 'c'];
-					var etiquetas = ['Total', 'Toolmania', 'Walko'];
-					var i;
-
-					for (i in data) {
-					    if (data.hasOwnProperty(i)) {
-					    	datos.push({ y : data[i]['y'], a: data[i]['total'], b : data[i]['toolmania'], c: data[i]['walko'] });
-					    }
-					}
 
 					$('#GraficoPedidosHistorico').html('');
 
-					$.graficos.graficoArea(divGrafico, datos, 'y', yKeys, etiquetas, colors);
+					$.graficos.graficoLinea(divGrafico, data.data, data.xkeys, data.ykeys, data.labels, data.lineColors);
 			})
 			.fail(function( jqXHR, textStatus, errorThrown ) {
 			    console.log( "La solicitud a fallado: " +  textStatus);
