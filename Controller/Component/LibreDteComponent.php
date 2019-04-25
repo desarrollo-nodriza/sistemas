@@ -423,7 +423,7 @@ class LibreDteComponent extends Component
 	}
 
 
-	public function enviarDteEmail($emails = array(), $dte = '', $folio = '', $emisor = '', $asunto = '', $mensaje = '', $pdf = true, $cedible = true, $papelContinuo = true)
+	public function enviarDteEmail($emails = array(), $dte = '', $folio = '', $emisor = '', $asunto = '', $mensaje = '', $pdf = true, $cedible = true, $papelContinuo = 0)
 	{
 		# Esquema para datos
 		$datos = array(

@@ -1660,8 +1660,15 @@ class VentaDetalleProductosController extends AppController
 						'VentaDetalleProducto.id_externo' => $id
 					)
 				));
+
+				if (!empty($producto)) {
+					$producto['VentaDetalleProducto']['stock_enbodega'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
+				}else{
+					$producto['VentaDetalleProducto'] = array();
+				}
+
 		        $this->set(array(
-		            'producto' => $producto,
+		            'producto' => $producto['VentaDetalleProducto'],
 		            '_serialize' => array('producto')
 		        ));
 			}	

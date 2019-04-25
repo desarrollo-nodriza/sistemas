@@ -54,6 +54,18 @@
 											<td><?= $venta['MedioPago']['nombre']; ?></td>
 										</tr>
 										<tr>
+											<th>Dirección despacho</th>
+											<td><?= $venta['Venta']['direccion_entrega']; ?></td>
+										</tr>
+										<tr>
+											<th>Comuna despacho</th>
+											<td><?= $venta['Venta']['comuna_entrega']; ?></td>
+										</tr>
+										<tr>
+											<th>Teléfono despacho</th>
+											<td><?= $venta['Venta']['fono_receptor']; ?></td>
+										</tr>
+										<tr>
 											<th>Tienda</th>
 											<td><?= $venta['Tienda']['nombre']; ?></td>
 										</tr>
@@ -443,7 +455,12 @@
 			<div class="panel panel-danger">
 				<?= $this->Form->create('Venta', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 				<?=$this->Form->input('id');?>
-				<?=$this->Form->hidden('atendida', array('value' => 1)); ?>
+				<?=$this->Form->hidden('id_externo', array('value' => $this->request->data['Venta']['id_externo'])); ?>
+				<?=$this->Form->hidden('atendida', array('value' => 0)); ?>
+				<?=$this->Form->hidden('tienda_id', array('value' => $this->request->data['Venta']['tienda_id'])); ?>
+				<?=$this->Form->hidden('marketplace_id', array('value' => $this->request->data['Venta']['marketplace_id'])); ?>
+				<?=$this->Form->hidden('venta_estado_id_actual', array('value' => $this->request->data['Venta']['venta_estado_id'])); ?>
+
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?=__('Cambiar estado'); ?></h3>
 				</div>
@@ -458,7 +475,7 @@
 					</div>
 				</div>
 				<div class="panel-footer">
-					<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+					<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Actualizar Estado">
 				</div>
 				<?= $this->Form->end(); ?>
 			</div>
