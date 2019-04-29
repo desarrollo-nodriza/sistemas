@@ -812,6 +812,8 @@ class VentaDetalleProductosController extends AppController
 			));
 		}
 		
+		$precio_costo_final = ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($id);
+		
 		$canales 				   = $this->verificar_canales($this->request->data['VentaDetalleProducto']['id_externo']);
 		$bodegas                   = $this->VentaDetalleProducto->Bodega->find('list', array('conditions' => array('activo' => 1)));
 		$proveedores               = $this->VentaDetalleProducto->Proveedor->find('list', array('conditions' => array('activo' => 1))); 
@@ -851,7 +853,7 @@ class VentaDetalleProductosController extends AppController
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos');
 		BreadcrumbComponent::add('Editar');
 
-		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega'));
+		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final'));
 	}
 
 
@@ -926,7 +928,10 @@ class VentaDetalleProductosController extends AppController
 	}
 
 	public function admin_exportar()
-	{
+	{	
+		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
+		set_time_limit(-1);
+
 		$datos			= $this->VentaDetalleProducto->find('all', array(
 			'recursive'				=> -1
 		));
@@ -944,7 +949,10 @@ class VentaDetalleProductosController extends AppController
 		if ($this->request->is('get') && !empty($palabra)) {
 			$productos = $this->VentaDetalleProducto->find('all', array(
 				'conditions' => array(
-					'VentaDetalleProducto.nombre LIKE "%'.$palabra.'%"'
+					'OR' => array(
+						'VentaDetalleProducto.nombre LIKE "%'.$palabra.'%"',
+						'VentaDetalleProducto.codigo_proveedor LIKE "%'.$palabra.'%"'
+					)
 				),
 				'contain' => array(
 					'PrecioEspecificoProducto' => array(
@@ -982,93 +990,13 @@ class VentaDetalleProductosController extends AppController
 			));
 
 			foreach ($productos as $i => $p) {
+				$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p, true);
 
-				$descuentosMarcaCompuestos  = Hash::extract($p, 'Marca.PrecioEspecificoMarca.{n}[descuento_compuesto=1]');
-				$descuentosMarcaEspecificos = Hash::extract($p, 'Marca.PrecioEspecificoMarca.{n}[descuento_compuesto=0]');
-				$descuentosMarca 			= Hash::extract($p, 'Marca.PrecioEspecificoMarca.{n}');
-
-				$descuentosProductoCompuestos   = Hash::extract($p, 'PrecioEspecificoProducto.{n}[descuento_compuesto=1]');
-				$descuentosProductosEspecificos = Hash::extract($p, 'PrecioEspecificoProducto.{n}[descuento_compuesto=0]');
-				$descuentosProducto             = Hash::extract($p, 'PrecioEspecificoProducto.{n}');
-
-				$descuentosCompuestos = Hash::format(array_merge($descuentosMarcaCompuestos, $descuentosProductoCompuestos), array('{n}.descuento'), '%1d');
-				$descCompuesto        = 0;
-
-				$productos[$i]['VentaDetalleProducto']['total_descuento']  = 0;
-				$productos[$i]['VentaDetalleProducto']['nombre_descuento'] = '';
-				$productos[$i]['VentaDetalleProducto']['valor_descuento']  = 0;
-
-				# Descuento marca
-				if ( !empty($descuentosMarca) ) {
-
-					if ($descuentosMarca[0]['descuento_compuesto']) {
-
-						$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $p['Marca']['descuento_base']);
-						$productos[$i]['VentaDetalleProducto']['total_descuento']  = $p['VentaDetalleProducto']['precio_costo'] * $descCompuesto;
-						$productos[$i]['VentaDetalleProducto']['nombre_descuento'] = 'Compuestos (%): ' . ($descCompuesto*100);
-						$productos[$i]['VentaDetalleProducto']['valor_descuento'] = $descCompuesto;
-
-					}else{
-
-						if ($p['Marca']['PrecioEspecificoMarca'][0]['tipo_descuento']) {
-							$productos[$i]['VentaDetalleProducto']['total_descuento'] = $p['VentaDetalleProducto']['precio_costo'] * ($p['Marca']['PrecioEspecificoMarca'][0]['descuento'] / 100); // Primer descuento
-							$productos[$i]['VentaDetalleProducto']['nombre_descuento'] = 'Descuento ' . $p['Marca']['PrecioEspecificoMarca'][0]['nombre'] . ': % ' . $p['Marca']['PrecioEspecificoMarca'][0]['descuento'];	
-							$productos[$i]['VentaDetalleProducto']['valor_descuento'] = $p['Marca']['PrecioEspecificoMarca'][0]['descuento'];
-
-						}else{
-							$productos[$i]['VentaDetalleProducto']['total_descuento'] = $p['Marca']['PrecioEspecificoMarca'][0]['descuento']; // Primer descuento
-							$productos[$i]['VentaDetalleProducto']['nombre_descuento'] = 'Descuento ' . $p['Marca']['PrecioEspecificoMarca'][0]['nombre'] . ': $ ' . CakeNumber::currency($p['Marca']['PrecioEspecificoMarca'][0]['descuento'] , 'CLP');
-							$productos[$i]['VentaDetalleProducto']['valor_descuento'] = $p['Marca']['PrecioEspecificoMarca'][0]['descuento'];
-						}
-
-					}
-
-				}
-
-				# Descuento producto
-				if ( !empty($descuentosProducto) ) {
-
-					if ($descuentosProducto[0]['descuento_compuesto']) {
-
-						if ($descCompuesto > 0) {
-
-							//$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $descCompuesto);
-							$productos[$i]['VentaDetalleProducto']['total_descuento']  = $p['VentaDetalleProducto']['precio_costo'] * $descCompuesto;	
-						}else{
-
-							$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $p['Marca']['descuento_base']);
-							
-							$productos[$i]['VentaDetalleProducto']['total_descuento']  = $p['VentaDetalleProducto']['precio_costo'] * $descCompuesto;
-						}
-
-						$productos[$i]['VentaDetalleProducto']['nombre_descuento'] = 'Compuestos (%): ' . ($descCompuesto*100);
-						$productos[$i]['VentaDetalleProducto']['valor_descuento'] = $descCompuesto;
-
-					}else{
-
-						if ($p['PrecioEspecificoProducto'][0]['tipo_descuento']) {
-							$productos[$i]['VentaDetalleProducto']['total_descuento'] = $p['VentaDetalleProducto']['precio_costo'] * ($p['PrecioEspecificoProducto'][0]['descuento'] / 100); // Primer descuento
-							$productos[$i]['VentaDetalleProducto']['nombre_descuento'] = 'Descuento ' . $p['PrecioEspecificoProducto'][0]['nombre'] . ': % ' . $p['PrecioEspecificoProducto'][0]['descuento'];
-							$productos[$i]['VentaDetalleProducto']['valor_descuento'] = $p['PrecioEspecificoProducto'][0]['descuento'];
-						}else{
-							$productos[$i]['VentaDetalleProducto']['total_descuento'] = $p['PrecioEspecificoProducto'][0]['descuento']; // Primer descuento
-							$productos[$i]['VentaDetalleProducto']['nombre_descuento'] = 'Descuento ' . $p['PrecioEspecificoProducto'][0]['nombre'] . ': $ ' . CakeNumber::currency($p['PrecioEspecificoProducto'][0]['descuento'] , 'CLP');
-							$productos[$i]['VentaDetalleProducto']['valor_descuento'] = $p['PrecioEspecificoProducto'][0]['descuento'];
-						}
-
-					}
-
-				}
-
-
-				if (empty($descuentosMarca) && empty($descuentosProducto) && isset($p['Marca']['descuento_base'])) {
-					$productos[$i]['VentaDetalleProducto']['total_descuento'] = $p['VentaDetalleProducto']['precio_costo'] * ($p['Marca']['descuento_base'] / 100); // Primer descuento
-					$productos[$i]['VentaDetalleProducto']['nombre_descuento'] = 'Descuento base marca' . ': % ' . $p['Marca']['descuento_base'];
-					$productos[$i]['VentaDetalleProducto']['valor_descuento'] = $p['Marca']['descuento_base'];
-				}
-
-
+				$productos[$i]['VentaDetalleProducto']['total_descuento']  = $descuentos['total_descuento'];
+				$productos[$i]['VentaDetalleProducto']['nombre_descuento'] = $descuentos['nombre_descuento'];
+				$productos[$i]['VentaDetalleProducto']['valor_descuento']  = $descuentos['valor_descuento']; 
 			}
+			
 
 			foreach ($productos as $key => $value) {
 				$respuesta[$key]['id']           	= $value['VentaDetalleProducto']['id'];

@@ -86,12 +86,16 @@
 		<div class="col-xs-12">
 			<div class="panel panel-info">
 				<div class="panel-heading">
-					<h3 class="panel-title text-uppercase"><b><?=$ocs['Proveedor']['nombre'];?></b></h3>
+					<h3 class="panel-title text-uppercase"><b>OC N°<?=$ocs['OrdenCompra']['id'];?> para <?=$ocs['Proveedor']['nombre'];?> </b></h3>
 				</div>
 				<div class="panel-body">
 					<div class="row">
-						<div class="col-xs-12 form-group input-group-lg">
-                            <?= $this->Form->label('moneda_id', 'Forma de pago'); ?>
+						<div class="col-xs-12 form-group text-center">
+							<h1>OC N°<?=$ocs['OrdenCompra']['id'];?></h1>
+							<h2>Monto a pagar sin descuentos: <?=CakeNumber::currency($ocs['OrdenCompra']['total'] , 'CLP');?></h2>
+						</div>
+						<div class="col-xs-12 form-group input-group-lg text-center">
+                            <h3>Forma de pago</h3>
                             <?= $this->Form->input('moneda_id', array('class' => 'form-control js-select-moneda', 'empty' => 'Seleccione', 'default' => $ocs['OrdenCompra']['moneda_id'] )); ?>
 						</div>
 						<div class="col-xs-12 form-group">

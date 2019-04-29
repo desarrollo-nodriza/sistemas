@@ -180,12 +180,18 @@ $venta['Venta']['total'] = $venta['Venta']['total'] = ($TotalProductos * 1.19);
 
 				</div>
 				<ul class="panel-body list-group">
-					
+								
 					<li class="list-group-item"><span class="fa fa-user"></span> <?= (!empty($venta['VentaCliente']['rut'])) ? $venta['VentaCliente']['rut'] : 'xxxxxxxx-x'; ?></li>
 					
 					<li class="list-group-item"><span class="fa fa-phone"></span> <?= (!empty($venta['VentaCliente']['telefono'])) ? $venta['VentaCliente']['telefono'] : 'x xxxx xxxx'; ?></li>
 
+					<li class="list-group-item"><span class="fa fa-phone"></span> <?= (!empty($venta['Venta']['fono_receptor'])) ? $venta['Venta']['fono_receptor'] : 'x xxxx xxxx'; ?></li>
+
 					<li class="list-group-item"><span class="fa fa-envelope"></span> <?= (!empty($venta['VentaCliente']['email'])) ? $venta['VentaCliente']['email'] : 'xxxxx@xxxx.xx'; ?></li>
+
+					<li class="list-group-item"><span class="fa fa-truck"></span> <?= (!empty($venta['Venta']['direccion_entrega'])) ? $venta['Venta']['direccion_entrega'] : 'No especificado'; ?></li>
+
+					<li class="list-group-item"><span class="fa fa-map-marker"></span> <?= (!empty($venta['Venta']['comuna_entrega'])) ? $venta['Venta']['comuna_entrega'] : 'No especificado'; ?></li>
 
 				</ul>                            
 			</div>

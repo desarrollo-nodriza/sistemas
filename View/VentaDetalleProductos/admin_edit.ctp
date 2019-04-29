@@ -72,7 +72,7 @@
 								<td><?= $this->Form->input('marca_id', array('class' => 'form-control not-blank', 'empty' => 'Seleccione Marca', 'default' => $this->request->data['Marca']['id'])); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('precio_costo', 'Costo'); ?></th>
+								<th><?= $this->Form->label('precio_costo', 'Precio Lista'); ?></th>
 								<td><?= $this->Form->input('precio_costo', array('class' => 'form-control not-blank is-number', 'type' => 'text')); ?></td>
 							</tr>
 							<tr>
@@ -212,8 +212,18 @@
 	</div>
 	
 	<div class="row">
-		<div class="col-xs-12 col-md-2">
-			<div class="widget small-widget" style="background-color: #<?=random_color();?>;">
+		<div class="col-xs-12 col-md-4">
+			<div class="widget" style="background-color: #<?=random_color();?>;">
+                <div class="owl-carousel">
+                	<div>                                    
+                        <div class="widget-title"><?=__('Precio Costo');?></div>                                                                      
+                        <div class="widget-int"><?=$this->Number->currency($precio_costo_final, 'CLP');?></div>
+                    </div>
+                </div>                                                        
+            </div>
+		</div>
+		<div class="col-xs-12 col-md-4">
+			<div class="widget" style="background-color: #<?=random_color();?>;">
                 <div class="owl-carousel">
                 	<div>                                    
                         <div class="widget-title"><?=__('PMP Global');?></div>                                                                      
@@ -222,8 +232,8 @@
                 </div>                                                        
             </div>
 		</div>
-		<div class="col-xs-12 col-md-2">
-			<div class="widget small-widget" style="background-color: #<?=random_color();?>;">
+		<div class="col-xs-12 col-md-4">
+			<div class="widget" style="background-color: #<?=random_color();?>;">
                 <div class="owl-carousel">
                 	<div>                                    
                         <div class="widget-title"><?=__('Stock Global');?></div>                                                                      
@@ -232,7 +242,8 @@
                 </div>                                                        
             </div>
 		</div>
-
+	</div>
+	<div class="row">		
 		<? if (isset($this->request->data['VentaDetalleProducto']['Inventario'])) : ?>
 			<? foreach ($this->request->data['VentaDetalleProducto']['Inventario'] as $i => $inventario) : ?>
 			<div class="col-xs-12 col-md-2">

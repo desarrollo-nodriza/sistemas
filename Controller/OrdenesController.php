@@ -544,7 +544,8 @@ class OrdenesController extends AppController
 					),
 					'fields' => array(
 						'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
-						'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id'
+						'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.paquete_generado', 'Venta.direccion_entrega', 
+						'Venta.comuna_entrega', 'Venta.fono_receptor'
 					)
 				)
 			);
@@ -685,6 +686,8 @@ class OrdenesController extends AppController
 		if (!$rol['Rol']['permitir_fc'])
 			unset($tipoDocumento['46']);
 
+		$tipoDocumentosReferencias = $this->LibreDte->tipoDocumento;
+
 		# Array de comunas actualizadas
 		$comunasResult = ClassRegistry::init('Comuna')->find('list', array('order' => array('nombre' => 'ASC')));
 
@@ -716,7 +719,7 @@ class OrdenesController extends AppController
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');
 		
-		$this->set(compact('venta', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos'));
+		$this->set(compact('venta', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias'));
 
 	}
 
@@ -885,7 +888,8 @@ class OrdenesController extends AppController
 					),
 					'fields' => array(
 						'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
-						'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id'
+						'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.paquete_generado', 'Venta.direccion_entrega', 
+						'Venta.comuna_entrega', 'Venta.fono_receptor'
 					)
 				)
 			);
@@ -1329,7 +1333,7 @@ class OrdenesController extends AppController
 			$emails = explode(',', trim($this->request->data['Orden']['emails']));
 
 			$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
-
+			
 			$enviar = $this->LibreDte->enviarDteEmail(
 				$emails, 
 				$this->request->data['Orden']['dte'], 

@@ -47,6 +47,7 @@
 									<thead>
 										<th></th>
 										<th>ID</th>
+										<th>ID EXTERNO</th>
 										<th>REFERENCIA</th>
 										<th>ESTADO</th>
 										<th>TOTAL</th>

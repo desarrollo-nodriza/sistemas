@@ -11,6 +11,7 @@
 	<?= $this->Form->input('Dte.id', array('type' => 'hidden', 'value' => $venta['Dte'][0]['id'])); ?>
 <? endif; ?>
 <?= $this->Form->input('estado', array('type' => 'hidden', 'value' => __('no_generado'))); ?>
+<?= $this->Form->hidden('externo', array('value' => $venta['Venta']['id_externo'])); ?>
 
 <div class="page-content-wrap">
 	<div class="row">
@@ -163,7 +164,8 @@
 								<table class="table js-clon-scope table-bordered">
 									<thead>
 										<tr>
-											<th><?= __('Documento referenciado');?></th>
+											<th><?= __('Folio referenciado');?></th>
+											<th><?= __('Tipo documento');?></th>
 											<th><?= __('Fecha Referencia');?></th>
 											<th><?= __('Código ref.');?></th>
 											<th><?= __('Razón referencia');?></th>
@@ -174,10 +176,10 @@
 										<tr class="js-clon-base hidden">
 											
 											<td>
-												<?= $this->Form->select('DteReferencia.999.dte_referencia', $dteEmitidos, array('disabled' => true, 'class' => 'form-control id-referencia', 'empty' => 'Seleccione folio de ref.')); ?>
-												<?= $this->Form->input('DteReferencia.999.folio', array('type' => 'hidden', 'diabled' => true, 'class' => 'folio-referencia'))?>
-												<?= $this->Form->input('DteReferencia.999.tipo_documento', array('type' => 'hidden', 'diabled' => true, 'class' => 'tipo-referencia'))?>
+												<!--<?= $this->Form->select('DteReferencia.999.dte_referencia', $dteEmitidos, array('disabled' => true, 'class' => 'form-control id-referencia', 'empty' => 'Seleccione folio de ref.')); ?>-->
+												<?= $this->Form->input('DteReferencia.999.folio', array('type' => 'text', 'disabled' => true, 'class' => 'folio-referencia form-control', 'placeholder' => 'Igrese folio'))?>
 											</td>
+											<td><?= $this->Form->select('DteReferencia.999.tipo_documento', $tipoDocumentosReferencias, array('diabled' => true, 'class' => 'tipo-referencia form-control', 'empty' => 'Seleccione'))?></td>
 											<td><?= $this->Form->input('DteReferencia.999.fecha', array('type' => 'text', 'disabled' => true, 'class' => 'form-control datepicker fecha-referencia')); ?></td>
 											<td><?= $this->Form->select('DteReferencia.999.codigo_referencia', $codigoReferencia , array('disabled' => true, 'class' => 'form-control', 'empty' => 'Seleccione código de ref.')); ?></td>
 											<td><?= $this->Form->input('DteReferencia.999.razon', array('disabled' => true)); ?></td>
@@ -190,10 +192,10 @@
 										<? foreach ( $this->request->data['Dte']['DteReferencia'] as $index => $referencia ) : ?>
 										<tr>
 											<td>
-												<?= $this->Form->select(sprintf('DteReferencia.%d.dte_referencia', $index), $dteEmitidos, array('class' => 'form-control id-referencia', 'empty' => 'Seleccione folio de ref.')); ?>
-												<?= $this->Form->input(sprintf('DteReferencia.%d.folio', $index), array('type' => 'hidden', 'class' => 'folio-referencia')); ?>
-												<?= $this->Form->input(sprintf('DteReferencia.%d.tipo_documento', $index), array('type' => 'hidden', 'class' => 'tipo-referencia')); ?>
+												<!--<?= $this->Form->select(sprintf('DteReferencia.%d.dte_referencia', $index), $dteEmitidos, array('class' => 'form-control id-referencia', 'empty' => 'Seleccione folio de ref.')); ?>-->
+												<?= $this->Form->input(sprintf('DteReferencia.%d.folio', $index), array('type' => 'text', 'class' => 'folio-referencia form-control', 'placeholder' => 'Igrese folio')); ?>
 											</td>
+											<td><?= $this->Form->select(sprintf('DteReferencia.%d.tipo_documento', $index), $tipoDocumentosReferencias, array('class' => 'tipo-referencia form-control', 'empty' => 'Seleccione'))?></td>
 											<td><?= $this->Form->input(sprintf('DteReferencia.%d.fecha', $index), array('type' => 'text', 'class' => 'form-control datepicker fecha-referencia')); ?></td>
 											<td><?= $this->Form->select(sprintf('DteReferencia.%d.codigo_referencia', $index),$codigoReferencia , array('class' => 'form-control', 'empty' => 'Seleccione código de ref.')); ?></td>
 											<td><?= $this->Form->input(sprintf('DteReferencia.%d.razon', $index), array('class' => 'form-control')); ?></td>
@@ -202,12 +204,12 @@
 											
 											</td>
 										</tr>
-										<? endforeach; ?>
+										<? endforeach; ?>	
 										<? endif; ?>
 									</tbody>
 									<tfoot>
 										<tr>
-											<td colspan="4">&nbsp;</td>
+											<td colspan="5">&nbsp;</td>
 											<td><a href="#" class="btn btn-xs btn-success js-clon-agregar"><i class="fa fa-plus"></i> Agregar referencia</a></td>
 										</tr>
 									</tfoot>
@@ -534,14 +536,20 @@
 
 				</div>
 				<ul class="panel-body list-group">
-					
+								
 					<li class="list-group-item"><span class="fa fa-user"></span> <?= (!empty($venta['VentaCliente']['rut'])) ? $venta['VentaCliente']['rut'] : 'xxxxxxxx-x'; ?></li>
 					
 					<li class="list-group-item"><span class="fa fa-phone"></span> <?= (!empty($venta['VentaCliente']['telefono'])) ? $venta['VentaCliente']['telefono'] : 'x xxxx xxxx'; ?></li>
 
+					<li class="list-group-item"><span class="fa fa-phone"></span> <?= (!empty($venta['Venta']['fono_receptor'])) ? $venta['Venta']['fono_receptor'] : 'x xxxx xxxx'; ?></li>
+
 					<li class="list-group-item"><span class="fa fa-envelope"></span> <?= (!empty($venta['VentaCliente']['email'])) ? $venta['VentaCliente']['email'] : 'xxxxx@xxxx.xx'; ?></li>
 
-				</ul>                            
+					<li class="list-group-item"><span class="fa fa-truck"></span> <?= (!empty($venta['Venta']['direccion_entrega'])) ? $venta['Venta']['direccion_entrega'] : 'No especificado'; ?></li>
+
+					<li class="list-group-item"><span class="fa fa-map-marker"></span> <?= (!empty($venta['Venta']['comuna_entrega'])) ? $venta['Venta']['comuna_entrega'] : 'No especificado'; ?></li>
+
+				</ul>                        
 			</div>
 
 

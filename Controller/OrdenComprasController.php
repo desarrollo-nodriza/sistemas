@@ -707,23 +707,20 @@ class OrdenComprasController extends AppController
 
 		# comprobamos el stock en bodegas para saber cuales productos se deben solicitar por OC
 		foreach ($productosTotales as $ip => $p) {
-			
-			$producto = Hash::extract($this->request->data['Venta'], 'VentaDetalle[venta_detalle_producto_id='.$ip.'].VentaDetalleProducto');
 
-			$pedir = $p;
-			$enBodega = 0;
+			$pedir = $p;			
 
-			if (!empty($producto)) {
+			# Consultamos la cantiad que tenemos en la bodega principal
+			$enBodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($ip);
 
-				$enBodega = array_sum(Hash::extract($producto['Bodega'], '{n}.BodegasVentaDetalleProducto[io=IN].cantidad')) - array_sum(Hash::extract($producto['Bodega'], '{n}.BodegasVentaDetalleProducto[io=ED].cantidad'));
-
-				if ($enBodega >= $p) {
-					$pedir = 0;
-				}else{
-					$pedir = $pedir - $enBodega;
-				}
+			# Calculamos la diferencia que se debe pedir segun lo que tenemos en bodega
+			if ($enBodega >= $p) {
+				$pedir = 0;
+			}else{
+				$pedir = $pedir - $enBodega;
 			}
-
+			
+			# Definimos lo que tenemos en bodega y lo que no
 			if ($pedir === 0) {
 				$productosNoSolicitar[$ip]['id'] = $ip;
 				$productosNoSolicitar[$ip]['cantidad_bodega'] = $enBodega;
@@ -734,6 +731,11 @@ class OrdenComprasController extends AppController
 
 		}
 
+		# Si no hay producto que pedir se cancela el paso
+		if (empty($productosSolicitar)) {
+			$this->Session->setFlash('No hay productos que agregar a la OC.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
 
 		# Ordenamos los productos que se deben solicitar por proveedor
 		$productos = ClassRegistry::init('VentaDetalleProducto')->find('all', array(
@@ -824,8 +826,7 @@ class OrdenComprasController extends AppController
 				)
 			)
 		));
-		
-		#prx($proveedores);
+
 		# Quitamos los duplicados
 		foreach ($proveedores as $ip => $p) {
 			if ( (count(Hash::extract($proveedores, '{n}.Proveedor[id=' . $p['Proveedor']['id'] .'].id' )) > 1) || empty($p['VentaDetalleProducto']) ) {
@@ -842,94 +843,14 @@ class OrdenComprasController extends AppController
 		foreach ($proveedores as $ip => $proveedor) {
 			foreach ($proveedor['VentaDetalleProducto'] as $i => $p) {
 
-				$descuentosMarcaCompuestos  = Hash::extract($p, 'Marca.PrecioEspecificoMarca.{n}[descuento_compuesto=1]');
-				$descuentosMarcaEspecificos = Hash::extract($p, 'Marca.PrecioEspecificoMarca.{n}[descuento_compuesto=0]');
-				$descuentosMarca 			= Hash::extract($p, 'Marca.PrecioEspecificoMarca.{n}');
+				$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
 
-				$descuentosProductoCompuestos   = Hash::extract($p, 'PrecioEspecificoProducto.{n}[descuento_compuesto=1]');
-				$descuentosProductosEspecificos = Hash::extract($p, 'PrecioEspecificoProducto.{n}[descuento_compuesto=0]');
-				$descuentosProducto             = Hash::extract($p, 'PrecioEspecificoProducto.{n}');
-
-				$descuentosCompuestos = Hash::format(array_merge($descuentosMarcaCompuestos, $descuentosProductoCompuestos), array('{n}.descuento'), '%1d');
-				$descCompuesto        = 0;
-
-				$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento']  = 0;
-				$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = '';
-				$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento']  = 0;
-
-				# Descuento marca
-				if ( !empty($descuentosMarca) ) {
-
-					if ($descuentosMarca[0]['descuento_compuesto']) {
-
-						$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $p['Marca']['descuento_base']);
-						$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento']  = $p['precio_costo'] * $descCompuesto;
-						$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = 'Compuestos (%): ' . ($descCompuesto*100);
-						$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento'] = $descCompuesto;
-
-					}else{
-
-						if ($p['Marca']['PrecioEspecificoMarca'][0]['tipo_descuento']) {
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento'] = $p['precio_costo'] * ($p['Marca']['PrecioEspecificoMarca'][0]['descuento'] / 100); // Primer descuento
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = 'Descuento ' . $p['Marca']['PrecioEspecificoMarca'][0]['nombre'] . ': % ' . $p['Marca']['PrecioEspecificoMarca'][0]['descuento'];	
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento'] = $p['Marca']['PrecioEspecificoMarca'][0]['descuento'];
-
-						}else{
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento'] = $p['Marca']['PrecioEspecificoMarca'][0]['descuento']; // Primer descuento
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = 'Descuento ' . $p['Marca']['PrecioEspecificoMarca'][0]['nombre'] . ': $ ' . CakeNumber::currency($p['Marca']['PrecioEspecificoMarca'][0]['descuento'] , 'CLP');
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento'] = $p['Marca']['PrecioEspecificoMarca'][0]['descuento'];
-						}
-
-					}
-
-				}
-
-				# Descuento producto
-				if ( !empty($descuentosProducto) ) {
-
-					if ($descuentosProducto[0]['descuento_compuesto']) {
-
-						if ($descCompuesto > 0) {
-
-							//$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $descCompuesto);
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento']  = $p['precio_costo'] * $descCompuesto;	
-						}else{
-
-							$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $p['Marca']['descuento_base']);
-							
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento']  = $p['precio_costo'] * $descCompuesto;
-						}
-
-						$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = 'Compuestos (%): ' . ($descCompuesto*100);
-						$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento'] = $descCompuesto;
-
-					}else{
-
-						if ($p['PrecioEspecificoProducto'][0]['tipo_descuento']) {
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento'] = $p['precio_costo'] * ($p['PrecioEspecificoProducto'][0]['descuento'] / 100); // Primer descuento
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = 'Descuento ' . $p['PrecioEspecificoProducto'][0]['nombre'] . ': % ' . $p['PrecioEspecificoProducto'][0]['descuento'];
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento'] = $p['PrecioEspecificoProducto'][0]['descuento'];
-						}else{
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento'] = $p['PrecioEspecificoProducto'][0]['descuento']; // Primer descuento
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = 'Descuento ' . $p['PrecioEspecificoProducto'][0]['nombre'] . ': $ ' . CakeNumber::currency($p['PrecioEspecificoProducto'][0]['descuento'] , 'CLP');
-							$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento'] = $p['PrecioEspecificoProducto'][0]['descuento'];
-						}
-
-					}
-
-				}
-
-
-				if (empty($descuentosMarca) && empty($descuentosProducto) && isset($p['Marca']['descuento_base'])) {
-					$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento'] = $p['precio_costo'] * ($p['Marca']['descuento_base'] / 100); // Primer descuento
-					$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = 'Descuento base marca' . ': % ' . $p['Marca']['descuento_base'];
-					$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento'] = $p['Marca']['descuento_base'];
-				}
-
-
+				$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
+				$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = $descuentos['nombre_descuento'];
+				$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento']; 
 			}
 		}
-
+		
 		$proveedoresLista = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('Proveedor.activo' => 1)));
 		$marcas 		  = ClassRegistry::init('Marca')->find('list');
 		$monedas          = $this->OrdenCompra->Moneda->find('list', array('conditions' => array('Moneda.activo' => 1)));
@@ -1286,7 +1207,7 @@ class OrdenComprasController extends AppController
 				'Venta.fecha_venta >' => $hace_un_mes
 			),
 			'fields' => array(
-				'Venta.id', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total'
+				'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total'
 			),
 			'contain' => array(
 				'Dte' => array(

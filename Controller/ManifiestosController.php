@@ -198,7 +198,7 @@ class ManifiestosController extends AppController {
 				'Venta.fecha_venta BETWEEN ? AND ?' => array($hace_un_mes, $fecha_actual)
 			),
 			'fields' => array(
-				'Venta.id', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total'
+				'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total'
 			),
 			'contain' => array(
 				'Dte' => array(

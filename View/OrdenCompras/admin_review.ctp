@@ -86,6 +86,7 @@
 								<th>Cantidad</th>
 								<th>N. Unitario</th>
 								<th>Descuento ($)</th>
+								<th>Costo Neto ($)</th>
 								<th>Total Neto</th>
 								<th></th>
 							</thead>
@@ -99,6 +100,7 @@
 									<td><?=$ocsp['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
 									<td><?=CakeNumber::currency($ocsp['OrdenComprasVentaDetalleProducto']['precio_unitario'] , 'CLP');?></td>
 									<td><?=CakeNumber::currency($ocsp['OrdenComprasVentaDetalleProducto']['descuento_producto'] , 'CLP');?></td>
+									<td><?=CakeNumber::currency(($ocsp['OrdenComprasVentaDetalleProducto']['descuento_producto'] - $ocsp['OrdenComprasVentaDetalleProducto']['descuento_producto']) , 'CLP');?></td>
 									<td><?=CakeNumber::currency($ocsp['OrdenComprasVentaDetalleProducto']['total_neto'] , 'CLP');?></td>
 									<td></td>
 								</tr>
@@ -108,22 +110,22 @@
 							</tboby>
 							<tfoot>
 								<tr>
-									<td colspan="6"></td>
+									<td colspan="7"></td>
 									<td>Total neto</td>
 									<td colspan="2"><?=CakeNumber::currency($ocs['OrdenCompra']['total_neto'] , 'CLP');?></td>
 								</tr>
 								<tr>
-									<td colspan="6"></td>
+									<td colspan="7"></td>
 									<td>Total Descuento</td>
 									<td colspan="2"><?=CakeNumber::currency($ocs['OrdenCompra']['descuento_monto'] , 'CLP');?></td>
 								</tr>
 								<tr>
-									<td colspan="6"></td>
+									<td colspan="7"></td>
 									<td>IVA</td>
 									<td colspan="2"><?=CakeNumber::currency($ocs['OrdenCompra']['iva'] , 'CLP');?></td>
 								</tr>
 								<tr>
-									<td colspan="6"></td>
+									<td colspan="7"></td>
 									<td>Total</td>
 									<td colspan="2"><?=CakeNumber::currency($ocs['OrdenCompra']['total'] , 'CLP');?></td>
 								</tr>
