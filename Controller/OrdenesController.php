@@ -410,7 +410,7 @@ class OrdenesController extends AppController
 
 				// Descuento Bruto en boletas
 				if ($this->request->data['DscRcgGlobal']['ValorDR'] > 0) {
-					$this->request->data['DscRcgGlobal']['ValorDR'] = $this->request->data['editDiscount'];	
+					$this->request->data['DscRcgGlobal']['ValorDR'] = $this->precio_bruto($this->request->data['editDiscount']);
 				}
 			}
 
