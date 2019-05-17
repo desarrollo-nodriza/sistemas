@@ -86,6 +86,15 @@ class VentaDetalleProductosController extends AppController
 		$this->paginate		= $paginate;
 		$ventadetalleproductos	= $this->paginate();
 
+
+		foreach ($ventadetalleproductos as $iv => $producto) {
+			
+			$ventadetalleproductos[$iv]['VentaDetalleProducto']['stock'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
+			$ventadetalleproductos[$iv]['VentaDetalleProducto']['costo'] = ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($producto['VentaDetalleProducto']['id']);
+
+		}
+
+
 		$marcas = ClassRegistry::init('Marca')->find('list');
 
 		BreadcrumbComponent::add('Productos');

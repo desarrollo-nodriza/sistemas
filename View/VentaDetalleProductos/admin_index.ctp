@@ -87,23 +87,28 @@
 						<table class="table">
 							<thead>
 								<tr class="sort">
-									<th><?= $this->Paginator->sort('id_externo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th style="width: 120px;"><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th style="max-width: 300px;"><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('marca_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('precio_costo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('created', 'Fecha de creación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('cantidad_virtual', 'Stock fisico', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('cantidad_virtual', 'Stock virtual', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
 								</tr>
 							</thead>
 							<tbody>
 								<?php foreach ( $ventadetalleproductos as $ventadetalleproducto ) : ?>
 								<tr>
-									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['id_externo']); ?>&nbsp;</td>
+									<td>
+										<b>Id:</b> <?= h($ventadetalleproducto['VentaDetalleProducto']['id']); ?>&nbsp;<br>
+										<b>Id Ext:</b> <?= h($ventadetalleproducto['VentaDetalleProducto']['id_externo']); ?>&nbsp;
+									</td>
 									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['nombre']); ?>&nbsp;</td>
 									<td><?= h($ventadetalleproducto['Marca']['nombre']); ?>&nbsp;</td>
-									<td><?= CakeNumber::currency(h($ventadetalleproducto['VentaDetalleProducto']['precio_costo']), 'CLP'); ?>&nbsp;</td>
+									<td><?= CakeNumber::currency(h($ventadetalleproducto['VentaDetalleProducto']['costo']), 'CLP'); ?>&nbsp;</td>
+									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['stock']); ?>&nbsp;</td>
+									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['cantidad_virtual']); ?>&nbsp;</td>
 									<td><?= ($ventadetalleproducto['VentaDetalleProducto']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
-									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['created']); ?>&nbsp;</td>
 									<td>
 									<? if ($permisos['edit']) : ?>
 										<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $ventadetalleproducto['VentaDetalleProducto']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
