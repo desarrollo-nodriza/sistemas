@@ -517,4 +517,273 @@ class LibreDteComponent extends Component
 		throw new Exception("Error al generar el DTE Real. No estan todos los campos completos.", 402);
 	}
 
+
+
+	public function prepararDte ($data = array())
+	{
+		# Arreglo Base
+		$dte = array(
+		    'Encabezado' => array(
+		        'IdDoc' => array(
+		            'TipoDTE' => $data['Dte']['tipo_documento'],
+		        ),
+		        'Emisor' => array(
+		            'RUTEmisor' => '76381142-5',
+		        )
+		    ),
+		      
+		);
+
+		# Glosa
+		if (!empty($data['Dte']['glosa'])) {
+			$dte = array_replace_recursive($dte, array(
+				'Encabezado' => array(
+					'IdDoc' => array(
+						'TermPagoGlosa' => $data['Dte']['glosa']
+					)
+				)
+			));
+		}
+
+		# Fecha
+		if (!empty($data['Dte']['fecha'])) {
+			$dte = array_replace_recursive($dte, array(
+				'Encabezado' => array(
+					'IdDoc' => array(
+						'FchEmis' => $data['Dte']['fecha']
+					)
+				)
+			));
+		}
+
+		# Items
+		if (!empty($data['DteDetalle'])) {
+
+			$detalle = array();
+			foreach ($data['DteDetalle'] as $i => $item) {
+				$detalle[] = array(
+					'CdgItem' => array(
+			    		'TpoCodigo' => 'INT1',
+			            'VlrCodigo' => $item['VlrCodigo']
+			    	),
+			        'NmbItem' => $item['NmbItem'],
+			        'QtyItem' => $item['QtyItem'],
+			        'PrcItem' => $item['PrcItem']
+			       );
+			}
+
+			$dte = array_replace_recursive($dte, array(
+				'Detalle' => $detalle
+				)
+			);
+		}
+
+
+		# Incluye Receptor
+		if (!empty($data['Dte']['rut_receptor']) && $data['Dte']['rut_receptor'] != '66666666-6' ) {
+
+			$rut = @number_format( substr ( $data['Dte']['rut_receptor'], 0 , -1 ) , 0, "", "") . '-' . substr ( $data['Dte']['rut_receptor'], strlen($data['Dte']['rut_receptor']) -1 , 1 );
+			
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Receptor' => array(
+					'RUTRecep' => $rut
+					)
+			));
+		}else{
+			# Boleta nominativa
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Receptor' => array(
+					'RUTRecep' => '66666666-6'
+					)
+			));
+		}
+
+		# Incluye Razón Social
+		if (!empty($data['Dte']['razon_social_receptor'])) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Receptor' => array(
+					'RznSocRecep' => $data['Dte']['razon_social_receptor']
+					)
+			));
+		}
+		# Incluye Giro Receptor
+		if (!empty($data['Dte']['giro_receptor'])) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Receptor' => array(
+					'GiroRecep' => $data['Dte']['giro_receptor']
+					)
+			));
+		}
+		# Incluye Dirección Receptor
+		if (!empty($data['Dte']['direccion_receptor'])) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Receptor' => array(
+					'DirRecep' => $data['Dte']['direccion_receptor']
+					)
+			));
+		}
+		# Incluye Comuna Receptor
+		if (!empty($data['Dte']['comuna_receptor'])) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Receptor' => array(
+					'CmnaRecep' => $data['Dte']['comuna_receptor']
+					)
+			));
+		}
+
+		# Incluye medio de pago
+		if (!empty($data['medio_de_pago'])) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'FmaPago' => $data['medio_de_pago']
+			));
+		}
+
+		# Inluye Descuento Global
+		if (isset($data['DscRcgGlobal']) && $data['Dte']['tipo_documento'] != 52 ) {
+			$dte = array_replace_recursive($dte, array(
+				"DscRcgGlobal" => array(
+			        "TpoMov" => "D",
+			        "TpoValor" => "$",
+			        'ValorDR' => $data['DscRcgGlobal']['ValorDR']
+				)
+			));
+
+			# si el descuento es 0 se elimina
+			if ($data['DscRcgGlobal']['ValorDR'] == 0) {
+				unset($dte['DscRcgGlobal']);
+			}
+		}
+		
+		# Incluye Tipo de transporte
+		/*if ( isset($data['Dte']['tipo_traslado']) && !empty($data['Dte']['tipo_traslado']) ) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'IdDoc' => array(
+					'IndTraslado' => $data['Dte']['tipo_traslado']
+					)	
+				)
+			);
+		}*/			
+
+		# Incluye patente
+		if ( isset($data['Dte']['patente']) && !empty($data['Dte']['patente']) ) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Transporte' => array(
+					'Patente' => $data['Dte']['patente']
+					)
+				)
+			);
+		}
+
+		# Incluye rut transportista
+		if ( isset($data['Dte']['rut_transportista']) && !empty($data['Dte']['rut_transportista']) ) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Transporte' => array(
+					'RUTTrans' => $data['Dte']['rut_transportista']
+					)
+				)
+			);
+		}
+
+		# Incluye rut chofer
+		if ( isset($data['Dte']['rut_chofer']) && !empty($data['Dte']['rut_chofer']) ) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Transporte' => array(
+					'Chofer' => array(
+						'RUTChofer' => $data['Dte']['rut_chofer'],
+						)
+					)
+				)
+			);
+		}
+
+		# Incluye nombre chofer
+		if ( isset($data['Dte']['nombre_chofer']) && !empty($data['Dte']['nombre_chofer']) ) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Transporte' => array(
+					'Chofer' => array(
+						'NombreChofer' => $data['Dte']['nombre_chofer']
+						)
+					)
+				)
+			);
+		}
+
+		# Incluye dirección destino
+		if ( isset($data['Dte']['direccion_traslado']) && !empty($data['Dte']['direccion_traslado']) ) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Transporte' => array(
+					'DirDest' => $data['Dte']['direccion_traslado']
+					)
+				)
+			);
+		}
+
+		# Incluye comuna destino
+		if ( isset($data['Dte']['comuna_traslado']) && !empty($data['Dte']['comuna_traslado']) ) {
+			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
+				'Transporte' => array(
+					'CmnaDest' => $data['Dte']['comuna_traslado']
+					)
+				)
+			);
+		}
+		
+		# Incluye referencia
+		if ( isset($data['DteReferencia']) && !empty($data['DteReferencia']) ) {
+
+			$DteReferencia = array();
+			$count = 1;
+			foreach ($data['DteReferencia'] as $i => $ref) {
+				
+				if (empty($ref['folio'])) {
+					continue;
+				}
+
+				$DteReferencia = array(
+					'TpoDocRef' => $ref['tipo_documento'],
+					'FolioRef' => $ref['folio'],
+					'FchRef' => $ref['fecha'],
+					'CodRef' => $ref['codigo_referencia'],
+					'RazonRef' => $ref['razon']
+				);
+
+				if (empty($ref['codigo_referencia'])) {
+					unset($DteReferencia['CodRef']);
+				}
+
+				if (empty($ref['razon'])) {
+					unset($DteReferencia['RazonRef']);
+				}
+
+				# Al ser nota de crédito invalida un documento de venta especifico...
+				if ($data['Dte']['tipo_documento'] == 61) {
+					$dteReferenciado = ClassRegistry::init('Dte')->find('first', array(
+						'conditions' => array(
+							'Dte.folio'          => $ref['folio'],
+							'Dte.tipo_documento' => array(33,39),
+							'Dte.venta_id'       => $data['Dte']['venta_id']
+						),
+						'fields' => array(
+							'Dte.id'
+						)
+					));
+
+					if (!empty($dteReferenciado)) {
+						ClassRegistry::init('Dte')->id = $dteReferenciado['Dte']['id'];
+						ClassRegistry::init('Dte')->saveField('invalidado', 1);
+					}
+				}
+
+				$count++;
+			}
+
+			$dte = array_replace_recursive($dte, array(
+				'Referencia' => $DteReferencia
+				)
+			);
+		}
+
+		return $dte;
+	}
+
 }

@@ -36,4 +36,17 @@ class VentaEstado extends AppModel
 			'counterQuery'			=> ''
 		)
 	);
+
+
+	public function obtener_estado_por_nombre($estado = '')
+	{
+		return $this->find('first', array(
+			'conditions' => array(
+				'VentaEstado.nombre' => trim($estado)
+				)
+			)
+		);
+	}
+
+
 }

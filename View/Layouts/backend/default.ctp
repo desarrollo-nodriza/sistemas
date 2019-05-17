@@ -60,6 +60,7 @@
 			'/backend/js/orden_compra',
 			'/backend/js/print_js/print.min',
 			'/backend/js/logistica',
+			'/backend/js/venta',
 			//'/backend/js/plugins',
 			//'/backend/js/demo_charts_nvd3'
 			//'/backend/js/demo_charts_morris'

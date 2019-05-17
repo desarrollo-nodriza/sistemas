@@ -80,6 +80,32 @@ class DtesController extends AppController
     }
 
 
+    /**
+     * Valida que una venta tenga o no un DTE de venta unico y validado. Es decir
+     * Que el estado sea dt_real_emitido, sea boleta o factura y que no esté 
+     * invalidado por una Nota de crédito
+     * @param  int 		$id_venta 
+     * @return bool
+     */
+    public static function unicoDteValido($id_venta)
+	{
+		$dts = ClassRegistry::init('Dte')->find('count', array(
+			'conditions' => array(
+				'Dte.venta_id' => $id_venta,
+				'Dte.estado' => 'dte_real_emitido',
+				'Dte.tipo_documento' => array(33, 39), // Boletas o facturas
+				'Dte.invalidado' => 0
+			)
+		));
+		
+		if ($dts > 0) {
+			return false;
+		}
+
+		return true;
+	}
+
+
 	/**
      * Crea un redirect y agrega a la URL los parámetros del filtro
      * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
@@ -193,6 +219,11 @@ class DtesController extends AppController
 	}
 
 
+	/**
+	 * Marca un dte como invalidado por una nota de crédito
+	 * @param  [type] $id id del DTE
+	 * @return [type]     [description]
+	 */
 	public function admin_invalidar($id = null)
 	{
 		if ( ! $this->Dte->exists($id) )
@@ -232,7 +263,7 @@ class DtesController extends AppController
 
 		foreach ($data as $indice => $valor) {
 				
-			$newData[$indice]['Dte']['id_order']                  = $valor['Dte']['id_order'];
+			$newData[$indice]['Dte']['venta_id']                  = $valor['Dte']['venta_id'];
 			$newData[$indice]['Dte']['referencia']                = (!empty($valor['Orden'])) ? $valor['Orden']['reference'] : 'Nulo';
 
 			# Identificador de la/s transacciones
@@ -384,7 +415,7 @@ class DtesController extends AppController
 				'order' => array('Dte.folio' => 'DESC'),
 				'fields' => array(
 					'Dte.id',
-					'Dte.id_order',
+					'Dte.venta_id',
 					'Dte.folio',
 					'Dte.tipo_documento',
 					'Dte.rut_receptor',
@@ -406,7 +437,7 @@ class DtesController extends AppController
 
 							if ($valor == 'ord' && isset($this->request->params['named']['txt'])) {
 								$query = array_replace_recursive($query, array(
-								'conditions' => array('Dte.id_order LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
+								'conditions' => array('Dte.venta_id LIKE' => '%'.trim($this->request->params['named']['txt']).'%')));
 							}
 
 							if ($valor == 'rut' && isset($this->request->params['named']['txt'])) {
@@ -444,9 +475,9 @@ class DtesController extends AppController
 			$ii = 1;
 
 			foreach ($datos as $i => $dato) {
-				if (!empty($dato['Dte']['pdf']) && !empty($dato['Dte']['id_order']) ) {
+				if (!empty($dato['Dte']['pdf']) && !empty($dato['Dte']['venta_id']) ) {
 
-					$pdfFile = APP . 'webroot' . DS. 'Dte' . DS . $dato['Dte']['id_order'] . DS . $dato['Dte']['id'] . DS . $dato['Dte']['pdf']; 
+					$pdfFile = APP . 'webroot' . DS. 'Dte' . DS . $dato['Dte']['venta_id'] . DS . $dato['Dte']['id'] . DS . $dato['Dte']['pdf']; 
 
 					if (file_exists($pdfFile)) {
 						

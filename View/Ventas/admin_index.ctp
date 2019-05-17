@@ -154,13 +154,19 @@
 				<div class="panel-heading">
 
 					<h3 class="panel-title">Listado de Ventas</h3>
-
+					
+					<?= $this->Form->create('Venta', array('url' => array('controller' => 'ventas', 'action' => 'facturacion_masiva'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
 					<div class="btn-group pull-right">
 						<? if ($permisos['generate']) : ?>
+						
+						<?= $this->Form->button('<i class="fa fa-file" aria-hidden="true"></i> Facturar seleccionados (<span id="ventas-seleccionadas">0</span>)', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-warning btn-facturacion-masiva', 'disabled' => true)); ?>
+						
+
 						<a class="btn btn-success" onclick="$('#mb-confirmar-actualizacion').css('display', 'block');"><i class="fa fa-refresh"></i> Actualizar Ventas</a>
 						<? endif; ?>
 						<a class="btn btn-primary" onclick="VentasExportarExcel();"><i class="fa fa-file-excel-o"></i> Exportar a Excel</a>
 					</div>
+					<?= $this->Form->end(); ?>
 
 				</div>
 
@@ -176,6 +182,7 @@
 
 							<thead>
 								<tr class="sort">
+									<th></th>
 									<th><?= $this->Paginator->sort('id', 'ID', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('fecha_venta', 'Fecha', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('total', 'Total', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -183,7 +190,7 @@
 									<th><?= $this->Paginator->sort('venta_estado_categoria_id', 'Estado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('tienda_id', 'Tienda', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('marketplace_id', 'Marketplace', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('cliente_id', 'Cliente', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th style="width: 120px"><?= $this->Paginator->sort('cliente_id', 'Cliente', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('Dte.id', 'Dtes', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<!--<th><?= $this->Paginator->sort('atendida', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>-->
 									<!--<th><?= $this->Paginator->sort('permitir_dte', 'DTE habilitado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>-->
@@ -194,9 +201,11 @@
 
 							<tbody>
 
-								<?php foreach ( $ventas as $venta ) : ?>
+								<?php foreach ( $ventas as $ix => $venta ) : ?>
 
 									<tr>
+
+										<td><input type="checkbox" class="facturacion_masiva" name="data[Venta][<?=$ix;?>][id]" value="<?=$venta['Venta']['id'];?>" data-id="<?=$venta['Venta']['id'];?>" <?= (count(Hash::extract($venta['Dte'], '{n}[estado=dte_real_emitido].id')) > 0 || !$venta['VentaEstado']['permitir_dte']) ? 'disabled="disabled"' : '' ; ?>  > </td>
 
 										<td>
 											ID: <strong><?= h($venta['Venta']['id']); ?></strong>

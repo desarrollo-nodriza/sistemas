@@ -324,4 +324,93 @@ class AdministradoresController extends AppController
 
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}
+
+
+
+	/**
+	 * REST methods
+	 */
+
+	public function api_test() {
+		App::uses('HttpSocket', 'Network/Http');
+		$socket			= new HttpSocket();
+		$request		= $socket->post(
+			Router::url('/api/administradores/auth.json', true),
+			array(
+				'email' => 'cristian.rojas@nodriza.cl',
+				'clave' => 'vendetta88'
+			)
+		);
+
+		prx( $request->body );
+	}
+
+
+
+	/**
+	 * Obtiene el token de acceso a los otros recursos
+	 * Endpoint :  /api/administradores/auth.json
+	 */
+    public function api_login() {
+
+    	if ($this->request->is('post')) {
+
+    		$email = $this->request->data['email'];
+    		$clave = $this->request->data['clave'];
+
+    		# Que los campos de autenticacion no esten vacios
+    		if (empty($email) || empty($clave)) {
+    			$response = array(
+					'code'    => 502, 
+					'message' => 'Empty value'
+				);
+
+				throw new CakeException($response);
+    		}
+    		
+    		# Buscar usuario
+    		$usuario = $this->Administrador->find('first', array(
+    			'conditions' => array(
+    				'Administrador.email' => $email
+    			)
+    		));
+
+    		# No existe usuario
+    		if (empty($usuario)) {
+    			$response = array(
+					'code'    => 404, 
+					'message' => 'User not found'
+				);
+
+				throw new CakeException($response);
+    		}
+
+    		# Contraseña no válida
+    		if (AuthComponent::password($clave) != $usuario['Administrador']['clave']) {
+    			$response = array(
+					'code'    => 403, 
+					'message' => 'Not allowed'
+				);
+
+				throw new CakeException($response);
+    		}
+
+    		# Crear Token
+    		$token = ClassRegistry::init('Token')->crear_token($usuario['Administrador']['id']);
+
+    		$this->set(array(
+	            'response' => $token,
+	            '_serialize' => array('response')
+	        ));
+
+    	}else{
+
+    		$response = array(
+				'code'    => 501, 
+				'message' => 'Only POST request allow'
+			);
+
+			throw new CakeException($response);
+    	}
+    }
 }

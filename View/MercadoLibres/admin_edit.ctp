@@ -118,7 +118,6 @@
 								<? if ( !empty($this->request->data['MercadoLibr']['imagen_meli']) ) : ?>
 									<img style="max-width:130px;" src="<?=$this->request->data['MercadoLibr']['imagen_meli'];?>" class="img-responsive img-rounded js-imagen-preview" />
 								<? endif; ?>
-								<?= $this->Form->input('imagen_meli', array('class' => 'js-imagen', 'type' => 'file')); ?>
 								</td>
 							</tr>
 							<tr>

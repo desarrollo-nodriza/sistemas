@@ -14,7 +14,7 @@ class MantenedorProductoShell extends AppShell {
 
 		$productosController = new VentaDetalleProductosController(new CakeRequest(), new CakeResponse());
 
-		$this->out($productosController->obtener_productos_base());
+		$this->out($productosController->admin_obtener_productos_base());
 		$this->hr();
 		$this->out('Finaliza actualización de productos base: ' . date('Y-m-d H:i:s'));
 		$this->hr();

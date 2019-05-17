@@ -1,4 +1,4 @@
-<?
+ <?
 App::uses('Component', 'Controller');
 
 // Librería Prestashop
@@ -6,7 +6,7 @@ require_once (__DIR__ . '/../../Vendor/PSWebServiceLibrary/PSWebServiceLibrary.p
 
 class PrestashopComponent extends Component
 {	
-	public $ConexionPrestashop; 
+	public $ConexionPrestashop;
 
 
 	public function crearCliente($apiurl, $apikey, $opt = false)
@@ -17,31 +17,17 @@ class PrestashopComponent extends Component
 
 	/****************************************************************************************************/
 	//obtiene las órdenes de una tienda
-	public function prestashop_obtener_ventas ($tienda) {
+	public function prestashop_obtener_ventas ($tienda_id, $ultima_venta = array()) {
 
 		$opt = array();
 		$opt['resource'] = 'orders';
-		$opt['display'] = '[id,id_customer,current_state,date_add,payment,total_discounts_tax_incl,total_paid,total_products,total_shipping_tax_incl,reference,id_address_delivery]';
+		$opt['display'] = '[id,id_customer,id_carrier,current_state,date_add,payment,total_discounts_tax_incl,total_paid,total_products,total_shipping_tax_incl,reference,id_address_delivery]';
 
-		//se obtiene la última venta registrada para consultar solo las nuevas a prestashop
-		$venta = ClassRegistry::init('Venta')->find(
-			'first',
-			array(
-				'conditions' => array(
-					'Venta.tienda_id' => $tienda['Tienda']['id'],
-					'Venta.marketplace_id' => null
-				),
-				'fields' => array(
-					'Venta.id_externo'
-				),
-				'order' => 'Venta.id_externo DESC'
-			)
-		);
 
 		//$venta['Venta']['id_externo'] = 8300;
 
-		if (!empty($venta)) {
-			$opt['filter[id]'] = '>[' .$venta['Venta']['id_externo']. ']';
+		if (!empty($ultima_venta)) {
+			$opt['filter[id]'] = '>[' .$ultima_venta['Venta']['id_externo']. ']';
 		}
 
 		$opt['filter[id_customer]'] = '>[0]';
@@ -57,6 +43,31 @@ class PrestashopComponent extends Component
 	}
 
 
+
+	/****************************************************************************************************/
+	//obtiene las órdenes por id
+	public function prestashop_obtener_venta ($id) {
+
+		$opt = array();
+		$opt['resource'] = 'orders';
+		$opt['display'] = '[id,id_customer,id_carrier,current_state,date_add,payment,total_discounts_tax_incl,total_paid,total_products,total_shipping_tax_incl,reference,id_address_delivery,id_address_invoice]';
+		$opt['filter[id]'] = '[' .$id. ']';
+
+		$xml                 = $this->ConexionPrestashop->get($opt);
+		
+		$PrestashopResources = $xml->children()->children();
+		
+		$DataVenta          = to_array($PrestashopResources);
+		
+		if (empty($DataVenta)) {
+			return array();
+		}
+
+		return $DataVenta['order'];
+
+	}
+
+
 	/**
 	 * Obtiene la dirección de entrega de una venta
 	 * @param  [type] $id                 id_address
@@ -66,7 +77,7 @@ class PrestashopComponent extends Component
 	{
 		$opt = array();
 		$opt['resource'] = 'addresses';
-		$opt['display'] = '[id,firstname,lastname,address1,address2,city,other, phone, phone_mobile]';
+		$opt['display'] = '[id,firstname,lastname,address1,address2,city,other,phone,phone_mobile,deleted]';
 		$opt['filter[id]'] = '[' .$id. ']';
 		$xml = $this->ConexionPrestashop->get($opt);
 
@@ -84,7 +95,7 @@ class PrestashopComponent extends Component
 	{
 		$opt = array();
 		$opt['resource'] = 'order_details';
-		$opt['display'] = '[product_id,product_name,product_quantity,unit_price_tax_excl]';
+		$opt['display'] = '[product_id,product_name,product_quantity,unit_price_tax_excl,unit_price_tax_incl]';
 		$opt['filter[id_order]'] = '[' .$venta_id. ']';
 
 		$xml = $this->ConexionPrestashop->get($opt);
@@ -115,6 +126,51 @@ class PrestashopComponent extends Component
 
 		return $DataVentaDetalle;
 
+	}
+
+
+	/**
+	 * Obitnen y cre el metodo si no existe
+	 * @param  [type]  $id_carrier [description]
+	 * @param  boolean $create     [description]
+	 * @return [type]              [description]
+	 */
+	public function prestashop_obtener_transportista($id_carrier)
+	{
+		$opt = array();
+		$opt['resource'] = 'carriers';
+		$opt['display'] = '[name,id]';
+		$opt['filter[id]'] = '[' .$id_carrier. ']';
+
+		$xml = $this->ConexionPrestashop->get($opt);
+
+		$PrestashopResources = $xml->children()->children();
+
+		$DataVentaDetalle = to_array($PrestashopResources);
+
+		$MetodoEnvio = ClassRegistry::init('MetodoEnvio')->find('first',
+			array(
+				'conditions' => array(
+					'MetodoEnvio.nombre' => trim($DataVentaDetalle['carrier']['name'])
+				),
+				'fields' => array(
+					'MetodoEnvio.id' 
+				)
+			)
+		);
+
+		if (!empty($MetodoEnvio)) {
+			return $MetodoEnvio['MetodoEnvio']['id'];
+		}
+
+		//si el metodo no existe, se crea
+		$data = array();
+		$data['MetodoEnvio']['nombre'] = $DataVentaDetalle['carrier']['name'];
+
+		ClassRegistry::init('MetodoEnvio')->create();
+		ClassRegistry::init('MetodoEnvio')->save($data);
+
+		return ClassRegistry::init('MetodoEnvio')->id;
 	}
 
 
@@ -167,9 +223,10 @@ class PrestashopComponent extends Component
 	public function prestashop_obtener_estado_por_nombre($estado)
 	{	
 		try {
-			$opt               = array();
-			$opt['resource']   = 'order_states';
-			$opt['display']    = '[id,name]';
+			$opt                 = array();
+			$opt['resource']     = 'order_states';
+			$opt['display']      = '[id,name]';
+			$opt['limit']        = 1;
 			$opt['filter[name]'] = '[' .$estado. ']';
 
 			$xml = $this->ConexionPrestashop->get($opt);
@@ -238,7 +295,7 @@ class PrestashopComponent extends Component
 
 
 
-	public function prestashop_cambiar_estado_actual_venta($id_venta, $estado_id)
+	public function prestashop_cambiar_estado_actual_venta($id_venta, $estado_id, $forzar = true)
 	{
 		try {
 
@@ -259,6 +316,10 @@ class PrestashopComponent extends Component
 		} catch (PrestaShopWebserviceException $ex) {
 			//prx($ex->getMessage());
 			 // No actualizado
+			if ($forzar) { // Algo pasa en prestashop que retorna un error 500 pero de todas maneras actualiza el estado.
+				return true;
+			}
+
 			return false;
 		}
 
@@ -665,4 +726,5 @@ class PrestashopComponent extends Component
 
 		return true;
 	}
+
 }

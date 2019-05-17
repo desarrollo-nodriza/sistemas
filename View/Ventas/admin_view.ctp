@@ -24,246 +24,281 @@
 
 						<div class="col-xs-12 col-md-8">
 
-
-						<!-- INFORMACIÓN DE LA VENTA -->
-						<div class="panel panel panel-info">
-							<div class="panel-heading">
-								<h3 class="panel-title"><i class="fa fa-info" aria-hidden="true"></i> <?=__('Información de la venta'); ?></h3>
-							</div>
-							<div class="panel-body">
-								<div class="table-responsive">
-									<table class="table table-bordered">
-										<tr>
-											<th>Referencia</th>
-											<td><?= $venta['Venta']['referencia']; ?></td>
-										</tr>
-										<tr>
-											<th>ID Externo</th>
-											<td><?= $venta['Venta']['id_externo']; ?></td>
-										</tr>
-										<tr>
-											<th>Estado</th>
-											<td><span data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$venta['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= $venta['VentaEstado']['VentaEstadoCategoria']['estilo']; ?>"><?= $venta['VentaEstado']['VentaEstadoCategoria']['nombre']; ?></span></td>
-										</tr>
-										<tr>
-											<th>Fecha</th>
-											<td><?= date_format(date_create($venta['Venta']['fecha_venta']), 'd/m/Y H:i:s'); ?></td>
-										</tr>
-										<tr>
-											<th>Medio de Pago</th>
-											<td><?= $venta['MedioPago']['nombre']; ?></td>
-										</tr>
-										<tr>
-											<th>Dirección despacho</th>
-											<td><?= $venta['Venta']['direccion_entrega']; ?></td>
-										</tr>
-										<tr>
-											<th>Comuna despacho</th>
-											<td><?= $venta['Venta']['comuna_entrega']; ?></td>
-										</tr>
-										<tr>
-											<th>Teléfono despacho</th>
-											<td><?= $venta['Venta']['fono_receptor']; ?></td>
-										</tr>
-										<tr>
-											<th>Tienda</th>
-											<td><?= $venta['Tienda']['nombre']; ?></td>
-										</tr>
-										<tr>
-											<th>Marketplace</th>
-											<td><?php if (!empty($venta['Venta']['marketplace_id'])) {echo $venta['Marketplace']['nombre'];} ?>&nbsp;</td>
-										</tr>
-										<tr>
-											<th>Atendida</th>
-											<td><?= ($venta['Venta']['atendida'] ? "<span class='btn btn-xs btn-success'>Sí</span>" : "<span class='btn btn-xs btn-danger'>No</span>"); ?></td>
-										</tr>
-									</table>
+							<!-- INFORMACIÓN DE LA VENTA -->
+							<div class="panel panel panel-info">
+								<div class="panel-heading">
+									<h3 class="panel-title"><i class="fa fa-info" aria-hidden="true"></i> <?=__('Información de la venta'); ?></h3>
 								</div>
-							</div>
-
-							<!-- Productos --> 
-							<div class="panel-body">
-								<div class="table-responsive">
-									<table class="table table-striped table-bordered">
-										<thead>
-											<th>ID Producto</th>
-											<th>Nombre</th>
-											<th>Precio Unitario <small>(Neto)</small></th>
-											<th>Precio Unitario <small>(Bruto)</small></th>
-											<th>Cantidad</th>
-											<th>Subtotal</th>
-										</thead>
-										<tbody>
-											<?php $TotalProductos = 0; foreach ($venta['VentaDetalle'] as $indice => $detalle) : $TotalProductos = $TotalProductos + ($detalle['precio'] * $detalle['cantidad']); ?>
-												<tr>
-													<td>
-														<?= $detalle['VentaDetalleProducto']['id']; ?>
-														<?= $this->Form->input(sprintf('DteDetalle.%d.VlrCodigo', $indice), array('type' => 'hidden', 'value' => sprintf('COD-%s', $detalle['VentaDetalleProducto']['id']))) ;?>
-														<?= $this->Form->input(sprintf('Detalle.%d.VlrCodigo', $indice), array('type' => 'hidden', 'value' => sprintf('COD-%s', $detalle['VentaDetalleProducto']['id']))) ;?>
-													</td>
-													<td>
-														<?= $detalle['VentaDetalleProducto']['nombre']; ?>
-														<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
-														<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
-													</td>
-													<td>
-														<?= CakeNumber::currency($detalle['precio'], 'CLP'); ?>
-														<?=$this->Form->input(sprintf('DteDetalle.%d.PrcItem', $indice), array('type' =>'hidden', 'value' => $detalle['precio']));?>
-														<?=$this->Form->input(sprintf('Detalle.%d.PrcItem', $indice), array('type' =>'hidden', 'value' => $detalle['precio']));?>
-													</td>
-													<td>
-														<?= CakeNumber::currency($detalle['precio'] * 1.19, 'CLP'); ?>
-													</td>
-													<td>
-														<?= number_format($detalle['cantidad'], 0, ".", "."); ?>
-														<?= $this->Form->input(sprintf('DteDetalle.%d.QtyItem', $indice), array('type' => 'hidden', 'value' => $detalle['cantidad'])); ?>
-														<?= $this->Form->input(sprintf('Detalle.%d.QtyItem', $indice), array('type' => 'hidden', 'value' => $detalle['cantidad'])); ?>
-													</td>
-													<td>
-														<?= CakeNumber::currency($detalle['precio'] * $detalle['cantidad'], 'CLP'); ?>
-													</td>
-												</tr>
-											<? endforeach; ?>
-										</tbody>
-										<tfoot>
+								<div class="panel-body">
+									<div class="table-responsive">
+										<table class="table table-bordered">
 											<tr>
-												<th colspan="5" class="text-right">Total Productos</th>
-												<td><?=CakeNumber::currency($TotalProductos, 'CLP');?></td>
+												<th>Referencia</th>
+												<td><?= $venta['Venta']['referencia']; ?></td>
 											</tr>
 											<tr>
-												<th colspan="5" class="text-right">IVA <small>(19%)</small></th>
-												<td><?=CakeNumber::currency(round($TotalProductos * 0.19), 'CLP');?></td>
+												<th>ID Externo</th>
+												<td><?= $venta['Venta']['id_externo']; ?></td>
 											</tr>
 											<tr>
-												<th colspan="5" class="text-right">Descuento</th>
+												<th>Estado</th>
+												<td><span data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$venta['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= $venta['VentaEstado']['VentaEstadoCategoria']['estilo']; ?>"><?= $venta['VentaEstado']['VentaEstadoCategoria']['nombre']; ?></span></td>
+											</tr>
+											<tr>
+												<th>Fecha</th>
+												<td><?= date_format(date_create($venta['Venta']['fecha_venta']), 'd/m/Y H:i:s'); ?></td>
+											</tr>
+											<tr>
+												<th>Medio de Pago</th>
+												<td><?= $venta['MedioPago']['nombre']; ?></td>
+											</tr>
+											<tr>
+												<th>Dirección despacho</th>
+												<td><?= $venta['Venta']['direccion_entrega']; ?></td>
+											</tr>
+											<tr>
+												<th>Comuna despacho</th>
+												<td><?= $venta['Venta']['comuna_entrega']; ?></td>
+											</tr>
+											<tr>
+												<th>Método de envio</th>
 												<td>
-													<?php if (!empty($venta['Venta']['descuento'])) {echo CakeNumber::currency($venta['Venta']['descuento'], 'CLP');} ?>
-													<?= $this->Form->input('DscRcgGlobal.ValorDR', array('type' => 'hidden', 'value' => round($this->request->data['Venta']['descuento']))); ?>
+												<? if (!empty($venta['MetodoEnvio'])) : ?>
+													<span class="btn btn-xs btn-info"><?= $venta['MetodoEnvio']['nombre']; ?></span>
+												<? else : ?>
+													<span class="btn btn-xs btn-warning"><?= __('No obtenido');?></span>
+												<? endif; ?>
 												</td>
 											</tr>
 											<tr>
-												<th colspan="5" class="text-right">Transporte</th>
-												<td>
-													<?=$this->Form->hidden('Dte.Transporte', array('value' => $venta['Venta']['costo_envio'] ));?>
-													<?php if (!empty($venta['Venta']['costo_envio'])) {echo CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP');} ?>
-												</td>
+												<th>Teléfono despacho</th>
+												<td><?= $venta['Venta']['fono_receptor']; ?></td>
 											</tr>
-											<tr class="success">
-												<th colspan="5" class="text-right">Total</th>
-												<td><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></td>
+											<tr>
+												<th>Tienda</th>
+												<td><?= $venta['Tienda']['nombre']; ?></td>
 											</tr>
-										</tfoot>
-									</table>
+											<tr>
+												<th>Marketplace</th>
+												<td><?php if (!empty($venta['Venta']['marketplace_id'])) {echo $venta['Marketplace']['nombre'];} ?>&nbsp;</td>
+											</tr>
+											<tr>
+												<th>Atendida</th>
+												<td><?= ($venta['Venta']['atendida'] ? "<span class='btn btn-xs btn-success'>Sí</span>" : "<span class='btn btn-xs btn-danger'>No</span>"); ?></td>
+											</tr>
+										</table>
+									</div>
 								</div>
-							</div>
-						</div>
 
-					</div> <!-- end col -->
-					
-
-					
-					<div class="col-xs-12 col-sm-4">
-
-						<!-- TOTAL VENTA -->
-						<a class="tile tile-primary">
-			                <?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?>
-			                <p><?=__('Total documento');?></p>
-			            </a>
-							
-						<!-- TRANSACCIONES -->
-						<div class="panel panel-primary">
-							<div class="panel-body">
-								<h4><i class="fa fa-money" aria-hidden="true"></i> <?= __('Transacciones de la venta');?></h4>
-							</div>
-							<div class="panel-body">
-								<div class="table-responsive">
-									<table class="table table-bordered">
-										<thead>
-											<th><?=__('Fecha');?></th>
-											<th><?=__('Alias');?></th>
-											<th><?=__('Monto');?></th>
-											<th><?=__('Fee');?></th>
-										</thead>
-										<tbody>
-											<? foreach ($venta['VentaTransaccion'] as $transaccion) : ?>
+								<!-- Productos --> 
+								<div class="panel-body">
+									<div class="table-responsive">
+										<table class="table table-striped table-bordered">
+											<thead>
+												<th>ID Producto</th>
+												<th>Nombre</th>
+												<th>Precio Unitario <small>(Neto)</small></th>
+												<th>Precio Unitario <small>(Bruto)</small></th>
+												<th>Cantidad</th>
+												<th>Subtotal</th>
+											</thead>
+											<tbody>
+												<?php $TotalProductos = 0; foreach ($venta['VentaDetalle'] as $indice => $detalle) : $TotalProductos = $TotalProductos + ($detalle['precio'] * $detalle['cantidad']); ?>
+													<tr>
+														<td>
+															<?= $detalle['VentaDetalleProducto']['id']; ?>
+															<?= $this->Form->input(sprintf('DteDetalle.%d.VlrCodigo', $indice), array('type' => 'hidden', 'value' => sprintf('COD-%s', $detalle['VentaDetalleProducto']['id']))) ;?>
+															<?= $this->Form->input(sprintf('Detalle.%d.VlrCodigo', $indice), array('type' => 'hidden', 'value' => sprintf('COD-%s', $detalle['VentaDetalleProducto']['id']))) ;?>
+														</td>
+														<td>
+															<?= $detalle['VentaDetalleProducto']['nombre']; ?>
+															<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
+															<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
+														</td>
+														<td>
+															<?= CakeNumber::currency($detalle['precio'], 'CLP'); ?>
+															<?=$this->Form->input(sprintf('DteDetalle.%d.PrcItem', $indice), array('type' =>'hidden', 'value' => $detalle['precio']));?>
+															<?=$this->Form->input(sprintf('Detalle.%d.PrcItem', $indice), array('type' =>'hidden', 'value' => $detalle['precio']));?>
+														</td>
+														<td>
+															<?= CakeNumber::currency($detalle['precio'] * 1.19, 'CLP'); ?>
+														</td>
+														<td>
+															<?= number_format($detalle['cantidad'], 0, ".", "."); ?>
+															<?= $this->Form->input(sprintf('DteDetalle.%d.QtyItem', $indice), array('type' => 'hidden', 'value' => $detalle['cantidad'])); ?>
+															<?= $this->Form->input(sprintf('Detalle.%d.QtyItem', $indice), array('type' => 'hidden', 'value' => $detalle['cantidad'])); ?>
+														</td>
+														<td>
+															<?= CakeNumber::currency($detalle['precio'] * $detalle['cantidad'], 'CLP'); ?>
+														</td>
+													</tr>
+												<? endforeach; ?>
+											</tbody>
+											<tfoot>
 												<tr>
-													<td><?=$transaccion['created'];?></td>
-													<td><?=$transaccion['nombre'];?></td>
-													<td><?= CakeNumber::currency($transaccion['monto'], 'CLP'); ?></td>
-													<td><?= CakeNumber::currency($transaccion['fee'], 'CLP'); ?></td>
+													<th colspan="5" class="text-right">Total Productos</th>
+													<td><?=CakeNumber::currency($TotalProductos, 'CLP');?></td>
 												</tr>
-											<? endforeach; ?>
-										</tbody>
-									</table>
+												<tr>
+													<th colspan="5" class="text-right">IVA <small>(19%)</small></th>
+													<td><?=CakeNumber::currency(round($TotalProductos * 0.19), 'CLP');?></td>
+												</tr>
+												<tr>
+													<th colspan="5" class="text-right">Descuento</th>
+													<td>
+														<?php if (!empty($venta['Venta']['descuento'])) {echo CakeNumber::currency($venta['Venta']['descuento'], 'CLP');} ?>
+														<?= $this->Form->input('DscRcgGlobal.ValorDR', array('type' => 'hidden', 'value' => round($this->request->data['Venta']['descuento']))); ?>
+													</td>
+												</tr>
+												<tr>
+													<th colspan="5" class="text-right">Transporte</th>
+													<td>
+														<?=$this->Form->hidden('Dte.Transporte', array('value' => $venta['Venta']['costo_envio'] ));?>
+														<?php if (!empty($venta['Venta']['costo_envio'])) {echo CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP');} ?>
+													</td>
+												</tr>
+												<tr class="success">
+													<th colspan="5" class="text-right">Total</th>
+													<td><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></td>
+												</tr>
+											</tfoot>
+										</table>
+									</div>
 								</div>
 							</div>
-						</div>
 
+						</div> <!-- end col -->
+					
 
-						<!-- CLIENTE -->
-
-						<div class="panel panel-default">
-							<div class="panel-body profile bg-info">
-
-								<div class="profile-image">
-									<img src="https://picsum.photos/200/200/?random">
-								</div>
-								<div class="profile-data">
-								<div class="profile-data-name"><?= $venta['VentaCliente']['nombre']; ?> <?= $venta['VentaCliente']['apellido']; ?></div>
-								<div class="profile-data-title text-primary"><?= __('Cliente'); ?></div>
-								</div>
-
-							</div>
-							<ul class="panel-body list-group">
+					
+						<div class="col-xs-12 col-sm-4">
 								
-								<li class="list-group-item"><span class="fa fa-user"></span> <?= (!empty($venta['VentaCliente']['rut'])) ? $venta['VentaCliente']['rut'] : 'xxxxxxxx-x'; ?></li>
-								
-								<li class="list-group-item"><span class="fa fa-phone"></span> <?= (!empty($venta['VentaCliente']['telefono'])) ? $venta['VentaCliente']['telefono'] : 'x xxxx xxxx'; ?></li>
+							<!-- DESCARGAR DOCUMENTOS -->
+				            <?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Generar <p>documentos</p>', array('controller' => 'ventas', 'action' => 'consultar_dte', $venta['Venta']['id']), array('class' => 'tile tile-success js-generar-documentos-venta-modal', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
 
-								<li class="list-group-item"><span class="fa fa-envelope"></span> <?= (!empty($venta['VentaCliente']['email'])) ? $venta['VentaCliente']['email'] : 'xxxxx@xxxx.xx'; ?></li>
-
-							</ul>                            
-						</div>
-
-
-						<!-- MENSAJES -->
-
-						<div class="panel panel-default">
-							<div class="panel-body">
-								<h4><i class="fa fa-envelope" aria-hidden="true"></i> <?= __('Mensajes de la venta');?></h4>
-							</div>
-							<ul class="panel-body list-group messages-dte-box">
-							<? 
-							if (!empty($venta['VentaMensaje'])) :
-
-								foreach ($venta['VentaMensaje'] as $mensaje) : ?>
-								<li class="list-group-item">
-									<span class="message-subject">
-										<?= (!empty($mensaje['asunto'])) ? $mensaje['asunto'] : 'Sin Asunto'; ?>
-									</span>
-									<span class="message-message">
-										<?= $mensaje['mensaje']; ?>
-									</span>
-									<span class="message-date">
-										<?= $mensaje['fecha']; ?>
-									</span>
-								</li>
-								<?
-								endforeach;
-							else : ?>
-								
-								<li class="list-group-item text-mutted">
-									<?= __('No registra mensajes.'); ?>
-								</li>
-
-							<?	
-							endif; ?>
-
-							</ul>  
+							<!-- TOTAL VENTA -->
+							<a class="tile tile-primary">
+				                <?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?>
+				                <p><?=__('Total documento');?></p>
+				            </a>
 							
-						</div>
+							<? if (isset($venta['VentaExterna']['facturacion'])) : ?>
+							<!-- Facturacion info -->
+							<div class="panel panel-primary">
+								<div class="panel-body">
+									<h4><i class="fa fa-file" aria-hidden="true"></i> <?= __('Datos de facturación');?></h4>
+								</div>
+								<ul class="panel-body list-group">
+									<li class="list-group-item"><?=__('Tipo de documento');?> : <?=$venta['VentaExterna']['facturacion']['glosa_tipo_documento'];?></li>
+									<li class="list-group-item"><?=__('Rut');?> : <?=$venta['VentaExterna']['facturacion']['rut_receptor'];?></li>
+									<li class="list-group-item"><?=__('Razon social');?> : <?=$venta['VentaExterna']['facturacion']['razon_social_receptor'];?></li>
+									<li class="list-group-item"><?=__('Giro');?> : <?=$venta['VentaExterna']['facturacion']['giro_receptor'];?></li>
+									<li class="list-group-item"><?=__('Direccion');?> : <?=$venta['VentaExterna']['facturacion']['direccion_receptor'];?></li>
+									<li class="list-group-item"><?=__('Comuna');?> : <?=$venta['VentaExterna']['facturacion']['comuna_receptor'];?></li>
+								</ul>
+							</div>
+							<? endif; ?>
 
-					</div>
+							<!-- TRANSACCIONES -->
+							<div class="panel panel-primary">
+								<div class="panel-body">
+									<h4><i class="fa fa-money" aria-hidden="true"></i> <?= __('Transacciones de la venta');?></h4>
+								</div>
+								<div class="panel-body">
+									<div class="table-responsive">
+										<table class="table table-bordered">
+											<thead>
+												<th><?=__('Fecha');?></th>
+												<th><?=__('Alias');?></th>
+												<th><?=__('Monto');?></th>
+												<th><?=__('Fee');?></th>
+											</thead>
+											<tbody>
+												<? foreach ($venta['VentaTransaccion'] as $transaccion) : ?>
+													<tr>
+														<td><?=$transaccion['created'];?></td>
+														<td><?=$transaccion['nombre'];?></td>
+														<td><?= CakeNumber::currency($transaccion['monto'], 'CLP'); ?></td>
+														<td><?= CakeNumber::currency($transaccion['fee'], 'CLP'); ?></td>
+													</tr>
+												<? endforeach; ?>
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+
+
+							<!-- CLIENTE -->
+
+							<div class="panel panel-default">
+								<div class="panel-body profile bg-info">
+
+									<div class="profile-image">
+										<img src="https://picsum.photos/200/200/?random">
+									</div>
+									<div class="profile-data">
+									<div class="profile-data-name"><?= $venta['VentaCliente']['nombre']; ?> <?= $venta['VentaCliente']['apellido']; ?></div>
+									<div class="profile-data-title text-primary"><?= __('Cliente'); ?></div>
+									</div>
+
+								</div>
+								<ul class="panel-body list-group">
+									
+									<li class="list-group-item"><span class="fa fa-user"></span> <?= (!empty($venta['VentaCliente']['rut'])) ? $venta['VentaCliente']['rut'] : 'xxxxxxxx-x'; ?></li>
+									
+									<li class="list-group-item"><span class="fa fa-phone"></span> <?= (!empty($venta['VentaCliente']['telefono'])) ? $venta['VentaCliente']['telefono'] : 'x xxxx xxxx'; ?></li>
+
+									<li class="list-group-item"><span class="fa fa-phone"></span> <?= (!empty($venta['Venta']['fono_receptor'])) ? $venta['Venta']['fono_receptor'] : 'x xxxx xxxx'; ?></li>
+
+									<li class="list-group-item"><span class="fa fa-envelope"></span> <?= (!empty($venta['VentaCliente']['email'])) ? $venta['VentaCliente']['email'] : 'xxxxx@xxxx.xx'; ?></li>
+
+									<li class="list-group-item"><span class="fa fa-truck"></span> <?= (!empty($venta['Venta']['direccion_entrega'])) ? $venta['Venta']['direccion_entrega'] : 'No especificado'; ?></li>
+
+									<li class="list-group-item"><span class="fa fa-map-marker"></span> <?= (!empty($venta['Venta']['comuna_entrega'])) ? $venta['Venta']['comuna_entrega'] : 'No especificado'; ?></li>
+
+								</ul>                            
+							</div>
+
+
+							<!-- MENSAJES -->
+
+							<div class="panel panel-default">
+								<div class="panel-body">
+									<h4><i class="fa fa-envelope" aria-hidden="true"></i> <?= __('Mensajes de la venta');?></h4>
+								</div>
+								<ul class="panel-body list-group messages-dte-box">
+								<? 
+								if (!empty($venta['VentaMensaje'])) :
+
+									foreach ($venta['VentaMensaje'] as $mensaje) : ?>
+									<li class="list-group-item">
+										<span class="message-subject">
+											<?= (!empty($mensaje['asunto'])) ? $mensaje['asunto'] : 'Sin Asunto'; ?>
+										</span>
+										<span class="message-message">
+											<?= $mensaje['mensaje']; ?>
+										</span>
+										<span class="message-date">
+											<?= $mensaje['fecha']; ?>
+										</span>
+									</li>
+									<?
+									endforeach;
+								else : ?>
+									
+									<li class="list-group-item text-mutted">
+										<?= __('No registra mensajes.'); ?>
+									</li>
+
+								<?	
+								endif; ?>
+
+								</ul>  
+								
+							</div>
+
+						</div>
 
 					</div>
 
@@ -272,13 +307,120 @@
 
 			    		<div class="container-fluid" style="padding: 0;">
 
+			    			<div class="row">
+								
+								<div class="col-xs-12 accordion" style="padding: 0;">
+								
+								<? if (isset($venta['VentaExterna']['facturacion'])) : ?>
+									<!-- Facturacion info -->
+									<div class="panel panel-primary">
+										<div class="panel-heading">
+											<h4 class="panel-title"><a href="#accFacturacion"><i class="fa fa-plus" aria-hidden="true"></i> <?= __('Ver datos de facturación');?></a></h4>
+										</div>
+										<div id="accFacturacion" style="display: none;">
+											<ul class="panel-body list-group">
+												<li class="list-group-item"><b><?=__('Tipo de documento');?></b> : <?=$venta['VentaExterna']['facturacion']['glosa_tipo_documento'];?></li>
+												<li class="list-group-item"><b><?=__('Rut');?></b> : <?=$venta['VentaExterna']['facturacion']['rut_receptor'];?></li>
+												<li class="list-group-item"><b><?=__('Razon social');?></b> : <?=$venta['VentaExterna']['facturacion']['razon_social_receptor'];?></li>
+												<li class="list-group-item"><b><?=__('Giro');?></b> : <?=$venta['VentaExterna']['facturacion']['giro_receptor'];?></li>
+												<li class="list-group-item"><b><?=__('Direccion');?></b> : <?=$venta['VentaExterna']['facturacion']['direccion_receptor'];?></li>
+												<li class="list-group-item"><b><?=__('Comuna');?></b> : <?=$venta['VentaExterna']['facturacion']['comuna_receptor'];?></li>
+												<li class="list-group-item"><b><?=__('Monto del documento');?></b> : <?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></li>
+												<li class="list-group-item"><b><?=__('Itemes');?></b> :</li>
+											</ul>
+											<!-- Productos --> 
+											<div class="panel-body list-group">
+												<div class="table-responsive">
+													<table class="table table-striped table-bordered">
+														<thead>
+															<th>ID Producto</th>
+															<th>Nombre</th>
+															<th>Precio Unitario <small>(Neto)</small></th>
+															<th>Precio Unitario <small>(Bruto)</small></th>
+															<th>Cantidad</th>
+															<th>Subtotal</th>
+														</thead>
+														<tbody>
+															<?php $TotalProductos = 0; foreach ($venta['VentaDetalle'] as $indice => $detalle) : $TotalProductos = $TotalProductos + ($detalle['precio'] * $detalle['cantidad']); ?>
+																<tr>
+																	<td>
+																		<?= $detalle['VentaDetalleProducto']['id']; ?>
+																		<?= $this->Form->input(sprintf('DteDetalle.%d.VlrCodigo', $indice), array('type' => 'hidden', 'value' => sprintf('COD-%s', $detalle['VentaDetalleProducto']['id']))) ;?>
+																		<?= $this->Form->input(sprintf('Detalle.%d.VlrCodigo', $indice), array('type' => 'hidden', 'value' => sprintf('COD-%s', $detalle['VentaDetalleProducto']['id']))) ;?>
+																	</td>
+																	<td>
+																		<?= $detalle['VentaDetalleProducto']['nombre']; ?>
+																		<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
+																		<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
+																	</td>
+																	<td>
+																		<?= CakeNumber::currency($detalle['precio'], 'CLP'); ?>
+																		<?=$this->Form->input(sprintf('DteDetalle.%d.PrcItem', $indice), array('type' =>'hidden', 'value' => $detalle['precio']));?>
+																		<?=$this->Form->input(sprintf('Detalle.%d.PrcItem', $indice), array('type' =>'hidden', 'value' => $detalle['precio']));?>
+																	</td>
+																	<td>
+																		<?= CakeNumber::currency($detalle['precio'] * 1.19, 'CLP'); ?>
+																	</td>
+																	<td>
+																		<?= number_format($detalle['cantidad'], 0, ".", "."); ?>
+																		<?= $this->Form->input(sprintf('DteDetalle.%d.QtyItem', $indice), array('type' => 'hidden', 'value' => $detalle['cantidad'])); ?>
+																		<?= $this->Form->input(sprintf('Detalle.%d.QtyItem', $indice), array('type' => 'hidden', 'value' => $detalle['cantidad'])); ?>
+																	</td>
+																	<td>
+																		<?= CakeNumber::currency($detalle['precio'] * $detalle['cantidad'], 'CLP'); ?>
+																	</td>
+																</tr>
+															<? endforeach; ?>
+														</tbody>
+														<tfoot>
+															<tr>
+																<th colspan="5" class="text-right">Total Productos</th>
+																<td><?=CakeNumber::currency($TotalProductos, 'CLP');?></td>
+															</tr>
+															<tr>
+																<th colspan="5" class="text-right">IVA <small>(19%)</small></th>
+																<td><?=CakeNumber::currency(round($TotalProductos * 0.19), 'CLP');?></td>
+															</tr>
+															<tr>
+																<th colspan="5" class="text-right">Descuento</th>
+																<td>
+																	<?php if (!empty($venta['Venta']['descuento'])) {echo CakeNumber::currency($venta['Venta']['descuento'], 'CLP');} ?>
+																	<?= $this->Form->input('DscRcgGlobal.ValorDR', array('type' => 'hidden', 'value' => round($this->request->data['Venta']['descuento']))); ?>
+																</td>
+															</tr>
+															<tr>
+																<th colspan="5" class="text-right">Transporte</th>
+																<td>
+																	<?=$this->Form->hidden('Dte.Transporte', array('value' => $venta['Venta']['costo_envio'] ));?>
+																	<?php if (!empty($venta['Venta']['costo_envio'])) {echo CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP');} ?>
+																</td>
+															</tr>
+															<tr class="success">
+																<th colspan="5" class="text-right">Total</th>
+																<td><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></td>
+															</tr>
+														</tfoot>
+													</table>
+												</div>
+											</div>
+										</div>
+									</div>						
+								<? endif; ?>
+
+								</div>
+
+			    			</div>
+
 				    		<div class="row">
 
 				    			<div class="col-md-12 col-sm-12 col-xs-12" style="padding: 0;">
 									
 									<? if($permisos['edit']) : ?>
 						    		<div class="btn-group pull-right">
-						    			<?= $this->Html->link('<i class="fa fa-file"></i> Generar Dte para esta Orden', array('controller' => 'ordenes', 'action' => 'generar', $venta['Venta']['id']), array('class' => 'btn btn-warning', 'rel' => 'tooltip', 'title' => 'Generar Dte', 'escape' => false)); ?>
+						    			<? if (isset($venta['VentaExterna']['facturacion'])) : ?>
+						    			<?= $this->Html->link(sprintf('<i class="fa fa-file-pdf-o"></i> Generar %s 1 click', $venta['VentaExterna']['facturacion']['glosa_tipo_documento']), array('controller' => 'ventas', 'action' => 'crear_dte_one_click', $venta['Venta']['id']), array('class' => 'btn btn-success', 'rel' => 'tooltip', 'title' => 'Generar Dte 1 click', 'escape' => false)); ?>
+						    			<? endif; ?>
+						    			<?= $this->Html->link('<i class="fa fa-file"></i> Generar Dte Manual', array('controller' => 'ordenes', 'action' => 'generar', $venta['Venta']['id']), array('class' => 'btn btn-warning', 'rel' => 'tooltip', 'title' => 'Generar Dte', 'escape' => false)); ?>
 									</div>
 									<? endif; ?>
 
@@ -424,7 +566,7 @@
 														<td><?=$envio['comentario'];?></td>
 														<td>
 														<? if ($envio['mostrar_etiqueta']) : ?>
-															<?= $this->Html->link('<i class="fa fa-download"></i>', array('action' => 'obtener_etiqueta', $venta['Venta']['id'] , $envio['id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Descargar', 'escape' => false, 'target' => '_blank')); ?>
+															<?= $this->Html->link('<i class="fa fa-download"></i>', array('action' => 'obtener_etiqueta', $venta['Venta']['id'] , $envio['id'], 'ext' => 'pdf'), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Descargar', 'escape' => false, 'target' => '_blank')); ?>
 														<? endif; ?>
 														</td>
 													</tr>
@@ -464,6 +606,9 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <?=__('Cambiar estado'); ?></h3>
 				</div>
+				
+				<!-- Prestashop -->
+				<? if (empty($this->request->data['Venta']['marketplace_id'])) : ?>
 				<div class="panel-body">
 					<div class="table-responsive">
 						<table class="table">
@@ -474,6 +619,39 @@
 						</table>
 					</div>
 				</div>
+				<? endif; ?>
+
+
+				<!-- Linio -->
+				<? if ($this->request->data['Marketplace']['marketplace_tipo_id'] == 1) : ?>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table">
+							<tr>
+								<th><?= $this->Form->label('venta_estado_id', 'Estado de la venta'); ?></th>
+								<td><?= $this->Form->input('venta_estado_id'); ?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<? endif; ?>
+
+
+				<!-- Mercadolibre -->
+				<? if ($this->request->data['Marketplace']['marketplace_tipo_id'] == 2) : ?>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table">
+							<tr>
+								<th><?= $this->Form->label('venta_estado_id', 'Estado de la venta'); ?></th>
+								<td><?= $this->Form->input('venta_estado_id'); ?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<? endif; ?>
+
+
 				<div class="panel-footer">
 					<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Actualizar Estado">
 				</div>
@@ -483,6 +661,33 @@
 	</div>
 	<? endif; ?>
 </div>
+
+
+<!-- MESSAGE BOX-->
+<div class="message-box message-box-danger animated fadeIn" data-sound="alert" id="modal_alertas">
+    <div class="mb-container">
+        <div class="mb-middle">
+            <div class="mb-title" id="modal_alertas_label"><i class="fa fa-exclamation-triangle"></i> Generar documentos</div>
+            <div class="mb-content">
+                <p id="mensajeModal" style="margin: 15px 0;">
+                	No se ha creado DTE para esta venta. La herramienta intentará crear el DTE con la información proporcionada en la venta. <br>
+                	Errores comunes: Venta no tiene productos cargados, la información de facturacón no está completa, etc.
+                </p>                
+                <p id="mensajeModal" style="margin: 15px 0;">
+                	<b>¿Deseas intentar crearlo automáticamente?</b>
+                </p>
+            </div>
+            <div class="mb-footer">
+                <div class="btn-group">
+                	<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Sí, crear dte y continuar.', array('controller' => 'ventas', 'action' => 'generar_documentos', $venta['Venta']['id'], true, true), array('class' => 'btn btn-success btn-lg js-generar-documentos-venta', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
+                	<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> No, solo continuar.', array('controller' => 'ventas', 'action' => 'generar_documentos', $venta['Venta']['id'], true, false), array('class' => 'btn btn-primary btn-lg js-generar-documentos-venta js-generar-documentos-venta-primario', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
+                    <button class="btn btn-default btn-lg mb-control-close">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END MESSAGE BOX-->
 
 
 <!-- Modal -->

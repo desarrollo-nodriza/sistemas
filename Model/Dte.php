@@ -111,4 +111,33 @@ class Dte extends AppModel
 			$this->data['Dte']['tienda_id'] = CakeSession::read('Tienda.id');
 		}
 	}
+
+
+	/**
+	 * Retorna solo las boletas-facturas que no esten nvalidadas por una NTD
+	 * @param  array  $dtes [description]
+	 * @return [type]       [description]
+	 */
+	public function preparar_dte_venta_valido($dtes = array())
+	{
+		$dteValido = array();
+
+		foreach ($dtes as $i => $dte) {
+
+			if ($dte['invalidado']) {
+				continue;
+			}
+
+			if ($dte['estado'] != 'dte_real_emitido') {
+				continue;
+			}
+
+			# solo boleta o factura no invalidada
+			if ($dte['tipo_documento'] == 39 || $dte['tipo_documento'] == 33) {
+				$dteValido[$i] = $dte;	
+			}
+		}
+
+		return $dteValido;
+	}
 }

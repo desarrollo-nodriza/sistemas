@@ -174,4 +174,14 @@ class AppHelper extends Helper
 			return '';
     	}
     }
+
+
+    /**
+     * Retorna un rut formateado
+     * @param  [type] $rut [description]
+     * @return [type]      [description]
+     */
+    public function rut( $rut ) {
+	    return number_format( substr ( $rut, 0 , -1 ) , 0, "", ".") . '-' . substr ( $rut, strlen($rut) -1 , 1 );
+	}
 }

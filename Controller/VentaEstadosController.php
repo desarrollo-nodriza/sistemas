@@ -33,6 +33,24 @@ class VentaEstadosController extends AppController
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{
 
+			if ($this->request->data['VentaEstado']['preparacion']) {
+				$estados = $this->VentaEstado->find('all', array(
+					'conditions' => array(
+						'preparacion' => 1,
+						'canal' => $this->request->data['VentaEstado']['canal']
+					),
+					'fields' => array(
+						'id', 'preparacion'
+					)
+				));
+
+				foreach ($estados as $i => $e) {
+					$estados[$i]['VentaEstado']['preparacion'] = false;
+				}
+				
+				$this->VentaEstado->saveMany($estados);	
+			}
+
 			if ( $this->VentaEstado->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
@@ -65,10 +83,12 @@ class VentaEstadosController extends AppController
 			)
 		);
 
+		$canales = ClassRegistry::init('MarketplaceTipo')->find('list');
+		
 		BreadcrumbComponent::add('Estados de Ventas');
 		BreadcrumbComponent::add('Editar Estado de Ventas');
 
-		$this->set(compact('ventaEstadoCategorias'));
+		$this->set(compact('ventaEstadoCategorias', 'canales'));
 
 	}
 

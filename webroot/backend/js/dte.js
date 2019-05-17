@@ -72,10 +72,10 @@ $.extend({
 				$.app.loader.mostrar();
 				var $rut 			= $('.rut-contribuyente'),
 					rutFormateado 	= $.dte.rutLimpio($rut.val());
-				console.log(rutFormateado);
+
 				$.get( webroot + 'ordenes/getContribuyenteInfo/' + rutFormateado + '/true', function(respuesta){
 					var contribuyente 	= $.parseJSON(respuesta);	
-					console.log(contribuyente);
+
 					if (typeof(contribuyente) == 'object') {
 						// Asignamos los valores obtenidos a sus respectivos inputs
 						$('#DteRazonSocialReceptor').val(contribuyente.razon_social);
@@ -92,10 +92,8 @@ $.extend({
 		     	});
 			},
 			bind: function(){
-				//$('.rut-contribuyente').rut();
-				//$('.rut-input').rut();
 
-				$(document).on('change', '#DteRutReceptor', function(){
+				$(document).on('change focusout', '#DteRutReceptor', function(){
 					if ($('#DteRutReceptor').hasClass('valid')) {
 						$.dte.rutChileno.autocompletar();
 					}

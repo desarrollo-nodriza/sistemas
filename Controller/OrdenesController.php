@@ -7,6 +7,7 @@ App::import('Vendor', 'LibreDTE', array('file' => 'LibreDte/sasco/libredte-sdk-p
 
 App::import('Vendor', 'Mercadolibre', array('file' => 'Meli/meli.php'));
 App::import('Controller', 'Ventas');
+App::import('Controller', 'Dtes');
 
 require_once (__DIR__ . '/../Vendor/PSWebServiceLibrary/PSWebServiceLibrary.php');
 
@@ -19,7 +20,8 @@ class OrdenesController extends AppController
     	'Chilexpress.GeoReferencia',
     	'Toolmania',
     	'MeliMarketplace',
-    	'LibreDte'
+    	'LibreDte',
+    	'Prestashop'
     );
     /**
      * Obtiene y lista los medios de pago disponibles en u array único
@@ -122,6 +124,7 @@ class OrdenesController extends AppController
 
     }
 
+
 	public function admin_index()
 	{	
 		$this->verificarTienda();
@@ -223,6 +226,11 @@ class OrdenesController extends AppController
 	}
 
 
+	/**
+	 * [admin_orden description]
+	 * @param  string $id [description]
+	 * @return [type]     [description]
+	 */
 	public function admin_orden($id = '') {
 
 		$this->verificarTienda();
@@ -255,7 +263,12 @@ class OrdenesController extends AppController
 
 	}
 
-
+	/**
+	 * [admin_invalidar description]
+	 * @param  string $id_dte   [description]
+	 * @param  string $id_orden [description]
+	 * @return [type]           [description]
+	 */
 	public function admin_invalidar($id_dte = '', $id_orden = '')
 	{	
 
@@ -295,6 +308,11 @@ class OrdenesController extends AppController
 	}
 
 
+	/**
+	 * [unicoDteValido description]
+	 * @param  [type] $id_venta [description]
+	 * @return [type]           [description]
+	 */
 	public function unicoDteValido($id_venta)
 	{
 		$dts = ClassRegistry::init('Dte')->find('count', array(
@@ -314,6 +332,12 @@ class OrdenesController extends AppController
 	}
 
 
+	/**
+	 * [admin_delete_dte description]
+	 * @param  string $id_dte   [description]
+	 * @param  string $id_orden [description]
+	 * @return [type]           [description]
+	 */
 	public function admin_delete_dte($id_dte = '', $id_orden = '')
 	{	
 
@@ -332,6 +356,12 @@ class OrdenesController extends AppController
 	}
 
 
+	/**
+	 * [admin_generar description]
+	 * @param  string $id_orden [description]
+	 * @param  string $id_dte   [description]
+	 * @return [type]           [description]
+	 */
 	public function admin_generar($id_orden = '', $id_dte = '')
 	{
 		$this->verificarTienda();
@@ -350,7 +380,7 @@ class OrdenesController extends AppController
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
 
-			if ( ($this->request->data['Dte']['tipo_documento'] == 33 || $this->request->data['Dte']['tipo_documento'] == 39) && !$this->unicoDteValido($id_orden)) {
+			if ( ($this->request->data['Dte']['tipo_documento'] == 33 || $this->request->data['Dte']['tipo_documento'] == 39) && !DtesController::unicoDteValido($id_orden)) {
 				$this->Session->setFlash('¡ERROR! No puedes generar 2 documentos válidos de venta. Debes solicitar una Nota de crédito.' , null, array(), 'danger');
 				$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
 			}
@@ -572,9 +602,9 @@ class OrdenesController extends AppController
 			//carga de mensajes de prestashop
 			if (empty($venta['Marketplace']['id'])) {
 
-				$ConexionPrestashop = new PrestaShopWebservice($venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'], false);
+				$this->Prestashop->crearCliente($venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop']);
 
-				$venta['VentaMensaje'] = VentasController::prestashop_obtener_venta_mensajes($ConexionPrestashop, $venta['Venta']['id_externo']);
+				$venta['VentaMensaje'] = $this->Prestashop->prestashop_obtener_venta_mensajes($venta['Venta']['id_externo']);
 
 			}
 
@@ -901,9 +931,9 @@ class OrdenesController extends AppController
 			//carga de mensajes de prestashop
 			if (empty($venta['Marketplace']['id'])) {
 
-				$ConexionPrestashop = new PrestaShopWebservice($venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'], false);
+				$this->Prestashop->crearCliente($venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop']);
 
-				$venta['VentaMensaje'] = VentasController::prestashop_obtener_venta_mensajes($ConexionPrestashop, $venta['Venta']['id_externo']);
+				$venta['VentaMensaje'] = $this->Prestashop->prestashop_obtener_venta_mensajes($venta['Venta']['id_externo']);
 
 			}
 
@@ -1037,259 +1067,7 @@ class OrdenesController extends AppController
 	 */
 	public function generarDte($id_dte = '')
 	{	
-		# Arreglo Base
-		$dte = array(
-		    'Encabezado' => array(
-		        'IdDoc' => array(
-		            'TipoDTE' => $this->request->data['Dte']['tipo_documento'],
-		        ),
-		        'Emisor' => array(
-		            'RUTEmisor' => '76381142-5',
-		        )
-		    ),
-		      
-		);
-
-		# Glosa
-		if (!empty($this->request->data['Dte']['glosa'])) {
-			$dte = array_replace_recursive($dte, array(
-				'Encabezado' => array(
-					'IdDoc' => array(
-						'TermPagoGlosa' => $this->request->data['Dte']['glosa']
-					)
-				)
-			));
-		}
-
-		# Fecha
-		if (!empty($this->request->data['Dte']['fecha'])) {
-			$dte = array_replace_recursive($dte, array(
-				'Encabezado' => array(
-					'IdDoc' => array(
-						'FchEmis' => $this->request->data['Dte']['fecha']
-					)
-				)
-			));
-		}
-
-		# Items
-		if (!empty($this->request->data['Detalle'])) {
-
-			$detalle = array();
-			foreach ($this->request->data['Detalle'] as $i => $item) {
-				$detalle[] = array(
-					'CdgItem' => array(
-			    		'TpoCodigo' => 'INT1',
-			            'VlrCodigo' => $item['VlrCodigo']
-			    	),
-			        'NmbItem' => $item['NmbItem'],
-			        'QtyItem' => $item['QtyItem'],
-			        'PrcItem' => $item['PrcItem']
-			       );
-			}
-
-			$dte = array_replace_recursive($dte, array(
-				'Detalle' => $detalle
-				)
-			);
-		}
-
-
-		# Incluye Receptor
-		if (!empty($this->request->data['Dte']['rut_receptor']) && $this->request->data['Dte']['rut_receptor'] != '66666666-6' ) {
-
-			$rut = @number_format( substr ( $this->request->data['Dte']['rut_receptor'], 0 , -1 ) , 0, "", "") . '-' . substr ( $this->request->data['Dte']['rut_receptor'], strlen($this->request->data['Dte']['rut_receptor']) -1 , 1 );
-			
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Receptor' => array(
-					'RUTRecep' => $rut
-					)
-			));
-		}else{
-			# Boleta nominativa
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Receptor' => array(
-					'RUTRecep' => '66666666-6'
-					)
-			));
-		}
-
-		# Incluye Razón Social
-		if (!empty($this->request->data['Dte']['razon_social_receptor'])) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Receptor' => array(
-					'RznSocRecep' => $this->request->data['Dte']['razon_social_receptor']
-					)
-			));
-		}
-		# Incluye Giro Receptor
-		if (!empty($this->request->data['Dte']['giro_receptor'])) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Receptor' => array(
-					'GiroRecep' => $this->request->data['Dte']['giro_receptor']
-					)
-			));
-		}
-		# Incluye Dirección Receptor
-		if (!empty($this->request->data['Dte']['direccion_receptor'])) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Receptor' => array(
-					'DirRecep' => $this->request->data['Dte']['direccion_receptor']
-					)
-			));
-		}
-		# Incluye Comuna Receptor
-		if (!empty($this->request->data['Dte']['comuna_receptor'])) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Receptor' => array(
-					'CmnaRecep' => $this->request->data['Dte']['comuna_receptor']
-					)
-			));
-		}
-
-		# Incluye medio de pago
-		if (!empty($this->request->data['medio_de_pago'])) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'FmaPago' => $this->request->data['medio_de_pago']
-			));
-		}
-
-		# Inluye Descuento Global
-		if (isset($this->request->data['DscRcgGlobal']) && $this->request->data['Dte']['tipo_documento'] != 52 ) {
-			$dte = array_replace_recursive($dte, array(
-				"DscRcgGlobal" => array(
-			        "TpoMov" => "D",
-			        "TpoValor" => "$",
-			        'ValorDR' => $this->request->data['DscRcgGlobal']['ValorDR']
-				)
-			));
-
-			# si el descuento es 0 se elimina
-			if ($this->request->data['DscRcgGlobal']['ValorDR'] == 0) {
-				unset($dte['DscRcgGlobal']);
-			}
-		}
-		
-		# Incluye Tipo de transporte
-		/*if ( isset($this->request->data['Dte']['tipo_traslado']) && !empty($this->request->data['Dte']['tipo_traslado']) ) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'IdDoc' => array(
-					'IndTraslado' => $this->request->data['Dte']['tipo_traslado']
-					)	
-				)
-			);
-		}*/			
-
-		# Incluye patente
-		if ( isset($this->request->data['Dte']['patente']) && !empty($this->request->data['Dte']['patente']) ) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Transporte' => array(
-					'Patente' => $this->request->data['Dte']['patente']
-					)
-				)
-			);
-		}
-
-		# Incluye rut transportista
-		if ( isset($this->request->data['Dte']['rut_transportista']) && !empty($this->request->data['Dte']['rut_transportista']) ) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Transporte' => array(
-					'RUTTrans' => $this->request->data['Dte']['rut_transportista']
-					)
-				)
-			);
-		}
-
-		# Incluye rut chofer
-		if ( isset($this->request->data['Dte']['rut_chofer']) && !empty($this->request->data['Dte']['rut_chofer']) ) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Transporte' => array(
-					'Chofer' => array(
-						'RUTChofer' => $this->request->data['Dte']['rut_chofer'],
-						)
-					)
-				)
-			);
-		}
-
-		# Incluye nombre chofer
-		if ( isset($this->request->data['Dte']['nombre_chofer']) && !empty($this->request->data['Dte']['nombre_chofer']) ) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Transporte' => array(
-					'Chofer' => array(
-						'NombreChofer' => $this->request->data['Dte']['nombre_chofer']
-						)
-					)
-				)
-			);
-		}
-
-		# Incluye dirección destino
-		if ( isset($this->request->data['Dte']['direccion_traslado']) && !empty($this->request->data['Dte']['direccion_traslado']) ) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Transporte' => array(
-					'DirDest' => $this->request->data['Dte']['direccion_traslado']
-					)
-				)
-			);
-		}
-
-		# Incluye comuna destino
-		if ( isset($this->request->data['Dte']['comuna_traslado']) && !empty($this->request->data['Dte']['comuna_traslado']) ) {
-			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'Transporte' => array(
-					'CmnaDest' => $this->request->data['Dte']['comuna_traslado']
-					)
-				)
-			);
-		}
-		
-		# Incluye referencia
-		if ( isset($this->request->data['DteReferencia']) && !empty($this->request->data['DteReferencia']) ) {
-
-			$DteReferencia = array();
-			$count = 1;
-			foreach ($this->request->data['DteReferencia'] as $i => $ref) {
-				
-				if (empty($ref['razon'])) {
-					continue;
-				}
-
-				$DteReferencia = array(
-					'TpoDocRef' => $ref['tipo_documento'],
-					'FolioRef' => $ref['folio'],
-					'FchRef' => $ref['fecha'],
-					'CodRef' => $ref['codigo_referencia'],
-					'RazonRef' => $ref['razon']
-				);
-
-				# Al ser nota de crédito invalida un documento de venta especifico...
-				if ($this->request->data['Dte']['tipo_documento'] == 61) {
-					$dteReferenciado = ClassRegistry::init('Dte')->find('first', array(
-						'conditions' => array(
-							'Dte.folio'          => $ref['folio'],
-							'Dte.tipo_documento' => array(33,39),
-							'Dte.venta_id'       => $this->request->data['Dte']['venta_id']
-						),
-						'fields' => array(
-							'Dte.id'
-						)
-					));
-
-					if (!empty($dteReferenciado)) {
-						ClassRegistry::init('Dte')->id = $dteReferenciado['Dte']['id'];
-						ClassRegistry::init('Dte')->saveField('invalidado', 1);
-					}
-				}
-
-				$count++;
-			}
-
-			$dte = array_replace_recursive($dte, array(
-				'Referencia' => $DteReferencia
-				)
-			);
-		}
+		$dte = $this->LibreDte->prepararDte($this->request->data);
 
 		if (!empty($id_dte)) {
 			# Obtener DTE interno por id

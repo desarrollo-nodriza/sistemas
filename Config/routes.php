@@ -75,6 +75,60 @@ Router::connect(
 );
 
 
+/**
+ * Administrador
+ */
+Router::connect(
+    '/api/administradores/test', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Administradores', 
+        'action' => 'test',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+Router::connect(
+    '/api/administradores/auth', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Administradores', 
+        'action' => 'login',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
+
+
+/**
+ * Venta
+ */
+Router::connect(
+    '/api/ventas/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'obtener_venta',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/api/ventas/change_state/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'cambiar_estado',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+
 Router::parseExtensions('json');
 
 CakePlugin::routes();

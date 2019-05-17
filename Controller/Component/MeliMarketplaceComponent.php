@@ -9,6 +9,9 @@ class MeliMarketplaceComponent extends Component
 	public static $MeliConexion;
 	public static $accessToken;
 	public $components = array('Session');
+	public $estados = array(
+		'approved' => 'Aprobar pedido',
+	);
 
 
 	public function crearCliente($apiuser, $apikey, $accesstoken, $refreshtoken)
@@ -331,7 +334,7 @@ class MeliMarketplaceComponent extends Component
 	 * @param  string 	$type 		  formato de retorno         	
 	 * @return OBJ
 	 */
-	public function mercadolibre_obtener_etiqueta_envio($access_token, $detallesVenta, $type = 'zpl2')
+	public function mercadolibre_obtener_etiqueta_envio($detallesVenta, $type = 'zpl2')
 	{	
 		if (isset($detallesVenta['shipping']['id'])) {
 			
@@ -344,8 +347,14 @@ class MeliMarketplaceComponent extends Component
 
 			$curl = curl_init();
 
+			if ($type == 'Y') {
+				$endpoint = "https://api.mercadolibre.com/shipment_labels?shipment_ids=".$shipping_id."&savePdf=".$type."&access_token=" . self::$accessToken;
+			}else{
+				$endpoint = "https://api.mercadolibre.com/shipment_labels?shipment_ids=".$shipping_id."&response_type=".$type."&access_token=" . self::$accessToken;
+			}
+
 			curl_setopt_array($curl, array(
-			  CURLOPT_URL => "https://api.mercadolibre.com/shipment_labels?shipment_ids=".$shipping_id."&response_type=".$type."&access_token=" . $access_token,
+			  CURLOPT_URL => $endpoint,
 			  CURLOPT_RETURNTRANSFER => true,
 			  CURLOPT_ENCODING => "",
 			  CURLOPT_MAXREDIRS => 10,
@@ -365,10 +374,14 @@ class MeliMarketplaceComponent extends Component
 			if ($err) {
 			  	echo "cURL Error #:" . $err;
 			} else {
-				header('Content-type:application/zip');
-				header('Content-Disposition:attachment;filename="'.$shipping_id.'.zip"');
 
-			  	echo $response;
+				if ($type != 'Y') {
+					header('Content-type:application/zip');
+					header('Content-Disposition:attachment;filename="'.$shipping_id.'.zip"');
+					echo $response;
+				}
+
+				return $response;
 			}
 		}
 

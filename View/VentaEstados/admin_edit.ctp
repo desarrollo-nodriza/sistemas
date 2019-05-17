@@ -23,6 +23,13 @@
 									<td><?= $this->Form->input('venta_estado_categoria_id', array('empty' => 'Seleccione Categoría')); ?></td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('notificacion_cliente', 'Enviar email al cliente'); ?></th>
+									<td>
+										<?= $this->Form->input('notificacion_cliente', array('class' => 'icheckbox')); ?>
+										<span class="help-block">Las ventas con este estado enviarán vía email la notificación correspondiente al cliente.</span>
+									</td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('permitir_dte', '¿Permitir DTE?'); ?></th>
 									<td>
 										<?= $this->Form->input('permitir_dte', array('class' => 'icheckbox')); ?>
@@ -62,6 +69,19 @@
 									<td>
 										<?= $this->Form->input('permitir_manifiesto', array('class' => 'icheckbox')); ?>
 										<span class="help-block">Las ventas con este estado le permite crear manifiestos.</span>
+									</td>
+								</tr>
+								<tr>
+									<th><?= $this->Form->label('preparacion', 'Preparación del pedido'); ?></th>
+									<td>
+										<?= $this->Form->input('preparacion', array('class' => 'icheckbox')); ?>
+										<span class="help-block">Cambiará el estado a preparacion en los distintos canales.</span>
+									</td>
+								</tr>
+								<tr>
+									<th><?= $this->Form->label('origen', 'Origen del estado'); ?></th>
+									<td>
+										<?= $this->Form->select('origen', $canales, array('empty' => 'Prestashop', 'class' => 'form-control')); ?>
 									</td>
 								</tr>
 								<tr>

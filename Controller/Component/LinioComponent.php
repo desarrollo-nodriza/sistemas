@@ -17,6 +17,11 @@ class LinioComponent extends Component
 
 	public $LinioConexion;
 
+	public $estados = array(
+		'canceled'      => 'Cancelar pedido',
+		'ready_to_ship' => 'Pedido listo para envio'
+	);
+
 
 	public function crearCliente($apiurl, $apiuser, $apikey)
 	{
@@ -309,13 +314,74 @@ class LinioComponent extends Component
 	}
 
 
+	/**
+	 * Referencia: https://sellerapi.sellercenter.net/docs/getfailurereasons
+	 * @return [type] [description]
+	 */
+	public function linio_obtener_razones_de_falla()
+	{
+		$response = $this->LinioConexion->call(
+		    (new GenericRequest(
+		        Client::GET,
+		        'GetFailureReasons',
+		        GenericRequest::V1,
+		        []
+		    ))
+		);
+
+		return $response->getBody();
+	}
+
+
+	/**
+	 * Referencia https://sellerapi.sellercenter.net/docs/setstatustocanceled
+	 * @param  [type] $item_id  id del producto
+	 * @return [type]          [description]
+	 */
+	public function linio_cancelar_pedido($item_id, $razon = '', $detalle_razon = '')
+	{
+		$response = Endpoints::order()
+		    ->SetStatusToCanceled($item_id, $razon, $detalle_razon)
+		    ->call($this->LinioConexion);
+
+		if ($response instanceof SuccessResponseInterface) {
+			return true;
+		} else {
+		    return false;
+		}
+	}
+
+
+	/**
+	 * Referencia: https://sellerapi.sellercenter.net/docs/setstatustopackedbymarketplace
+	 * @param  [type] $id       [description]
+	 * @return [type]           [description]
+	 */
+	public function linio_paquete_embalado($items = array(), $delivery = 'dropship', $currier = 'Blue Express')
+	{
+		$orderItemIds     = $items; // Please change the set of Order Item IDs for Your system.
+		$deliveryType     = $delivery;
+		$shipmentProvider = $currier;
+
+		$response = Endpoints::order()
+		    ->SetStatusToPackedByMarketplace($orderItemIds, $deliveryType, $shipmentProvider)
+		    ->call($this->LinioConexion);
+
+		if ($response instanceof SuccessResponseInterface) {
+			return true;
+		} else {
+		    return false;
+		}
+	}
+
+
 
 	/**
 	 * Referencia: https://sellerapi.sellercenter.net/docs/setstatustoreadytoship
 	 * @param  [type] $id       [description]
 	 * @return [type]           [description]
 	 */
-	public function linio_listo_para_envio($items = array(), $delivery = '', $currier = '', $tracking = '')
+	public function linio_listo_para_envio($items = array(), $delivery = 'dropship', $currier = 'Blue Express', $tracking = '')
 	{
 		$orderItemIds     = $items; // Please change the set of Order Item IDs for Your system.
 		$deliveryType     = $delivery;
@@ -391,7 +457,7 @@ class LinioComponent extends Component
 		$documentType = $type;
 
 		$response = Endpoints::order()->getDocument($orderItemIds, $documentType)->call($this->LinioConexion);
-
+		
 		if ($response instanceof ErrorResponse) {
 		    return '';
 		} else {
