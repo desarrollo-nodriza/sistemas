@@ -2552,7 +2552,7 @@ class VentasController extends AppController {
 
 				$tipoDoc = ($documentos['content'][0]['boleta']) ? 39 : 33;
 
-				$venta['VentaExterna']['facturacion'] = array(
+				$facturacion = array(
 					'tipo_documento'        => $tipoDoc,
 					'glosa_tipo_documento'  => $this->LibreDte->tipoDocumento[$tipoDoc],
 					'rut_receptor'          => $documentos['content'][0]['rut'],
@@ -2568,33 +2568,34 @@ class VentasController extends AppController {
 				
 				// Agregamos comuna
 				if (isset($info['comuna_glosa'])) {
-					$venta['VentaExterna']['facturacion']['comuna_receptor'] = $info['comuna_glosa'];
+					$facturacion['comuna_receptor'] = $info['comuna_glosa'];
 				}
 
 				// Agregamos razon social
 				if (empty($documentos['content'][0]['empresa']) && isset($info['razon_social'])) {
-					$venta['VentaExterna']['facturacion']['razon_social_receptor'] = $info['razon_social'];
+					$facturacion['razon_social_receptor'] = $info['razon_social'];
 				}
 
 				// Agregamos giro
 				if (empty($documentos['content'][0]['giro']) && isset($info['giro'])) {
-					$venta['VentaExterna']['facturacion']['giro_receptor'] = $info['giro'];
+					$facturacion['giro_receptor'] = $info['giro'];
 				}	
 
 				// Agregamos direccon
 				if (empty($documentos['content'][0]['direccion_receptor']) && isset($info['direccion'])) {
-					$venta['VentaExterna']['facturacion']['direccion_receptor'] = $info['direccion'];
+					$facturacion['direccion_receptor'] = $info['direccion'];
 				}	
-				
 				
 				# Guardamos el rut de la persona
 				ClassRegistry::init('VentaCliente')->id = $venta['VentaCliente']['id'];
 				ClassRegistry::init('VentaCliente')->saveField('rut', $documentos['content'][0]['rut']);
 
 				$this->request->data['VentaCliente']['rut'] = $documentos['content'][0]['rut'];
+
+				$venta['VentaExterna']['facturacion'] = array_replace_recursive($venta['VentaExterna']['facturacion'], $facturacion);
 			}
-			
-		}
+
+		}	
 
 		else {
 			
@@ -4718,7 +4719,7 @@ class VentasController extends AppController {
 				$plantillaEmail   = ClassRegistry::init('VentaEstadoCategoria')->field('plantilla', array('id' => ClassRegistry::init('VentaEstado')->field('venta_estado_categoria_id')));	
 				
 				if (!empty($plantillaEmail) && $notificar) {
-					$this->notificar_cambio_estado($id, $plantillaEmail, $estado_nuevo);
+					#$this->notificar_cambio_estado($id, $plantillaEmail, $estado_nuevo);
 				}
 
 			}else{
@@ -4820,7 +4821,9 @@ class VentasController extends AppController {
 		
 		# Guardamos el nuevo estado
 		$this->Venta->id = $id;
-		if ($this->Venta->saveField('venta_estado_id', $venta['Venta']['venta_estado_id'])) {
+		$ts = true;
+		if ($ts) {
+		#if ($this->Venta->saveField('venta_estado_id', $venta['Venta']['venta_estado_id'])) {
 			
 			$this->set(array(
 	            'response' => true,

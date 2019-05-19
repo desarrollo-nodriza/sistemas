@@ -219,9 +219,10 @@ class Venta extends AppModel
 							)
 						),
 						'fields' => array(
-							'VentaEstado.id', 'VentaEstado.venta_estado_categoria_id'
+							'VentaEstado.id', 'VentaEstado.venta_estado_categoria_id', 'VentaEstado.permitir_dte', 'VentaEstado.nombre'
 						)
 					),
+					'VentaTransaccion',
 					'Tienda' => array(
 						'fields' => array(
 							'Tienda.id', 'Tienda.nombre', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.logo', 'Tienda.direccion', 'Tienda.facturacion_apikey'
