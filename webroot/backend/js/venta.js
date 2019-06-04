@@ -55,6 +55,49 @@ $(function() {
 			
 		}
 
+		var generar_etiqueta = function($ths){
+
+			ejecutando = true;
+
+			$('.loader').addClass('show');
+
+			$.get( $ths.attr('href'), function(res){
+				var result = $.parseJSON(res);
+				
+				ejecutando = false;
+				$('.loader').removeClass('show');
+
+				if (typeof(result.result) != 'undefined') {
+					for (var i = 0; i <= result.result.length; i++) {
+						window.open(result.result[i].document);
+					}
+				}else{
+					noty({text: 'Ocurrió un error al generar la etiqueta.', layout: 'topRight', type: 'error'});
+
+					setTimeout(function(){
+						$.noty.closeAll();
+					}, 10000);
+				}
+
+				cerrar_modal();
+
+			}).fail(function(){
+				
+				cerrar_modal();
+
+				ejecutando = false;
+				$('.loader').removeClass('show');
+
+				noty({text: 'Ocurrió un error al generar la etiqueta.', layout: 'topRight', type: 'error'});
+
+				setTimeout(function(){
+					$.noty.closeAll();
+				}, 10000);
+
+			});
+			
+		}
+
 		var consultar_dte = function(){
 			ejecutando = true;
 
@@ -115,6 +158,15 @@ $(function() {
 					if (!ejecutando) {
 						cerrar_modal();
 						generar_documento($(this));
+					}
+				});
+
+
+				$('.js-generar-etiqueta-venta').on('click', function(e){
+					e.preventDefault();
+					if (!ejecutando) {
+						cerrar_modal();
+						generar_etiqueta($(this));
 					}
 				});
 

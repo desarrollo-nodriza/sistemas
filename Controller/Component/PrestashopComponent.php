@@ -1,4 +1,4 @@
- <?
+<?
 App::uses('Component', 'Controller');
 
 // Librería Prestashop
@@ -10,7 +10,7 @@ class PrestashopComponent extends Component
 
 
 	public function crearCliente($apiurl, $apikey, $opt = false)
-	{
+	{	
 		$this->ConexionPrestashop = new PrestaShopWebservice($apiurl, $apikey, $opt);
 	}
 

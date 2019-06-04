@@ -23,7 +23,7 @@ class ActualizarVentasEstadosShell extends AppShell {
 
 		$controller = new VentasController(new CakeRequest(), new CakeResponse());
 		$controller->shell = true;
-		$controller->admin_verificar_conexion_meli();
+		#$controller->admin_verificar_conexion_meli();
 		$controller->actualizar_ventas_anteriores();
 
 		$this->hr();
@@ -98,6 +98,33 @@ class ActualizarVentasEstadosShell extends AppShell {
 			'administrador' => 'Demonio',
 			'modulo' => 'Venta',
 			'modulo_accion' => 'Finaliza proceso de actualización de ventas atendidas: ' . date('Y-m-d H:i:s')
+		));
+
+
+		$log = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'Venta',
+			'modulo_accion' => 'Inicia proceso de reserva: ' . date('Y-m-d H:i:s')
+		));
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
+
+		$this->hr();
+		$this->out('Inicia ventas_estados_pagadas: ' . date('Y-m-d H:i:s'));
+		$this->hr();
+		$this->hr();
+		# revertir el stock virtual del producto segun su estado
+		$controller->ventas_estados_pagadas();
+		$this->hr();
+		$this->out('Finaliza ventas_estados_pagadas: ' . date('Y-m-d H:i:s'));
+		$this->hr();
+		$this->hr();
+
+		$log = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'Venta',
+			'modulo_accion' => 'Finaliza proceso de reserva: ' . date('Y-m-d H:i:s')
 		));
 
 		ClassRegistry::init('Log')->create();

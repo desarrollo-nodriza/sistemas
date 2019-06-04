@@ -52,6 +52,11 @@ class OrdenComprasController extends AppController
 							'Administrador.nombre'
 						)
 					),
+					'Proveedor' => array(
+						'fields' => array(
+							'Proveedor.nombre'
+						)
+					),
 					'Tienda' => array(
 						'fields' => array(
 							'Tienda.nombre'
@@ -61,6 +66,11 @@ class OrdenComprasController extends AppController
 				'Administrador' => array(
 					'fields' => array(
 						'Administrador.nombre'
+					)
+				),
+				'Proveedor' => array(
+					'fields' => array(
+						'Proveedor.nombre'
 					)
 				),
 				'Tienda' => array(
@@ -80,7 +90,8 @@ class OrdenComprasController extends AppController
 			),
 			'order' => array(
 				'OrdenCompra.id' => 'DESC'
-			)
+			),
+			'limit' => 20
 		);
 		
 		try {
@@ -254,21 +265,21 @@ class OrdenComprasController extends AppController
 				# Calcula la cantidad  de productos que faltan por recibir.
 				$cantidadFaltante = $pedido['OrdenComprasVentaDetalleProducto']['cantidad'] - $pedido['OrdenComprasVentaDetalleProducto']['cantidad_recibida'];
 
-				if ( $value['Bodega'][0]['cantidad'] < $cantidadFaltante ) {
-					$res['faltantes'][] = sprintf('#%s - %s (faltantes: %d)', $value['VentaDetalleProducto']['id'], $pedido['OrdenComprasVentaDetalleProducto']['descripcion'], $cantidadFaltante - $value['Bodega'][0]['cantidad']);
-
-					$res['incompletos'][] = sprintf('#%s - %s (agregados: %d)', $value['VentaDetalleProducto']['id'], $pedido['OrdenComprasVentaDetalleProducto']['descripcion'], $value['Bodega'][0]['cantidad']);
-				}
-
-				if ( $value['Bodega'][0]['cantidad'] == $cantidadFaltante && $value['Bodega'][0]['cantidad'] > 0 ) {
-					$res['completos'][] = sprintf('#%s - %s (agregados: %d)', $value['VentaDetalleProducto']['id'], $pedido['OrdenComprasVentaDetalleProducto']['descripcion'], $value['Bodega'][0]['cantidad']);
-				}
-
 				# Se obtiene la cantdad en la bodega elegida
-				$enBodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($value['VentaDetalleProducto']['id'], $value['Bodega'][0]['bodega_id']);
+				$enBodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($value['VentaDetalleProducto']['id']);
+
+				if ( $enBodega < $cantidadFaltante ) {
+					$res['faltantes'][] = sprintf('#%s - %s (faltantes: %d)', $value['VentaDetalleProducto']['id'], $pedido['OrdenComprasVentaDetalleProducto']['descripcion'], $cantidadFaltante - $enBodega);
+
+					$res['incompletos'][] = sprintf('#%s - %s (agregados: %d)', $value['VentaDetalleProducto']['id'], $pedido['OrdenComprasVentaDetalleProducto']['descripcion'], $enBodega);
+				}
+
+				if ( $enBodega == $cantidadFaltante && $enBodega > 0 ) {
+					$res['completos'][] = sprintf('#%s - %s (agregados: %d)', $value['VentaDetalleProducto']['id'], $pedido['OrdenComprasVentaDetalleProducto']['descripcion'], $enBodega);
+				}
 				
 				# Se modifica los detalles del pedido con la nueva información
-				if ( ($pedido['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] + $value['Bodega'][0]['cantidad']) == $pedido['OrdenComprasVentaDetalleProducto']['cantidad']) {
+				if ( ($pedido['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] + $enBodega) == $pedido['OrdenComprasVentaDetalleProducto']['cantidad']) {
 					ClassRegistry::init('OrdenComprasVentaDetalleProducto')->id = $pedido['OrdenComprasVentaDetalleProducto']['id'];
 					ClassRegistry::init('OrdenComprasVentaDetalleProducto')->saveField('cantidad_recibida', $pedido['OrdenComprasVentaDetalleProducto']['cantidad']); # Actualiamos la cantidad recibidaTodo
 				}else{
@@ -432,6 +443,47 @@ class OrdenComprasController extends AppController
 	}
 
 
+	public function admin_generar_pdf($id)
+	{	
+
+		if ( ! $this->OrdenCompra->exists($id) )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$ocs = $this->OrdenCompra->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id
+			),
+			'contain' => array(
+				'Moneda',
+				'VentaDetalleProducto',
+				'Administrador',
+				'Tienda',
+				'Proveedor' => array(
+					'Moneda'
+				)
+			)
+		));
+
+		$nombreOC = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1,100) . '.pdf';
+		
+		$this->generar_pdf($ocs, $nombreOC);
+
+		$this->OrdenCompra->id = $id;
+
+		if($this->OrdenCompra->saveField('pdf', $nombreOC)) {
+			$this->Session->setFlash('OC generada en PDF con éxito.', null, array(), 'success');
+		}else{
+			$this->Session->setFlash('No fue posible generar el PDF.', null, array(), 'danger');
+		}
+
+		$this->redirect(array('action' => 'ready', $id));
+
+	}
+
+
 	public function admin_ready($id)
 	{
 		if ( ! $this->OrdenCompra->exists($id) )
@@ -441,6 +493,34 @@ class OrdenComprasController extends AppController
 		}
 
 		if ($this->request->is('post') || $this->request->is('put')) {
+
+			# si no se ha gnerado se intenta generar nuevamente
+			if (empty($this->request->data['OrdenCompra']['pdf'])) {
+
+				$ocs = $this->OrdenCompra->find('first', array(
+					'conditions' => array(
+						'OrdenCompra.id' => $id
+					),
+					'contain' => array(
+						'Moneda',
+						'VentaDetalleProducto',
+						'Administrador',
+						'Tienda',
+						'Proveedor' => array(
+							'Moneda'
+						)
+					)
+				));
+
+				$nombreOC = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1,100) . '.pdf';
+				
+				$this->generar_pdf($ocs, $nombreOC);
+
+				$this->OrdenCompra->id = $id;
+				$this->OrdenCompra->saveField('pdf', $nombreOC);
+				
+			}
+
 			
 			$rutaArchivos = array(
 				sprintf('order_compra_%d.pdf', rand(1000, 100000)) => array(
@@ -473,12 +553,13 @@ class OrdenComprasController extends AppController
 			->viewVars(compact('mensaje'))
 			->emailFormat('html')
 			->from(array($this->Session->read('Auth.Administrador.email') => 'Nodriza Spa') )
+			->replyTo(array($this->Session->read('Auth.Administrador.email') => $this->Session->read('Auth.Administrador.nombre')))
 			->to($to)
 			->cc($cc)
 			->bcc($bcc)
 			->template('oc_proveedor')
 			->attachments($rutaArchivos)
-			->subject('[OC] Se ha creado una Orden de compra desde Nodriza Spa');
+			->subject(sprintf('[OC] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id));
 
 
 			# Cambiar estado OC a enviado
@@ -531,12 +612,27 @@ class OrdenComprasController extends AppController
 			),
 			'contain' => array(
 				'Moneda',
-				'VentaDetalleProducto',
+				'VentaDetalleProducto' => array(
+					'Marca' => array(
+						'PrecioEspecificoMarca'
+					),
+					'PrecioEspecificoProducto'
+				),
 				'Administrador',
 				'Tienda',
 				'Proveedor'
 			)
 		));
+
+		# Calculo de descuentos
+		foreach ($ocs['VentaDetalleProducto'] as $i => $p) {
+
+			$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
+
+			$ocs['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
+			$ocs['VentaDetalleProducto'][$i]['nombre_descuento'] = $descuentos['nombre_descuento'];
+			$ocs['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento']; 
+		}
 
 
 		if ($this->request->is('post') || $this->request->is('put')) {
@@ -553,39 +649,26 @@ class OrdenComprasController extends AppController
 
 			}else{
 
+				/*# Limpiar data
+				$this->OrdenCompra->OrdenComprasVentaDetalleProducto->deleteAll(array('OrdenComprasVentaDetalleProducto.orden_compra_id' => $id));
+
+				$this->request->data['OrdenCompra']['estado']          = 'validado'; # Pasa a finanzas
+				$this->request->data['OrdenCompra']['nombre_validado'] = $this->Session->read('Auth.Administrador.nombre'); # Guardamos el nombre de quien validó la OC
+				*/
 				$this->OrdenCompra->id = $id;
 				$this->OrdenCompra->saveField('estado', 'validado'); # Pasa a pago
 				$this->OrdenCompra->saveField('nombre_validado', $this->Session->read('Auth.Administrador.nombre')); # Guardamos el nombre de quien validó la OC
 				$this->OrdenCompra->saveField('comentario_validar', $this->request->data['OrdenCompra']['comentario_validar']); # Guarda comentario
+				
+				/*if ( $this->OrdenCompra->saveAll($this->request->data) )
+				{*/	
+					
+					$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
 
-
-				$admins = ClassRegistry::init('Administrador')->find('all', array(
-					'conditions' => array(
-						'Administrador.activo' => 1
-					),
-					'fields' => array(
-						'Administrador.email',
-						'Administrador.notificaciones'
-					)
-				));
-
-				$emailsNotificar = array();
-
-				// Obtenemos a los administradores que tiene activa la notificación de oc revision
-				foreach ($admins as $ia => $admin) {
-					if (!empty($admin['Administrador']['notificaciones'])) {
-
-						$confNotificacion = json_decode($admin['Administrador']['notificaciones'], true);
-						
-						if ( array_key_exists('pagar_oc', $confNotificacion) && $confNotificacion['pagar_oc'] ) {
-							$emailsNotificar[] = $admin['Administrador']['email'];
-						}
+					if (!empty($emailsNotificar)) {
+						$this->guardarEmailValidado($id, $emailsNotificar);
 					}
-				}
-
-				if (!empty($emailsNotificar)) {
-					$this->guardarEmailValidado($id, $emailsNotificar);
-				}
+				/*}*/
 
 			}
 
@@ -632,29 +715,7 @@ class OrdenComprasController extends AppController
 			$this->OrdenCompra->id = $id;
 			$this->OrdenCompra->saveField('estado', 'iniciado');
 
-			$admins = ClassRegistry::init('Administrador')->find('all', array(
-				'conditions' => array(
-					'Administrador.activo' => 1
-				),
-				'fields' => array(
-					'Administrador.email',
-					'Administrador.notificaciones'
-				)
-			));
-
-			$emailsNotificar = array();
-
-			// Obtenemos a los administradores que tiene activa la notificación de oc revision
-			foreach ($admins as $ia => $admin) {
-				if (!empty($admin['Administrador']['notificaciones'])) {
-
-					$confNotificacion = json_decode($admin['Administrador']['notificaciones'], true);
-					
-					if ( array_key_exists('revision_oc', $confNotificacion) && $confNotificacion['revision_oc'] ) {
-						$emailsNotificar[] = $admin['Administrador']['email'];
-					}
-				}
-			}
+			$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('revision_oc');
 
 			if (!empty($emailsNotificar)) {
 				$this->guardarEmailRevision($this->request->data['OrdenesCompra'], $emailsNotificar);
@@ -711,7 +772,7 @@ class OrdenComprasController extends AppController
 			$pedir = $p;			
 
 			# Consultamos la cantiad que tenemos en la bodega principal
-			$enBodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($ip);
+			$enBodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($ip, true);
 
 			# Calculamos la diferencia que se debe pedir segun lo que tenemos en bodega
 			if ($enBodega >= $p) {
@@ -730,7 +791,7 @@ class OrdenComprasController extends AppController
 			}
 
 		}
-
+		
 		# Si no hay producto que pedir se cancela el paso
 		if (empty($productosSolicitar)) {
 			$this->Session->setFlash('No hay productos que agregar a la OC.', null, array(), 'danger');
@@ -887,6 +948,11 @@ class OrdenComprasController extends AppController
 			)
 		));
 
+		if (!empty($ocs['OrdenCompra']['nombre_pagado'])) {
+			$this->Session->setFlash('La OC #' . $id . ' ya fue pagada por ' . $ocs['OrdenCompra']['nombre_pagado'], null, array(), 'success');
+			$this->redirect(array('action' => 'index'));
+		}
+
 		if ($this->request->is('post') || $this->request->is('put')) {
 			
 			$data = array(
@@ -921,7 +987,7 @@ class OrdenComprasController extends AppController
 					)
 				));
 
-				$nombreOC = 'cotizacion_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1,100) . '.pdf';
+				$nombreOC = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1,100) . '.pdf';
 
 				if (empty($ocs['OrdenCompra']['pdf'])) {
 
@@ -998,29 +1064,8 @@ class OrdenComprasController extends AppController
 			$this->OrdenCompra->create();
 			if ( $this->OrdenCompra->save($this->request->data) )
 			{	
-				$admins = ClassRegistry::init('Administrador')->find('all', array(
-					'conditions' => array(
-						'Administrador.activo' => 1
-					),
-					'fields' => array(
-						'Administrador.email',
-						'Administrador.notificaciones'
-					)
-				));
 
-				$emailsNotificar = array();
-
-				// Obtenemos a los administradores que tiene activa la notificación de oc revision
-				foreach ($admins as $ia => $admin) {
-					if (!empty($admin['Administrador']['notificaciones'])) {
-
-						$confNotificacion = json_decode($admin['Administrador']['notificaciones'], true);
-						
-						if ( array_key_exists('revision_oc', $confNotificacion) && $confNotificacion['revision_oc'] ) {
-							$emailsNotificar[] = $admin['Administrador']['email'];
-						}
-					}
-				}
+				$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('revision_oc');
 
 				if (!empty($emailsNotificar)) {
 					$this->guardarEmailRevision($this->request->data['OrdenCompra'], $emailsNotificar);
@@ -1062,29 +1107,8 @@ class OrdenComprasController extends AppController
 
 			if ( $this->OrdenCompra->saveAll($this->request->data) )
 			{	
-				$admins = ClassRegistry::init('Administrador')->find('all', array(
-					'conditions' => array(
-						'Administrador.activo' => 1
-					),
-					'fields' => array(
-						'Administrador.email',
-						'Administrador.notificaciones'
-					)
-				));
 
-				$emailsNotificar = array();
-
-				// Obtenemos a los administradores que tiene activa la notificación de oc revision
-				foreach ($admins as $ia => $admin) {
-					if (!empty($admin['Administrador']['notificaciones'])) {
-
-						$confNotificacion = json_decode($admin['Administrador']['notificaciones'], true);
-						
-						if ( array_key_exists('revision_oc', $confNotificacion) && $confNotificacion['revision_oc'] ) {
-							$emailsNotificar[] = $admin['Administrador']['email'];
-						}
-					}
-				}
+				$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('revision_oc');
 
 				if (!empty($emailsNotificar)) {
 					$this->guardarEmailRevision($this->request->data['OrdenCompra'], $emailsNotificar);
@@ -1106,12 +1130,29 @@ class OrdenComprasController extends AppController
 				),
 				'contain' => array(
 					'Moneda',
-					'VentaDetalleProducto',
+					'VentaDetalleProducto' => array(
+						'Marca' => array(
+							'PrecioEspecificoMarca'
+						),
+						'PrecioEspecificoProducto'
+					),
 					'Administrador',
 					'Tienda',
 					'Proveedor'
 				)
 			));
+
+			# Calculo de descuentos
+			
+			foreach ($this->request->data['VentaDetalleProducto'] as $i => $p) {
+
+				$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
+
+				$this->request->data['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
+				$this->request->data['VentaDetalleProducto'][$i]['nombre_descuento'] = $descuentos['nombre_descuento'];
+				$this->request->data['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento']; 
+			}
+			
 		}
 
 		$tipoDescuento    = array(0 => '$', 1 => '%');
@@ -1395,7 +1436,7 @@ class OrdenComprasController extends AppController
 		if ( $this->Correo->save(array(
 			'estado'					=> 'Notificación rechazo oc',
 			'html'						=> $html,
-			'asunto'					=> '[NDRZ] OC rechazada',
+			'asunto'					=> sprintf('[NDRZ] OC #%d rechazada', $id),
 			'destinatario_email'		=> trim(implode(',', $emails)),
 			'destinatario_nombre'		=> '',
 			'remitente_email'			=> 'cristian.rojas@nodriza.cl',
@@ -1438,7 +1479,7 @@ class OrdenComprasController extends AppController
 		if ( $this->Correo->save(array(
 			'estado'					=> 'Notificación validado oc',
 			'html'						=> $html,
-			'asunto'					=> '[NDRZ] OC lista para pagar',
+			'asunto'					=> sprintf('[NDRZ] OC #%d lista para pagar', $id),
 			'destinatario_email'		=> trim(implode(',', $emails)),
 			'destinatario_nombre'		=> '',
 			'remitente_email'			=> 'cristian.rojas@nodriza.cl',
@@ -1482,7 +1523,7 @@ class OrdenComprasController extends AppController
 		if ( $this->Correo->save(array(
 			'estado'					=> 'Notificación pagado oc',
 			'html'						=> $html,
-			'asunto'					=> '[NDRZ] OC lista para enviar',
+			'asunto'					=> sprintf('[NDRZ] OC #%d lista para enviar', $id),
 			'destinatario_email'		=> trim(implode(',', $emails)),
 			'destinatario_nombre'		=> '',
 			'remitente_email'			=> 'cristian.rojas@nodriza.cl',
@@ -1511,7 +1552,7 @@ class OrdenComprasController extends AppController
 			$this->CakePdf = new CakePdf();
 			$this->CakePdf->template('generar_oc', 'default');
 			$this->CakePdf->viewVars(compact('oc'));
-			$this->CakePdf->write(APP . 'webroot' . DS . 'Pdf' . DS . 'OrdenCompra' . DS . $oc['OrdenCompra']['id'] . DS . $nombreOC);	
+			@$this->CakePdf->write(APP . 'webroot' . DS . 'Pdf' . DS . 'OrdenCompra' . DS . $oc['OrdenCompra']['id'] . DS . $nombreOC);	
 		} catch (Exception $e) {
 			
 		}

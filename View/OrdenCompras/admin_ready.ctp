@@ -61,6 +61,27 @@
 			</div>
 		</div>
 		<? endif; ?>
+
+		<? if (empty($this->request->data['OrdenCompra']['pdf'])) : ?>
+		<div class="col-xs-12 <?= (!empty($this->request->data['OrdenCompra']['adjunto']['path'])) ? 'col-sm-6' : ''; ?>">
+			<div class="panel panel-info">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-file"></i> Documento OC</h3>
+				</div>
+				<div class="panel-body">
+					<?= $this->Html->link(
+					'<i class="fa fa-refresh"></i> Generar OC',
+					array(
+						'action' => 'generar_pdf', $this->request->data['OrdenCompra']['id']
+					),
+					array(
+						'class' => 'btn btn-success btn-lg btn-block', 
+						'escape' => false) 
+					); ?>
+				</div>
+			</div>
+		</div>
+		<? else : ?>
 		<div class="col-xs-12 <?= (!empty($this->request->data['OrdenCompra']['adjunto']['path'])) ? 'col-sm-6' : ''; ?>">
 			<div class="panel panel-info">
 				<div class="panel-heading">
@@ -78,6 +99,7 @@
 				</div>
 			</div>
 		</div>
+		<? endif; ?>
 	</div>
 	
 	

@@ -168,7 +168,7 @@ class AppHelper extends Helper
 			if ($retrasoHoras->days > 0) {
 				return ($retrasoHoras->days > 1) ? sprintf('<label class="label btn-block label-danger label-form"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> %d días de retraso</label>', $retrasoHoras->days) : sprintf('<label class="label label-warning label-form"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> %d día de retraso</label>', $retrasoHoras->days);
 			}else{
-				return sprintf('<span class="text-muted btn-block"><small>Creada hace %d horas</small></span>', $retraso->h);
+				return sprintf('<span class="text-muted btn-block"><small>Creada hace %dh %dmin</small></span>', $retraso->h, $retraso->i);
 			}
 
 			return '';

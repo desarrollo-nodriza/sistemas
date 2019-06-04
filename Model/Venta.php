@@ -201,6 +201,11 @@ class Venta extends AppModel
 				'contain' => array(
 					'VentaDetalle' => array(
 						'VentaDetalleProducto' => array(
+							'Bodega' => array(
+								'fields' => array(
+									'Bodega.id', 'Bodega..nombre', 'Bodega.activo', 'Bodega.principal', 'Bodega.direccion', 'Bodega.fono'
+								)
+							),
 							'fields' => array(
 								'VentaDetalleProducto.id', 'VentaDetalleProducto.nombre'
 							)
@@ -209,7 +214,7 @@ class Venta extends AppModel
 							'VentaDetalle.activo' => 1
 						),
 						'fields' => array(
-							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id'
+							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada'
 						)
 					),
 					'VentaEstado' => array(
@@ -256,9 +261,14 @@ class Venta extends AppModel
 						)
 					),
 					'Dte' => array(
+						'Administrador' => array(
+							'fields' => array(
+								'Administrador.id', 'Administrador.email'
+							)
+						),
 						'fields' => array(
 							'Dte.id', 'Dte.folio', 'Dte.tipo_documento', 'Dte.rut_receptor', 'Dte.razon_social_receptor', 'Dte.giro_receptor', 'Dte.neto', 'Dte.iva',
-							'Dte.total', 'Dte.fecha', 'Dte.estado', 'Dte.venta_id', 'Dte.pdf', 'Dte.invalidado'
+							'Dte.total', 'Dte.fecha', 'Dte.estado', 'Dte.venta_id', 'Dte.pdf', 'Dte.invalidado', 'Dte.administrador_id'
 						),
 						'order' => 'Dte.fecha DESC'
 					)
@@ -270,5 +280,35 @@ class Venta extends AppModel
 				)
 			)
 		);
+	}
+
+
+	public function obtener_lista_cantidad_productos_vendidos($id_venta)
+	{	
+		$vendidos = ClassRegistry::init('VentaDetalle')->find('all', array(
+			'conditions' => array(
+				'VentaDetalle.venta_id' => $id_venta
+			),
+			'fields' => array(
+				'VentaDetalle.id',
+				'VentaDetalle.venta_detalle_producto_id',
+				'VentaDetalle.cantidad'
+			)
+		));
+
+		$indices = array();
+
+		foreach ($vendidos as $iv => $detalle) {
+			$indices[$detalle['VentaDetalle']['venta_detalle_producto_id']] = $detalle['VentaDetalle']['venta_detalle_producto_id'];
+		}
+
+		$indices = array_unique($indices);
+		$items   = array();
+
+		foreach ($indices as $id_producto) {
+			$items[$id_producto] = array_sum(Hash::extract($vendidos, '{n}.VentaDetalle[venta_detalle_producto_id='.$id_producto.'].cantidad'));
+		}
+
+		return $items;
 	}
 }

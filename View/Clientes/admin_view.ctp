@@ -1,0 +1,1 @@
+<?= $this->Html->link('Hola', $this->Session->read($this->request->controller));?>

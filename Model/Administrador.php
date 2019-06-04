@@ -176,4 +176,49 @@ class Administrador extends AppModel
 		}
 		return true;
 	}
+
+
+	/**
+	 * Obtiene un listado de emails segun l tipo de notificacion activa.
+	 *
+	 * pagar_oc : Envia un email avisando que hay una OC lista para ser pagada
+	 * revision_oc : Envía un email avisando que hay un OC lista para ser revisada
+	 * ventas: Notifica las ventas retrasadas
+	 * bodegas: Notifica segun la fecha de llegada de un producto de bodega.
+	 * 
+	 * @param  	string $tipo (pagar_oc, revision_oc, ventas, bodegas)
+	 * @return 	array    Lista de emails
+	 */
+	public function obtener_email_por_tipo_notificacion($tipo = '')
+	{
+
+		if (empty($tipo))
+			return array();
+
+		$admins = $this->find('all', array(
+			'conditions' => array(
+				'Administrador.activo' => 1
+			),
+			'fields' => array(
+				'Administrador.email',
+				'Administrador.notificaciones'
+			)
+		));
+
+		$emailsNotificar = array();
+
+		// Obtenemos a los administradores que tiene activa la notificación de oc revision
+		foreach ($admins as $ia => $admin) {
+			if (!empty($admin['Administrador']['notificaciones'])) {
+
+				$confNotificacion = json_decode($admin['Administrador']['notificaciones'], true);
+				
+				if ( array_key_exists('pagar_oc', $confNotificacion) && $confNotificacion[$tipo] ) {
+					$emailsNotificar[] = $admin['Administrador']['email'];
+				}
+			}
+		}
+
+		return $emailsNotificar;
+	}
 }

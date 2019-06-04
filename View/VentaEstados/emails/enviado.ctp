@@ -115,7 +115,7 @@
 
 
                                           <!-- Venta ID -->
-                                          <h4 class="text-center" style="color: inherit; font-size: 33px; font-weight: 700; line-height: 36px; margin-top: 30px; margin-bottom: 30px; text-align: center; vertical-align: baseline;">N° Venta #<?=$venta['Venta']['id_externo'];?></h4>
+                                          <h4 class="text-center" style="color: inherit; font-size: 33px; font-weight: 700; line-height: 36px; margin-top: 30px; margin-bottom: 30px; text-align: center; vertical-align: baseline;">N° Venta #<?=$venta['Venta']['id'];?></h4>
                                           <!-- /Venta ID -->
 
                                           <!-- Parrafo -->
@@ -286,9 +286,10 @@
                           <td style="border-bottom: 0; border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 20px" align="left">
 
                             
-                              <font color="636c72" font-size="13" style="font-size: 13px; line-height: 16px;">Diagonal Oriente 1355, Ñuñoa. Región Metropolitana<br>
+                              <font color="636c72" font-size="13" style="font-size: 13px; line-height: 16px;"><?=$venta['Tienda']['direccion'];?><br>
                               <a style="color: #636c72; line-height: 26px; width: 100%;" href="tel:+56 2 2379 2188">+56 2 2379 2188</a><br>
                               <a style="color: #636c72; line-height: 26px; width: 100%;" href="mailto:ventas@toolmania.cl">ventas@toolmania.cl</a><br>
+                              <a style="color: #636c72; line-height: 26px; width: 100%;" href="#">Lun-Vie 09:00-14:00 y 15:00-18:30</a><br>
                               <a style="color: #636c72; line-height: 26px; width: 100%;" href="https://www.toolmania.cl/content/3-terminos-y-condiciones">Centro de ayuda</a><br>
                               </font>
                                                                                     

@@ -66,7 +66,7 @@ foreach ($datos as $dato) {
 			}	
 		}
 	}
-	
+
 	$this->PhpExcel->addTableRow(
 		array(
 			$dato['Venta']['id'],

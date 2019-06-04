@@ -493,7 +493,7 @@
 							<div class="form-group">
 								<br>
 								<label><?=__('Glosa (opcional)');?></label>
-								<?=$this->Form->input('glosa', array('class' => 'form-control', 'escape' => false, 'placeholder' => 'Máximo 100 carácteres', 'maxlength' => 100));?>
+								<?=$this->Form->input('glosa', array('class' => 'form-control', 'escape' => false, 'placeholder' => 'Máximo 100 carácteres', 'maxlength' => 100, 'value' => 'Dte para venta #' . $venta['Venta']['id']));?>
 							</div>
 						</div>
 					</div>

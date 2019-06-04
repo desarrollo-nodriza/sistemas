@@ -146,7 +146,7 @@ class ProspectosController extends AppController
 					$verificarExistencia = $this->Cliente->find('all', array('conditions' => array('Cliente.email' => $this->request->data['Cliente'][1]['email'])));
 
 					if ( empty($verificarExistencia) ) {
-						/*if( $this->Cliente->saveAll($this->request->data['Cliente'][1]) ) {
+						if( $this->Cliente->saveAll($this->request->data['Cliente'][1]) ) {
 							// Agregamos el id del cliente y su dirección
 							$clienteNuevo = $this->Cliente->find('first', array(
 								'fields' => array('Cliente.id_customer'),
@@ -160,7 +160,7 @@ class ProspectosController extends AppController
 
 						}else{
 							$this->Session->setFlash('No se pudo guardar el nuevo cliente.', null, array(), 'danger');
-						}*/
+						}
 
 						// Eliminamos a cliente del arreglo para que no se vuelva a actualizar
 						unset($this->request->data['Cliente']);	
@@ -289,7 +289,7 @@ class ProspectosController extends AppController
 					$verificarExistencia = $this->Cliente->find('all', array('conditions' => array('Cliente.email' => $this->request->data['Cliente'][1]['email'])));
 
 					if ( empty($verificarExistencia) ) {
-						/*if( $this->Cliente->saveAll($this->request->data['Cliente'][1]) ) {
+						if( $this->Cliente->saveAll($this->request->data['Cliente'][1]) ) {
 							// Agregamos el id del cliente y su dirección
 							$clienteNuevo = $this->Cliente->find('first', array(
 								'fields' => array('Cliente.id_customer'),
@@ -303,7 +303,7 @@ class ProspectosController extends AppController
 
 						}else{
 							$this->Session->setFlash('No se pudo guardar el nuevo cliente.', null, array(), 'danger');
-						}*/
+						}
 
 						// Eliminamos a cliente del arreglo para que no se vuelva a actualizar
 						unset($this->request->data['Cliente']);	

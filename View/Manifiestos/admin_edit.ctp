@@ -114,7 +114,7 @@
 
 			$.get( webroot + 'manifiestos/obtener_ordenes_ajax/', data , function(respuesta){
 			
-				if (respuesta != '0') {
+				if (respuesta != 0) {
 					$('#wrapper-ordenes tbody').append(respuesta);
 					$offset = $offset + $limit;
 					obtener_ordenes($limit, $offset);

@@ -4,7 +4,7 @@ if (isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] == 'localhost')
 {
 	Configure::write('debug', 2);
 }else{
-	Configure::write('debug', 2);
+	Configure::write('debug', 0);
 }
 
 
@@ -29,7 +29,7 @@ Configure::write('Cache.disable', true);
 //Configure::write('Cache.viewPrefix', 'prefix');
 Configure::write('Session', array(
 	'defaults'			=> 'php',
-	'cookie'			=> 'NODRIZASPADEV', // Unico
+	'cookie'			=> 'SISTEMAV2', // Unico
 	'timeout' 			=> 360,
 	'checkAgent'		=> true,
 	'autoRegenerate'	=> true
@@ -37,7 +37,7 @@ Configure::write('Session', array(
 Configure::write('Security.salt', 'f3ec8ed41979f4d5939d58f7ae598f3afe346819');
 Configure::write('Security.cipherSeed', '316431663662343239636630303637');
 // Solución a la muerte de la sessión al hacer peticiones ajax
-Configure::write('Session.checkAgent', false);
+//Configure::write('Session.checkAgent', false);
 //Configure::write('Asset.timestamp', true);
 //Configure::write('Asset.filter.css', 'css.php');
 //Configure::write('Asset.filter.js', 'custom_javascript_output_filter.php');
@@ -60,7 +60,7 @@ if ( Configure::read('debug') > 0 )
 /**
  * Cambiar a prefijo unico por proyecto
  */
-$prefix		= 'nodriza_';
+$prefix		= 'sistemav2_';
 
 /**
  * Configuracion general del cache

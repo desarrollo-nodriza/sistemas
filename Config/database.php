@@ -4,10 +4,10 @@ class DATABASE_CONFIG
 	public $default = array(
 		'datasource'	=> 'Database/Mysql',
 		'persistent'	=> false,
-		'host'			=> '69.164.205.133',
+		'host'			=> '45.79.26.106',
 		'login'			=> 'nodriza',
 		'password'		=> 'IgP_8111980_IgP',
-		'database'		=> 'sistemas_dev',
+		'database'		=> 'sistemav3',
 		'prefix'		=> 'rp_',
 		'encoding'		=> 'utf8'
 	);
@@ -16,10 +16,10 @@ class DATABASE_CONFIG
 	public $reportes = array(
 		'datasource'	=> 'Database/Mysql',
 		'persistent'	=> false,
-		'host'			=> '69.164.205.133',
+		'host'			=> '45.79.26.106',
 		'login'			=> 'nodriza',
 		'password'		=> 'IgP_8111980_IgP',
-		'database'		=> 'sistemas_dev',
+		'database'		=> 'sistemav3',
 		'prefix'		=> 'rp_',
 		'encoding'		=> 'utf8'
 	);
@@ -28,7 +28,7 @@ class DATABASE_CONFIG
 	public $newsletter = array(
 		'datasource'	=> 'Database/Mysql',
 		'persistent'	=> false,
-		'host'			=> '69.164.205.133',
+		'host'			=> '45.79.26.106',
 		'login'			=> 'nodriza',
 		'password'		=> 'IgP_8111980_IgP',
 		'database'		=> 'newsletter',
@@ -40,7 +40,7 @@ class DATABASE_CONFIG
 	public $toolmania = array(
 		'datasource' => 'Database/Mysql',
 		'persistent' => false,
-		'host' => '69.164.205.133',
+		'host' => '45.79.26.106',
 		'login' => 'nodriza',
 		'password' => 'IgP_8111980_IgP',
 		'database' => 'tm2018',
@@ -52,7 +52,7 @@ class DATABASE_CONFIG
 	public $walko = array(
 		'datasource' => 'Database/Mysql',
 		'persistent' => false,
-		'host' => '69.164.205.133',
+		'host' => '45.79.26.106',
 		'login' => 'nodriza',
 		'password' => 'IgP_8111980_IgP',
 		'database' => 'walko',

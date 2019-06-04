@@ -182,7 +182,7 @@ class PhpExcelHelper extends AppHelper {
 		header('Content-Disposition: attachment;filename="'.$filename.'"');
 		header('Cache-Control: max-age=0');
 		// writer
-		$objWriter = PHPExcel_IOFactory::createWriter($this->xls, 'Excel2007');
+		$objWriter = PHPExcel_IOFactory::createWriter($this->xls, 'Excel5');
 		$objWriter->save('php://output');
 		// clear memory
 		$this->xls->disconnectWorksheets();

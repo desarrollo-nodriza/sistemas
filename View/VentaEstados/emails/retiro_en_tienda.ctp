@@ -115,7 +115,7 @@
 
 
                                           <!-- Venta ID -->
-                                          <h4 class="text-center" style="color: inherit; font-size: 33px; font-weight: 700; line-height: 36px; margin-top: 30px; margin-bottom: 30px; text-align: center; vertical-align: baseline;">N° Venta #<?=$venta['Venta']['id_externo'];?></h4>
+                                          <h4 class="text-center" style="color: inherit; font-size: 33px; font-weight: 700; line-height: 36px; margin-top: 30px; margin-bottom: 30px; text-align: center; vertical-align: baseline;">N° Venta #<?=$venta['Venta']['id'];?></h4>
                                           <!-- /Venta ID -->
 
                                           <!-- Parrafo -->
@@ -126,9 +126,33 @@
                                           <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 0px; text-align: center; vertical-align: baseline;">Recuerda mostrar éste código y llevar tu cedula de identidad o pasaporte.</p>
                                           <!-- /Parrafo -->
 
-                                          <div class="qr" style="margin-top: 25px; margin-bottom: 25px; text-align: center;">
+                                          <div class="qr" style="margin-top: 25px; margin-bottom: 15px; text-align: center;">
                                             <img src="https://chart.googleapis.com/chart?chs=<?=$tamanoQr;?>&cht=qr&chl=<?=$urlQr;?>&choe=UTF-8" title="QR" width="250" height="250" />
                                           </div>
+											
+										<table class="hr" style="border: 0; border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                            <tbody>
+                                              <tr>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; font-size: 16px; line-height: 24px; margin: 0; padding: 16px 0px;" width="100%">
+                                                  <table style="border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                    <tbody>
+                                                      <tr>
+                                                        <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #dddddd; font-size: 16px; line-height: 24px; margin: 0;" width="100%" height="1px"></td>
+                                                      </tr>
+                                                    </tbody>
+                                                  </table>
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+
+                                          <!-- Titulo tus productos -->
+                                          <h5 class="text-center" style="color: inherit; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 20px; margin-top: 10px; text-align: center; vertical-align: baseline;">Horario de atención</h5>
+                                          <!-- /titulo tus productos -->
+
+                                          <!-- Parrafo -->
+                                          <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 25px;; margin-top: 0px; text-align: center; vertical-align: baseline;">Lunes a Viernes de 09:00-14:00 y de 15:00-18:30 hrs.</p>
+                                          <!-- /Parrafo -->
 
 
                                           <!-- Links de interés -->
@@ -275,6 +299,7 @@
                               <font color="636c72" font-size="13" style="font-size: 13px; line-height: 16px;"><?=$venta['Tienda']['direccion'];?><br>
                               <a style="color: #636c72; line-height: 26px; width: 100%;" href="tel:+56 2 2379 2188">+56 2 2379 2188</a><br>
                               <a style="color: #636c72; line-height: 26px; width: 100%;" href="mailto:ventas@toolmania.cl">ventas@toolmania.cl</a><br>
+                              <a style="color: #636c72; line-height: 26px; width: 100%;" href="#">Lun-Vie 09:00-14:00 y 15:00-18:30</a><br>
                               <a style="color: #636c72; line-height: 26px; width: 100%;" href="https://www.toolmania.cl/content/3-terminos-y-condiciones">Centro de ayuda</a><br>
                               </font>
                                                                                     

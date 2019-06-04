@@ -146,7 +146,7 @@ Configure::write('CakePdf', array(
 
 // URL Base para consola
 if ( !defined('FULL_BASE_URL') ) {
-	define('FULL_BASE_URL', 'http://sistemas.nodriza.cl/');
+	define('FULL_BASE_URL', 'https://sistema.nodriza.cl/');
 }
 
 /**

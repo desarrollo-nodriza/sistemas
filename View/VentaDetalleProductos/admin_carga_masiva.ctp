@@ -66,10 +66,10 @@
 											<? if (array_key_exists($c, $p)) :  ?>
 												<? if ($c == 'fecha inicio' ) : ?>
 													<th>Fecha inicio</th>
-													<th>Hora inicio</th>
+													
 												<? elseif ($c == 'fecha termino') : ?>
 													<th>Fecha termino</th>
-													<th>Hora termino</th>
+													
 												<? else : ?>
 													<th><?=$c;?></th>
 												<? endif; ?>
@@ -95,27 +95,15 @@
 											<?=$this->Form->input(sprintf('%d.PrecioEspecificoProducto.%d.descuento', $ip, $ip), array('type' => 'text', 'value' => $p[$c], 'class' => 'form-control not-blank', 'style' => 'min-width: 100px;'));?>
 
 										<? elseif ($c == 'fecha inicio') : ?>
-											
-											<? $fecha = date_create_from_format('d-m-Y H:i:s', $p[$c]);?>
+										
+											<? $fecha = date_create_from_format('d-m-Y', $p[$c]);?>
 	
-											<?=$this->Form->input(sprintf('%d.PrecioEspecificoProducto.%d.fecha_inicio', $ip, $ip), array('type' => 'text', 'value' => @date_format($fecha, 'Y-m-d'), 'class' => 'form-control datepicker js-f-inicio not-blank', 'style' => 'min-width: 100px;'));?>
-
-										</td>
-										<td>
-
-											<?=$this->Form->input(sprintf('%d.PrecioEspecificoProducto.%d.hora_inicio', $ip, $ip), array('type' => 'text', 'value' => @date_format($fecha, 'G:i:s'), 'class' => 'form-control timepicker24 js-h-inicio not-blank', 'style' => 'min-width: 100px;'));?>
+											<?=$this->Form->input(sprintf('%d.PrecioEspecificoProducto.%d.fecha_inicio', $ip, $ip), array('type' => 'text', 'value' => $p[$c], 'class' => 'form-control datepicker js-f-inicio not-blank', 'style' => 'min-width: 100px;'));?>
 
 										<? elseif ($c == 'fecha termino') : ?>
-											
-											<? $fecha = date_create_from_format('d-m-Y H:i:s', $p[$c]); ?>
-
-											<?=$this->Form->input(sprintf('%d.PrecioEspecificoProducto.%d.fecha_termino', $ip, $ip), array('type' => 'text', 'value' => @date_format($fecha, 'Y-m-d'), 'class' => 'form-control datepicker js-f-inicio not-blank', 'style' => 'min-width: 100px;'));?>
-
-										</td>
-										<td>
-
-											<?=$this->Form->input(sprintf('%d.PrecioEspecificoProducto.%d.hora_termino', $ip, $ip), array('type' => 'text', 'value' => @date_format($fecha, 'G:i:s'), 'class' => 'form-control timepicker24 js-h-inicio not-blank', 'style' => 'min-width: 100px;'));?>
 										
+											<?=$this->Form->input(sprintf('%d.PrecioEspecificoProducto.%d.fecha_termino', $ip, $ip), array('type' => 'text', 'value' => $p[$c], 'class' => 'form-control datepicker js-f-inicio not-blank', 'style' => 'min-width: 100px;'));?>
+
 										<? elseif ($c == 'activo') : ?>
 
 											<?= $this->Form->input(sprintf('%d.PrecioEspecificoProducto.%d.activo', $ip, $ip), array('type' => 'checkbox', 'class' => '', 'checked' => $p[$c])); ?>

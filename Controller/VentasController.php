@@ -1,5 +1,4 @@
 <?php
-
 App::uses('AppController', 'Controller');
 App::uses('VentaDetalleProductosController', 'Controller');
 App::uses('DtesController', 'Controller');
@@ -7,9 +6,9 @@ App::uses('CakePdf', 'Plugin/CakePdf/Pdf');
 
 //App::import('Vendor', 'Mercadopago', array('file' => 'Mercadopago/mercadopago.php'));
 App::import('Vendor', 'Mercadolibre', array('file' => 'Meli/meli.php'));
+App::import('Vendor', 'PDFMerger', array('file' => 'PDFMerger/PDFMerger.php'));
 
 App::uses('CakeTime', 'Utility');
-
 
 class VentasController extends AppController {
 
@@ -19,15 +18,15 @@ class VentasController extends AppController {
 
 
 	public $components = array(
+		'RequestHandler',
 		'Linio',
 		'Prestashop',
 		'MeliMarketplace',
 		'Mercadopago',
 		'Toolmania',
 		'LibreDte',
-		'RequestHandler'
 	);
-
+	
 
 	/**
      * Crea un redirect y agrega a la URL los parámetros del filtro
@@ -71,6 +70,16 @@ class VentasController extends AppController {
 		$FiltroAtendida             = '';
 		$FiltroFechaDesde           = '';
 		$FiltroFechaHasta          = '';
+
+		$backurl = array(
+            'action' => 'index'
+        );
+
+		if (is_array($this->request->params['action'])) {
+			$backurl = array_replace_recursive($backurl, $this->request->params['action']);	
+		}
+        
+        $this->Session->write($this->request->params['controller'], $backurl);
 
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
@@ -221,7 +230,7 @@ class VentasController extends AppController {
 					)
 				);
 
-				$condiciones["Venta.subestado_oc !="] = 'entregado';	
+				#$condiciones["Venta.subestado_oc !="] = 'entregado';	
 			}
 		}
 
@@ -278,7 +287,7 @@ class VentasController extends AppController {
 			),
 			'sort' => 'Venta.fecha_venta',
 			'direction' => 'DESC',
-			'limit' => 10
+			'limit' => 20
 		);
 
 		//----------------------------------------------------------------------------------------------------
@@ -925,6 +934,7 @@ class VentasController extends AppController {
 		$siteId      = 'MLC';
 		$results     = array();
 		$response    = array();
+		$code 		 = isset($_GET['code']) ? $_GET['code'] : '' ;
 
 		foreach ($tiendas as $it => $tienda) {
 			foreach ($tienda['Marketplace'] as $im => $marketplace) {
@@ -932,8 +942,8 @@ class VentasController extends AppController {
 
 					if (!empty($marketplace['api_user']) && !empty($marketplace['api_key'])) {
 
-						$this->Mercadolibre = new Meli($marketplace['api_user'], $marketplace['api_key'], $marketplace['access_token'], $marketplace['refresh_token']);
-						$results[$marketplace['id']] = $this->admin_mercadolibre_conectar($marketplace, $redirectURI, $siteId);	
+						$this->MeliMarketplace->crearCliente($marketplace['api_user'], $marketplace['api_key'], $marketplace['access_token'], $marketplace['refresh_token']);
+						$results[$marketplace['id']] = $this->MeliMarketplace->mercadolibre_conectar($code, $marketplace, $redirectURI, $siteId);	
 					}else{
 
 						$results[$marketplace['id']]['errors'] = sprintf('%s no tiene configurado su API_USER y API_KEY', $marketplace['nombre']);
@@ -1041,7 +1051,10 @@ class VentasController extends AppController {
 	/****************************************************************************************************/
 	//actualización de estatus de ventas marcadas como No Atendidas para marketplaces (mercado libre)
 	public function actualizar_ventas_anteriores_mercadolibre ($ventas, $marketplace) {
-
+		# Para la consola se carga el componente on the fly!
+		if ($this->shell) {
+			$this->MeliMarketplace = $this->Components->load('MeliMarketplace');
+		}
 		# Cliente y conexión Meli
 		$this->MeliMarketplace->crearCliente( $marketplace['Marketplace']['api_user'], $marketplace['Marketplace']['api_key'], $marketplace['Marketplace']['access_token'], $marketplace['Marketplace']['refresh_token'] );
 		$this->MeliMarketplace->mercadolibre_conectar('', $marketplace['Marketplace']);
@@ -1052,6 +1065,10 @@ class VentasController extends AppController {
 
 			$response = $this->MeliMarketplace->mercadolibre_obtener_venta_detalles($marketplace['Marketplace']['access_token'], $venta['Venta']['id_externo'], true);
 			
+			if (empty($response)) {
+				continue;
+			}
+
 			$EstatusMeli = $response['status'];
 		
 			$venta['Venta']['estado_anterior'] = $venta['Venta']['venta_estado_id'];
@@ -1069,6 +1086,10 @@ class VentasController extends AppController {
 	/****************************************************************************************************/
 	//actualización de estatus de ventas marcadas como No Atendidas para marketplaces (linio)
 	public function actualizar_ventas_anteriores_linio ($ventas, $marketplace) {
+		# Para la consola se carga el componente on the fly!
+		if ($this->shell) {
+			$this->Linio = $this->Components->load('Linio');
+		}
 		# Cliente Linio
 		$this->Linio->crearCliente($marketplace['Marketplace']['api_host'], $marketplace['Marketplace']['api_user'], $marketplace['Marketplace']['api_key']);
 
@@ -1095,16 +1116,20 @@ class VentasController extends AppController {
 	/****************************************************************************************************/
 	//actualización de estatus de ventas marcadas como No Atendidas para tiendas (prestashop)
 	public function actualizar_ventas_anteriores_prestashop ($ventas, $tienda) {
-
+		# Para la consola se carga el componente on the fly!
+		if ($this->shell) {
+			$this->Prestashop = $this->Components->load('Prestashop');
+		}
 		# Cliente Prestashop
 		$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
 
 		$dataToSave = array();
 
+
 		foreach ($ventas as $venta) {
 
 			$dataWS = $this->Prestashop->prestashop_obtener_venta($venta['Venta']['id_externo']);
-
+			$dataWS = array(); // Se debe quitar la caché del WS
 			if (empty($dataWS)) {
 
 				# Modelos que requieren agregar configuración
@@ -1120,6 +1145,7 @@ class VentasController extends AppController {
 						'Orden.total_paid',
 						'Orden.total_discounts_tax_incl',
 						'Orden.total_shipping_tax_incl',
+						'Orden.id_carrier'
 					)
 				));
 
@@ -1132,6 +1158,7 @@ class VentasController extends AppController {
 					$venta['Venta']['venta_estado_id'] = $this->Prestashop->prestashop_obtener_venta_estado($data['Orden']['current_state']);
 					$venta['Venta']['costo_envio']     = round($data['Orden']['total_shipping_tax_incl'], 2);
 					$venta['Venta']['descuento']       = round($data['Orden']['total_discounts_tax_incl'], 2);
+					$venta['Venta']['metodo_envio_id'] = $this->Prestashop->prestashop_obtener_transportista($data['Orden']['id_carrier']);
 					$venta['Venta']['total']           = round($data['Orden']['total_paid'], 2);
 				}
 
@@ -1146,6 +1173,7 @@ class VentasController extends AppController {
 					$venta['Venta']['venta_estado_id'] = $this->Prestashop->prestashop_obtener_venta_estado($dataWS['current_state']);
 					$venta['Venta']['costo_envio']     = round($dataWS['total_shipping_tax_incl'], 2);
 					$venta['Venta']['descuento']       = round($dataWS['total_discounts_tax_incl'], 2);
+					$venta['Venta']['metodo_envio_id'] = $this->Prestashop->prestashop_obtener_transportista($dataWS['id_carrier']);
 					$venta['Venta']['total']           = round($dataWS['total_paid'], 2);
 				}
 
@@ -1417,6 +1445,75 @@ class VentasController extends AppController {
 		return;
 	}
 
+	public function ventas_estados_pagadas()
+	{
+		$ventas = $this->Venta->find('all', array(
+			'conditions' => array(
+				'Venta.activo'        => 1,
+				'Venta.atendida'      => 0
+			),
+			'contain' => array(
+				'VentaDetalle' => array(
+					'VentaDetalleProducto' => array(
+						'fields' => array(
+							'VentaDetalleProducto.cantidad_virtual',
+							'VentaDetalleProducto.id_externo',
+							'VentaDetalleProducto.id'
+						)
+					),
+					'fields' => array(
+						'VentaDetalle.cantidad',
+						'VentaDetalle.id',
+						'VentaDetalle.venta_detalle_producto_id',
+						'VentaDetalle.cantidad_reservada'
+					),
+					'conditions' => array(
+						'VentaDetalle.completo' => 0
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.venta_estado_id',
+				'Venta.estado_anterior',
+				'Venta.fecha_venta',
+				'Venta.atendida'
+			)
+		));
+		
+		if (!empty($ventas)) {
+
+			foreach ($ventas as $iv => $venta) {
+
+				# No es venta pagada
+				if (!ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id'])) {
+					continue;	
+				}
+
+				# No tiene detalle
+				if (empty($venta['VentaDetalle'])) {
+					continue;
+				}
+
+				# solo se procesa si el estado de la venta ha cambiado
+				if ($venta['Venta']['venta_estado_id'] != $venta['Venta']['estado_anterior'] ) {
+					foreach ($venta['VentaDetalle'] as $ip => $producto) {
+
+						if ($producto['cantidad_reservada'] != 0)
+							continue;
+
+						$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], $producto['cantidad']);
+					
+						ClassRegistry::init('VentaDetalle')->id = $producto['id'];
+						ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $reservado);
+					}
+				}
+			}
+		}
+
+		return;
+	}
+
 
 
 	/****************************************************************************************************/
@@ -1428,7 +1525,7 @@ class VentasController extends AppController {
 		set_time_limit(0);
 
 		# Mercadolibre conectar
-		$this->admin_verificar_conexion_meli();
+		#$this->admin_verificar_conexion_meli();
 
 		//actualización de estatus de ventas marcadas como No Atendidas
 		#$this->actualizar_ventas_anteriores();
@@ -1445,6 +1542,10 @@ class VentasController extends AppController {
 
 			//ciclo para procesar cada tienda (prestashop)
 			foreach ($tiendas as $tienda) {
+				# Para la consola se carga el componente on the fly!
+				if ($this->shell) {
+					$this->Prestashop = $this->Components->load('Prestashop');
+				}
 
 				# Cliente Prestashop
 				$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
@@ -1591,6 +1692,24 @@ class VentasController extends AppController {
 							);
 						}
 
+						//se obtiene el estado de la venta
+						if (empty($DataVenta['current_state']) || $DataVenta['current_state'] == 0) {
+							$NuevaVenta['Venta']['venta_estado_id'] = 1; //Sin Estado
+							$NuevaVenta['Venta']['estado_anterior'] = 1;
+						}
+						else {
+							$NuevaVenta['Venta']['venta_estado_id'] = $this->Prestashop->prestashop_obtener_venta_estado($DataVenta['current_state']);
+							$NuevaVenta['Venta']['estado_anterior'] = $NuevaVenta['Venta']['venta_estado_id'];
+						}
+
+						$NuevaVenta['Venta']['metodo_envio_id']  = $this->Prestashop->prestashop_obtener_transportista($DataVenta['id_carrier']);
+
+						//se obtiene el medio de pago
+						$NuevaVenta['Venta']['medio_pago_id']    = $this->Prestashop->prestashop_obtener_medio_pago($DataVenta['payment']);
+						
+						//se obtiene el cliente
+						$NuevaVenta['Venta']['venta_cliente_id'] = $this->Prestashop->prestashop_obtener_cliente($DataVenta['id_customer']);
+
 						// Existen ventas sin productos xD
 						if (isset($VentaDetalles['order_detail'])) {
 							//ciclo para recorrer el detalle de la venta
@@ -1603,6 +1722,10 @@ class VentasController extends AppController {
 									$NuevoDetalle['precio_bruto']               = round($DetalleVenta['unit_price_tax_incl'], 2);
 									$NuevoDetalle['cantidad']                   = $DetalleVenta['product_quantity'];
 									$NuevoDetalle['cantidad_pendiente_entrega'] = $DetalleVenta['product_quantity'];
+
+									if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
+										$NuevoDetalle['cantidad_reservada']     = ClassRegistry::init('Bodega')->calcular_reserva_stock($DetalleVenta['product_id'], $DetalleVenta['product_quantity']);	
+									}
 
 									$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 
@@ -1622,22 +1745,6 @@ class VentasController extends AppController {
 							} //fin ciclo detalle de venta
 						}
 
-						//se obtiene el estado de la venta
-						if (empty($DataVenta['current_state']) || $DataVenta['current_state'] == 0) {
-							$NuevaVenta['Venta']['venta_estado_id'] = 1; //Sin Estado
-						}
-						else {
-							$NuevaVenta['Venta']['venta_estado_id'] = $this->Prestashop->prestashop_obtener_venta_estado($DataVenta['current_state']);
-						}
-
-						$NuevaVenta['Venta']['metodo_envio_id']  = $this->Prestashop->prestashop_obtener_transportista($DataVenta['id_carrier']);
-
-						//se obtiene el medio de pago
-						$NuevaVenta['Venta']['medio_pago_id']    = $this->Prestashop->prestashop_obtener_medio_pago($DataVenta['payment']);
-						
-						//se obtiene el cliente
-						$NuevaVenta['Venta']['venta_cliente_id'] = $this->Prestashop->prestashop_obtener_cliente($DataVenta['id_customer']);
-
 						//se guarda la venta
 						$this->Venta->create();
 						$this->Venta->saveAll($NuevaVenta);
@@ -1656,6 +1763,10 @@ class VentasController extends AppController {
 						//----------------------------------------------------------------------------------------------------
 						//si el marketplace es Linio
 						if ($marketplace['marketplace_tipo_id'] == 1) {
+							# Para la consola se carga el componente on the fly!
+							if ($this->shell) {
+								$this->Linio = $this->Components->load('Linio');
+							}
 
 							# Cliente Linio	
 							$this->Linio->crearCliente($marketplace['api_host'], $marketplace['api_user'], $marketplace['api_key']);
@@ -1733,6 +1844,23 @@ class VentasController extends AppController {
 
 										$metodo_envio  = '';
 
+										$NuevaVenta['Venta']['costo_envio']      = (float) $totalDespacho;
+										
+										//se obtiene el estado de la venta
+										$NuevaVenta['Venta']['venta_estado_id']  = $this->obtener_estado_id($DataVenta['Statuses']['Status'], $marketplace['marketplace_tipo_id']);
+										$NuevaVenta['Venta']['estado_anterior']  = $NuevaVenta['Venta']['venta_estado_id'];
+										
+										//se obtiene el medio de pago
+										$NuevaVenta['Venta']['medio_pago_id']    = $this->obtener_medio_pago_id($DataVenta['PaymentMethod']);
+
+										//se obtiene el metodo de envio
+										$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id($metodo_envio);
+										
+										//se obtiene el cliente
+										$NuevaVenta['Venta']['venta_cliente_id'] = $this->obtener_cliente_id($DataVenta);
+
+										$NuevaVenta['Venta']['total'] 			 = (float) 0; // El total se calcula en en base a la sumatoria de items
+
 										//ciclo para recorrer el detalle de la venta
 										foreach ($VentaDetalles as $DetalleVenta) {
 
@@ -1746,9 +1874,20 @@ class VentasController extends AppController {
 
 											$NuevoDetalle = array();
 											$NuevoDetalle['venta_detalle_producto_id'] = $idNuevoProducto;
-											$NuevoDetalle['precio']                    = $this->precio_neto(round($DetalleVenta['PaidPrice'], 2));
-											$NuevoDetalle['precio_bruto']              = $DetalleVenta['PaidPrice'];
+
+											if ( round($DetalleVenta['VoucherAmount']) > 0 ) {
+												$NuevoDetalle['precio']                    = $this->precio_neto(round($DetalleVenta['PaidPrice'] + $DetalleVenta['VoucherAmount'], 2));
+												$NuevoDetalle['precio_bruto']              = round($DetalleVenta['PaidPrice'] + $DetalleVenta['VoucherAmount'], 2);	
+											}else{
+												$NuevoDetalle['precio']                    = $this->precio_neto(round($DetalleVenta['PaidPrice'], 2));
+												$NuevoDetalle['precio_bruto']              = $DetalleVenta['PaidPrice'];
+											}
+											
 											$NuevoDetalle['cantidad_pendiente_entrega']= 1;
+
+											if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
+												$NuevoDetalle['cantidad_reservada']    = ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, 1);	
+											}
 
 											# OBtenemos el último metodo de envio
 											$metodo_envio = $DetalleVenta['ShipmentProvider'];
@@ -1756,7 +1895,7 @@ class VentasController extends AppController {
 											$totalDespacho = $totalDespacho + round($DetalleVenta['ShippingAmount'], 2);
 
 											// Se agrega el valor de la compra sumanod el precio de los productos
-											//$NuevaVenta['Venta']['total'] = $NuevaVenta['Venta']['total'] + $NuevoDetalle['precio'];
+											$NuevaVenta['Venta']['total'] = $NuevaVenta['Venta']['total'] + $NuevoDetalle['precio_bruto'];
 
 											$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 											
@@ -1777,19 +1916,7 @@ class VentasController extends AppController {
 
 										} //fin ciclo detalle de venta
 
-										$NuevaVenta['Venta']['costo_envio']      = (float) $totalDespacho;
-										
-										//se obtiene el estado de la venta
-										$NuevaVenta['Venta']['venta_estado_id']  = $this->obtener_estado_id($DataVenta['Statuses']['Status'], $marketplace['marketplace_tipo_id']);
-										
-										//se obtiene el medio de pago
-										$NuevaVenta['Venta']['medio_pago_id']    = $this->obtener_medio_pago_id($DataVenta['PaymentMethod']);
 
-										//se obtiene el metodo de envio
-										$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id($metodo_envio);
-										
-										//se obtiene el cliente
-										$NuevaVenta['Venta']['venta_cliente_id'] = $this->obtener_cliente_id($DataVenta);
 											
 										/*
 										obtener mensajes de la venta
@@ -1813,6 +1940,10 @@ class VentasController extends AppController {
 
 						# Es mercadolibre
 						if ($marketplace['marketplace_tipo_id'] == 2) {
+							# Para la consola se carga el componente on the fly!
+							if ($this->shell) {
+								$this->MeliMarketplace = $this->Components->load('MeliMarketplace');
+							}
 
 							# cliente y conexion Meli
 							$this->MeliMarketplace->crearCliente( $marketplace['api_user'], $marketplace['api_key'], $marketplace['access_token'], $marketplace['refresh_token'] );
@@ -1891,61 +2022,12 @@ class VentasController extends AppController {
 											'0' => $VentaDetalles['order_items']
 										);
 									}
-									
-									//ciclo para recorrer el detalle de la venta
-									foreach ($VentaDetalles['order_items'] as $DetalleVenta) {
-										if (!empty($DetalleVenta['item']['seller_custom_field']) ) {
-											
-											$DetalleVenta['Sku']  = intval($DetalleVenta['item']['seller_custom_field']);
-											$DetalleVenta['Name'] = $DetalleVenta['item']['title'];
-
-											if ($DetalleVenta['Sku'] == 0) {
-												$DetalleVenta['Sku'] = $DetalleVenta['item']['seller_sku'];
-											}
-
-											if ($DetalleVenta['Sku'] == 0) {
-												continue;
-											}
-
-											# Evitamos que se vuelva actualizar el stock en meli
-											$excluirMeli = array('Mercadolibre' => array($marketplace['id']));
-
-											//se guarda el producto si no existe
-											$idNuevoProducto = $this->linio_guardar_producto($DetalleVenta, $excluirMeli);
-
-											$NuevoDetalle                               = array();
-											$NuevoDetalle['venta_detalle_producto_id']  = $idNuevoProducto;
-											$NuevoDetalle['precio']                     = $this->precio_neto(round($DetalleVenta['unit_price'], 2));
-											$NuevoDetalle['precio_bruto']               = round($DetalleVenta['unit_price'], 2);
-											$NuevoDetalle['cantidad']                   = $DetalleVenta['quantity'];
-											$NuevoDetalle['cantidad_pendiente_entrega'] = $DetalleVenta['quantity'];
-
-											$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
-
-
-											//se toma el id de producto para usarlo luego en la sincronización de stock
-											if (!in_array($DetalleVenta['Sku'], $ArrayProductosSincronizacion)) {
-												$ArrayProductosSincronizacion[] = $DetalleVenta['Sku'];
-											}
-
-											//se aumenta la cantidad de vendidos
-											$pos = array_search($DetalleVenta['Sku'], $ArrayProductosSincronizacion);
-
-											if (!isset($ArrayCantidadesVendidos[$pos])) {
-												$ArrayCantidadesVendidos[$pos] = 1;
-											}
-											else {
-												$ArrayCantidadesVendidos[$pos]++;
-											}
-											
-										} // fin no empty
-									
-									} //fin ciclo detalle de venta
 
 									# Mercado libre puede tener más de 1 pago
 									foreach ($DataVenta['payments'] as $venta) {
 										//se obtiene el estado de la venta
 										$NuevaVenta['Venta']['venta_estado_id'] = $this->obtener_estado_id($venta['status'], $marketplace['marketplace_tipo_id']);
+										$NuevaVenta['Venta']['estado_anterior'] = $NuevaVenta['Venta']['venta_estado_id'];
 										
 										//se obtiene el medio de pago
 										$NuevaVenta['Venta']['medio_pago_id']   = $this->obtener_medio_pago_id($venta['payment_type']);
@@ -1985,6 +2067,60 @@ class VentasController extends AppController {
 										$NuevaVenta['VentaMensaje'][$im]['mensaje']  = $this->removeEmoji($mensaje['text']['plain']);
 
 									}
+
+									//ciclo para recorrer el detalle de la venta
+									foreach ($VentaDetalles['order_items'] as $DetalleVenta) {
+										if (!empty($DetalleVenta['item']['seller_custom_field']) ) {
+											
+											$DetalleVenta['Sku']  = intval($DetalleVenta['item']['seller_custom_field']);
+											$DetalleVenta['Name'] = $DetalleVenta['item']['title'];
+
+											if ($DetalleVenta['Sku'] == 0) {
+												$DetalleVenta['Sku'] = $DetalleVenta['item']['seller_sku'];
+											}
+
+											if ($DetalleVenta['Sku'] == 0) {
+												continue;
+											}
+
+											# Evitamos que se vuelva actualizar el stock en meli
+											$excluirMeli = array('Mercadolibre' => array($marketplace['id']));
+
+											//se guarda el producto si no existe
+											$idNuevoProducto = $this->linio_guardar_producto($DetalleVenta, $excluirMeli);
+
+											$NuevoDetalle                               = array();
+											$NuevoDetalle['venta_detalle_producto_id']  = $idNuevoProducto;
+											$NuevoDetalle['precio']                     = $this->precio_neto(round($DetalleVenta['unit_price'], 2));
+											$NuevoDetalle['precio_bruto']               = round($DetalleVenta['unit_price'], 2);
+											$NuevoDetalle['cantidad']                   = $DetalleVenta['quantity'];
+											$NuevoDetalle['cantidad_pendiente_entrega'] = $DetalleVenta['quantity'];
+
+											if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['metodo_envio_id'])) {
+												$NuevoDetalle['cantidad_reservada'] 	= ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, $DetalleVenta['quantity']);	
+											}											
+
+											$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
+
+
+											//se toma el id de producto para usarlo luego en la sincronización de stock
+											if (!in_array($DetalleVenta['Sku'], $ArrayProductosSincronizacion)) {
+												$ArrayProductosSincronizacion[] = $DetalleVenta['Sku'];
+											}
+
+											//se aumenta la cantidad de vendidos
+											$pos = array_search($DetalleVenta['Sku'], $ArrayProductosSincronizacion);
+
+											if (!isset($ArrayCantidadesVendidos[$pos])) {
+												$ArrayCantidadesVendidos[$pos] = 1;
+											}
+											else {
+												$ArrayCantidadesVendidos[$pos]++;
+											}
+											
+										} // fin no empty
+									
+									} //fin ciclo detalle de venta
 									
 									//se guarda la venta
 									$this->Venta->create();
@@ -2035,7 +2171,7 @@ class VentasController extends AppController {
 
 		set_time_limit(0);
 
-		ini_set('memory_limit', '512M');
+		ini_set('memory_limit', '-1');
 
 		$condiciones = array();
 		$joins = array();
@@ -2299,7 +2435,8 @@ class VentasController extends AppController {
 			$esPrestashop   = (empty($this->request->data['Venta']['marketplace_id'])) ? true : false;
 			$id_externo     = $this->request->data['Venta']['id_externo'];
 			$plantillaEmail = ClassRegistry::init('VentaEstadoCategoria')->field('plantilla', array('id' => ClassRegistry::init('VentaEstado')->field('venta_estado_categoria_id')));
-			
+			$venta 			= $this->preparar_venta($id);
+
 			$esMercadolibre = false;
 			$esLinio        = false;
 
@@ -2321,10 +2458,39 @@ class VentasController extends AppController {
 			$apiurlprestashop = ClassRegistry::init('Tienda')->field('apiurl_prestashop');
 			$apikeyprestashop = ClassRegistry::init('Tienda')->field('apikey_prestashop');
 
+			# si es un estado pagado se reserva el stock disponible
+			if ( $estado_actual != $estado_nuevo && ClassRegistry::init('VentaEstado')->es_estado_pagado($this->request->data['Venta']['venta_estado_id'])) {
+				foreach ($venta['VentaDetalle'] as $iv => $v) {
+
+					if ($v['completo'])
+						continue;
+
+					if ($v['cantidad_pendiente_entrega'] == 0)
+						continue;
+
+					if ($v['cantidad_reservada'] != 0) {
+						continue;
+					}
+
+					$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($venta['Venta']['id'], $v['cantidad']);
+
+					ClassRegistry::init('VentaDetalle')->id = $venta['Venta']['id'];
+					
+					if (ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $reservado) ) {
+						$this->Session->setFlash(sprintf('Se han reservado %d para el item %s <br>', $reservado, $v['VentaDetalleProducto']['nombre']), null, array(), 'success');
+					}else{
+						$this->Session->setFlash(sprintf('No fue posible reservar stock para el item %s', $reservado, $v['VentaDetalleProducto']['nombre']), null, array(), 'warning');
+					}
+				}
+					
+			}
 
 			# Prestashop
 			if ( $estado_actual != $estado_nuevo && $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) {
-
+				# Para la consola se carga el componente on the fly!
+				if ($this->shell) {
+					$this->Prestashop = $this->Components->load('Prestashop');
+				}
 				# Cliente Prestashop
 				$this->Prestashop->crearCliente( $apiurlprestashop, $apikeyprestashop );
 
@@ -2350,7 +2516,10 @@ class VentasController extends AppController {
 				
 			# Linio
 			}elseif ( $estado_actual != $estado_nuevo && $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) {
-
+				# Para la consola se carga el componente on the fly!
+				if ($this->shell) {
+					$this->Linio = $this->Components->load('Linio');
+				}
 				# cliente Linio
 				$this->Linio->crearCliente( $apiurllinio, $apiuserlinio, $apikeylinio );
 
@@ -2443,7 +2612,10 @@ class VentasController extends AppController {
 		//----------------------------------------------------------------------------------------------------
 		//carga de mensajes de prestashop
 		if (empty($venta['Marketplace']['id'])) {
-
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->Prestashop = $this->Components->load('Prestashop');
+			}
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );						
 
@@ -2560,6 +2732,10 @@ class VentasController extends AppController {
 					'giro_receptor'         => $documentos['content'][0]['giro'],
 					'direccion_receptor'    => $documentos['content'][0]['calle']
 				);
+				# Para la consola se carga el componente on the fly!
+				if ($this->shell) {
+					$this->LibreDte = $this->Components->load('LibreDte');
+				}
 
 				// Obtenemos la información del contribuyente desde el SII
 				$this->LibreDte->crearCliente($venta['Tienda']['facturacion_apikey']);
@@ -2794,6 +2970,7 @@ class VentasController extends AppController {
 				}elseif ($detalle['cantidad_entregar'] > 0) {
 
 					$this->request->data['VentaDetalle'][$id]['cantidad_pendiente_entrega'] = $detalle['cantidad'] - $detalle['cantidad_entregar'];
+					$this->request->data['VentaDetalle'][$id]['cantidad_reservada'] = $detalle['cantidad'] - $detalle['cantidad_entregar'];
 
 					if (ClassRegistry::init('Bodega')->crearSalidaBodega($detalle['venta_detalle_producto_id'], null, $detalle['cantidad_entregar'], 'OC')) {
 						$aceptados[] = 'Item ' . ClassRegistry::init('VentaDetalleProducto')->field('nombre', $detalle['venta_detalle_producto_id']) . ': Se descontaron ' . $detalle['cantidad_entregar'] . ' items de bodega principal';
@@ -3056,7 +3233,10 @@ class VentasController extends AppController {
 		
 		# Linio
 		if ($venta['Marketplace']['marketplace_tipo_id'] == 1) {
-
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->Linio = $this->Components->load('Linio');
+			}
 			# cliente Linio
 			$this->Linio->crearCliente( $venta['Marketplace']['api_host'], $venta['Marketplace']['api_user'], $venta['Marketplace']['api_key'] );
 
@@ -3207,7 +3387,7 @@ class VentasController extends AppController {
 			}
 
 			$documentoEnvio = $this->MeliMarketplace->mercadolibre_obtener_etiqueta_envio($venta['VentaExterna'], 'Y');
-
+			
 			$rutaAbsoluta = APP . 'webroot' . DS. 'Venta' . DS . $id . DS;
 			$rutaPublica  =  Router::url('/', true) . 'Venta/' . $id . '/';
 
@@ -3228,7 +3408,10 @@ class VentasController extends AppController {
 
 		# Prestashop
 		if (!$venta['Venta']['marketplace_id']) {
-
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->Prestashop = $this->Components->load('Prestashop');
+			}
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
 
@@ -3299,7 +3482,7 @@ class VentasController extends AppController {
 
 				$tipoDoc = ($documentos['content'][0]['boleta']) ? 39 : 33;
 
-				$venta['VentaExterna']['facturacion'] = array(
+				$facturacion = array(
 					'tipo_documento'        => $tipoDoc,
 					'glosa_tipo_documento'  => $this->LibreDte->tipoDocumento[$tipoDoc],
 					'rut_receptor'          => $documentos['content'][0]['rut'],
@@ -3307,7 +3490,10 @@ class VentasController extends AppController {
 					'giro_receptor'         => $documentos['content'][0]['giro'],
 					'direccion_receptor'    => $documentos['content'][0]['calle']
 				);
-
+				# Para la consola se carga el componente on the fly!
+				if ($this->shell) {
+					$this->LibreDte = $this->Components->load('LibreDte');
+				}
 				// Obtenemos la información del contribuyente desde el SII
 				$this->LibreDte->crearCliente($venta['Tienda']['facturacion_apikey']);
 		
@@ -3315,22 +3501,22 @@ class VentasController extends AppController {
 				
 				// Agregamos comuna
 				if (isset($info['comuna_glosa'])) {
-					$venta['VentaExterna']['facturacion']['comuna_receptor'] = $info['comuna_glosa'];
+					$facturacion['comuna_receptor'] = $info['comuna_glosa'];
 				}
 
 				// Agregamos razon social
 				if (empty($documentos['content'][0]['empresa']) && isset($info['razon_social'])) {
-					$venta['VentaExterna']['facturacion']['razon_social_receptor'] = $info['razon_social'];
+					$facturacion['razon_social_receptor'] = $info['razon_social'];
 				}
 
 				// Agregamos giro
 				if (empty($documentos['content'][0]['giro']) && isset($info['giro'])) {
-					$venta['VentaExterna']['facturacion']['giro_receptor'] = $info['giro'];
+					$facturacion['giro_receptor'] = $info['giro'];
 				}	
 
 				// Agregamos direccon
 				if (empty($documentos['content'][0]['direccion_receptor']) && isset($info['direccion'])) {
-					$venta['VentaExterna']['facturacion']['direccion_receptor'] = $info['direccion'];
+					$facturacion['direccion_receptor'] = $info['direccion'];
 				}	
 				
 				
@@ -3339,14 +3525,12 @@ class VentasController extends AppController {
 				ClassRegistry::init('VentaCliente')->saveField('rut', $documentos['content'][0]['rut']);
 
 				$this->request->data['VentaCliente']['rut'] = $documentos['content'][0]['rut'];
+
+				$venta['VentaExterna']['facturacion'] = array_replace_recursive($venta['VentaExterna']['facturacion'], $facturacion);
 			}
 			
 			
 		}
-		
-		$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta);
-		
-		$archivos[] = $url_etiqueta_envio['path'];
 
 		/*$url_etiqueta_qr = $this->obtener_codigo_qr_url($venta['Venta']['id']);
 				
@@ -3381,6 +3565,310 @@ class VentasController extends AppController {
 				$archivos[] = $dte['path'];
 			}
 		}
+
+		$venta              = $this->preparar_venta($id);
+		$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta);
+		$archivos[]         = $url_etiqueta_envio['path'];
+
+
+		# Unimos todos los PDFS obtenidos
+		if (!empty($archivos)) {
+			
+			$this->layoutPath = '';
+			$this->layout = 'ajax';
+
+			$pdf = $this->unir_documentos($archivos, $id);
+
+			if ($ajax) {
+				echo json_encode($pdf);
+				exit;
+			}
+
+		}else{
+
+			if ($ajax) {
+				echo '';
+				exit;
+			}
+
+			$this->Session->setFlash('No hay documentos para generar.', null, array(), 'warning');
+			$this->redirect(array('action' => 'view', $id));
+		}
+
+	}
+
+
+	/**
+	 * Genera la etiqueta de envio: Transporte, etiqueta interna de venta, DTes.
+	 * @param  int  		$id       id de la venta
+	 * @param  boolean 		$ajax     es una peticion ajax o no
+	 * @param  boolean 		$crearDte si la venta no tiene DTE generado, lo crea siempre y cuando tenga los datos de facturación cargados.
+	 * @return url del documento
+	 */
+	public function admin_generar_etiqueta($id, $ajax = false)
+	{	
+		# Toda la información de la venta
+		$venta = $this->Venta->obtener_venta_por_id($id);
+
+		# Variable que contendrá los documentos
+		$archivos = array();
+		
+		# Linio
+		if ($venta['Marketplace']['marketplace_tipo_id'] == 1) {
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->Linio = $this->Components->load('Linio');
+			}
+			# cliente Linio
+			$this->Linio->crearCliente( $venta['Marketplace']['api_host'], $venta['Marketplace']['api_user'], $venta['Marketplace']['api_key'] );
+
+			//$mensajes =  $this->Linio->linio_obtener_venta_mensajes($venta, $ConexionLinio);
+
+			// Obtener detall venta externo
+			$venta['VentaExterna'] = $this->Linio->linio_obtener_venta($venta['Venta']['id_externo'], true);
+
+			// Datos d facturacion
+			$venta['VentaExterna']['facturacion'] = array(
+				'tipo_documento'        => 39, # Boleta por defecto,
+				'glosa_tipo_documento'  => $this->LibreDte->tipoDocumento[39],
+				'rut_receptor'          => $venta['VentaCliente']['rut'],
+				'razon_social_receptor' => $venta['VentaCliente']['nombre']  . ' ' . $venta['VentaCliente']['apellido'],
+				'giro_receptor'         => null,
+				'direccion_receptor'    => $venta['Venta']['direccion_entrega'],
+				'comuna_receptor'       => $venta['Venta']['comuna_entrega']
+			);
+
+			// Se define transportista
+			$venta['VentaExterna']['transportista'] = (!empty($venta['MetodoEnvio']['id'])) ? $venta['MetodoEnvio']['nombre'] : 'Sin especificar' ;
+
+			// Detalles de envio
+			$venta['Envio'][0] = array(
+				'id'                      => null,
+				'tipo'                    => null,
+				'estado'                  => null,
+				'direccion_envio'         => sprintf('%s, %s, %s', $venta['VentaExterna']['AddressShipping']['Address1'], $venta['VentaExterna']['AddressShipping']['Address2'], $venta['VentaExterna']['AddressShipping']['City']),
+				'nombre_receptor'         => sprintf('%s %s', $venta['VentaExterna']['AddressShipping']['FirstName'], $venta['VentaExterna']['AddressShipping']['LastName']),
+				'fono_receptor'           => $venta['VentaExterna']['AddressShipping']['Phone'],
+				'producto'                => null,
+				'cantidad'                => 1, // No especifica
+				'costo'                   => 0,
+				'fecha_entrega_estimada'  => $venta['VentaExterna']['PromisedShippingTime'],
+				'comentario'              => '',
+				'mostrar_etiqueta'        => false,
+				'paquete' 				  => false
+			);
+			
+		}
+
+		# MEli
+		if ($venta['Marketplace']['marketplace_tipo_id'] == 2) {
+
+
+			$this->MeliMarketplace->crearCliente( $venta['Marketplace']['api_user'], $venta['Marketplace']['api_key'], $venta['Marketplace']['access_token'], $venta['Marketplace']['refresh_token'] );
+			$this->MeliMarketplace->mercadolibre_conectar('', $venta['Marketplace']);
+
+			$mensajes = $this->MeliMarketplace->mercadolibre_obtener_mensajes($venta['Marketplace']['access_token'], $venta['Venta']['id_externo']);
+
+			foreach ($mensajes as $mensaje) {
+				$data = array();
+				$data['mensaje'] = $this->removeEmoji($mensaje['text']['plain']);
+				$data['fecha'] = CakeTime::format($mensaje['date'], '%d-%m-%Y %H:%M:%S');
+				$data['asunto'] = $mensaje['subject'];
+				$venta['VentaMensaje'][] = $data;
+			}
+
+			// Detalles de la venta externa
+			$venta['VentaExterna'] = $this->MeliMarketplace->mercadolibre_obtener_venta_detalles($venta['Marketplace']['access_token'], $venta['Venta']['id_externo'], true);
+
+			$venta['VentaExterna']['transportista'] = (!empty($venta['MetodoEnvio']['id'])) ? $venta['MetodoEnvio']['nombre'] : 'Sin especificar' ;
+			
+			// Datos d facturacion
+			$venta['VentaExterna']['facturacion'] = array(
+				'tipo_documento'        => 39, # Boleta por defecto,
+				'glosa_tipo_documento'  => $this->LibreDte->tipoDocumento[39],
+				'rut_receptor'          => $venta['VentaCliente']['rut'],
+				'razon_social_receptor' => $venta['VentaCliente']['nombre']  . ' ' . $venta['VentaCliente']['apellido'],
+				'giro_receptor'         => null,
+				'direccion_receptor'    => $venta['Venta']['direccion_entrega'],
+				'comuna_receptor'       => $venta['Venta']['comuna_entrega']
+			);
+
+
+			if (isset($venta['VentaExterna']['shipping']['id'])) {
+
+				// Detalles de envio
+				$direccion_envio = '';
+				$nombre_receptor = '';
+				$fono_receptor   = '';
+				$comentario      = '';
+
+				if (isset($venta['VentaExterna']['shipping']['receiver_address']['address_line'])
+					&& isset($venta['VentaExterna']['shipping']['receiver_address']['city']['name'])) {
+					$direccion_envio = sprintf('%s, %s', $venta['VentaExterna']['shipping']['receiver_address']['address_line'], $venta['VentaExterna']['shipping']['receiver_address']['city']['name']);
+				}
+
+				if (isset($venta['VentaExterna']['shipping']['receiver_address']['receiver_name'])) {
+					$nombre_receptor = $venta['VentaExterna']['shipping']['receiver_address']['receiver_name'];
+				}
+
+				if (isset($venta['VentaExterna']['shipping']['receiver_address']['receiver_phone'])) {
+					$fono_receptor = $venta['VentaExterna']['shipping']['receiver_address']['receiver_phone'];
+				}
+
+				if (isset($venta['VentaExterna']['shipping']['receiver_address']['comment'])) {
+					$comentario = $venta['VentaExterna']['shipping']['receiver_address']['comment'];
+				}
+
+				
+				$venta['Envio'][0] = array(
+					'id'                      => $venta['VentaExterna']['shipping']['id'],
+					'tipo'                    => $venta['VentaExterna']['shipping']['shipping_option']['name'],
+					'estado'                  => $venta['VentaExterna']['shipping']['status'],
+					'direccion_envio'         => $direccion_envio,
+					'nombre_receptor'         => $nombre_receptor,
+					'fono_receptor'           => $fono_receptor,
+					'producto'                => null,
+					'cantidad'                => 1,
+					'costo'                   => $venta['VentaExterna']['shipping']['shipping_option']['cost'],
+					'fecha_entrega_estimada'  => (isset($venta['VentaExterna']['shipping']['shipping_option']['estimated_delivery_time'])) ? CakeTime::format($venta['VentaExterna']['shipping']['shipping_option']['estimated_delivery_time']['date'], '%d-%m-%Y %H:%M:%S') : __('No especificado') ,
+					'comentario'              => $comentario,
+					'mostrar_etiqueta'        => ($venta['VentaExterna']['shipping']['status'] == 'ready_to_ship') ? true : false,
+					'paquete' 				  => false
+				);	
+				
+			}
+
+		}	
+
+		# Prestashop
+		if (!$venta['Venta']['marketplace_id']) {
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->Prestashop = $this->Components->load('Prestashop');
+			}
+			# Cliente Prestashop
+			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
+
+			// Obtener detall venta externo
+			$venta['VentaExterna'] = $this->Prestashop->prestashop_obtener_venta($venta['Venta']['id_externo']);		
+
+			$venta['VentaExterna']['transportista'] = (!empty($venta['MetodoEnvio']['id'])) ? $venta['MetodoEnvio']['nombre'] : 'Sin especificar' ;
+
+			$venta['VentaMensaje'] = $this->Prestashop->prestashop_obtener_venta_mensajes($venta['Venta']['id_externo']);
+
+			$direccionEnvio       = $this->Prestashop->prestashop_obtener_venta_direccion($venta['VentaExterna']['id_address_delivery']);				
+
+			// Detalles de envio
+			$telefonosEnvio = '';
+			
+			if (is_array($direccionEnvio['address']['phone_mobile']) && !empty($direccionEnvio['address']['phone_mobile'])) {
+				$telefonosEnvio .= implode(' ', $direccionEnvio['address']['phone_mobile']);
+			}
+
+			if (!is_array($direccionEnvio['address']['phone_mobile']) && !empty($direccionEnvio['address']['phone_mobile'])) {
+				$telefonosEnvio .= ' ' . $direccionEnvio['address']['phone_mobile'];
+			}
+
+
+			if (is_array($direccionEnvio['address']['phone']) && !empty($direccionEnvio['address']['phone'])) {
+				$telefonosEnvio .= implode(' ', $direccionEnvio['address']['phone']);
+			}
+
+			if (!is_array($direccionEnvio['address']['phone']) && !empty($direccionEnvio['address']['phone'])) {
+				$telefonosEnvio .= ' ' . $direccionEnvio['address']['phone'];
+			}
+			
+			// Detalles de envio
+			$venta['Envio'][0] = array(
+				'id'                      => $direccionEnvio['address']['id'],
+				'tipo'                    => 'Dir. despacho',
+				'estado'                  => (!$direccionEnvio['address']['deleted']) ? 'activo' : 'eliminada',
+				'direccion_envio'         => @sprintf('%s %s, %s', $direccionEnvio['address']['address1'], implode(',', $direccionEnvio['address']['address2']), $direccionEnvio['address']['city']),
+				'nombre_receptor'         => @sprintf('%s %s', $direccionEnvio['address']['firstname'], $direccionEnvio['address']['lastname']),
+				'fono_receptor'           => $telefonosEnvio,
+				'producto'                => null,
+				'cantidad'                => 1, // No especifica
+				'costo'                   => $venta['VentaExterna']['total_shipping_tax_incl'],
+				'fecha_entrega_estimada'  => 'No especificado',
+				'comentario'              => implode(',', $direccionEnvio['address']['other']),
+				'mostrar_etiqueta'        => true,
+				'paquete' 				  => false
+			);
+
+			# Datos de facturación para compras por Prestashop
+			ToolmaniaComponent::$api_url = $venta['Tienda']['apiurl_prestashop'];
+			
+			#Obtener información webpay si es necesario
+			#$webpay                      = $this->Toolmania->obtenerWebpayInfo($this->request->data['Orden']['id_cart'], $this->Session->read('Tienda.apikey_prestashop'));
+			$documentos                  = $this->Toolmania->obtenerDocumento($venta['Venta']['id_externo'], null, $venta['Tienda']['apikey_prestashop']);
+			
+			$venta['VentaExterna']['facturacion'] = array(
+				'tipo_documento'        => 39, # Boleta por defecto,
+				'glosa_tipo_documento'  => $this->LibreDte->tipoDocumento[39],
+				'rut_receptor'          => $venta['VentaCliente']['rut'],
+				'razon_social_receptor' => $venta['VentaCliente']['nombre']  . ' ' . $venta['VentaCliente']['apellido'],
+				'giro_receptor'         => null,
+				'direccion_receptor'    => $venta['Venta']['direccion_entrega'],
+				'comuna_receptor'       => $venta['Venta']['comuna_entrega']
+			);
+			
+			if (!empty($documentos['content'])) {
+
+				$tipoDoc = ($documentos['content'][0]['boleta']) ? 39 : 33;
+
+				$facturacion = array(
+					'tipo_documento'        => $tipoDoc,
+					'glosa_tipo_documento'  => $this->LibreDte->tipoDocumento[$tipoDoc],
+					'rut_receptor'          => $documentos['content'][0]['rut'],
+					'razon_social_receptor' => $documentos['content'][0]['empresa'],
+					'giro_receptor'         => $documentos['content'][0]['giro'],
+					'direccion_receptor'    => $documentos['content'][0]['calle']
+				);
+				# Para la consola se carga el componente on the fly!
+				if ($this->shell) {
+					$this->LibreDte = $this->Components->load('LibreDte');
+				}
+				// Obtenemos la información del contribuyente desde el SII
+				$this->LibreDte->crearCliente($venta['Tienda']['facturacion_apikey']);
+		
+				$info = $this->LibreDte->obtenerContribuyente($this->rutSinDv($documentos['content'][0]['rut']));
+				
+				// Agregamos comuna
+				if (isset($info['comuna_glosa'])) {
+					$facturacion['comuna_receptor'] = $info['comuna_glosa'];
+				}
+
+				// Agregamos razon social
+				if (empty($documentos['content'][0]['empresa']) && isset($info['razon_social'])) {
+					$facturacion['razon_social_receptor'] = $info['razon_social'];
+				}
+
+				// Agregamos giro
+				if (empty($documentos['content'][0]['giro']) && isset($info['giro'])) {
+					$facturacion['giro_receptor'] = $info['giro'];
+				}	
+
+				// Agregamos direccon
+				if (empty($documentos['content'][0]['direccion_receptor']) && isset($info['direccion'])) {
+					$facturacion['direccion_receptor'] = $info['direccion'];
+				}	
+				
+				
+				# Guardamos el rut de la persona
+				ClassRegistry::init('VentaCliente')->id = $venta['VentaCliente']['id'];
+				ClassRegistry::init('VentaCliente')->saveField('rut', $documentos['content'][0]['rut']);
+
+				$this->request->data['VentaCliente']['rut'] = $documentos['content'][0]['rut'];
+
+				$venta['VentaExterna']['facturacion'] = array_replace_recursive($venta['VentaExterna']['facturacion'], $facturacion);
+			}
+			
+			
+		}
+		
+		$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta);
+		
+		$archivos[] = $url_etiqueta_envio['path'];
 
 		# Unimos todos los PDFS obtenidos
 		if (!empty($archivos)) {
@@ -3566,6 +4054,13 @@ class VentasController extends AppController {
 				# Ruta absoluta PDF DTE
 				$rutas[$i]['path'] = APP . 'webroot' . DS. 'Dte' . DS . $dte['venta_id'] . DS . $dte['id'] . DS . $dte['pdf'];
 				$rutas[$i]['public'] = Router::url('/', true) . 'Dte/' . $dte['venta_id'] . '/' . $dte['id'] . $dte['pdf'] . '.pdf';	
+
+				# Si es boleta la agregamos 2 veces
+				if ($dte['tipo_documento'] == 39) {
+					# Ruta absoluta PDF DTE
+					$rutas[$i.$i]['path'] = APP . 'webroot' . DS. 'Dte' . DS . $dte['venta_id'] . DS . $dte['id'] . DS . $dte['pdf'];
+					$rutas[$i.$i]['public'] = Router::url('/', true) . 'Dte/' . $dte['venta_id'] . '/' . $dte['id'] . $dte['pdf'] . '.pdf';
+				}
 			}
 		}
 
@@ -3581,8 +4076,6 @@ class VentasController extends AppController {
 	 */
 	public function unir_documentos($archivos = array(), $venta_id = '')
 	{
-		include '../Vendor/PDFMerger/PDFMerger.php';
-
 		$pdfs       = array();
 		$limite     = 500;
 		$lote = 0;
@@ -3733,11 +4226,11 @@ class VentasController extends AppController {
 		$data = array(
 			'estado'					=> 'Notificación venta #' . $id_venta . '-' . $plantillaEmail,
 			'html'						=> $html,
-			'asunto'					=> '['.$venta['Tienda']['nombre'].'] ' . $nombre_estado_nuevo,
+			'asunto'					=> '['.$venta['Tienda']['nombre'].'] Venta #' . $id_venta . ' - ' . $nombre_estado_nuevo,
 			'destinatario_email'		=> trim($venta['VentaCliente']['email']),
 			'destinatario_nombre'		=> $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'],
-			'remitente_email'			=> $venta['Tienda']['email_remitente'],
-			'remitente_nombre'			=> $venta['Tienda']['nombre'] . ' - Nodriza Spa',
+			'remitente_email'			=> 'ventas@toolmania.cl',
+			'remitente_nombre'			=> 'Ventas ' . $venta['Tienda']['nombre'],
 			'cc_email'					=> '',
 			'bcc_email'					=> $venta['Tienda']['emails_bcc'],
 			'traza'						=> null,
@@ -3817,7 +4310,7 @@ class VentasController extends AppController {
 		$dte['Dte']['venta_id']              = $venta['Venta']['id'];
 		$dte['Dte']['tienda_id']             = $venta['Tienda']['id'];
 		$dte['Dte']['externo']               = $venta['Venta']['id_externo'];
-		$dte['Dte']['administrador_id']      = $this->Session->read('Auth.Administrador.id');
+		$dte['Dte']['administrador_id']      = $this->Auth->user('id');
 
 		$dte['Dte']['glosa'] = __('Dte generado automáticamente para la venta # ') . $venta['Venta']['id'];
 
@@ -3829,7 +4322,7 @@ class VentasController extends AppController {
 		}
 	
 		# Si existe costo de transporte se agrega como ITEM
-		if ($venta['Venta']['costo_envio'] > 0) {
+		if (round($venta['Venta']['costo_envio']) > 0) {
 			$cantidadItem = (count($venta['VentaDetalle']) + 1);
 
 			$dte['DteDetalle'][$cantidadItem]['VlrCodigo'] = "COD-Trns";
@@ -3847,6 +4340,10 @@ class VentasController extends AppController {
 
 		foreach ($venta['VentaDetalle'] as $k => $item) {
 
+			if ($item['precio'] <= 0) {
+				continue;
+			}
+
 			$dte['DteDetalle'][$k]['VlrCodigo'] = sprintf('COD-%d', $item['venta_detalle_producto_id']);
 			$dte['DteDetalle'][$k]['NmbItem'] = $item['VentaDetalleProducto']['nombre'];
 			$dte['DteDetalle'][$k]['QtyItem'] = $item['cantidad'];
@@ -3862,9 +4359,9 @@ class VentasController extends AppController {
 		// Descuento Bruto en boletas
 		if ($venta['Venta']['descuento'] > 0) {
 			if ($tipo_documento == 39) { # Boleta valores brutos o con iva
-				$dte['DscRcgGlobal']['ValorDR'] = $this->precio_bruto($venta['Venta']['descuento']);	
-			}else{
 				$dte['DscRcgGlobal']['ValorDR'] = $venta['Venta']['descuento'];
+			}else{
+				$dte['DscRcgGlobal']['ValorDR'] = $this->precio_neto($venta['Venta']['descuento']);
 			}
 		}
 
@@ -3872,6 +4369,8 @@ class VentasController extends AppController {
 
 		# Guardar información del DTE en base de datos local
 		if($DteModel->saveAll($dte)) {
+
+			$this->LibreDte->crearCliente($venta['Tienda']['facturacion_apikey']);
 
 			$nwDte  = $this->LibreDte->prepararDte($dte);
 			$id_dte = $DteModel->id;
@@ -3895,7 +4394,7 @@ class VentasController extends AppController {
 				}
 
 				// crear DTE real
-				$generar = $this->LibreDte->crearDteReal($nwDte, $dteInterno);
+				$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
 
 			} catch (Exception $e) {
 
@@ -3913,9 +4412,35 @@ class VentasController extends AppController {
 					$respuesta['errors'] = sprintf('Venta #%d error: %s', $venta['Venta']['id'], $e->getMessage());
 					return $respuesta;
 				}
+			}	
+
+
+			# Enviamos doc al cliente
+			if (!empty($venta['VentaCliente'])) {
+
+				$emails = array(
+					$venta['VentaCliente']['email']
+				);
+
+				$asunto = sprintf('Su Factura Electrónica ha sido emitida.', $this->LibreDte->tipoDocumento[$dteInterno['Dte']['tipo_documento']]);
+
+				$mensaje = sprintf('Estimado/a %s %s. Hemos emitido su %s exitosamente para su compra referencia %s. El documento los encontrará adjunto a este email. Por favor NO RESPONDA ESTE EMAIL ya que es generado automáticamente.', $venta['VentaCliente']['nombre'], $venta['VentaCliente']['apellido'], $venta['Venta']['referencia'], $this->LibreDte->tipoDocumento[$dteInterno['Dte']['tipo_documento']]);
+
+				$enviar = $this->LibreDte->enviarDteEmail(
+					$emails, 
+					$dteInterno['Dte']['tipo_documento'], 
+					$dteInterno['Dte']['folio'], 
+					$dteInterno['Dte']['emisor'],
+					$asunto,
+					$mensaje);
+				
+				if ($enviar) {
+					$respuesta['success'] = sprintf('Venta #%d: DTE generado y enviado existosamente.', $venta['Venta']['id']);
+				}else{
+					$respuesta['success'] = sprintf('Venta #%d: DTE generado existosamente.', $venta['Venta']['id']);
+				}
 			}
-			
-			$respuesta['success'] = sprintf('Venta #%d: DTE generado existosamente.', $venta['Venta']['id']);
+
 			return $respuesta;
 
 		}else{
@@ -3937,7 +4462,10 @@ class VentasController extends AppController {
 		
 		# Linio
 		if ($venta['Marketplace']['marketplace_tipo_id'] == 1) {
-
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->Linio = $this->Components->load('Linio');
+			}
 			# cliente Linio
 			$this->Linio->crearCliente( $venta['Marketplace']['api_host'], $venta['Marketplace']['api_user'], $venta['Marketplace']['api_key'] );
 
@@ -3980,8 +4508,10 @@ class VentasController extends AppController {
 
 		# MEli
 		if ($venta['Marketplace']['marketplace_tipo_id'] == 2) {
-
-
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->MeliMarketplace = $this->Components->load('MeliMarketplace');
+			}
 			$this->MeliMarketplace->crearCliente( $venta['Marketplace']['api_user'], $venta['Marketplace']['api_key'], $venta['Marketplace']['access_token'], $venta['Marketplace']['refresh_token'] );
 			$this->MeliMarketplace->mercadolibre_conectar('', $venta['Marketplace']);
 
@@ -4060,7 +4590,10 @@ class VentasController extends AppController {
 
 		# Prestashop
 		if (!$venta['Venta']['marketplace_id']) {
-
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->Prestashop = $this->Components->load('Prestashop');
+			}
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
 
@@ -4131,7 +4664,7 @@ class VentasController extends AppController {
 
 				$tipoDoc = ($documentos['content'][0]['boleta']) ? 39 : 33;
 
-				$venta['VentaExterna']['facturacion'] = array(
+				$facturacion = array(
 					'tipo_documento'        => $tipoDoc,
 					'glosa_tipo_documento'  => $this->LibreDte->tipoDocumento[$tipoDoc],
 					'rut_receptor'          => $documentos['content'][0]['rut'],
@@ -4139,7 +4672,10 @@ class VentasController extends AppController {
 					'giro_receptor'         => $documentos['content'][0]['giro'],
 					'direccion_receptor'    => $documentos['content'][0]['calle']
 				);
-
+				# Para la consola se carga el componente on the fly!
+				if ($this->shell) {
+					$this->LibreDte = $this->Components->load('LibreDte');
+				}
 				// Obtenemos la información del contribuyente desde el SII
 				$this->LibreDte->crearCliente($venta['Tienda']['facturacion_apikey']);
 		
@@ -4147,22 +4683,22 @@ class VentasController extends AppController {
 				
 				// Agregamos comuna
 				if (isset($info['comuna_glosa'])) {
-					$venta['VentaExterna']['facturacion']['comuna_receptor'] = $info['comuna_glosa'];
+					$facturacion['comuna_receptor'] = $info['comuna_glosa'];
 				}
 
 				// Agregamos razon social
 				if (empty($documentos['content'][0]['empresa']) && isset($info['razon_social'])) {
-					$venta['VentaExterna']['facturacion']['razon_social_receptor'] = $info['razon_social'];
+					$facturacion['razon_social_receptor'] = $info['razon_social'];
 				}
 
 				// Agregamos giro
 				if (empty($documentos['content'][0]['giro']) && isset($info['giro'])) {
-					$venta['VentaExterna']['facturacion']['giro_receptor'] = $info['giro'];
+					$facturacion['giro_receptor'] = $info['giro'];
 				}	
 
 				// Agregamos direccon
 				if (empty($documentos['content'][0]['direccion_receptor']) && isset($info['direccion'])) {
-					$venta['VentaExterna']['facturacion']['direccion_receptor'] = $info['direccion'];
+					$facturacion['direccion_receptor'] = $info['direccion'];
 				}	
 				
 				
@@ -4171,6 +4707,8 @@ class VentasController extends AppController {
 				ClassRegistry::init('VentaCliente')->saveField('rut', $documentos['content'][0]['rut']);
 
 				$venta['VentaCliente']['rut'] = $documentos['content'][0]['rut'];
+
+				$venta['VentaExterna']['facturacion'] = array_replace_recursive($venta['VentaExterna']['facturacion'], $facturacion);
 			}
 		}
 
@@ -4187,7 +4725,12 @@ class VentasController extends AppController {
 	{	
 		$venta = $this->preparar_venta($id);
 
-		$result = $this->crearDteAutomatico($venta);
+		try {
+			$result = $this->crearDteAutomatico($venta);
+		} catch (Exception $e) {
+			$result['errors'] = $e->getMessage();
+		}
+		
 
 		if (!empty($result['success'])) {
 			$this->Session->setFlash($result['success'], null, array(), 'success');			
@@ -4248,14 +4791,17 @@ class VentasController extends AppController {
 
 		# Prestashop
 		if ( $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) {
-
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->Prestashop = $this->Components->load('Prestashop');
+			}
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $apiurlprestashop, $apikeyprestashop );
 
 			# Obtenemos estado de en prepracion
-			$preparacion      = ClassRegistry::init('VentaEstado')->find('first', array('conditions' => array('preparacion' => 1)));
+			$preparacion      = ClassRegistry::init('VentaEstado')->find('first', array('conditions' => array('preparacion' => 1, 'origen' => 0)));
 
-			if (empty($preparacion)) { prx('Sin estado preparacion');
+			if (empty($preparacion)) {
 				return false;
 			}
 
@@ -4263,7 +4809,7 @@ class VentasController extends AppController {
 			$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 			
 			# El estado ya se ha actualizado
-			if ($estado_actual == $estado_nuevo_arr['VentaEstado']['id']) { prx('Ya se actualizó el estado');
+			if ($estado_actual == $estado_nuevo_arr['VentaEstado']['id']) {
 				return false;
 			}
 
@@ -4287,7 +4833,7 @@ class VentasController extends AppController {
 				$plantillaEmail   = ClassRegistry::init('VentaEstadoCategoria')->field('plantilla', array('id' => ClassRegistry::init('VentaEstado')->field('venta_estado_categoria_id')));	
 				
 				if (!empty($plantillaEmail) && $notificar) {
-					$this->notificar_cambio_estado($venta['Venta']['venta_estado_id'], $plantillaEmail, $estado_nuevo);
+					$this->notificar_cambio_estado($venta['Venta']['id'], $plantillaEmail, $estado_nuevo);
 				}
 
 			}else{
@@ -4324,6 +4870,10 @@ class VentasController extends AppController {
 
 		$pdfs = array();
 
+		$pdfsEtiquetas = array();
+
+		$url_retorno = $this->request->data['Venta']['return_url'];
+
 		if ($this->request->is('post')) {
 
 			foreach ($this->request->data['Venta'] as $iv => $v) {
@@ -4335,10 +4885,6 @@ class VentasController extends AppController {
 				}
 
 				$venta = $this->preparar_venta($v['id']);
-				
-				$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta);
-				
-				$pdfs[] = $url_etiqueta_envio['path'];
 
 				/*$url_etiqueta_qr = $this->obtener_codigo_qr_url($venta['Venta']['id']);
 				
@@ -4373,9 +4919,20 @@ class VentasController extends AppController {
 						continue;
 					}
 
+					$this->preparacion_de_pedido($venta);
+
 					foreach ($dtes as $dte) {
 						$pdfs[] = $dte['path'];
 					}
+
+					$venta = $this->preparar_venta($v['id']);
+
+					$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta);
+					
+					$pdfs[] = $url_etiqueta_envio['path'];
+
+					# solo etiquetas
+					$pdfsEtiquetas[] = $url_etiqueta_envio['path'];
 					
 					continue;
 				}
@@ -4400,25 +4957,29 @@ class VentasController extends AppController {
 			if (!empty($pdfs)) {
 				
 				$pdf = $this->unir_documentos($pdfs, 'todo');
+				$pdfEtiqueta = $this->unir_documentos($pdfsEtiquetas, 'todo_etiquetas');
 
 				$pdf_resultado = array();
 
 				if (!empty($pdf['result'])) {
 					foreach ($pdf['result'] as $ir => $url) {
-						$pdf_resultado[] = '<a href="'.$url['document'].'" class="link" download><i class="fa fa-download"></i> Descargar PDF </a>';
+						$pdf_resultado[] = '<a href="'.$url['document'].'" class="link" download><i class="fa fa-download"></i> Descargar PDF Dte, Envio, Etiqueta </a>';
+					}
+				}
+
+				if (!empty($pdfEtiqueta['result'])) {
+					foreach ($pdfEtiqueta['result'] as $ir => $url) {
+						$pdf_resultado[] = '<a href="'.$url['document'].'" class="link" download><i class="fa fa-download"></i> Descargar PDF Etiquetas </a>';
 					}
 				}
 
 				if (!empty($pdf_resultado)) {
-
-					$this->preparacion_de_pedido($venta);
-
 					$this->Session->setFlash($this->crearAlertaUl($pdf_resultado, 'Descargas disponibles'), null, array(), 'success');	
 				}
 			}
 		}
 	
-		$this->redirect(array('action' => 'index'));
+		$this->redirect($url_retorno);
 	}
 
 
@@ -4656,14 +5217,17 @@ class VentasController extends AppController {
 
 		# Prestashop
 		if ( $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) {
-
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->Prestashop = $this->Components->load('Prestashop');
+			}
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $apiurlprestashop, $apikeyprestashop );
 
 			switch ($tipoEstado) {
 				case 'shipped':
 					# Obtenemos el estado de enviado
-					$estado_nuevo     = 'Enviado';
+					$estado_nuevo     = 'En transito';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					break;
 				
@@ -4706,8 +5270,8 @@ class VentasController extends AppController {
 				throw new CakeException($response);
 			}
 
-			#$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
-			$resCambio = true;
+			$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
+			#$resCambio = true;
 			if ($resCambio) {
 
 				# Asignamos el nuevo estado a la venta intenra
@@ -4719,7 +5283,7 @@ class VentasController extends AppController {
 				$plantillaEmail   = ClassRegistry::init('VentaEstadoCategoria')->field('plantilla', array('id' => ClassRegistry::init('VentaEstado')->field('venta_estado_categoria_id')));	
 				
 				if (!empty($plantillaEmail) && $notificar) {
-					#$this->notificar_cambio_estado($id, $plantillaEmail, $estado_nuevo);
+					$this->notificar_cambio_estado($id, $plantillaEmail, $estado_nuevo);
 				}
 
 			}else{
@@ -4734,7 +5298,10 @@ class VentasController extends AppController {
 			
 		# Linio
 		}elseif ( $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) {
-
+			# Para la consola se carga el componente on the fly!
+			if ($this->shell) {
+				$this->Linio = $this->Components->load('Linio');
+			}
 			# cliente Linio
 			$this->Linio->crearCliente( $apiurllinio, $apiuserlinio, $apikeylinio );
 
@@ -4789,14 +5356,14 @@ class VentasController extends AppController {
 			foreach ($itemsVenta as $ii => $item) {
 
 				# Listo para envio pedido en Linio Por defecto se usa Blue Express
-				/*if(!$this->Linio->linio_listo_para_envio($item['OrderItemId'])){
+				if(!$this->Linio->linio_listo_para_envio($item['OrderItemId'])){
 					$response = array(
 						'code'    => 507, 
 						'message' => 'Can´t update state in Marketplace'
 					);
 
 					throw new CakeException($response);
-				}*/
+				}
 			}
 
 			# Asignamos el nuevo estado a la venta intenra
@@ -4821,9 +5388,9 @@ class VentasController extends AppController {
 		
 		# Guardamos el nuevo estado
 		$this->Venta->id = $id;
-		$ts = true;
-		if ($ts) {
-		#if ($this->Venta->saveField('venta_estado_id', $venta['Venta']['venta_estado_id'])) {
+		#$ts = true;
+		#if ($ts) {
+		if ($this->Venta->saveField('venta_estado_id', $venta['Venta']['venta_estado_id'])) {
 			
 			$this->set(array(
 	            'response' => true,

@@ -2,7 +2,7 @@
 /**
  * Crea un nuevo documento Excel
  */
-$this->PhpSpreadsheet->createWorksheet();
+$this->PhpSpreadsheet->createWorksheet('Listado');
 
 /**
  * Escribe las cabeceras

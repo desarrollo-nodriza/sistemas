@@ -29,6 +29,11 @@ class Bodega extends AppModel
 			'IN' => 'Ingreso normal',
 			'ED' => 'Salida normal',
 			'NOMBRE' => 'I/O normal'
+		),
+		'VT' => array(
+			'IN' => 'Ingreso normal',
+			'ED' => 'Salida desde venta',
+			'NOMBRE' => 'I/O venta'
 		)
 	); 
 
@@ -149,7 +154,7 @@ class Bodega extends AppModel
 	} 
 
 
-	public function obtenerCantidadProductoBodega($id_producto, $id_bodega = null)
+	public function obtenerCantidadProductoBodega($id_producto, $id_bodega = null, $real = false)
 	{	
 		# Bodega principal
 		if (empty($id_bodega)) {
@@ -163,6 +168,9 @@ class Bodega extends AppModel
 			)
 		));
 
+		# Obtenemos la cantidad reservada o vendida no empaquetada
+		$reservado = ClassRegistry::init('VentaDetalleProducto')->obtener_cantidad_reservada($id_producto);
+
 		$total = 0;
 
 		if (!empty($historico)) {
@@ -173,11 +181,20 @@ class Bodega extends AppModel
 			$total = ($inCantidad - $edCantidad);	
 		}
 
+		if ($real)
+			return $total;
+
+		if ($total <= $reservado)
+			return 0; // No tenemos stock
+
+		if ($total > $reservado)
+			$total = ($total - $reservado); // Descontamos la cantidad reservada
+
 		return $total;
 	}
 
 
-	public function obtenerCantidadProductoBodegas($id_producto)
+	public function obtenerCantidadProductoBodegas($id_producto, $real = false)
 	{
 		$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
 			'conditions' => array(
@@ -185,6 +202,9 @@ class Bodega extends AppModel
 			)
 		));
 
+		# Obtenemos la cantidad reservada o vendida no empaquetada
+		$reservado = ClassRegistry::init('VentaDetalleProducto')->obtener_cantidad_reservada($id_producto);
+
 		$total = 0;
 
 		if (!empty($historico)) {
@@ -194,6 +214,15 @@ class Bodega extends AppModel
 
 			$total = ($inCantidad - $edCantidad);	
 		}
+
+		if ($real)
+			return $total;
+
+		if ($total <= $reservado)
+			return 0; // No tenemos stock
+
+		if ($total > $reservado)
+			$total = ($total - $reservado); // Descontamos la cantidad reservada
 
 		return $total;
 	}
@@ -223,6 +252,13 @@ class Bodega extends AppModel
 	 */
 	public function crearEntradaBodega($id_producto, $bodega_id = null, $cantidad, $precio_costo, $tipo)
 	{	
+		if ($cantidad <= 0) {
+			return false;
+		}
+
+		if ($precio_costo <= 0) {
+			return false;
+		}
 
 		# Bodega principal
 		if (empty($bodega_id)) {
@@ -390,7 +426,7 @@ class Bodega extends AppModel
 			}
 
 			# Verificamos que el item no tenga ya un ingreso inicial
-			$existeIi = ClassRegistry::init('BodegasVentaDetalleProducto')->find('first', array('conditions' => array('venta_detalle_producto_id' => $value['id_producto'], 'bodega_id' => $value['bodega_id'])));
+			$existeIi = ClassRegistry::init('BodegasVentaDetalleProducto')->find('first', array('conditions' => array('venta_detalle_producto_id' => $value['id_producto'], 'bodega_id' => $value['bodega_id'], 'io' => 'II')));
 
 			if (!empty($existeIi)) {
 				$result['errores'][] = sprintf('Item %d ya ha sido tiene un ingreso inicial. Para modificarlo debe ajustarlo.', $value['id_producto']);
@@ -503,5 +539,40 @@ class Bodega extends AppModel
 
 		return $result;
 
+	}
+
+
+	/**
+	 * Crea un salida de productos tomando la cantidad desde la bodega
+	 * @param  [type] $id               [description]
+	 * @param  [type] $cantidad         [description]
+	 * @param  string $bodega_origen_id [description]
+	 * @return bool                   [description]
+	 */
+	public function calcular_reserva_stock($id, $cantidad)
+	{	
+		$enBodega   = $this->obtenerCantidadProductoBodegas($id);
+		$nwcantidad = 0;
+
+		# Se toman todos los items de bodega
+		if ($enBodega <= $cantidad) {
+			$nwcantidad = $enBodega;
+		}
+
+		# se descuentan los item necesarios
+		if ($enBodega > $cantidad) {
+			$nwcantidad = $cantidad;
+		}
+
+		return $nwcantidad;
+
+		// Crear la salida de la bodega actual
+		$result1 = $this->crearSalidaBodega($id, $bodega_origen_id, $nwcantidad, 'VT');
+
+		if ($result1) {
+			return true;
+		}else{
+			return false;
+		}
 	}
 }

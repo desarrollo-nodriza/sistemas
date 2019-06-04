@@ -158,8 +158,8 @@
 													</td>
 												</tr>
 												<tr class="success">
-													<th colspan="5" class="text-right">Total</th>
-													<td><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></td>
+													<th colspan="5" class="text-right" style="font-size: 22px;">Total</th>
+													<td style="font-size: 22px;"><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></td>
 												</tr>
 											</tfoot>
 										</table>
@@ -174,13 +174,11 @@
 						<div class="col-xs-12 col-sm-4">
 								
 							<!-- DESCARGAR DOCUMENTOS -->
-				            <?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Generar <p>documentos</p>', array('controller' => 'ventas', 'action' => 'consultar_dte', $venta['Venta']['id']), array('class' => 'tile tile-success js-generar-documentos-venta-modal', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
+				            <?= $this->Html->link('<i class="fa fa-file-pdf-o"></i><p>Envio, etiqueta, DTE</p>', array('controller' => 'ventas', 'action' => 'consultar_dte', $venta['Venta']['id']), array('class' => 'tile tile-success js-generar-documentos-venta-modal', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
 
-							<!-- TOTAL VENTA -->
-							<a class="tile tile-primary">
-				                <?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?>
-				                <p><?=__('Total documento');?></p>
-				            </a>
+
+				            <!-- DESCARGAR ETIQUETA -->
+				            <?= $this->Html->link('<i class="fa fa-cube"></i><p>Etiqueta</p>', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'tile tile-warning js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => 'Generar Etiqueta', 'escape' => false)); ?>
 							
 							<? if (isset($venta['VentaExterna']['facturacion'])) : ?>
 							<!-- Facturacion info -->

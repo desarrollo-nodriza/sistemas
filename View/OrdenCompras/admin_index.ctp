@@ -121,7 +121,7 @@
 								<tr class="sort">
 									<th><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('administrador_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('tienda_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('proveedor_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('estado', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('parent_id', 'Cantidad OC', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('oc_manual', 'OC Manual', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -136,7 +136,7 @@
 								<tr class="accordion-toggle"  data-toggle="collapse" data-target="#collapse<?=$ordenCompra['OrdenCompra']['id'];?>">
 									<td><?= h($ordenCompra['OrdenCompra']['id']); ?>&nbsp;</td>
 									<td><?= h($ordenCompra['Administrador']['nombre']); ?></td>
-									<td><?= h($ordenCompra['Tienda']['nombre']); ?>&nbsp;</td>
+									<td><?= (!empty($ordenCompra['Proveedor'])) ? $ordenCompra['Proveedor']['nombre'] : 'Sin especificar' ; ?>&nbsp;</td>
 									<td><?= h($ordenCompra['OrdenCompra']['estado']); ?>&nbsp;</td>
 									<td><?= count($ordenCompra['ChildOrdenCompra']); ?>&nbsp;</td>
 									<td><?= ($ordenCompra['OrdenCompra']['oc_manual'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
@@ -167,7 +167,7 @@
 												<th>Id padre</th>
 												<th>Id</th>
 												<th>Administrador</th>
-												<th>Tinda</th>
+												<th>Proveedor</th>
 												<th>Estado</th>
 												<th>Fecha creación</th>
 												<th>Acciones</th>
@@ -178,13 +178,13 @@
 												<td><?=$ordenCompra['OrdenCompra']['id'];?></td>
 												<td><?= h($o['id']); ?>&nbsp;</td>
 												<td><?= h($o['Administrador']['nombre']); ?></td>
-												<td><?= h($o['Tienda']['nombre']); ?>&nbsp;</td>
+												<td><?= (!empty($o['Proveedor'])) ? $o['Proveedor']['nombre'] : 'Sin especificar' ; ?>&nbsp;</td>
 												<td><?= h($o['estado']); ?>&nbsp;</td>
 												<td><?= h($o['created']); ?>&nbsp;</td>
 												<td>
 
 												<? if ($permisos['edit'] && $o['estado'] == '') : ?>
-													<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'editSingle', $o['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
+													<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'editsingle', $o['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
 												<? endif; ?>
 
 												<? if ($permisos['generate'] && $o['estado'] == 'iniciado') : ?>
@@ -226,7 +226,7 @@
 								<tr>
 									<td><?= h($ordenCompra['OrdenCompra']['id']); ?>&nbsp;</td>
 									<td><?= h($ordenCompra['Administrador']['nombre']); ?></td>
-									<td><?= h($ordenCompra['Tienda']['nombre']); ?>&nbsp;</td>
+									<td><?= (!empty($ordenCompra['Proveedor'])) ? $ordenCompra['Proveedor']['nombre'] : 'Sin especificar' ; ?>&nbsp;</td>
 									<td><?= h($ordenCompra['OrdenCompra']['estado']); ?>&nbsp;</td>
 									<td><?= count($ordenCompra['ChildOrdenCompra']); ?>&nbsp;</td>
 									<td><?= ($ordenCompra['OrdenCompra']['oc_manual'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
@@ -234,7 +234,7 @@
 									<td>
 
 									<? if ($permisos['edit'] && $ordenCompra['OrdenCompra']['estado'] == '') : ?>
-										<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'editSingle', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
+										<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'editsingle', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
 									<? endif; ?>
 
 									<? if ($permisos['generate'] && $ordenCompra['OrdenCompra']['estado'] == 'iniciado') : ?>
@@ -274,7 +274,7 @@
 								<tr class="accordion-toggle"  data-toggle="collapse" data-target="#collapse<?=$ordenCompra['OrdenCompra']['id'];?>">
 									<td><?= h($ordenCompra['OrdenCompra']['id']); ?>&nbsp;</td>
 									<td><?= h($ordenCompra['Administrador']['nombre']); ?></td>
-									<td><?= h($ordenCompra['Tienda']['nombre']); ?>&nbsp;</td>
+									<td><?= (!empty($ordenCompra['Proveedor'])) ? $ordenCompra['Proveedor']['nombre'] : 'Sin especificar' ; ?>&nbsp;</td>
 									<td><?= h($ordenCompra['OrdenCompra']['estado']); ?>&nbsp;</td>
 									<td><?= count($ordenCompra['ChildOrdenCompra']); ?>&nbsp;</td>
 									<td><?= ($ordenCompra['OrdenCompra']['oc_manual'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
@@ -295,7 +295,7 @@
 								<tr class="accordion-toggle"  data-toggle="collapse" data-target="#collapse<?=$ordenCompra['OrdenCompra']['id'];?>">
 									<td><?= h($ordenCompra['OrdenCompra']['id']); ?>&nbsp;</td>
 									<td><?= h($ordenCompra['Administrador']['nombre']); ?></td>
-									<td><?= h($ordenCompra['Tienda']['nombre']); ?>&nbsp;</td>
+									<td><?= (!empty($ordenCompra['Proveedor'])) ? $ordenCompra['Proveedor']['nombre'] : 'Sin especificar' ; ?>&nbsp;</td>
 									<td><?= h($ordenCompra['OrdenCompra']['estado']); ?>&nbsp;</td>
 									<td><?= count($ordenCompra['ChildOrdenCompra']); ?>&nbsp;</td>
 									<td><?= ($ordenCompra['OrdenCompra']['oc_manual'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
@@ -322,7 +322,7 @@
 <div class="pull-right">
 	<ul class="pagination">
 		<?= $this->Paginator->prev('« Anterior', array('tag' => 'li'), null, array('tag' => 'li', 'disabledTag' => 'a', 'class' => 'first disabled hidden')); ?>
-		<?= $this->Paginator->numbers(array('tag' => 'li', 'currentTag' => 'a', 'modulus' => 2, 'currentClass' => 'active', 'separator' => '')); ?>
+		<?= $this->Paginator->numbers(array('tag' => 'li', 'currentTag' => 'a', 'modulus' => 10, 'currentClass' => 'active', 'separator' => '')); ?>
 		<?= $this->Paginator->next('Siguiente »', array('tag' => 'li'), null, array('tag' => 'li', 'disabledTag' => 'a', 'class' => 'last disabled hidden')); ?>
 	</ul>
 </div>

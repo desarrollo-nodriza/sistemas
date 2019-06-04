@@ -2,10 +2,10 @@
 
 App::uses('AppHelper', 'Helper');
 
-App::import('Vendor', 'PhpSpreadsheet', array('file' => 'PhpSpreadsheet/vendor/autoload.php'));
+App::import('Vendor', 'PhpSpreadsheet', array('file' => 'PHPSpreadsheet/vendor/autoload.php'));
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class PhpSpreadsheetHelper extends AppHelper {
 
@@ -37,7 +37,7 @@ class PhpSpreadsheetHelper extends AppHelper {
 	/**
 	 * Create new worksheet
 	 */
-	public function createWorksheet() {
+	public function createWorksheet($title = 'Listado') {
 		$this->xls = new Spreadsheet();
 	}
 
@@ -52,8 +52,13 @@ class PhpSpreadsheetHelper extends AppHelper {
 	 * Set default font
 	 */
 	public function setDefaultFont($name, $size) {
-		$this->xls->getDefaultStyle()->getFont()->setName($name);
-		$this->xls->getDefaultStyle()->getFont()->setSize($size);
+
+		$this->xls->getParent()->getDefaultStyle()->applyFromArray([
+		    'font' => [
+		        'name' => $name,
+		        'size' => $size,
+		    ],
+		]);
 	}
 
 	/**
@@ -77,19 +82,7 @@ class PhpSpreadsheetHelper extends AppHelper {
 		$offset = 0;
 		if (array_key_exists('offset', $params))
 			$offset = is_numeric($params['offset']) ? (int)$params['offset'] : \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($params['offset']);
-		// font name
-		if (array_key_exists('font', $params))
-			$this->xls->getActiveSheet()->getStyle($this->row)->getFont()->setName($params['font_name']);
-		// font size
-		if (array_key_exists('size', $params))
-			$this->xls->getActiveSheet()->getStyle($this->row)->getFont()->setSize($params['font_size']);
-		// bold
-		if (array_key_exists('bold', $params))
-			$this->xls->getActiveSheet()->getStyle($this->row)->getFont()->setBold($params['bold']);
-		// italic
-		if (array_key_exists('italic', $params))
-			$this->xls->getActiveSheet()->getStyle($this->row)->getFont()->setItalic($params['italic']);
-
+		
 		// set internal params that need to be processed after data are inserted
 		$this->tableParams = array(
 			'header_row' => $this->row,
@@ -172,14 +165,13 @@ class PhpSpreadsheetHelper extends AppHelper {
 	public function output($filename = 'export.xlsx') {
 		// set layout
 		$this->_View->layout = '';
-		// headers
-		header('Content-Type: application/vnd.ms-excel');
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 		header('Content-Disposition: attachment;filename="'.$filename.'"');
 		header('Cache-Control: max-age=0');
+
 		// writer
-		$objWriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->xls, 'Xlsx');
-		$objWriter->save('php://output');
-		// clear memory
-		$this->xls->disconnectWorksheets();
+		$writer = IOFactory::createWriter($this->xls, 'Xlsx');
+		$writer->save('php://output');
+		exit;
 	}
 }

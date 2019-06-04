@@ -34,10 +34,15 @@ class VentaEstadosController extends AppController
 		{
 
 			if ($this->request->data['VentaEstado']['preparacion']) {
+
+				if (!isset($this->request->data['VentaEstado']['canal'])) {
+					$this->request->data['VentaEstado']['canal'] = 0;
+				}
+
 				$estados = $this->VentaEstado->find('all', array(
 					'conditions' => array(
 						'preparacion' => 1,
-						'canal' => $this->request->data['VentaEstado']['canal']
+						'origen' => $this->request->data['VentaEstado']['canal']
 					),
 					'fields' => array(
 						'id', 'preparacion'
@@ -48,7 +53,9 @@ class VentaEstadosController extends AppController
 					$estados[$i]['VentaEstado']['preparacion'] = false;
 				}
 				
-				$this->VentaEstado->saveMany($estados);	
+				if (!empty($estados)) {
+					$this->VentaEstado->saveMany($estados);	
+				}					
 			}
 
 			if ( $this->VentaEstado->save($this->request->data) )

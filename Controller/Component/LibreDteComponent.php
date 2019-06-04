@@ -346,8 +346,8 @@ class LibreDteComponent extends Component
 
 
 	public function eliminarDteTemporal($rut_receptor, $tipo_documento, $dte_temporal, $rut_emisor)
-	{
-		$eliminar = $this->ConexionLibreDte->get('/dte/dte_tmps/eliminar/'.$receptor.''.$tipo_documento.''.$dte_temporal.''.$rut_emisor);
+	{	
+		$eliminar = $this->ConexionLibreDte->get('/dte/dte_tmps/eliminar/'.$rut_receptor.'/'.$tipo_documento.'/'.$dte_temporal.'/'.$rut_emisor);
 
 		if ($eliminar['status']['code'] == 200) {
 			return;

@@ -49,4 +49,34 @@ class VentaEstado extends AppModel
 	}
 
 
+	public function es_estado_pagado($estado_id)
+	{
+		$est = $this->find('first', array(
+			'conditions' => array(
+				'VentaEstado.id' => $estado_id
+			),
+			'contain' => array(
+				'VentaEstadoCategoria' => array(
+					'fields' => array(
+						'VentaEstadoCategoria.id',
+						'VentaEstadoCategoria.venta'
+					)
+				)
+			),
+			'fields' => array(
+				'VentaEstado.id'
+			)
+		));
+
+		if (empty($est))
+			return false;
+
+		if (empty($est['VentaEstadoCategoria']))
+			return false;
+
+		return $est['VentaEstadoCategoria']['venta'];
+
+	}
+
+
 }

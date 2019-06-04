@@ -7,7 +7,7 @@ class ClientesController extends AppController {
     public $uses = array('Cliente');
 
     public function admin_index() 
-    {
+    {   
     	$paginate = array(); 
     	$conditions = array();
     	$total = 0;
@@ -15,6 +15,14 @@ class ClientesController extends AppController {
     	$categorias = array();
 
     	$textoBuscar = null;
+
+        $backurl = array(
+            'action' => 'index'
+        );
+
+        $backurl = array_replace_recursive($backurl, $this->request->params['action']);
+        
+        $this->Session->write($this->request->params['controller'], $backurl);
 
 		// Filtrado de clientes por formulario
 		if ( $this->request->is('post') ) {
@@ -174,6 +182,7 @@ class ClientesController extends AppController {
     {
         # Aumentamos el tiempo máxmimo de ejecución para evitar caídas
         set_time_limit(600);
+        ini_set('memory_limit', -1);
         
         $this->verificarTienda();
 

@@ -76,24 +76,48 @@ $.extend({
 				$.get( webroot + 'ordenes/getContribuyenteInfo/' + rutFormateado + '/true', function(respuesta){
 					var contribuyente 	= $.parseJSON(respuesta);	
 
+					// Asignamos los valores vacios a sus respectivos inputs
+					$('#DteRazonSocialReceptor').val('');
+					$('#DteGiroReceptor').val('');
+					$('#DteDireccionReceptor').val('');
+					$('#DteComunaReceptor').val('');
+
+					if(contribuyente === null){
+						$.app.loader.ocultar();
+						
+						noty({text: 'Ocurrió un error al obtener los datos del cliente.', layout: 'topRight', type: 'error'});
+
+						setTimeout(function(){
+							$.noty.closeAll();
+						}, 10000);
+
+						return;
+					}
+
 					if (typeof(contribuyente) == 'object') {
 						// Asignamos los valores obtenidos a sus respectivos inputs
 						$('#DteRazonSocialReceptor').val(contribuyente.razon_social);
 						$('#DteGiroReceptor').val(contribuyente.giro);
 						$('#DteDireccionReceptor').val(contribuyente.direccion);
 						$('#DteComunaReceptor').val(contribuyente.comuna_glosa);
+
+						noty({text: 'Datos de facturación cargados.', layout: 'topRight', type: 'success'});
+
+						setTimeout(function(){
+							$.noty.closeAll();
+						}, 10000);
 					}
-
-					$.app.loader.ocultar();
-
 		     	})
 		     	.fail(function(){
+		     		$.app.loader.ocultar();
+		     	})
+		     	.always(function(){
 		     		$.app.loader.ocultar();
 		     	});
 			},
 			bind: function(){
 
-				$(document).on('change focusout', '#DteRutReceptor', function(){
+				$(document).on('focusout', '#DteRutReceptor', function(){
 					if ($('#DteRutReceptor').hasClass('valid')) {
 						$.dte.rutChileno.autocompletar();
 					}

@@ -116,6 +116,38 @@ class VentaDetalleProducto extends AppModel
 	);
 
 
+	public function obtener_cantidad_reservada($id)
+	{
+
+		$vendidos = ClassRegistry::init('VentaDetalle')->find('all', array(
+			'conditions' => array(
+				'VentaDetalle.venta_detalle_producto_id' => $id,
+				'VentaDetalle.completo' => 0,
+				'VentaDetalle.created >' => '2019-05-28 18:00:00' 
+			),
+			'fields' => array(
+				'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_reservada'
+			)
+		));
+
+		if (empty($vendidos)) {
+			return 0;
+		}
+
+		$total = 0;
+
+		foreach ($vendidos as $iv => $vendido) {
+
+			if ($vendido['VentaDetalle']['cantidad_reservada'] == 0)
+				continue;
+
+			$total = $total + ( $vendido['VentaDetalle']['cantidad_reservada'] - $vendido['VentaDetalle']['cantidad_entregada'] );
+		}
+
+		return $total;
+
+	}
+
 	public static function obtener_descuento_por_producto($producto = array(), $indice = false)
 	{	
 		$respuesta = array();
@@ -211,8 +243,6 @@ class VentaDetalleProducto extends AppModel
 
 		return $respuesta;
 	}
-
-
 
 
 	public function obtener_precio_costo($id)

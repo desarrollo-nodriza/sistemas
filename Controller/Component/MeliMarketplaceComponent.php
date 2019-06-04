@@ -44,20 +44,21 @@ class MeliMarketplaceComponent extends Component
 
 					$user = self::$MeliConexion->authorize($code, $redirectURI);
 					
-					if ($user['httpCode'] == 200) {
+					if ($user['httpCode'] < 300) {
 						// Now we save credentials with the authenticated user
 						$m['Marketplace']['access_token']  = $user['body']->access_token;
 						$m['Marketplace']['expires_token'] = time() + $user['body']->expires_in;
 						$m['Marketplace']['refresh_token'] = $user['body']->refresh_token;
 						$m['Marketplace']['seller_id']     = $user['body']->user_id;
 
-						self::$accessToken = $refresh['body']->access_token;
+						self::$accessToken = $user['body']->access_token;
 					}
 
 				}catch(Exception $e){
 					$response['errors'] = $e->getMessage();
 				}
 			} else {
+
 				// We can check if the access token in invalid checking the time
 				if($marketplace['expires_token'] < time()) {
 
@@ -65,7 +66,7 @@ class MeliMarketplaceComponent extends Component
 						// Make the refresh proccess
 						$refresh = self::$MeliConexion->refreshAccessToken();
 						
-						if ($refresh['httpCode'] == 200) {
+						if ($refresh['httpCode'] < 300) {
 							// Now we save credentials with the new parameters
 							$m['Marketplace']['access_token']  = $refresh['body']->access_token;
 							$m['Marketplace']['expires_token'] = time() + $refresh['body']->expires_in;
@@ -86,7 +87,7 @@ class MeliMarketplaceComponent extends Component
 						$marketplace['MarketplaceTipo']['nombre'] = ClassRegistry::init('MarketplaceTipo')->field('nombre', $marketplace['marketplace_tipo_id']);
 					}
 
-					$response['success'] = sprintf('%s sigue conectado a %s', $marketplace['nombre'], $marketplace['MarketplaceTipo']['nombre']);
+					#$response['success'] = sprintf('%s sigue conectado a %s', $marketplace['nombre'], $marketplace['MarketplaceTipo']['nombre']);
 				}
 			}
 			
@@ -141,7 +142,7 @@ class MeliMarketplaceComponent extends Component
         }
 
         $params = array(
-			'access_token' => $marketplace['access_token'],
+			'access_token' => self::$accessToken,
 			'seller'       => $marketplace['seller_id'],
 			'limit'        => $limit,
 			'offset'       => $offset
@@ -192,15 +193,15 @@ class MeliMarketplaceComponent extends Component
         	
          	$result = self::$MeliConexion->get('/orders/search', $params);
          	
-        	if ( $result['httpCode'] == 200 && count($result['body']->results) == 0  ) {
+        	if ( $result['httpCode'] < 300 && count($result['body']->results) == 0  ) {
         		$ejecutar = false;
-        	}elseif($result['httpCode'] == 200){
+        	}elseif($result['httpCode'] < 300){
 
         		$params['offset'] = $params['offset'] + 50;
         		
         		foreach ($result['body']->results as $ir => $venta) {
         			if (!empty($venta)) {
-
+        				
         				$arrVenta = to_array($venta);
 
         				$ventaExiste =  ClassRegistry::init('Venta')->find('count', array('conditions' => array('Venta.id_externo' => $arrVenta['id'])));
@@ -240,7 +241,7 @@ class MeliMarketplaceComponent extends Component
 			// 
 		}
 		
-		if ($mensajes['httpCode'] == 200) {
+		if ($mensajes['httpCode'] < 300) {
 			return $mensajes['body']['results'];
 		}else{
 			return array();
@@ -268,8 +269,8 @@ class MeliMarketplaceComponent extends Component
 		} catch (Exception $e) {
 			//
 		}
-
-		if ($detallesVenta['httpCode'] == 200) {
+		
+		if ($detallesVenta['httpCode'] < 300) {
 			if ($todo) {
 				return $detallesVenta['body']; # Retornamos toda la venta
 			}else{
@@ -385,7 +386,7 @@ class MeliMarketplaceComponent extends Component
 			}
 		}
 
-		exit;
+		return;
 	}
 
 
@@ -408,7 +409,7 @@ class MeliMarketplaceComponent extends Component
 			//
 		}
 		
-		if ($producto['httpCode'] == 200) {
+		if ($producto['httpCode'] < 300) {
 			if (!empty(Hash::extract($producto['body'], 'results.{n}')) ) {
 				
 				$item                   = $this->mercadolibre_obtener_producto($producto['body']['results'][0]);
@@ -446,7 +447,7 @@ class MeliMarketplaceComponent extends Component
 			//
 		}
 		
-		if ($producto['httpCode'] == 200) {
+		if ($producto['httpCode'] < 300) {
 			if (!empty($producto['body']) ) {
 				return $producto['body'];
 			}			
@@ -501,7 +502,7 @@ class MeliMarketplaceComponent extends Component
 			
 		}
 		
-		if ($producto['httpCode'] == 200) {
+		if ($producto['httpCode'] < 300) {
 			if (!empty($producto['body']) ) {
 				return $producto['body'];
 			}			

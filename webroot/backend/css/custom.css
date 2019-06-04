@@ -343,3 +343,25 @@ tfoot > tr > td, tfoot > tr:first-child > td {
     font-size: 25px;
     line-height: 30px;
 }
+
+.label-lila, .btn-lila, 
+.label-lila:hover, .btn-lila:hover,
+.label-lila:active, .btn-lila:active {
+    background-color: #5330F2;
+    color: #fff;
+}
+
+.label-amarillo, .btn-amarillo {
+    background-color: #FFCB00;
+}
+
+.label-link, .btn-link {
+    background-color: #EAEAEA;
+}
+
+.label-verde, .btn-verde,
+.label-verde:hover, .btn-verde:hover,
+.label-verde:active, .btn-verde:active {
+    background-color: #097705;
+    color: #fff;
+}

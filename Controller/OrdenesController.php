@@ -340,18 +340,8 @@ class OrdenesController extends AppController
 	 */
 	public function admin_delete_dte($id_dte = '', $id_orden = '')
 	{	
-
-		$this->Orden->Dte->id = $id_dte;
-
-		if ($this->Orden->Dte->delete()) {
-
-			$this->admin_eliminarDteTemporal($id_dte, $id_orden);
-
-			$this->Session->setFlash('DTE eliminado con éxito.', null, array(), 'success');
-		}else{
-			$this->Session->setFlash('No fue posible elimnar el DTE.', null, array(), 'danger');
-		}
-
+		$this->admin_eliminarDteTemporal($id_dte, $id_orden);
+		
 		$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
 	}
 
@@ -405,21 +395,17 @@ class OrdenesController extends AppController
 		
 			# Si existe costo de transporte se agrega como ITEM
 			if (intval($this->request->data['Dte']['Transporte']) > 0) {
-				$cantidadItem = (count($this->request->data['Detalle']) + 1);
-				$this->request->data['Detalle'][$cantidadItem]['VlrCodigo'] = "COD-Trns";
-				$this->request->data['Detalle'][$cantidadItem]['NmbItem'] = "Transporte";
+				$cantidadItem = (count($this->request->data['DteDetalle']) + 1);
 				$this->request->data['DteDetalle'][$cantidadItem]['VlrCodigo'] = "COD-Trns";
 				$this->request->data['DteDetalle'][$cantidadItem]['NmbItem'] = "Transporte";
 
 				# Para boleta se envia el valor bruto y así evitar que el monto aumente o disminuya por el calculo de iva
 				if ($this->request->data['Dte']['tipo_documento'] == 39) {
-					$this->request->data['Detalle'][$cantidadItem]['PrcItem'] = round($this->request->data['Dte']['Transporte']);
 					$this->request->data['DteDetalle'][$cantidadItem]['PrcItem'] = round($this->request->data['Dte']['Transporte']);
 				}else{
-					$this->request->data['Detalle'][$cantidadItem]['PrcItem'] = $this->precio_neto($this->request->data['Dte']['Transporte']);
 					$this->request->data['DteDetalle'][$cantidadItem]['PrcItem'] = $this->precio_neto($this->request->data['Dte']['Transporte']);
 				}
-				$this->request->data['Detalle'][$cantidadItem]['QtyItem'] = 1;
+				
 				$this->request->data['DteDetalle'][$cantidadItem]['QtyItem'] = 1;
 			}
 				
@@ -429,11 +415,11 @@ class OrdenesController extends AppController
 				# Se agrega un rut por defecto
 				$this->request->data['Dte']['rut_receptor'] = '66666666-6';
 
-				foreach ($this->request->data['Detalle'] as $k => $item) {
+				foreach ($this->request->data['DteDetalle'] as $k => $item) {
 
 					# Precio de transporte viene Bruto
 					if ($item['NmbItem'] != 'Transporte') {
-						$this->request->data['Detalle'][$k]['PrcItem'] = $this->precio_bruto($item['PrcItem']);
+						$this->request->data['DteDetalle'][$k]['PrcItem'] = $this->precio_bruto($item['PrcItem']);
 					}
 					
 				}

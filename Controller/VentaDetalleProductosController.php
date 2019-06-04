@@ -842,6 +842,9 @@ class VentaDetalleProductosController extends AppController
 			'order' => array('BodegasVentaDetalleProducto.fecha' => 'desc'),
 		));
 
+		$this->request->data['VentaDetalleProducto']['cantidad_real_fisica']      = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($id, true);
+		$this->request->data['VentaDetalleProducto']['cantidad_real']    = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($id);
+
 		# PMP
 		$this->request->data['VentaDetalleProducto']['pmp_global'] = ClassRegistry::init('Bodega')->obtener_pmp_por_id($id);
 
@@ -1110,10 +1113,6 @@ class VentaDetalleProductosController extends AppController
 
 					if (!empty($dataTosave)) {
 						
-						// Limpiar
-						//$this->VentaDetalleProducto->BodegasVentaDetalleProducto->deleteAll(array('venta_detalle_producto_id' => $campo['VentaDetalleProducto']['id']));
-						$this->VentaDetalleProducto->PrecioEspecificoProducto->deleteAll(array('venta_detalle_producto_id' => $campo['VentaDetalleProducto']['id']));
-
 						if ($this->VentaDetalleProducto->saveAll($dataTosave)) {
 							$contSuccess++;
 

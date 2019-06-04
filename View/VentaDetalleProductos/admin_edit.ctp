@@ -80,8 +80,14 @@
 								<td><?= $this->Form->input('cantidad_virtual', array('class' => 'form-control', 'type' => 'text')); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('cantidad_real', 'Stock fisico'); ?></th>
-								<td><?= $this->Form->input('cantidad_real', array('class' => 'form-control', 'type' => 'text', 'readonly' => true, 'value' => array_sum(Hash::extract($this->request->data['Bodega'], '{n}.BodegasVentaDetalleProducto[io=IN].cantidad')) - array_sum(Hash::extract($this->request->data['Bodega'], '{n}.BodegasVentaDetalleProducto[io=ED].cantidad')) )); ?></td>
+								<th><?= $this->Form->label('cantidad_real', 'Stock disponible'); ?></th>
+								<td><?= $this->Form->input('cantidad_real', array('class' => 'form-control', 'type' => 'text', 'readonly' => true)); ?><span class="help-block">Unidades fisicas menos las reservadas.</span></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('cantidad_real_fisica', 'Stock fisico real'); ?></th>
+								<td><?= $this->Form->input('cantidad_real_fisica', array('class' => 'form-control', 'type' => 'text', 'readonly' => true)); ?>
+									<span class="help-block">Unidades aun en bodega.</span>
+								</td>
 							</tr>
 						</table>
 					</div>

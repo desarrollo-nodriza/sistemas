@@ -156,6 +156,7 @@
 					<h3 class="panel-title">Listado de Ventas</h3>
 					
 					<?= $this->Form->create('Venta', array('url' => array('controller' => 'ventas', 'action' => 'facturacion_masiva'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
+					<?= $this->Form->hidden('return_url', array('value' => Router::url( $this->here, true )));?>
 					<div class="btn-group pull-right">
 						<? if ($permisos['generate']) : ?>
 						
@@ -186,9 +187,9 @@
 									<th><?= $this->Paginator->sort('id', 'ID', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('fecha_venta', 'Fecha', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('total', 'Total', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<!--<th><?= $this->Paginator->sort('medio_pago_id', 'Medio de Pago', array('title' => 'Haz click para ordenar por este criterio')); ?></th>-->
+									<th style="width: 120px"><?= $this->Paginator->sort('medio_pago_id', 'Medio de Pago', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('venta_estado_categoria_id', 'Estado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('tienda_id', 'Tienda', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<!--<th><?= $this->Paginator->sort('tienda_id', 'Tienda', array('title' => 'Haz click para ordenar por este criterio')); ?></th>-->
 									<th><?= $this->Paginator->sort('marketplace_id', 'Marketplace', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th style="width: 120px"><?= $this->Paginator->sort('cliente_id', 'Cliente', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('Dte.id', 'Dtes', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -238,15 +239,15 @@
 
 										<td><label class="label label-form label-<?=($venta['Venta']['total'] > 0) ? 'success' : '' ; ?>"><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?>&nbsp;</label></td>
 
-										<!--<td><?= h($venta['MedioPago']['nombre']); ?>&nbsp;</td>-->
+										<td><?= h($venta['MedioPago']['nombre']); ?>&nbsp;</td>
 
 										<td>
 											<a data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$venta['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= h($venta['VentaEstado']['VentaEstadoCategoria']['estilo']); ?>"><?= h($venta['VentaEstado']['VentaEstadoCategoria']['nombre']); ?></a>&nbsp;
 										</td>
 
-										<td><?= h($venta['Tienda']['nombre']); ?>&nbsp;</td>
+										<!--<td><?= h($venta['Tienda']['nombre']); ?>&nbsp;</td>-->
 
-										<td><?php if (!empty($venta['Venta']['marketplace_id'])) {echo $venta['Marketplace']['nombre'];} ?>&nbsp;</td>
+										<td><?= (!empty($venta['Venta']['marketplace_id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'] ; ?>&nbsp;</td>
 
 										<td>
 											<?php
@@ -260,7 +261,7 @@
 													$cliente.= "<br />";
 													$cliente.= $venta['VentaCliente']['rut'];
 												}
-												if (!empty($venta['VentaCliente']['email'])) {
+												if (!empty($venta['VentaCliente']['email']) && empty($venta['Venta']['marketplace_id'])) {
 													$cliente.= "<br />";
 													$cliente.= $venta['VentaCliente']['email'];
 												}
@@ -284,7 +285,7 @@
 										<td> 
 											
 
-												<?= $this->Html->link('<i class="fa fa-eye"></i> Ver Detalles', array('action' => 'view', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-info btn-block', 'rel' => 'tooltip', 'title' => 'Ver detalles de este registro', 'escape' => false)); ?>
+												<?= $this->Html->link('<i class="fa fa-eye"></i> Ver Detalles', array('action' => 'view', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-info btn-block', 'rel' => 'tooltip', 'title' => 'Ver detalles de este registro', 'escape' => false, 'target' => '_blank')); ?>
 												
 												<? if ($permisos['storage'] && $venta['VentaEstado']['permitir_retiro_oc']) : ?>
 												
@@ -293,13 +294,13 @@
 												<? endif; ?>
 
 												<?php
-													/*
+													
 													if ($venta['Venta']['atendida']) {
 														echo $this->Form->postLink('<i class="fa fa-remove"></i> Marcar como No Atendida', array('action' => 'marcar_no_atendida', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-danger btn-block', 'rel' => 'tooltip', 'title' => 'Marcar Venta como No Atendida', 'escape' => false));
 													}
 													else {
-														echo $this->Form->postLink('<i class="fa fa-check"></i> Marcar como Atendida', array('action' => 'marcar_atendida', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-success btn-block', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Atendida', 'escape' => false));
-													}*/
+														#echo $this->Form->postLink('<i class="fa fa-check"></i> Marcar como Atendida', array('action' => 'marcar_atendida', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-success btn-block', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Atendida', 'escape' => false));
+													}
 												?>
 
 												<?php
@@ -337,7 +338,7 @@
 			<div class="pull-right">
 				<ul class="pagination">
 					<?= $this->Paginator->prev('« Anterior', array('tag' => 'li'), null, array('tag' => 'li', 'disabledTag' => 'a', 'class' => 'first disabled hidden')); ?>
-					<?= $this->Paginator->numbers(array('tag' => 'li', 'currentTag' => 'a', 'modulus' => 2, 'currentClass' => 'active', 'separator' => '')); ?>
+					<?= $this->Paginator->numbers(array('tag' => 'li', 'currentTag' => 'a', 'modulus' => 10, 'currentClass' => 'active', 'separator' => '')); ?>
 					<?= $this->Paginator->next('Siguiente »', array('tag' => 'li'), null, array('tag' => 'li', 'disabledTag' => 'a', 'class' => 'last disabled hidden')); ?>
 				</ul>
 			</div>

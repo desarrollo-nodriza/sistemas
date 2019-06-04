@@ -86,7 +86,7 @@
 		<div class="col-xs-12">
 			<div class="panel panel-info">
 				<div class="panel-heading">
-					<h3 class="panel-title text-uppercase"><b>OC N°<?=$ocs['OrdenCompra']['id'];?> para <?=$ocs['Proveedor']['nombre'];?> </b></h3>
+					<h3 class="panel-title text-uppercase"><b>Proveedor: <?=$ocs['Proveedor']['nombre'];?><br> Rut: <?=$ocs['Proveedor']['rut_empresa'];?> </b></h3>
 				</div>
 				<div class="panel-body">
 					<div class="row">
