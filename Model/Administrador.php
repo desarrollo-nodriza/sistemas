@@ -213,7 +213,7 @@ class Administrador extends AppModel
 
 				$confNotificacion = json_decode($admin['Administrador']['notificaciones'], true);
 				
-				if ( array_key_exists('pagar_oc', $confNotificacion) && $confNotificacion[$tipo] ) {
+				if ( array_key_exists($tipo, $confNotificacion) && $confNotificacion[$tipo] ) {
 					$emailsNotificar[] = $admin['Administrador']['email'];
 				}
 			}

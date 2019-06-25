@@ -124,20 +124,22 @@
 								</tfoot>
 							</table>
 						</div>
+
+						<div class="form-group">
+							<?= $this->Form->label('mensaje_final', 'Mensaje para el proveedor');?>
+							<?= $this->Form->input('mensaje_final', array('class' => 'form-control js-contacto-proveedor-input', 'placeholder' => 'Ingrese texto...')); ?>
+						</div>
+					</div>
+					<div class="panel-footer hide">
+						<div class="pull-right">
+							<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Enviar a revisión">
+							<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 		
-
-		<div class="row">
-			<div class="col-xs-12">
-				<div class="pull-right">
-					<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Enviar a revisión">
-					<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
-				</div>
-			</div>
-		</div>
 	</div>
 
 <?= $this->Form->end(); ?>

@@ -49,6 +49,17 @@ class VentaEstado extends AppModel
 	}
 
 
+	public function obtener_estado_por_id($id = '')
+	{
+		return $this->find('first', array(
+			'conditions' => array(
+				'VentaEstado.id' => trim($id)
+				)
+			)
+		);
+	}
+
+
 	public function es_estado_pagado($estado_id)
 	{
 		$est = $this->find('first', array(
@@ -67,7 +78,7 @@ class VentaEstado extends AppModel
 				'VentaEstado.id'
 			)
 		));
-
+		
 		if (empty($est))
 			return false;
 
@@ -76,6 +87,52 @@ class VentaEstado extends AppModel
 
 		return $est['VentaEstadoCategoria']['venta'];
 
+	}
+
+
+	public function es_estado_cancelado($estado_id)
+	{
+		$est = $this->find('first', array(
+			'conditions' => array(
+				'VentaEstado.id' => $estado_id
+			),
+			'contain' => array(
+				'VentaEstadoCategoria' => array(
+					'fields' => array(
+						'VentaEstadoCategoria.id',
+						'VentaEstadoCategoria.rechazo'
+					)
+				)
+			),
+			'fields' => array(
+				'VentaEstado.id'
+			)
+		));
+
+		if (empty($est))
+			return false;
+
+		if (empty($est['VentaEstadoCategoria']))
+			return false;
+
+		return $est['VentaEstadoCategoria']['rechazo'];
+	}
+
+
+	public function obtener_estado_preparacion()
+	{
+		return $this->find('first', array('conditions' => array('preparacion' => 1, 'origen' => 0)));
+	}
+
+
+	public function obtener_estados_logistica($lista = false)
+	{	
+		if ($lista) {
+			return $this->find('list', array('conditions' => array('logistica' => 1)));
+		}else{
+			return $this->find('all', array('conditions' => array('logistica' => 1)));
+		}
+		
 	}
 
 

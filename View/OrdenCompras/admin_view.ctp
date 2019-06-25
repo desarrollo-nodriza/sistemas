@@ -269,7 +269,7 @@
 				</div>
 				<div class="panel-footer">
 					<div class="pull-right">
-						<?= $this->Html->link('Volver', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+						<?= $this->Html->link('Volver', $url_retorno, array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>

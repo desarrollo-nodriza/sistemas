@@ -174,16 +174,22 @@
 							</table>
 						</div>
 					</div>
-				</div>
-			</div>
-		</div>
-
-
-		<div class="row">
-			<div class="col-xs-12">
-				<div class="pull-right">
-					<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Enviar a revisión">
-					<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					<div class="panel-body">
+						<div class="form-group">
+							<?= $this->Form->label('mensaje_final', 'Mensaje para el proveedor');?>
+							<? if (empty($this->request->data['OrdenCompra']['mensaje_final'])) : ?>
+							<?= $this->Form->input('mensaje_final', array('class' => 'form-control', 'placeholder' => 'Ingrese texto...', 'value' => sprintf('Estimado/a %s se envía adjunto la orden de compra y su comprobante de pago.', $this->request->data['Proveedor']['nombre_encargado']))); ?>
+							<? else : ?>
+							<?= $this->Form->input('mensaje_final', array('class' => 'form-control', 'placeholder' => 'Ingrese texto...')); ?>
+							<? endif; ?>
+						</div>
+					</div>
+					<div class="panel-footer">
+						<div class="pull-right">
+							<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Enviar a revisión">
+							<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -2,8 +2,9 @@
 	<h2><i class="fa fa-list" aria-hidden="true"></i> Revisar OC generada por <?=$ocs['Administrador']['nombre'];?></h2>
 </div>
 
-<?= $this->Form->create('OrdenCompra', array('url' => array('controller' => 'ordenCompras', 'action' => 'review', $ocs['OrdenCompra']['id']),  'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-<?# $this->Form->input('id');?>
+<?= $this->Form->create('OrdenCompra', array('url' => array('controller' => 'ordenCompras', 'action' => 'review', $ocs['OrdenCompra']['id']),  'class' => 'form-horizontal js-validate-oc', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+<?= $this->Form->input('id', array('value' => $ocs['OrdenCompra']['id']));?>
+<?= $this->Form->hidden('fecha_validado', array('value' => date('Y-m-d H:i:s')));?>
 <div class="page-content-wrap">
 	<div class="row">
 		<div class="col-xs-12">
@@ -79,66 +80,100 @@
 							</tr>
 						</table>
 						
-						<table class="table table-bordered js-clone-wrapper">
-							<thead>
-								<th>Item</th>
-								<th>Código</th>
-								<th>Descripción</th>
-								<th>Cantidad</th>
-								<th>N. Unitario</th>
-								<th>Descuento ($)</th>
-								<th>Costo Neto ($)</th>
-								<th>Total Neto</th>
-								<th></th>
-							</thead>
-							<tboby class="">
-								
-							<? foreach ($ocs['VentaDetalleProducto'] as $ipp => $ocsp) : ?>	
-								
-								<tr>
-									<td><?=$ocsp['OrdenComprasVentaDetalleProducto']['id'];?></td>
-									<td><?=$ocsp['OrdenComprasVentaDetalleProducto']['codigo'];?></td>
-									<td><?=$ocsp['OrdenComprasVentaDetalleProducto']['descripcion'];?></td>
-									<td><?=$ocsp['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
-									<td><?=CakeNumber::currency($ocsp['OrdenComprasVentaDetalleProducto']['precio_unitario'] , 'CLP');?></td>
-									<td><?=CakeNumber::currency($ocsp['OrdenComprasVentaDetalleProducto']['descuento_producto'] , 'CLP');?></td>
-									<td><?=CakeNumber::currency(($ocsp['OrdenComprasVentaDetalleProducto']['precio_unitario'] - $ocsp['OrdenComprasVentaDetalleProducto']['descuento_producto']) , 'CLP');?></td>
-									<td><?=CakeNumber::currency($ocsp['OrdenComprasVentaDetalleProducto']['total_neto'] , 'CLP');?></td>
-									<td></td>
-								</tr>
-								
-							<? endforeach; ?>
-							
-							</tboby>
-							<tfoot>
-								<tr>
-									<td colspan="6"></td>
-									<td>Total neto</td>
-									<td colspan="2"><?=CakeNumber::currency($ocs['OrdenCompra']['total_neto'] , 'CLP');?></td>
-								</tr>
-								<tr>
-									<td colspan="6"></td>
-									<td>Total Descuento</td>
-									<td colspan="2"><?=CakeNumber::currency($ocs['OrdenCompra']['descuento_monto'] , 'CLP');?></td>
-								</tr>
-								<tr>
-									<td colspan="6"></td>
-									<td>IVA</td>
-									<td colspan="2"><?=CakeNumber::currency($ocs['OrdenCompra']['iva'] , 'CLP');?></td>
-								</tr>
-								<tr>
-									<td colspan="6"></td>
-									<td>Total</td>
-									<td colspan="2"><?=CakeNumber::currency($ocs['OrdenCompra']['total'] , 'CLP');?></td>
-								</tr>
-							</tfoot>
-						</table>
+						<table class="table table-bordered js-clone-wrapper js-oc">
+								<thead>
+									<th>Item</th>
+									<th>Código</th>
+									<th>Descripción</th>
+									<th>Cantidad</th>
+									<th>N. Unitario</th>
+									<th>Descuento ($)</th>
+									<th>Total Neto</th>
+									<th><a href="#" class="copy_tr btn btn-rounded btn-primary"><span class="fa fa-plus"></span> agregar</a></th>
+								</thead>
+								<tboby class="">
+									<tr class="hidden clone-tr">
+										<td>
+											<?= $this->Form->input('VentaDetalleProducto.999.venta_detalle_producto_id', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-id-producto not-blank')); ?>
+										</td>
+										<td><?= $this->Form->input('VentaDetalleProducto.999.codigo', array('disabled' => true, 'type' => 'text', 'class' => 'form-control not-blank js-codigo-producto')); ?></td>
+										<td><?= $this->Form->input('VentaDetalleProducto.999.descripcion', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-descripcion-producto js-buscar-producto not-blank', 'style' =>'width: 200px;')); ?></td>
+										<td><?= $this->Form->input('VentaDetalleProducto.999.cantidad', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-cantidad-producto not-blank js-cantidad-producto not-blank is-number')); ?></td>
+										<td><?= $this->Form->input('VentaDetalleProducto.999.precio_unitario', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-precio-producto not-blank is-number')); ?></td>
+										<td data-toggle="tooltip" data-placement="top" title="" class="js-descuento-valor"><?= $this->Form->input('VentaDetalleProducto.999.descuento_producto', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-descuento-producto not-blank is-number')); ?></td>
+										<td><?= $this->Form->input('VentaDetalleProducto.999.total_neto', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-total-producto not-blank is-number')); ?></td>
+										<td valign="center" class="js-acciones">
+											<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
+											<!--<button class="habilitar-fila btn-success"><i class="fa fa-pencil"></i></button>-->
+											<button class="btn-warning btn-modificar-precio-especifico" data-toggle="modal" data-target=""><i class="fa fa-usd"></i></button>
+											<div class="js-modal-precio-especifico">
+											</div>
+										</td>
+									</tr>
+									<? foreach ($ocs['VentaDetalleProducto'] as $ipp => $pp) : ?>	
+									<tr>
+										<td>
+											<?= $this->Form->input(sprintf('VentaDetalleProducto.%d.venta_detalle_producto_id', $ipp), array('value' => $pp['id'], 'type' => 'text', 'class' => 'form-control js-id-producto not-blank')); ?>
+										</td>
+										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.codigo', $ipp), array('type' => 'text', 'class' => 'form-control not-blank js-codigo-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['codigo'] )); ?></td>
+										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.descripcion', $ipp), array('type' => 'text', 'class' => 'form-control not-blank js-descripcion-producto', 'value' => $pp['nombre'], 'style' =>'width: 200px;')); ?></td>
+
+										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['cantidad'] )); ?></td>
+										
+										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.precio_unitario', $ipp), array('readonly' => true, 'type' => 'text', 'class' => 'form-control not-blank is-number js-precio-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['precio_unitario'])); ?></td>
+										
+										
+										<td id="descuento-<?=$pp['id'];?>" data-toggle="tooltip" data-placement="top" title="<?= (!empty($pp['nombre_descuento'])) ? $pp['nombre_descuento'] : '' ; ?>" class="js-descuento-valor">
+											<?= $this->Form->input(sprintf('VentaDetalleProducto.%d.descuento_producto', $ipp), array('readonly' => true, 'type' => 'text', 'class' => 'form-control not-blank is-number js-descuento-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['descuento_producto'], 'data-descuento' => $pp['total_descuento'])); ?>
+										</td>
+										
+										<td>
+											<?= $this->Form->input(sprintf('VentaDetalleProducto.%d.total_neto', $ipp), array('readonly' => true, 'type' => 'text', 'class' => 'form-control not-blank is-number js-total-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['total_neto'])); ?>
+										</td>
+										<td valign="center" class="js-acciones">
+											<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
+											<!--<button class="habilitar-fila btn-success"><i class="fa fa-pencil"></i></button>-->
+											<button class="btn-warning btn-modificar-precio-especifico" data-toggle="modal" data-target="#modalPrecio<?=$pp['id']?>"><i class="fa fa-usd"></i></button>
+											
+											<div class="js-modal-precio-especifico">
+												<?=$this->element('ordenCompras/modal-precio-especifico', array('producto' => $pp)); ?>
+											</div>
+
+										</td>
+									</tr>
+									<? endforeach; ?>
+								</tboby>
+								<tfoot>
+									<tr>
+										<td colspan="6"></td>
+										<td>Total neto</td>
+										<td colspan="2"><?=$this->Form->input('total_neto', array('type' => 'text', 'class' => 'form-control not-blank is-number js-total-neto', 'value' => $ocs['OrdenCompra']['total_neto']) );?></td>
+									</tr>
+									<tr>
+										<td colspan="6"></td>
+										<td>Total Descuento</td>
+										<td colspan="2">
+											No aplicado aún.
+											<!--<?=$this->Form->input('descuento_monto', array('type' => 'text', 'class' => 'form-control not-blank is-number js-total-descuento', 'value' => $ocs['OrdenCompra']['descuento_monto']) );?>--></td>
+									</tr>
+									<tr>
+										<td colspan="6"></td>
+										<td>IVA</td>
+										<td colspan="2"><?=$this->Form->input('iva', array('type' => 'text', 'class' => 'form-control not-blank is-number js-total-iva', 'value' => $ocs['OrdenCompra']['iva']) );?></td>
+									</tr>
+									<tr>
+										<td colspan="6"></td>
+										<td>Total</td>
+										<td colspan="2"><?=$this->Form->input('total', array('type' => 'text', 'class' => 'form-control not-blank is-number js-total-oc', 'value' => $ocs['OrdenCompra']['total']) );?></td>
+									</tr>
+								</tfoot>
+							</table>
 					</div>
 				</div>
 				<div class="panel-footer">
 					<div class="pull-right">
 						<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalComentario">Continuar</button>
-						<?= $this->Html->link('Volver', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+						<?= $this->Html->link('Volver', array('action' => 'index_revision'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>

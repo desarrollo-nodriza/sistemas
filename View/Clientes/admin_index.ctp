@@ -57,19 +57,9 @@
 					</div>
 				</div>
 				<div class="panel-body">
+					<?= $this->element('contador_resultados'); ?>
+
 					<div class="table-responsive">
-						<table class="table">
-							<tbody>
-								<tr>
-									<td><b>Total clientes:</b> <?=sprintf('%d clientes registrados en el sitio', $total)?></td>
-								</tr>
-								<tr>
-								<? if ( !empty($textoBuscar) ) : ?>
-										<td><?=sprintf('<b>%d Clientes encontrados para "%s"</b>  ', $totalMostrados, $textoBuscar)?></td>
-								<? endif; ?>
-								</tr>
-							</tbody>
-						</table>
 						<table class="table">
 							<thead>
 								<tr class="sort">

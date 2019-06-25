@@ -10,19 +10,6 @@ class ClientesController extends AppController {
     {   
     	$paginate = array(); 
     	$conditions = array();
-    	$total = 0;
-    	$totalMostrados = 0;
-    	$categorias = array();
-
-    	$textoBuscar = null;
-
-        $backurl = array(
-            'action' => 'index'
-        );
-
-        $backurl = array_replace_recursive($backurl, $this->request->params['action']);
-        
-        $this->Session->write($this->request->params['controller'], $backurl);
 
 		// Filtrado de clientes por formulario
 		if ( $this->request->is('post') ) {
@@ -75,37 +62,33 @@ class ClientesController extends AppController {
 						)
 					));
 					break;
-			}
-			// Texto ingresado en el campo buscar
-			$textoBuscar = $this->request->params['named']['nombre_buscar'];
+			}			
 			
 		}else if ( ! empty($this->request->params['named']['findby'])) {
 			$this->Session->setFlash('No se aceptan campos vacios.' ,  null, array(), 'danger');
 		}
 
-		// Total de registros de la tienda
-		$total 		= $this->Cliente->find('count', array(
-			'joins' => array(),
-			'conditions' => array()
-		));
-
 
 		$this->paginate = $paginate;
 
 		$clientes	= $this->paginate();
-		$totalMostrados = count($clientes);
-
+		
 		if (empty($clientes)) {
 			$this->Session->setFlash(sprintf('No se encontraron resultados para %s', $this->request->params['named']['nombre_buscar']) , null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
 
 		BreadcrumbComponent::add('Clientes');
-		$this->set(compact('clientes', 'total', 'totalMostrados', 'textoBuscar'));
+		$this->set(compact('clientes'));
     }
 
     public function admin_view ($id = '') {
     	
+        if (!$this->Cliente->exists($id)) {
+            $this->Session->setFlash('Cliente no existe' , null, array(), 'danger');
+            $this->redirect($this->referer('/', true));
+        }
+
     }
 
     public function admin_clientes_por_tienda ($tienda = '', $palabra = '') {
@@ -187,17 +170,11 @@ class ClientesController extends AppController {
         $this->verificarTienda();
 
         $datos          = $this->Cliente->find('all', array(
-
             'recursive'             => -1
-
         ));
 
-        
         $campos         = array_keys($this->Cliente->_schema);
-
         $modelo         = $this->Cliente->alias;
-
-
 
         $this->set(compact('datos', 'campos', 'modelo'));
 

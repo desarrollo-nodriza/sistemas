@@ -1,15 +1,15 @@
-<? foreach ($ventas as $iv => $orden) : ?>
-<tr>
-	<td><input type="checkbox" class="create_input" value="<?=$orden['Venta']['id'];?>"  data-ordencompras="<?=count($orden['OrdenCompra']);?>" data-id="<?=$orden['Venta']['id'];?>" 
-		<? if($orden['Venta']['selected']){ echo 'value="1" checked'; }?>></td>
-	<td><?=$orden['Venta']['id'];?></td>
-	<td><?=$orden['Venta']['id_externo'];?></td>
-	<td><?=$orden['Venta']['referencia'];?></td>
-	<td><label class="label label-<?=$orden['VentaEstado']['VentaEstadoCategoria']['estilo'];?>"><?=$orden['VentaEstado']['VentaEstadoCategoria']['nombre'];?></label></td>
-	<td><?=CakeNumber::currency($orden['Venta']['total'], 'CLP');?></td>
-	<td><?=$orden['VentaCliente']['nombre'];?> <?=$orden['VentaCliente']['apellido'];?></td>
-	<td><?=$orden['Venta']['fecha_venta'];?></td>
-	<td><?=count($orden['OrdenCompra']);?></td>
-	<td><?=count($orden['VentaDetalle']);?></td>
+<? foreach ($ventas as $iv => $venta) : ?>
+<tr class="<?=($venta['Venta']['prioritario']) ? 'tr-prioritario' : ''; ?>">
+	<td><input type="checkbox" class="create_input" value="<?=$venta['Venta']['id'];?>"  data-ordencompras="<?=count($venta['OrdenCompra']);?>" data-id="<?=$venta['Venta']['id'];?>" 
+		<? if($venta['Venta']['selected']){ echo 'value="1" checked'; }?>></td>
+	<td><?=$venta['Venta']['id'];?></td>
+	<td><?=$venta['Venta']['id_externo'];?></td>
+	<td><?=$venta['Venta']['referencia'];?></td>
+	<td><label class="label label-<?=$venta['VentaEstado']['VentaEstadoCategoria']['estilo'];?>"><?=$venta['VentaEstado']['VentaEstadoCategoria']['nombre'];?></label></td>
+	<td><?=$venta['VentaCliente']['nombre'];?> <?=$venta['VentaCliente']['apellido'];?></td>
+	<td><?=$venta['Venta']['fecha_venta'];?></td>
+	<td><?=count($venta['OrdenCompra']);?></td>
+	<td><?=count($venta['VentaDetalle']);?></td>
+	<td><?=($venta['Venta']['prioritario']) ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'; ?></td>
 </tr>
 <? endforeach ?>		

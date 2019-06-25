@@ -21,6 +21,18 @@
 								<th><?= $this->Form->label('precio', 'Precio'); ?></th>
 								<td><?= $this->Form->input('precio', array('class' => 'form-control select')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('url_seguimiento', 'Url de seguimiento'); ?></th>
+								<td><?= $this->Form->input('url_seguimiento'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('tiempo_entrega', 'Tiempo aprox de entrega'); ?></th>
+								<td><?= $this->Form->input('tiempo_entrega'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
+								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
+							</tr>
 						</table>
 					</div>
 				</div>

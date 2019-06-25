@@ -868,6 +868,96 @@ class VentaDetalleProductosController extends AppController
 		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final'));
 	}
 
+	
+	/**
+	 * Modificar los precios especificos de cada prodcuto via ajax
+	 * @param 	$id 	ID del producto
+	 */
+	public function admin_modificar_precio_lista_especifico($id)
+	{	
+		$res = array(
+			'code' => 504,
+			'message' => 'Error inexplicable'
+		);
+		
+		if ( !$this->VentaDetalleProducto->exists($id) )
+		{
+			echo json_encode($res);
+			exit;
+		}
+
+		if ($this->request->is('post')) {
+			
+			$dataToSave = array(
+				'VentaDetalleProducto' => array(
+					'id' => $id
+				),
+				'PrecioEspecificoProducto' => $this->request->data['PrecioEspecificoProducto']
+			);
+			
+			$this->VentaDetalleProducto->PrecioEspecificoProducto->deleteAll(array('venta_detalle_producto_id' => $id));
+
+			if ($this->VentaDetalleProducto->saveAll($dataToSave)) {
+
+				$precios = $this->VentaDetalleProducto->PrecioEspecificoProducto->find('all', array(
+					'conditions' => array(
+						'PrecioEspecificoProducto.venta_detalle_producto_id' => $id
+					)
+				));
+
+				$precios_especificos = Hash::extract($precios, '{n}.PrecioEspecificoProducto');
+
+				$this->set(compact('precios_especificos'));
+
+				$vista = $this->render('../Elements/ordenCompras/crear_precio_costo_especifico_producto');
+				$html = $vista->body();
+
+				$res['code'] = 200;
+				$res['message'] = $html;
+			}
+		}
+
+		echo json_encode($res);
+		exit;
+	}
+
+
+	/**
+	 * Obtiene los descuentos de un producto
+	 * @param 	$id ID del producto
+	 */
+	public function admin_obtener_descuento_producto($id)
+	{
+		$res = array(
+			'code' => 504,
+			'message' => 'Error inexplicable',
+			'data' => array()
+		);
+		
+		if ( !$this->VentaDetalleProducto->exists($id) )
+		{
+			echo json_encode($res);
+			exit;
+		}
+
+		$producto = $this->VentaDetalleProducto->obtener_producto_por_id($id);
+		
+		$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($producto, true);
+		
+		$producto = array();
+
+		$producto['total_descuento']  = $descuentos['total_descuento'];
+		$producto['nombre_descuento'] = $descuentos['nombre_descuento'];
+		$producto['valor_descuento']  = $descuentos['valor_descuento'];
+
+		$res['code'] = 200;
+		$res['message'] = 'Descuento obtenidos con éxito';
+		$res['data'] = $producto;
+
+		echo json_encode($res);
+		exit;
+	}
+
 
 	public function admin_guardar_proveedores_producto()
 	{	
@@ -975,6 +1065,9 @@ class VentaDetalleProductosController extends AppController
 									array('PrecioEspecificoProducto.fecha_inicio <=' => date('Y-m-d')),
 									array('PrecioEspecificoProducto.fecha_termino >=' => date('Y-m-d')),
 								)
+							),
+							'AND' => array(
+								'PrecioEspecificoProducto.activo' => 1,
 							)
 						),
 						'order' => array(
@@ -998,7 +1091,7 @@ class VentaDetalleProductosController extends AppController
 						)
 					)
 				),
-				'limit' => 10
+				'limit' => 3
 			));
 
 			foreach ($productos as $i => $p) {
@@ -1018,6 +1111,16 @@ class VentaDetalleProductosController extends AppController
 				$respuesta[$key]['descuento'] 	 	= round($value['VentaDetalleProducto']['total_descuento']);
 				$respuesta[$key]['tipo_descuento'] 	= (int)0;
 				$respuesta[$key]['nombre_descuento'] = $value['VentaDetalleProducto']['nombre_descuento'];
+
+				$producto = $value['VentaDetalleProducto'];
+				$producto['PrecioEspecificoProducto'] = $value['PrecioEspecificoProducto'];
+				
+				$this->set(compact('producto'));
+
+				$vista = $this->render('../Elements/ordenCompras/modal-precio-especifico');
+				$html = $vista->body();
+				
+				$respuesta[$key]['html_modal'] = $html;
 
 			}
 		}

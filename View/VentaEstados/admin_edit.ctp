@@ -79,6 +79,13 @@
 									</td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('logistica', 'Usado para logistica'); ?></th>
+									<td>
+										<?= $this->Form->input('logistica', array('class' => 'icheckbox')); ?>
+										<span class="help-block">Identifica que será un estado de logistica.</span>
+									</td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('origen', 'Origen del estado'); ?></th>
 									<td>
 										<?= $this->Form->select('origen', $canales, array('empty' => 'Prestashop', 'class' => 'form-control')); ?>

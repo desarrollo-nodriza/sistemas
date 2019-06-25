@@ -110,4 +110,23 @@ class Transporte extends AppModel
 			'counterQuery'			=> ''
 		)
 	);
+
+	public $hasAndBelongsToMany = array(
+		'Venta' => array(
+			'className'				=> 'Venta',
+			'joinTable'				=> 'transportes_ventas',
+			'foreignKey'			=> 'transporte_id',
+			'associationForeignKey'	=> 'venta_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> '',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		)
+	);
 }

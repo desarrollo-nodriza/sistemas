@@ -13,7 +13,7 @@
 			        <li><a href="#tab-dtes" data-toggle="tab"><i class="fa fa-file"></i> Dte's</a></li>
 					<? endif; ?>
 			        <?php if (isset($venta['Envio'])) :  ?>
-			    		<li><a href="#tab-envio" data-toggle="tab"><i class="fa fa-truck"></i> Envio</a></li>
+			    		<li><a href="#tab-envio" data-toggle="tab"><i class="fa fa-truck"></i> Direcciones</a></li>
 			    	<?php endif; ?>
 			    </ul>
 
@@ -43,6 +43,10 @@
 											<tr>
 												<th>Estado</th>
 												<td><span data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$venta['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= $venta['VentaEstado']['VentaEstadoCategoria']['estilo']; ?>"><?= $venta['VentaEstado']['VentaEstadoCategoria']['nombre']; ?></span></td>
+											</tr>
+											<tr>
+												<th>Picking</th>
+												<td><span class="btn btn-xs btn" style="color: #fff; background-color: <?=ClassRegistry::init('Venta')->picking_estado[$venta['Venta']['picking_estado']]['color'];?>"><?=ClassRegistry::init('Venta')->picking_estado[$venta['Venta']['picking_estado']]['label'];?></span></td>
 											</tr>
 											<tr>
 												<th>Fecha</th>
@@ -100,6 +104,7 @@
 												<th>Precio Unitario <small>(Neto)</small></th>
 												<th>Precio Unitario <small>(Bruto)</small></th>
 												<th>Cantidad</th>
+												<th>Stock reservado</th>
 												<th>Subtotal</th>
 											</thead>
 											<tbody>
@@ -129,6 +134,9 @@
 															<?= $this->Form->input(sprintf('Detalle.%d.QtyItem', $indice), array('type' => 'hidden', 'value' => $detalle['cantidad'])); ?>
 														</td>
 														<td>
+															<?=$detalle['cantidad_reservada'];?>
+														</td>
+														<td>
 															<?= CakeNumber::currency($detalle['precio'] * $detalle['cantidad'], 'CLP'); ?>
 														</td>
 													</tr>
@@ -136,35 +144,130 @@
 											</tbody>
 											<tfoot>
 												<tr>
-													<th colspan="5" class="text-right">Total Productos</th>
+													<th colspan="6" class="text-right">Total Productos</th>
 													<td><?=CakeNumber::currency($TotalProductos, 'CLP');?></td>
 												</tr>
 												<tr>
-													<th colspan="5" class="text-right">IVA <small>(19%)</small></th>
+													<th colspan="6" class="text-right">IVA <small>(19%)</small></th>
 													<td><?=CakeNumber::currency(round($TotalProductos * 0.19), 'CLP');?></td>
 												</tr>
 												<tr>
-													<th colspan="5" class="text-right">Descuento</th>
+													<th colspan="6" class="text-right">Descuento</th>
 													<td>
 														<?php if (!empty($venta['Venta']['descuento'])) {echo CakeNumber::currency($venta['Venta']['descuento'], 'CLP');} ?>
 														<?= $this->Form->input('DscRcgGlobal.ValorDR', array('type' => 'hidden', 'value' => round($this->request->data['Venta']['descuento']))); ?>
 													</td>
 												</tr>
 												<tr>
-													<th colspan="5" class="text-right">Transporte</th>
+													<th colspan="6" class="text-right">Transporte</th>
 													<td>
 														<?=$this->Form->hidden('Dte.Transporte', array('value' => $venta['Venta']['costo_envio'] ));?>
 														<?php if (!empty($venta['Venta']['costo_envio'])) {echo CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP');} ?>
 													</td>
 												</tr>
 												<tr class="success">
-													<th colspan="5" class="text-right" style="font-size: 22px;">Total</th>
+													<th colspan="6" class="text-right" style="font-size: 22px;">Total</th>
 													<td style="font-size: 22px;"><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></td>
 												</tr>
 											</tfoot>
 										</table>
 									</div>
 								</div>
+							</div>	
+							
+							<!-- TRANSPORTISTAS -->
+							<?= $this->Form->create('Venta', array('url' => array('action' => 'registrar_seguimiento'), 'class' => 'form-horizontal js-validate-producto', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+							<div class="panel panel-info">
+								<div class="panel-heading">
+									<h5 class="panel-title"><i class="fa fa-truck" aria-hidden="true"></i> <?=__('Transportes');?></h5>
+									<ul class="panel-controls">
+				                        <li><a href="#" class="copy_tr"><span class="fa fa-plus"></span></a></li>
+				                    </ul>
+								</div>
+								<div class="panel-body">
+
+									<div class="table-responsive">
+										<table class="table table-bordered">
+											
+											<thead>
+												<tr>
+													<th><?=__('Transportista');?></th>
+													<th><?=__('N° de seguimiento');?></th>
+													<th><?=__('Plazo entrega aprox');?></th>
+													<th><?=__('Seguimiento');?></th>
+													<th><?=__('Acciones'); ?></th>
+												</tr>
+											</thead>
+											<tbody class="">
+												<tr class="hidden clone-tr">
+													<td><?=$this->Form->select('Transporte.999.transporte_id', $transportes, array('disabled' => true, 'empty' => 'Seleccione', 'class' => 'form-control not-blank js-select-transporte'))?></td>
+													<td><?=$this->Form->input('Transporte.999.cod_seguimiento', array('disabled' => true, 'class' => 'form-control not-blank', 'placeholder' => 'Ej: 9999999999'));?></td>
+													<td><span class="js-fecha-entrega">Seleccione tranporte</span></td>
+													<td><span class="js-btn-seguimiento">Seleccione tranporte</span></td>
+													<td valign="center"><button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button></td>
+												</tr>
+
+												<? if (!empty($venta['Transporte'])) : ?>
+													<? foreach ($venta['Transporte'] as $it => $transporte) : ?>
+														<tr>
+															<td><?=$this->Form->select(sprintf('Transporte.%d.transporte_id', $it), $transportes, array('empty' => 'Seleccione', 'class' => 'form-control not-blank js-select-transporte', 'default' => $transporte['id']))?></td>
+															<td><?=$this->Form->input(sprintf('Transporte.%d.cod_seguimiento', $it), array('value' => $transporte['TransportesVenta']['cod_seguimiento'], 'class' => 'form-control not-blank', 'placeholder' => 'Ej: 9999999999'));?></td>
+															<td><span class="js-fecha-entrega"><?=$transporte['tiempo_entrega']; ?></span></td>
+															<td><span class="js-btn-seguimiento"><?=$transporte['url_seguimiento']; ?></td>
+															<td valign="center">
+																<button class="remove_tr btn-danger js-remove-seguimiento" data-id="<?=$transporte['TransportesVenta']['id'];?>"><i class="fa fa-minus"></i></button>
+															</td>
+														</tr>
+													<? endforeach; ?>
+												<? endif; ?>
+
+											</tbody>
+										</table>
+									</div>
+								</div>
+								<div class="panel-footer">
+									<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar">
+								</div>
+							</div>
+							<?= $this->Form->end(); ?>
+							<!-- / TRANSPORTISTA -->
+
+
+							<!-- MENSAJES -->
+
+							<div class="panel panel-info">
+								<div class="panel-body">
+									<h4><i class="fa fa-envelope" aria-hidden="true"></i> <?= __('Mensajes de la venta');?></h4>
+								</div>
+								<ul class="panel-body list-group messages-dte-box">
+								<? 
+								if (!empty($venta['VentaMensaje'])) :
+									
+									foreach ($venta['VentaMensaje'] as $mensaje) : ?>
+									<li class="list-group-item">
+										<span class="message-subject">
+											<?= (!empty($mensaje['asunto'])) ? $mensaje['asunto'] : 'Sin Asunto'; ?>
+										</span>
+										<span class="message-message">
+											<?= $mensaje['mensaje']; ?>
+										</span>
+										<span class="message-date">
+											<?= $mensaje['fecha']; ?>
+										</span>
+									</li>
+									<?
+									endforeach;
+								else : ?>
+									
+									<li class="list-group-item text-mutted">
+										<?= __('No registra mensajes.'); ?>
+									</li>
+
+								<?	
+								endif; ?>
+
+								</ul>  
+								
 							</div>
 
 						</div> <!-- end col -->
@@ -256,44 +359,6 @@
 									<li class="list-group-item"><span class="fa fa-map-marker"></span> <?= (!empty($venta['Venta']['comuna_entrega'])) ? $venta['Venta']['comuna_entrega'] : 'No especificado'; ?></li>
 
 								</ul>                            
-							</div>
-
-
-							<!-- MENSAJES -->
-
-							<div class="panel panel-default">
-								<div class="panel-body">
-									<h4><i class="fa fa-envelope" aria-hidden="true"></i> <?= __('Mensajes de la venta');?></h4>
-								</div>
-								<ul class="panel-body list-group messages-dte-box">
-								<? 
-								if (!empty($venta['VentaMensaje'])) :
-
-									foreach ($venta['VentaMensaje'] as $mensaje) : ?>
-									<li class="list-group-item">
-										<span class="message-subject">
-											<?= (!empty($mensaje['asunto'])) ? $mensaje['asunto'] : 'Sin Asunto'; ?>
-										</span>
-										<span class="message-message">
-											<?= $mensaje['mensaje']; ?>
-										</span>
-										<span class="message-date">
-											<?= $mensaje['fecha']; ?>
-										</span>
-									</li>
-									<?
-									endforeach;
-								else : ?>
-									
-									<li class="list-group-item text-mutted">
-										<?= __('No registra mensajes.'); ?>
-									</li>
-
-								<?	
-								endif; ?>
-
-								</ul>  
-								
 							</div>
 
 						</div>
@@ -652,6 +717,7 @@
 
 				<div class="panel-footer">
 					<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Actualizar Estado">
+					<?=$this->Html->link('<i class="fa fa-send"></i> Re-enviar email', array('controller' => 'ventas', 'action' => 'enviar_email_estado', $venta['Venta']['id']), array('class' => 'btn btn-success', 'escape' => false) );?>
 				</div>
 				<?= $this->Form->end(); ?>
 			</div>
@@ -687,6 +753,36 @@
 </div>
 <!-- END MESSAGE BOX-->
 
+<!-- Modal seguimiento -->
+<div class="modal fade" id="modalRegistrarSeguimiento" tabindex="-1" role="dialog" aria-labelledby="modalRegistrarSeguimiento">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+    	<?= $this->Form->create('Venta', array('url' => array('action' => 'registrar_seguimiento'), 'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+    	<?= $this->Form->hidden('created', array('value' => date('Y-m-d H:i:s')));?>
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        <h4 class="modal-title" id="modalRegistrarSeguimiento"><i class="fa fa-truck"></i> Registrar seguimiento</h4>
+	      </div>
+	      
+	      <div class="modal-body">
+	      	<div class="form-group col-xs-12">
+	      		<?=$this->Form->label('transporte_id', 'Transportista');?>
+				<?=$this->Form->select('transporte_id', $transportes, array('empty' => 'Seleccione', 'class' => 'form-control not-blank')); ?>
+	      	</div>
+	      	<div class="form-group col-xs-12">
+	      		<?=$this->Form->label('cod_seguimiento', 'N° Seguimiento');?>
+				<?=$this->Form->input('cod_seguimiento', array('placeholder' => 'Ej: 1113411121212', 'class' => 'form-control not-blank')); ?>
+	      	</div>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="submit" class="btn btn-primary">Guardar</button>
+	        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+	      </div>
+      	<?= $this->Form->end(); ?>
+    </div>
+  </div>
+</div>
+<!-- Fin modal seguimiento -->
 
 <!-- Modal -->
 <? if (!empty($venta['VentaExterna']['curriers'])) : ?>

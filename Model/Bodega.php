@@ -256,10 +256,6 @@ class Bodega extends AppModel
 			return false;
 		}
 
-		if ($precio_costo <= 0) {
-			return false;
-		}
-
 		# Bodega principal
 		if (empty($bodega_id)) {
 			$bodega_id = ClassRegistry::init('Bodega')->find('first', array('conditions' => array('Bodega.principal' => 1), 'limit' => 1, 'fields' => array('Bodega.id')))['Bodega']['id'];
@@ -301,6 +297,10 @@ class Bodega extends AppModel
 	 */
 	public function crearSalidaBodega($id_producto, $bodega_id = null, $cantidad, $tipo)
 	{	
+		if ($cantidad <= 0) {
+			return false;
+		}
+		
 		$valor = $this->obtener_pmp_por_id($id_producto);
 
 		# Bodega principal

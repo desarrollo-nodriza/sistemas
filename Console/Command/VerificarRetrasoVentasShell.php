@@ -50,29 +50,7 @@ class VerificarRetrasoVentasShell extends AppShell {
 		));
 		
 		$ventasNotificar = array();
-		$emailsNotificar = array();
-
-		$admins = ClassRegistry::init('Administrador')->find('all', array(
-			'conditions' => array(
-				'Administrador.activo' => 1
-			),
-			'fields' => array(
-				'Administrador.email',
-				'Administrador.notificaciones'
-			)
-		));
-
-
-		// Obtenemos a los administradores que tiene activa la notificación de ventas
-		foreach ($admins as $ia => $admin) {
-			if (!empty($admin['Administrador']['notificaciones'])) {
-				$confNotificacion = json_decode($admin['Administrador']['notificaciones'], true);
-				
-				if ( array_key_exists('ventas', $confNotificacion) && $confNotificacion['ventas'] ) {
-					$emailsNotificar[] = $admin['Administrador']['email'];
-				}
-			}
-		}
+		$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('ventas');
 
 		$controller = new AppController();
 

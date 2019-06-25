@@ -2,7 +2,7 @@
 /**
  * Crea un nuevo documento Excel
  */
-$this->PhpExcel->createWorksheet();
+$this->PhpSpreadsheet->createWorksheet();
 
 /**
  * Escribe las cabeceras
@@ -16,7 +16,7 @@ foreach ($campos as $campo) {
 	array_push($cabeceras, array_merge(array('label' => Inflector::humanize($campo)), $opciones));
 }
 
-$this->PhpExcel->addTableHeader($cabeceras, array('bold' => true));
+$this->PhpSpreadsheet->addTableHeader($cabeceras, array('bold' => true));
 
 /**
  * Escribe los datos
@@ -67,7 +67,7 @@ foreach ($datos as $dato) {
 		}
 	}
 
-	$this->PhpExcel->addTableRow(
+	$this->PhpSpreadsheet->addTableRow(
 		array(
 			$dato['Venta']['id'],
 			$dato['Venta']['id_externo'],
@@ -88,5 +88,5 @@ foreach ($datos as $dato) {
 /**
  * Cierra la tabla y crea el archivo
  */
-$this->PhpExcel->addTableFooter();
-$this->PhpExcel->output(sprintf('listado-de-ventas%s.xls', date('Y-m-d_H-i-s')));
+$this->PhpSpreadsheet->addTableFooter();
+$this->PhpSpreadsheet->output(sprintf('listado-de-ventas%s.xlsx', date('Y-m-d_H-i-s')));

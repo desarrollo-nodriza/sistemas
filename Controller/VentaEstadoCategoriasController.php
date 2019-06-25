@@ -7,9 +7,6 @@ class VentaEstadoCategoriasController extends AppController
 
 		$this->paginate = array(
 			'recursive' => 0,
-			'contain' => array(
-				'VentaEstadoCategoriaCategoria'
-			),
 			'sort' => 'VentaEstadoCategoria.nombre',
 			'direction' => 'ASC'
 		);
@@ -31,7 +28,13 @@ class VentaEstadoCategoriasController extends AppController
 		}
 
 		if ( $this->request->is('post') || $this->request->is('put') )
-		{
+		{	
+			$this->VentaEstadoCategoria->final_unico($this->request->data);
+
+			if (!$this->VentaEstadoCategoria->aceptado_rechazo($this->request->data)) {
+				$this->Session->setFlash('Un estado no puede ser venta y rechazo a la vez.', null, array(), 'danger');
+				$this->redirect(array('action' => 'edit', $id));
+			}
 
 			if ( $this->VentaEstadoCategoria->save($this->request->data) )
 			{
@@ -90,7 +93,14 @@ class VentaEstadoCategoriasController extends AppController
 	public function admin_add()
 	{
 		if ( $this->request->is('post') || $this->request->is('put') )
-		{
+		{	
+			$this->VentaEstadoCategoria->final_unico($this->request->data);
+
+			if (!$this->VentaEstadoCategoria->aceptado_rechazo($this->request->data)) {
+				$this->Session->setFlash('Un estado no puede ser venta y rechazo a la vez.', null, array(), 'danger');
+				$this->redirect(array('action' => 'add'));
+			}
+
 			$this->VentaEstadoCategoria->create();
 			if ( $this->VentaEstadoCategoria->save($this->request->data) )
 			{

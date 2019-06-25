@@ -52,11 +52,11 @@
 										<th>ID EXTERNO</th>
 										<th>REFERENCIA</th>
 										<th>ESTADO</th>
-										<th>TOTAL</th>
 										<th>CLIENTE</th>
 										<th>CREADA</th>
 										<th>OC</th>
 										<th>ITEMS</th>
+										<th>PRIORITARIA</th>
 									</thead>
 									<tbody>
 									</tbody>

@@ -4,10 +4,10 @@
 
 <?= $this->Form->create('OrdenCompra', array('class' => 'form-horizontal form-pay', 'data-oc' => $ocs['OrdenCompra']['id'] , 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 
+	<?=$this->Form->hidden('fecha_pagado', array('value' => date('Y-m-d H:i:s')));?>
 	<?=$this->Form->hidden('descuento', array('value' => $ocs['OrdenCompra']['descuento']));?>
 	<?=$this->Form->hidden('descuento_monto', array('value' => $ocs['OrdenCompra']['descuento_monto']));?>
 	<?=$this->Form->hidden('total', array('value' => $ocs['OrdenCompra']['total']));?>
-
 
 <div class="page-content-wrap">
 	
@@ -95,11 +95,11 @@
 							<h2>Monto a pagar sin descuentos: <?=CakeNumber::currency($ocs['OrdenCompra']['total'] , 'CLP');?></h2>
 						</div>
 						<div class="col-xs-12 form-group input-group-lg text-center">
-                            <h3>Forma de pago</h3>
+                            <h3>Seleccione forma de pago</h3>
                             <?= $this->Form->input('moneda_id', array('class' => 'form-control js-select-moneda', 'empty' => 'Seleccione', 'default' => $ocs['OrdenCompra']['moneda_id'] )); ?>
 						</div>
 						<div class="col-xs-12 form-group">
-							<button type="button" class="btn btn-primary btn-block btn-lg btn-calcular-precio"><i class="fa fa-money"></i> CONTINUAR</button>
+							<button type="button" class="btn btn-primary btn-block btn-lg btn-calcular-precio"><i class="fa fa-money"></i> Calcular total y adjuntar documento</button>
 						</div>
 						<div class="col-xs-12 text-center form-group">
 							<?= $this->Html->link('Volver', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
@@ -159,9 +159,22 @@
 		        <?=$this->Form->input('comentario_finanza', array('class' => 'form-control', 'placeholder' => 'Ingrese texto...')); ?>
 	    	</div>
 	    </div>
+
+		<div class="form-group">
+			<?=$this->Form->label('email_contacto_empresa', 'Se enviará la OC a los siguientes destinatarios:');?>
+			<ul>
+				<? foreach ($ocs['Proveedor']['meta_emails'] as $i => $email) : ?>
+				<? if ($email['activo']) : ?>
+					<li><b><?=$email['email']; ?></b> (<?=$email['tipo']?>)</li>
+					<?=$this->Form->hidden(sprintf('email_contacto_empresa.%d.email', $i), array('value' => $email['email'])); ?>
+					<?=$this->Form->hidden(sprintf('email_contacto_empresa.%d.tipo', $i), array('value' => $email['tipo'])); ?>
+				<? endif; ?>
+				<? endforeach; ?>
+			</ul>
+		</div>
       </div>
       <div class="modal-footer">
-        <button type="submit" class="btn btn-success esperar-carga" autocomplete="off" data-loading-text="Espera un momento..."><i class="fa fa-check"></i> Pagar OC</button>
+        <button type="submit" class="btn btn-success esperar-carga" autocomplete="off" data-loading-text="Espera un momento..."><i class="fa fa-check"></i> Pagar y enviar a Proveedor</button>
         <!--<button type="submit" class="btn btn-danger reject-button"><i class="fa fa-ban"></i> Rechazar OC</button>-->
       </div>
     </div>

@@ -116,20 +116,76 @@ class VentaDetalleProducto extends AppModel
 	);
 
 
-	public function obtener_cantidad_reservada($id)
+	public function obtener_producto_por_id($id = null)
+	{
+		return $this->find('first', array(
+			'conditions' => array(
+				'VentaDetalleProducto.id' => $id
+			),
+			'contain' => array(
+				'PrecioEspecificoProducto' => array(
+					'conditions' => array(
+						'OR' => array(
+							'PrecioEspecificoProducto.descuento_infinito' => 1,
+							'AND' => array(
+								array('PrecioEspecificoProducto.fecha_inicio <=' => date('Y-m-d')),
+								array('PrecioEspecificoProducto.fecha_termino >=' => date('Y-m-d')),
+							)
+						)
+					),
+					'order' => array(
+						'PrecioEspecificoProducto.id' => 'DESC'
+					)
+				),
+				'Marca' => array(
+					'PrecioEspecificoMarca' => array(
+						'conditions' => array(
+							'OR' => array(
+								'PrecioEspecificoMarca.descuento_infinito' => 1,
+								'AND' => array(
+									array('PrecioEspecificoMarca.fecha_inicio <=' => date('Y-m-d')),
+									array('PrecioEspecificoMarca.fecha_termino >=' => date('Y-m-d')),
+								)
+							)
+						),
+						'order' => array(
+							'PrecioEspecificoMarca.id' => 'DESC'
+						)
+					)
+				)
+			)
+		));
+	}
+
+
+	/**
+	 * [obtener_cantidad_reservada description]
+	 * @param  [type] $id       [description]
+	 * @param  [type] $id_venta [description]
+	 * @return [type]           [description]
+	 */
+	public function obtener_cantidad_reservada($id, $id_venta = null)
 	{
 
-		$vendidos = ClassRegistry::init('VentaDetalle')->find('all', array(
+		$qry = array(
 			'conditions' => array(
 				'VentaDetalle.venta_detalle_producto_id' => $id,
 				'VentaDetalle.completo' => 0,
 				'VentaDetalle.created >' => '2019-05-28 18:00:00' 
 			),
 			'fields' => array(
-				'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_reservada'
+				'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.venta_id', 'VentaDetalle.id'
 			)
-		));
+		);
 
+		if (!empty($id_venta)) {
+			$qry = array_replace_recursive($qry, array('conditions' => array(
+				'VentaDetalle.venta_id' => $id_venta
+			)));
+		}
+		
+		$vendidos = ClassRegistry::init('VentaDetalle')->find('all', $qry);
+		
 		if (empty($vendidos)) {
 			return 0;
 		}
@@ -159,13 +215,17 @@ class VentaDetalleProducto extends AppModel
 		}
 
 		$descuentosMarcaCompuestos  = Hash::extract($producto, 'Marca.PrecioEspecificoMarca.{n}[descuento_compuesto=1]');
+		$descuentosMarcaCompuestos  = Hash::extract($descuentosMarcaCompuestos, '{n}[activo=1]');
 		$descuentosMarcaEspecificos = Hash::extract($producto, 'Marca.PrecioEspecificoMarca.{n}[descuento_compuesto=0]');
-		$descuentosMarca 			= Hash::extract($producto, 'Marca.PrecioEspecificoMarca.{n}');
+		$descuentosMarcaEspecificos = Hash::extract($descuentosMarcaEspecificos, '{n}[activo=1]');
+		$descuentosMarca 			= Hash::extract($producto, 'Marca.PrecioEspecificoMarca.{n}[activo=1]');
 
 		$descuentosProductoCompuestos   = Hash::extract($producto, 'PrecioEspecificoProducto.{n}[descuento_compuesto=1]');
+		$descuentosProductoCompuestos   = Hash::extract($descuentosProductoCompuestos, '{n}[activo=1]');
 		$descuentosProductosEspecificos = Hash::extract($producto, 'PrecioEspecificoProducto.{n}[descuento_compuesto=0]');
-		$descuentosProducto             = Hash::extract($producto, 'PrecioEspecificoProducto.{n}');
-
+		$descuentosProductosEspecificos = Hash::extract($descuentosProductosEspecificos, '{n}[activo=1]');
+		$descuentosProducto             = Hash::extract($producto, 'PrecioEspecificoProducto.{n}[activo=1]');
+		
 		$descuentosCompuestos = Hash::format(array_merge($descuentosMarcaCompuestos, $descuentosProductoCompuestos), array('{n}.descuento'), '%1d');
 		$descCompuesto        = 0;
 
@@ -199,16 +259,16 @@ class VentaDetalleProducto extends AppModel
 			}
 
 		}
-
+	
 		# Descuento producto
 		if ( !empty($descuentosProducto) ) {
 
 			if ($descuentosProducto[0]['descuento_compuesto']) {
-
+				
 				if ($descCompuesto > 0) {
 					$respuesta['total_descuento']  = $precio_lista * $descCompuesto;	
 				}else{
-
+					
 					$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $producto['Marca']['descuento_base']);
 					
 					$respuesta['total_descuento']  = $precio_lista * $descCompuesto;
@@ -225,7 +285,7 @@ class VentaDetalleProducto extends AppModel
 					$respuesta['valor_descuento'] = $producto['PrecioEspecificoProducto'][0]['descuento'];
 				}else{
 					$respuesta['total_descuento'] = $producto['PrecioEspecificoProducto'][0]['descuento']; // Primer descuento
-					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['PrecioEspecificoProducto'][0]['nombre'] . ': $ ' . CakeNumber::currency($producto['PrecioEspecificoProducto'][0]['descuento'] , 'CLP');
+					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['PrecioEspecificoProducto'][0]['nombre'] . ': ' . CakeNumber::currency($producto['PrecioEspecificoProducto'][0]['descuento'] , 'CLP');
 					$respuesta['valor_descuento'] = $producto['PrecioEspecificoProducto'][0]['descuento'];
 				}
 

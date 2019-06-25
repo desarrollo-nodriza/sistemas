@@ -25,4 +25,33 @@ class VentaEstadoCategoria extends AppModel
 			'counterQuery'			=> ''
 		)
 	);
+
+
+	public function final_unico($data = array())
+	{
+		if ($data['VentaEstadoCategoria']['final']) {
+			$estados = $this->find('all', array(
+				'conditions' => array(
+					'VentaEstadoCategoria.final' => 1
+				)
+			));
+
+			foreach ($estados as $ie => $e) {
+				$estados[$ie]['VentaEstadoCategoria']['final'] = 0;
+			}
+			$this->saveMany($estados, array('callbacks' => false));
+		}
+
+		return;
+	}
+
+
+
+	public function aceptado_rechazo($data = array())
+	{	
+		if ($data['VentaEstadoCategoria']['rechazo'] && $data['VentaEstadoCategoria']['rechazo']) {
+			return false;		
+		}
+		return true;
+	}
 }

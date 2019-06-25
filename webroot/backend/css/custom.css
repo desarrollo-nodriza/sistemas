@@ -89,7 +89,7 @@
     right: 0;
     left: 0;
     bottom: 0;
-    z-index: 100;
+    z-index: 100000;
 }
 
 .loader > .fa {
@@ -302,15 +302,15 @@ tfoot > tr > td, tfoot > tr:first-child > td {
     color: red;
 }
 
-.duplicate_tr, .remove_tr {
-    width: 20px;
-    height: 20px;
-    line-height: 20px;
+.duplicate_tr, .remove_tr, .habilitar-fila, .btn-modificar-precio-especifico {
+    width: 23px;
+    height: 23px;
+    line-height: 23px;
     text-align: center;
     color: #fff;
     border-radius: 50%;
     border: none;
-    font-size: 5px;
+    font-size: 8px;
 }
 
 .duplicate_tr:hover, .remove_tr:hover {
@@ -364,4 +364,134 @@ tfoot > tr > td, tfoot > tr:first-child > td {
 .label-verde:active, .btn-verde:active {
     background-color: #097705;
     color: #fff;
+}
+
+.mb-1 {
+    margin-bottom: 2px;
+}
+
+.mt-5 {
+    margin-top: 5px;
+}
+
+.mb-5 {
+    margin-bottom: 5px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.divider {
+    background-color: #C1C1C1;
+    height: 1px;
+    display: block;
+    margin: 0 0 20px;
+    float: left;
+    width: 100%;
+}
+
+.venta-prioritaria {
+    border: 1px solid #B64645;
+}
+
+.venta-prioritaria h3 {
+    color: #B64645;
+}
+
+.btn-circulo {
+    border-radius: 50%;
+    text-align: center;
+    line-height: initial;
+    height: 30px;
+    display: inline-block;
+    width: 30px;
+    line-height: 30px;
+    padding: 0 !important;
+    margin: 0;
+}
+
+.btn-circulo > i {
+    margin: 0 !important;
+}
+
+.qr-code {
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+}
+
+.task-text {
+    margin-bottom: 0 !important;
+}
+
+.task-text .table {
+    margin-bottom: 0;
+    font-size: 11px;
+}
+
+.tasks .task-item .task-footer a{
+    color: #fff;
+    font-size: 10px;
+    margin-left: 0;
+}
+
+.tasks .task-item .task-footer a:hover {
+    color: #fff;
+}
+
+.dark-modal .modal-backdrop {
+    background-color: rgba(0,0,0,0.93);
+    opacity: 1;
+}
+
+.tr-prioritario {
+    position: relative;
+}
+
+.prioritario-btn {
+    content: "\f0a2";
+    width: 25px;
+    position: absolute;
+    top: 5px;
+    height: 25px;
+    background-color: #e04d4d;
+    left: 3px;
+    color: #fff;
+    font-size: 17px;
+    border-radius: 50%;
+    font-family: Fontawesome;
+    line-height: 25px;
+    text-align: center;
+    bottom: auto;
+    cursor: help;
+    -webkit-animation-name: shake;
+    animation-name: shake;
+    -webkit-animation-iteration-count: infinite;
+    animation-iteration-count: infinite;
+}
+
+.task-item.no-move {
+    display: none;
+}
+
+.task-item.no-move::before {
+    content: "En preparación";
+    background: rgba(255,255,255, 0.9);
+    position: absolute;
+    top: 0;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    font-size: 200%;
+    color: #868686;
+    height: auto;
+    text-align: center;
+    vertical-align: middle;
+    padding: 40% 0;
+    cursor: not-allowed;
 }

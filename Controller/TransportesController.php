@@ -93,4 +93,111 @@ class TransportesController extends AppController
 
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}
+
+
+	/**
+	 * [obtener_transporte description]
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function admin_obtener_transporte($id)
+	{
+		if ( ! $this->Transporte->exists($id) )
+		{
+			$result = array(
+				'code'    => 404,
+				'message' => 'Transporte no encontrado',
+				'data'    => array()
+			);
+
+			echo json_encode($result);
+			exit;
+		}
+
+		$transporte = $this->Transporte->find('first', array(
+			'conditions' => array(
+				'Transporte.id' => $id
+			)
+		));
+
+		$result = array(
+			'code'    => 200,
+			'message' => 'Transporte obtenido con éxito',
+			'data'    => $transporte['Transporte']
+		);
+
+		echo json_encode($result);
+		exit;
+	}
+
+
+	public function admin_quitar_transporte()
+	{	
+		$res = array(
+			'code' => 500,
+			'message' => 'Error inexplicable'
+		);
+
+		if ($this->request->is('post')) {
+			if(ClassRegistry::init('TransportesVenta')->delete($this->request->data['id'])){
+				$res['code'] = 200;
+				$res['message'] = 'Registro eliminado con éxito.';
+			}else{
+				$res['code'] = 501;
+				$res['message'] = 'Error al elimnar el registro.';
+			}			
+		}
+
+		echo json_encode($res);
+		exit;
+	}
+
+
+
+	/**
+	 * [api_obtener_transportes description]
+	 * @return [type] [description]
+	 */
+	public function api_obtener_transportes()
+	{	
+		# Sólo método Get
+		if (!$this->request->is('get')) {
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Only GET request allow'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$transportistas = $this->Transporte->find('list', array('conditions' => array('activo' => 1)));
+
+		$this->set(array(
+            'response' => $transportistas,
+            '_serialize' => array('response')
+        ));
+
+	}
+
 }

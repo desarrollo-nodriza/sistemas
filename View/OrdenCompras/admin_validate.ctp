@@ -269,6 +269,12 @@
 							</table>
 						</div>
 					</div>
+					<div class="panel-body">
+						<div class="form-group">
+							<?= $this->Form->label(sprintf('%d.OrdenCompra.mensaje_final', $ip), 'Mensaje para el proveedor');?>
+							<?= $this->Form->input(sprintf('%d.OrdenCompra.mensaje_final', $ip), array('value' => sprintf('Estimado/a %s se envía adjunto la orden de compra y su comprobante de pago.', $p['Proveedor']['nombre_encargado']))); ?>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -286,7 +292,7 @@
 			<div class="col-xs-12">
 				<div class="pull-right">
 					<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Enviar a revisión">
-					<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					<?= $this->Html->link('Cancelar', array('action' => 'index_no_procesadas'), array('class' => 'btn btn-danger')); ?>
 				</div>
 			</div>
 		</div>

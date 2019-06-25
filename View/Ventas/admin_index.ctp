@@ -189,7 +189,7 @@
 									<th><?= $this->Paginator->sort('total', 'Total', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th style="width: 120px"><?= $this->Paginator->sort('medio_pago_id', 'Medio de Pago', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('venta_estado_categoria_id', 'Estado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<!--<th><?= $this->Paginator->sort('tienda_id', 'Tienda', array('title' => 'Haz click para ordenar por este criterio')); ?></th>-->
+									<th><?= $this->Paginator->sort('picking_estado', 'Picking', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('marketplace_id', 'Marketplace', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th style="width: 120px"><?= $this->Paginator->sort('cliente_id', 'Cliente', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('Dte.id', 'Dtes', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -204,7 +204,7 @@
 
 								<?php foreach ( $ventas as $ix => $venta ) : ?>
 
-									<tr>
+									<tr class="<?=($venta['Venta']['prioritario']) ? 'tr-prioritario' : ''; ?>">
 
 										<td><input type="checkbox" class="facturacion_masiva" name="data[Venta][<?=$ix;?>][id]" value="<?=$venta['Venta']['id'];?>" data-id="<?=$venta['Venta']['id'];?>" <?= (count(Hash::extract($venta['Dte'], '{n}[estado=dte_real_emitido].id')) > 0 || !$venta['VentaEstado']['permitir_dte']) ? 'disabled="disabled"' : '' ; ?>  > </td>
 
@@ -243,6 +243,10 @@
 
 										<td>
 											<a data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$venta['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= h($venta['VentaEstado']['VentaEstadoCategoria']['estilo']); ?>"><?= h($venta['VentaEstado']['VentaEstadoCategoria']['nombre']); ?></a>&nbsp;
+										</td>
+										
+										<td>
+											<span class="btn btn-xs btn" style="color: #fff; background-color: <?=ClassRegistry::init('Venta')->picking_estado[$venta['Venta']['picking_estado']]['color'];?>"><?=ClassRegistry::init('Venta')->picking_estado[$venta['Venta']['picking_estado']]['label'];?></span>
 										</td>
 
 										<!--<td><?= h($venta['Tienda']['nombre']); ?>&nbsp;</td>-->
@@ -293,10 +297,26 @@
 
 												<? endif; ?>
 
+												<? if (!empty($venta['VentaEstado']) && $venta['VentaEstado']['notificacion_cliente']) : ?>
+
+												<?=$this->Html->link('<i class="fa fa-send"></i> Re-enviar email', array('controller' => 'ventas', 'action' => 'enviar_email_estado', $venta['Venta']['id']), array('class' => 'btn btn-success btn-xs btn-block', 'escape' => false) );?>
+
+												<? endif; ?>
+
+												<? if (!$venta['Venta']['prioritario']) : ?>
+												<?= $this->Form->postLink('<i class="fa fa-check"></i> Marcar como prioritaria', array('action' => 'marcar_prioritaria', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-primary btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
+												<? else : ?>
+
+													<div class="prioritario-btn" data-toggle="tooltip" data-placement="top" title="" data-original-title="Prioritario">
+														<i class="fa fa-exclamation" aria-hidden="true"></i>
+													</div>
+
+												<?= $this->Form->postLink('<i class="fa fa-remove"></i> Marcar no prioritaria', array('action' => 'marcar_no_prioritaria', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-default btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
+												<? endif; ?>
 												<?php
 													
 													if ($venta['Venta']['atendida']) {
-														echo $this->Form->postLink('<i class="fa fa-remove"></i> Marcar como No Atendida', array('action' => 'marcar_no_atendida', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-danger btn-block', 'rel' => 'tooltip', 'title' => 'Marcar Venta como No Atendida', 'escape' => false));
+														echo $this->Form->postLink('<i class="fa fa-remove"></i> Marcar como No Atendida', array('action' => 'marcar_no_atendida', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-danger btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Marcar Venta como No Atendida', 'escape' => false));
 													}
 													else {
 														#echo $this->Form->postLink('<i class="fa fa-check"></i> Marcar como Atendida', array('action' => 'marcar_atendida', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-success btn-block', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Atendida', 'escape' => false));

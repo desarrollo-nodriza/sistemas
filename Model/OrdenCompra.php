@@ -7,6 +7,18 @@ class OrdenCompra extends AppModel
 	 */
 	public $displayField	= 'created';
 
+
+	public $estados = array(
+		''           => 'No rocesada',
+		'iniciado'   => 'En revisión',
+		'validado'   => 'En proceso de pago',
+		'pagado'     => 'Pagado',
+		'enviado'    => 'Enviado',
+		'incompleto' => 'Recibido incompleto',
+		'recibido'   => 'Finalizado'
+	);
+
+
 	/**
 	 * BEHAVIORS
 	 */
@@ -132,14 +144,58 @@ class OrdenCompra extends AppModel
 
 	public function afterFind($results, $primary = false) {
 
-
 		# Convertimos meta dtes en un "Modelo"
 		foreach ($results as $key => $val) {
-
 	        if (isset($val['OrdenCompra']['meta_dtes'])) {
 	            $results[$key]['OrdenCompra']['meta_dtes'] = json_decode($results[$key]['OrdenCompra']['meta_dtes'], true);
 	        }
 	    }
 	    return $results;
+	}
+
+
+	public function obtener_metricas()
+	{
+		$ocs = $this->find('all', array(
+			'conditions' => array(
+				'OrdenCompra.parent_id !=' => null,
+				'OrdenCompra.fecha_recibido !=' => null
+			),
+			'fields' => array(
+				'OrdenCompra.created',
+				'OrdenCompra.fecha_enviado',
+				'OrdenCompra.fecha_recibido'
+			)
+		));
+
+		$avg = array();
+		foreach ($ocs as $key => $value) {
+			$f_creacion  = date_create($value['OrdenCompra']['created']);
+			$f_recepcion = date_create($value['OrdenCompra']['fecha_recibido']);
+			$f_enviado   = date_create($value['OrdenCompra']['fecha_enviado']);
+
+			$diferencia1 = date_diff($f_creacion, $f_recepcion);
+			$diferencia2 = date_diff($f_enviado, $f_recepcion);
+			$diferencia3 = date_diff($f_creacion, $f_enviado);
+
+			$avg[$key]['creado_recibido']['dias']   = $diferencia1->days;
+			$avg[$key]['creado_recibido']['horas']  = $diferencia1->h;
+			$avg[$key]['enviado_recibido']['dias']  = $diferencia2->days;
+			$avg[$key]['enviado_recibido']['horas'] = $diferencia2->h;
+			$avg[$key]['creado_enviado']['dias']    = $diferencia3->days;
+			$avg[$key]['creado_enviado']['horas']   = $diferencia3->h;
+		}	
+
+		$promedio_creado_recibido  = (array_sum(Hash::extract($avg, '{n}.creado_recibido.dias')) / count($avg));
+		$promedio_enviado_recibido = (array_sum(Hash::extract($avg, '{n}.enviado_recibido.dias')) / count($avg));
+		$promedio_creado_enviado   = (array_sum(Hash::extract($avg, '{n}.creado_enviado.dias')) / count($avg));
+		
+		return array(
+			'tiempo_promedio' => array(
+				'creado_recibido'  => $promedio_creado_recibido,
+				'enviado_recibido' => $promedio_enviado_recibido,
+				'creado_enviado'   => $promedio_creado_enviado
+			)
+		);
 	}
 }

@@ -47,6 +47,7 @@
 			'/backend/js/plugins/jquery.rut.min',
 			'/backend/js/plugins/summernote/summernote',
 			'/backend/js/plugins/currencyFormatter.min',
+			'/backend/js/plugins/mcustomscrollbar/jquery.mCustomScrollbar.min',
 			'/backend/js/plugins/mask.min',
 			'/backend/js/custom',
 			'/backend/js/dashboard',
@@ -92,7 +93,7 @@
 		<?= $this->fetch('script'); ?>
 	</head>
 	<body>
-        <div class="page-container">
+        <div class="page-container page-navigation-toggled">
 			<?= $this->element('admin_menu_lateral'); ?>
             <div class="page-content">
                 <?= $this->element('admin_menu_superior'); ?>

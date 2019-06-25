@@ -29,6 +29,20 @@
 									</td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('rechazo', '¿Es Venta rechazada?'); ?></th>
+									<td>
+										<?= $this->Form->input('rechazo', array('class' => 'icheckbox')); ?>
+										<span class="help-block">Las ventas que tengan ésta categoria se marcarán como una venta cancelada o rechazada.</span>
+									</td>
+								</tr>
+								<tr>
+									<th><?= $this->Form->label('final', 'Estado final'); ?></th>
+									<td>
+										<?= $this->Form->input('final', array('class' => 'icheckbox')); ?>
+										<span class="help-block">Marca la venta como finalizada</span>
+									</td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('plantilla', 'Plantilla de email'); ?></th>
 									<td>
 										<?= $this->Form->select('plantilla', $plantillas, array('class' => 'form-control', 'empty' => 'Seleccione')); ?>

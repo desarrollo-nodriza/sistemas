@@ -110,13 +110,63 @@
                                           <div style="text-align: center;">
                                             <img src="https://sistemasdev.nodriza.cl/img/toolmania/iconos/delivery-truck.png" style="max-width: 100%; margin-top: 40px;" width="60">
                                           </div>
-                                          <h4 class="text-center" style="color: inherit; font-size: 24px; font-weight: 500; line-height: 26.4px; margin-top: 10px; margin-bottom: 30px; text-align: center; vertical-align: baseline;">Tu compra está en reparto</h4>
+                                          <h4 class="text-center" style="color: inherit; font-size: 24px; font-weight: 500; line-height: 26.4px; margin-top: 10px; margin-bottom: 30px; text-align: center; vertical-align: baseline;">Tu compra ha sido enviada</h4>
                                           <!-- /Titulo -->
 
 
                                           <!-- Venta ID -->
                                           <h4 class="text-center" style="color: inherit; font-size: 33px; font-weight: 700; line-height: 36px; margin-top: 30px; margin-bottom: 30px; text-align: center; vertical-align: baseline;">N° Venta #<?=$venta['Venta']['id'];?></h4>
                                           <!-- /Venta ID -->
+                        
+                                          <? if (!empty($venta['Transporte'])) : ?>
+
+                                          <table class="hr" style="border: 0; border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                            <tbody>
+                                              <tr>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; font-size: 16px; line-height: 24px; margin: 0; padding: 16px 0px;" width="100%">
+                                                  <table style="border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                    <tbody>
+                                                      <tr>
+                                                        <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #dddddd; font-size: 16px; line-height: 24px; margin: 0;" width="100%" height="1px"></td>
+                                                      </tr>
+                                                    </tbody>
+                                                  </table>
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+
+                                          <!-- Titulo seguimiento -->
+                                          <h5 class="text-center" style="color: inherit; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 20px; margin-top: 10px; text-align: center; vertical-align: baseline;">N° de Seguimiento</h5>
+                                          <!-- /titulo tus productos -->
+
+
+                                          <!-- Parrafo -->
+                                          <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 30px; margin-top: 25px; text-align: center; vertical-align: baseline;">
+                                            Hemos entregado su pedido al transportista correspondiente. Puede ver más detalles a continuación.
+                                          </p>
+                                          <!-- /Parrafo -->
+                                          
+                                          <table class="table" style="border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; margin-bottom: 16px; max-width: 100%; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
+                                            width="100%">
+                                            <thead>
+                                              <th style="font-size: 12px;" align="left">Transportista</th>
+                                              <th style="font-size: 12px;" align="left">N° de seguimiento</th>
+                                              <th style="font-size: 12px;" align="left">Plazo entrega aprox</th>
+                                              <th style="font-size: 12px;" align="left">Seguimiento</th>
+                                            </thead>
+                                            <tbody style="border-top: 1px solid #e9ecef;">
+                                            <? foreach ($venta['Transporte'] as $it => $t) : ?>
+                                              <tr style="border-bottom: 1px solid #e9ecef;">
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 12px; line-height: 14px; margin: 0; padding: 15px 5px;" valign="center" align="left"><?=$t['nombre']; ?></td>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 12px; line-height: 14px; margin: 0; padding: 15px 5px;" valign="center" align="left"><?=$t['TransportesVenta']['cod_seguimiento']; ?></td>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 12px; line-height: 14px; margin: 0; padding: 15px 5px;" valign="center" align="left"><?=$t['tiempo_entrega']; ?></td>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 12px; line-height: 14px; margin: 0; padding: 15px 5px;" valign="center" align="left"><a href="<?=$t['url_seguimiento']; ?>">Ir a la página</a></td>
+                                              </tr>
+                                            <? endforeach; ?>
+                                            </tbody>
+                                          </table>
+                                          <? endif; ?>
 
                                           <!-- Parrafo -->
                                           <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 25px; text-align: center; vertical-align: baseline;">Sí tienes alguna duda escríbenos a <a href="mailto:ventas@toolmania.cl" style="color: #636c72; font-size: 16px; font-weight: 600; line-height: 22px; margin-bottom: 10px; margin-top: 15px;">ventas@toolmania.cl</a> o llámanos al <br> <a style="color: #636c72; font-size: 16px; font-weight: 600; line-height: 22px; margin-bottom: 10px; margin-top: 15px;" href="tel:+56 2 2379 2188">(2) 2379 2188</a></p>
@@ -138,56 +188,6 @@
                                               </tr>
                                             </tbody>
                                           </table>
-
-                                          <!-- Titulo tus productos -->
-                                          <h5 class="text-center" style="color: inherit; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 20px; margin-top: 10px; text-align: center; vertical-align: baseline;">Tus productos</h5>
-                                          <!-- /titulo tus productos -->
-                                          
-
-                                          <!-- Productos y totales-->
-                                          <table class="table" style="border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; margin-bottom: 16px; max-width: 100%; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
-                                            width="100%">
-                                            <tbody>
-                                            <? foreach ($venta['VentaDetalle'] as $ivd => $producto) : ?>
-                                              <tr>
-                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top"><?=$producto['VentaDetalleProducto']['nombre'];?></td>
-                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" class="text-right" valign="top" align="right"> <span style="color: #F55A00; font-size: 12px; margin-right: 5px; line-height: 24px; position: relative; vertical-align: top">(x<?=$producto['cantidad']?>)</span> <?=CakeNumber::currency(($producto['precio']*1.19), 'CLP');?></td>
-                                              </tr>
-                                            <? endforeach; ?>
-                                              
-                                            <? if ($venta['Venta']['costo_envio'] > 0) : ?>  
-                                              <tr>
-                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
-                                                  Despacho
-                                                </td>
-                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
-                                                  <h4 class="text-right" style="color: inherit; font-size: 16px; font-weight: 500; line-height: 24px; margin-bottom: 8px; margin-top: 0; text-align: right; vertical-align: baseline;"><?=CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP');?></h4>
-                                                </td>
-                                              </tr>
-                                            <? endif; ?>
-
-                                            <? if ($venta['Venta']['descuento'] > 0) : ?>
-                                              <tr>
-                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
-                                                  Descuento
-                                                </td>
-                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
-                                                  <h4 class="text-right" style="color: inherit; font-size: 16px; font-weight: 500; line-height: 24px; margin-bottom: 8px; margin-top: 0; text-align: right; vertical-align: baseline;"> - <?=CakeNumber::currency($venta['Venta']['descuento'], 'CLP');?></h4>
-                                                </td>
-                                              </tr>
-                                            <? endif; ?>
-
-                                              <tr>
-                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
-                                                  Total
-                                                </td>
-                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
-                                                  <h4 class="text-right" style="color: inherit; font-size: 16px; font-weight: 500; line-height: 24px; margin-bottom: 8px; margin-top: 0; text-align: right; vertical-align: baseline;"><strong><?=CakeNumber::currency($venta['Venta']['total'], 'CLP');?></strong></h4>
-                                                </td>
-                                              </tr>
-                                            </tbody>
-                                          </table>
-                                          <!-- / Productos y totales -->
 
 
                                           <!-- Titulo Dirección entrega -->
@@ -241,6 +241,57 @@
                                             </tbody>
                                           </table>
                                           <!-- /Entrega -->
+
+
+                                          <!-- Titulo tus productos -->
+                                          <h5 class="text-center" style="color: inherit; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 20px; margin-top: 10px; text-align: center; vertical-align: baseline;">Tus productos</h5>
+                                          <!-- /titulo tus productos -->
+                                          
+
+                                          <!-- Productos y totales-->
+                                          <table class="table" style="border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; margin-bottom: 16px; max-width: 100%; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
+                                            width="100%">
+                                            <tbody>
+                                            <? foreach ($venta['VentaDetalle'] as $ivd => $producto) : ?>
+                                              <tr>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top"><?=$producto['VentaDetalleProducto']['nombre'];?></td>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" class="text-right" valign="top" align="right"> <span style="color: #F55A00; font-size: 12px; margin-right: 5px; line-height: 24px; position: relative; vertical-align: top">(x<?=$producto['cantidad']?>)</span> <?=CakeNumber::currency(($producto['precio']*1.19), 'CLP');?></td>
+                                              </tr>
+                                            <? endforeach; ?>
+                                              
+                                            <? if ($venta['Venta']['costo_envio'] > 0) : ?>  
+                                              <tr>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
+                                                  Despacho
+                                                </td>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
+                                                  <h4 class="text-right" style="color: inherit; font-size: 16px; font-weight: 500; line-height: 24px; margin-bottom: 8px; margin-top: 0; text-align: right; vertical-align: baseline;"><?=CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP');?></h4>
+                                                </td>
+                                              </tr>
+                                            <? endif; ?>
+
+                                            <? if ($venta['Venta']['descuento'] > 0) : ?>
+                                              <tr>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
+                                                  Descuento
+                                                </td>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
+                                                  <h4 class="text-right" style="color: inherit; font-size: 16px; font-weight: 500; line-height: 24px; margin-bottom: 8px; margin-top: 0; text-align: right; vertical-align: baseline;"> - <?=CakeNumber::currency($venta['Venta']['descuento'], 'CLP');?></h4>
+                                                </td>
+                                              </tr>
+                                            <? endif; ?>
+
+                                              <tr>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
+                                                  Total
+                                                </td>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #e9ecef; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">
+                                                  <h4 class="text-right" style="color: inherit; font-size: 16px; font-weight: 500; line-height: 24px; margin-bottom: 8px; margin-top: 0; text-align: right; vertical-align: baseline;"><strong><?=CakeNumber::currency($venta['Venta']['total'], 'CLP');?></strong></h4>
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                          <!-- / Productos y totales -->
     
 
                                         </div>

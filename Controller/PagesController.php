@@ -1220,6 +1220,8 @@ class PagesController extends AppController
 		#$ventas = $this->admin_get_all_sales(); 
 		$ventas = $this->admin_obtener_ventas();
 
+		$metricas_oc = ClassRegistry::init('OrdenCompra')->obtener_metricas();
+
 		// Obtener descuentos e los comercios
 		$descuentos = $this->admin_get_all_discount();
 		// Obtener pedidos de los comercios
@@ -1240,7 +1242,7 @@ class PagesController extends AppController
 		// Prisync
 		$prisync = $this->admin_obtener_resultados_prisync();
 		
-		$this->set(compact('sumaVentas','ventas', 'sumaDescuentos', 'descuentos', 'sumaPedidos', 'pedidos', 'tickets', 'tablaMarcas', 'prisync'));
+		$this->set(compact('sumaVentas','ventas', 'sumaDescuentos', 'descuentos', 'sumaPedidos', 'pedidos', 'tickets', 'tablaMarcas', 'prisync', 'metricas_oc'));
 
 	}
 

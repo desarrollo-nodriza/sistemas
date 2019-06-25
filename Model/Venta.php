@@ -1,7 +1,28 @@
 <?php
 App::uses('AppModel', 'Model');
 class Venta extends AppModel
-{
+{	
+
+	public $picking_estado = array(
+		'no_definido' => array(
+			'label' => 'Incompleta',
+			'color' => '#B64645'
+		),
+		'empaquetar' => array(
+			'label' => 'Listo para embalar',
+			'color' => '#3FBAE4'
+		),
+		'empaquetando' => array(
+			'label' => 'En preparación',
+			'color' => '#FEA223'
+		),
+		'empaquetado' => array(
+			'label' => 'Embalaje finalizado',
+			'color' => '#95B75D'
+		)
+	);
+
+
 	/**
 	 * ASOCIACIONES
 	 */
@@ -161,6 +182,21 @@ class Venta extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'Transporte' => array(
+			'className'				=> 'Transporte',
+			'joinTable'				=> 'transportes_ventas',
+			'foreignKey'			=> 'venta_id',
+			'associationForeignKey'	=> 'transporte_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 
@@ -207,30 +243,30 @@ class Venta extends AppModel
 								)
 							),
 							'fields' => array(
-								'VentaDetalleProducto.id', 'VentaDetalleProducto.nombre'
+								'VentaDetalleProducto.id', 'VentaDetalleProducto.nombre', 'VentaDetalleProducto.codigo_proveedor'
 							)
 						),
 						'conditions' => array(
 							'VentaDetalle.activo' => 1
 						),
 						'fields' => array(
-							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada'
+							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada'
 						)
 					),
 					'VentaEstado' => array(
 						'VentaEstadoCategoria' => array(
 							'fields' => array(
-								'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo'
+								'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.plantilla'
 							)
 						),
 						'fields' => array(
-							'VentaEstado.id', 'VentaEstado.venta_estado_categoria_id', 'VentaEstado.permitir_dte', 'VentaEstado.nombre'
+							'VentaEstado.id', 'VentaEstado.venta_estado_categoria_id', 'VentaEstado.permitir_dte', 'VentaEstado.nombre', 'VentaEstado.notificacion_cliente'
 						)
 					),
 					'VentaTransaccion',
 					'Tienda' => array(
 						'fields' => array(
-							'Tienda.id', 'Tienda.nombre', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.logo', 'Tienda.direccion', 'Tienda.facturacion_apikey'
+							'Tienda.id', 'Tienda.nombre', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.logo', 'Tienda.direccion', 'Tienda.facturacion_apikey', 'Tienda.emails_bcc', 'Tienda.url', 'Tienda.direccion'
 						)
 					),
 					'Marketplace' => array(
@@ -260,6 +296,11 @@ class Venta extends AppModel
 							'VentaCliente.nombre', 'VentaCliente.apellido', 'VentaCliente.rut', 'VentaCliente.email', 'VentaCliente.telefono', 'VentaCliente.created'
 						)
 					),
+					'Transporte' => array(
+						'fields' => array(
+							'Transporte.id', 'Transporte.nombre', 'Transporte.url_seguimiento', 'Transporte.tiempo_entrega'
+						)
+					),
 					'Dte' => array(
 						'Administrador' => array(
 							'fields' => array(
@@ -276,13 +317,225 @@ class Venta extends AppModel
 				'fields' => array(
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
 					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.comuna_entrega', 'Venta.nombre_receptor',
-					'Venta.fono_receptor'
+					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email'
 				)
 			)
 		);
 	}
 
 
+	/**
+	 * [obtener_ventas_preparar description]
+	 * @param  string  $estado      [description]
+	 * @param  integer $limit       [description]
+	 * @param  integer $offset      [description]
+	 * @param  array   $estados_ids [description]
+	 * @return [type]               [description]
+	 */
+	public function obtener_ventas_preparar($estado = '', $limit = -1, $offset = 0, $estados_ids = array())
+	{	
+		$joins[] = array(
+			'table' => 'rp_venta_estados',
+			'alias' => 'ventas_estados',
+			'type' => 'INNER',
+			'conditions' => array(
+				'ventas_estados.id = Venta.venta_estado_id',
+				"ventas_estados.venta_estado_categoria_id" => $estados_ids,
+				"ventas_estados.permitir_retiro_oc"  => 1
+			)
+		);
+
+		$joins[] = array(
+			'table' => 'rp_venta_detalles',
+			'alias' => 'venta_detalles',
+			'type' => 'INNER',
+			'conditions' => array(
+				'venta_detalles.venta_id = Venta.id',
+				'venta_detalles.cantidad_reservada = venta_detalles.cantidad',
+			)
+		);
+
+		
+		$joins[] = array(
+			'table' => 'rp_dtes',
+			'alias' => 'dtes',
+			'type' => 'INNER',
+			'conditions' => array(
+				'dtes.venta_id = Venta.id',
+				"dtes.tipo_documento" => array(33, 39),
+				"dtes.estado = 'dte_real_emitido'",
+				"dtes.invalidado = 0"
+			)
+		);
+
+		$ventas =  $this->find('all', array(
+			'conditions' => array(
+				'Venta.picking_estado' => $estado
+			),
+			'joins'  => $joins,
+			'limit'  => $limit,
+			'offset' => $offset,
+			'order'  => array('Venta.prioritario' => 'desc', 'Venta.fecha_venta' => 'asc', 'Venta.modified' => 'desc'),
+			'group'  => 'Venta.id',
+			'fields' => array(
+				'Venta.id', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.fecha_venta'
+			),
+		));
+	
+		return $ventas;
+	}
+
+	/**
+	 * [obtener_ventas_preparadas description]
+	 * @param  string  $estado      [description]
+	 * @param  integer $limit       [description]
+	 * @param  integer $offset      [description]
+	 * @param  array   $estados_ids [description]
+	 * @return [type]               [description]
+	 */
+	public function obtener_ventas_preparadas($estado = '', $limit = 10, $offset = 0, $estados_ids = array())
+	{	
+		$joins[] = array(
+			'table' => 'rp_venta_estados',
+			'alias' => 'ventas_estados',
+			'type' => 'INNER',
+			'conditions' => array(
+				'ventas_estados.id = Venta.venta_estado_id',
+				"ventas_estados.venta_estado_categoria_id" => $estados_ids,
+				"ventas_estados.permitir_retiro_oc"  => 1
+			)
+		);
+
+		$joins[] = array(
+			'table' => 'rp_venta_detalles',
+			'alias' => 'venta_detalles',
+			'type' => 'INNER',
+			'conditions' => array(
+				'venta_detalles.venta_id = Venta.id',
+				"venta_detalles.cantidad_entregada = venta_detalles.cantidad",
+				'venta_detalles.fecha_completado >= DATE_ADD(CURDATE(),INTERVAL -1 DAY)'
+			)
+		);
+
+		
+		$joins[] = array(
+			'table' => 'rp_dtes',
+			'alias' => 'dtes',
+			'type' => 'INNER',
+			'conditions' => array(
+				'dtes.venta_id = Venta.id',
+				"dtes.tipo_documento" => array(33, 39),
+				"dtes.estado = 'dte_real_emitido'",
+				"dtes.invalidado = 0"
+			)
+		);
+
+		$ventas =  $this->find('all', array(
+			'conditions' => array(
+				'Venta.picking_estado' => $estado,
+			),
+			'joins'  => $joins,
+			'limit'  => $limit,
+			'offset' => $offset,
+			'order'  => array('Venta.prioritario' => 'desc', 'Venta.fecha_venta' => 'asc', 'Venta.modified' => 'desc'),
+			'group'  => 'Venta.id',
+			'fields' => array(
+				'Venta.id', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.fecha_venta'
+			),
+		));
+		
+		return $ventas;
+	}
+
+
+	/**
+	 * Devolvemos las unidades reservadas o las que ya se sacaron de bodega
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function cancelar_venta($id)
+	{	
+		$this->id = $id;
+		if (!$this->exists()) {
+			return false;
+		}
+
+		$venta = $this->obtener_venta_por_id($id);
+		
+		foreach ($venta['VentaDetalle'] as $iv => $detalle) {
+			
+			$pmp = ClassRegistry::init('Bodega')->obtener_pmp_por_id($detalle['venta_detalle_producto_id']);
+			$vDetalle = ClassRegistry::init('VentaDetalle');
+
+			$vDetalle->id = $detalle['id'];
+
+			# Devolver stock a bodega
+			if ($detalle['cantidad_entregada'] > 0) {
+				ClassRegistry::init('Bodega')->crearEntradaBodega($detalle['venta_detalle_producto_id'], null, $detalle['cantidad_entregada'], $pmp, 'VT');
+				$vDetalle->saveField('cantidad_entregada', 0);
+				$vDetalle->saveField('cantidad_pendiente_entrega', $detalle['cantidad_entregada']);
+				$vDetalle->saveField('completo', 0);
+			}
+
+			# Devolver unidades reservadas
+			if ($detalle['cantidad_reservada'] > 0) {
+				$vDetalle->saveField('cantidad_reservada', 0);
+			}
+		}
+
+		$this->saveField('picking_estado', 'no_definido');
+		$this->saveField('subestado_oc', 'no_entregado');
+
+		return;
+
+	}
+
+	/**
+	 * Reserva las unidades que esten en existencia y cambia el estad de la venta
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function pagar_venta($id)
+	{	
+		$this->id = $id;
+		if (!$this->exists()) {
+			return false;
+		}
+
+		$venta = $this->obtener_venta_por_id($id);	
+
+		# solo se procesa si el estado de la venta ha cambiado
+		if ($venta['Venta']['venta_estado_id'] != $venta['Venta']['estado_anterior'] ) {
+			foreach ($venta['VentaDetalle'] as $ip => $producto) {
+
+				if ($producto['cantidad_reservada'] != 0)
+					continue;
+
+				$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], $producto['cantidad']);
+				
+				ClassRegistry::init('VentaDetalle')->id = $producto['id'];
+				ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $reservado);
+				ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $producto['cantidad']);
+
+				$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $reservado;
+
+			}
+		}
+
+		if (array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada')) == array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad'))) {
+			$this->saveField('picking_estado', 'empaquetar');
+			$this->saveField('subestado_oc', 'no_entregado');
+		}
+
+		return;
+	}
+
+
+	/**
+	 * [obtener_lista_cantidad_productos_vendidos description]
+	 * @param  [type] $id_venta [description]
+	 * @return [type]           [description]
+	 */
 	public function obtener_lista_cantidad_productos_vendidos($id_venta)
 	{	
 		$vendidos = ClassRegistry::init('VentaDetalle')->find('all', array(
@@ -311,4 +564,5 @@ class Venta extends AppModel
 
 		return $items;
 	}
+
 }

@@ -296,7 +296,8 @@ class DtesController extends AppController
 	public function admin_exportar()
 	{	
 		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
-		set_time_limit(600);
+		set_time_limit(-1);
+		ini_set('memory_limit', -1);
 
 		$this->verificarTienda();
 

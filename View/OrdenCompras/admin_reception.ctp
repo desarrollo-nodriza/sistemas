@@ -3,6 +3,7 @@
 </div>
 
 <?= $this->Form->create('OrdenCompra', array('class' => 'form-horizontal js-validate-oc js-recepcion', 'type' => 'file',  'data-valid' => false, 'data-id' => $this->request->data['OrdenCompra']['id'],'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+<?= $this->Form->hidden('url_retorno', array('value' => $url_retorno)); ?>
 <div class="page-content-wrap">
 	<div class="row">
 		<div class="col-xs-12">
@@ -19,7 +20,7 @@
 								<th>Descripción</th>
 								<th>Cantidad pedida</th>
 								<th>Cantidad recibida <br><small>(ya en stock)</small></th>
-								<th>Cantidad faltante</th>
+								<th>Cantidad entrante</th>
 								<th>Bodega</th>
 								<!--<th>Recibido</th>-->
 							</thead>
@@ -130,7 +131,7 @@
 				<div class="panel-footer">
 					<div class="pull-right">
 						<button type="submit" class="btn btn-success esperar-carga" autocomplete="off" data-loading-text="Espera un momento..."><i class="fa fa-check"></i> Guardar cambios</button>
-						<?= $this->Html->link('Volver', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+						<?= $this->Html->link('Volver', $url_retorno, array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>

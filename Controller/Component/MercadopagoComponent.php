@@ -1,5 +1,4 @@
 <?
-
 App::import('Vendor', 'Mercadopago', array('file' => 'Mercadopago/mercadopago.php'));
 App::uses('Component', 'Controller');
 

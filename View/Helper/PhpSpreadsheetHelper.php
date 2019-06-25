@@ -79,7 +79,7 @@ class PhpSpreadsheetHelper extends AppHelper {
 	 */
 	public function addTableHeader($data, $params = array()) {
 		// offset
-		$offset = 0;
+		$offset = 1;
 		if (array_key_exists('offset', $params))
 			$offset = is_numeric($params['offset']) ? (int)$params['offset'] : \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($params['offset']);
 		
