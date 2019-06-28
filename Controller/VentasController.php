@@ -1593,6 +1593,10 @@ class VentasController extends AppController {
 			$venta['Venta']['estado_anterior'] = $venta['Venta']['venta_estado_id'];
 			$venta['Venta']['venta_estado_id'] = $this->obtener_estado_id($EstatusMeli, $marketplace['Marketplace']['marketplace_tipo_id']);
 
+			if ($this->Session->check('Auth.Administrador.id')) {
+				$venta['Venta']['venta_estado_responsable'] = $this->Auth->user('nombre');	
+			}
+
 			$dataToSave[] = $venta;
 
 		}
@@ -1622,6 +1626,10 @@ class VentasController extends AppController {
 
 			$venta['Venta']['estado_anterior'] = $venta['Venta']['venta_estado_id'];
 			$venta['Venta']['venta_estado_id'] = $this->obtener_estado_id($EstatusLinio, $marketplace['Marketplace']['marketplace_tipo_id']);
+
+			if ($this->Session->check('Auth.Administrador.id')) {
+				$venta['Venta']['venta_estado_responsable'] = $this->Auth->user('nombre');	
+			}
 
 			$dataToSave[] = $venta;
 
@@ -1696,6 +1704,10 @@ class VentasController extends AppController {
 					$venta['Venta']['total']           = round($dataWS['total_paid'], 2);
 				}
 
+			}
+
+			if ($this->Session->check('Auth.Administrador.id')) {
+				$venta['Venta']['venta_estado_responsable'] = $this->Auth->user('nombre');	
 			}
 
 			$dataToSave[] = $venta;
@@ -2924,6 +2936,10 @@ class VentasController extends AppController {
 
 
 		if ($this->request->is('post') || $this->request->is('put')) {
+
+			if ($this->Session->check('Auth.Administrador.id')) {
+				$this->request->data['Venta']['venta_estado_responsable'] = $this->Auth->user('nombre');	
+			}
 
 			try {
 				$cambiar_estado = $this->cambiarEstado($id, $this->request->data['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id']);
