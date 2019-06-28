@@ -1380,7 +1380,7 @@ class OrdenComprasController extends AppController
 				->viewVars(compact('mensaje'))
 				->emailFormat('html')
 				->from(array($this->Session->read('Auth.Administrador.email') => 'Nodriza Spa') )
-				->replyTo(array($this->Session->read('Auth.Administrador.email') => $this->Session->read('Auth.Administrador.nombre')))
+				->replyTo(array($ocs['Administrador']['email'] => $ocs['Administrador']['nombre']))
 				->to($to)
 				->cc($cc)
 				->bcc($bcc)
