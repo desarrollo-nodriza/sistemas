@@ -444,6 +444,10 @@ class VentaDetalleProductosController extends AppController
 							continue;
 						}
 
+						if (!$this->VentaDetalleProducto->exists($valor[$columna_id_productos])) {
+							continue;
+						}
+
 						# Datos necesarios para reaizar un ingreso
 						$dataToSave[$indice]['id_producto'] = $valor[$columna_id_productos];
 						$dataToSave[$indice]['cantidad']    = $valor[$columna_cantidad];
@@ -552,6 +556,10 @@ class VentaDetalleProductosController extends AppController
 					
 					foreach ($this->Session->read('moverInventarioMasivo.data') as $indice => $valor) {
 						if (empty($valor[$columna_id_productos]) || empty($valor[$columna_cantidad]) || empty($valor[$columna_bodega_destino]) || empty($valor[$columna_bodega_origen]) || $indice == 1) {
+							continue;
+						}
+
+						if (!$this->VentaDetalleProducto->exists($valor[$columna_id_productos])) {
 							continue;
 						}
 
@@ -672,6 +680,10 @@ class VentaDetalleProductosController extends AppController
 						if (empty($valor[$columna_id_productos]) || empty($valor[$columna_cantidad]) || $indice == 1) {
 							continue;
 						}
+						
+						if (!$this->VentaDetalleProducto->exists($valor[$columna_id_productos])) {
+							continue;
+						}
 
 						# Datos necesarios para reaizar un ingreso
 						$dataToSave[$indice]['id_producto'] = $valor[$columna_id_productos];
@@ -682,7 +694,7 @@ class VentaDetalleProductosController extends AppController
 					}
 
 				}
-
+				
 				if (empty($dataToSave)) {
 					$this->Session->setFlash('No se encontraron valores para actualizar.', null, array(), 'warning');
 					$this->redirect(array('action' => 'inventarioInicial'));
