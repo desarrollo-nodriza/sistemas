@@ -1593,7 +1593,7 @@ class VentasController extends AppController {
 			$venta['Venta']['estado_anterior'] = $venta['Venta']['venta_estado_id'];
 			$venta['Venta']['venta_estado_id'] = $this->obtener_estado_id($EstatusMeli, $marketplace['Marketplace']['marketplace_tipo_id']);
 
-			if ($this->Session->check('Auth.Administrador.id')) {
+			if (CakeSession::check('Auth.Administrador.id')) {
 				$venta['Venta']['venta_estado_responsable'] = $this->Auth->user('nombre');	
 			}
 
@@ -1627,7 +1627,7 @@ class VentasController extends AppController {
 			$venta['Venta']['estado_anterior'] = $venta['Venta']['venta_estado_id'];
 			$venta['Venta']['venta_estado_id'] = $this->obtener_estado_id($EstatusLinio, $marketplace['Marketplace']['marketplace_tipo_id']);
 
-			if ($this->Session->check('Auth.Administrador.id')) {
+			if (CakeSession::check('Auth.Administrador.id')) {
 				$venta['Venta']['venta_estado_responsable'] = $this->Auth->user('nombre');	
 			}
 
@@ -1706,7 +1706,7 @@ class VentasController extends AppController {
 
 			}
 
-			if ($this->Session->check('Auth.Administrador.id')) {
+			if (CakeSession::check('Auth.Administrador.id')) {
 				$venta['Venta']['venta_estado_responsable'] = $this->Auth->user('nombre');	
 			}
 
@@ -2937,7 +2937,7 @@ class VentasController extends AppController {
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 
-			if ($this->Session->check('Auth.Administrador.id')) {
+			if (CakeSession::check('Auth.Administrador.id')) {
 				$this->request->data['Venta']['venta_estado_responsable'] = $this->Auth->user('nombre');	
 			}
 
