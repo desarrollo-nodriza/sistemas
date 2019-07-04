@@ -1502,17 +1502,24 @@ class VentaDetalleProductosController extends AppController
 				# Editar existente
 				if (!empty($local)) {
 					$productosLocales[$ip]['VentaDetalleProducto']['id'] = $local['VentaDetalleProducto']['id'];
+					$productosLocales[$ip]['VentaDetalleProducto']['cantidad_virtual'] = 0;
 				}else{
+					$stock = $this->Prestashop->prestashop_obtener_stock_producto($p['id']);
+			
 					$productosLocales[$ip]['VentaDetalleProducto']['id'] = $p['id'];
+					$productosLocales[$ip]['VentaDetalleProducto']['cantidad_virtual'] = $stock['stock_available']['quantity'];
 				}
 
-				$stock = $this->Prestashop->prestashop_obtener_stock_producto($p['id']);
+				if (is_array($p['name']['language']) || empty($p['name']['language'])) {
+					unset($productosLocales[$ip]);
+					continue;
+				}
 
 				$productosLocales[$ip]['VentaDetalleProducto']['id_externo']       = $p['id'];
 				$productosLocales[$ip]['VentaDetalleProducto']['codigo_proveedor'] = $p['supplier_reference'];
 				$productosLocales[$ip]['VentaDetalleProducto']['marca_id'] 		   = $p['id_manufacturer'];
 				$productosLocales[$ip]['VentaDetalleProducto']['nombre']           = $p['name']['language'];
-				$productosLocales[$ip]['VentaDetalleProducto']['cantidad_virtual'] = 0;
+				
 
 			}
 
