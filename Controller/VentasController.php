@@ -641,6 +641,22 @@ class VentasController extends AppController {
 			exit;
 		}
 
+		# Quitar los productos reservados de la bodega
+		$detalles = ClassRegistry::init('VentaDetalle')->find('all', array(
+			'conditions' => array(
+				'VentaDetalle.venta_id' => $id,
+				'VentaDetalle.completo' => 0,
+				'VentaDetalle.cantidad_reservada >' => 0
+			)
+		));
+
+		if (array_sum(Hash::extract($detalles, '{n}.VentaDetalle.confirmado_app')) != count(Hash::extract($detalles, '{n}.VentaDetalle.id')) ) {
+			$respuesta['code'] = 503;
+			$respuesta['message'] = 'Debes confirmar los productos de la venta';
+			echo json_encode($respuesta);
+			exit;
+		}
+
 		try {
 			$cambiar_estado = $this->cambiarEstado($id, $this->request->data['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id']);
 		} catch (Exception $e) {
@@ -655,15 +671,6 @@ class VentasController extends AppController {
 		if ($cambiar_estado) {
 
 			if ($subestado == 'empaquetado') {
-
-				# Quitar los productos reservados de la bodega
-				$detalles = ClassRegistry::init('VentaDetalle')->find('all', array(
-					'conditions' => array(
-						'VentaDetalle.venta_id' => $id,
-						'VentaDetalle.completo' => 0,
-						'VentaDetalle.cantidad_reservada >' => 0
-					)
-				));
 
 				foreach ($detalles as $idd => $d) {
 
@@ -685,6 +692,7 @@ class VentasController extends AppController {
 
 				$this->Venta->saveField('picking_fecha_termino', date('Y-m-d H:i:s'));
 				$this->Venta->saveField('picking_estado', $subestado);
+				$this->Venta->saveField('prioritario', 0);
 
 				# Sub estados OC de la venta
 				if (array_sum(Hash::extract($detalles, '{n}VentaDetalle.cantidad_pendiente_entrega')) > 0 ) {
@@ -754,7 +762,7 @@ class VentasController extends AppController {
 				$this->cambiar_estado_preparada($venta);
 			}
 
-			if ($subestado == 'empaquetado') {
+			if ($subestado == 'empaquetado') {				
 
 				# Quitar los productos reservados de la bodega
 				$detalles = ClassRegistry::init('VentaDetalle')->find('all', array(
@@ -764,6 +772,13 @@ class VentasController extends AppController {
 						'VentaDetalle.cantidad_reservada >' => 0
 					)
 				));
+
+				if (count(Hash::extract($detalles, '{n}.VentaDetalle.confirmado_app')) != count(Hash::extract($detalles, '{n}.VentaDetalle.id')) ) {
+					$respuesta['code'] = 503;
+					$respuesta['message'] = 'Debes confirmar los productos de la venta';
+					echo json_encode($respuesta);
+					exit;
+				}
 
 				foreach ($detalles as $idd => $d) {
 
@@ -784,6 +799,7 @@ class VentasController extends AppController {
 				}
 
 				$this->Venta->saveField('picking_fecha_termino', date('Y-m-d H:i:s'));
+				$this->Venta->saveField('prioritario', 0);
 
 				# Sub estados OC de la venta
 				if (array_sum(Hash::extract($detalles, '{n}VentaDetalle.cantidad_pendiente_entrega')) > 0 ) {
@@ -2975,6 +2991,56 @@ class VentasController extends AppController {
 	}
 
 
+	public function admin_crear_mensaje_venta($id)
+	{
+		$venta = $this->Venta->obtener_venta_por_id($id);
+
+		if (empty($venta)) {
+			$this->Session->setFlash('La venta no existe', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$canal = 'prestashop';
+		if (!empty($venta['Venta']['marketplace_id'])) {
+
+			$tipoMarketplace = ClassRegistry::init('Marketplace')->field('marketplace_tipo_id', array('id' => $venta['Venta']['marketplace_id']) );
+
+			if ($tipoMarketplace == 1) {
+				$canal = 'linio';
+			}
+
+			if ($tipoMarketplace == 2) {
+				$canal = 'mercadolibre';
+			}
+		}
+
+
+		switch ($canal) {
+			case 'prestashop':
+				# Registrar mensaje en prestashop
+
+				$this->Prestashop->crearCliente($venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop']);
+				$this->Prestashop->prestashop_crear_mensaje($venta['Venta']['id_externo']);
+
+				break;
+			case 'linio':
+				# Registrar mensaje en linio (proximamente)
+
+
+				break;
+			case 'mercadolibre':
+				# Registrar mensaje en meli (proximamente)
+
+				break;
+		}
+
+		prx($venta);
+
+		
+	}
+
+
+
 	/**
 	 * [admin_registrar_seguimiento description]
 	 * @param  [type] $id [description]
@@ -3197,6 +3263,79 @@ class VentasController extends AppController {
 		}
 	}
 
+
+	public function admin_reservar_stock_venta($id = '')
+	{
+		$venta = $this->Venta->obtener_venta_por_id($id);
+		$result = array();
+		
+		foreach ($venta['VentaDetalle'] as $key => $value) {
+
+			$cant = $this->Venta->reservar_stock_producto($value['id']);
+
+			if ($cant == 1) {
+				$result['success'][]  = $value['VentaDetalleProducto']['nombre'] . ' - Cant reservada: ' . $cant  . ' unidad.';
+			}elseif($cant > 1) {
+				$result['success'][]  = $value['VentaDetalleProducto']['nombre'] . ' - Cant reservada: ' . $cant  . ' unidades.';
+			}elseif ($cant == 0) {
+				$result['warning'][]  = $value['VentaDetalleProducto']['nombre'] . ' - Cant reservada: ' . $cant  . ' unidades.';
+			}
+		}
+
+		if (!empty($result['success'])) {
+			$this->Session->setFlash($this->crearAlertaUl($result['success'], 'Resultados'), null, array(), 'success');
+		}
+
+		if (!empty($result['warning'])) {
+			$this->Session->setFlash($this->crearAlertaUl($result['warning'], 'Resultados'), null, array(), 'warning');
+		}
+
+		$this->redirect($this->referer('/', true));
+
+	}
+
+
+	public function admin_liberar_stock_reservado($id = '', $id_detalle = '', $cant_liberar)
+	{
+		$venta = $this->Venta->obtener_venta_por_id($id);
+		
+		$dataToSave = array();
+
+		$result = array();
+		
+		foreach ($venta['VentaDetalle'] as $key => $value) {
+			
+			if ($value['id'] != $id_detalle)
+				continue;
+			
+			$liberar = $this->Venta->liberar_reserva_stock_producto($id_detalle, $cant_liberar);
+
+			if ($liberar == 1) {
+				$result['success'][]  = $value['VentaDetalleProducto']['codigo_proveedor'] . ' - Cant liberada: ' . $liberar  . ' unidad.';
+			}elseif($liberar > 1) {
+				$result['success'][]  = $value['VentaDetalleProducto']['codigo_proveedor'] . ' - Cant liberada: ' . $liberar  . ' unidades.';
+			}else{
+				$result['warning'][]  = $value['VentaDetalleProducto']['codigo_proveedor'] . ' - Cant liberada: ' . $liberar  . ' unidades.';
+			}
+		}
+
+		if (!empty($result['success'])) {
+			$this->Session->setFlash($this->crearAlertaUl($result['success'], 'Resultados'), null, array(), 'success');
+		}
+
+		if (!empty($result['warning'])) {
+			$this->Session->setFlash($this->crearAlertaUl($result['warning'], 'Resultados'), null, array(), 'warning');
+		}
+
+		$this->redirect($this->referer('/', true));
+
+	}
+
+
+	public function reservar_stock_detalle($id_detalle)
+	{
+		return $this->Venta->reservar_stock_producto($id_detalle);
+	}
 
 
 	/**
@@ -4749,6 +4888,29 @@ class VentasController extends AppController {
 			}
 		}
 
+		# Tienda principal
+		$tienda = ClassRegistry::init('Tienda')->find('first', array(
+			'conditions' => array(
+				'Tienda.principal' => 1,
+				'Tienda.activo' => 1
+			),
+			'fields' => array(
+				'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop'
+			)
+		));
+
+		# Agregamos las imagenes de prstashop al arreglo
+		if (!empty($tienda)) {
+
+			$this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
+
+			foreach ($venta['VentaDetalle'] as $iv => $d) {
+				$venta['VentaDetalle'][$iv]['VentaDetalleProducto']['imagenes'] = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $tienda['Tienda']['apiurl_prestashop']);	
+			}
+
+		}
+
+
 		return $venta;
 	}
 
@@ -5041,7 +5203,8 @@ class VentasController extends AppController {
 		if (!isset($this->request->query['token'])) {
 			$response = array(
 				'code'    => 502, 
-				'message' => 'Expected Token'
+				'name' => 'error',
+				'message' => 'Token requerido'
 			);
 
 			throw new CakeException($response);
@@ -5051,7 +5214,8 @@ class VentasController extends AppController {
 		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
 			$response = array(
 				'code'    => 505, 
-				'message' => 'Invalid or expired Token'
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
 			);
 
 			throw new CakeException($response);
@@ -5061,7 +5225,8 @@ class VentasController extends AppController {
 		if (!$this->Venta->exists($id)) {
 			$response = array(
 				'code'    => 404, 
-				'message' => 'Sale not found'
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
 			);
 
 			throw new CakeException($response);
@@ -5116,6 +5281,12 @@ class VentasController extends AppController {
 				'precio_bruto'     => $this->precio_bruto($item['precio']),
 				'precio_bruto_clp' => CakeNumber::currency($this->precio_bruto($item['precio']), 'CLP')
 			);
+			prx($item);
+			if (!empty($item['VentaDetalleProducto']['imagenes'])) {
+				$respuesta['itemes'][$i] = array_replace_recursive($respuesta['itemes'][$i], array(
+					'imagen' => Hash::extract($item['VentaDetalleProducto']['imagenes'], '{n}[principal=1].url')[0]
+				));
+			}
 		}
 
 
@@ -5137,8 +5308,9 @@ class VentasController extends AppController {
 		# Solo método POST
 		if (!$this->request->is('post')) {
 			$response = array(
-				'code'    => 501, 
-				'message' => 'Only POST request allow'
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
 			);
 
 			throw new CakeException($response);
@@ -5148,19 +5320,30 @@ class VentasController extends AppController {
 		if (!isset($this->request->query['token'])) {
 			$response = array(
 				'code'    => 502, 
-				'message' => 'Expected Token'
+				'name' => 'error',
+				'message' => 'Token requerido'
 			);
 
 			throw new CakeException($response);
 		}
 
-		$token = $this->request->query['token'];
-		$tipoEstado  = $this->request->query['type'];
+		$token      = @$this->request->query['token']; // GET
+		$tipoEstado = @$this->request->data['type']; // POST
+		$chofer     = @$this->request->data['driver']; // POST
 
 		$tiposPermitidos = array(
 			'shipped', // En transito
 			'delivered',
 			'enviado' // Enviado por carrier
+		);
+
+		$tiposPermitidos = array(
+			'despacho_interno', // Despacho transporte interno, selecciona chofer (Enviado)
+			'despacho_externo', // Despacho transporte externo, seleccionar transportista usado (Enviado)
+			'despacho_transito', // Despacho en transito, selecciona chofer (En transito)
+			'retiro_en_tienda', // Adjuntar foto carnet (Retiro en tienda)
+			'entrega_domicilio', // Transporte interno, adjunta foto carnet (Entregado),
+			'entrega_agencia', // Transporte entrega en agencia, selecciona transporte y agrega ID de seguimiento 
 		);
 
 		# No vacios
@@ -5187,7 +5370,8 @@ class VentasController extends AppController {
 		if (!ClassRegistry::init('Token')->validar_token($token)) {
 			$response = array(
 				'code'    => 505, 
-				'message' => 'Invalid or expired Token'
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
 			);
 
 			throw new CakeException($response);
@@ -5197,15 +5381,17 @@ class VentasController extends AppController {
 		if (!$this->Venta->exists($id)) {
 			$response = array(
 				'code'    => 404, 
-				'message' => 'Sale not found'
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
 			);
 
 			throw new CakeException($response);
 		}
 
 		# Detalles de la venta
-		$venta = $this->preparar_venta($id);
+		$venta = $this->Venta->obtener_venta_por_id($id);
 
+		$this->Venta->id                       = $id;
 		ClassRegistry::init('VentaEstado')->id = $venta['Venta']['venta_estado_id'];
 		ClassRegistry::init('Tienda')->id      = $venta['Venta']['tienda_id'];
 
@@ -5256,18 +5442,191 @@ class VentasController extends AppController {
 			$this->Prestashop->crearCliente( $apiurlprestashop, $apikeyprestashop );
 
 			switch ($tipoEstado) {
+				case 'despacho_interno':
+					# Obtenemos el estado de enviado
+					$estado_nuevo     = 'Enviado';
+					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
+
+					#  Necesita recibir un chofer
+					if (empty($chofer)) {
+						$response = array(
+							'code'    => 512, 
+							'message' => 'Driver is required'
+						);
+
+						throw new CakeException($response);
+					}
+
+					# Guardar chofer
+					if (empty($venta['Venta']['chofer_email'])) {
+						$this->Venta->saveField('chofer_email', $chofer);	
+					}
+
+					# Guardar fecha de envio
+					if (empty($venta['Venta']['fecha_enviado'])) {
+						$this->Venta->saveField('fecha_enviado', date('Y-m-d H:i:s'));	
+					}
+
+					break;
+				case 'entrega_domicilio':
+					# Obtenemos el estado de entregado
+					$estado_nuevo     = 'Entregado';
+					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
+					
+					# Si se adjunta foto del carnet del receptor
+					if (isset($this->request->form['carnet'])) {
+
+						$imagenes = array($this->request->form['carnet']);
+
+						$erroresImagen = $this->validarTamanoTipoImagenes($imagenes);
+						
+						if (!empty($erroresImagen)) {
+							$response = array(
+								'code'    => 513, 
+								'message' => 'Errors: ' . implode(' - ', $erroresImagen)
+							);
+
+							throw new CakeException($response);
+						}
+
+						# Guardamos
+						if (!$this->Venta->saveField('ci_receptor', $this->request->form['carnet'])) {
+							$response = array(
+								'code'    => 512, 
+								'message' => 'Can´t save c.i photo'
+							);
+
+							throw new CakeException($response);
+						}
+
+						# Guardamos fecha entrega
+						if (empty($venta['Venta']['fecha_entregado'])) {
+							$this->Venta->saveField('fecha_entregado', date('Y-m-d H:i:s'));
+						}
+
+					}
+
+					break;
+				case 'retiro_en_tienda':
+					# Obtenemos estado de entregado
+					$estado_nuevo     = 'Entregado';
+					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
+
+					# Si se adjunta foto del carnet del receptor
+					if (isset($this->request->form['carnet'])) {
+
+						$imagenes = array($this->request->form['carnet']);
+
+						$erroresImagen = $this->validarTamanoTipoImagenes($imagenes);
+						
+						if (!empty($erroresImagen)) {
+							$response = array(
+								'code'    => 513, 
+								'message' => 'Errors: ' . implode(' - ', $erroresImagen)
+							);
+
+							throw new CakeException($response);
+						}
+
+						# Guardamos
+						if (!$this->Venta->saveField('ci_receptor', $this->request->form['carnet'])) {
+							$response = array(
+								'code'    => 512, 
+								'message' => 'Can´t save c.i photo'
+							);
+
+							throw new CakeException($response);
+						}
+
+						# Guardamos fecha entrega
+						if (empty($venta['Venta']['fecha_entregado'])) {
+							$this->Venta->saveField('fecha_entregado', date('Y-m-d H:i:s'));
+						}
+
+					}
+
+					break;
+				case 'despacho_externo':
+					# Obtenemos el estado de enviado
+					$estado_nuevo     = 'Enviado';
+					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
+
+					if (!isset($this->request->data['carrier']))
+						break;
+
+					if (!ClassRegistry::init('Transporte')->exists($this->request->data['carrier'])) {
+						$response = array(
+							'code'    => 404, 
+							'message' => 'Carrier not found'
+						);
+
+						throw new CakeException($response);
+					}
+
+					$dataToSave = array(
+						'Venta' => array(
+							'id' => $venta['Venta']['id'],
+							'fecha_enviado' => date('Y-m-d H:i:s')
+						),
+						'Transporte' => array(
+							array(
+								'transporte_id'   => $this->request->data['carrier'],
+								'cod_seguimiento' => (isset($this->request->data['tracking'])) ? $this->request->data['tracking'] : 'No ingresado' ,
+								'created'         => date('Y-m-d H:i:s')
+							)
+						)
+					);
+
+					# Guardamos los códigos de seguimiento
+					if (!$this->Venta->saveAll($dataToSave)) {
+						$response = array(
+							'code'    => 404, 
+							'message' => 'Can´t save carrier info. Pease try again'
+						);
+
+						throw new CakeException($response);
+					}
+
+					break;
+				case 'despacho_transito':
+					# Obtenemos el estado de enviado
+					$estado_nuevo     = 'En transito';
+					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
+
+					#  Necesita recibir un chofer
+					if (empty($chofer)) {
+						$response = array(
+							'code'    => 512, 
+							'message' => 'Driver is required'
+						);
+
+						throw new CakeException($response);
+					}
+
+					# Guardar chofer
+					$this->Venta->saveField('chofer_email', $chofer);
+
+					# Guardar fecha de envio
+					$this->Venta->saveField('fecha_transito', date('Y-m-d H:i:s'));	
+
+					break;
+				case 'entrega_agencia':
+
+					# Obtenemos el estado de enviado
+					$estado_nuevo     = 'Enviado';
+					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
+					
+					break;
 				case 'shipped':
 					# Obtenemos el estado de enviado
 					$estado_nuevo     = 'En transito';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					break;
-
 				case 'enviado':
 					# Obtenemos el estado de enviado
 					$estado_nuevo     = 'Enviado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					break;
-				
 				case 'delivered':
 					# Obtenemos estado de entregado
 					$estado_nuevo     = 'Entregado';
@@ -5351,7 +5710,7 @@ class VentasController extends AppController {
 			}
 
 			switch ($tipoEstado) {
-				case 'shipped':
+				case 'despacho_externo':
 					# Obtenemos el estado de enviado
 					$estado_nuevo     = 'ready_to_ship';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
@@ -5408,12 +5767,9 @@ class VentasController extends AppController {
 			
 		# Meli
 		}elseif ( $esMercadolibre && !empty($apiurl) && !empty($apikey)) {
-			$response = array(
-				'code'    => 507, 
-				'message' => 'Can´t update state in Marketplace'
-			);
+			
+			# Nada, meli cambia sus estados
 
-			throw new CakeException($response);
 		}else{
 			$response = array(
 				'code'    => 404, 
@@ -5424,9 +5780,6 @@ class VentasController extends AppController {
 		}
 		
 		# Guardamos el nuevo estado
-		$this->Venta->id = $id;
-		#$ts = true;
-		#if ($ts) {
 		if ($this->Venta->saveField('venta_estado_id', $venta['Venta']['venta_estado_id'])) {
 			
 			$this->set(array(
@@ -5453,11 +5806,12 @@ class VentasController extends AppController {
 	 */
 	public function api_registrar_seguimiento($id = '')
 	{
-		# Sólo método Get
+		# Sólo método post
 		if (!$this->request->is('post')) {
 			$response = array(
-				'code'    => 501, 
-				'message' => 'Only POST request allow'
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
 			);
 
 			throw new CakeException($response);
@@ -5468,7 +5822,8 @@ class VentasController extends AppController {
 		if (!isset($this->request->query['token'])) {
 			$response = array(
 				'code'    => 502, 
-				'message' => 'Expected Token'
+				'name' => 'error',
+				'message' => 'Token requerido'
 			);
 
 			throw new CakeException($response);
@@ -5478,7 +5833,8 @@ class VentasController extends AppController {
 		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
 			$response = array(
 				'code'    => 505, 
-				'message' => 'Invalid or expired Token'
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
 			);
 
 			throw new CakeException($response);
@@ -5488,7 +5844,8 @@ class VentasController extends AppController {
 		if (!$this->Venta->exists($id)) {
 			$response = array(
 				'code'    => 404, 
-				'message' => 'Sale not found'
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
 			);
 
 			throw new CakeException($response);
@@ -5553,7 +5910,9 @@ class VentasController extends AppController {
 			App::uses('HttpSocket', 'Network/Http');
 			$socket			= new HttpSocket();
 			
-			$request		= $socket->post(Router::url('/api/ventas/change_state/'.$this->Venta->id.'.json?type=enviado&token='.$token, true));
+			$request		= $socket->post(Router::url('/api/ventas/change_state/'.$this->Venta->id.'.json?&token='.$token, true), array(
+				'type' => 'entrega_agencia'
+			));
 			
 			$request->body = json_decode($request->body, true);
 			
@@ -5571,7 +5930,8 @@ class VentasController extends AppController {
 		}else{
 			$response = array(
 				'code'    => 509, 
-				'message' => 'Can´t save tracking number for this sale'
+				'name' => 'error',
+				'message' => 'No fue posible guardar los n° de seguimiento'
 			);
 
 			throw new CakeException($response);
@@ -5580,6 +5940,157 @@ class VentasController extends AppController {
 		$this->set(array(
             'response' => $respuesta,
             '_serialize' => array('response')
+        ));
+		
+	}
+
+
+	/**
+	 * [api_picking_venta description]
+	 * @param  string $id [description]
+	 * @return [type]     [description]
+	 */
+	public function api_picking_venta($id = '')
+	{
+		# Sólo método post
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		// parámetro mágico que permite ingresar sin estar autenticado
+		if (isset($this->request->query['tadah'])) {
+			$token = ClassRegistry::init('Token')->crear_token(1);
+			$this->request->query['token'] = $token['token'];
+		}
+
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# No existe venta
+		if (!$this->Venta->exists($id)) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!isset($this->request->data['Detail'])) {
+			$response = array(
+				'code'    => 518, 
+				'name' => 'error',
+				'message' => 'Productos vendidos son obligatorios'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$venta = $this->Venta->obtener_venta_por_id($id);
+
+		$productosConfirmados = $this->request->data['Detail'];
+
+		$detalles = array();
+
+		foreach ($productosConfirmados as $ip => $producto) {
+			
+			if (!isset($producto['id']) || !isset($producto['quantity'])) {
+				continue;
+			}
+
+			if (count(Hash::extract($venta['VentaDetalle'], '{n}[id='.$producto['id'].']')) == 0)  {
+				continue;
+			}
+
+
+			$detalles[$ip]['VentaDetalle'] = Hash::extract($venta['VentaDetalle'], '{n}[id='.$producto['id'].']')[0];
+			$detalles[$ip]['VentaDetalle']['cantidad_preparada'] = $producto['quantity'];
+			
+		}
+
+		# Existen detalles
+		if (empty($detalles)) {
+			$response = array(
+				'code'    => 519,
+				'name'    => 'error',
+				'message' => 'No existen productos para procesar. Verifique la información e intente nuevamente.'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Cantidad preparada debe ser igual a la reservada
+		if (array_sum(Hash::extract($detalles, '{n}.VentaDetalle.cantidad_preparada')) != array_sum(Hash::extract($detalles, '{n}.VentaDetalle.cantidad_reservada'))) {
+			$response = array(
+				'code'    => 519,
+				'name' 	  => 'error',
+				'message' => 'La cantidad de productos confirmados es diferente a la cantidad reservada. Verifique la información e intente nuevamente.'
+			);
+
+			throw new CakeException($response);
+		}
+		
+
+		$html_tr = '';
+
+		foreach ($detalles as $idd => $detalle) {
+			# Pedido validado por app
+			$detalles[$idd]['VentaDetalle']['confirmado_app']  = 1;
+
+			$d = $detalle['VentaDetalle'];
+			$d['confirmado_app'] = 1;
+			
+			$confirmar = 1;
+
+			$v             =  new View();
+			$v->autoRender = false;
+			$v->output     = '';
+			$v->layoutPath = '';
+			$v->layout     = '';
+			$v->set(compact('d', 'confirmar'));	
+
+			$html_tr = $v->render('/Elements/ventas/tr-producto-modal');
+
+		}
+		
+		if (!empty($detalles)) {
+			ClassRegistry::init('VentaDetalle')->saveMany($detalles);
+		}
+
+		$this->Venta->id = $id;
+		$this->Venta->saveField('picking_fecha_termino', date('Y-m-d H:i:s'));
+
+		$this->set(array(
+			'response'   => true,
+			'tr' => $html_tr,
+			'_serialize' => array('response', 'tr')
         ));
 		
 	}

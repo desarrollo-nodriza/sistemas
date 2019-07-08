@@ -102,6 +102,22 @@
 				<?= $this->fetch('content'); ?>
 			</div>
 		</div>
+
+		<!-- Modal imagen vacio-->
+		<div class="modal fade" id="modalImagen" tabindex="-1" role="dialog" aria-labelledby="modalImagenLabel">
+		  <div class="modal-dialog modal-lg" role="document">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		        <h4 class="modal-title" id="modalImagenLabel"></h4>
+		      </div>
+		      <div class="modal-body">
+		      
+		      </div>
+		    </div>
+		  </div>
+		</div>
+
         <audio id="audio-alert" src="<?= $this->Html->url('/backend/audio/alert.mp3'); ?>" preload="auto"></audio>
         <audio id="audio-fail" src="<?= $this->Html->url('/backend/audio/fail.mp3'); ?>" preload="auto"></audio>
 		<?= $this->Html->script(array('/backend/js/actions')); ?>

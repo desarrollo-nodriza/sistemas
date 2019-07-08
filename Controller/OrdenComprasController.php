@@ -203,8 +203,18 @@ class OrdenComprasController extends AppController
 
 		$ocs = $this->OrdenCompra->find('all', array(
 			'conditions' => array(
-				'parent_id !=' => '',
-				'estado !=' => ''
+				'OR' => array(
+					array(
+						'OrdenCompra.parent_id !=' => '',
+						'OrdenCompra.oc_manual' => 0,
+						'OrdenCompra.estado !=' => ''
+					),
+					array(
+						'OrdenCompra.parent_id' => '',
+						'OrdenCompra.oc_manual' => 1,
+						'OrdenCompra.estado !=' => ''
+					)
+				)
 			),
 			'fields' => array(
 				'estado', 'id'
@@ -213,8 +223,18 @@ class OrdenComprasController extends AppController
 
 		$sin_iniciar = $this->OrdenCompra->find('count', array(
 			'conditions' => array(
-				'parent_id !=' => '',
-				'estado' => ''
+				'OR' => array(
+					array(
+						'OrdenCompra.parent_id !=' => '',
+						'OrdenCompra.oc_manual' => 0,
+						'OrdenCompra.estado' => ''
+					),
+					array(
+						'OrdenCompra.parent_id' => '',
+						'OrdenCompra.oc_manual' => 1,
+						'OrdenCompra.estado' => ''
+					)
+				)
 			),
 			'fields' => array(
 				'estado', 'id'
@@ -511,7 +531,6 @@ class OrdenComprasController extends AppController
 					$res['incompletos'][] = sprintf('#%s - %s (agregados: %d - faltantes: %d)', $oc['VentaDetalleProducto']['id'], $pedido['OrdenComprasVentaDetalleProducto']['descripcion'], $cantidadRecibida, ($cantidadFaltante - $cantidadRecibida) );
 				}
 			
-
 				# Obtenemos los productos vendidos que se solicitaron en ésta OC
 				$currentOC = $this->OrdenCompra->find('first', array(
 					'conditions' => array(

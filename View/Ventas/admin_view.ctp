@@ -44,10 +44,12 @@
 												<th>Estado</th>
 												<td><span data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$venta['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= $venta['VentaEstado']['VentaEstadoCategoria']['estilo']; ?>"><?= $venta['VentaEstado']['VentaEstadoCategoria']['nombre']; ?></span> <small><?=$venta['Venta']['venta_estado_responsable'];?></small></td>
 											</tr>
+											<? if (isset(ClassRegistry::init('Venta')->picking_estado[$venta['Venta']['picking_estado']])) : ?>
 											<tr>
 												<th>Picking</th>
 												<td><span class="btn btn-xs btn" style="color: #fff; background-color: <?=ClassRegistry::init('Venta')->picking_estado[$venta['Venta']['picking_estado']]['color'];?>"><?=ClassRegistry::init('Venta')->picking_estado[$venta['Venta']['picking_estado']]['label'];?></span></td>
 											</tr>
+											<? endif; ?>
 											<tr>
 												<th>Fecha</th>
 												<td><?= date_format(date_create($venta['Venta']['fecha_venta']), 'd/m/Y H:i:s'); ?></td>
@@ -78,6 +80,63 @@
 												<th>Teléfono despacho</th>
 												<td><?= $venta['Venta']['fono_receptor']; ?></td>
 											</tr>
+											<? if (!empty($venta['Venta']['ci_receptor'])) : ?>
+											<tr>
+												<th>Cédula de identidad receptor</th>
+												<td>
+													<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#cimodal"><i class="fa fa-file"></i> Ver cédula</button>
+
+													<!-- Modal -->
+													<div class="modal fade" id="cimodal" tabindex="-1" role="dialog" aria-labelledby="modalCI">
+													  <div class="modal-dialog modal-lg" role="document">
+													    <div class="modal-content">
+													      <div class="modal-header">
+													        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+													        <h4 class="modal-title" id="modalCI">Cédula de identidad</h4>
+													      </div>
+													      <div class="modal-body">
+													        <?=$this->Html->image($venta['Venta']['ci_receptor']['path'], array('alt' => 'CI receptor', 'class' => 'img-responsive')); ?>
+													      </div>
+													      <div class="modal-footer">
+													        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+													        <?=$this->Html->link('<i class="fa fa-download"></i> Descargar', sprintf('%swebroot/img/%s', $this->webroot, $venta['Venta']['ci_receptor']['path']) , array('class' => 'btn btn-primary', 'escape' => false, 'download'=> sprintf('ci-venta-%d.jpg', $venta['Venta']['id']))); ?>
+													      </div>
+													    </div>
+													  </div>
+													</div>
+												</td>
+											</tr>
+											<? endif; ?>
+											<? if (!empty($venta['Venta']['chofer_email'])) : ?>
+											<tr>
+												<th>Chofer designado</th>
+												<td><?= $venta['Venta']['chofer_email']; ?></td>
+											</tr>
+											<? endif; ?>
+											<? if (!empty($venta['Venta']['fecha_transito'])) : ?>
+											<tr>
+												<th>Fecha en transito</th>
+												<td><?= date_format(date_create($venta['Venta']['fecha_transito']), 'd/m/Y H:i:s'); ?></td>
+											</tr>
+											<? endif; ?>
+											<? if (!empty($venta['Venta']['fecha_enviado'])) : ?>
+											<tr>
+												<th>Fecha enviado</th>
+												<td><?= date_format(date_create($venta['Venta']['fecha_enviado']), 'd/m/Y H:i:s'); ?></td>
+											</tr>
+											<? endif; ?>
+											<? if (!empty($venta['Venta']['fecha_entregado'])) : ?>
+											<tr>
+												<th>Fecha entregado</th>
+												<td><?= date_format(date_create($venta['Venta']['fecha_entregado']), 'd/m/Y H:i:s'); ?></td>
+											</tr>
+											<? endif; ?>
+											<? if (!empty($venta['Venta']['transporte_id'])) : ?>
+											<tr>
+												<th>Transporte usado</th>
+												<td><?= $venta['Transporte']['nombre']; ?></td>
+											</tr>
+											<? endif; ?>
 											<tr>
 												<th>Tienda</th>
 												<td><?= $venta['Tienda']['nombre']; ?></td>
@@ -93,6 +152,12 @@
 										</table>
 									</div>
 								</div>
+								
+								<? if ($venta['Venta']['picking_estado'] != 'empaquetado') : ?>
+								<div class="panel-body">
+									<?=$this->Html->link('<i class="fa fa-hand-paper-o"></i> Reservar stock manualmente', array('action' => 'reservar_stock_venta', $venta['Venta']['id']), array('class' => 'btn btn-primary pull-right', 'escape' => false))?>
+								</div>
+								<? endif; ?>
 
 								<!-- Productos --> 
 								<div class="panel-body">
@@ -101,37 +166,33 @@
 											<thead>
 												<th>ID Producto</th>
 												<th>Nombre</th>
-												<th>Precio Unitario <small>(Neto)</small></th>
-												<th>Precio Unitario <small>(Bruto)</small></th>
+												<th>Precio Neto</th>
+												<th>Precio Bruto</th>
 												<th>Cantidad</th>
 												<th>Stock reservado</th>
 												<th>Subtotal</th>
+												<th>Opciones</th>
 											</thead>
 											<tbody>
 												<?php $TotalProductos = 0; foreach ($venta['VentaDetalle'] as $indice => $detalle) : $TotalProductos = $TotalProductos + ($detalle['precio'] * $detalle['cantidad']); ?>
 													<tr>
 														<td>
-															<?= $detalle['VentaDetalleProducto']['id']; ?>
-															<?= $this->Form->input(sprintf('DteDetalle.%d.VlrCodigo', $indice), array('type' => 'hidden', 'value' => sprintf('COD-%s', $detalle['VentaDetalleProducto']['id']))) ;?>
-															<?= $this->Form->input(sprintf('Detalle.%d.VlrCodigo', $indice), array('type' => 'hidden', 'value' => sprintf('COD-%s', $detalle['VentaDetalleProducto']['id']))) ;?>
+															<?=($detalle['confirmado_app']) ? '<i class="fa fa-mobile text-success" data-toggle="tooltip" title="Confirmado vía app"></i>' : '' ; ?> <?= $detalle['VentaDetalleProducto']['id']; ?>
 														</td>
-														<td>
-															<?= $detalle['VentaDetalleProducto']['nombre']; ?>
-															<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
-															<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
+														<td data-toggle="tooltip" title="<?=$detalle['VentaDetalleProducto']['nombre'];?>" class="td-producto">
+															<? if (!empty($detalle['VentaDetalleProducto']['imagenes'])) : ?>
+															<img src="<?=Hash::extract($detalle['VentaDetalleProducto']['imagenes'], '{n}[principal=1].url')[0]; ?>" class="img-responsive producto-td-imagen">
+															<? endif; ?>
+															<?= $this->Text->truncate($detalle['VentaDetalleProducto']['nombre'], 40); ?>
 														</td>
 														<td>
 															<?= CakeNumber::currency($detalle['precio'], 'CLP'); ?>
-															<?=$this->Form->input(sprintf('DteDetalle.%d.PrcItem', $indice), array('type' =>'hidden', 'value' => $detalle['precio']));?>
-															<?=$this->Form->input(sprintf('Detalle.%d.PrcItem', $indice), array('type' =>'hidden', 'value' => $detalle['precio']));?>
 														</td>
 														<td>
 															<?= CakeNumber::currency($detalle['precio'] * 1.19, 'CLP'); ?>
 														</td>
 														<td>
 															<?= number_format($detalle['cantidad'], 0, ".", "."); ?>
-															<?= $this->Form->input(sprintf('DteDetalle.%d.QtyItem', $indice), array('type' => 'hidden', 'value' => $detalle['cantidad'])); ?>
-															<?= $this->Form->input(sprintf('Detalle.%d.QtyItem', $indice), array('type' => 'hidden', 'value' => $detalle['cantidad'])); ?>
 														</td>
 														<td>
 															<?=$detalle['cantidad_reservada'];?>
@@ -139,34 +200,39 @@
 														<td>
 															<?= CakeNumber::currency($detalle['precio'] * $detalle['cantidad'], 'CLP'); ?>
 														</td>
+														<td>
+														<? if ($venta['Venta']['picking_estado'] != 'empaquetado') : ?>
+															<?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('action' => 'liberar_stock_reservado', $venta['Venta']['id'], $detalle['id'], $detalle['cantidad_reservada']), array('class' => 'btn btn-warning btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?>
+														<? endif; ?>
+														</td>
 													</tr>
 												<? endforeach; ?>
 											</tbody>
 											<tfoot>
 												<tr>
-													<th colspan="6" class="text-right">Total Productos</th>
+													<th colspan="7" class="text-right">Total Productos</th>
 													<td><?=CakeNumber::currency($TotalProductos, 'CLP');?></td>
 												</tr>
 												<tr>
-													<th colspan="6" class="text-right">IVA <small>(19%)</small></th>
+													<th colspan="7" class="text-right">IVA <small>(19%)</small></th>
 													<td><?=CakeNumber::currency(round($TotalProductos * 0.19), 'CLP');?></td>
 												</tr>
 												<tr>
-													<th colspan="6" class="text-right">Descuento</th>
+													<th colspan="7" class="text-right">Descuento</th>
 													<td>
 														<?php if (!empty($venta['Venta']['descuento'])) {echo CakeNumber::currency($venta['Venta']['descuento'], 'CLP');} ?>
 														<?= $this->Form->input('DscRcgGlobal.ValorDR', array('type' => 'hidden', 'value' => round($this->request->data['Venta']['descuento']))); ?>
 													</td>
 												</tr>
 												<tr>
-													<th colspan="6" class="text-right">Transporte</th>
+													<th colspan="7" class="text-right">Transporte</th>
 													<td>
 														<?=$this->Form->hidden('Dte.Transporte', array('value' => $venta['Venta']['costo_envio'] ));?>
 														<?php if (!empty($venta['Venta']['costo_envio'])) {echo CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP');} ?>
 													</td>
 												</tr>
 												<tr class="success">
-													<th colspan="6" class="text-right" style="font-size: 22px;">Total</th>
+													<th colspan="7" class="text-right" style="font-size: 22px;">Total</th>
 													<td style="font-size: 22px;"><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></td>
 												</tr>
 											</tfoot>
@@ -282,6 +348,13 @@
 
 				            <!-- DESCARGAR ETIQUETA -->
 				            <?= $this->Html->link('<i class="fa fa-cube"></i><p>Etiqueta</p>', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'tile tile-warning js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => 'Generar Etiqueta', 'escape' => false)); ?>
+
+
+				            <? if (!$venta['Venta']['prioritario']) : ?>
+							<?= $this->Form->postLink('<i class="fa fa-check"></i><p>Marcar como prioritaria</p>', array('action' => 'marcar_prioritaria', $venta['Venta']['id']), array('class' => 'tile tile-danger', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
+							<? else : ?>
+							<?= $this->Form->postLink('<i class="fa fa-remove"></i><p>Marcar no prioritaria</p>', array('action' => 'marcar_no_prioritaria', $venta['Venta']['id']), array('class' => 'tile tile-default', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
+							<? endif; ?>
 							
 							<? if (isset($venta['VentaExterna']['facturacion'])) : ?>
 							<!-- Facturacion info -->

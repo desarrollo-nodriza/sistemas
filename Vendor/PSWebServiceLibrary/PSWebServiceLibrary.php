@@ -403,6 +403,13 @@ class PrestaShopWebservice
 	}
 
 
+
+	public function get_url()
+	{
+		return $this->url;
+	}
+
+
 }
 
 /**

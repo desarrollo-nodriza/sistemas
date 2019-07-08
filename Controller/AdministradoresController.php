@@ -413,4 +413,180 @@ class AdministradoresController extends AppController
 			throw new CakeException($response);
     	}
     }
+
+
+    /**
+     * [api_obtener_usuario description]
+     * @return [type] [description]
+     */
+    public function api_obtener_usuario()
+    {	
+
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$tokenData = ClassRegistry::init('Token')->find('first', array(
+			'conditions' => array(
+				'Token.token' => $token
+			),
+			'contain' => array(
+				'Administrador' => array(
+					'Rol' => array(
+						'fields' => array(
+							'Rol.nombre', 'Rol.app_retiro', 'Rol.app_despacho', 'Rol.app_entrega', 'Rol.app_agencia', 'Rol.app_picking', 'Rol.app_perfil'
+						)
+					),
+					'fields' => array(
+						'Administrador.nombre', 'Administrador.email', 'Administrador.google_imagen'
+					)
+				)
+			),
+			'fields' => array('Token.token', 'Token.administrador_id')
+		));
+
+		
+		# Validamos usuario
+		if (empty($tokenData['Administrador'])) {
+			$response = array(
+				'code'    => 404, 
+				'message' => 'User not found'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$response = array(
+			'Usuario' => array(
+				'nombre' => $tokenData['Administrador']['nombre'],
+				'email'  => $tokenData['Administrador']['email'],
+				'avatar' => (!empty($tokenData['Administrador']['google_imagen'])) ? $tokenData['Administrador']['google_imagen'] : 'https://ui-avatars.com/api/?size=50&background=fff&color=771D97&name=' . urlencode($tokenData['Administrador']['nombre'])
+			)
+		);
+
+		if (!empty($tokenData['Administrador']['Rol'])) {
+
+			$permisos = array(
+				'Usuario' => array(
+					'perfil' => (isset(ClassRegistry::init('Rol')->app[$tokenData['Administrador']['Rol']['app_perfil']])) ? ClassRegistry::init('Rol')->app[$tokenData['Administrador']['Rol']['app_perfil']] : ClassRegistry::init('Rol')->app['general'] 
+				),
+				'Opciones' => array(
+					'retirar_en_tienda' => $tokenData['Administrador']['Rol']['app_retiro'],
+					'despachar'         => $tokenData['Administrador']['Rol']['app_despacho'],
+					'entrega_domicilio' => $tokenData['Administrador']['Rol']['app_entrega'],
+					'entrega_agencia'   => $tokenData['Administrador']['Rol']['app_agencia'],
+					'picking'           => $tokenData['Administrador']['Rol']['app_picking']
+				)
+			);
+
+			$response = array_replace_recursive($response, $permisos);
+		}
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
+    }
+
+
+    /**
+     * [api_obtener_usuarios_por_perfil description]
+     * @return [type] [description]
+     */
+    public function api_obtener_usuarios_por_perfil()
+    {
+    	$token = '';
+    	$perfil = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# viene perfil
+    	if (isset(ClassRegistry::init('Rol')->app[$this->request->query['profile']])) {
+    		$perfil = $this->request->query['profile'];
+    	}else{
+    		# Existe token
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected profile param'
+			);
+
+			throw new CakeException($response);
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$roles = ClassRegistry::init('Rol')->find('all', array(
+			'conditions' => array(
+				'app_perfil' => $perfil,
+				'activo' => 1
+			),
+			'contain' => array(
+				'Administrador' => array(
+					'conditions' => array(
+						'Administrador.activo' => 1
+					),
+					'fields' => array(
+						'Administrador.id', 'Administrador.nombre', 'Administrador.email'
+					)
+				)
+			),
+			'fields' => array(
+				'Rol.id'
+			)
+		));
+
+		$response = array();
+
+		foreach (Hash::extract($roles, '{n}.Administrador.{n}') as $ia => $admin) {
+			$response[$admin['email']] = $admin['nombre'];
+		}
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
+
+    }
 }

@@ -22,6 +22,32 @@ class Venta extends AppModel
 		)
 	);
 
+	/**
+	 * BEHAVIORS
+	 * Foto CI
+	 */
+	var $actsAs			= array(
+		'Image'		=> array(
+			'fields'	=> array(
+				'ci_receptor'	=> array(
+					'versions'	=> array(
+						array(
+							'prefix'	=> 'mini',
+							'width'		=> 100,
+							'height'	=> 100,
+							'crop'		=> true
+						),
+						array(
+							'prefix'	=> 'landscape',
+							'width'		=> 300,
+							'height'	=> 200,
+							'crop'		=> true
+						)
+					)
+				)
+			)
+		)
+	);
 
 	/**
 	 * ASOCIACIONES
@@ -250,7 +276,7 @@ class Venta extends AppModel
 							'VentaDetalle.activo' => 1
 						),
 						'fields' => array(
-							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada'
+							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app'
 						)
 					),
 					'VentaEstado' => array(
@@ -317,7 +343,7 @@ class Venta extends AppModel
 				'fields' => array(
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
 					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.comuna_entrega', 'Venta.nombre_receptor',
-					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable'
+					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito'
 				)
 			)
 		);
@@ -381,7 +407,7 @@ class Venta extends AppModel
 				'Venta.id', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.fecha_venta'
 			),
 		));
-	
+		
 		return $ventas;
 	}
 
@@ -528,6 +554,80 @@ class Venta extends AppModel
 		}
 
 		return;
+	}
+
+
+	/**
+	 * Si hay items disponible se reserva el stock y se actualiza el picking_estado de la venta.
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function reservar_stock_producto($id)
+	{
+		ClassRegistry::init('VentaDetalle')->id = $id;
+		if (!ClassRegistry::init('VentaDetalle')->exists()) {
+			return 0;
+		}
+
+		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente
+		if (ClassRegistry::init('VentaDetalle')->field('cantidad_reservada') == ClassRegistry::init('VentaDetalle')->field('cantidad')) {
+			return 0;
+		}
+
+		$reservar = ClassRegistry::init('VentaDetalle')->field('cantidad') - ClassRegistry::init('VentaDetalle')->field('cantidad_reservada');
+
+		$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock(ClassRegistry::init('VentaDetalle')->field('venta_detalle_producto_id'), $reservar);
+		
+		$save = array(
+			'VentaDetalle' => array(
+				'id' => $id,
+				'cantidad_reservada' => $reservado
+			)
+		);
+
+		if(!ClassRegistry::init('VentaDetalle')->save($save))
+			return 0;
+
+		$venta = $this->obtener_venta_por_id(ClassRegistry::init('VentaDetalle')->field('venta_id'));
+
+		if (array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada')) == array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad'))) {
+			$this->id = $venta['Venta']['id'];
+			$this->saveField('picking_estado', 'empaquetar');
+			$this->saveField('subestado_oc', 'no_entregado');
+		}
+
+		return $reservado;
+	}
+
+
+	/**
+	 * [liberar_reserva_stock_producto description]
+	 * @param  [type] $id      [description]
+	 * @param  [type] $liberar [description]
+	 * @return [type]          [description]
+	 */
+	public function liberar_reserva_stock_producto($id, $liberar)
+	{
+		ClassRegistry::init('VentaDetalle')->id = $id;
+		if (!ClassRegistry::init('VentaDetalle')->exists()) {
+			return 0;
+		}
+
+		if ($liberar == 0 || $liberar < 0 || $liberar > ClassRegistry::init('VentaDetalle')->field('cantidad_reservada'))
+			return 0;
+
+		$nueva_cantidad = ClassRegistry::init('VentaDetalle')->field('cantidad_reservada') - $liberar;
+			
+		if(ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $nueva_cantidad)) {
+
+			ClassRegistry::init('VentaDetalle')->saveField('confirmado_app', 0);
+
+			$this->id = ClassRegistry::init('VentaDetalle')->field('venta_id');
+			$this->saveField('picking_estado', 'no_definido');
+			return $liberar;
+		}else{
+			return 0;
+		}
 	}
 
 

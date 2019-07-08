@@ -59,7 +59,7 @@ class Token extends AppModel
 		$expira = new DateTime(date('Y-m-d H:i:s'));
 		$expira->modify(sprintf('+%d hours', $duracion));
 
-		$token_acceso = bin2hex(openssl_random_pseudo_bytes(24));
+		$token_acceso = $this->generar_token(24);
 
 		$token['Token'] = array(
 			'administrador_id' => $administrador_id,
@@ -82,6 +82,12 @@ class Token extends AppModel
 		}else{
 			return $this->validationErrors;
 		}
+	}
+
+
+	public function generar_token($largo = 24)
+	{
+		return bin2hex(openssl_random_pseudo_bytes($largo));
 	}
 
 

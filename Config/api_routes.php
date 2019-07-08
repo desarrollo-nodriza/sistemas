@@ -98,6 +98,28 @@ Router::connect(
 );
 
 
+Router::connect(
+    '/api/administradores/userinfo', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Administradores', 
+        'action' => 'obtener_usuario',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
+
+
+Router::connect(
+    '/api/administradores/userbyprofile', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Administradores', 
+        'action' => 'obtener_usuarios_por_perfil',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
+
+
 /**
  * Venta
  */
@@ -133,6 +155,20 @@ Router::connect(
     array(
         'controller' => 'Ventas', 
         'action' => 'registrar_seguimiento',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+Router::connect(
+    '/api/ventas/picking/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'picking_venta',
         'api' => true,
         'prefix' => 'api'),
     array(

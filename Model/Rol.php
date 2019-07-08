@@ -8,6 +8,15 @@ class Rol extends AppModel
 	public $useDbConfig = 'reportes';
 	public $displayField	= 'nombre';
 
+
+	public $app = array(
+		'general'			 => 'No definido',
+		'encargado_bodega'   => 'Encargado de bodega',
+		'chofer_transporte'  => 'Chofer',
+		'ayudante_bodega'    => 'Ayudante de bodega',
+		'pioneta_transporte' => 'Pioneta'
+	);
+
 	/**
 	 * BEHAVIORS
 	 */

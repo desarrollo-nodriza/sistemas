@@ -293,13 +293,13 @@ $(function() {
 					actualizado = true;
 					obtener_ventas_preparacion();
 				}else{
-					cancelarOrdenamiento();
+					$("#tasks").sortable('cancel');
 					actualizado = false;
 					noty({text: respuesta.message, layout: 'topRight', type: 'error'});
 				}				
 
 			}).fail(function(){
-				cancelarOrdenamiento();
+				$("#tasks").sortable('cancel');
 				actualizado = false;
 				$('.loader').removeClass('show');
 				noty({text: 'Ocurrió un error al actualizar la venta. Intente actualizar la página.', layout: 'topRight', type: 'error'});
@@ -329,14 +329,14 @@ $(function() {
 					actualizado = true;
 					obtener_ventas_preparacion();
 				}else{
-					cancelarOrdenamiento();
+					$("#tasks_progreess").sortable('cancel');
 					actualizado = false;
 					$('.loader').removeClass('show');
 					noty({text: respuesta.message, layout: 'topRight', type: 'error'});
 				}
 
 			}).fail(function(){
-				cancelarOrdenamiento();
+				$("#tasks_progreess").sortable('cancel');
 				actualizado = false;
 				$('.loader').removeClass('show');
 				noty({text: 'Ocurrió un error al actualizar la venta. Intente actualizar la página.', layout: 'topRight', type: 'error'});
@@ -375,6 +375,57 @@ $(function() {
 		        countdown = t/1000; // Reiniciamos el countdown
 		        return this.stop().start();
 		    }
+		}
+
+
+		var confirmarDetalle = function($id_venta, $id_detalle, $cantidad, $btn){
+
+			var $itemsConfirmar = {
+				'Detail' : [{ 'id' : $id_detalle, 'quantity' : $cantidad}]
+			};
+			
+
+			$.post(webroot + 'api/ventas/picking/' + $id_venta + '.json?tadah=1', $itemsConfirmar, function(data, textStatus, xhr) {
+				
+				var respuesta = data;
+				
+				if (respuesta.response == true) {
+					
+					$btn.parents('tr').eq(0).replaceWith(respuesta.tr);
+					noty({text: 'Item confirmado con éxito.', layout: 'topRight', type: 'success'});
+
+				}else{
+					noty({text: respuesta.message, layout: 'topRight', type: 'error'});
+				}
+
+			}).fail(function(){
+				
+				noty({text: 'Ocurrió un error inesperado. Intene nuevamente.', layout: 'topRight', type: 'error'});
+
+			}).always(function(){
+
+				setTimeout(function(){
+					$.noty.closeAll();
+				}, 10000);
+
+				$btn.removeAttr('disabled');
+
+			});
+		}
+
+		var ver_imagen_producto = function($img){
+
+			var titulo = $img.parents('td').eq(0).data('original-title');
+
+			$('#modalImagenLabel').html(titulo);
+
+			var imgnw = $img.clone(); 
+				imgnw.removeClass('producto-td-imagen');
+
+			$('#modalImagen .modal-body').html(imgnw);
+			$('#modalImagen').modal('show');
+
+
 		}
 
 		return {
@@ -455,6 +506,24 @@ $(function() {
 					}
 				});
 
+
+				$(document).on('click', '.js-confirmar-detalle' , function(e){
+					e.preventDefault();
+
+					$(this).attr('disabled', 'disabled');
+
+					var id_venta 	= $(this).parents('.modal').eq(0).data('id'),
+						id_detalle 	= $(this).parents('tr').eq(0).data('id'),
+						cantidad 	= $(this).parents('tr').eq(0).data('cantidad'),
+						btn 		= $(this);
+
+					btn.attr('disabled', 'disabled');
+
+					confirmarDetalle(id_venta, id_detalle, cantidad, btn);
+
+				});
+
+
 				$('.mb-control-close').on('click', function(){
 					cerrar_modal();
 				});
@@ -529,12 +598,20 @@ $(function() {
 
 				$(document).on('click', '.js-cancelar-cambio-estado', function(){
 					
-					$("#tasks_completed").sortable('cancel');
+					$("#tasks_progreess").sortable('cancel');
 				});
 
 				$(document).on('hide.bs.modal', '.modal-cambiar-estado', function(){
 					
-					$("#tasks_completed").sortable('cancel');
+					$("#tasks_progreess").sortable('cancel');
+					autoRefresh.reset(120000);
+				});
+
+				$(document).on('show.bs.modal', '.modal-venta-detalle', function(){
+					autoRefresh.stop();
+				});
+
+				$(document).on('hide.bs.modal', '.modal-venta-detalle', function(){
 					autoRefresh.reset(120000);
 				});
 
@@ -555,6 +632,11 @@ $(function() {
 						$('.btn-facturacion-masiva').removeAttr('disabled');
 					}
 
+				});
+
+
+				$(document).on('click', '.producto-td-imagen', function(){
+					ver_imagen_producto($(this));
 				});
 
 			}

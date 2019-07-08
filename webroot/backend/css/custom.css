@@ -495,3 +495,17 @@ tfoot > tr > td, tfoot > tr:first-child > td {
     padding: 40% 0;
     cursor: not-allowed;
 }
+
+
+.td-producto {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.producto-td-imagen {
+    width: 100px;
+    height: auto;
+    margin-right: 10px;
+    cursor: pointer;
+}

@@ -362,7 +362,7 @@ class PrestashopComponent extends Component
 
 	/****************************************************************************************************/
 	//obtiene el estado de venta
-	public function prestashop_obtener_cliente ($cliente_id) 
+	public function prestashop_obtener_cliente ($cliente_id, $todo = false) 
 	{
 		$opt = array();
 		$opt['resource'] = 'customers';
@@ -374,6 +374,11 @@ class PrestashopComponent extends Component
 		$PrestashopResources = $xml->children()->children();
 
 		$cliente = to_array($PrestashopResources);
+
+
+		if ($todo) {
+			return $cliente;
+		}
 
 		$VentaCliente = ClassRegistry::init('VentaCliente')->find(
 			'first',
@@ -460,6 +465,85 @@ class PrestashopComponent extends Component
 		}
 
 		return $res;
+	}
+
+
+	public function prestashop_crear_mensaje($venta_id_externo, $mensaje = '')
+	{
+		# Obtenemos el esquema del modelo
+		try {	
+			$xml = $this->ConexionPrestashop->get(array('url' => $this->ConexionPrestashop->get_url().'/api/customer_threads?schema=blank'));
+			$resources = $xml->children()->children();
+			
+		} catch (PrestaShopWebserviceException $ex) {
+			return false;
+		}
+
+		# Obtenemos hilo de los mensajes
+		$opt = array();
+		$opt['resource'] = 'customer_threads';
+		$opt['display'] = '[id]';
+		$opt['filter[id_order]'] = '[' .$venta_id_externo. ']';
+
+		$xml = $this->ConexionPrestashop->get($opt);
+
+		$PrestashopResources = $xml->children()->children();
+
+		debug($venta_id_externo);
+
+		prx($PrestashopResources);
+
+		# Obtenemos el esquema del modelo
+		try {		
+			$xml2 = $this->ConexionPrestashop->get(array('url' => $this->ConexionPrestashop->get_url().'/api/customer_messages?schema=blank'));
+			$resources2 = $xml2->children()->children();
+			
+		} catch (PrestaShopWebserviceException $ex) {
+			return false;
+		}
+
+		debug($resources);
+
+		# Obtenemos la venta
+		$venta   = $this->prestashop_obtener_venta($venta_id_externo);
+		$cliente = $this->prestashop_obtener_cliente($venta['id_customer'], true);
+		
+		/*
+		# Datos
+		foreach ($resources as $nodeKey => $node)
+		{	
+			$resources->id_order   = $venta_id_externo;
+			$resources->id_shop    = 1;
+			$resources->id_lang    = 1;
+			$resources->id_contact = 0;
+			$resources->id_product = 0;
+			$resources->status     = 'open';
+			$resources->token 	   = ClassRegistry::init('Token')->generar_token(12);
+			$resources->email      = $cliente['customer']['email'];
+			$resources->date_add   = date('Y-m-d H:i:s');
+			$resources->date_upd   = date('Y-m-d H:i:s');
+		}
+		
+		try {		
+			$opt['postXml']  = $xml->asXML();
+			$opt['resource'] = 'customer_threads';
+			$xml = $this->ConexionPrestashop->add($opt);
+		}
+		catch (PrestaShopWebserviceException $ex)
+		{	
+			//prx($ex->getMessage());
+		}*/
+
+		prx($resources2);
+		foreach ($resources2 as $nodekey => $node) {
+			# code...
+		}
+
+
+		# Crear mensaje
+
+
+
 	}
 
 
@@ -595,7 +679,7 @@ class PrestashopComponent extends Component
 		ini_set('max_execution_time', 0);
 
 		$opt             = array();
-		$opt['display'] = '[id,name,price,active,quantity,supplier_reference,id_manufacturer]';
+		$opt['display'] = '[id,name,price,active,quantity,supplier_reference,id_manufacturer,id_default_image,link_rewrite]';
 		
 		$opt['resource'] = 'products';
 
@@ -620,6 +704,64 @@ class PrestashopComponent extends Component
 	}
 
 
+	/**
+	 * [prestashop_obtener_imagenes_producto description]
+	 * @param  [type] $id_product [description]
+	 * @param  string $host       [description]
+	 * @return [type]             [description]
+	 */
+	public function prestashop_obtener_imagenes_producto($id_product = null, $host = '')
+	{
+		
+		$filtro = array(
+			'filter[id]' => '['.$id_product.']',
+			'display' => 'full'
+		);
+
+		$res = $this->prestashop_obtener_productos($filtro);
+
+		$imagenes = array();
+
+		if (!empty($res['product']['associations']) && !empty($res['product']['associations']['images']) && isset($res['product']['associations']['images']['image'])) {
+			foreach ($res['product']['associations']['images']['image'] as $im => $image_id) {
+
+				$id = (isset($image_id['id'])) ? $image_id['id'] : $image_id ; 
+
+				$imagenes[$id]['url'] = $this->ConexionPrestashop->get_url() . $id . '-full_default/' . $res['product']['link_rewrite']['language'] . '.jpg';
+
+				if ($id == $res['product']['id_default_image']) {
+					$imagenes[$id]['principal'] = 1;
+				}else{
+					$imagenes[$id]['principal'] = 0;
+				}
+			}
+		}
+
+		if ($id_product == 8987) {
+			//prx($imagenes);
+		}
+
+		return $imagenes;
+		
+	}
+
+	/**
+	 * [prestashop_crear_imagen_url description]
+	 * @param  string $id_imagen                [description]
+	 * @param  string $nombre_amigable_producto [description]
+	 * @param  string $host                     [description]
+	 * @return [type]                           [description]
+	 */
+	public function prestashop_crear_imagen_url($id_imagen = '', $nombre_amigable_producto = '' , $host = '')
+	{
+		return $this->ConexionPrestashop->get_url() . $id_imagen . '-full_default/' . $nombre_amigable_producto . '.jpg';
+	}
+
+
+	/**
+	 * [prestashop_obtener_proveedores description]
+	 * @return [type] [description]
+	 */
 	public function prestashop_obtener_proveedores()
 	{	
 		ini_set('max_execution_time', 0);

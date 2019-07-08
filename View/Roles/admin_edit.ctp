@@ -36,7 +36,60 @@
 			</div>
 		</div>
 	</div>
-
+	
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-mobile" aria-hidden="true"></i> Permisos App</h3>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('app_perfil', 'Perfil APP'); ?></th>
+								<td><?= $this->Form->select('app_perfil', $app_perfiles, array('class' => 'form-control', 'empty' => false)); ?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<div class="panel-body">
+					<h4>Bodega</h4>
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('app_retiro', 'Retiro en tienda'); ?></th>
+								<td><?= $this->Form->input('app_retiro', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('app_despacho', 'Enviar a domicilio'); ?></th>
+								<td><?= $this->Form->input('app_despacho', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('app_picking', 'Picking'); ?></th>
+								<td><?= $this->Form->input('app_picking', array('class' => 'icheckbox')); ?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<div class="panel-body">
+					<h4>Transporte interno</h4>
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('app_entrega', 'Entrega en domicilio'); ?></th>
+								<td><?= $this->Form->input('app_entrega', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('app_agencia', 'Entrega en agencia'); ?></th>
+								<td><?= $this->Form->input('app_agencia', array('class' => 'icheckbox')); ?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
 	<div class="row">
 		<div class="col-xs-12">

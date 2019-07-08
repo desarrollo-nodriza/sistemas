@@ -50,7 +50,9 @@ class RolesController extends AppController
 		BreadcrumbComponent::add('Roles de usuario ', '/roles');
 		BreadcrumbComponent::add('Agregar ');
 		$modulos	= $this->Rol->Modulo->find('list');
-		$this->set(compact('modulos'));
+		$app_perfiles = $this->Rol->app;
+
+		$this->set(compact('modulos', 'app_perfiles'));
 	}
 
 	public function admin_edit($id = null)
@@ -99,7 +101,9 @@ class RolesController extends AppController
 		BreadcrumbComponent::add('Roles de usuario ', '/roles');
 		BreadcrumbComponent::add('Editar ');
 		$modulos	= $this->Rol->Modulo->find('list');
-		$this->set(compact('modulos'));
+		$app_perfiles = $this->Rol->app;
+
+		$this->set(compact('modulos', 'app_perfiles'));
 	}
 
 	public function admin_delete($id = null)

@@ -37,7 +37,7 @@
 	</div>
 
 	<!-- Modal -->
-	<div class="modal fade dark-modal" id="venta<?=$venta['Venta']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="venta<?=$venta['Venta']['id'];?>Label">
+	<div class="modal fade modal-venta-detalle" data-id="<?=$venta['Venta']['id'];?>"" id="venta<?=$venta['Venta']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="venta<?=$venta['Venta']['id'];?>Label">
 	  <div class="modal-dialog" role="document">
 	    <div class="modal-content">
 	      <div class="modal-header">
@@ -87,17 +87,11 @@
 	      			<th>Id</th>
 	      			<th>Nombre</th>
 	      			<th>Cantidad</th>
-	      			<th>Pendiente entrega</th>
+	      			<th>Pendiente preparación</th>
 	      			<th>Stock reservado</th>
 	      		</thead>
 	      	<? foreach ($venta['VentaDetalle'] as $ivd => $d) : ?>
-				<tr>
-					<td><?=$d['venta_detalle_producto_id'];?></td>
-					<td><?=$d['VentaDetalleProducto']['nombre'];?></td>
-					<td><?=$d['cantidad'];?></td>
-					<td><?=$d['cantidad_pendiente_entrega'];?></td>
-					<td><?=$d['cantidad_reservada'];?></td>
-				</tr>
+				<?=$this->element('ventas/tr-producto-modal', array('d' => $d, 'confirmar' => 0));?>
 	      	<? endforeach; ?>
 	      	</table>
 	      </div>
@@ -161,7 +155,7 @@
 	</div>
 
 	<!-- Modal -->
-	<div class="modal fade dark-modal" id="venta<?=$venta['Venta']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="venta<?=$venta['Venta']['id'];?>Label">
+	<div class="modal fade modal-venta-detalle" data-id="<?=$venta['Venta']['id'];?>"" id="venta<?=$venta['Venta']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="venta<?=$venta['Venta']['id'];?>Label">
 	  <div class="modal-dialog modal-lg" role="document">
 	    <div class="modal-content">
 	      <div class="modal-header">
@@ -248,17 +242,12 @@
 			      			<th>Id</th>
 			      			<th>Nombre</th>
 			      			<th>Cantidad</th>
-			      			<th>Pendiente entrega</th>
+			      			<th>Pendiente preparación</th>
 			      			<th>Stock reservado</th>
+			      			<th></th>
 			      		</thead>
 			      	<? foreach ($venta['VentaDetalle'] as $ivd => $d) : ?>
-						<tr>
-							<td><?=$d['venta_detalle_producto_id'];?></td>
-							<td><?=$d['VentaDetalleProducto']['nombre'];?></td>
-							<td><?=$d['cantidad'];?></td>
-							<td><?=$d['cantidad_pendiente_entrega'];?></td>
-							<td><?=$d['cantidad_reservada'];?></td>
-						</tr>
+						<?=$this->element('ventas/tr-producto-modal', array('d' => $d, 'confirmar' => 1));?>
 			      	<? endforeach; ?>
 			      	</table>
 				</div>
@@ -275,7 +264,7 @@
 	<? if ( empty($venta['Venta']['marketplace_id']) || $venta['Marketplace']['marketplace_tipo_id'] == 1 ) : ?>
 	
 	<!-- Modal cambiar estado -->
-	<div class="modal fade dark-modal modal-cambiar-estado" data-backdrop="static" id="modal-cambiar-estado-<?=$venta['Venta']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-cambiar-estado-<?=$venta['Venta']['id'];?>Label">
+	<div class="modal fade modal-cambiar-estado" data-backdrop="static" id="modal-cambiar-estado-<?=$venta['Venta']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-cambiar-estado-<?=$venta['Venta']['id'];?>Label">
 	<?= $this->Form->create('Venta', array('url' => array('controller' => 'ventas', 'action' => 'cambiar_estado'), 'inputDefaults' => array('div' => false, 'label' => false), 'class' => 'js-validate-oc js-form-cambiar-estado-venta', 'id' => 'FormCambiarEstadoVenta' . $venta['Venta']['id'], 'data-id' => $venta['Venta']['id'])); ?>
 	  <div class="modal-dialog" role="document">
 	    <div class="modal-content">
@@ -403,7 +392,7 @@
 	</div>
 
 	<!-- Modal -->
-	<div class="modal fade dark-modal" id="venta<?=$venta['Venta']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="venta<?=$venta['Venta']['id'];?>Label">
+	<div class="modal fade modal-venta-detalle" data-id="<?=$venta['Venta']['id'];?>"" id="venta<?=$venta['Venta']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="venta<?=$venta['Venta']['id'];?>Label">
 	  <div class="modal-dialog modal-lg" role="document">
 	    <div class="modal-content">
 	      <div class="modal-header">
@@ -490,18 +479,12 @@
 			      			<th>Id</th>
 			      			<th>Nombre</th>
 			      			<th>Cantidad</th>
-			      			<th>Pendiente entrega</th>
+			      			<th>Pendiente preparación</th>
 			      			<th>Stock reservado</th>
 			      		</thead>
-			      	<? foreach ($venta['VentaDetalle'] as $ivd => $d) : ?>
-						<tr>
-							<td><?=$d['venta_detalle_producto_id'];?></td>
-							<td><?=$d['VentaDetalleProducto']['nombre'];?></td>
-							<td><?=$d['cantidad'];?></td>
-							<td><?=$d['cantidad_pendiente_entrega'];?></td>
-							<td><?=$d['cantidad_reservada'];?></td>
-						</tr>
-			      	<? endforeach; ?>
+				      	<? foreach ($venta['VentaDetalle'] as $ivd => $d) : ?>
+							<?=$this->element('ventas/tr-producto-modal', array('d' => $d, 'confirmar' => 0));?>
+				      	<? endforeach; ?>
 			      	</table>
 				</div>
 			</div>

@@ -204,6 +204,12 @@ class VentaDetalleProducto extends AppModel
 
 	}
 
+	/**
+	 * [obtener_descuento_por_producto description]
+	 * @param  array   $producto [description]
+	 * @param  boolean $indice   [description]
+	 * @return [type]            [description]
+	 */
 	public static function obtener_descuento_por_producto($producto = array(), $indice = false)
 	{	
 		$respuesta = array();
@@ -305,6 +311,11 @@ class VentaDetalleProducto extends AppModel
 	}
 
 
+	/**
+	 * [obtener_precio_costo description]
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
 	public function obtener_precio_costo($id)
 	{
 		$producto = $this->find('first', array(
@@ -349,5 +360,17 @@ class VentaDetalleProducto extends AppModel
 
 		return $producto['VentaDetalleProducto']['precio_costo'] - $descuentos['total_descuento'];
 	}
+
+
+	/**
+	 * [obtener_codigo_unico description]
+	 * @param  string $prefx [description]
+	 * @return [type]      [description]
+	 */
+	public function obtener_codigo_unico($prefx = '')
+	{
+		return uniqid($prefx, true);
+	}
+
 
 }

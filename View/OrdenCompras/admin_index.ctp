@@ -45,7 +45,7 @@
                     <span class="fa fa-money"></span>
                 </div>
                 <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=revisado].id'));?></div>
+                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=validado].id'));?></div>
                     <div class="widget-title">Espera de pago</div>
                     <div class="widget-subtitle">Pincha AQUÍ para ver</div>
                 </div>                         

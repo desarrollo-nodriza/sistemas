@@ -755,6 +755,12 @@ class VentaDetalleProductosController extends AppController
 		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'marcas'));
 	}
 
+
+	/**
+	 * [admin_edit description]
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
 	public function admin_edit($id = null)
 	{	
 		if ( ! $this->VentaDetalleProducto->exists($id) )
@@ -784,7 +790,6 @@ class VentaDetalleProductosController extends AppController
 					if (!empty($resultadoStock['successes'])) {
 						$this->Session->setFlash($this->crearAlertaUl($resultadoStock['successes']), null, array(), 'success');
 					}
-
 
 				}
 
@@ -873,11 +878,16 @@ class VentaDetalleProductosController extends AppController
 		if (!in_array(1, Hash::extract($canales, '{s}.{n}.existe'))) {
 			$this->Session->setFlash('El producto no se encontró en ningún canal de venta.', null, array(), 'warning');
 		}
+
+		# Imagenes publicadas en la tienda de prestashop
+		$this->Prestashop->crearCliente($this->Session->read('Tienda.apiurl_prestashop'), $this->Session->read('Tienda.apikey_prestashop'));
+		$imagenes = $this->Prestashop->prestashop_obtener_imagenes_producto($id);
+
 		
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos');
 		BreadcrumbComponent::add('Editar');
 
-		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final'));
+		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes'));
 	}
 
 	
