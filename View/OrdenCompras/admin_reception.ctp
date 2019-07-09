@@ -18,9 +18,11 @@
 								<th>ID</th>
 								<th>Código</th>
 								<th>Descripción</th>
+								<th>Precio uni</th>
+								<th>Total</th>
 								<th>Cantidad pedida</th>
 								<th>Cantidad recibida <br><small>(ya en stock)</small></th>
-								<th>Cantidad entrante</th>
+								<th>Cantidad a ingresar</th>
 								<th>Bodega</th>
 								<!--<th>Recibido</th>-->
 							</thead>
@@ -34,6 +36,8 @@
 									</td>
 									<td><?=$data['OrdenComprasVentaDetalleProducto']['codigo'];?></td>
 									<td><?=$data['OrdenComprasVentaDetalleProducto']['descripcion'];?></td>
+									<td><?=CakeNumber::currency(($data['OrdenComprasVentaDetalleProducto']['total_neto'] / $data['OrdenComprasVentaDetalleProducto']['cantidad']), 'CLP');?></td>
+									<td><?=CakeNumber::currency($data['OrdenComprasVentaDetalleProducto']['total_neto'] , 'CLP');?></td>
 									<td><?=$data['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
 									<td><?=$data['OrdenComprasVentaDetalleProducto']['cantidad_recibida'];?></td>
 
