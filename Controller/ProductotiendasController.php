@@ -939,6 +939,7 @@ class ProductotiendasController extends AppController {
 					)
 				),
 				'SpecificPrice' => array(
+					'order' => array('SpecificPrice.id_specific_price' => 'DESC'),
 					'conditions' => array(
 						'OR' => array(
 							array(
@@ -963,7 +964,7 @@ class ProductotiendasController extends AppController {
 			),
 			'limit' => 3)
    		);
-
+   		
    		if (empty($productos)) {
     		echo json_encode(array('0' => array('id' => '', 'value' => 'No se encontraron coincidencias')));
     		exit;
