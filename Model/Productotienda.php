@@ -207,18 +207,7 @@ Class Productotienda extends AppModel {
 		)
 	);
 	
-	/**
-	* CAllbacks
-	*/
-
-	public function beforeSave($options = array()) {
-		parent::beforeSave();
-	}
-
-	public function afterSave($created = null, $options = Array()) {
-		parent::afterSave();
-	}
-
+	
 }
 	
 ?>

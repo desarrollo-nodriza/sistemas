@@ -197,24 +197,27 @@ class ProductotiendasController extends AppController {
 					),
 					'SpecificPrice' => array(
 						'conditions' => array(
-							'OR' => array(
-								array(
-									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
-									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
-								),
-								array(
-									'SpecificPrice.from' => '0000-00-00 00:00:00',
-									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
-								),
-								array(
-									'SpecificPrice.from' => '0000-00-00 00:00:00',
-									'SpecificPrice.to' => '0000-00-00 00:00:00'
-								),
-								array(
-									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
-									'SpecificPrice.to' => '0000-00-00 00:00:00'
-								)
+							'AND' => array(
+							'SpecificPrice.from_quantity > 0' 
+						),
+						'OR' => array(
+							array(
+								'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+								'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+							),
+							array(
+								'SpecificPrice.from' => '0000-00-00 00:00:00',
+								'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
+							),
+							array(
+								'SpecificPrice.from' => '0000-00-00 00:00:00',
+								'SpecificPrice.to' => '0000-00-00 00:00:00'
+							),
+							array(
+								'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
+								'SpecificPrice.to' => '0000-00-00 00:00:00'
 							)
+						)
 						)
 					),
 					'SpecificPricePriority'
@@ -422,6 +425,9 @@ class ProductotiendasController extends AppController {
 					),
 					'SpecificPrice' => array(
 						'conditions' => array(
+							'AND' => array(
+								'SpecificPrice.from_quantity > 0' 
+							),
 							'OR' => array(
 								array(
 									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
@@ -841,6 +847,9 @@ class ProductotiendasController extends AppController {
 				),
 				'SpecificPrice' => array(
 					'conditions' => array(
+						'AND' => array(
+							'SpecificPrice.from_quantity > 0' 
+						),
 						'OR' => array(
 							array(
 								'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
@@ -941,6 +950,9 @@ class ProductotiendasController extends AppController {
 				'SpecificPrice' => array(
 					'order' => array('SpecificPrice.id_specific_price' => 'DESC'),
 					'conditions' => array(
+						'AND' => array(
+							'SpecificPrice.from_quantity > 0' 
+						),
 						'OR' => array(
 							array(
 								'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
@@ -991,7 +1003,7 @@ class ProductotiendasController extends AppController {
 			$precio_normal 		= $this->precio($producto['Productotienda']['price'], $producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
 			
 			if ( ! empty($producto['SpecificPrice']) ) {
-				if ($producto['SpecificPrice'][0]['reduction'] == 0) {
+				if ($producto['SpecificPrice'][0]['reduction'] == 0 || $producto['SpecificPrice'][0]['from_quantity'] == 0) {
 					$tabla = str_replace('[*PRECIO*]', CakeNumber::currency($precio_normal , 'CLP'), $tabla);
 				}else {
 					$precio_descuento	= $this->precio($precio_normal, ($producto['SpecificPrice'][0]['reduction'] * 100 * -1) );

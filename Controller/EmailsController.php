@@ -536,10 +536,13 @@ class EmailsController extends AppController
 						'TaxRulesGroup' => array(
 							'TaxRule' => array(
 								'Tax'
-							)
+							) 
 						),
 						'SpecificPrice' => array(
 							'conditions' => array(
+								'AND' => array(
+									'SpecificPrice.from_quantity > 0' 
+								),
 								'OR' => array(
 									'OR' => array(
 										array(
