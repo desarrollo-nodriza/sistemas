@@ -18,8 +18,8 @@
 							<thead>
 								<th><?=__('Item');?></th>
 								<th><?=__('Cantidad vendida'); ?></th>
-								<th><?=__('Cantidad pendiente de entrega'); ?></th>
-								<th><?=__('Cantidad entregada'); ?></th>
+								<th><?=__('Cantidad pendiente de retiro'); ?></th>
+								<th><?=__('Cantidad retirada'); ?></th>
 								<th><?=__('Cantidad a retirar'); ?></th>
 								<th class="fecha_llegada hidden"><?=__('Fecha llegada'); ?></th>
 							</thead>

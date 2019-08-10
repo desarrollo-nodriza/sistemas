@@ -43,7 +43,10 @@
 			'/backend/js/plugins/noty/jquery.noty',
 			'/backend/js/plugins/noty/layouts/topRight',
 			'/backend/js/plugins/noty/themes/default',
-			//'/backend/js/plugins/maskedinput/jquery.maskedinput.min',
+			'/backend/js/plugins/moment.min',
+			'/backend/js/plugins/fullcalendar/fullcalendar.min',
+			'/backend/js/plugins/fullcalendar/lang/es',
+			'/backend/js/plugins/tagsinput/jquery.tagsinput.min',
 			'/backend/js/plugins/jquery.rut.min',
 			'/backend/js/plugins/summernote/summernote',
 			'/backend/js/plugins/currencyFormatter.min',
@@ -62,6 +65,10 @@
 			'/backend/js/print_js/print.min',
 			'/backend/js/logistica.js?v=' . rand(),
 			'/backend/js/venta.js?v=' . rand(),
+			'/backend/js/saldo.js?v=' . rand(),
+			//'/backend/js/orden_compra_pagos.js?v=' . rand(),
+			'/backend/js/pagos.js?v=' . rand(),
+			'/backend/js/orden_compra_facturas.js?v=' . rand(),
 			//'/backend/js/plugins',
 			//'/backend/js/demo_charts_nvd3'
 			//'/backend/js/demo_charts_morris'

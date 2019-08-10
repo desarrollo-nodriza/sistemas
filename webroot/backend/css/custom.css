@@ -302,7 +302,7 @@ tfoot > tr > td, tfoot > tr:first-child > td {
     color: red;
 }
 
-.duplicate_tr, .remove_tr, .habilitar-fila, .btn-modificar-precio-especifico {
+.duplicate_tr, .remove_tr, .habilitar-fila, .btn-modificar-precio-especifico, .ver-pago {
     width: 23px;
     height: 23px;
     line-height: 23px;
@@ -311,9 +311,10 @@ tfoot > tr > td, tfoot > tr:first-child > td {
     border-radius: 50%;
     border: none;
     font-size: 8px;
+    display: inline-block;
 }
 
-.duplicate_tr:hover, .remove_tr:hover {
+.duplicate_tr:hover, .remove_tr:hover, .ver-pago:hover {
     opacity: 0.8rem;
 }
 .table-responsive {overflow-y: inherit; }
@@ -507,5 +508,19 @@ tfoot > tr > td, tfoot > tr:first-child > td {
     width: 100px;
     height: auto;
     margin-right: 10px;
+    cursor: pointer;
+}
+
+.close-pop {
+    margin: 10px 0;
+    font-size: 12px !important;
+}
+
+.close-pop > i {
+    font-size: 12px !important;
+}
+
+
+.fc-title {
     cursor: pointer;
 }

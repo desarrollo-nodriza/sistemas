@@ -83,10 +83,15 @@ class ProveedoresController extends AppController
 			$this->request->data	= $this->Proveedor->find('first', array(
 				'conditions'	=> array('Proveedor.id' => $id),
 				'contain' => array(
-					'Moneda'
+					'Moneda',
+					'Saldo' => array(
+						'order' => array('Saldo.id' => 'DESC')
+					)
 				)
 			));
 		}
+
+		$this->request->data['Proveedor']['saldo'] = ClassRegistry::init('Saldo')->obtener_saldo_total_proveedor($id);
 	
 		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
 

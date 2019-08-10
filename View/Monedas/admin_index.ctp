@@ -22,6 +22,8 @@
 								<tr class="sort">
 									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('codigo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('tipo', 'Tipo pago OC', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('comprobante_requerido', 'Comprobante requerido', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('activo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
 								</tr>
@@ -31,6 +33,8 @@
 								<tr>
 									<td><?= h($moneda['Moneda']['nombre']); ?>&nbsp;</td>
 									<td><?= h($moneda['Moneda']['codigo']); ?>&nbsp;</td>
+									<td><?= h($tipos[$moneda['Moneda']['tipo']]); ?>&nbsp;</td>
+									<td><?= ($moneda['Moneda']['comprobante_requerido'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td><?= ($moneda['Moneda']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td>
 									<? if ($permisos['edit']) : ?>

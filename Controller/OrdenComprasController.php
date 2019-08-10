@@ -186,6 +186,7 @@ class OrdenComprasController extends AppController
 				'OrdenCompra.tienda_id',
 				'OrdenCompra.parent_id',
 				'OrdenCompra.administrador_id',
+				'OrdenCompra.email_finanza',
 				'OrdenCompra.oc_manual'
 			),
 			'order' => array(
@@ -491,20 +492,31 @@ class OrdenComprasController extends AppController
 			$this->redirect(array('action' => 'index_enviadas'));
 		}
 
-		$productosActualizado = array();
+		$productosActualizado   = array();
 		$productosNoActualizado = array();
-		$res = array(
-			'incompletos' => array(),
-			'completos'   => array()
+
+		$res                    = array(
+			'incompletos'           => array(),
+			'completos'             => array()
 		);
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 
-			$url_retorno = $this->request->data['OrdenCompra']['url_retorno'];
-			
-			unset($this->request->data['OrdenCompra']['url_retorno']);
+			# Variables usados directamente que deben ser quitadas del post una vez asigandas.
+			$url_retorno   = $this->request->data['OrdenCompra']['url_retorno'];
+			$rut_proveedor = $this->request->data['OrdenCompra']['rut_proveedor'];
+			$rut_tienda    = $this->request->data['OrdenCompra']['rut_tienda'];
 
+			unset($this->request->data['OrdenCompra']['url_retorno']);
+			unset($this->request->data['OrdenCompra']['rut_proveedor']);
+			unset($this->request->data['OrdenCompra']['rut_tienda']);
+			
 			foreach ($this->request->data['OrdenCompra'] as $key => $oc) {
+
+				if (!isset($this->request->data['OrdenCompraFactura']) || empty($this->request->data['OrdenCompraFactura'])) {
+					$this->Session->setFlash('No ha asignado pagos a esta OC.', null, array(), 'danger');
+					$this->redirect(array('action' => 'reception', $id));
+				}
 
 				# Se obtiene los datos de la OC enviada a proveedor
 				$pedido = ClassRegistry::init('OrdenComprasVentaDetalleProducto')->find('first', array(
@@ -637,25 +649,95 @@ class OrdenComprasController extends AppController
 				$this->Session->setFlash($this->crearAlertaUl($res['incompletos'], 'Agregados'), null, array(), 'warning');
 			}
 
-			$this->OrdenCompra->id = $id;
+			if (empty($res['incompletos']) && empty($res['completos'])) {
+				$this->Session->setFlash('La OC #' . $id . ' ya fue procesada.', null, array(), 'success');
+			}
+
+			$ocSave = array(
+				'OrdenCompra' => array(
+					'id' => $id ,
+					'estado' => 'recibido'
+				)
+			);
 
 			# Guardamos la fecha de la primera recepción
 			if (empty($this->OrdenCompra->field('fecha_recibido'))) {
-				$this->OrdenCompra->saveField('fecha_recibido', date('Y-m-d H:i:s'));
-			}
-
-			# Guardamos los dtes en un objeto json
-			if (isset($this->request->data['OrdenComprasDocumento'])) {
-				$this->OrdenCompra->saveField('meta_dtes', json_encode($this->request->data['OrdenComprasDocumento'], true));
+				$ocSave = array_replace_recursive($ocSave, array(
+					'OrdenCompra' => array(
+						'fecha_recibido' => date('Y-m-d H:i:s')
+					)
+				));
 			}
 
 			if (!empty($res['incompletos'])) {
-				$this->OrdenCompra->saveField('estado', 'incompleto');	
-			}else{
-				$this->OrdenCompra->saveField('estado', 'recibido');
+				$ocSave = array_replace_recursive($ocSave, array(
+					'OrdenCompra' => array(
+						'estado' => 'incompleto'
+					)
+				));
 			}
 
-			$this->redirect($url_retorno);
+			# Cliente Libredte
+			$libreDte = $this->Components->load('LibreDte');
+			$libreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
+
+			$folios = array();
+
+			foreach ($this->request->data['OrdenCompraFactura'] as $iocf => $ocf) {
+
+				if (empty($ocf['folio']))
+					continue;
+				
+				# Se obtiene el dTE desde el sii y se verifican los datos
+				$emisor   = $this->rutSinDv($rut_proveedor);
+				$tipo_dte = $ocf['tipo_documento']; // Facturas
+				$folio    = $ocf['folio'];
+				$receptor = $this->rutSinDv($rut_tienda);
+
+				$res = $libreDte->obtener_documento_recibido($emisor, $tipo_dte, $folio, $receptor);
+				
+				if (!empty($res)) {
+					$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $res['total'];
+					$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $res['emisor'];
+					$this->request->data['OrdenCompraFactura'][$iocf]['receptor']        = $res['receptor'];
+
+
+					# Obtenemos el saldo disponible para pagar para éste proveedor
+					$id_proveedor = $this->OrdenCompra->field('proveedor_id', array('id' => $id));
+					$saldo_disponible_pago = ClassRegistry::init('Saldo')->obtener_saldo_total_proveedor($id_proveedor);
+
+					if (count($this->request->data['OrdenCompraFactura']) == 1 && $saldo_disponible_pago >= $res['total']) {
+
+						# Se paga la factura
+						$this->request->data['OrdenCompraFactura'][$iocf]['monto_pagado'] = $res['total'];
+						$this->request->data['OrdenCompraFactura'][$iocf]['pagada']       = 1;
+					}
+
+					# Descontamos el saldo usado solo al crearla
+					if (!isset($ocf['id'])) 
+						ClassRegistry::init('Saldo')->descontar($id_proveedor, $id, null, null, $res['total']);	
+
+				}else{
+					$folios[] = $libreDte->tipoDocumento[$ocf['tipo_documento']] . ' folio #' . $ocf['folio'] . ' no fue encontrado. Verifique que la información del DTE sea correcta.';
+				}
+			}
+				
+			$ocSave = array_replace_recursive($ocSave, array(
+				'OrdenCompraFactura' => $this->request->data['OrdenCompraFactura']
+			));	
+			
+			$this->OrdenCompra->saveAll($ocSave);
+
+			if ( $this->OrdenCompra->es_pago_factura_unico($id) ) {
+				ClassRegistry::init('Pago')->relacionar_pago_factura($id);
+			}
+
+			if (!empty($folios)) {
+				$this->Session->setFlash($this->crearAlertaUl($folios, 'Errores'), null, array(), 'warning');
+				$this->redirect(array('action' => 'reception', $id));
+			}
+
+			$this->redirect(array('action' => 'index_enviadas'));
 
 		}
 
@@ -664,13 +746,13 @@ class OrdenComprasController extends AppController
 				'OrdenCompra.id' => $id
 			),
 			'contain' => array(
-				'Moneda',
 				'VentaDetalleProducto' => array(
 					'Bodega'
 				),
 				'Administrador',
 				'Tienda',
 				'Proveedor',
+				'OrdenCompraFactura'
 			)
 		));
 		#prx($this->request->data);
@@ -678,10 +760,16 @@ class OrdenComprasController extends AppController
 		
 		$url_retorno = Router::url( $this->referer(), true );
 
-		BreadcrumbComponent::add('Ordenes de compra ', $url_retorno);
+		# Array de tipos de documentos
+		$libreDte = $this->Components->load('LibreDte');
+		$tipo_documento = array(
+			33 => 'Factura electrónica'
+ 		);
+
+		BreadcrumbComponent::add('Ordenes de compra ', '/index_enviadas');
 		BreadcrumbComponent::add('Recepción OC');
 
-		$this->set(compact('bodegas', 'url_retorno'));
+		$this->set(compact('bodegas', 'url_retorno', 'tipo_documento'));
 
 	}
 
@@ -756,7 +844,9 @@ class OrdenComprasController extends AppController
 				'VentaDetalleProducto',
 				'Administrador',
 				'Tienda',
-				'Proveedor'
+				'Proveedor',
+				'OrdenCompraFactura',
+				'OrdenCompraPago'
 			)
 		));
 
@@ -770,7 +860,9 @@ class OrdenComprasController extends AppController
 					'VentaDetalleProducto',
 					'Administrador',
 					'Tienda',
-					'Proveedor'
+					'Proveedor',
+					'OrdenCompraFactura',
+					'OrdenCompraPago'
 				)
 			));
 		}
@@ -1308,13 +1400,15 @@ class OrdenComprasController extends AppController
 				'VentaDetalleProducto',
 				'Administrador',
 				'Tienda',
+				'OrdenCompraPago',
 				'Proveedor' => array(
 					'Moneda'
-				)
+				),
+				'OrdenCompraPago'
 			)
 		));
 
-		if (!empty($ocs['OrdenCompra']['nombre_pagado'])) {
+		if (!empty($ocs['OrdenCompra']['nombre_pagado']) && !isset($this->request->query['update'])) {
 			$this->Session->setFlash('La OC #' . $id . ' ya fue pagada por ' . $ocs['OrdenCompra']['nombre_pagado'], null, array(), 'success');
 			$this->redirect(array('action' => 'index_validadas'));
 		}
@@ -1326,22 +1420,37 @@ class OrdenComprasController extends AppController
 					'id'                 => $id,
 					'estado'             => 'pagado',
 					'moneda_id'          => $this->request->data['OrdenCompra']['moneda_id'],
-					'nombre_pagado'      => $this->Session->read('Auth.Administrador.nombre'),
+					//'nombre_pagado'      => $this->Session->read('Auth.Administrador.nombre'),
+					'email_finanza'      => $this->Session->read('Auth.Administrador.email'),
 					'comentario_finanza' => $this->request->data['OrdenCompra']['comentario_finanza'],
 					'total'              => $this->request->data['OrdenCompra']['total'],
 					'descuento_monto'    => round($this->request->data['OrdenCompra']['descuento_monto']),
 					'descuento'    	     => round($this->request->data['OrdenCompra']['descuento']),
-					'adjunto'            => $this->request->data['OrdenCompra']['adjunto']
-				)
+				),
+				'OrdenCompraAdjunto' 	 => (isset($this->request->data['OrdenCompraAdjunto'])) ? $this->request->data['OrdenCompraAdjunto'] : array(),
+				//'OrdenCompraPago' => $this->request->data['OrdenCompraPago']
 			);
 
-			if ($this->OrdenCompra->save($data)) {
+
+			if (isset($this->request->query['update'])) { 
+				unset($data['OrdenCompra']['estado']);
+			}
+			
+			if ($this->OrdenCompra->saveAll($data)) {
 
 				$ocs = $this->OrdenCompra->find('first', array(
 					'conditions' => array(
 						'OrdenCompra.id' => $id
 					),
 					'contain' => array(
+						'OrdenCompraAdjunto' => array(
+							'fields' => array(
+								'OrdenCompraAdjunto.adjunto',
+								'OrdenCompraAdjunto.incluir_email',
+								'OrdenCompraAdjunto.identificador',
+								'OrdenCompraAdjunto.id'
+							)
+						),
 						'Moneda',
 						'VentaDetalleProducto',
 						'Administrador',
@@ -1349,11 +1458,33 @@ class OrdenComprasController extends AppController
 							'VentaDetalle'
 						),
 						'Tienda',
-						'Proveedor' => array(
-							'Moneda'
-						)
+						'Proveedor'
 					)
-				));	
+				));
+			
+
+				# Por cada adjunto creado se crea un pago
+				foreach ($ocs['OrdenCompraAdjunto'] as $ioca => $oca) {
+					
+					switch ($ocs['Moneda']['tipo']) {
+						case 'pagar':
+
+							// Se crea un pago al dia 
+							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], date('Y-m-d'), $ocs['OrdenCompra']['total']);
+							break;
+						
+						case 'agendar':
+
+							// Se crea un pago sin fecha ni monto (se debe configurar una vez recibida la/las factura/s) 
+							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], null, 0);
+							break;
+
+						case 'esperar':
+							// Al moento de recibir la factura se crea y asigna el pago
+							break;
+					}
+					
+				}
 
 				$pdfOc = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1,100) . '.pdf';
 
@@ -1361,19 +1492,33 @@ class OrdenComprasController extends AppController
 
 				$this->OrdenCompra->id = $id;
 				
-				/*$emailsNotificar = array();
-
-				$emailsNotificar[] = $ocs['Administrador']['email'];
-
-				# enviar email
-				$this->guardarEmailPagado($id, $emailsNotificar);*/
-				
 				$rutaArchivos = array(
 					sprintf('order_compra_%d.pdf', rand(1000, 100000)) => array(
 						'file' => APP . 'webroot' . DS . 'Pdf' . DS . 'OrdenCompra' . DS . $id . DS . $pdfOc,
 						#'mimetype' => $this->getFileMimeType(APP . 'webroot' . DS . 'Pdf' . DS . 'OrdenCompra' . DS . $id . DS . $this->request->data['OrdenCompra']['pdf']),
 					)
 				);
+
+				
+				if (count(Hash::extract($ocs['OrdenCompraAdjunto'], '{n}.id'))) {
+					
+					foreach ($ocs['OrdenCompraAdjunto'] as $ioca => $oca) {
+
+						if (empty($oca['adjunto']))
+							continue;
+
+						if (!$oca['incluir_email'])
+							continue;
+
+						$extp = pathinfo(APP . 'webroot' . DS . 'img' . DS . 'OrdenCompraAdjunto' . DS . $oca['id'] . DS . $oca['adjunto'], PATHINFO_EXTENSION);
+						
+						$rutaArchivos[sprintf('adjunto_%d.%s', rand(1000, 100000), $extp)] = array(
+							'file' => APP . 'webroot' . DS . 'img' . DS . 'OrdenCompraAdjunto' . DS . $oca['id'] . DS . $oca['adjunto']
+						);
+
+					}
+
+				}
 
 				if (!empty($ocs['OrdenCompra']['adjunto'])) {
 
@@ -1407,17 +1552,23 @@ class OrdenComprasController extends AppController
 				->attachments($rutaArchivos)
 				->subject(sprintf('[OC] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id));
 
-
-				# Cambiar estado OC a enviado
-				$this->OrdenCompra->id = $id;
-				$this->OrdenCompra->saveField('fecha_enviado', date('Y-m-d H:i:s'));
-				$this->OrdenCompra->saveField('estado', 'enviado');
-				
+				# Actualizamos el asunto del email
+				if (isset($this->request->query['update'])) { 
+					$this->Email->subject(sprintf('[OC] #%d actualizada desde Nodriza Spa', $id));
+				}
+								
 				if( $this->Email->send() ) {
 
-					$this->OrdenCompra->saveField('pdf', $pdfOc);
-					$this->OrdenCompra->saveField('estado', 'enviado');
+					# Cambiar estado OC a enviado
+					# Solo creación
+					if (!isset($this->request->query['update'])) {
+						$this->OrdenCompra->saveField('pdf', $pdfOc);
+						$this->OrdenCompra->saveField('estado', 'enviado');
+						$this->OrdenCompra->saveField('fecha_enviado', date('Y-m-d H:i:s'));
+					}
+
 					$this->Session->setFlash('Email y adjuntos enviados con éxito', null, array(), 'success');
+
 				}else{
 					$this->Session->setFlash('Ocurrió un error al enviar el email. Intente nuevamente.', null, array(), 'danger');
 				}
@@ -1785,11 +1936,15 @@ class OrdenComprasController extends AppController
 	public function admin_calcularMontoPagar()
 	{	
 		$res = array(
-			'descuento_porcentaje' => 0,
-			'descuento_monto'      => 0,
-			'descuento_monto_html' => CakeNumber::currency(0 , 'CLP'),
-			'monto_pagar' 		   => 0,
-			'monto_pagar_html'     => CakeNumber::currency(0, 'CLP')
+			'descuento_porcentaje'  => 0,
+			'descuento_monto'       => 0,
+			'descuento_monto_html'  => CakeNumber::currency(0 , 'CLP'),
+			'monto_pagar'           => 0,
+			'monto_pagar_html'      => CakeNumber::currency(0, 'CLP'),
+			'pago_adelantado'       => false,
+			'comprobante_requerido' => false,
+			'agendar'				=> false,
+			'pago_contra_factura'	=> false,
 		);
 
 		if ($this->request->is('post')) {
@@ -1805,14 +1960,42 @@ class OrdenComprasController extends AppController
 				)
 			));
 
+			$moneda = ClassRegistry::init('Moneda')->find('first', array(
+				'conditions' => array(
+					'Moneda.id' => $this->request->data['moneda_id']
+				)
+			));
+
+			# Condiciones por moneda seleccionada
+			if (!empty($moneda)) {
+				$tipo_moneda = $moneda['Moneda']['tipo'];
+				$comprobante = $moneda['Moneda']['comprobante_requerido'];
+
+				if ($tipo_moneda == 'pagar') {
+					$res['pago_adelantado'] = true;
+				}
+
+				if ($comprobante) {
+					$res['comprobante_requerido'] = true;
+				}
+
+				if ($tipo_moneda == 'agendar') {
+					$res['agendar'] = true;
+				}
+
+				if ($tipo_moneda == 'esperar') {
+					$res['pago_contra_factura'] = true;
+				}
+			}
+
+			# Descuentos por método de pago
 			if ( Hash::check($oc, 'Proveedor.Moneda.{n}[id=' . $this->request->data['moneda_id'] . ']') )
 			{
 				$descuento = Hash::extract($oc, 'Proveedor.Moneda.{n}[id=' . $this->request->data['moneda_id'] . '].MonedasProveedor.descuento')[0];
-
+				
 				$res['descuento_porcentaje'] = $descuento;
 				$res['descuento_monto']      = $oc['OrdenCompra']['total'] * ($descuento / 100);
 				$res['descuento_monto_html'] = CakeNumber::currency($oc['OrdenCompra']['total'] * ($descuento / 100) , 'CLP');
-				
 			}
 
 			$res['monto_pagar'] = round($oc['OrdenCompra']['total'] - $res['descuento_monto']);

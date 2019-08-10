@@ -184,8 +184,22 @@ $.extend({
 		},
 		clonarElemento: function($ths){
 
-			$contexto = $ths.parents('.panel').eq(0).find('.clone-tr').eq(0);
-			
+			var $contexto = $ths.parents('.panel').eq(0).find('.clone-tr').eq(0);
+			var limite    = $ths.parents('.js-clone-wrapper').eq(0).data('filas');
+			var filas     = $ths.parents('.js-clone-wrapper').eq(0).find('tbody').find('tr:not(.hidden)').length;
+
+			if (typeof(limite) == 'undefined') {
+				limite = 200;
+			}
+
+			if ( filas == limite ) {
+				noty({text: 'No puede agregar más de ' + limite + ' filas.', layout: 'topRight', type: 'error'});
+				setTimeout(function(){
+					$.noty.closeAll();
+				}, 10000);
+				return;
+			}
+
 			var newTr = $contexto.clone();
 
 
@@ -356,6 +370,10 @@ $.extend({
 					    });
 					}
 
+					if ($that.hasClass('mask-money')) {
+						$that.mask('000.000.000.000.000', {reverse: true});
+					}
+
 				});
 
 			});
@@ -379,8 +397,13 @@ $.extend({
 
 				$th.fadeOut('slow', function() {
 					$th.remove();
-					$.ordenCompra.ordenCompra.calcularTotalesProducto();
-				    $.ordenCompra.ordenCompra.calcularTotales();
+					$.ordenCompra.calcularTotalesProducto();
+				    $.ordenCompra.calcularTotales();
+
+				    if ($('.form-pay').length) {
+				    	$.ordenCompra.calcularMonto();
+				    	$.ordenCompra.calcularMontoPendiente();
+				    }
 				});
 
 			});
@@ -569,9 +592,12 @@ $.extend({
 			})
 
 		},
-		calcularMonto: function( $id_oc, $id_moneda ) {
+		calcularMontoPagar: function($id_oc, $id_moneda, $contexto){
 
-			$('.loader').css('display', 'block');
+			$('.loader').addClass('show');
+
+			// Se quitan los TR creados
+			$contexto.find('.table').find('tbody > tr:not(.hidden)').remove();
 
 			$.ajax({
 				url: webroot + 'ordenCompras/calcularMontoPagar',
@@ -583,61 +609,260 @@ $.extend({
 			})
 			.done(function(res) {
 
-				var $result = $.parseJSON(res);
+				$result = $.parseJSON(res);
 
-				$('#descuento_aplicado').text($result.descuento_porcentaje);
-				$('#descuento_monto_aplicado').text($result.descuento_monto_html);
-				$('#total_bruto').text($result.monto_pagar_html);
+				console.log($result);
 
-				$('#OrdenCompraDescuentoMonto').val($result.descuento_monto);
-				$('#OrdenCompraDescuento').val($result.descuento_porcentaje);
+				// Monto a pagar
+				$('#total_bruto').html($result.monto_pagar_html);
 				$('#OrdenCompraTotal').val($result.monto_pagar);
 
-				$('.loader').css('display', 'none');
+				// Descuentos
+				$('#OrdenCompraDescuento').val($result.descuento_porcentaje);
+				$('#OrdenCompraDescuentoMonto').val($result.descuento_monto);
+				$('#descuento_aplicado').html($result.descuento_porcentaje);
 
-				$('#modalComentario').modal('show');
+				if ($result.comprobante_requerido) {
+					$('.js-adjuntos').removeClass('hidden');
+					$.ordenCompra.clonarElemento( $('.copy_tr').eq(0) );
+				}else{
+					$('.js-adjuntos').addClass('hidden');
+				}
+
+				if ($result.pago_adelantado) {
+					$contexto.find('.table').data('filas', 1);
+				}
+
+				if ($result.agendar) {
+					$contexto.find('.table').data('filas', 10);
+				}
 
 			})
 			.fail(function() {
-
-				$('.loader').css('display', 'none');
 
 				noty({text: 'Ocurrió un error al calcular el monto. Intente nuevamente.', layout: 'topRight', type: 'error'});
 
 				setTimeout(function(){
 					$.noty.closeAll();
 				}, 10000);
+			})
+			.always(function(){
+				$('.loader').removeClass('show');
+			});
+		},
+		calcularMonto: function( $id_oc, $id_moneda, $contexto ) {
+
+			$.ajax({
+				url: webroot + 'ordenCompras/calcularMontoPagar',
+				type: 'POST',
+				data: {
+					'orden_compra_id' : $id_oc,
+					'moneda_id' : $id_moneda
+				},
+			})
+			.done(function(res) {
+
+				$result = $.parseJSON(res);
+
+				if (!$result.pagado) {
+
+					// Se quitan los otros TR
+					$contexto.siblings('tr:not(.hidden)').remove();
+
+					$contexto.parents('table').eq(0).find('.copy_tr').attr('disabled', 'disabled');
+					$contexto.find('.js-monto-pagado').rules("add", {
+				        min: $result.monto_pagar,
+				        max: $result.monto_pagar,
+				        messages: {
+				        	min: 'Monto mínimo a pagar: ' + $result.monto_pagar_html,
+				        	max: 'Monto máximo a pagar: ' + $result.monto_pagar_html
+				        }
+				    });
+				}else{
+					$contexto.parents('table').eq(0).find('.copy_tr').removeAttr('disabled');
+					$contexto.find('.js-monto-pagado').rules("remove", "min max");
+				}
+
+
+				if ($result.comprobante_requerido) {
+					$contexto.find('.js-comprobante').rules("add", {
+				        required: true,
+				        messages: {
+				        	required: 'Comprobante requerido'
+				        }
+				    });
+				}else{
+					$contexto.find('.js-comprobante').rules("remove", "required");
+				}
+
+
+				if ($result.pendiente) {
+					$contexto.find('.js-monto-pagado').rules("add", {
+				        max: 0,
+				        min: 0,
+				        messages: {
+				        	required: 'Requerido',
+				        	min: 'Monto debe ser igual a 0',
+				        	max: 'Monto debe ser igual a 0'
+				        }
+				    });
+
+					$contexto.find('.js-identificador-pago').rules("remove", "required");
+					$contexto.find('.js-cuenta-pago').rules("remove", "required");
+					$contexto.find('.js-monto-pagado').val(0);
+
+				}else{
+					$contexto.find('.js-monto-pagado').rules("remove", "max");
+				}
+
+				if ($result.agendar) {
+					$contexto.find('.js-agendar').rules("add", {
+				        required: true,
+				        messages: {
+				        	required: 'Ingrese fecha del pago'
+				        }
+				    });
+				}else{
+					$contexto.find('.js-agendar').rules("remove", "required");
+				}
+
+				$contexto.find('.js-monto-pagar').eq(0).tooltip('destroy');
+				$contexto.find('.js-monto-pagar').eq(0).val($result.monto_pagar);
+				$contexto.find('.js-monto-pagar').eq(0).tooltip({
+					show : true,
+					title : 'Descuento aplicado: ' + $result.descuento_monto_html,
+				});
+
+				$('.form-pay').data('pagar', $result.monto_pagar);
+				$('.form-pay').data('pendiente-pago', $result.monto_pagar);
+				$('#descuento_aplicado').text($result.descuento_porcentaje);
+				$('#descuento_monto_aplicado').text($result.descuento_monto_html);
+				$('#total_bruto').text($result.monto_pagar_html);
+				
+				$.ordenCompra.calcularMontoPendiente();
+
+				$('#OrdenCompraDescuentoMonto').val($result.descuento_monto);
+				$('#OrdenCompraDescuento').val($result.descuento_porcentaje);
+				$('#OrdenCompraTotal').val($result.monto_pagar);
+
+
+				/*$('#modalComentario').modal('show');*/
+
+			})
+			.fail(function() {
+
+				noty({text: 'Ocurrió un error al calcular el monto. Intente nuevamente.', layout: 'topRight', type: 'error'});
+
+				setTimeout(function(){
+					$.noty.closeAll();
+				}, 10000);
+			})
+			.always(function(){
+				$('.loader').removeClass('show');
 			});
 			
+		},
+		calularMontoPagar: function(){
+
+			var pagar = $('.form-pay').data('pagar');
+			var totalPagar  = 0;
+			var totalPagado = 0;
+			$('.js-select-medio-pago:not(disabled)').each(function(){
+
+				totalPagado = totalPagado + $(this).parents('tr').eq(0).find('.js-monto-pagado');
+
+			});
+
+			if (totalPagado == totalPagar) {
+				$('.copy_tr').attr('disabled', 'disabled');
+			}else{
+				$('.copy_tr').removeAttr('disabled');
+			}
+
+		},
+		calcularMontoPendiente: function() {
+			var total_pendiente 		= parseInt($('.form-pay').data('pendiente-pago')),
+				total_pendiente_inicial = parseInt($('.form-pay').data('pendiente-pago-inicial')),
+				total_pagado 			= parseInt($('.form-pay').data('total-pagado'));
+
+			$('.js-monto-pagado:not(disabled)').each(function(){
+
+				var pagado = parseInt($(this).val().replace('.', '')); // quitamos los puntos
+				
+				if (!isNaN(pagado)) {
+					total_pendiente = (total_pendiente - pagado);
+				}
+				
+
+			});
+			
+			//$('.form-pay').data('pendiente-pago', total_pendiente);
+			$('#total_pendiente').html(total_pendiente);
+			$('#total_pendiente').unmask();
+			$('#total_pendiente').mask('000.000.000.000.000', {reverse: true});
+
 		},
 		pagar: function(){
 
 			$('.form-pay').validate({
-				'rules' : {
+				rules : {
 					'data[OrdenCompra][moneda_id]' : {
 						required : true
 					}
 				},
-				'messages' : {
+				messages: {
 					'data[OrdenCompra][moneda_id]' : {
-						required : 'Seleccione forma de pago'
+						required : 'Seleccione medio de pago global'
 					}
 				}
 			});
 
+			$(document).on('change', '.js-select-medio-pago', function(){
+				var $ths = $(this);
+
+				$('.loader').addClass('show');
+
+				if ( $ths.val() != '' ) {
+
+					var id_oc 		= $('.form-pay').data('oc'),
+						moneda_id 	= $ths.val(),
+						contexto    = $ths.parents('tr').eq(0);
+
+					$.ordenCompra.calcularMonto(id_oc, moneda_id, contexto);
+				
+				}
+
+			});
+
+
+			$(document).on('keyup', '.js-monto-pagado', function(){	
+
+				$.ordenCompra.calcularMontoPendiente();			
+
+				var pagado = parseInt($(this).val().replace('.', ''));
+				var filas  = $(this).parents('table').eq(0).data('filas');
+				var pagar  = parseInt($('.form-pay').data('pendiente-pago'));
+
+				if ( pagado < pagar ) {
+					// Permitimos agregar una fila más ya que el monto pagado es inferior al total a pagar
+					$(this).parents('table').eq(0).data('filas', filas+1);
+
+					// Al ser el monto menor se anulan los descuentos
+					
+
+				}else{
+					$(this).parents('table').eq(0).data('filas', filas);
+					//$(this).parents('tr').eq(0).siblings('tr:not(.hidden)').remove();
+				}
+
+			});
+
+
 			$('.btn-calcular-precio').on('click', function(e){
 				e.preventDefault();
 
-				if ( $('.js-select-moneda').val() != '' ) {
+				if ($('.form-pay').valid()) {
 
-					var id_oc 		= $('.form-pay').data('oc'),
-						moneda_id 	= $('.js-select-moneda').val();
-
-					$.ordenCompra.calcularMonto(id_oc, moneda_id);
-
-				}else{
-					$('#modalComentario').modal('hide');
-					$('.form-pay').valid();
 				}
 
 			});
@@ -661,7 +886,7 @@ $.extend({
 					$('.js-razon-social-proveedor').val($result.data.nombre);
 					$('.js-giro-proveedor').val($result.data.giro);
 					$('.js-contacto-proveedor').val($result.data.nombre_encargado);
-					$('.js-contacto-proveedor-input').val($result.data.nombre_encargado);
+					$('.js-contacto-proveedor-input').val('Estimado/a ' + $result.data.nombre_encargado + ' se envía adjunto la orden de compra.');
 					$('.js-email-proveedor').val($result.data.email_contacto);
 					$('.js-fono-proveedor').val($result.data.fono_contacto);
 					$('.js-direccion-proveedor').val($result.data.direccion);
@@ -829,6 +1054,8 @@ $.extend({
 			if ( $('.form-pay').length ) {
 				$.ordenCompra.pagar();
 
+				$.ordenCompra.clonar();
+
 				var opentext = $('.js-toggle-adjunto-oc').data('open');
 				var closetext = $('.js-toggle-adjunto-oc').data('close');
 
@@ -841,6 +1068,14 @@ $.extend({
 				$('#collapseComments').on('show.bs.collapse', function () {
 					$('.js-toggle-adjunto-oc').text(opentext);
 				})
+
+				$('.js-select-moneda').on('change', function(){
+					var id_oc 		= $('.form-pay').data('id'),
+						moneda_id 	= $(this).val(),
+						contexto    = $(this).parents('.panel-body').eq(0);
+
+					$.ordenCompra.calcularMontoPagar(id_oc, moneda_id, contexto);
+				});
 			}
 
 			if ( $('.js-select-proveedor').length ) {

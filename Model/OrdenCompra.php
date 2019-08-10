@@ -5,7 +5,7 @@ class OrdenCompra extends AppModel
 	/**
 	 * CONFIGURACION DB
 	 */
-	public $displayField	= 'created';
+	public $displayField	= 'id';
 
 
 	public $estados = array(
@@ -38,6 +38,71 @@ class OrdenCompra extends AppModel
 		'ChildOrdenCompra' => array(
 			'className'				=> 'OrdenCompra',
 			'foreignKey'			=> 'parent_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'OrdenCompraPago' => array(
+			'className'				=> 'OrdenCompraPago',
+			'foreignKey'			=> 'orden_compra_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'OrdenCompraFactura' => array(
+			'className'				=> 'OrdenCompraFactura',
+			'foreignKey'			=> 'orden_compra_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'OrdenCompraAdjunto' => array(
+			'className'				=> 'OrdenCompraAdjunto',
+			'foreignKey'			=> 'orden_compra_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'Saldo' => array(
+			'className'				=> 'Saldo',
+			'foreignKey'			=> 'orden_compra_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'Pago' => array(
+			'className'				=> 'Pago',
+			'foreignKey'			=> 'orden_compra_id',
 			'dependent'				=> false,
 			'conditions'			=> '',
 			'fields'				=> '',
@@ -198,4 +263,66 @@ class OrdenCompra extends AppModel
 			)
 		);
 	}
+
+
+	public function es_pago_factura_unico($id)
+	{
+		$oc = $this->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id
+			),
+			'contain' => array(
+				'OrdenCompraFactura' => array(
+					'fields' => array(
+						'OrdenCompraFactura.id',
+						'OrdenCompraFactura.monto_facturado'
+					)
+				),
+				'Pago' => array(
+					'fields' => array(
+						'Pago.id',
+						'Pago.monto_pagado'
+					)
+				)
+			)
+		));
+
+		$total_f = count($oc['OrdenCompraFactura']);
+		$total_p = count($oc['Pago']);
+
+		$return  = false;
+
+		if ($total_f == 1 && $total_p == 1) {
+			$return = true;
+		}
+
+		return $return;
+
+	}
+
+
+
+	public function es_pago_agendado($id)
+	{
+		$oc = $this->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id
+			),
+			'contain' => array(
+				'Moneda' => array(
+					'fields' => array(
+						'Moneda.tipo'
+					)
+				)
+			)
+		));
+		
+		if ($oc['Moneda']['tipo'] == 'agendar') {
+			return true;
+		}else{
+			return false;
+		}
+
+	}
+
 }

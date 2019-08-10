@@ -31,6 +31,19 @@
 								); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('tipo', 'Tipo pago OC'); ?></th>
+								<td><?= $this->Form->select('tipo', $tipos,
+									array(
+										'class' => 'form-control',
+										'empty' => 'Seleccione'
+									)
+								); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('comprobante_requerido', 'Comprobante de pago requerido'); ?></th>
+								<td><?= $this->Form->input('comprobante_requerido', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>

@@ -197,6 +197,51 @@
 			</div>
 		</div>
 	</div>
+
+
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="panel panel-info">
+				<div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list"></i> Movimientos de saldos</h3></div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="col-xs-12 col-md-8">
+							<div class="table-responsive">
+								<table class="table table-bordered datatable">
+									<caption>Valores entre paréntesis () son negativos</caption>
+									<thead>
+										<tr>
+											<th>OC relacionada</th>
+											<th>Factura relacionada</th>
+											<th>Pago relacionada</th>
+											<th>Monto</th>
+										</tr>
+									</thead>
+									<tbody>
+									<? foreach($this->request->data['Saldo'] as $is => $saldo) : ?>
+										<tr>
+											<td><?=(!empty($saldo['orden_compra_id'])) ? '#' . $saldo['orden_compra_id'] : '--' ; ?></td>
+											<td><?=(!empty($saldo['orden_compra_factura_id'])) ? '#' . $saldo['orden_compra_factura_id'] : '--' ; ?></td>
+											<td><?=(!empty($saldo['pago_id'])) ? '#' . $saldo['pago_id'] : '--' ; ?></td>
+											<td><?=CakeNumber::currency($saldo['saldo'], 'CLP'); ?></td>
+										</tr>
+									<? endforeach; ?>
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<div class="col-xs-12 col-md-4">
+							<div class="widget widget-<?=($this->request->data['Proveedor']['saldo'] < 0) ? 'danger' : 'success'; ?>">
+					            <div class="widget-title">Saldo disponible</div>
+					            <div class="widget-subtitle">bruto</div>
+					            <div class="widget-int"><?=($this->request->data['Proveedor']['saldo'] < 0) ? '-' . CakeNumber::currency($this->request->data['Proveedor']['saldo'], 'CLP') : CakeNumber::currency($this->request->data['Proveedor']['saldo'], 'CLP');?></div>
+					        </div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 	
 	<!-- MESSAGE BOX-->
 	<div class="message-box message-box-info animated fadeIn" data-sound="alert" id="modal_alertas">

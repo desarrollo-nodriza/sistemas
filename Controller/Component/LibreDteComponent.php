@@ -786,4 +786,25 @@ class LibreDteComponent extends Component
 		return $dte;
 	}
 
+
+	/**
+	 * REf: https://doc.libredte.cl/api/#!/DteRecibidos/get_dte_dte_recibidos_info_emisor_dte_folio_receptor
+	 * @param  string $emisor   RUT del emisor del DTE (sin DV)
+	 * @param  string $tipo_dte Tipo de DTE (Factura por defecto)
+	 * @param  string $folio    Folio del DTE
+	 * @param  string $receptor RUT del receptor del DTE (sin DV)
+	 * @param  bool   $xml      =1 bajará XML (=0 por defecto)
+	 * @param  bool   $todo     =1 bajará detalle del DTE (=0 por defecto)
+	 * @return [type]           [description]
+	 */
+	public function obtener_documento_recibido($emisor = '', $tipo_dte = 33, $folio = '', $receptor = '', $xml = 0, $todo = 1)
+	{
+		# Obtenemos información de los dtes
+		$dtes = $this->ConexionLibreDte->get('/dte/dte_recibidos/info/'.$emisor.'/'.$tipo_dte.'/'.$folio.'/'.$receptor.'?getXML='.$xml.'&getDetalle='.$todo);
+		
+		if ($dtes['status']['code'] == 200) {
+			return $dtes['body'];
+		}
+	}
+
 }

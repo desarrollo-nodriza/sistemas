@@ -500,7 +500,7 @@ class VentasController extends AppController {
 			$this->viewPath   = 'Ventas/ajax';
 			$this->output     = '';
 			
-			$venta  = $this->preparar_venta($ve['Venta']['id']);
+			$venta  = $this->Venta->obtener_venta_por_id($ve['Venta']['id']);
 
 			# Si la venta no está completa se quita
 			$reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
@@ -565,7 +565,7 @@ class VentasController extends AppController {
 			$this->viewPath   = 'Ventas/ajax';
 			$this->output     = '';
 
-			$venta  = $this->preparar_venta($ve['Venta']['id']);
+			$venta  = $this->Venta->obtener_venta_por_id($ve['Venta']['id']);
 			$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
 			$tamano = '500x500';
 			

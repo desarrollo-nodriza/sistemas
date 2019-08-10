@@ -7,6 +7,13 @@ class Moneda extends AppModel
 	 */
 	public $displayField	= 'nombre';
 
+	public $tipos = array(
+		''        => 'No asignado',
+		'agendar' => 'Agendar pago DTE',
+		'esperar' => 'Pago contra DTE',
+		'pagar'   => 'Pago por adelantado'
+	);
+
 	/**
 	 * BEHAVIORS
 	 */
@@ -110,7 +117,33 @@ class Moneda extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
-		)
+		),
+		'OrdenCompraPago' => array(
+			'className'				=> 'OrdenCompraPago',
+			'foreignKey'			=> 'moneda_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'Pago' => array(
+			'className'				=> 'Pago',
+			'foreignKey'			=> 'moneda_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
 	);
 
 	public $hasAndBelongsToMany = array(
@@ -131,4 +164,33 @@ class Moneda extends AppModel
 			'insertQuery'			=> ''
 		)
 	);
+
+
+	/**
+	 * Indica si un pago dado su ID es un pago inmediato o no
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function pago_es_inmediato($id)
+	{	
+		if (!$this->exists($id)) {
+			return false;
+		}
+
+		$moneda = $this->find('first', array(
+			'conditions' => array(
+				'Moneda.id' => $id
+			),
+			'fields' => array(
+				'tipo'
+			)
+		));
+
+
+		if ($moneda['Moneda']['tipo'] == 'pagar') {
+			return true;
+		}
+
+		return false;
+	}
 }

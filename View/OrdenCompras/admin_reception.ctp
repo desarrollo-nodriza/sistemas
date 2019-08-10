@@ -4,6 +4,8 @@
 
 <?= $this->Form->create('OrdenCompra', array('class' => 'form-horizontal js-validate-oc js-recepcion', 'type' => 'file',  'data-valid' => false, 'data-id' => $this->request->data['OrdenCompra']['id'],'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 <?= $this->Form->hidden('url_retorno', array('value' => $url_retorno)); ?>
+<?= $this->Form->hidden('rut_proveedor', array('value' => $this->request->data['Proveedor']['rut_empresa'])); ?>
+<?= $this->Form->hidden('rut_tienda', array('value' => $this->request->data['Tienda']['rut'])); ?>
 <div class="page-content-wrap">
 	<div class="row">
 		<div class="col-xs-12">
@@ -43,7 +45,7 @@
 
 									<? if ($data['OrdenComprasVentaDetalleProducto']['cantidad'] > $data['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] ) : ?>
 
-									<td><?=$this->Form->input(sprintf('%d.Bodega.0.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'max' => $data['OrdenComprasVentaDetalleProducto']['cantidad'] , 'value' => $data['OrdenComprasVentaDetalleProducto']['cantidad'] - $data['OrdenComprasVentaDetalleProducto']['cantidad_recibida']));?></td>
+									<td><?=$this->Form->input(sprintf('%d.Bodega.0.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'max' => $data['OrdenComprasVentaDetalleProducto']['cantidad']));?></td>
 									
 									<? else : ?>
 
@@ -75,7 +77,7 @@
 		<div class="col-xs-12">
 			<div class="panel panel-info">
 				<div class="panel-heading">
-					<h5 class="panel-title"><i class="fa fa-file" aria-hidden="true"></i> <?=__('Documentos');?></h5>
+					<h5 class="panel-title"><i class="fa fa-file" aria-hidden="true"></i> <?=__('Facturas');?></h5>
 					<ul class="panel-controls">
                         <li><a href="#" class="copy_tr"><span class="fa fa-plus"></span></a></li>
                     </ul>
@@ -84,42 +86,43 @@
 
 					<div class="table-responsive">
 						<table class="table table-bordered">
-							<caption><?= __('Agregue los folios y tipos de documentos'); ?></caption>
+							<caption><?= __('Agregue los folios de las facturas recibidas para ésta OC'); ?></caption>
 							<thead>
 								<tr>
-									<th><?= __('Folio');?></th>
-									<th><?= __('Tipo');?></th>
-									<th><?= __('Comentario');?></th>
+									<th><?= __('Tipo de documento');?></th>
+									<th><?= __('Folio del decumento');?></th>
+									<th><?= __('Nota interna del documento');?></th>
 									<th>Acciones</th>
 								</tr>
 							</thead>
 							<tbody class="">
 								<tr class="hidden clone-tr">
 									<td>
-										<?= $this->Form->input('OrdenComprasDocumento.999.folio', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej: 4433')); ?>
+										<?= $this->Form->select('OrdenCompraFactura.999.tipo_documento', $tipo_documento , array( 'disabled' => true, 'class' => 'form-control not-blank', 'empty' => 'Seleccione tipo documento')); ?>
 									</td>
 									<td>
-										<?= $this->Form->select('OrdenComprasDocumento.999.tipo', array('factura' => 'Factura', 'nota de credito' => 'Nota de crédito'), array('disabled' => true, 'class' => 'form-control not-blank', 'default' => 1, 'empty' => false)); ?>
+										<?= $this->Form->input('OrdenCompraFactura.999.folio', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej: 4433')); ?>
 									</td>	
 									<td>
-										<?= $this->Form->input('OrdenComprasDocumento.999.comentario', array('type' => 'textarea', 'disabled' => true, 'class' => 'form-control', 'placeholder' => 'Agregue un comentario (opcional)')); ?>
+										<?= $this->Form->input('OrdenCompraFactura.999.nota', array('type' => 'textarea', 'disabled' => true, 'class' => 'form-control', 'placeholder' => 'Agregue un nota (opcional)')); ?>
 									</td>							
 									<td valign="center">
 										<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
 									</td>
 								</tr>
 
-								<? if (!empty($this->request->data['OrdenCompra']['meta_dtes'])) :  ?>
-								<? foreach($this->request->data['OrdenCompra']['meta_dtes'] as $ip => $dte) : ?>
+								<? if (!empty($this->request->data['OrdenCompraFactura'])) :  ?>
+								<? foreach($this->request->data['OrdenCompraFactura'] as $ip => $dte) : ?>
 								<tr>
 									<td>
-										<?= $this->Form->input(sprintf('OrdenComprasDocumento.%d.folio', $ip), array('type' => 'text', 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej:  4433', 'value' => $dte['folio'])); ?>
+										<?=$this->Form->hidden(sprintf('OrdenCompraFactura.%d.id', $ip), array('value' => $dte['id'])); ?>
+										<?= $this->Form->select(sprintf('OrdenCompraFactura.%d.tipo_documento', $ip), $tipo_documento, array('class' => 'form-control not-blank', 'empty' => 'Seleccione tipo documento', 'default' => $dte['tipo_documento'])); ?>
 									</td>
 									<td>
-										<?= $this->Form->select(sprintf('OrdenComprasDocumento.%d.tipo', $ip), array('factura' => 'Factura', 'nota de credito' => 'Nota de crédito'), array('class' => 'form-control not-blank', 'default' => $dte['tipo'], 'empty' => false)); ?>
+										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.folio', $ip), array('type' => 'text', 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej:  4433', 'value' => $dte['folio'])); ?>
 									</td>
 									<td>
-										<?= $this->Form->input(sprintf('OrdenComprasDocumento.%d.comentario', $ip), array('type' => 'textarea', 'class' => 'form-control', 'placeholder' => 'Agregue un comentario (opcional)', 'value' => $dte['comentario'])); ?>
+										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.nota', $ip), array('type' => 'textarea', 'class' => 'form-control', 'placeholder' => 'Agregue un nota (opcional)', 'value' => $dte['nota'])); ?>
 									</td>
 									<td valign="center">
 										<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>

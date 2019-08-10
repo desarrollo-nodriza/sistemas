@@ -237,27 +237,39 @@
 
 					<div class="table-responsive">
 						<table class="table table-bordered">
-							<caption><?= __('Folios y tipos de documentos'); ?></caption>
+							<caption><?= __('Documentos recibidos en ésta OC'); ?></caption>
 							<thead>
 								<tr>
-									<th><?= __('Folio');?></th>
 									<th><?= __('Tipo');?></th>
-									<th><?= __('Comentario');?></th>
+									<th><?= __('Folio');?></th>
+									<th><?= __('Emisor');?></th>
+									<th><?= __('Monto facturado');?></th>
+									<th><?= __('Monto pagado');?></th>
+									<th><?= __('Nota interna');?></th>
 								</tr>
 							</thead>
 							<tbody class="">
 
-								<? if (!empty($oc['OrdenCompra']['meta_dtes'])) :  ?>
-								<? foreach($oc['OrdenCompra']['meta_dtes'] as $ip => $dte) : ?>
+								<? if (!empty($oc['OrdenCompraFactura'])) :  ?>
+								<? foreach($oc['OrdenCompraFactura'] as $ip => $dte) : ?>
 								<tr>
+									<td>
+										<?=$this->Html->link('<i class="fa fa-eye"></i> ' . $this->Html->tipoDocumento[$dte['tipo_documento']], array('controller' => 'ordenCompraFacturas', 'action' => 'view', $dte['id']), array('target' => '_blank', 'escape' => false)); ?>
+									</td>
 									<td>
 										#<?= $dte['folio']; ?>
 									</td>
 									<td>
-										<?=$dte['tipo'];?>
+										<?= $dte['emisor']; ?>
 									</td>
 									<td>
-										<?=$dte['comentario'];?>
+										<?= CakeNumber::currency($dte['monto_facturado'], 'CLP'); ?>
+									</td>
+									<td>
+										<?= CakeNumber::currency($dte['monto_pagado'], 'CLP'); ?>
+									</td>
+									<td>
+										<?=$dte['nota'];?>
 									</td>
 								</tr>
 								<? endforeach; ?>

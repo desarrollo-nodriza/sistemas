@@ -8,8 +8,11 @@ class MonedasController extends AppController
 			'recursive'			=> 0
 		);
 		$monedas	= $this->paginate();
+
+		$tipos = $this->Moneda->tipos;
+			
 		BreadcrumbComponent::add('Monedas ');
-		$this->set(compact('monedas'));
+		$this->set(compact('monedas', 'tipos'));
 	}
 
 	public function admin_add()
@@ -27,8 +30,13 @@ class MonedasController extends AppController
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
 		}
+
+		$tipos = $this->Moneda->tipos;
+
 		BreadcrumbComponent::add('Monedas ', '/monedas');
 		BreadcrumbComponent::add('Agregar ');
+
+		$this->set(compact('tipos'));
 	}
 
 	public function admin_edit($id = null)
@@ -58,8 +66,12 @@ class MonedasController extends AppController
 			));
 		}
 
+		$tipos = $this->Moneda->tipos;
+
 		BreadcrumbComponent::add('Monedas ', '/monedas');
 		BreadcrumbComponent::add('Editar ');
+
+		$this->set(compact('tipos'));
 	}
 
 	public function admin_delete($id = null)
