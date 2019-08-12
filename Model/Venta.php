@@ -549,7 +549,10 @@ class Venta extends AppModel
 		}
 
 		if (array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada')) == array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad'))) {
-			$this->saveField('picking_estado', 'empaquetar');
+
+			if ($this->field('picking_estado') == '') {
+				$this->saveField('picking_estado', 'empaquetar');
+			}
 			$this->saveField('subestado_oc', 'no_entregado');
 		}
 
