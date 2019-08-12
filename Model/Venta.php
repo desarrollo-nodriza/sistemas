@@ -550,7 +550,7 @@ class Venta extends AppModel
 
 		if (array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada')) == array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad'))) {
 
-			if ($this->field('picking_estado') == '') {
+			if (empty($this->field('picking_estado')) || $this->field('picking_estado') = 'no_definido' ) {
 				$this->saveField('picking_estado', 'empaquetar');
 			}
 			$this->saveField('subestado_oc', 'no_entregado');
@@ -595,7 +595,10 @@ class Venta extends AppModel
 
 		if (array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada')) == array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad'))) {
 			$this->id = $venta['Venta']['id'];
-			$this->saveField('picking_estado', 'empaquetar');
+
+			if (empty($this->field('picking_estado')) || $this->field('picking_estado') = 'no_definido' ) {
+				$this->saveField('picking_estado', 'empaquetar');
+			}
 			$this->saveField('subestado_oc', 'no_entregado');
 		}
 
