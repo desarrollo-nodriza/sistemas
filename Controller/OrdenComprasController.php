@@ -697,31 +697,34 @@ class OrdenComprasController extends AppController
 				$res = $libreDte->obtener_documento_recibido($emisor, $tipo_dte, $folio, $receptor);
 				
 				if (!empty($res)) {
+
 					$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $res['total'];
 					$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $res['emisor'];
 					$this->request->data['OrdenCompraFactura'][$iocf]['receptor']        = $res['receptor'];
-
-
-					# Obtenemos el saldo disponible para pagar para éste proveedor
-					$id_proveedor = $this->OrdenCompra->field('proveedor_id', array('id' => $id));
-					$saldo_disponible_pago = ClassRegistry::init('Saldo')->obtener_saldo_total_proveedor($id_proveedor);
-
-					if (count($this->request->data['OrdenCompraFactura']) == 1 && $saldo_disponible_pago >= $res['total']) {
-
-						# Se paga la factura
-						$this->request->data['OrdenCompraFactura'][$iocf]['monto_pagado'] = $res['total'];
-						$this->request->data['OrdenCompraFactura'][$iocf]['pagada']       = 1;
-					}
-
-					# Descontamos el saldo usado solo al crearla
-					if (!isset($ocf['id'])) 
-						ClassRegistry::init('Saldo')->descontar($id_proveedor, $id, null, null, $res['total']);	
-
+				
 				}else{
-					$folios[] = $libreDte->tipoDocumento[$ocf['tipo_documento']] . ' folio #' . $ocf['folio'] . ' no fue encontrado. Verifique que la información del DTE sea correcta.';
 
-					unset($this->request->data['OrdenCompraFactura'][$iocf]);
+					#$folios[] = $libreDte->tipoDocumento[$ocf['tipo_documento']] . ' folio #' . $ocf['folio'] . ' no fue encontrado. Verifique que la información del DTE sea correcta.';
+
+					$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $ocf['monto_facturado'];
+					$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $emisor;
+					$this->request->data['OrdenCompraFactura'][$iocf]['receptor']        = $receptor;
 				}
+
+				# Obtenemos el saldo disponible para pagar para éste proveedor
+				$id_proveedor = $this->OrdenCompra->field('proveedor_id', array('id' => $id));
+				$saldo_disponible_pago = ClassRegistry::init('Saldo')->obtener_saldo_total_proveedor($id_proveedor);
+
+				if (count($this->request->data['OrdenCompraFactura']) == 1 && $saldo_disponible_pago >= $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']) {
+
+					# Se paga la factura
+					$this->request->data['OrdenCompraFactura'][$iocf]['monto_pagado'] = $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'];
+					$this->request->data['OrdenCompraFactura'][$iocf]['pagada']       = 1;
+				}
+
+				# Descontamos el saldo usado solo al crearla
+				if (!isset($ocf['id'])) 
+					ClassRegistry::init('Saldo')->descontar($id_proveedor, $id, null, null, $res['total']);
 			}
 				
 			$ocSave = array_replace_recursive($ocSave, array(

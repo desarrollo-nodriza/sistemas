@@ -90,7 +90,8 @@
 							<thead>
 								<tr>
 									<th><?= __('Tipo de documento');?></th>
-									<th><?= __('Folio del decumento');?></th>
+									<th><?= __('Folio del documento');?></th>
+									<th><?= __('Monto facturado');?></th>
 									<th><?= __('Nota interna del documento');?></th>
 									<th>Acciones</th>
 								</tr>
@@ -102,6 +103,9 @@
 									</td>
 									<td>
 										<?= $this->Form->input('OrdenCompraFactura.999.folio', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej: 4433')); ?>
+									</td>
+									<td>
+										<?= $this->Form->input('OrdenCompraFactura.999.monto_facturado', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej: 299900')); ?>
 									</td>	
 									<td>
 										<?= $this->Form->input('OrdenCompraFactura.999.nota', array('type' => 'textarea', 'disabled' => true, 'class' => 'form-control', 'placeholder' => 'Agregue un nota (opcional)')); ?>
@@ -116,13 +120,16 @@
 								<tr>
 									<td>
 										<?=$this->Form->hidden(sprintf('OrdenCompraFactura.%d.id', $ip), array('value' => $dte['id'])); ?>
-										<?= $this->Form->select(sprintf('OrdenCompraFactura.%d.tipo_documento', $ip), $tipo_documento, array('class' => 'form-control not-blank', 'empty' => 'Seleccione tipo documento', 'default' => $dte['tipo_documento'])); ?>
+										<?= $this->Form->select(sprintf('OrdenCompraFactura.%d.tipo_documento', $ip), $tipo_documento, array('class' => 'form-control not-blank', 'empty' => 'Seleccione tipo documento', 'default' => $dte['tipo_documento'], 'disabled' => ($dte['pagada']) ? true : false)); ?>
 									</td>
 									<td>
-										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.folio', $ip), array('type' => 'text', 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej:  4433', 'value' => $dte['folio'])); ?>
+										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.folio', $ip), array('type' => 'text', 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej:  4433', 'value' => $dte['folio'], 'disabled' => ($dte['pagada']) ? true : false )); ?>
 									</td>
 									<td>
-										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.nota', $ip), array('type' => 'textarea', 'class' => 'form-control', 'placeholder' => 'Agregue un nota (opcional)', 'value' => $dte['nota'])); ?>
+										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.monto_facturado', $ip), array('type' => 'text', 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej:  4433', 'value' => $dte['monto_facturado'], 'disabled' => ($dte['pagada']) ? true : false)); ?>
+									</td>
+									<td>
+										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.nota', $ip), array('type' => 'textarea', 'class' => 'form-control', 'placeholder' => 'Agregue un nota (opcional)', 'value' => $dte['nota'], 'disabled' => ($dte['pagada']) ? true : false)); ?>
 									</td>
 									<td valign="center">
 										<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
