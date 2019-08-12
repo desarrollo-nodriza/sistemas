@@ -724,7 +724,7 @@ class OrdenComprasController extends AppController
 
 				# Descontamos el saldo usado solo al crearla
 				if (!isset($ocf['id'])) 
-					ClassRegistry::init('Saldo')->descontar($id_proveedor, $id, null, null, $res['total']);
+					ClassRegistry::init('Saldo')->descontar($id_proveedor, $id, null, null, $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']);
 			}
 				
 			$ocSave = array_replace_recursive($ocSave, array(
