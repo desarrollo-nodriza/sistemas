@@ -2587,7 +2587,7 @@ class VentasController extends AppController {
 
 									foreach ($mensajes as $im => $mensaje) {
 	
-										$NuevaVenta['VentaMensaje'][$im]['nombre']   = $mensaje['subject'];
+										$NuevaVenta['VentaMensaje'][$im]['nombre']   = (empty($mensaje['subject'])) ? 'Sin asunto' : $mensaje['subject'] ;
 										$NuevaVenta['VentaMensaje'][$im]['fecha']    = CakeTime::format($mensaje['date'], '%Y-%m-%d %H:%M:%S');
 										$NuevaVenta['VentaMensaje'][$im]['emisor']   = $mensaje['from']['user_id'];
 										$NuevaVenta['VentaMensaje'][$im]['mensaje']  = $this->removeEmoji($mensaje['text']['plain']);
@@ -3747,7 +3747,7 @@ class VentasController extends AppController {
 				$data = array();
 				$data['mensaje'] = $this->removeEmoji($mensaje['text']['plain']);
 				$data['fecha'] = CakeTime::format($mensaje['date'], '%d-%m-%Y %H:%M:%S');
-				$data['asunto'] = $mensaje['subject'];
+				$data['asunto'] = (empty($mensaje['subject'])) ? 'Sin asunto' : $mensaje['subject'] ;
 				$venta['VentaMensaje'][] = $data;
 			}
 
@@ -5281,7 +5281,7 @@ class VentasController extends AppController {
 				'precio_bruto'     => $this->precio_bruto($item['precio']),
 				'precio_bruto_clp' => CakeNumber::currency($this->precio_bruto($item['precio']), 'CLP')
 			);
-			prx($item);
+			
 			if (!empty($item['VentaDetalleProducto']['imagenes'])) {
 				$respuesta['itemes'][$i] = array_replace_recursive($respuesta['itemes'][$i], array(
 					'imagen' => Hash::extract($item['VentaDetalleProducto']['imagenes'], '{n}[principal=1].url')[0]

@@ -719,6 +719,8 @@ class OrdenComprasController extends AppController
 
 				}else{
 					$folios[] = $libreDte->tipoDocumento[$ocf['tipo_documento']] . ' folio #' . $ocf['folio'] . ' no fue encontrado. Verifique que la información del DTE sea correcta.';
+
+					unset($this->request->data['OrdenCompraFactura'][$iocf]);
 				}
 			}
 				
