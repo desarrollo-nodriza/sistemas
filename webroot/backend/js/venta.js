@@ -355,6 +355,8 @@ $(function() {
 				if (respuesta.code == 200) {
 					actualizado = true;
 					obtener_ventas_preparacion();
+
+					noty({text: respuesta.message, layout: 'topRight', type: 'success'});
 				}else{
 					$("#tasks_progreess").sortable('cancel');
 					actualizado = false;

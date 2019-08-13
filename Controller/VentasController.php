@@ -399,12 +399,14 @@ class VentasController extends AppController {
 	{	
 		$estados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0, 'excluir_preparacion' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
 
+		$estados_preparados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
+
 		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', 10, 0, $estados_ids);
 		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids);
 		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', 10, 0, $estados_ids);
 		$ventas_empaquetando_total = $this->Venta->obtener_ventas_preparar('empaquetando', -1, 0, $estados_ids);
-		$ventas_empaquetado        = $this->Venta->obtener_ventas_preparadas('empaquetado', 10, 0, $estados_ids);
-		$ventas_empaquetado_total  = $this->Venta->obtener_ventas_preparadas('empaquetado', -1, 0, $estados_ids);
+		$ventas_empaquetado        = $this->Venta->obtener_ventas_preparadas('empaquetado', 10, 0, $estados_preparados_ids);
+		$ventas_empaquetado_total  = $this->Venta->obtener_ventas_preparadas('empaquetado', -1, 0, $estados_preparados_ids);
 
 		$this->layout = 'ajax';
 
@@ -605,7 +607,7 @@ class VentasController extends AppController {
 			}
 
 			$respuesta['code'] = 200;
-			$respuesta['message'] = 'Ok';
+			$respuesta['message'] = 'Estado actualizado con éxito.';
 		}
 
 		echo json_encode($respuesta);
