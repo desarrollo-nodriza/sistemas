@@ -47,7 +47,7 @@
                                 
             <h3 class="mb-5">Listos para empaquetar <small id="contador-listos">(0)</small></h3>
             
-            <div class="tasks" id="tasks" style="display: flex; flex-direction: column height: 100%;;">
+            <div class="tasks" id="tasks" style="display: flex; flex-direction: column; height: 100%;;">
                 
                 <div class="task-drop push-down-10">
 		            <span class="fa fa-cloud"></span>
