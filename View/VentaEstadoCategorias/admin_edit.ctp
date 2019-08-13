@@ -37,6 +37,13 @@
 									</td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('excluir_preparacion', '¿Excluir de la preparación de pedidos?'); ?></th>
+									<td>
+										<?= $this->Form->input('excluir_preparacion', array('class' => 'icheckbox')); ?>
+										<span class="help-block">Las ventas que tengan ésta categoria no se mostrarán en el visor de preparación de pedidos.</span>
+									</td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('final', 'Estado final'); ?></th>
 									<td>
 										<?= $this->Form->input('final', array('class' => 'icheckbox')); ?>

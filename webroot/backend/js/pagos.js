@@ -329,7 +329,6 @@ $.extend({
 				    		noty({text: 'Ocurrió un error al obtener los pagos. Regresque la página.', layout: 'topRight', type: 'error'});
 				    	} 
 				    },
-				    eventOrder: 'allDay',
 			    	header : {
 			    		right : 'prevYear,nextYear',
 			    		left : 'prev,next,today',

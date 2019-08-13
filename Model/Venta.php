@@ -350,6 +350,67 @@ class Venta extends AppModel
 	}
 
 
+
+	public function obtener_venta_por_id_tiny($id)
+	{
+		return $this->find(
+			'first',
+			array(
+				'conditions' => array(
+					'Venta.id' => $id
+				),
+				'contain' => array(
+					'Tienda' => array(
+						'fields' => array(
+							'Tienda.id', 'Tienda.nombre'
+						)
+					),
+					'VentaEstado' => array(
+						'VentaEstadoCategoria' => array(
+							'fields' => array(
+								'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo'
+							)
+						),
+						'fields' => array(
+							'VentaEstado.nombre'
+						)
+					),
+					'MetodoEnvio' => array(
+						'fields' => array(
+							'MetodoEnvio.nombre'
+						)
+					),
+					'VentaCliente' => array(
+						'fields' => array(
+							'VentaCliente.nombre', 'VentaCliente.apellido', 'VentaCliente.rut', 'VentaCliente.telefono', 'VentaCliente.email'
+						)
+					),
+					'VentaDetalle' => array(
+						'VentaDetalleProducto' => array(
+							'fields' => array(
+								'VentaDetalleProducto.nombre'
+							)
+						),
+						'fields' => array(
+							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app'
+						)
+					),
+					'Marketplace' => array(
+						'fields' => array(
+							'Marketplace.nombre', 'Marketplace.marketplace_tipo_id'
+						)
+					),
+					'Tienda' => array(
+						'fields' => array(
+							'Tienda.nombre'
+						)
+					)
+				)
+			)
+		);
+	}
+
+
 	/**
 	 * [obtener_ventas_preparar description]
 	 * @param  string  $estado      [description]
@@ -404,10 +465,10 @@ class Venta extends AppModel
 			'order'  => array('Venta.prioritario' => 'desc', 'Venta.fecha_venta' => 'asc', 'Venta.modified' => 'desc'),
 			'group'  => 'Venta.id',
 			'fields' => array(
-				'Venta.id', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.fecha_venta'
+				'Venta.id'
 			),
 		));
-		
+
 		return $ventas;
 	}
 

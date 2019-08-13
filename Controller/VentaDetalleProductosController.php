@@ -292,10 +292,7 @@ class VentaDetalleProductosController extends AppController
 		foreach ($bodegas as $ib => $b) {
 			$this->request->data['VentaDetalleProducto']['Total'][$ib]['bodega_id'] = $ib;
 			$this->request->data['VentaDetalleProducto']['Total'][$ib]['bodega_nombre'] = $b;
-
-			$iosBodega = Hash::extract($this->request->data['Bodega'], '{n}.BodegasVentaDetalleProducto[bodega_id='.$ib.']');
-
-			$this->request->data['VentaDetalleProducto']['Total'][$ib]['total'] = array_sum(Hash::extract($iosBodega, '{n}[io=IN].cantidad')) - array_sum(Hash::extract($iosBodega, '{n}[io=ED].cantidad'));	
+			$this->request->data['VentaDetalleProducto']['Total'][$ib]['total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib, true);	
 		}
 
 		BreadcrumbComponent::add('Listado de Movimientos', '/ventaDetalleProductos/movimientos');
@@ -357,16 +354,13 @@ class VentaDetalleProductosController extends AppController
 
 		if (!empty($aceptados)) {
 			$this->Session->setFlash($this->crearAlertaUl($aceptados, 'Movimientos correcto'), null, array(), 'success');
-			$this->redirect(array('action' => 'ajustarInventario', $id));
+			$this->redirect(array('action' => 'edit', $id));
 		}
 
 		foreach ($bodegas as $ib => $b) {
 			$this->request->data['VentaDetalleProducto']['Total'][$ib]['bodega_id'] = $ib;
 			$this->request->data['VentaDetalleProducto']['Total'][$ib]['bodega_nombre'] = $b;
-
-			$iosBodega = Hash::extract($this->request->data['Bodega'], '{n}.BodegasVentaDetalleProducto[bodega_id='.$ib.']');
-
-			$this->request->data['VentaDetalleProducto']['Total'][$ib]['total'] = array_sum(Hash::extract($iosBodega, '{n}[io=IN].cantidad')) - array_sum(Hash::extract($iosBodega, '{n}[io=ED].cantidad'));	
+			$this->request->data['VentaDetalleProducto']['Total'][$ib]['total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib, true);	
 		}
 
 		BreadcrumbComponent::add('Listado de Movimientos', '/ventaDetalleProductos/movimientos');
@@ -868,10 +862,7 @@ class VentaDetalleProductosController extends AppController
 		foreach ($bodegas as $ib => $b) {
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_id'] = $ib;
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_nombre'] = $b;
-
-			$iosBodega = Hash::extract($this->request->data['Bodega'], '{n}.BodegasVentaDetalleProducto[bodega_id='.$ib.']');
-
-			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['total'] = array_sum(Hash::extract($iosBodega, '{n}[io=IN].cantidad')) - array_sum(Hash::extract($iosBodega, '{n}[io=ED].cantidad'));
+			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib);
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['pmp'] = ClassRegistry::init('Bodega')->obtener_pmp_por_id($id, $ib);
 		}
 

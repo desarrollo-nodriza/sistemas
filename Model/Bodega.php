@@ -344,7 +344,7 @@ class Bodega extends AppModel
 	public function ajustarInventario($id_producto, $bodega_id, $cantidad)
 	{	
 		$precio_costo = $this->obtener_pmp_por_id($id_producto);
-		$enBodega = $this->obtenerCantidadProductoBodega($id_producto, $bodega_id);
+		$enBodega = $this->obtenerCantidadProductoBodega($id_producto, $bodega_id, true);
 
 		$result = false;
 
@@ -352,7 +352,7 @@ class Bodega extends AppModel
 		if ($cantidad > $enBodega) {
 			$result = $this->crearEntradaBodega($id_producto, $bodega_id, ($cantidad-$enBodega), $precio_costo, 'AJ' );
 		}
-
+		
 		// Se crea una salida del total que hay en bodega
 		if ($cantidad == 0 && $cantidad < $enBodega) {
 			$result = $this->crearSalidaBodega($id_producto, $bodega_id, $enBodega, 'AJ' );
@@ -361,6 +361,10 @@ class Bodega extends AppModel
 		// Se crea una salida con la diferencia
 		if ($cantidad < $enBodega && $cantidad > 0) {
 			$result = $this->crearSalidaBodega($id_producto, $bodega_id, ($enBodega-$cantidad), 'AJ' );
+		}
+
+		if ($cantidad == 0 && $enBodega == 0) {
+			$result = false;
 		}
 
 		return $result;

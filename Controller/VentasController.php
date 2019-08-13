@@ -349,123 +349,42 @@ class VentasController extends AppController {
      */
 	public function admin_index_bodega () {
 
-		$condiciones = array(
-			'AND' => array(
-				array(
-					'Venta.picking_estado' => 'empaquetar'
-				),
-				array(
-					'Venta.picking_estado' => 'empaquetando'
-				)
-			)
-		);
-		$joins = array();
-
-		$estados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
-
-		// Listamos solo pagados
-		$joins[] = array(
-			'table' => 'rp_venta_estados',
-			'alias' => 'ventas_estados',
-			'type' => 'INNER',
-			'conditions' => array(
-				'ventas_estados.id = Venta.venta_estado_id',
-				"ventas_estados.venta_estado_categoria_id" => $estados_ids,
-				"ventas_estados.permitir_retiro_oc"  => 1
-			)
-		);
-
-		$paginate = array(
-			'recursive' => 0,
-			'contain' => array(
-				'VentaEstado' => array(
-					'VentaEstadoCategoria' => array(
-						'fields' => array(
-							'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo'
-						)
-					),
-					'fields' => array(
-						'VentaEstado.id', 'VentaEstado.nombre', 'VentaEstado.venta_estado_categoria_id', 'VentaEstado.permitir_dte', 'VentaEstado.permitir_retiro_oc', 'VentaEstado.notificacion_cliente'
-					)
-				),
-				'Tienda' => array(
-					'fields' => array(
-						'Tienda.id', 'Tienda.nombre'
-					)
-				),
-				'Marketplace' => array(
-					'fields' => array(
-						'Marketplace.id', 'Marketplace.nombre'
-					)
-				),
-				'VentaCliente' => array(
-					'fields' => array(
-						'VentaCliente.nombre', 'VentaCliente.apellido', 'VentaCliente.rut', 'VentaCliente.email', 'VentaCliente.telefono',
-					)
-				)
-			),
-			'conditions' => $condiciones,
-			'joins' => $joins,
-			'fields' => array(
-				'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo',
-				'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.picking_estado', 'Venta.prioritario'
-			),
-			'order' => array('Venta.prioritario' => 'desc', 'Venta.fecha_venta' => 'asc'),
-			'limit' => -1
-		);
-
-		//----------------------------------------------------------------------------------------------------
-		$this->paginate = $paginate;
-
-		$ventas = $this->paginate();
-
-		//----------------------------------------------------------------------------------------------------
-		$tiendas = $this->Venta->Tienda->find(
-			'list',
-			array(
-				'conditions' => array(
-					'Tienda.activo' => 1
-				),
-				'order' => 'Tienda.nombre ASC'
-			)
-		);
-
-		//----------------------------------------------------------------------------------------------------
-		$marketplaces = $this->Venta->Marketplace->find(
-			'list',
-			array(
-				'conditions' => array(
-					'Marketplace.activo' => 1
-				),
-				'order' => 'Marketplace.nombre ASC'
-			)
-		);
-
-		//----------------------------------------------------------------------------------------------------
-		$ventaEstadoCategorias = $this->Venta->VentaEstado->VentaEstadoCategoria->find('list');
-
-		//----------------------------------------------------------------------------------------------------
-		$medioPagos = $this->Venta->MedioPago->find(
-			'list',
-			array(
-				'conditions' => array(
-					'MedioPago.activo' => 1
-				),
-				'order' => 'MedioPago.nombre ASC'
-			)
-		);
-
-		# Mercadolibre conectar
-		$meliConexion = $this->admin_verificar_conexion_meli();
-
-		BreadcrumbComponent::add('Ventas', '/ventas');
-
-		$this->set(compact(
-			'ventas', 'tiendas', 'marketplaces', 'ventaEstadoCategorias', 'medioPagos',
-			'FiltroVenta', 'FiltroCliente', 'FiltroTienda', 'FiltroMarketplace', 'FiltroMedioPago', 'FiltroVentaEstadoCategoria', 'FiltroAtendida', 'FiltroFechaDesde', 'FiltroFechaHasta', 'meliConexion'
-		));
+		//
 
 	}
+
+
+	/**
+	 * [admin_obtener_ventas_preparacion_modal description]
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function admin_obtener_ventas_preparacion_modal($id)
+	{
+		$this->layout   = 'ajax';
+		$this->viewPath = 'Ventas/ajax';
+		$this->output   = '';
+
+		$venta  = $this->preparar_venta($id);
+
+		$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
+		$tamano = '500x500';
+		
+		$this->set(compact('venta', 'url', 'tamano'));
+
+		$vista = $this->render('venta_preparacion_modal');
+
+		$response =  array(
+			'code'    => 200,
+			'message' => 'Venta obtenida con éxito',
+			'html' => $vista->body()
+		);
+
+		echo json_encode($response);
+		exit;
+
+	}
+
 
 
 	/**
@@ -478,7 +397,7 @@ class VentasController extends AppController {
 	 */
 	public function admin_obtener_ventas_preparacion($limit1 = 10, $offset1 = 0, $limit2 = 10, $offset2 = 0)
 	{	
-		$estados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
+		$estados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0, 'excluir_preparacion' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
 
 		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', 10, 0, $estados_ids);
 		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids);
@@ -500,17 +419,9 @@ class VentasController extends AppController {
 			$this->viewPath   = 'Ventas/ajax';
 			$this->output     = '';
 			
-			$venta  = $this->Venta->obtener_venta_por_id($ve['Venta']['id']);
+			$venta  = $this->Venta->obtener_venta_por_id_tiny($ve['Venta']['id']);
 
-			# Si la venta no está completa se quita
-			$reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
-			$comprados = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad'));
-
-			if ($reservado != $comprados) {
-				$ventas_empaquetando_total--;
-				continue;
-			}
-
+			
 			$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
 			$tamano = '500x500';
 			
@@ -532,16 +443,7 @@ class VentasController extends AppController {
 			$this->viewPath   = 'Ventas/ajax';
 			$this->output     = '';
 
-			$venta  = $this->preparar_venta($ve['Venta']['id']);
-
-			# Si la venta no está completa se quita
-			$reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
-			$comprados = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad'));
-
-			if ($reservado != $comprados) {
-				$ventas_empaquetado_total--;
-				continue;
-			}
+			$venta  = $this->Venta->obtener_venta_por_id_tiny($ve['Venta']['id']);
 
 			$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
 			$tamano = '500x500';
@@ -565,7 +467,7 @@ class VentasController extends AppController {
 			$this->viewPath   = 'Ventas/ajax';
 			$this->output     = '';
 
-			$venta  = $this->Venta->obtener_venta_por_id($ve['Venta']['id']);
+			$venta  = $this->Venta->obtener_venta_por_id_tiny($ve['Venta']['id']);
 			$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
 			$tamano = '500x500';
 			
@@ -2381,6 +2283,9 @@ class VentasController extends AppController {
 
 										$NuevaVenta['Venta']['total'] 			 = (float) 0; // El total se calcula en en base a la sumatoria de items
 
+										# Se marca como prioritaria
+										$NuevaVenta['Venta']['prioritario'] 	= 1;
+
 										//ciclo para recorrer el detalle de la venta
 										foreach ($VentaDetalles as $DetalleVenta) {
 
@@ -2504,6 +2409,9 @@ class VentasController extends AppController {
 									
 									$NuevaVenta['Venta']['fecha_venta']    = CakeTime::format($DataVenta['date_created'], '%Y-%m-%d %H:%M:%S');
 									$NuevaVenta['Venta']['total']          = round($DataVenta['total_amount'], 2);
+
+									# Se marca como prioritaria
+									$NuevaVenta['Venta']['prioritario'] 	= 1;
 
 									# costo envio
 									if (isset($DataVenta['shipping']['cost'])) {
@@ -3219,15 +3127,10 @@ class VentasController extends AppController {
 
 					break;
 				case 'ready_to_ship':
-					
-					# Pedimos retiro del pedido en Linio
-					foreach ($itemsVenta as $ii => $item) {
-
-						# Listo para envio pedido en Linio Por defecto se usa Blue Express
-						if(!$this->Linio->linio_listo_para_envio(array($item['OrderItemId']))){
-							throw new Exception('Imposible cambiar el estado. Intente cancelarla directamente en Seller Center.', 508);
-						}
-
+					 
+					# Listo para envio pedido en Linio Por defecto se usa Blue Express
+					if(!$this->Linio->linio_listo_para_envio( Hash::extract($itemsVenta, '{n}.OrderItemId') )) {
+						throw new Exception('Imposible cambiar el estado. Intente cancelarla directamente en Seller Center.', 508);
 					}
 
 					break;

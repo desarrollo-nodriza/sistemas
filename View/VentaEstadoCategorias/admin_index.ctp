@@ -25,6 +25,7 @@
 									<th><?= $this->Paginator->sort('nombre', 'Estado Detallado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('estilo', 'Color', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('venta', 'Es Venta', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('excluir_preparacion', 'Excluir de preparación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('plantilla', 'Plantilla email', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('activo', 'Activa', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
@@ -40,6 +41,7 @@
 										<td><?= h($ventaEstadoCategoria['VentaEstadoCategoria']['nombre']); ?>&nbsp;</td>
 										<td><span class="btn btn-xs btn-<?= $ventaEstadoCategoria['VentaEstadoCategoria']['estilo']; ?>"><?= $ventaEstadoCategoria['VentaEstadoCategoria']['nombre']; ?></span>&nbsp;</td>
 										<td><?= ($ventaEstadoCategoria['VentaEstadoCategoria']['venta'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
+										<td><?= ($ventaEstadoCategoria['VentaEstadoCategoria']['excluir_preparacion'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 										<td><?= h($ventaEstadoCategoria['VentaEstadoCategoria']['plantilla']); ?>&nbsp;</td>
 										<td><?= ($ventaEstadoCategoria['VentaEstadoCategoria']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 

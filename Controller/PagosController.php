@@ -174,7 +174,8 @@ class PagosController extends AppController
 			}
 
 			$result[$index]['id']         = rand();
-			$result[$index]['title']      = 'Total del día: ' . CakeNumber::currency($pagar, 'CLP');
+			$result[$index]['orden']      = $index;
+			$result[$index]['title']      = $index . ' - Total del día: ' . CakeNumber::currency($pagar, 'CLP');
 			$result[$index]['description'] = 'Suma de todos los pagos del día.';
 			$result[$index]['start']      = $dia;
 			$result[$index]['className']  = 'default';
@@ -193,7 +194,8 @@ class PagosController extends AppController
 			$folios .= '</ul>';
 
 			$result[$index]['id']        = $pago['Pago']['id'];
-			$result[$index]['title']     = 'Pago #' . $pago['Pago']['identificador'] . ' - ' . CakeNumber::currency($pago['Pago']['monto_pagado'], 'CLP');			
+			$result[$index]['orden']     = $index;
+			$result[$index]['title']     = $index . ' - Pago #' . $pago['Pago']['identificador'] . ' - ' . CakeNumber::currency($pago['Pago']['monto_pagado'], 'CLP');			
 			$result[$index]['start']     = $pago['Pago']['fecha_pago'];
 			$result[$index]['className'] = 'orange';
 			$result[$index]['trigger']   = 'click';

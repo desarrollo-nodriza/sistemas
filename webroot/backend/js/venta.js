@@ -313,6 +313,33 @@ $(function() {
 		}
 
 
+		var obtener_ventas_preparacion_modal = function($id_venta){
+
+			$.ajax({
+				url: webroot + 'ventas/obtener_ventas_preparacion_modal/' + $id_venta
+			})
+			.done(function(res) {
+				
+				var $res = $.parseJSON(res);
+				console.log($res);
+				$('#wrapper-modal-venta-ver-mas').html($res.html);
+				$('#wrapper-modal-venta-ver-mas .modal').modal('show');
+
+			})
+			.fail(function() {
+				noty({text: 'Ocurrió un error al obtener la venta. Intente nuevamente.', layout: 'topRight', type: 'error'});
+			})
+			.always(function() {
+				$('.loader').removeClass('show');
+				setTimeout(function(){
+					$.noty.closeAll();
+				}, 10000);
+			});
+			
+
+		}
+
+
 		var cambiar_venta_estado_empaquetado = function($ths, $data){
 			var id_venta 	= $ths.data('id'),
 				actualizado = false;
@@ -455,6 +482,11 @@ $(function() {
 					}, 120000);
 
 				}
+
+				$(document).on('click', '.js-venta-ver-mas', function(){
+					$('.loader').addClass('show');
+					obtener_ventas_preparacion_modal($(this).data('id'));
+				});
 
 				$('#refrescar_manualmente').on('click', function(){
 					$('.loader').addClass('show');

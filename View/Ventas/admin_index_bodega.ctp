@@ -41,13 +41,13 @@
 		</div>
 	<? endif; ?>
 
-	<div class="row">
+	<div class="row" style="display: flex;">
 		
-		<div class="col-md-4">
+		<div class="col-md-4" style="display: flex; flex-direction: column;">
                                 
             <h3 class="mb-5">Listos para empaquetar <small id="contador-listos">(0)</small></h3>
             
-            <div class="tasks" id="tasks">
+            <div class="tasks" id="tasks" style="display: flex; flex-direction: column height: 100%;;">
                 
                 <div class="task-drop push-down-10">
 		            <span class="fa fa-cloud"></span>
@@ -56,9 +56,9 @@
             </div>                            
 
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4" style="display: flex; flex-direction: column;">
             <h3 class="mb-5">En progreso <small id="contador-preparacion">(0)</small></h3>
-            <div class="tasks" id="tasks_progreess">
+            <div class="tasks" id="tasks_progreess" style="display: flex; flex-direction: column; height: 100%;">
 
 				<div class="task-drop push-down-10">
 		            <span class="fa fa-cloud"></span>
@@ -66,9 +66,9 @@
 		        </div>                
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4" style="display: flex; flex-direction: column;">
             <h3 class="mb-5">Completos <small id="contador-completos">(0)</small></h3>
-            <div class="tasks" id="tasks_completed">
+            <div class="tasks" id="tasks_completed" style="display: flex; flex-direction: column; height: 100%;">
                 <div class="task-drop push-down-10">
 		            <span class="fa fa-cloud"></span>
 		            Arrastra la venta aquí para finalizar su prepración
@@ -79,3 +79,9 @@
 	</div>
 
 </div>
+
+<!-- Modal detalle venta -->
+<div id="wrapper-modal-venta-ver-mas">
+	
+</div>
+<!-- Fin modal -->
