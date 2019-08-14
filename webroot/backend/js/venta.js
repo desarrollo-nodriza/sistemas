@@ -4,10 +4,10 @@ $(function() {
 
 		var ejecutando = false;
 		
-		var limiteEmpaquetar = 10;
+		var limiteEmpaquetar = 15;
 		var offsetEmpaquetar = 0;
 
-		var limiteEmpaquetando = 10;
+		var limiteEmpaquetando = 15;
 		var offsetEmpaquetando = 0;
 
 		var modalAbierto = null;
@@ -283,10 +283,10 @@ $(function() {
 			$('.loader').addClass('show');
 			$('#refrescar_manualmente').addClass('fa-spin');
 
-			var $id_venta 			= $('#filtro-venta-id').val() == '' ? null : $('#filtro-venta-id').val() ,
-				$id_metodo_envio 	= $('#filtro-venta-envio').val() == '' ? null : $('#filtro-venta-envio').val() ,
-				$id_marketplace 	= $('#filtro-venta-marketplace').val() == '' ? null : $('#filtro-venta-marketplace').val(),
-				$id_tienda 			= $('#filtro-venta-tienda').val() == '' ? null : $('#filtro-venta-tienda').val();
+			var $id_venta 			= $('#filtro-venta-id').val() == '' ? 0 : $('#filtro-venta-id').val() ,
+				$id_metodo_envio 	= $('#filtro-venta-envio').val() == '' ? 0 : $('#filtro-venta-envio').val() ,
+				$id_marketplace 	= $('#filtro-venta-marketplace').val() == '' ? 0 : $('#filtro-venta-marketplace').val(),
+				$id_tienda 			= $('#filtro-venta-tienda').val() == '' ? 0 : $('#filtro-venta-tienda').val();
 
 			$.get(webroot + 'ventas/obtener_ventas_preparacion/' + limiteEmpaquetar + '/' + offsetEmpaquetar + '/' + limiteEmpaquetando + '/' + offsetEmpaquetando + '/' + $id_venta + '/' + $id_metodo_envio + '/' + $id_marketplace + '/' + $id_tienda, function(data) {
 				
