@@ -14,6 +14,55 @@
 
 <div class="page-content-wrap" id="preparacion_index">
 
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="panel panel-primary panel-toggled">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de ventas por empaquetar</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="form-group col-xs-12 col-md-3">
+							<label for="filtro-venta-id">Id de la venta</label>
+							<input type="text" class="form-control" id="filtro-venta-id" placeholder="ID de la venta">
+						</div>
+						<div class="form-group col-xs-12 col-md-3">
+							<label for="filtro-venta-id">Metodo de envio</label>
+							<select class="form-control" id="filtro-venta-envio">
+								<?=$this->Html->crear_opciones_por_arraglo($metodo_envios); ?>
+							</select>
+						</div>
+						<div class="form-group col-xs-12 col-md-3">
+							<label for="filtro-venta-id">Marketplace</label>
+							<select class="form-control" id="filtro-venta-marketplace">
+								<?=$this->Html->crear_opciones_por_arraglo($canales); ?>
+							</select>
+						</div>
+						<div class="form-group col-xs-12 col-md-3">
+							<label for="filtro-venta-id">Tienda</label>
+							<select class="form-control" id="filtro-venta-tienda">
+								<?=$this->Html->crear_opciones_por_arraglo($tiendas); ?>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="col-xs-12">
+						<div class="pull-left">
+							<?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtros', array('action' => 'index_bodega'), array('class' => 'btn btn-primary btn-block', 'escape' => false)); ?>
+						</div>
+						<div class="pull-right">
+							<button class="btn btn-success" id="filtro-venta-btn"><i class="fa fa-search" aria-hidden="true"></i> Buscar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+    </div>
+
 	<div class="row mb-20 mt-20">
 		<div class="col-xs-12">
 			<h3 class="text-center text-muted"><i class="fa fa-arrows"></i> Arrastra las ventas por las distintas columnas para cambiar sus estados</h3>

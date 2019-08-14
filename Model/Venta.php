@@ -419,7 +419,7 @@ class Venta extends AppModel
 	 * @param  array   $estados_ids [description]
 	 * @return [type]               [description]
 	 */
-	public function obtener_ventas_preparar($estado = '', $limit = -1, $offset = 0, $estados_ids = array())
+	public function obtener_ventas_preparar($estado = '', $limit = -1, $offset = 0, $estados_ids = array(), $id_venta = '', $id_metodo_envio = '', $id_marketplace = '', $id_tienda = '')
 	{	
 		$joins[] = array(
 			'table' => 'rp_venta_estados',
@@ -455,10 +455,34 @@ class Venta extends AppModel
 			)
 		);
 
+		$conditions = array('Venta.picking_estado' => $estado);
+
+		if (!is_null($id_venta) && $id_venta != 'null') {
+			$conditions = array_replace_recursive($conditions, array(
+				'Venta.id' => $id_venta
+			));
+		}
+
+		if (!is_null($id_metodo_envio) && $id_metodo_envio != 'null') {
+			$conditions = array_replace_recursive($conditions, array(
+				'Venta.metodo_envio_id' => $id_metodo_envio
+			));
+		}
+
+		if (!is_null($id_marketplace) && $id_marketplace != 'null') {
+			$conditions = array_replace_recursive($conditions, array(
+				'Venta.marketplace_id' => $id_marketplace
+			));
+		}
+
+		if (!is_null($id_tienda) && $id_tienda != 'null') {
+			$conditions = array_replace_recursive($conditions, array(
+				'Venta.tienda_id' => $id_tienda
+			));
+		}
+
 		$ventas =  $this->find('all', array(
-			'conditions' => array(
-				'Venta.picking_estado' => $estado
-			),
+			'conditions' => $conditions,
 			'joins'  => $joins,
 			'limit'  => $limit,
 			'offset' => $offset,

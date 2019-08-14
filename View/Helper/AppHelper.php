@@ -184,4 +184,21 @@ class AppHelper extends Helper
     public function rut( $rut ) {
 	    return @number_format( substr ( $rut, 0 , -1 ) , 0, "", ".") . '-' . substr ( $rut, strlen($rut) -1 , 1 );
 	}
+
+
+
+	public function crear_opciones_por_arraglo($arreglo = array(), $vacio = false, $text_vacio = 'Seleccione')
+	{	
+		$opciones = '';
+
+		if (!$vacio) {
+			$opciones .= '<option value="">'.$text_vacio.'</option>';
+		}
+
+		foreach ($arreglo as $indice => $valor) {
+			$opciones .= '<option value="'.$indice.'">'.$valor.'</option>';
+		}
+
+		return $opciones;
+	}
 }

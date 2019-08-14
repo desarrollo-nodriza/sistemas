@@ -193,4 +193,22 @@ Router::connect(
 
 
 
+/**
+ * Linio webhook
+ */
+Router::connect(
+    '/api/ventas/linio/:tipo/:marketplace_id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'venta_linio',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('tipo', 'marketplace_id'),
+        'tipo' => 'crear|actualizar',
+        'marketplace_id'   => '[0-9]+' // id del marketplace
+    )
+);
+
+
 Router::parseExtensions('json');

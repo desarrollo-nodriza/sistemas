@@ -8,7 +8,7 @@
 		<? if (!empty($d['VentaDetalleProducto']['imagenes'])) : ?>
 		<img src="<?=Hash::extract($d['VentaDetalleProducto']['imagenes'], '{n}[principal=1].url')[0]; ?>" class="img-responsive producto-td-imagen">
 		<? endif; ?>
-		<?= $this->Text->truncate($d['VentaDetalleProducto']['nombre'], 40); ?>
+		<?= $d['VentaDetalleProducto']['nombre']; ?>
 	</td>
 	<td><?=$d['cantidad'];?></td>
 	<td><?=$d['cantidad_pendiente_entrega'];?></td>

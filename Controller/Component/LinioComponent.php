@@ -241,10 +241,10 @@ class LinioComponent extends Component
 
 		$results = $response->getBody()['Orders'];
 
-		// Productos
-		$productos = $this->linio_obtener_venta_detalles($id);
-
 		if ($todo) {
+
+			// Productos
+			$productos = $this->linio_obtener_venta_detalles($id);
 			
 			if (!isset($productos[0])) {
 				$productosN[0] = $productos;

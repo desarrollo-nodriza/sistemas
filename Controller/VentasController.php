@@ -349,7 +349,16 @@ class VentasController extends AppController {
      */
 	public function admin_index_bodega () {
 
-		//
+
+		$metodo_envios = ClassRegistry::init('MetodoEnvio')->find('list');
+
+		$tiendas = ClassRegistry::init('Tienda')->find('list'); 
+
+		$canales = ClassRegistry::init('Marketplace')->find('list');
+
+		BreadcrumbComponent::add('Ventas', '/ventas/index_bodega');
+
+		$this->set(compact('metodo_envios', 'tiendas', 'canales'));
 
 	}
 
@@ -395,17 +404,17 @@ class VentasController extends AppController {
 	 * @param  integer $offset2 [description]
 	 * @return [type]           [description]
 	 */
-	public function admin_obtener_ventas_preparacion($limit1 = 10, $offset1 = 0, $limit2 = 10, $offset2 = 0)
+	public function admin_obtener_ventas_preparacion($limit1 = 10, $offset1 = 0, $limit2 = 10, $offset2 = 0, $id_venta = null, $id_metodo_envio = null, $id_marketplace = null, $id_tienda = null)
 	{	
 		$estados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0, 'excluir_preparacion' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
 
 		$estados_preparados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
-
-		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', 10, 0, $estados_ids);
-		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids);
-		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', 10, 0, $estados_ids);
+		
+		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', 15, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
+		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
+		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', 15, 0, $estados_ids);
 		$ventas_empaquetando_total = $this->Venta->obtener_ventas_preparar('empaquetando', -1, 0, $estados_ids);
-		$ventas_empaquetado        = $this->Venta->obtener_ventas_preparadas('empaquetado', 10, 0, $estados_preparados_ids);
+		$ventas_empaquetado        = $this->Venta->obtener_ventas_preparadas('empaquetado', 15, 0, $estados_preparados_ids);
 		$ventas_empaquetado_total  = $this->Venta->obtener_ventas_preparadas('empaquetado', -1, 0, $estados_preparados_ids);
 
 		$this->layout = 'ajax';
@@ -422,6 +431,10 @@ class VentasController extends AppController {
 			$this->output     = '';
 			
 			$venta  = $this->Venta->obtener_venta_por_id_tiny($ve['Venta']['id']);
+
+			# si la venta no tiene todos los productos se quita
+			if (array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad')) != array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_reservada')))
+				continue;
 
 			
 			$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
@@ -560,7 +573,7 @@ class VentasController extends AppController {
 			echo json_encode($respuesta);
 			exit;
 		}
-
+		
 		try {
 			$cambiar_estado = $this->cambiarEstado($id, $this->request->data['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id']);
 		} catch (Exception $e) {
@@ -580,7 +593,7 @@ class VentasController extends AppController {
 
 					# Pedido completado
 					$detalles[$idd]['VentaDetalle']['completo']                   = ($detalles[$idd]['VentaDetalle']['cantidad'] == $d['VentaDetalle']['cantidad_reservada']) ? 1 : 0;
-					$detalles[$idd]['VentaDetalle']['fecha_completado']			 = ($detalles[$idd]['VentaDetalle']['completo']) ? date('Y-m-d H:i:s') : '';
+					$detalles[$idd]['VentaDetalle']['fecha_completado']			  = ($detalles[$idd]['VentaDetalle']['completo']) ? date('Y-m-d H:i:s') : '';
 
 					$detalles[$idd]['VentaDetalle']['cantidad_reservada']         = 0;
 					$detalles[$idd]['VentaDetalle']['cantidad_entregada']         = $d['VentaDetalle']['cantidad_reservada'];
@@ -594,6 +607,7 @@ class VentasController extends AppController {
 					ClassRegistry::init('VentaDetalle')->saveMany($detalles);
 				}
 
+				$this->Venta->id = $id;
 				$this->Venta->saveField('picking_fecha_termino', date('Y-m-d H:i:s'));
 				$this->Venta->saveField('picking_estado', $subestado);
 				$this->Venta->saveField('prioritario', 0);
@@ -4707,12 +4721,21 @@ class VentasController extends AppController {
 				$telefonosEnvio .= ' ' . $direccionEnvio['address']['phone'];
 			}
 			
+
+			$comuna = 'No obtenida';
+
+			if (isset($direccionEnvio['address']['id_state'])) {
+				$comuna = $this->Prestashop->prestashop_obtener_comuna_por_id($direccionEnvio['address']['id_state'])['state']['name'];
+			}
+			
+			
+			
 			// Detalles de envio
 			$venta['Envio'][0] = array(
 				'id'                      => $direccionEnvio['address']['id'],
 				'tipo'                    => 'Dir. despacho',
 				'estado'                  => (!$direccionEnvio['address']['deleted']) ? 'activo' : 'eliminada',
-				'direccion_envio'         => @sprintf('%s %s, %s', $direccionEnvio['address']['address1'], implode(',', $direccionEnvio['address']['address2']), $direccionEnvio['address']['city']),
+				'direccion_envio'         => @sprintf('%s %s, %s, %s', $direccionEnvio['address']['address1'], implode(',', $direccionEnvio['address']['address2']), $direccionEnvio['address']['city'], $comuna),
 				'nombre_receptor'         => @sprintf('%s %s', $direccionEnvio['address']['firstname'], $direccionEnvio['address']['lastname']),
 				'fono_receptor'           => $telefonosEnvio,
 				'producto'                => null,
@@ -5078,6 +5101,164 @@ class VentasController extends AppController {
 		}
 	
 		$this->redirect($url_retorno);
+	}
+
+
+	public function admin_crear_venta_linio($marketplace_id, $id_externo)
+	{	
+		# Obtenemos el marketplace
+		$marketplace = ClassRegistry::init('Marketplace')->find('first', array(
+			'conditions' => array(
+				'Marketplace.id' => $marketplace_id,
+				'Marketplace.activo' => 1
+			),
+			'fields' => array(
+				'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key', 'Marketplace.tienda_id', 'Marketplace.fee', 'Marketplace.marketplace_tipo_id'
+			)
+		));
+
+		# No existe
+		if (empty($marketplace)) {
+			return false;
+		}
+
+		# Para la consola se carga el componente on the fly!
+		if ($this->shell) {
+			$this->Linio = $this->Components->load('Linio');
+		}
+
+		#Vemos si existe en la BD
+		$existe = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id_externo'     => $id_externo,
+				'Venta.marketplace_id' => $marketplace_id
+			)
+		));
+
+		if (!empty($existe)) {
+			return true;
+		}
+
+		# Cliente Linio	
+		$this->Linio->crearCliente($marketplace['Marketplace']['api_host'], $marketplace['Marketplace']['api_user'], $marketplace['Marketplace']['api_key']);
+
+		$detalle_venta = $this->Linio->linio_obtener_venta($id_externo, true); 
+
+		# datos de la venta a registrar
+		$NuevaVenta = array();
+		$NuevaVenta['Venta']['tienda_id']      = $marketplace['Marketplace']['tienda_id'];
+		$NuevaVenta['Venta']['marketplace_id'] = $marketplace_id;
+		$NuevaVenta['Venta']['id_externo']     = $id_externo;
+		$NuevaVenta['Venta']['referencia']     = $detalle_venta['OrderNumber'];
+		$NuevaVenta['Venta']['fecha_venta']    = $detalle_venta['CreatedAt'];
+		$NuevaVenta['Venta']['total']          = $detalle_venta['Price'];
+		
+		// Guardar transacción
+		$NuevaTransaccion = array();
+
+		if (!empty($detalle_venta['OrderNumber'])) {
+			$NuevaTransaccion['nombre'] = $detalle_venta['OrderNumber'];
+		}
+
+		$NuevaTransaccion['monto'] = (!empty($detalle_venta['Price'])) ? $detalle_venta['Price'] : 0;
+		$NuevaTransaccion['fee']   = ($NuevaTransaccion['monto'] * ($marketplace['Marketplace']['fee'] / 100));
+
+		$NuevaVenta['VentaTransaccion'][] = $NuevaTransaccion;
+
+
+		$direcciones = array(
+			$detalle_venta['AddressShipping']['Address1'],
+			$detalle_venta['AddressShipping']['Address2'],
+			$detalle_venta['AddressShipping']['Address3'],
+			$detalle_venta['AddressShipping']['Address4'],
+			$detalle_venta['AddressShipping']['Address5']
+		);
+
+
+		// Direccion despacho
+		$NuevaVenta['Venta']['direccion_entrega'] =  implode(', ', $direcciones);
+		$NuevaVenta['Venta']['comuna_entrega']    =  $detalle_venta['AddressShipping']['City'];
+		$NuevaVenta['Venta']['nombre_receptor']   =  $detalle_venta['AddressShipping']['FirstName'] . ' ' . $detalle_venta['AddressShipping']['LastName'];
+		$NuevaVenta['Venta']['fono_receptor']     =  trim($detalle_venta['AddressShipping']['Phone']) . '-' .  trim($detalle_venta['AddressShipping']['Phone2']) ;
+		
+		$totalDespacho = (float) 0;
+
+		$metodo_envio  = '';
+
+		$NuevaVenta['Venta']['costo_envio']      = (float) $totalDespacho;
+		
+		//se obtiene el estado de la venta
+		$NuevaVenta['Venta']['venta_estado_id']  = $this->obtener_estado_id($detalle_venta['Statuses']['Status'], $marketplace['Marketplace']['marketplace_tipo_id']);
+		$NuevaVenta['Venta']['estado_anterior']  = $NuevaVenta['Venta']['venta_estado_id'];
+		
+		//se obtiene el medio de pago
+		$NuevaVenta['Venta']['medio_pago_id']    = $this->obtener_medio_pago_id($detalle_venta['PaymentMethod']);
+
+		//se obtiene el metodo de envio
+		$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id($metodo_envio);
+		
+		//se obtiene el cliente
+		$NuevaVenta['Venta']['venta_cliente_id'] = $this->obtener_cliente_id($detalle_venta);
+
+		$NuevaVenta['Venta']['total'] 			 = (float) 0; // El total se calcula en en base a la sumatoria de items
+
+		# Se marca como prioritaria
+		$NuevaVenta['Venta']['prioritario'] 	= 1;
+
+		//ciclo para recorrer el detalle de la venta
+		foreach ($detalle_venta['Products'] as $DetalleVenta) {
+
+			$DetalleVenta['Sku'] = intval($DetalleVenta['Sku']);
+
+			# Evitamos que se vuelva actualizar el stock en linio
+			$excluirLinio = array('Linio' => array($marketplace_id));
+
+			//se guarda el producto si no existe
+			$idNuevoProducto = $this->linio_guardar_producto($DetalleVenta, $excluirLinio);
+
+			$NuevoDetalle = array();
+			$NuevoDetalle['venta_detalle_producto_id'] = $idNuevoProducto;
+
+			if ( round($DetalleVenta['VoucherAmount']) > 0 ) {
+				$NuevoDetalle['precio']                    = $this->precio_neto(round($DetalleVenta['PaidPrice'] + $DetalleVenta['VoucherAmount'], 2));
+				$NuevoDetalle['precio_bruto']              = round($DetalleVenta['PaidPrice'] + $DetalleVenta['VoucherAmount'], 2);	
+			}else{
+				$NuevoDetalle['precio']                    = $this->precio_neto(round($DetalleVenta['PaidPrice'], 2));
+				$NuevoDetalle['precio_bruto']              = $DetalleVenta['PaidPrice'];
+			}
+			
+			$NuevoDetalle['cantidad_pendiente_entrega'] = 1;
+			$NuevoDetalle['cantidad_reservada']         = 0;
+			$NuevoDetalle['cantidad']         			= 1;
+
+			if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
+				$NuevoDetalle['cantidad_reservada']    = ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, 1);	
+			}
+
+			# OBtenemos el último metodo de envio
+			$metodo_envio = $DetalleVenta['ShipmentProvider'];
+
+			$totalDespacho = $totalDespacho + round($DetalleVenta['ShippingAmount'], 2);
+
+			// Se agrega el valor de la compra sumanod el precio de los productos
+			$NuevaVenta['Venta']['total'] = $NuevaVenta['Venta']['total'] + $NuevoDetalle['precio_bruto'];
+
+			$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
+
+		} //fin ciclo detalle de venta
+
+
+		# si la venta tiene sus productos reservados ésta disponible para ser procesada
+		if (array_sum(Hash::extract($NuevaVenta['VentaDetalle'], '{n}.cantidad_reservada')) == array_sum(Hash::extract($NuevaVenta['VentaDetalle'], '{n}.cantidad'))) {
+			$NuevaVenta['Venta']['picking_estado'] = 'empaquetar';
+		}
+
+		# Falta acá!
+
+		//se guarda la venta
+		$this->Venta->create();
+		$this->Venta->saveAll($NuevaVenta);
+		
 	}
 
 
@@ -5918,7 +6099,7 @@ class VentasController extends AppController {
 			throw new CakeException($response);
 		}
 
-		$venta = $this->Venta->obtener_venta_por_id($id);
+		$venta = $this->preparar_venta($id);
 
 		$productosConfirmados = $this->request->data['Detail'];
 
@@ -5997,6 +6178,72 @@ class VentasController extends AppController {
 			'tr' => $html_tr,
 			'_serialize' => array('response', 'tr')
         ));
+		
+	}
+
+
+
+	public function api_venta_linio($tipo = 'crear', $marketplace_id)
+	{	
+
+		if (!ClassRegistry::init('Marketplace')->exists($marketplace_id)) {
+			echo json_encode(array(
+				'code' => 404,
+				'created' => false,
+				'message' => 'Marketplace no encontrado'
+			));
+
+			exit;
+		}
+
+
+		$respuesta = array(
+			'code' => 500,
+			'created' => false,
+			'message' => 'Error inexplicable'
+		);
+
+		#{"event":"onOrderCreated","payload":{"OrderId":1833030}}
+
+		$log = array();
+
+		if ($tipo == 'crear') {
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Linio Webhook Crear',
+					'modulo' => 'Ventas',
+					'modulo_accion' => json_encode($this->request->data)
+				)
+			);
+
+			$accion = $this->admin_crear_venta_linio($marketplace_id, $this->request->data['payload']['OrderId']);
+
+			if ($accion) {
+				
+				$respuesta['code'] = 200;
+				$respuesta['created'] = true;
+				$respuesta['message'] = 'Venta #'.$this->request->data['payload']['OrderId'].' creada con éxito';
+
+			}
+
+		}
+
+		if ($tipo == 'actualizar') {
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Linio Webhook Actualizar',
+					'modulo' => 'Ventas',
+					'modulo_accion' => json_encode($this->request->data)
+				)
+			);	
+		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
+
+		echo json_encode($respuesta);
+		exit;
 		
 	}
 

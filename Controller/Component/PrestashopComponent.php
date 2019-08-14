@@ -77,7 +77,7 @@ class PrestashopComponent extends Component
 	{
 		$opt = array();
 		$opt['resource'] = 'addresses';
-		$opt['display'] = '[id,firstname,lastname,address1,address2,city,other,phone,phone_mobile,deleted]';
+		$opt['display'] = '[id,firstname,lastname,address1,address2,city,other,phone,phone_mobile,deleted,id_state]';
 		$opt['filter[id]'] = '[' .$id. ']';
 		$xml = $this->ConexionPrestashop->get($opt);
 
@@ -86,6 +86,23 @@ class PrestashopComponent extends Component
 		$Address = to_array($PrestashopResources);
 
 		return $Address;
+	}
+
+
+
+	public function prestashop_obtener_comuna_por_id($id)
+	{	
+		$opt = array();
+		$opt['resource'] = 'states';
+		$opt['display'] = '[id,name]';
+		$opt['filter[id]'] = '[' .$id. ']';
+		$xml = $this->ConexionPrestashop->get($opt);
+
+		$PrestashopResources = $xml->children()->children();
+
+		$commune = to_array($PrestashopResources);
+
+		return $commune;
 	}
 
 
