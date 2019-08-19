@@ -216,7 +216,7 @@ class VentasController extends AppController {
 			$permisos = $e;
 		}
 
-		if (isset($permisos['storage'])) {
+		/*if (isset($permisos['storage'])) {
 
 			if ($permisos['storage']) {
 
@@ -232,7 +232,7 @@ class VentasController extends AppController {
 
 				#$condiciones["Venta.subestado_oc !="] = 'entregado';	
 			}
-		}
+		}*/
 
 
 		$paginate = array(
@@ -1382,6 +1382,9 @@ class VentasController extends AppController {
 			$redirectURI = Router::url( array('controller' => $this->request->controller, 'action' => 'index'), true );	
 		}else{
 			$redirectURI = Router::url( $redirect, true );
+
+			# Para la consola se carga el componente on the fly!
+			$this->MeliMarketplace = $this->Components->load('MeliMarketplace');
 		}
 
 		$siteId      = 'MLC';
@@ -5104,6 +5107,12 @@ class VentasController extends AppController {
 	}
 
 
+	/**
+	 * [admin_crear_venta_linio description]
+	 * @param  [type] $marketplace_id [description]
+	 * @param  [type] $id_externo     [description]
+	 * @return [type]                 [description]
+	 */
 	public function admin_crear_venta_linio($marketplace_id, $id_externo)
 	{	
 		# Obtenemos el marketplace
@@ -5152,20 +5161,8 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['referencia']     = $detalle_venta['OrderNumber'];
 		$NuevaVenta['Venta']['fecha_venta']    = $detalle_venta['CreatedAt'];
 		$NuevaVenta['Venta']['total']          = $detalle_venta['Price'];
-		
-		// Guardar transacción
-		$NuevaTransaccion = array();
 
-		if (!empty($detalle_venta['OrderNumber'])) {
-			$NuevaTransaccion['nombre'] = $detalle_venta['OrderNumber'];
-		}
-
-		$NuevaTransaccion['monto'] = (!empty($detalle_venta['Price'])) ? $detalle_venta['Price'] : 0;
-		$NuevaTransaccion['fee']   = ($NuevaTransaccion['monto'] * ($marketplace['Marketplace']['fee'] / 100));
-
-		$NuevaVenta['VentaTransaccion'][] = $NuevaTransaccion;
-
-
+		# Dirección cliente
 		$direcciones = array(
 			$detalle_venta['AddressShipping']['Address1'],
 			$detalle_venta['AddressShipping']['Address2'],
@@ -5189,7 +5186,7 @@ class VentasController extends AppController {
 		
 		//se obtiene el estado de la venta
 		$NuevaVenta['Venta']['venta_estado_id']  = $this->obtener_estado_id($detalle_venta['Statuses']['Status'], $marketplace['Marketplace']['marketplace_tipo_id']);
-		$NuevaVenta['Venta']['estado_anterior']  = $NuevaVenta['Venta']['venta_estado_id'];
+		$NuevaVenta['Venta']['estado_anterior']  = 1;
 		
 		//se obtiene el medio de pago
 		$NuevaVenta['Venta']['medio_pago_id']    = $this->obtener_medio_pago_id($detalle_venta['PaymentMethod']);
@@ -5204,6 +5201,9 @@ class VentasController extends AppController {
 
 		# Se marca como prioritaria
 		$NuevaVenta['Venta']['prioritario'] 	= 1;
+
+		# Guardar n° de seguimiento
+		$NuevaVenta['Transporte'] = array();
 
 		//ciclo para recorrer el detalle de la venta
 		foreach ($detalle_venta['Products'] as $DetalleVenta) {
@@ -5231,35 +5231,365 @@ class VentasController extends AppController {
 			$NuevoDetalle['cantidad_reservada']         = 0;
 			$NuevoDetalle['cantidad']         			= 1;
 
-			if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
-				$NuevoDetalle['cantidad_reservada']    = ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, 1);	
-			}
-
 			# OBtenemos el último metodo de envio
 			$metodo_envio = $DetalleVenta['ShipmentProvider'];
 
 			$totalDespacho = $totalDespacho + round($DetalleVenta['ShippingAmount'], 2);
 
-			// Se agrega el valor de la compra sumanod el precio de los productos
+			// Se agrega el valor de la compra sumando el precio de los productos
 			$NuevaVenta['Venta']['total'] = $NuevaVenta['Venta']['total'] + $NuevoDetalle['precio_bruto'];
 
 			$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 
+			# agregamos los n° de seguimiento
+			if (!empty($DetalleVenta['ShipmentProvider']) && !empty($DetalleVenta['TrackingCode'])) {
+				$seguimiento =  array(
+					'transporte_id' => ClassRegistry::init('Transporte')->obtener_transporte_por_nombre($DetalleVenta['ShipmentProvider']),
+					'cod_seguimiento' => $DetalleVenta['TrackingCode']
+				);
+
+				$NuevaVenta['Transporte'][] = $seguimiento;
+			}
+
 		} //fin ciclo detalle de venta
 
 
-		# si la venta tiene sus productos reservados ésta disponible para ser procesada
-		if (array_sum(Hash::extract($NuevaVenta['VentaDetalle'], '{n}.cantidad_reservada')) == array_sum(Hash::extract($NuevaVenta['VentaDetalle'], '{n}.cantidad'))) {
-			$NuevaVenta['Venta']['picking_estado'] = 'empaquetar';
+		// Guardar transacción
+		$NuevaTransaccion = array();
+
+		if (!empty($detalle_venta['OrderNumber'])) {
+			$NuevaTransaccion['nombre'] = $detalle_venta['OrderNumber'];
 		}
 
-		# Falta acá!
+		$NuevaTransaccion['monto'] = (!empty($NuevaVenta['Venta']['total'])) ? $NuevaVenta['Venta']['total'] : 0;
+		$NuevaTransaccion['fee']   = ($NuevaTransaccion['monto'] * ($marketplace['Marketplace']['fee'] / 100));
+
+		$NuevaVenta['VentaTransaccion'][] = $NuevaTransaccion;
 
 		//se guarda la venta
 		$this->Venta->create();
-		$this->Venta->saveAll($NuevaVenta);
+		if ($this->Venta->saveAll($NuevaVenta) ) {
+
+			# si es un estado pagado se reserva el stock disponible
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
+				$this->Venta->pagar_venta($this->Venta->id);
+			}
+
+			return true;
+
+		}else{
+			return false;
+		}
 		
 	}
+
+
+	/**
+	 * [admin_actualizar_venta_meli description]
+	 * @param  [type] $marketplace_id [description]
+	 * @param  [type] $id_externo     [description]
+	 * @return [type]                 [description]
+	 */
+	public function admin_actualizar_venta_meli($marketplace_id, $id_externo)
+	{
+		# Obtenemos el marketplace
+		$marketplace = ClassRegistry::init('Marketplace')->find('first', array(
+			'conditions' => array(
+				'Marketplace.id' => $marketplace_id,
+				'Marketplace.activo' => 1
+			),
+			'fields' => array(
+				'Marketplace.id', 'Marketplace.nombre', 'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key', 'Marketplace.tienda_id', 'Marketplace.fee', 'Marketplace.marketplace_tipo_id', 'Marketplace.access_token', 'Marketplace.refresh_token', 'Marketplace.expires_token'
+			)
+		));
+
+
+		//datos de la venta a registrar
+		$NuevaVenta = array();
+
+		# No existe
+		if (empty($marketplace)) {
+			return false;
+		}
+
+		#Vemos si existe en la BD
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id_externo'     => $id_externo,
+				'Venta.marketplace_id' => $marketplace_id
+			),
+			'fields' => array(
+				'Venta.id'
+			),
+			'contain' => array(
+				'VentaTransaccion'
+			)
+		));
+
+		# componente on the fly!
+		$this->MeliMarketplace = $this->Components->load('MeliMarketplace');
+
+		# cliente y conexion Meli
+		$this->MeliMarketplace->crearCliente( $marketplace['Marketplace']['api_user'], $marketplace['Marketplace']['api_key'], $marketplace['Marketplace']['access_token'], $marketplace['Marketplace']['refresh_token'] );
+
+		$this->MeliMarketplace->mercadolibre_conectar('', $marketplace['Marketplace']);
+
+		$ventaMeli = $this->MeliMarketplace->mercadolibre_obtener_venta($marketplace['Marketplace']['access_token'], $id_externo);
+
+		if (empty($ventaMeli)) {
+			return false;
+		}
+		
+		$NuevaVenta['Venta']['id'] = $venta['Venta']['id'];
+
+		//se obtiene el estado de la venta
+		$NuevaVenta['Venta']['venta_estado_id'] = $this->obtener_estado_id($ventaMeli['status'], $marketplace['Marketplace']['marketplace_tipo_id']);
+		$NuevaVenta['Venta']['estado_anterior'] = $NuevaVenta['Venta']['venta_estado_id'];
+
+		# Mercado libre puede tener más de 1 pago
+		foreach ($ventaMeli['payments'] as $ventaTransaccion) {
+
+			$NuevaTransaccion = array();
+
+			if (!empty($ventaTransaccion['id'])) {
+				$NuevaTransaccion['nombre'] = $ventaTransaccion['id'];
+
+				if (Hash::check($venta, 'VentaTransaccion.{n}[nombre='.$ventaTransaccion['id'].'].id')) {
+					continue;
+				}
+			}
+
+			$NuevaTransaccion['monto'] = (!empty($ventaTransaccion['total_paid_amount'])) ? $ventaTransaccion['total_paid_amount'] : 0;
+			$NuevaTransaccion['fee'] = (!empty($ventaTransaccion['marketplace_fee'])) ? $ventaTransaccion['marketplace_fee'] : 0;
+			$NuevaTransaccion['estado'] = (!empty($ventaTransaccion['status'])) ? $ventaTransaccion['status'] : '';
+
+			$NuevaVenta['VentaTransaccion'][] = $NuevaTransaccion;
+		}
+
+
+		// Se guarda la venta
+		if($this->Venta->saveAll($NuevaVenta)){
+
+			# si es un estado pagado se reserva el stock disponible
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) ) {
+				$this->Venta->pagar_venta($venta['Venta']['id']);
+			}
+
+			# si es un estado rechazo se devuelve el stock disponible
+			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($NuevaVenta['Venta']['venta_estado_id']) ) {
+				$this->Venta->revertir_venta($venta['Venta']['id']);
+			}
+
+			return true;
+
+		}else{
+			return false;
+		}
+	}
+
+
+	/**
+	 * [admin_crear_venta_meli description]
+	 * @param  [type] $marketplace_id [description]
+	 * @param  [type] $id_externo     [description]
+	 * @return [type]                 [description]
+	 */
+	public function admin_crear_venta_meli($marketplace_id, $id_externo)
+	{
+		# Obtenemos el marketplace
+		$marketplace = ClassRegistry::init('Marketplace')->find('first', array(
+			'conditions' => array(
+				'Marketplace.id' => $marketplace_id,
+				'Marketplace.activo' => 1
+			),
+			'fields' => array(
+				'Marketplace.id', 'Marketplace.nombre', 'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key', 'Marketplace.tienda_id', 'Marketplace.fee', 'Marketplace.marketplace_tipo_id', 'Marketplace.access_token', 'Marketplace.refresh_token', 'Marketplace.expires_token'
+			)
+		));
+
+
+		//datos de la venta a registrar
+		$NuevaVenta = array();
+
+		# No existe
+		if (empty($marketplace)) {
+			return false;
+		}
+
+		#Vemos si existe en la BD
+		$existe = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id_externo'     => $id_externo,
+				'Venta.marketplace_id' => $marketplace_id
+			),
+			'fields' => array(
+				'Venta.id'
+			)
+		));
+
+		if (!empty($existe)) {
+
+			return $this->admin_actualizar_venta_meli($marketplace_id, $id_externo);
+
+		}
+
+		# componente on the fly!
+		$this->MeliMarketplace = $this->Components->load('MeliMarketplace');
+
+		# cliente y conexion Meli
+		$this->MeliMarketplace->crearCliente( $marketplace['Marketplace']['api_user'], $marketplace['Marketplace']['api_key'], $marketplace['Marketplace']['access_token'], $marketplace['Marketplace']['refresh_token'] );
+
+		$this->MeliMarketplace->mercadolibre_conectar('', $marketplace['Marketplace']);
+
+		$ventaMeli = $this->MeliMarketplace->mercadolibre_obtener_venta($marketplace['Marketplace']['access_token'], $id_externo);
+
+		if (empty($ventaMeli)) {
+			return false;
+		}
+		
+		# Info de la nueva venta 
+		$NuevaVenta['Venta']['tienda_id']      = $marketplace['Marketplace']['tienda_id'];
+		$NuevaVenta['Venta']['marketplace_id'] = $marketplace_id;
+		$NuevaVenta['Venta']['id_externo']     = $ventaMeli['id'];
+		$NuevaVenta['Venta']['referencia']     = $ventaMeli['id'];
+
+		
+		$NuevaVenta['Venta']['fecha_venta']    = CakeTime::format($ventaMeli['date_created'], '%Y-%m-%d %H:%M:%S');
+		$NuevaVenta['Venta']['total']          = round($ventaMeli['total_amount'], 2);
+
+		//se obtiene el estado de la venta
+		$NuevaVenta['Venta']['venta_estado_id'] = $this->obtener_estado_id($ventaMeli['status'], $marketplace['Marketplace']['marketplace_tipo_id']);
+		$NuevaVenta['Venta']['estado_anterior'] = 1;
+
+		# Se marca como prioritaria
+		$NuevaVenta['Venta']['prioritario'] 	= 1;
+
+		# costo envio
+		if (isset($ventaMeli['shipping']['cost'])) {
+			$NuevaVenta['Venta']['costo_envio'] = $ventaMeli['shipping']['cost'];
+			$NuevaVenta['Venta']['total']       = round($ventaMeli['total_amount'] + $ventaMeli['shipping']['cost'], 2);
+		}
+		
+		
+		// Detalles de envio
+		$direccion_entrega = 'No aplica';
+		$comuna_entrega  = 'No aplica';
+		$nombre_receptor = 'No aplica';
+		$fono_receptor   = 'No aplica';
+
+		if (isset($ventaMeli['shipping']['receiver_address']['address_line'])
+			&& isset($ventaMeli['shipping']['receiver_address']['city']['name'])) {
+			$direccion_entrega = $ventaMeli['shipping']['receiver_address']['address_line'] . ', ' . $ventaMeli['shipping']['receiver_address']['city']['name'];
+		}
+
+		if (isset($ventaMeli['shipping']['receiver_address']['city']['name'])) {
+			$comuna_entrega = $ventaMeli['shipping']['receiver_address']['city']['name'];
+		}
+
+		if (isset($ventaMeli['shipping']['receiver_address']['receiver_name'])) {
+			$nombre_receptor = $ventaMeli['shipping']['receiver_address']['receiver_name'];
+		}
+
+		if (isset($ventaMeli['shipping']['receiver_address']['receiver_phone'])) {
+			$fono_receptor = $ventaMeli['shipping']['receiver_address']['receiver_phone'];
+		}
+
+		// Direccion despacho
+		$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
+		$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
+		$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
+		$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
+		
+		//se obtiene el medio de pago
+		$NuevaVenta['Venta']['medio_pago_id']     = $this->obtener_medio_pago_id('Meli gateway'); # Metodo de pago generico para ventas a través de mercadolibre
+
+		# Mercado libre puede tener más de 1 pago
+		foreach ($ventaMeli['payments'] as $ventaTransaccion) {
+
+			$NuevaTransaccion = array();
+
+			if (!empty($ventaTransaccion['id'])) {
+				$NuevaTransaccion['nombre'] = $ventaTransaccion['id'];
+			}
+
+			$NuevaTransaccion['monto'] = (!empty($ventaTransaccion['total_paid_amount'])) ? $ventaTransaccion['total_paid_amount'] : 0;
+			$NuevaTransaccion['fee'] = (!empty($ventaTransaccion['marketplace_fee'])) ? $ventaTransaccion['marketplace_fee'] : 0;
+			$NuevaTransaccion['estado'] = (!empty($ventaTransaccion['status'])) ? $ventaTransaccion['status'] : '';
+
+			$NuevaVenta['VentaTransaccion'][] = $NuevaTransaccion;
+		}
+
+		# se obtiene el metodo de envio
+		if (isset($ventaMeli['shipping']['shipping_option']['name'])) {
+			$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id($ventaMeli['shipping']['shipping_option']['name']);	
+		}else{
+			$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id('A coordinar con comprador');	
+		}
+
+		# se obtiene el cliente
+		$NuevaVenta['Venta']['venta_cliente_id'] = $this->MeliMarketplace->mercadolibre_obtener_cliente($ventaMeli);
+		
+		# Obtener mensajes de la venta
+		$mensajes = $this->MeliMarketplace->mercadolibre_obtener_mensajes($marketplace['Marketplace']['access_token'], $ventaMeli['id']);
+
+		foreach ($mensajes as $im => $mensaje) {
+
+			$NuevaVenta['VentaMensaje'][$im]['nombre']   = (empty($mensaje['subject'])) ? 'Sin asunto' : $mensaje['subject'] ;
+			$NuevaVenta['VentaMensaje'][$im]['fecha']    = CakeTime::format($mensaje['date'], '%Y-%m-%d %H:%M:%S');
+			$NuevaVenta['VentaMensaje'][$im]['emisor']   = $mensaje['from']['user_id'];
+			$NuevaVenta['VentaMensaje'][$im]['mensaje']  = $this->removeEmoji($mensaje['text']['plain']);
+
+		}
+
+		//ciclo para recorrer el detalle de la venta
+		foreach ($ventaMeli['order_items'] as $DetalleVenta) {
+			if (!empty($DetalleVenta['item']['seller_custom_field']) ) {
+				
+				$DetalleVenta['Sku']  = intval($DetalleVenta['item']['seller_custom_field']);
+				$DetalleVenta['Name'] = $DetalleVenta['item']['title'];
+
+				if ($DetalleVenta['Sku'] == 0) {
+					$DetalleVenta['Sku'] = $DetalleVenta['item']['seller_sku'];
+				}
+
+				if ($DetalleVenta['Sku'] == 0) {
+					continue;
+				}
+
+				# Evitamos que se vuelva actualizar el stock en meli
+				$excluirMeli = array('Mercadolibre' => array($marketplace_id));
+
+				//se guarda el producto si no existe
+				$idNuevoProducto = $this->linio_guardar_producto($DetalleVenta, $excluirMeli);
+
+				$NuevoDetalle                               = array();
+				$NuevoDetalle['venta_detalle_producto_id']  = $idNuevoProducto;
+				$NuevoDetalle['precio']                     = $this->precio_neto(round($DetalleVenta['unit_price'], 2));
+				$NuevoDetalle['precio_bruto']               = round($DetalleVenta['unit_price'], 2);				
+
+				$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
+				
+			} // fin no empty
+		
+		} //fin ciclo detalle de venta
+
+		//se guarda la venta
+		$this->Venta->create();
+		
+		if ( $this->Venta->saveAll($NuevaVenta) ) {
+
+			# si es un estado pagado se reserva el stock disponible
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
+				$this->Venta->pagar_venta($this->Venta->id);
+			}
+
+			return true;
+
+		}else{
+			return false;
+		}
+	}
+
 
 
 	/**
@@ -6183,6 +6513,15 @@ class VentasController extends AppController {
 
 
 
+	/**
+	 * Usado por el webhook configurado en Linio
+	 * Ej actualizar: https://sistemasdev.nodriza.cl/api/ventas/linio/actualizar/1
+	 * Ej crear: https://sistemasdev.nodriza.cl/api/ventas/linio/crear/1
+	 * Ref: https://sellerapi.sellercenter.net/docs/entities-payload-definition
+	 * @param  string $tipo           crear o actualizar
+	 * @param  [type] $marketplace_id ID del marketplace
+	 * @return
+	 */
 	public function api_venta_linio($tipo = 'crear', $marketplace_id)
 	{	
 
@@ -6223,20 +6562,72 @@ class VentasController extends AppController {
 				
 				$respuesta['code'] = 200;
 				$respuesta['created'] = true;
-				$respuesta['message'] = 'Venta #'.$this->request->data['payload']['OrderId'].' creada con éxito';
+				$respuesta['message'] = 'Venta #'. $this->request->data['payload']['OrderId'].' creada con éxito';
 
 			}
 
 		}
 
 		if ($tipo == 'actualizar') {
+
+			# {"event":"onOrderItemsStatusChanged","payload":{"OrderId":1824977,"OrderItemIds":["1701255"],"NewStatus":"ready_to_ship"}}
+
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Linio Webhook Actualizar',
 					'modulo' => 'Ventas',
 					'modulo_accion' => json_encode($this->request->data)
 				)
-			);	
+			);
+
+			$venta = $this->Venta->find('first', array(
+				'conditions' => array(
+					'Venta.id_externo' => $this->request->data['payload']['OrderId']
+				),
+				'fields' => array(
+					'Venta.id', 'Venta.id_externo', 'Venta.venta_estado_id', 'Venta.estado_anterior', 'Venta.venta_estado_responsable'
+				)
+			));
+
+
+			if (empty($venta)) {
+				
+				$accion = $this->admin_crear_venta_linio($marketplace_id, $this->request->data['payload']['OrderId']);
+
+				if ($accion) {
+					
+					$respuesta['code'] = 200;
+					$respuesta['created'] = true;
+					$respuesta['message'] = 'Venta #'. $this->request->data['payload']['OrderId'].' creada con éxito';
+
+				}
+
+			}else{
+
+				$nw_estado_id = $this->obtener_estado_id($this->request->data['payload']['NewStatus'], $venta['Marketplace']['marketplace_tipo_id']);
+
+				$venta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
+				$venta['Venta']['venta_estado_id']          = $nw_estado_id;
+				$venta['Venta']['venta_estado_responsable'] = 'Linio Webhook';
+
+				if ($this->Venta->save($venta)) {
+
+					# si es un estado pagado se reserva el stock disponible
+					if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($nw_estado_id) ) {
+						$this->Venta->pagar_venta($venta['Venta']['id']);
+					}
+
+					# si es un estado rechazo se devuelve el stock disponible
+					if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($nw_estado_id) ) {
+						$this->Venta->revertir_venta($venta['Venta']['id']);
+					}
+
+					$respuesta['code'] = 200;
+					$respuesta['created'] = true;
+					$respuesta['message'] = 'Venta #'. $this->request->data['payload']['OrderId'].' actualizada con éxito';
+				}
+			}
+
 		}
 
 		ClassRegistry::init('Log')->create();
@@ -6247,4 +6638,55 @@ class VentasController extends AppController {
 		
 	}
 
+
+	public function api_venta_meli($tipo = 'crear', $marketplace_id)
+	{	
+		if (!ClassRegistry::init('Marketplace')->exists($marketplace_id)) {
+			echo json_encode(array(
+				'code' => 404,
+				'created' => false,
+				'message' => 'Marketplace no encontrado'
+			));
+
+			exit;
+		}
+
+		$respuesta = array(
+			'code' => 500,
+			'created' => false,
+			'message' => 'Error inexplicable'
+		);
+
+		$log = array();
+
+		if ($tipo == 'crear') {
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Meli Notification Crear',
+					'modulo' => 'Ventas',
+					'modulo_accion' => json_encode($this->request->data)
+				)
+			);
+
+			$id_venta = str_replace('/orders/', '', $this->request->data['resource']);
+
+			$accion = $this->admin_crear_venta_meli($marketplace_id, $id_venta);
+
+			if ($accion) {
+				
+				$respuesta['code'] = 200;
+				$respuesta['created'] = true;
+				$respuesta['message'] = 'Venta #'. $id_venta . ' creada/actualizada con éxito';
+
+			}
+
+		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
+
+		echo json_encode($respuesta);
+		exit;
+	}
 }

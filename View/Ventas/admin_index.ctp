@@ -280,58 +280,45 @@
 											&nbsp;
 										</td>
 
-										<td><label class="label label-form label-primary"><?= count(Hash::extract($venta['Dte'], '{n}[estado=dte_real_emitido].id')); ?></label></td>
-
-										<!--<td><?= ($venta['Venta']['atendida'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>-->
-										<!--<td><?= ($venta['VentaEstado']['permitir_dte'] ? '<i class="fa fa-check text-success"></i>' : '<i class="fa fa-remove text-danger"></i>'); ?>&nbsp;</td>-->
-										<!--<td><?= ($venta['Venta']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>-->
+										<td>
+											<label class="label label-form label-primary"><?= count(Hash::extract($venta['Dte'], '{n}[estado=dte_real_emitido].id')); ?></label>
+										</td>
 
 										<td> 
 											
+											<?= $this->Html->link('<i class="fa fa-eye"></i> Ver Detalles', array('action' => 'view', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-info btn-block', 'rel' => 'tooltip', 'title' => 'Ver detalles de este registro', 'escape' => false, 'target' => '_blank')); ?>
+											
+											<? if ($permisos['storage'] && $venta['VentaEstado']['permitir_retiro_oc']) : ?>
+											
+											<?= $this->Html->link('<i class="fa fa-ban"></i> Procesar', array('action' => 'procesar_ventas', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-warning btn-block', 'rel' => 'tooltip', 'title' => 'Procesar este registro', 'escape' => false)); ?>
 
-												<?= $this->Html->link('<i class="fa fa-eye"></i> Ver Detalles', array('action' => 'view', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-info btn-block', 'rel' => 'tooltip', 'title' => 'Ver detalles de este registro', 'escape' => false, 'target' => '_blank')); ?>
-												
-												<? if ($permisos['storage'] && $venta['VentaEstado']['permitir_retiro_oc']) : ?>
-												
-												<?= $this->Html->link('<i class="fa fa-ban"></i> Procesar', array('action' => 'procesar_ventas', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-warning btn-block', 'rel' => 'tooltip', 'title' => 'Procesar este registro', 'escape' => false)); ?>
+											<? endif; ?>
 
-												<? endif; ?>
+											<? if (!empty($venta['VentaEstado']) && $venta['VentaEstado']['notificacion_cliente']) : ?>
 
-												<? if (!empty($venta['VentaEstado']) && $venta['VentaEstado']['notificacion_cliente']) : ?>
+											<?=$this->Html->link('<i class="fa fa-send"></i> Re-enviar email', array('controller' => 'ventas', 'action' => 'enviar_email_estado', $venta['Venta']['id']), array('class' => 'btn btn-success btn-xs btn-block', 'escape' => false) );?>
 
-												<?=$this->Html->link('<i class="fa fa-send"></i> Re-enviar email', array('controller' => 'ventas', 'action' => 'enviar_email_estado', $venta['Venta']['id']), array('class' => 'btn btn-success btn-xs btn-block', 'escape' => false) );?>
+											<? endif; ?>
 
-												<? endif; ?>
+											<? if (!$venta['Venta']['prioritario'] && $permisos['edit']) : ?>
+											<?= $this->Form->postLink('<i class="fa fa-check"></i> Marcar como prioritaria', array('action' => 'marcar_prioritaria', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-primary btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
+											<? elseif ($permisos['edit']) : ?>
 
-												<? if (!$venta['Venta']['prioritario']) : ?>
-												<?= $this->Form->postLink('<i class="fa fa-check"></i> Marcar como prioritaria', array('action' => 'marcar_prioritaria', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-primary btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
-												<? else : ?>
-
-													<div class="prioritario-btn" data-toggle="tooltip" data-placement="top" title="" data-original-title="Prioritario">
-														<i class="fa fa-exclamation" aria-hidden="true"></i>
-													</div>
+												<div class="prioritario-btn" data-toggle="tooltip" data-placement="top" title="" data-original-title="Prioritario">
+													<i class="fa fa-exclamation" aria-hidden="true"></i>
+												</div>
 
 												<?= $this->Form->postLink('<i class="fa fa-remove"></i> Marcar no prioritaria', array('action' => 'marcar_no_prioritaria', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-default btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
-												<? endif; ?>
-												<?php
-													
-													if ($venta['Venta']['atendida']) {
-														echo $this->Form->postLink('<i class="fa fa-remove"></i> Marcar como No Atendida', array('action' => 'marcar_no_atendida', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-danger btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Marcar Venta como No Atendida', 'escape' => false));
-													}
-													else {
-														#echo $this->Form->postLink('<i class="fa fa-check"></i> Marcar como Atendida', array('action' => 'marcar_atendida', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-success btn-block', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Atendida', 'escape' => false));
-													}
-												?>
-
-												<?php
-													/*if ($venta['Venta']['activo']) {
-														echo $this->Form->postLink('<i class="fa fa-remove"></i> Desactivar', array('action' => 'desactivar', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-danger confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Desactivar este registro', 'escape' => false));
-													}
-													else {
-														echo $this->Form->postLink('<i class="fa fa-check"></i> Activar', array('action' => 'activar', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-success confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Activar este registro', 'escape' => false));
-													}*/
-												?>
-											
+											<? endif; ?>
+											<?php
+												
+												if ($venta['Venta']['atendida']) {
+													echo $this->Form->postLink('<i class="fa fa-remove"></i> Marcar como No Atendida', array('action' => 'marcar_no_atendida', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-danger btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Marcar Venta como No Atendida', 'escape' => false));
+												}
+												else {
+													#echo $this->Form->postLink('<i class="fa fa-check"></i> Marcar como Atendida', array('action' => 'marcar_atendida', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-success btn-block', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Atendida', 'escape' => false));
+												}
+											?>											
 
 										</td>
 

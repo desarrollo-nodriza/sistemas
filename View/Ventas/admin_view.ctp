@@ -153,7 +153,7 @@
 									</div>
 								</div>
 								
-								<? if ($venta['Venta']['picking_estado'] != 'empaquetado') : ?>
+								<? if ($venta['Venta']['picking_estado'] != 'empaquetado' && $permisos['storage']) : ?>
 								<div class="panel-body">
 									<?=$this->Html->link('<i class="fa fa-hand-paper-o"></i> Reservar stock manualmente', array('action' => 'reservar_stock_venta', $venta['Venta']['id']), array('class' => 'btn btn-primary pull-right', 'escape' => false))?>
 								</div>
@@ -201,7 +201,7 @@
 															<?= CakeNumber::currency($detalle['precio'] * $detalle['cantidad'], 'CLP'); ?>
 														</td>
 														<td>
-														<? if ($venta['Venta']['picking_estado'] != 'empaquetado') : ?>
+														<? if ($venta['Venta']['picking_estado'] != 'empaquetado' && $permisos['storage']) : ?>
 															<?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('action' => 'liberar_stock_reservado', $venta['Venta']['id'], $detalle['id'], $detalle['cantidad_reservada']), array('class' => 'btn btn-warning btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?>
 														<? endif; ?>
 														</td>
@@ -242,6 +242,7 @@
 							</div>	
 							
 							<!-- TRANSPORTISTAS -->
+							<? if ($permisos['storage'] || $permisos['edit']) : ?>
 							<?= $this->Form->create('Venta', array('url' => array('action' => 'registrar_seguimiento'), 'class' => 'form-horizontal js-validate-producto', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 							<div class="panel panel-info">
 								<div class="panel-heading">
@@ -296,6 +297,7 @@
 								</div>
 							</div>
 							<?= $this->Form->end(); ?>
+							<? endif; ?>
 							<!-- / TRANSPORTISTA -->
 
 

@@ -112,7 +112,8 @@ class OrdenCompraPago extends AppModel
 			        'alias' => 'OrdenCompraFactura',
 			        'type' => 'INNER',
 			        'conditions' => array(
-			            'OrdenCompraFactura.orden_compra_id = OrdenCompra.id'
+			            'OrdenCompraFactura.orden_compra_id = OrdenCompra.id',
+			            'OrdenCompraFactura.tipo_documento = 33'
 			        )
 			    )
 			),

@@ -129,4 +129,45 @@ class Transporte extends AppModel
 			'insertQuery'			=> ''
 		)
 	);
+
+
+	public function obtener_transporte_por_nombre($nombre = '', $solo_id = true, $opt = array())
+	{
+		$transporte = $this->find('first', array(
+			'conditions' => array(
+				'Transporte.nombre' => trim($nombre)
+			)
+		));
+
+		if (empty($transporte)) {
+			# Lo creamos
+			
+			$nw_transporte = array(
+				'Transporte' => array(
+					'nombre' => $nombre
+				)
+			);
+
+			if (!empty($opt)) {
+				$nw_transporte = array_replace_recursive($nw_transporte, $opt);
+			}
+
+			$this->create();
+			$this->save($nw_transporte);				
+
+			if ($solo_id) {
+				return $this->id;
+			}
+
+			$transporte = $this->find('first', array(
+				'conditions' => array(
+					'Transporte.id' => $this->id
+				)
+			));
+
+		}
+
+		return ($solo_id) ? $transporte['Transporte']['id'] : $transporte;
+		
+	}
 }

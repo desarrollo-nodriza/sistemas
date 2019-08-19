@@ -855,6 +855,7 @@ class VentaDetalleProductosController extends AppController
 
 		$this->request->data['VentaDetalleProducto']['cantidad_real_fisica']      = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($id, true);
 		$this->request->data['VentaDetalleProducto']['cantidad_real']    = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($id);
+		$this->request->data['VentaDetalleProducto']['cantidad_reservada']    = $this->VentaDetalleProducto->obtener_cantidad_reservada($id);
 
 		# PMP
 		$this->request->data['VentaDetalleProducto']['pmp_global'] = ClassRegistry::init('Bodega')->obtener_pmp_por_id($id);

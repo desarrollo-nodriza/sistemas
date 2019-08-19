@@ -9,13 +9,14 @@ class OrdenCompra extends AppModel
 
 
 	public $estados = array(
-		''           => 'No rocesada',
-		'iniciado'   => 'En revisión',
-		'validado'   => 'En proceso de pago',
-		'pagado'     => 'Pagado',
-		'enviado'    => 'Enviado',
-		'incompleto' => 'Recibido incompleto',
-		'recibido'   => 'Finalizado'
+		''                  => 'No rocesada',
+		'iniciado'          => 'En revisión',
+		'validado'          => 'En proceso de pago',
+		'pagado'            => 'Pagado',
+		'enviado'           => 'Enviado',
+		'incompleto'        => 'Recibido incompleto',
+		'pendiente_factura' => 'Factura pendiente',
+		'recibido'          => 'Finalizado'
 	);
 
 

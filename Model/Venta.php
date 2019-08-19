@@ -648,6 +648,37 @@ class Venta extends AppModel
 
 
 	/**
+	 * Devuleve las unidades que esten en existencia y cambia el estad de la venta
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function revertir_venta($id)
+	{	
+		$this->id = $id;
+		if (!$this->exists()) {
+			return false;
+		}
+
+		$ventaDetalles = ClassRegistry::init('VentaDetalle')->find('all', array(
+			'conditions' => array(
+				'venta_id' => $id
+			)
+		));	
+
+		foreach ($ventaDetalles as $ip => $producto) {
+			ClassRegistry::init('VentaDetalle')->id = $producto['VentaDetalle']['id'];
+			ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', 0);
+			ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $producto['VentaDetalle']['cantidad']);
+		}
+
+		$this->saveField('picking_estado', 'no_definido');
+		$this->saveField('subestado_oc', 'no_entregado');
+
+		return;
+	}
+
+
+	/**
 	 * Si hay items disponible se reserva el stock y se actualiza el picking_estado de la venta.
 	 * @param  [type] $id [description]
 	 * @return [type]     [description]

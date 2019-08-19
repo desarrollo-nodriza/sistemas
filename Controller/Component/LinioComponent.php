@@ -238,7 +238,7 @@ class LinioComponent extends Component
 		        ['OrderId' => $id]
 		    ))
 		);
-
+		
 		$results = $response->getBody()['Orders'];
 
 		if ($todo) {

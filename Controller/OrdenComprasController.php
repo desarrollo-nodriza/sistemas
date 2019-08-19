@@ -479,6 +479,39 @@ class OrdenComprasController extends AppController
 
 
 	/**
+	 * [admin_index_pendiente_facturas description]
+	 * @return [type] [description]
+	 */
+	public function admin_index_pendiente_facturas()
+	{	
+
+		// Filtrado de oc por formulario
+		if ( $this->request->is('post') ) {
+			$this->filtrar('ordenCompras', 'index_pendiente_facturas');
+		}
+
+		$paginate = $this->paginacion_index(array('pendiente_factura'));
+
+		# Filtrar
+		if ( isset($this->request->params['named']) ) {
+			$this->reemplazar_filtro_recursivamente($paginate);
+		}
+		
+		$this->paginate = $paginate;
+
+		$estados = $this->OrdenCompra->estados;
+
+		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
+
+		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
+		BreadcrumbComponent::add('Finalizadas', '/ordenCompras/index_pendiente_facturas');
+
+		$ordenCompras	= $this->paginate();
+		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
+	}
+
+
+	/**
 	 * Para finalizar una OC como recibida debe indicarse el/las facturas
 	 * que respaldan los porductos ingresados.
 	 * @param  [type] $id [description]
@@ -711,22 +744,32 @@ class OrdenComprasController extends AppController
 					$this->request->data['OrdenCompraFactura'][$iocf]['receptor']        = $receptor;
 				}
 
-				# Obtenemos el saldo disponible para pagar para éste proveedor
-				$id_proveedor = $this->OrdenCompra->field('proveedor_id', array('id' => $id));
-				$saldo_disponible_pago = ClassRegistry::init('Saldo')->obtener_saldo_total_proveedor($id_proveedor);
+				# Es factura
+				if ($tipo_dte == 33) {
+					# Obtenemos el saldo disponible para pagar para éste proveedor
+					$id_proveedor = $this->OrdenCompra->field('proveedor_id', array('id' => $id));
+					$saldo_disponible_pago = ClassRegistry::init('Saldo')->obtener_saldo_total_proveedor($id_proveedor);
 
-				if (count($this->request->data['OrdenCompraFactura']) == 1 && $saldo_disponible_pago >= $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']) {
+					if (count($this->request->data['OrdenCompraFactura']) == 1 && $saldo_disponible_pago >= $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']) {
 
-					# Se paga la factura
-					$this->request->data['OrdenCompraFactura'][$iocf]['monto_pagado'] = $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['pagada']       = 1;
+						# Se paga la factura
+						$this->request->data['OrdenCompraFactura'][$iocf]['monto_pagado'] = $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'];
+						$this->request->data['OrdenCompraFactura'][$iocf]['pagada']       = 1;
+					}
+
+					# Descontamos el saldo usado solo al crearla
+					if (!isset($ocf['id'])) 
+						ClassRegistry::init('Saldo')->descontar($id_proveedor, $id, null, null, $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']);	
 				}
-
-				# Descontamos el saldo usado solo al crearla
-				if (!isset($ocf['id'])) 
-					ClassRegistry::init('Saldo')->descontar($id_proveedor, $id, null, null, $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']);
 			}
-				
+
+			# OC queda en estado de espera de factura
+			if ($ocSave['OrdenCompra']['estado'] == 'recibido' && count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33]')) == 0 ) {
+				$ocSave['OrdenCompra']['estado'] = 'pendiente_factura';
+			}elseif ($ocSave['OrdenCompra']['estado'] == 'recibido' && count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33]')) > 0) {
+				$ocSave['OrdenCompra']['estado'] = 'recibido';
+			}
+
 			$ocSave = array_replace_recursive($ocSave, array(
 				'OrdenCompraFactura' => $this->request->data['OrdenCompraFactura']
 			));	
@@ -768,7 +811,9 @@ class OrdenComprasController extends AppController
 		# Array de tipos de documentos
 		$libreDte = $this->Components->load('LibreDte');
 		$tipo_documento = array(
-			33 => 'Factura electrónica'
+			33 => 'Factura electrónica',
+			52 => 'Guia de despacho electrónica',
+			50 => 'Guia de despacho manual'
  		);
 
 		BreadcrumbComponent::add('Ordenes de compra ', '/index_enviadas');

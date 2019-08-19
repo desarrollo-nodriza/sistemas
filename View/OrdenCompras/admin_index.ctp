@@ -96,9 +96,23 @@
 		</div>		
 	</div>
     <div class="row">
+        <div class="col-xs-12 col-md-4">
+            <a href="<?=Router::url('/', false);?>ordenCompras/index_incompletas">
+            <div class="widget widget-danger widget-item-icon">
+                <div class="widget-item-left">
+                    <span class="fa fa-exclamation-circle"></span>
+                </div>
+                <div class="widget-data">
+                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=pendiente_factura].id'));?></div>
+                    <div class="widget-title">Pendiente Factura</div>
+                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
+                </div>                         
+            </div>
+            </a>
+        </div>
         <div class="col-xs-12 col-md-offset-4 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_finalizadas">
-            <div class="widget widget-success widget-item-icon">
+            <a href="<?=Router::url('/', false);?>ordenCompras/index_pendiente_facturas">
+            <div class="widget widget-danger widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-smile-o"></span>
                 </div>

@@ -37,6 +37,9 @@ class OrdenCompraFacturasController extends AppController
 
 		$opt		= array(
 			'recursive'			=> 0,
+			'conditions' => array(
+				'OrdenCompraFactura.tipo_documento' => 33 // mostramos solo facturas
+			),
 			'contain' => array(
 				'OrdenCompra' => array(
 					'Tienda' => array('fields' => array('Tienda.rut')),

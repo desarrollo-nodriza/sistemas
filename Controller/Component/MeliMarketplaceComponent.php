@@ -220,6 +220,33 @@ class MeliMarketplaceComponent extends Component
 
 
 	/**
+	 * [mercadolibre_obtener_venta description]
+	 * @param  [type] $access_token [description]
+	 * @param  [type] $resource     [description]
+	 * @return [type]               [description]
+	 */
+	public function mercadolibre_obtener_venta($access_token, $id_externo)
+	{
+		$params = array(
+			'access_token' => $access_token
+		);
+		
+		try {
+			$detallesVenta = self::$MeliConexion->get('/orders/' . $id_externo, $params);
+			$detallesVenta = to_array($detallesVenta);
+		} catch (Exception $e) {
+			
+		}
+		
+		if ($detallesVenta['httpCode'] < 300) {
+			return $detallesVenta['body'];
+		}else{
+			return array();
+		}
+	}
+
+
+	/**
 	 * Obtiene los mensajes de un pedido dado desde Meli
 	 * @param  string $access_token token de acceso para peticiones privadas
 	 * @param  string $id           Identificador de la venta de Meli
@@ -389,6 +416,12 @@ class MeliMarketplaceComponent extends Component
 	}
 
 
+	/**
+	 * [mercadolibre_producto_existe description]
+	 * @param  [type] $id_externo [description]
+	 * @param  [type] $seller_id  [description]
+	 * @return [type]             [description]
+	 */
 	public function mercadolibre_producto_existe($id_externo, $seller_id )
 	{
 		$params = array(
@@ -456,6 +489,11 @@ class MeliMarketplaceComponent extends Component
 	}
 
 
+	/**
+	 * [obtener_scroll_id description]
+	 * @param  [type] $seller_id [description]
+	 * @return [type]            [description]
+	 */
 	public function obtener_scroll_id($seller_id)
 	{
 		$params = array(
@@ -478,6 +516,14 @@ class MeliMarketplaceComponent extends Component
 	}
 
 
+	/**
+	 * [mercadolibre_obtener_productos description]
+	 * @param  string  $seller_id [description]
+	 * @param  integer $limit     [description]
+	 * @param  integer $offset    [description]
+	 * @param  string  $scroll_id [description]
+	 * @return [type]             [description]
+	 */
 	public function mercadolibre_obtener_productos($seller_id = '', $limit = 50, $offset = 0, $scroll_id = '')
 	{
 		$params = array(
@@ -513,6 +559,11 @@ class MeliMarketplaceComponent extends Component
 	}
 
 
+	/**
+	 * [mercadolibre_obtener_todos_productos description]
+	 * @param  [type] $seller_id [description]
+	 * @return [type]            [description]
+	 */
 	public function mercadolibre_obtener_todos_productos($seller_id)
 	{
 		$productosMeli = $this->mercadolibre_obtener_productos($seller_id);
@@ -547,7 +598,12 @@ class MeliMarketplaceComponent extends Component
 	}
 
 
-
+	/**
+	 * [mercadolibre_actualizar_stock description]
+	 * @param  [type] $meli  [description]
+	 * @param  [type] $stock [description]
+	 * @return [type]        [description]
+	 */
 	public function mercadolibre_actualizar_stock($meli, $stock)
 	{	
 		// We construct the item to POST
@@ -560,6 +616,11 @@ class MeliMarketplaceComponent extends Component
 	}
 
 
+	/**
+	 * [mercadolibre_normalizar_seller_custom_field description]
+	 * @param  [type] $seller_id [description]
+	 * @return [type]            [description]
+	 */
 	public function mercadolibre_normalizar_seller_custom_field($seller_id)
 	{
 		$misProductosIds = $this->mercadolibre_obtener_todos_productos($seller_id);

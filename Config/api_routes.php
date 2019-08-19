@@ -211,4 +211,22 @@ Router::connect(
 );
 
 
+/**
+ * Mercadolibre notificaciones
+ */
+Router::connect(
+    '/api/ventas/meli/:tipo/:marketplace_id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'venta_meli',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('tipo', 'marketplace_id'),
+        'tipo' => 'crear|actualizar',
+        'marketplace_id'   => '[0-9]+' // id del marketplace
+    )
+);
+
+
 Router::parseExtensions('json');

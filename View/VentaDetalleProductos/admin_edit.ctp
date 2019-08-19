@@ -80,7 +80,7 @@
 								<td><?= $this->Form->input('cantidad_virtual', array('class' => 'form-control', 'type' => 'text')); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('cantidad_real', 'Stock disponible'); ?></th>
+								<th><?= $this->Form->label('cantidad_real', 'Stock disponible', array('data-toggle' => 'tooltip', 'title' => 'Cantidad reservada: ' . $this->request->data['VentaDetalleProducto']['cantidad_reservada'])); ?></th>
 								<td><?= $this->Form->input('cantidad_real', array('class' => 'form-control', 'type' => 'text', 'readonly' => true)); ?><span class="help-block">Unidades fisicas menos las reservadas.</span></td>
 							</tr>
 							<tr>
