@@ -159,6 +159,29 @@
 					</div>
 				</div>
 			</div>
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Notificaciones Push</h3>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<td><?= $this->Form->label('activar_notificaciones', '¿Activar notificciones Push?'); ?></td>
+								<td><?= $this->Form->input('activar_notificaciones', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('notificacion_apikey', 'Api Key Pushalert'); ?></td>
+								<td><?= $this->Form->input('notificacion_apikey'); ?></td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

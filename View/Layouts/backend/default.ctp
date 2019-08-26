@@ -128,5 +128,16 @@
         <audio id="audio-alert" src="<?= $this->Html->url('/backend/audio/alert.mp3'); ?>" preload="auto"></audio>
         <audio id="audio-fail" src="<?= $this->Html->url('/backend/audio/fail.mp3'); ?>" preload="auto"></audio>
 		<?= $this->Html->script(array('/backend/js/actions')); ?>
+
+		<!-- PushAlert -->
+        <script type="text/javascript">
+        (function(d, t) {
+            var g = d.createElement(t),
+            s = d.getElementsByTagName(t)[0];
+            g.src = "https://cdn.pushalert.co/integrate_e53524febc1d5923a2071c710ed1efdd.js";
+            s.parentNode.insertBefore(g, s);
+        }(document, "script"));
+        </script>
+        <!-- End PushAlert -->
     </body>
 </html>

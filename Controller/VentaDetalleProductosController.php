@@ -1705,41 +1705,49 @@ class VentaDetalleProductosController extends AppController
      */
     public function api_view($id) {
     	
-    	if ($this->request->is('post')) {
-    		if ( ! $this->VentaDetalleProducto->apiAuth($this->request->data['Auth']) )
-			{	
-				$response		= array(
-					'code'    => $this->VentaDetalleProducto->apiCode, 
-					'message' => $this->VentaDetalleProducto->apiCodeMessage
-				);
+    	$token = '';
 
-				throw new CakeException($response);
-			}else{
-				$producto = $this->VentaDetalleProducto->find('first', array(
-					'conditions' => array(
-						'VentaDetalleProducto.id_externo' => $id
-					)
-				));
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
 
-				if (!empty($producto)) {
-					$producto['VentaDetalleProducto']['stock_enbodega'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
-				}else{
-					$producto['VentaDetalleProducto'] = array();
-				}
-
-		        $this->set(array(
-		            'producto' => $producto['VentaDetalleProducto'],
-		            '_serialize' => array('producto')
-		        ));
-			}	
-    	}else{
-    		$response		= array(
-				'code'    => 300, 
-				'message' => 'Request no válido'
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
 			);
 
 			throw new CakeException($response);
-    	}
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$producto = $this->VentaDetalleProducto->find('first', array(
+			'conditions' => array(
+				'VentaDetalleProducto.id_externo' => $id
+			)
+		));
+
+		if (!empty($producto)) {
+			$producto['VentaDetalleProducto']['stock_enbodega'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
+		}else{
+			$producto['VentaDetalleProducto'] = array();
+		}
+
+        $this->set(array(
+            'producto' => $producto['VentaDetalleProducto'],
+            '_serialize' => array('producto')
+        ));
+			
     }
 
 
@@ -1937,5 +1945,166 @@ class VentaDetalleProductosController extends AppController
     	}
 
     }
+
+
+    /**
+     * Crea un producto desde Prestashop
+     * @param  [type] $tienda_id [description]
+     * @return [type]            [description]
+     */
+    public function api_crear() {
+
+		# Solo método POST
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		if (empty($this->request->data['id_externo']) || empty($this->request->data['nombre'])) {
+			$response = array(
+				'code' => 504,
+				'created' => false,
+				'message' => 'Id y nombre requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$resultado = array(
+			'code' => 201,
+			'created' => false,
+			'updated' => false
+		);
+
+		$log = array();
+
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop rest',
+				'modulo' => 'Productos',
+				'modulo_accion' => json_encode($this->request->data)
+			)
+		);
+			
+		$data = array(
+			'VentaDetalleProducto' => array(
+				'id'               => $this->request->data['id_externo'],
+				'id_externo'       => $this->request->data['id_externo'],
+				'marca_id'         => $this->request->data['marca_id'],
+				'nombre'           => $this->request->data['nombre'],
+				'codigo_proveedor' => $this->request->data['codigo_proveedor']
+			)
+		);
+
+		$existe = true;
+
+		# Si la marca no existe se intenta crear
+		if (!ClassRegistry::init('Marca')->exists($this->request->data['marca_id'])) {
+
+			$tienda = ClassRegistry::init('Tienda')->tienda_principal(array('Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop'));
+
+			$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
+			
+			$marcaPrestashop = $this->Prestashop->prestashop_obtener_marca($this->request->data['marca_id']);
+
+			if (!empty($marcaPrestashop)) {
+				$marcaSave = array(
+					'Marca' => array(
+						'id' => $marcaPrestashop['id'],
+						'nombre' => $marcaPrestashop['name']
+					)
+				);
+
+				ClassRegistry::init('Marca')->create();
+				ClassRegistry::init('Marca')->save($marcaSave);
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Prestashop rest',
+						'modulo' => 'Marca',
+						'modulo_accion' => json_encode($marcaSave)
+					)
+				);
+			}
+
+		}
+
+
+		if (!$this->VentaDetalleProducto->exists($this->request->data['id_externo'])) {
+			$this->VentaDetalleProducto->create();
+			$existe = false;	
+		}
+		
+		if ($this->VentaDetalleProducto->save($data)){
+
+			if ($existe) {
+				
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Prestashop rest',
+						'modulo' => 'Productos',
+						'modulo_accion' => sprintf('Producto #%d actualizado con éxito', $this->request->data['id_externo'])
+					)
+				);
+
+				$resultado = array(
+					'code' => 200,
+					'updated' => true
+				);
+
+			}else{
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Prestashop rest',
+						'modulo' => 'Productos',
+						'modulo_accion' => sprintf('Producto #%d creado con éxito', $this->request->data['id_externo'])
+					)
+				);
+
+				$resultado = array(
+					'code' => 200,
+					'created' => true
+				);
+			}
+		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
+
+		$this->set(array(
+			'response'   => $resultado,
+			'_serialize' => array('response')
+	    ));
+	}
 
 }

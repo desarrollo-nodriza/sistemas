@@ -244,4 +244,41 @@ class Tienda extends AppModel
 			'counterQuery'			=> ''
 		)
 	);
+
+
+	/**
+	 * [tienda_principal description]
+	 * @param  array  $fields [description]
+	 * @return [type]         [description]
+	 */
+	public function tienda_principal($fields = array())
+	{	
+		$qry = array(
+			'conditions' => array(
+				'Tienda.principal' => 1
+			)
+		);
+
+		if (!empty($fields)) {
+			$qry['fields'] = $fields;
+		}
+
+		return $this->find('first', $qry);
+	}
+
+
+	public function obtener_tienda($id, $fields = array())
+	{	
+		$qry = array(
+			'conditions' => array(
+				'Tienda.id' => $id
+			)
+		);
+
+		if (!empty($fields)) {
+			$qry['fields'] = $fields;
+		}
+
+		return $this->find('first', $qry);
+	}
 }

@@ -653,6 +653,35 @@ class PrestashopComponent extends Component
 
 
 	/**
+	 * [prestashop_obtener_producto description]
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function prestashop_obtener_producto($id)
+	{
+		$opt             = array();
+		$opt['resource'] = 'products';
+		$opt['id']       = $id;
+
+		$producto = array();
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+		
+			$PrestashopResources = $xml->children()->children();
+			
+			$producto = to_array($PrestashopResources);
+
+				
+		} catch (Exception $e) {
+			// No existe en prestashop
+		}
+
+		return $producto;
+	}
+
+
+	/**
 	 * Actualiza el stock disponible en prestashop
 	 * @param  [type] $stock_id   Identificador del stock (no id de producto)
 	 * @param  [type] $NuevoStock Nueva cantidad
@@ -884,6 +913,35 @@ class PrestashopComponent extends Component
 		}
 
 		return true;
+	}
+
+
+	/**
+	 * [prestashop_obtener_marca description]
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function prestashop_obtener_marca($id)
+	{
+		$opt             = array();
+		$opt['resource'] = 'manufacturers';
+		$opt['id']       = $id;
+
+		$marca = array();
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+		
+			$PrestashopResources = $xml->children()->children();
+			
+			$marca = to_array($PrestashopResources);
+
+				
+		} catch (Exception $e) {
+			// No existe en prestashop
+		}
+
+		return $marca;
 	}
 
 }

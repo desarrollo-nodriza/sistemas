@@ -18,7 +18,7 @@ Router::connect(
     '/api/producto/add', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'VentaDetalleProductos', 
-        'action' => 'add',
+        'action' => 'crear',
         'api' => true,
         'prefix' => 'api')
 );
@@ -72,6 +72,19 @@ Router::connect(
         'pass' => array('id'),
         'id' => '[0-9]+'
     )
+);
+
+
+/**
+ * Marcas
+ */
+Router::connect(
+    '/api/marca/add', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Marcas', 
+        'action' => 'crear',
+        'api' => true,
+        'prefix' => 'api')
 );
 
 
@@ -137,6 +150,20 @@ Router::connect(
 );
 
 Router::connect(
+    '/api/ventas/exists/externo/:id_externo', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'venta_existe_externo',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id_externo'),
+        'id_externo' => '[0-9]+'
+    )
+);
+
+
+Router::connect(
     '/api/ventas/change_state/:id', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'Ventas', 
@@ -192,6 +219,20 @@ Router::connect(
 );
 
 
+/**
+ * Tienda
+ */
+Router::connect(
+    '/api/tienda', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Tiendas', 
+        'action' => 'obtener_tiendas',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
+
+
 
 /**
  * Linio webhook
@@ -227,6 +268,26 @@ Router::connect(
         'marketplace_id'   => '[0-9]+' // id del marketplace
     )
 );
+
+
+/**
+ * Prestashop endpoint
+ */
+Router::connect(
+    '/api/ventas/prestashop/:tienda_id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'venta_prestashop',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('tienda_id'),
+        'tienda_id'   => '[0-9]+' // id del marketplace
+    )
+);
+
+
+
 
 
 Router::parseExtensions('json');

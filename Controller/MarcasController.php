@@ -268,4 +268,134 @@ class MarcasController extends AppController
 		return;
 	}
 
+
+
+	/**
+	 * API
+	 */
+	/**
+     * Crea/actualiza una marca desde Prestashop
+     * @param  [type] $tienda_id [description]
+     * @return [type]            [description]
+     */
+    public function api_crear() {
+
+		# Solo método POST
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		if (empty($this->request->data['id_externo']) || empty($this->request->data['nombre'])) {
+			$response = array(
+				'code' => 504,
+				'created' => false,
+				'message' => 'Id y nombre requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$resultado = array(
+			'code' => 201,
+			'created' => false,
+			'updated' => false
+		);
+
+		$log = array();
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop rest',
+				'modulo' => 'Marcas',
+				'modulo_accion' => json_encode($this->request->data)
+			)
+		);
+			
+		$data = array(
+			'Marca' => array(
+				'id'               => $this->request->data['id_externo'],
+				'nombre'           => $this->request->data['nombre']
+			)
+		);
+
+		$existe = true;
+
+
+		if (!$this->Marca->exists($this->request->data['id_externo'])) {
+			$this->Marca->create();
+			$existe = false;	
+		}
+		
+		if ($this->Marca->save($data)){
+
+			if ($existe) {
+				
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Prestashop rest',
+						'modulo' => 'Marcas',
+						'modulo_accion' => sprintf('Marca #%d actualizado con éxito', $this->request->data['id_externo'])
+					)
+				);
+
+				$resultado = array(
+					'code' => 200,
+					'updated' => true
+				);
+
+			}else{
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Prestashop rest',
+						'modulo' => 'Marcas',
+						'modulo_accion' => sprintf('Marca #%d creada con éxito', $this->request->data['id_externo'])
+					)
+				);
+
+				$resultado = array(
+					'code' => 200,
+					'created' => true
+				);
+			}
+		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
+
+		$this->set(array(
+			'response'   => $resultado,
+			'_serialize' => array('response')
+	    ));
+	}
+
 }

@@ -95,8 +95,8 @@
 						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
 							<div class="form-group">
 								<br />
-								<label>Atendida</label>
-								<?= $this->Form->input('atendida', array('class' => 'form-control', 'empty' => 'Atendida', 'options' => array('1' => 'Sí', '0' => 'No'), 'required' => false, 'default' => $FiltroAtendida)); ?>
+								<label>Venta urgente</label>
+								<?= $this->Form->input('prioritario', array('class' => 'form-control', 'empty' => 'Seleccione', 'options' => array('1' => 'Atención urgente', '0' => 'Atencion normal'), 'required' => false, 'default' => $FiltroPrioritario)); ?>
 							</div>
 						</div>
 
@@ -206,7 +206,16 @@
 
 									<tr class="<?=($venta['Venta']['prioritario']) ? 'tr-prioritario' : ''; ?>">
 
-										<td><input type="checkbox" class="facturacion_masiva" name="data[Venta][<?=$ix;?>][id]" value="<?=$venta['Venta']['id'];?>" data-id="<?=$venta['Venta']['id'];?>" <?= (count(Hash::extract($venta['Dte'], '{n}[estado=dte_real_emitido].id')) > 0 || !$venta['VentaEstado']['permitir_dte']) ? 'disabled="disabled"' : '' ; ?>  > </td>
+										<td style="position: relative;">
+										<? if ($venta['Venta']['prioritario']) : ?>
+											<div class="prioritario-btn" data-toggle="tooltip" data-placement="top" title="" data-original-title="Prioritario">
+												<i class="fa fa-exclamation" aria-hidden="true"></i>
+											</div>
+										<? endif; ?>
+										
+											<input type="checkbox" class="facturacion_masiva" name="data[Venta][<?=$ix;?>][id]" value="<?=$venta['Venta']['id'];?>" data-id="<?=$venta['Venta']['id'];?>" <?= (count(Hash::extract($venta['Dte'], '{n}[estado=dte_real_emitido].id')) > 0 || !$venta['VentaEstado']['permitir_dte']) ? 'disabled="disabled"' : '' ; ?>  > 
+
+										</td>
 
 										<td>
 											ID: <strong><?= h($venta['Venta']['id']); ?></strong>
@@ -303,10 +312,6 @@
 											<? if (!$venta['Venta']['prioritario'] && $permisos['edit']) : ?>
 											<?= $this->Form->postLink('<i class="fa fa-check"></i> Marcar como prioritaria', array('action' => 'marcar_prioritaria', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-primary btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
 											<? elseif ($permisos['edit']) : ?>
-
-												<div class="prioritario-btn" data-toggle="tooltip" data-placement="top" title="" data-original-title="Prioritario">
-													<i class="fa fa-exclamation" aria-hidden="true"></i>
-												</div>
 
 												<?= $this->Form->postLink('<i class="fa fa-remove"></i> Marcar no prioritaria', array('action' => 'marcar_no_prioritaria', $venta['Venta']['id']), array('class' => 'btn btn-xs btn-default btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
 											<? endif; ?>
