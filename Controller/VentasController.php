@@ -2074,6 +2074,11 @@ class VentasController extends AppController {
 							if (!empty($direccionEntrega['address']['phone_mobile'])) {
 								$fono_receptor .=  ' - ' . trim($direccionEntrega['address']['phone_mobile']);
 							}
+							if (isset($direccionEntrega['address']['id_state'])) {
+								$comuna_entrega = $this->Prestashop->prestashop_obtener_comuna_por_id($direccionEntrega['address']['id_state'])['state']['name'];
+							}
+
+							
 							$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
 							$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
 							$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
@@ -4133,7 +4138,7 @@ class VentasController extends AppController {
 	 * @return [type]                      [description]
 	 */
 	public function notificar_cambio_estado($id_venta = null, $plantillaEmail = null, $nombre_estado_nuevo = '')
-	{
+	{	return true;
 		$venta = $this->Venta->obtener_venta_por_id($id_venta);
 
 		$plantillaDefault = @$venta['VentaEstado']['VentaEstadoCategoria']['plantilla'];
@@ -5195,7 +5200,7 @@ class VentasController extends AppController {
 				'Venta.marketplace_id' => $marketplace_id
 			),
 			'fields' => array(
-				'Venta.id'
+				'Venta.id', 'Venta.venta_estado_id'
 			),
 			'contain' => array(
 				'VentaTransaccion'
@@ -5219,8 +5224,8 @@ class VentasController extends AppController {
 		$ActualizarVenta['Venta']['id'] = $venta['Venta']['id'];
 
 		//se obtiene el estado de la venta
+		$ActualizarVenta['Venta']['estado_anterior'] = $venta['Venta']['venta_estado_id'];
 		$ActualizarVenta['Venta']['venta_estado_id'] = $this->obtener_estado_id($ventaMeli['status'], $marketplace['Marketplace']['marketplace_tipo_id']);
-		$ActualizarVenta['Venta']['estado_anterior'] = $ActualizarVenta['Venta']['venta_estado_id'];
 		$ActualizarVenta['Venta']['venta_estado_responsable'] = 'Meli Webhook';
 
 		# si es un estado pagado se reserva el stock disponible
@@ -5253,7 +5258,7 @@ class VentasController extends AppController {
 			$ActualizarVenta['VentaTransaccion'][] = $NuevaTransaccion;
 		}
 
-
+		
 		// Se guarda la venta
 		if($this->Venta->saveAll($ActualizarVenta)){
 
@@ -6199,16 +6204,6 @@ class VentasController extends AppController {
 			throw new CakeException($response);
 		}
 
-		# Validamos token
-		if (!ClassRegistry::init('Token')->validar_token($token)) {
-			$response = array(
-				'code'    => 505, 
-				'name' => 'error',
-				'message' => 'Token de sesión expirado o invalido'
-			);
-
-			throw new CakeException($response);
-		}
 
 		# No existe venta
 		if (!$this->Venta->exists($id)) {
@@ -6499,8 +6494,8 @@ class VentasController extends AppController {
 				throw new CakeException($response);
 			}
 
-			$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
-			#$resCambio = true;
+			#$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
+			$resCambio = true;
 			if ($resCambio) {
 
 				# Asignamos el nuevo estado a la venta intenra
