@@ -2078,7 +2078,7 @@ class VentasController extends AppController {
 								$comuna_entrega = $this->Prestashop->prestashop_obtener_comuna_por_id($direccionEntrega['address']['id_state'])['state']['name'];
 							}
 
-							
+
 							$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
 							$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
 							$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
@@ -2730,7 +2730,7 @@ class VentasController extends AppController {
 	 */
 	public function admin_view ($id = null) 
 	{
-
+		
 		if ( ! $this->Venta->exists($id) ) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
@@ -4138,7 +4138,11 @@ class VentasController extends AppController {
 	 * @return [type]                      [description]
 	 */
 	public function notificar_cambio_estado($id_venta = null, $plantillaEmail = null, $nombre_estado_nuevo = '')
-	{	return true;
+	{	
+		if (Configure::read('debug') > 0) {
+			return true;	
+		}
+		
 		$venta = $this->Venta->obtener_venta_por_id($id_venta);
 
 		$plantillaDefault = @$venta['VentaEstado']['VentaEstadoCategoria']['plantilla'];
@@ -6494,8 +6498,12 @@ class VentasController extends AppController {
 				throw new CakeException($response);
 			}
 
-			#$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
-			$resCambio = true;
+			if (Configure::read('debug') > 0) {
+				$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
+			}else{
+				$resCambio = true;
+			}
+			
 			if ($resCambio) {
 
 				# Asignamos el nuevo estado a la venta intenra
