@@ -460,6 +460,10 @@ class PrestashopComponent extends Component
 
 			$mensajes = to_array($PrestashopResources);
 
+			if (empty($mensajes)) {
+				return $res;
+			}
+			
 			if (!isset($mensajes['customer_message'][0])) {
 				$mensajes = array(
 					'customer_message' => array(

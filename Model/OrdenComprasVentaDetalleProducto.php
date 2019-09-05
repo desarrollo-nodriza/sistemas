@@ -58,4 +58,25 @@ class OrdenComprasVentaDetalleProducto extends AppModel
 
 		}		
 	}*/
+
+
+	public function obtener_cantidad_confirmada_proveedor($id_producto, $id_oc)
+	{
+		$ocDetalles = $this->find('first', array(
+			'conditions' => array(
+				'OrdenComprasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto,
+				'OrdenComprasVentaDetalleProducto.orden_compra_id' => $id_oc
+			)
+		));
+
+		return $ocDetalles['OrdenComprasVentaDetalleProducto']['cantidad'];
+
+	}
+
+
+	public function obtener_productos_por_oc($id_oc)
+	{
+		
+	}
+
 }

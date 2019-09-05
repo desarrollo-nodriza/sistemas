@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Crea un nuevo documento Excel
  */
@@ -14,7 +13,6 @@ foreach ( $campos as $campo )
 {
 	array_push($cabeceras, array_merge(array('label' => Inflector::humanize($campo)), $opciones));
 }
-
 $this->PhpSpreadsheet->addTableHeader($cabeceras, array('bold' => true));
 
 /**
@@ -22,11 +20,11 @@ $this->PhpSpreadsheet->addTableHeader($cabeceras, array('bold' => true));
  */
 foreach ( $datos as $dato )
 {
-	$this->PhpSpreadsheet->addTableRow(iconv(current($dato)));
+	$this->PhpSpreadsheet->addTableRow(current($dato));
 }
 
 /**
  * Cierra la tabla y crea el archivo
  */
 $this->PhpSpreadsheet->addTableFooter();
-$this->PhpSpreadsheet->output(sprintf('Listado_%s_%s.xls', $modelo, date('Y_m_d-H_i_s')));
+$this->PhpSpreadsheet->output(sprintf('Listado_%s_%s.xlsx', $modelo, date('Y_m_d-H_i_s')));

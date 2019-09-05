@@ -36,7 +36,13 @@ $.extend({
 			});
 
 
-			$('.js-validate-oc').validate();
+			$('.js-validate-oc').validate({
+				rules : {
+					'data[OrdenCompra][razon_cancelada]': {
+						required: true
+					}
+				}
+			});
 
 			$('.js-validate-oc input, .js-validate-oc select').each(function(){
 
@@ -817,7 +823,7 @@ $.extend({
 				}
 			});
 
-			$(document).on('change', '.js-select-medio-pago', function(){
+			/*$(document).on('change', '.js-select-medio-pago', function(){
 				var $ths = $(this);
 
 				$('.loader').addClass('show');
@@ -832,7 +838,7 @@ $.extend({
 				
 				}
 
-			});
+			});*/
 
 
 			$(document).on('keyup', '.js-monto-pagado', function(){	

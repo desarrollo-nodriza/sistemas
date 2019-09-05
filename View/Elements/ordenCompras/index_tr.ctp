@@ -15,6 +15,10 @@
         <?= $this->Html->link('<i class="fa fa-money"></i> Pagar OC', array('action' => 'pay', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-block btn-primary', 'rel' => 'tooltip', 'title' => 'Pagar', 'escape' => false)); ?>
     <? endif; ?>
 
+    <? if (in_array('asignar_pagar', $accion) && $permisos['pay']) : ?>
+        <?= $this->Html->link('<i class="fa fa-money"></i> Asignar metodo de pago', array('action' => 'asignar_moneda', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-block btn-primary', 'rel' => 'tooltip', 'title' => 'Pagar', 'escape' => false)); ?>
+    <? endif; ?>
+
     <? if (in_array('revisar', $accion) && $permisos['validate']) : ?>
         <?= $this->Html->link('<i class="fa fa-pencil"></i> Revisar', array('action' => 'review', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-block btn-primary', 'rel' => 'tooltip', 'title' => 'Revisar este registro', 'escape' => false)); ?>
     <? endif; ?>
@@ -33,5 +37,37 @@
 
     <?= $this->Html->link('<i class="fa fa-eye"></i> Ver', array('action' => 'view', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-block btn-info', 'rel' => 'tooltip', 'title' => 'Revisar este registro', 'escape' => false)); ?>
     
+    <? if (in_array('cancelar', $accion) && $permisos['edit']) : ?>
+        <button class="btn btn-danger btn-block btn-xs mt-5" data-toggle="modal" data-target="#modal-cancelar-oc-<?=$ordenCompra['OrdenCompra']['id'];?>"><i class="fa fa-trash"></i> Cancelar</button>
+        
+
+        <div class="modal fade" id="modal-cancelar-oc-<?=$ordenCompra['OrdenCompra']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="#modal-cancelar-oc-<?=$ordenCompra['OrdenCompra']['id'];?>-label">
+          <div class="modal-dialog" role="document">
+            <?= $this->Form->create('OrdenCompra', array('url' => array('controller' => 'ordenCompras','action' => 'cancelar', $ordenCompra['OrdenCompra']['id']), 'method' => 'post', 'class' => 'form-horizontal js-validate-oc', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="modal-cancelar-oc-<?=$ordenCompra['OrdenCompra']['id'];?>-label">¿Desea cancelar ésta orden de compra?</h4>
+              </div>
+              <div class="modal-body">
+                <p>Está intentando cancelar la orden de compra #<?=$ordenCompra['OrdenCompra']['id']; ?>. Por favor indique el motivo de la cancelación a continuación:</p>
+                <div class="form-group">
+                    <?= $this->Form->hidden('id', array('value' => $ordenCompra['OrdenCompra']['id']));?>
+                    <?= $this->Form->hidden('estado', array('value' => 'cancelada')); ?>
+                    <?= $this->Form->label('razon_cancelada', 'Razón/Motivo (obligatorio)');?>
+                    <?= $this->Form->input('razon_cancelada', array('rows' => 3, 'placeholder' => 'Ingrese razón de la cancelación', 'class' => 'form-control not-blank')); ?>
+                </div>        
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Volver</button>
+                <?= $this->Form->button('Cancelar oc', array('type' => 'submit', 'class' => 'btn btn-success')); ?>
+              </div>
+            </div>
+            <?= $this->Form->end(); ?>
+          </div>
+        </div>
+
+    <? endif; ?>
+
     </td>
 </tr>

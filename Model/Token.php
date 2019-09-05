@@ -14,7 +14,12 @@ class Token extends AppModel
 		'administrador_id' => array(
 			'alphaNumeric' => array(
                 'rule' => 'alphaNumeric',
-                'required' => true,
+                'message' => 'user_id is not integer'
+            )
+		),
+		'proveedor_id' => array(
+			'alphaNumeric' => array(
+                'rule' => 'alphaNumeric',
                 'message' => 'user_id is not integer'
             )
 		)
@@ -29,6 +34,15 @@ class Token extends AppModel
 		'Administrador' => array(
 			'className'				=> 'Administrador',
 			'foreignKey'			=> 'administrador_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
+		'Proveedor' => array(
+			'className'				=> 'Proveedor',
+			'foreignKey'			=> 'proveedor_id',
 			'conditions'			=> '',
 			'fields'				=> '',
 			'order'					=> '',
@@ -83,6 +97,38 @@ class Token extends AppModel
 			return $this->validationErrors;
 		}
 	}
+
+
+	public function crear_token_proveedor($proveedor_id, $tienda_id = '', $duracion = 365)
+	{	
+		$expira = new DateTime(date('Y-m-d H:i:s'));
+		$expira->modify(sprintf('+%d hours', $duracion));
+
+		$token_acceso = $this->generar_token(24);
+
+		$token['Token'] = array(
+			'proveedor_id' => $proveedor_id,
+			'token'            => $token_acceso,
+			'expires'          => $expira->format('Y-m-d H:i:s')
+		);
+
+		if (!empty($tienda_id)) {
+			$token['Token']['tienda_id'] = $tienda_id;
+		}
+
+		$this->create();
+		if ($this->save($token)) {
+			
+			return array(
+				'expires_token' => $expira->format('Y-m-d H:i:s'),
+				'token'         => $token_acceso
+			);
+
+		}else{
+			return $this->validationErrors;
+		}
+	}
+
 
 
 	public function generar_token($largo = 24)

@@ -1,5 +1,5 @@
 <div class="page-title">
-	<h2><span class="fa fa-list"></span> Ordenes de compra en proceso de pago</h2>
+	<h2><span class="fa fa-list"></span> Ordenes de compra canceladas</h2>
 </div>
 
 <div class="page-content-wrap">
@@ -44,7 +44,19 @@
 							<tbody>
 								<?php foreach ( $ordenCompras as $ordenCompra ) : ?>
 
-								<?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array()));?>
+								<tr>
+									<td><?= h($ordenCompra['OrdenCompra']['id']); ?>&nbsp;</td>
+									<td><?= h($ordenCompra['Administrador']['nombre']); ?></td>
+									<td><?= (!empty($ordenCompra['Proveedor'])) ? $ordenCompra['Proveedor']['nombre'] : 'Sin especificar' ; ?>&nbsp;</td>
+									<td><?= h($estados[$ordenCompra['OrdenCompra']['estado']]); ?>&nbsp;</td>
+									<td><?= ($ordenCompra['OrdenCompra']['oc_manual'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
+									<td><?= h($ordenCompra['OrdenCompra']['created']); ?>&nbsp;</td>
+									<td>
+
+									<?= $this->Html->link('<i class="fa fa-eye"></i> Ver', array('action' => 'view', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-block btn-info', 'rel' => 'tooltip', 'title' => 'Revisar este registro', 'escape' => false)); ?>
+
+									</td>
+								</tr>
 								
 								<?php endforeach; ?>
 							</tbody>

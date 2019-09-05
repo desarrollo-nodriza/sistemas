@@ -149,6 +149,11 @@ if ( !defined('FULL_BASE_URL') ) {
 	define('FULL_BASE_URL', 'https://sistema.nodriza.cl/');
 }
 
+// URL DEV Base para consola
+if ( !defined('FULL_BASE_URL_DEV') ) {
+	define('FULL_BASE_URL_DEV', 'https://sistemasdev.nodriza.cl/');
+}
+
 /**
  * Funciones personalizadas
  */
@@ -227,6 +232,27 @@ function monto_bruto($precio = null, $iva = 19)
 }
 
 
+function monto_neto($precio = null, $iva = 19)
+{
+	if (!is_null($precio)) {
+
+		$iva = $iva / 100;
+
+		return round( $precio * $iva, 2 );
+	}
+	
+	return 0;
+}
+
+
+function obtener_iva($monto, $iva = 19)
+{	
+	$iva = ($iva/100);
+
+	return (float)($monto * $iva);
+}
+
+
 function random_color_part() {
     return str_pad( dechex( mt_rand( 0, 255 ) ), 2, '0', STR_PAD_LEFT);
 }
@@ -235,3 +261,27 @@ function random_color_part() {
 function random_color() {
     return random_color_part() . random_color_part() . random_color_part();
 }
+
+
+function getDatesFromRange($start, $end, $format = 'Y-m-d') { 
+      
+    // Declare an empty array 
+    $array = array(); 
+      
+    // Variable that store the date interval 
+    // of period 1 day 
+    $interval = new DateInterval('P1D'); 
+  
+    $realEnd = new DateTime($end); 
+    $realEnd->add($interval); 
+  
+    $period = new DatePeriod(new DateTime($start), $interval, $realEnd); 
+  
+    // Use loop to store date into array 
+    foreach($period as $date) {                  
+        $array[] = $date->format($format);  
+    } 
+  
+    // Return the array elements 
+    return $array; 
+} 

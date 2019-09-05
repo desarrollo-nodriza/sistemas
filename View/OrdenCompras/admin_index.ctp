@@ -38,20 +38,48 @@
             </div>
             </a>
 		</div>
-		<div class="col-xs-12 col-md-4">
+        <div class="col-xs-12 col-md-4">
+            <a href="<?=Router::url('/', false);?>ordenCompras/index_asignacion_moneda">
+            <div class="widget widget-primary widget-item-icon">
+                <div class="widget-item-left">
+                    <span class="fa fa-user"></span>
+                </div>
+                <div class="widget-data">
+                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=validado].id'));?></div>
+                    <div class="widget-title">Asignación de m. de pago</div>
+                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
+                </div>                         
+            </div>
+            </a>
+        </div>
+        <div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_validadas">
-			<div class="widget widget-info widget-item-icon">
+            <div class="widget widget-info widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-money"></span>
                 </div>
                 <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=validado].id'));?></div>
+                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=asignacion_moneda].id'));?></div>
+                    <div class="widget-title">Espera de validación</div>
+                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
+                </div>                         
+            </div>
+            </a>
+        </div>
+        <div class="col-xs-12 col-md-4">
+            <a href="<?=Router::url('/', false);?>ordenCompras/index_validada_proveedores">
+            <div class="widget widget-primary widget-item-icon">
+                <div class="widget-item-left">
+                    <span class="fa fa-user"></span>
+                </div>
+                <div class="widget-data">
+                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=validado_proveedor].id'));?></div>
                     <div class="widget-title">Espera de pago</div>
                     <div class="widget-subtitle">Pincha AQUÍ para ver</div>
                 </div>                         
             </div>
             </a>
-		</div>
+        </div>
 		<div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_pagadas">
 			<div class="widget widget-success widget-item-icon">
@@ -94,10 +122,9 @@
             </div>
             </a>
 		</div>		
-	</div>
-    <div class="row">
+
         <div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_incompletas">
+            <a href="<?=Router::url('/', false);?>ordenCompras/index_pendiente_facturas">
             <div class="widget widget-danger widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-exclamation-circle"></span>
@@ -110,9 +137,9 @@
             </div>
             </a>
         </div>
-        <div class="col-xs-12 col-md-offset-4 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_pendiente_facturas">
-            <div class="widget widget-danger widget-item-icon">
+        <div class="col-xs-12 col-md-4">
+            <a href="<?=Router::url('/', false);?>ordenCompras/index_finalizadas">
+            <div class="widget widget-success widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-smile-o"></span>
                 </div>
@@ -125,6 +152,7 @@
             </a>
         </div>
     </div>
+    
 	<br>
 	<hr>
 	<br>

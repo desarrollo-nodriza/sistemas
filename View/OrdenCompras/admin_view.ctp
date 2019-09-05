@@ -15,11 +15,23 @@
 
 					<div class="row">
 						<div class="col-xs-12">
-							<div class="alert alert-info" role="alert">
+							<div class="alert alert-<?= ($oc['OrdenCompra']['estado'] == 'cancelada') ? 'danger' :  'info' ; ?>" role="alert">
                                 <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
                                 <strong>Estado del la OC: </strong> <?= (!empty($oc['OrdenCompra']['estado'])) ? $oc['OrdenCompra']['estado'] : 'No iniciado' ;  ?>
                             </div>
 						</div>
+						<? if (!empty($oc['OrdenCompra']['razon_cancelada'])) : ?>
+						<div class="col-xs-12">
+							<div class="table-responsive">
+								<table class="table table-bordered">
+									<tr>
+										<th style="width: 300px">Razón o motivo de la cancelación</th>
+										<td><?= $this->Text->autoParagraph($oc['OrdenCompra']['razon_cancelada']); ?></td>
+									</tr>
+								</table>
+							</div>
+						</div>
+                        <? endif; ?>
 					</div>
 					
 					<? if (!empty($oc['OrdenCompra']['comentario_validar'])) : ?>

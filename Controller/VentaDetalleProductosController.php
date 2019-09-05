@@ -178,6 +178,7 @@ class VentaDetalleProductosController extends AppController
 	{	
 		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
 		set_time_limit(-1);
+		ini_set('memory_limit', -1);
 
 		$paginate = array(); 
     	$conditions = array();
@@ -1047,10 +1048,13 @@ class VentaDetalleProductosController extends AppController
 	{	
 		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
 		set_time_limit(-1);
+		ini_set('memory_limit', -1);
 
 		$datos			= $this->VentaDetalleProducto->find('all', array(
 			'recursive'				=> -1
 		));
+
+		
 		$campos			= array_keys($this->VentaDetalleProducto->_schema);
 		$modelo			= $this->VentaDetalleProducto->alias;
 

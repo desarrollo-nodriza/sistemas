@@ -69,7 +69,7 @@
 						<div class="col-xs-12 form-group text-center">
 							<h1>OC N°<?=$ocs['OrdenCompra']['id'];?></h1>
 							<h2>Monto a pagar: <span id="total_bruto"><?=CakeNumber::currency($ocs['OrdenCompra']['total'] , 'CLP');?></span></h2>
-							<h3>Descuento aplicado: <span id="descuento_aplicado">0</span>%</h3>
+							<h3>Descuento aplicado: <span id="descuento_aplicado"><?= (empty($ocs['OrdenCompra']['descuento'])) ? 0 : $ocs['OrdenCompra']['descuento']; ?></span>%</h3>
 							<!--<h3>Pendiente de pago: <span id="total_pendiente"><?=CakeNumber::currency($ocs['OrdenCompra']['pendiente_pago'], 'CLP');?></span></h3>-->
 						</div>
 					</div>
@@ -79,10 +79,10 @@
 					<div class="row">
 						<div class="col-xs-12 form-group">
                             <?= $this->Form->label('moneda_id', 'Medio de pago (requerido)');?></p>
-                            <?= $this->Form->input('moneda_id', array('class' => 'form-control not-blank js-select-moneda', 'empty' => 'Seleccione', 'default' => $ocs['OrdenCompra']['moneda_id'] )); ?>
+                            <?= $this->Form->input('moneda_id', array('class' => 'form-control not-blank js-select-moneda', 'empty' => 'Seleccione', 'default' => $ocs['OrdenCompra']['moneda_id'], 'disabled' => true )); ?>
 							<span class="help-block">El medio de pago usado, se heredará a las facturas recibidas para ésta OC</span>
 						</div>
-						<div class="col-xs-12 hidden js-adjuntos">
+						<div class="col-xs-12 js-adjuntos">
 							<div class="table-responsive">
 								<table class="table table-bordered js-clone-wrapper" data-filas="10">
 									<thead>

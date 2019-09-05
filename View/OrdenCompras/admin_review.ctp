@@ -89,7 +89,11 @@
 									<th>N. Unitario</th>
 									<th>Descuento ($)</th>
 									<th>Total Neto</th>
-									<th><a href="#" class="copy_tr btn btn-rounded btn-primary"><span class="fa fa-plus"></span> agregar</a></th>
+									<? if ($ocs['OrdenCompra']['validado_proveedor']) : ?>
+									<th>Estado proveedor</th>
+									<th>Nota proveedor</th>
+									<? endif; ?>
+									<th><a href="#" class="copy_tr btn btn-rounded btn-primary"><span class="fa fa-plus"></span> agregar</a></th>									
 								</thead>
 								<tboby class="">
 									<tr class="hidden clone-tr">
@@ -102,6 +106,10 @@
 										<td><?= $this->Form->input('VentaDetalleProducto.999.precio_unitario', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-precio-producto not-blank is-number')); ?></td>
 										<td data-toggle="tooltip" data-placement="top" title="" class="js-descuento-valor"><?= $this->Form->input('VentaDetalleProducto.999.descuento_producto', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-descuento-producto not-blank is-number')); ?></td>
 										<td><?= $this->Form->input('VentaDetalleProducto.999.total_neto', array('disabled' => true, 'type' => 'text', 'class' => 'form-control js-total-producto not-blank is-number')); ?></td>
+										<? if ($ocs['OrdenCompra']['validado_proveedor']) : ?>
+										<td></td>
+										<td></td>
+										<? endif; ?>
 										<td valign="center" class="js-acciones">
 											<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
 											<!--<button class="habilitar-fila btn-success"><i class="fa fa-pencil"></i></button>-->
@@ -117,7 +125,7 @@
 										</td>
 										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.codigo', $ipp), array('type' => 'text', 'class' => 'form-control not-blank js-codigo-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['codigo'] )); ?></td>
 										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.descripcion', $ipp), array('type' => 'text', 'class' => 'form-control not-blank js-descripcion-producto', 'value' => $pp['nombre'], 'style' =>'width: 200px;')); ?></td>
-
+										
 										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['cantidad'] )); ?></td>
 										
 										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.precio_unitario', $ipp), array('readonly' => true, 'type' => 'text', 'class' => 'form-control not-blank is-number js-precio-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['precio_unitario'])); ?></td>
@@ -130,6 +138,14 @@
 										<td>
 											<?= $this->Form->input(sprintf('VentaDetalleProducto.%d.total_neto', $ipp), array('readonly' => true, 'type' => 'text', 'class' => 'form-control not-blank is-number js-total-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['total_neto'])); ?>
 										</td>
+										<? if ($ocs['OrdenCompra']['validado_proveedor']) : ?>
+										<td>
+											<?= $estados_proveedor[$pp['OrdenComprasVentaDetalleProducto']['estado_proveedor']]; ?>
+										</td>
+										<td>
+											<?= $pp['OrdenComprasVentaDetalleProducto']['nota_proveedor']; ?>
+										</td>										
+										<? endif; ?>
 										<td valign="center" class="js-acciones">
 											<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
 											<!--<button class="habilitar-fila btn-success"><i class="fa fa-pencil"></i></button>-->
@@ -145,24 +161,24 @@
 								</tboby>
 								<tfoot>
 									<tr>
-										<td colspan="6"></td>
+										<td colspan="<?= ($ocs['OrdenCompra']['validado_proveedor']) ? '8' : '6' ; ?>"></td>
 										<td>Total neto</td>
 										<td colspan="2"><?=$this->Form->input('total_neto', array('type' => 'text', 'class' => 'form-control not-blank is-number js-total-neto', 'value' => $ocs['OrdenCompra']['total_neto']) );?></td>
 									</tr>
 									<tr>
-										<td colspan="6"></td>
+										<td colspan="<?= ($ocs['OrdenCompra']['validado_proveedor']) ? '8' : '6' ; ?>"></td>
 										<td>Total Descuento</td>
 										<td colspan="2">
 											No aplicado aún.
 											<!--<?=$this->Form->input('descuento_monto', array('type' => 'text', 'class' => 'form-control not-blank is-number js-total-descuento', 'value' => $ocs['OrdenCompra']['descuento_monto']) );?>--></td>
 									</tr>
 									<tr>
-										<td colspan="6"></td>
+										<td colspan="<?= ($ocs['OrdenCompra']['validado_proveedor']) ? '8' : '6' ; ?>"></td>
 										<td>IVA</td>
 										<td colspan="2"><?=$this->Form->input('iva', array('type' => 'text', 'class' => 'form-control not-blank is-number js-total-iva', 'value' => $ocs['OrdenCompra']['iva']) );?></td>
 									</tr>
 									<tr>
-										<td colspan="6"></td>
+										<td colspan="<?= ($ocs['OrdenCompra']['validado_proveedor']) ? '8' : '6' ; ?>"></td>
 										<td>Total</td>
 										<td colspan="2"><?=$this->Form->input('total', array('type' => 'text', 'class' => 'form-control not-blank is-number js-total-oc', 'value' => $ocs['OrdenCompra']['total']) );?></td>
 									</tr>

@@ -62,6 +62,36 @@ Router::connect(
     )
 );*/
 
+Router::connect(
+    '/socio/oc/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'ordenCompras', 
+        'action' => 'validate_supplier',
+        'socio' => false,
+        'prefix' => null
+    ),
+     array(
+        'pass' => array('id'),
+        'id' => '[0-9]+',
+    )
+);
+
+
+Router::connect(
+    '/socio/oc/pdf/:id/:proveedor', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'ordenCompras', 
+        'action' => 'view_oc_pdf',
+        'socio' => false,
+        'prefix' => null
+    ),
+     array(
+        'pass' => array('id', 'proveedor'),
+        'id' => '[0-9]+',
+        'proveedor' => '[0-9]+',
+    )
+);
+
 
 /**
 * MELI
@@ -133,8 +163,6 @@ Router::connect('/seccion/*', array('controller' => 'pages', 'action' => 'displa
  */
 Router::connect('/:controller', array('admin' => true, 'prefix' => 'admin'));
 Router::connect('/:controller/:action/*', array('admin' => true, 'prefix' => 'admin'));
-
-
 
 
 

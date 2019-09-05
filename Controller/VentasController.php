@@ -5269,8 +5269,8 @@ class VentasController extends AppController {
 			$tienda = ClassRegistry::init('Tienda')->obtener_tienda($marketplace['Marketplace']['tienda_id'], array('Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
 
 			if ($tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
+				
 				$this->Pushalert = $this->Components->load('Pushalert');
-
 				$this->Pushalert::$api_key = $tienda['Tienda']['notificacion_apikey'];
 
 				$tituloPush = sprintf('Actualización de venta en %s', $marketplace['Marketplace']['nombre']);
@@ -6932,7 +6932,6 @@ class VentasController extends AppController {
 	}
 
 
-
 	/**
 	 * Usado por el webhook configurado en Linio
 	 * Ej actualizar: https://sistemasdev.nodriza.cl/api/ventas/linio/actualizar/1
@@ -7092,6 +7091,13 @@ class VentasController extends AppController {
 	}
 
 
+	/**
+	 * Enpoint: /api/ventas/meli/:tipo/:marketplace_id
+	 * Ref: https://developers.mercadolibre.cl/es_ar/productos-recibe-notificaciones
+	 * @param  string $tipo           crear/actualizar: Meli no hace diferencia por sus tipos de notificaciones, así que por ahora se usa solo crear tanto para crear y como para actualizar.
+	 * @param  [type] $marketplace_id Id del marketplace en el sistema
+	 * @return json
+	 */
 	public function api_venta_meli($tipo = 'crear', $marketplace_id)
 	{	
 		if (!ClassRegistry::init('Marketplace')->exists($marketplace_id)) {
@@ -7156,6 +7162,11 @@ class VentasController extends AppController {
 	}
 
 
+	/**
+	 * Enpoint  /api/ventas/prestashop/:tienda_id.json
+	 * @param  int $tienda_id identificador de la tienda a la cual se relacionan las ventas
+	 * @return json
+	 */
 	public function api_venta_prestashop($tienda_id)
 	{	
 

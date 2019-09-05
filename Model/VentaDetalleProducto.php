@@ -312,6 +312,32 @@ class VentaDetalleProducto extends AppModel
 
 
 	/**
+	 * [obtener_descuento_por_producto_id description]
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function obtener_descuento_por_producto_id($id)
+	{
+		$producto = $this->find('first', array(
+			'conditions' => array(
+				'VentaDetalleProducto.id' => $id
+			),
+			'contain' => array(
+				'Marca' => array(
+					'PrecioEspecificoMarca'
+				),
+				'PrecioEspecificoProducto'
+			)
+		));
+
+		if (empty($producto))
+			return array();
+
+		return self::obtener_descuento_por_producto($producto, true);
+	}
+
+
+	/**
 	 * [obtener_precio_costo description]
 	 * @param  [type] $id [description]
 	 * @return [type]     [description]

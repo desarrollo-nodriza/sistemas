@@ -196,7 +196,6 @@ class ManifiestosController extends AppController {
 		$ventas          = $this->Manifiesto->Venta->find('all', array(
 			'conditions' => array(
 				'Venta.fecha_venta BETWEEN ? AND ?' => array($hace_un_mes, $fecha_actual),
-				'Venta.atendida' => 0
 			),
 			'fields' => array(
 				'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida'

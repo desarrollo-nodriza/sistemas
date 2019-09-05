@@ -9,14 +9,24 @@ class OrdenCompra extends AppModel
 
 
 	public $estados = array(
-		''                  => 'No rocesada',
+		''                  => 'No procesada',
 		'iniciado'          => 'En revisión',
-		'validado'          => 'En proceso de pago',
+		'validado'          => 'En asignación de m. de pago',
+		'asignacion_moneda' => 'En revisión proveedor',
+		'validado_proveedor'=> 'En proceso de pago',
 		'pagado'            => 'Pagado',
 		'enviado'           => 'Enviado',
 		'incompleto'        => 'Recibido incompleto',
 		'pendiente_factura' => 'Factura pendiente',
-		'recibido'          => 'Finalizado'
+		'recibido'          => 'Finalizado',
+		'cancelada'          => 'Cancelada'
+	);
+
+
+	public $estado_proveedor = array(
+		'accept'      => 'Aceptado',
+		'stockout'    => 'Sin stock',
+		'price_error' => 'Error de precio'
 	);
 
 
@@ -324,6 +334,100 @@ class OrdenCompra extends AppModel
 			return false;
 		}
 
+	}
+
+
+	public function crear_oc($id_proveedor, $estado = '', $items = array())
+	{
+
+	}
+
+	public function obtener_ventas_por_oc($id_oc, $order = 'ASC')
+	{	
+
+		$ocVentas = ClassRegistry::init('OrdenComprasVenta')->find('all', array(
+			'conditions' => array(
+				'OrdenComprasVenta.orden_compra_id' => $id_oc
+			)
+		));
+
+		$ventas = ClassRegistry::init('Venta')->find('all', array(
+			'conditions' => array(
+				'Venta.id' => Hash::extract($ocVentas, '{n}.OrdenComprasVenta.venta_id')
+			),
+			'contain' => array(
+				'VentaDetalle' => array(
+					'VentaDetalleProducto'
+				)
+			),
+			'order' => array(
+				'Venta.fecha_venta' => $order
+			)
+		));
+
+		return $ventas;
+	}
+
+
+	public function obtener_ventas_por_productos($id_oc, $id_productos = array())
+	{
+		$ventas = ClassRegistry::init('Venta')->find('all', array(
+			'contain' => array(
+				'VentaDetalle' => array(
+					'VentaDetalleProducto'
+				),
+				'Tienda',
+				'Marketplace'
+			),
+			'joins' => array(
+			    array(
+			    	'table' => 'venta_detalles',
+			        'alias' => 'vd',
+			        'type' => 'INNER',
+			        'conditions' => array(
+			            'vd.venta_id = Venta.id',
+			            'vd.venta_detalle_producto_id' => $id_productos
+			        )
+			    ),
+			    array(
+			    	'table' => 'orden_compras_ventas',
+			        'alias' => 'v',
+			        'type' => 'INNER',
+			        'conditions' => array(
+			            'v.venta_id = Venta.id',
+			            'v.orden_compra_id' => $id_oc
+			        )
+			    )
+			)
+		));
+
+		return $ventas;
+		
+	}
+
+
+	public function obtener_descuento_oc($id_oc)
+	{	
+		$oc = $this->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id_oc
+			),
+			'contain' => array(
+				'Proveedor' => array(
+					'Moneda'
+				),
+			)
+		));
+
+		$descuento = 0;
+
+		# Descuentos por método de pago
+		if ( Hash::check($oc, 'Proveedor.Moneda.{n}[id=' . $oc['OrdenCompra']['moneda_id'] . ']') )
+		{
+			$descuento = Hash::extract($oc, 'Proveedor.Moneda.{n}[id=' . $oc['OrdenCompra']['moneda_id'] . '].MonedasProveedor.descuento')[0];
+		}
+
+		return $descuento;
 	}
 
 }

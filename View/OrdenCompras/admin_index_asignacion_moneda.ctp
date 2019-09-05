@@ -1,5 +1,5 @@
 <div class="page-title">
-	<h2><span class="fa fa-list"></span> Ordenes de compra en proceso de pago</h2>
+	<h2><span class="fa fa-list"></span> Ordenes de compra en en espera de asignación de m. de pago</h2>
 </div>
 
 <div class="page-content-wrap">
@@ -44,7 +44,7 @@
 							<tbody>
 								<?php foreach ( $ordenCompras as $ordenCompra ) : ?>
 
-								<?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array()));?>
+								<?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('asignar_pagar')));?>
 								
 								<?php endforeach; ?>
 							</tbody>

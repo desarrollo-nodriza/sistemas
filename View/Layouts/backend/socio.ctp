@@ -20,7 +20,9 @@
 			'/backend/js/plugins/datatables/jquery.dataTables.min',
 			'/backend/js/plugins/morris/raphael-min',
 			'/backend/js/plugins/morris/morris.min',
+			'/backend/js/plugins/jquery-validation/jquery.validate',
 			'/backend/js/custom',
+			'/backend/js/revision_oc',
 			'/backend/js/socios'
 		)); ?>
 		<?= $this->fetch('meta'); ?>
