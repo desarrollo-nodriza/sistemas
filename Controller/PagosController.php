@@ -66,6 +66,7 @@ class PagosController extends AppController
 				'Moneda' => array(
 					'fields' => array(
 						'Moneda.tipo',
+						'Moneda.nombre',
 						'Moneda.comprobante_requerido'
 					)
 				),
@@ -91,7 +92,7 @@ class PagosController extends AppController
 				'OrdenCompra.moneda_id'
 			)
 		));
-
+		
 		BreadcrumbComponent::add('Pagos', '/ordenCompraFacturas/index');
 		BreadcrumbComponent::add('Configuración de pagos');
 

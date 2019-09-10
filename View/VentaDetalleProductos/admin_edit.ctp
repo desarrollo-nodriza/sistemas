@@ -102,8 +102,44 @@
 				<div class="col-xs-12">
 					<div class="panel panel-info">
 		                <div class="panel-heading">
+		                    <h3 class="panel-title"><i class="fa fa-cubes" aria-hidden="true"></i> Unidades reservadas</h3>
+		                    <ul class="panel-controls"> 
+		                    	<li><a href="#" class="panel-collapse"><span class="fa fa-angle-up"></span></a></li>
+		                    </ul>
+		                </div>
+		                <div class="panel-body">
+		                	<div class="table-responsive">
+								<table class="table table-bordered">
+									<caption>Cantidades reservadas en distintas ventas</caption>
+									<thead>
+										<th>Id venta</th>
+										<th>Estado</th>
+										<th>Cantidad vendida</th>
+										<th>Cantidad reservada</th>
+										<th>Liberar</th>
+									</thead>
+									<tbody>
+									<? foreach ($this->request->data['VentaDetalle'] as $ivd => $vd) : if($vd['cantidad_reservada'] < 1) { continue; } ?>
+										<tr>
+											<td><?= $this->Html->link($vd['venta_id'], array('controller' => 'ventas', 'action' => 'view', $vd['venta_id']), array('target' => '_blank')); ?></td>
+											<td><a data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$vd['Venta']['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= h($vd['Venta']['VentaEstado']['VentaEstadoCategoria']['estilo']); ?>"><?= h($vd['Venta']['VentaEstado']['VentaEstadoCategoria']['nombre']); ?></a>&nbsp;</td>
+											<td><?= $vd['cantidad']; ?></td>
+											<td><?= $vd['cantidad_reservada']; ?></td>
+											<td><?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('controller' => 'ventas', 'action' => 'liberar_stock_reservado', $vd['Venta']['id'], $vd['id'], $vd['cantidad_reservada']), array('class' => 'btn btn-warning btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?></td>
+										</tr>
+									<? endforeach; ?>										
+									</tbody>	
+								</table>
+		                	</div>
+		                </div>                             
+		            </div>
+				</div>
+				<div class="col-xs-12">
+					<div class="panel panel-info panel-toggled">
+		                <div class="panel-heading">
 		                    <h3 class="panel-title"><i class="fa fa-money" aria-hidden="true"></i> Ventas</h3>
-		                    <ul class="panel-controls">      
+		                    <ul class="panel-controls"> 
+		                    	<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>     
 		                        <li><label class="control-label">Rango </label></li>
 		                        <li>
 		                            <div class="input-group">
@@ -121,6 +157,7 @@
 		                    </div>
 		                </div>                             
 		            </div>
+
 				</div>
 
 
@@ -282,7 +319,7 @@
 		<div class="col-xs-12">
 			<div class="panel panel-info">
 				<div class="panel-heading">
-					<h5 class="panel-title"><i class="fa fa-usd" aria-hidden="true"></i> <?=__('Precios específicos');?></h5>
+					<h5 class="panel-title"><i class="fa fa-usd" aria-hidden="true"></i> <?=__('Precios específicos compra');?></h5>
 					<ul class="panel-controls">
                         <li><a href="#" class="copy_tr"><span class="fa fa-plus"></span></a></li>
                     </ul>

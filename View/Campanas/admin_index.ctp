@@ -34,7 +34,7 @@
 									<td><?= h($campana['Campana']['id']); ?>&nbsp;</td>
 									<td><?= h($campana['Campana']['nombre']); ?>&nbsp;</td>
 									<td><?= h($campana['Campana']['categoria_id']); ?>&nbsp;</td>
-									<td><?= Router::url('/', true) . 'feed/google/' . $this->Session->read('Tienda.id') . '/' . $campana['Campana']['id']; ?></td>
+									<td><?= Router::url('/', true) . 'Campana/google/' . $this->Session->read('Tienda.id') . '/' . $campana['Campana']['id']; ?></td>
 									<td><?= ($campana['Campana']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td>
 									<? if ($permisos['edit']) : ?>

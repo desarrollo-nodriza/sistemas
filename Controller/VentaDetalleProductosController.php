@@ -801,7 +801,19 @@ class VentaDetalleProductosController extends AppController
 			$this->request->data	= $this->VentaDetalleProducto->find('first', array(
 				'conditions'	=> array('VentaDetalleProducto.id' => $id),
 				'contain' => array(
-					'VentaDetalle',
+					'VentaDetalle' => array(
+						'Venta' => array(
+							'fields' => array(
+								'Venta.id', 'Venta.referencia', 'Venta.venta_estado_id'
+							),
+							'VentaEstado' => array(
+								'fields' => array('VentaEstado.id', 'VentaEstado.nombre'),
+								'VentaEstadoCategoria' => array(
+									'fields' => array('VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo')
+								)
+							)
+						)
+					),
 					'Bodega' => array(
 						'fields' => array(
 							'Bodega.id',

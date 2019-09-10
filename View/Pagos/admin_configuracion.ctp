@@ -10,6 +10,7 @@
 					<h2>OC #<?=$oc['OrdenCompra']['id']; ?></h2>
 					<h3>Monto OC <?=CakeNumber::currency($oc['OrdenCompra']['total'], 'CLP')?></h3>
 					<h1 id="total-facturado" data-total="<?=array_sum(Hash::extract($oc['OrdenCompraFactura'], '{n}.monto_facturado')); ?>">Total Facturado <?=CakeNumber::currency( array_sum(Hash::extract($oc['OrdenCompraFactura'], '{n}.monto_facturado')), 'CLP')?></h1>
+					<h3 style="font-size: 18px !important;" class="label label-success">Moneda seleccionada: <?=$oc['Moneda']['nombre']; ?></h3>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
