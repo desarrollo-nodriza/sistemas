@@ -99,9 +99,9 @@ Router::connect(
 Router::connect(
     '/meli/:tienda/:plantilla/:producto', // E.g. /blog/3-CakePHP_Rocks
     array(
-    	'controller' => 'mercado_libres', 
-    	'action' => 'get',
-    	'meli' => true,
+        'controller' => 'mercado_libres', 
+        'action' => 'get',
+        'meli' => true,
         'prefix' => 'meli'),
     array(
         'pass' => array('tienda', 'plantilla', 'producto'),
@@ -149,6 +149,21 @@ Router::connect(
     array(
         'pass' => array('tienda'),
         'tienda' => '[a-z]+'
+    )
+);
+
+
+Router::connect(
+    '/feed/google/:tienda/:feed', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'campanas', 
+        'action' => 'feed',
+        'google' => true,
+        'prefix' => 'google'),
+    array(
+        'pass' => array('tienda', 'feed'),
+        'tienda' => '[0-9]+',
+        'feed' => '[0-9]+',
     )
 );
 
