@@ -1,1 +1,13 @@
 /tmp/*
+/webroot/img/OrdenCompra/*
+/webroot/img/OrdenCompraAdjunto/*
+/webroot/img/OrdenCompraPago/*
+/webroot/img/Pago/*
+/webroot/manifest.json
+/webroot/sw.js
+/webroot/img/Email/*
+/webroot/Venta/*
+/webroot/Pdf/*
+/webroot/Dte/*
+/Config/*
+.gitignore

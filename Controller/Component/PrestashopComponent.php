@@ -812,6 +812,40 @@ class PrestashopComponent extends Component
 	 * [prestashop_obtener_proveedores description]
 	 * @return [type] [description]
 	 */
+	public function prestashop_obtener_categorias( $id_padre = '' )
+	{	
+		ini_set('max_execution_time', 0);
+
+		$opt             = array();
+		$opt['display'] = '[id,name]';
+		$opt['filter[active]'] = '[1]';
+		$opt['resource'] = 'categories';
+
+		if (!empty($id_padre)) {
+			$opt['filter[id_parent]'] = $id_padre;
+		}
+
+		$proveedores = array();
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+		
+			$PrestashopResources = $xml->children()->children();
+			
+			$proveedores = to_array($PrestashopResources);
+
+		} catch (Exception $e) {
+			// No existe en prestashop
+		}
+		
+		return $proveedores;
+	}
+
+
+	/**
+	 * [prestashop_obtener_proveedores description]
+	 * @return [type] [description]
+	 */
 	public function prestashop_obtener_proveedores()
 	{	
 		ini_set('max_execution_time', 0);

@@ -129,13 +129,13 @@
         <audio id="audio-fail" src="<?= $this->Html->url('/backend/audio/fail.mp3'); ?>" preload="auto"></audio>
 		<?= $this->Html->script(array('/backend/js/actions')); ?>
 
-		<!-- PushAlert -->
+        <!-- PushAlert -->
         <script type="text/javascript">
         (function(d, t) {
-            var g = d.createElement(t),
-            s = d.getElementsByTagName(t)[0];
-            g.src = "https://cdn.pushalert.co/integrate_e53524febc1d5923a2071c710ed1efdd.js";
-            s.parentNode.insertBefore(g, s);
+                var g = d.createElement(t),
+                s = d.getElementsByTagName(t)[0];
+                g.src = "https://cdn.pushalert.co/integrate_0c569d5c63e4bf2937a830239ab1cc38.js";
+                s.parentNode.insertBefore(g, s);
         }(document, "script"));
         </script>
         <!-- End PushAlert -->
