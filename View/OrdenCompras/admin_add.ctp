@@ -129,7 +129,7 @@
 					$('.ctm-datatables').DataTable({
 						paging: false,
 				    	scrollY: 400,
-						ordering: false
+						ordering: true,
 					});
 
 				}

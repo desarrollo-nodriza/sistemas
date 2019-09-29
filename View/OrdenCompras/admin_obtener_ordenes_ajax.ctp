@@ -10,6 +10,6 @@
 	<td><?=$venta['Venta']['fecha_venta'];?></td>
 	<td><?=count($venta['OrdenCompra']);?></td>
 	<td><?=count($venta['VentaDetalle']);?></td>
-	<td><?=($venta['Venta']['prioritario']) ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'; ?></td>
+	<td><?=($venta['Venta']['prioritario']) ? '<i class="fa fa-check"></i> Si' : '<i class="fa fa-remove"></i> No'; ?></td>
 </tr>
 <? endforeach ?>		

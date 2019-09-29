@@ -101,6 +101,12 @@
 						</div>
 
 						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
+							<br />
+							<label>Estado picking</label>
+							<?= $this->Form->select('picking_estado', $picking, array('class' => 'form-control', 'empty' => 'Seleccione', 'required' => false, 'default' => $FiltroPicking)); ?>
+						</div>
+
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
 							<div class="form-group">
 								<br />
 								<label>Fecha (desde)</label>
@@ -120,19 +126,17 @@
 									<span class="input-group-addon glyphicon glyphicon-calendar"></span>
 								</div>
 							</div>
-						</div>
-
-						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
-							<br />
-							<?= $this->Form->button('<i class="fa fa-search" aria-hidden="true"></i> Filtrar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
-						</div>
+						</div>						
 
 					</div>
 
 					<div class="panel-footer">
 						<div class="col-xs-12">
+							<div class="pull-left">
+								<?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtros', array('action' => 'index'), array('class' => 'btn btn-primary btn-block', 'escape' => false)); ?>
+							</div>
 							<div class="pull-right">
-								<?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtros', array('action' => 'index'), array('class' => 'btn btn-buscar btn-primary btn-block', 'escape' => false)); ?>
+								<?= $this->Form->button('<i class="fa fa-search" aria-hidden="true"></i> Filtrar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-success btn-block')); ?>
 							</div>
 						</div>
 					</div>
@@ -166,6 +170,10 @@
 						<a class="btn btn-success" onclick="$('#mb-confirmar-actualizacion').css('display', 'block');"><i class="fa fa-refresh"></i> Actualizar Ventas</a>
 						<? endif; ?>
 						<a class="btn btn-primary" onclick="VentasExportarExcel();"><i class="fa fa-file-excel-o"></i> Exportar a Excel</a>
+
+						<? if ($permisos['edit']) : ?>
+						<a class="btn btn-info" data-toggle="modal" data-target="#modal-venta-manual"><i class="fa fa-money"></i> Obtener venta desde canal</a>
+						<? endif; ?>
 					</div>
 					<?= $this->Form->end(); ?>
 
@@ -386,6 +394,9 @@
 		</div>
 	</div>
 </div>
+
+
+<?= $this->element('ventas/modal-venta-manual', array('tiendas' => $tiendas, 'marketplaces' => $marketplaces))?>
 
 <script type="text/javascript">
 

@@ -35,10 +35,10 @@ class AppController extends Controller
 				array('Inicio', '/'),
 			)
 		),
-		'Chilexpress.GeoReferencia',
-		'Chilexpress.Tarificacion',
-		'Chilexpress.Ot',
-		'Chilexpress.Tracking'
+		//'Chilexpress.GeoReferencia',
+		//'Chilexpress.Tarificacion',
+		//'Chilexpress.Ot',
+		//'Chilexpress.Tracking'
 		//'Facebook.Connect'	=> array('model' => 'Usuario'),
 		//'Facebook'
 	);
@@ -877,6 +877,26 @@ class AppController extends Controller
 	public function crearAlertaUl($arr = array(), $frstMessg = 'Resultado')
 	{	
 		$errMsg = '<p>'.$frstMessg.': </p><ul>';
+
+		foreach ($arr as $key => $value) {
+			$errMsg .= '<li>' . $value . '</li>';
+		}
+
+		$errMsg .= '</ul>';
+
+		return $errMsg;
+
+	}
+
+
+	/**
+	 * [crearUl description]
+	 * @param  array  $arr [description]
+	 * @return [type]      [description]
+	 */
+	public function crearUl($arr = array())
+	{	
+		$errMsg = '<ul>';
 
 		foreach ($arr as $key => $value) {
 			$errMsg .= '<li>' . $value . '</li>';

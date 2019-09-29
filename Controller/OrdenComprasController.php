@@ -2386,7 +2386,7 @@ class OrdenComprasController extends AppController
 	 * @param  array  $emails [description]
 	 * @return [type]         [description]
 	 */
-	private function guardarEmailValidado($id, $emails = array())
+	private function guardarEmailValidado($id)
 	{	
 		$oc = $this->OrdenCompra->find('first', array(
 			'conditions' => array(
@@ -2417,9 +2417,12 @@ class OrdenComprasController extends AppController
 		$mensaje = sprintf('Estimados %s, la OC #%d emitida por "%s" se encuentra disponible para ser validada.', $oc['Proveedor']['nombre'], $oc['OrdenCompra']['id'], $oc['Tienda']['nombre']);
 
 				
-		$to  = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=destinatario].email');
+		$to  = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=validador].email');
+		$to2 = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=destinatario].email');
 		$cc  = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=copia].email');
 		$bcc = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=copia oculta].email');
+
+		$destinatario = (!empty($to)) ? $to : $to2;
 		
 		App::uses('CakeEmail', 'Network/Email');
 
@@ -2435,7 +2438,7 @@ class OrdenComprasController extends AppController
 		->emailFormat('html')
 		->from(array($this->Session->read('Auth.Administrador.email') => 'Nodriza Spa') )
 		->replyTo(array($oc['Administrador']['email'] => $oc['Administrador']['nombre']))
-		->to($to)
+		->to($destinatario)
 		->cc($cc)
 		->bcc($bcc)
 		->template('oc_proveedor')
@@ -2448,7 +2451,6 @@ class OrdenComprasController extends AppController
 			$this->Session->setFlash('Ocurrió un error al enviar el email. Intente nuevamente.', null, array(), 'danger');
 			return false;
 		}
-
 
 		/**
 		 * Clases requeridas
@@ -2723,16 +2725,30 @@ class OrdenComprasController extends AppController
 				}
 
 				# si es error de stock se decuenta las unidades rechazadas
-				if ($p['estado_proveedor'] == 'stockout') {
+				if ($p['estado_proveedor'] == 'stockout' || $p['estado_proveedor'] == 'modified') {
 
 					if ($p['cantidad'] > 0) {
+						
 						$itemsAceptados[$ip] = $p;
+						$itemes[$p['estado_proveedor']][$ip]['venta_detalle_producto_id'] = $p['venta_detalle_producto_id'];
+						$itemes[$p['estado_proveedor']][$ip]['codigo']                    = $p['codigo'];
+						$itemes[$p['estado_proveedor']][$ip]['descripcion']               = $p['descripcion'];
+						$itemes[$p['estado_proveedor']][$ip]['precio_unitario']           = $p['precio_unitario'];
+						$itemes[$p['estado_proveedor']][$ip]['total_neto']                = $p['total_neto'];
+						$itemes[$p['estado_proveedor']][$ip]['descuento_producto']        = $p['descuento_producto'];
+						$itemes[$p['estado_proveedor']][$ip]['tipo_descuento']            = $p['tipo_descuento'];
+						$itemes[$p['estado_proveedor']][$ip]['estado_recibido']           = $p['estado_recibido'];
+						$itemes[$p['estado_proveedor']][$ip]['cantidad']                  = $p['cantidad'];
+						$itemes[$p['estado_proveedor']][$ip]['estado_proveedor']          = $p['estado_proveedor'];
+						$itemes[$p['estado_proveedor']][$ip]['nota_proveedor']            = $p['nota_proveedor'];
+
 						$cantidad = $p['cantidad_solicitada'] - $p['cantidad'];
 					}
 					
+					$p['estado_proveedor'] = 'stockout';
+					$p['cantidad'] = $cantidad;
 					$itemsRechazados[$ip] = $p;
-					$itemsRechazados[$ip]['cantidad'] = $cantidad;
-								
+					
 				}
 
 				if ($p['estado_proveedor'] == 'price_error') {

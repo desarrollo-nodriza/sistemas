@@ -168,9 +168,6 @@ class Bodega extends AppModel
 			)
 		));
 
-		# Obtenemos la cantidad reservada o vendida no empaquetada
-		$reservado = ClassRegistry::init('VentaDetalleProducto')->obtener_cantidad_reservada($id_producto);
-
 		$total = 0;
 
 		if (!empty($historico)) {
@@ -183,6 +180,9 @@ class Bodega extends AppModel
 
 		if ($real)
 			return $total;
+
+		# Obtenemos la cantidad reservada o vendida no empaquetada
+		$reservado = ClassRegistry::init('VentaDetalleProducto')->obtener_cantidad_reservada($id_producto);
 
 		if ($total <= $reservado)
 			return 0; // No tenemos stock
@@ -202,9 +202,6 @@ class Bodega extends AppModel
 			)
 		));
 
-		# Obtenemos la cantidad reservada o vendida no empaquetada
-		$reservado = ClassRegistry::init('VentaDetalleProducto')->obtener_cantidad_reservada($id_producto);
-
 		$total = 0;
 
 		if (!empty($historico)) {
@@ -217,6 +214,9 @@ class Bodega extends AppModel
 
 		if ($real)
 			return $total;
+
+		# Obtenemos la cantidad reservada o vendida no empaquetada
+		$reservado = ClassRegistry::init('VentaDetalleProducto')->obtener_cantidad_reservada($id_producto);
 
 		if ($total <= $reservado)
 			return 0; // No tenemos stock

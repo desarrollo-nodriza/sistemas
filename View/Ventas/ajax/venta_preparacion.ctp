@@ -143,7 +143,7 @@
 	           	<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Documentos.', array('controller' => 'ventas', 'action' => 'generar_documentos', $venta['Venta']['id'], true, false), array('class' => 'btn btn-success btn-xs js-generar-documentos-venta js-generar-documentos-venta-primario', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
 
 	            <!-- DESCARGAR ETIQUETA -->
-	            <?= $this->Html->link('<i class="fa fa-cube"></i> Etiqueta', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'btn btn-warning btn-xs js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => ' Generar Etiqueta', 'escape' => false)); ?>
+	            <?= $this->Html->link('<i class="fa fa-cube"></i> Etiqueta interna', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'btn btn-warning btn-xs js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => ' Generar Etiqueta interna', 'escape' => false)); ?>
 
 	        	<button class="btn btn-xs btn-primary js-venta-ver-mas" data-id="<?=$venta['Venta']['id'];?>"><i class="fa fa-eye"></i> Ver más</button> 
 	        </div>                                
@@ -270,10 +270,14 @@
 	    </div>
 	    <div class="task-footer">
 
-	        <div class="pull-right">
+	        <div class="pull-right btn-group">
 				
 				<!-- DESCARGAR DOCUMENTOS -->
 	            <?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Documentos.', array('controller' => 'ventas', 'action' => 'generar_documentos', $venta['Venta']['id'], true, false), array('class' => 'btn btn-success btn-xs js-generar-documentos-venta js-generar-documentos-venta-primario', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
+
+	            <? if (!empty($venta['Venta']['etiqueta_envio_externa'])) : ?>
+				<a href="<?=$venta['Venta']['etiqueta_envio_externa']; ?>" target="_blank" class="btn btn-info btn-xs" rel="tooltip" title="Descargar etiqueta/s externas"><i class="fa fa-truck"></i> Etiqueta/s externa</a>
+	           	<? endif; ?>
 
 	            <!-- DESCARGAR ETIQUETA -->
 	            <?= $this->Html->link('<i class="fa fa-cube"></i> Etiqueta', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'btn btn-warning btn-xs js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => ' Generar Etiqueta', 'escape' => false)); ?>

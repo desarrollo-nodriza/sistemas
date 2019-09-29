@@ -50,6 +50,10 @@
 									<th><?= $this->Form->label('tienda_id', 'Tienda'); ?></th>
 									<td><?= $this->Form->input('tienda_id', array('empty' => 'Seleccione Tienda')); ?></td>
 								</tr>
+								<tr>
+									<th><?= $this->Form->label('stock_automatico', 'Sincronizar stock'); ?></th>
+									<td><?= $this->Form->input('stock_automatico', array('class' => 'icheckbox')); ?></td>
+								</tr>
 							</table>
 
 							<div class="pull-right">

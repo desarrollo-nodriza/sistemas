@@ -74,17 +74,27 @@
 
 					<div class="btn-group pull-right">
 					<? if ($permisos['edit']) : ?>
-						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Actualización masiva', array('action' => 'carga_masiva'), array('class' => 'btn btn-danger', 'escape' => false)); ?>
+						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Actualización masiva', array('action' => 'edicion_masiva'), array('class' => 'btn btn-danger', 'escape' => false)); ?>
 					<? endif; ?>
 					<? if ($permisos['add']) : ?>
 						<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Producto', array('action' => 'add'), array('class' => 'btn btn-success', 'escape' => false)); ?>
 					<? endif; ?>
-						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', array('action' => 'exportar'), array('class' => 'btn btn-primary', 'escape' => false)); ?>
+						
+						<? $export = array(
+							'action' => 'exportar'
+							);
+
+						if (isset($this->request->params['named'])) {
+							$export = array_replace_recursive($export, $this->request->params['named']);
+						}?>
+						
+						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>
 					</div>					
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
 						<table class="table">
+							<caption><?=$this->Paginator->counter('Página {:page} de {:pages}, mostrando {:current} registros de {:count}.');?></caption>
 							<thead>
 								<tr class="sort">
 									<th style="width: 120px;"><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>

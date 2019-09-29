@@ -36,4 +36,12 @@ class MetodoEnvio extends AppModel
 			)
 		);
 	}
+
+
+	
+	public function es_despacho($id)
+	{	
+		$this->id = $id;
+		return $this->field('es_despacho');
+	}
 }

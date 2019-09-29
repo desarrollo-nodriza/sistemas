@@ -87,6 +87,8 @@ class MeliMarketplaceComponent extends Component
 					}
 
 					#$response['success'] = sprintf('%s sigue conectado a %s', $marketplace['nombre'], $marketplace['MarketplaceTipo']['nombre']);
+					
+					$response['success'] = true;
 				}
 			}
 			
@@ -487,6 +489,7 @@ class MeliMarketplaceComponent extends Component
 
 		return array();
 	}
+
 
 
 	/**
@@ -1063,13 +1066,33 @@ class MeliMarketplaceComponent extends Component
 		);
 
 		$res = $this->update($id, $item);
-	
+		
 		if ($estado == 'closed') {
 			return $this->mercadolibre_eliminar_producto($id); // Se elimina de meli
 		}
 
 		return $res;
 
+	}
+
+
+	public function mercadolibre_cambiar_precio($id, $precio)
+	{
+		$item = array(
+			"price" => (float) round($precio)
+		);
+		
+		return $this->update($id, $item);
+	}
+
+
+	public function mercadolibre_cambiar_precio_oferta($id, $precio)
+	{
+		$item = array(
+			"price" => (float) round($precio)
+		);
+
+		return $this->update($id, $item);
 	}
 
 

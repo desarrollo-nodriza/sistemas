@@ -78,7 +78,7 @@ class LinioComponent extends Component
 	 * @param  string $precioFinal   Nuevo precio del producto
 	 * @return array                
 	 */
-	function actualizar_precio_producto($referencia = '', $precioFinal = '')
+	function actualizar_precio_producto($referencia = '', $precioFinal = '', $precioOferta = '')
 	{
 		$res = array(
 			'code'    => 501,
@@ -97,8 +97,12 @@ class LinioComponent extends Component
 
 		$productCollectionRequest = Endpoints::product()->productUpdate();
 
-		$productCollectionRequest->updateProduct($referencia)
-		->setPrice($precioFinal);
+		$productCollectionRequest->updateProduct($referencia)->setPrice($precioFinal);
+
+		# actualizar precio oferta
+		if (!empty($precioOferta)) {
+			$productCollectionRequest->updateProduct($referencia)->setSalePrice($precioOferta);
+		}
 		
 		$response = $productCollectionRequest->build()->call($this->LinioConexion);
 
@@ -106,6 +110,82 @@ class LinioComponent extends Component
 		if ($response instanceof SuccessResponseInterface) {
 			$res['code'] = 200;
 			$res['message'] = 'Producto Ref: ' . $referencia . ' precio actualizado con éxito';
+		}
+
+		return $res;
+	}
+
+
+	/**
+	 * [actualizar_precio_oferta_producto description]
+	 * @param  string $referencia   [description]
+	 * @param  string $precioOferta [description]
+	 * @return [type]               [description]
+	 */
+	function actualizar_precio_oferta_producto($referencia = '', $precioOferta = '')
+	{
+		$res = array(
+			'code'    => 501,
+			'message' => 'Un error interno ha ocurrido.'
+		);
+
+		if ( empty($referencia)
+			|| empty($precioOferta)
+			) {
+
+			$res['code']    = 300;
+			$res['message'] = 'Existen campos vacios. No se puede realizar la operación.';
+			
+			return $res;
+		}
+
+		$productCollectionRequest = Endpoints::product()->productUpdate();
+		$productCollectionRequest->updateProduct($referencia)->setSalePrice($precioOferta);
+		
+		$response = $productCollectionRequest->build()->call($this->LinioConexion);
+
+		//si la actualización a linio es correcta
+		if ($response instanceof SuccessResponseInterface) {
+			$res['code'] = 200;
+			$res['message'] = 'Producto Ref: ' . $referencia . ' precio oferta actualizado con éxito';
+		}
+
+		return $res;
+	}
+
+
+	/**
+	 * ref: https://sellerapi.sellercenter.net/docs/productupdate#request-data
+	 * @param  string $referencia [description]
+	 * @param  string $estado     One of the following values: 'active', 'inactive' or 'deleted'
+	 * @return [type]             [description]
+	 */
+	function actualizar_estado_producto($referencia = '', $estado = '')
+	{
+		$res = array(
+			'code'    => 501,
+			'message' => 'Un error interno ha ocurrido.'
+		);
+
+		if ( empty($referencia)
+			|| empty($estado)
+			) {
+
+			$res['code']    = 300;
+			$res['message'] = 'Existen campos vacios. No se puede realizar la operación.';
+			
+			return $res;
+		}
+
+		$productCollectionRequest = Endpoints::product()->productUpdate();
+		$productCollectionRequest->updateProduct($referencia)->setStatus($estado);
+		
+		$response = $productCollectionRequest->build()->call($this->LinioConexion);
+
+		//si la actualización a linio es correcta
+		if ($response instanceof SuccessResponseInterface) {
+			$res['code'] = 200;
+			$res['message'] = 'Producto Ref: ' . $referencia . ' estado actualizado con éxito';
 		}
 
 		return $res;
@@ -150,14 +230,14 @@ class LinioComponent extends Component
 			$error = $e->getMessage();
 		}
 		
-
+		
 		//si la actualización a linio es correcta
 		if ($response instanceof SuccessResponseInterface) {
 			$res['code'] = 200;
 			$res['message'] = 'Producto Ref: ' . $referencia . ' stock actualizado con éxito';
 		}else{
 			$res['code'] = 300;
-			$res['message'] = 'Error Ref: ' . $referencia . '-- Mesnaje: ' . $error;
+			$res['message'] = 'Error Ref: ' . $referencia . '-- Mensaje: ' . $error;
 		}
 
 		return $res;

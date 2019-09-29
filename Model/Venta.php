@@ -3,6 +3,9 @@ App::uses('AppModel', 'Model');
 class Venta extends AppModel
 {	
 
+	/**
+	 * @var array
+	 */
 	public $picking_estado = array(
 		'no_definido' => array(
 			'label' => 'Incompleta',
@@ -20,6 +23,17 @@ class Venta extends AppModel
 			'label' => 'Embalaje finalizado',
 			'color' => '#95B75D'
 		)
+	);
+
+
+	/**
+	 * @var array
+	 */
+	public $picking_estados_lista = array(
+		'no_definido' => 'Incompleta',
+		'empaquetar'  => 'Listo para embalar',
+		'empaquetando' => 'En prepración',
+		'empaquetado'  => 'Emabalaje finalizado'
 	);
 
 	/**
@@ -228,13 +242,21 @@ class Venta extends AppModel
 
 
 	public function beforeSave($options = array())
-	{
+	{	
+		$peso_total = (float) 0;
+
 		if (isset($this->data['VentaDetalle'])) {
 			foreach ($this->data['VentaDetalle'] as $i => $d) {
 
 				if (!isset($d['VentaDetalle']['cantidad'])) {
 					continue;
 				}
+
+				$peso_producto = (float) ClassRegistry::init('VentaDetalleProducto')->field('peso', array('id' => $d['VentaDetalle']['venta_detalle_producto_id']));
+
+				$this->data['VentaDetalle'][$i]['VentaDetalle']['peso_bulto'] = round($peso_producto * $d['VentaDetalle']['cantidad'], 2);		
+
+				$peso_total = $peso_total + $this->data['VentaDetalle'][$i]['VentaDetalle']['peso_bulto'];
 
 				$this->data['VentaDetalle'][$i]['VentaDetalle']['cantidad_pendiente_entrega'] = $d['VentaDetalle']['cantidad'];
 				$this->data['VentaDetalle'][$i]['VentaDetalle']['cantidad_entregada']         = 0;
@@ -243,6 +265,10 @@ class Venta extends AppModel
 					$this->data['VentaDetalle'][$i]['VentaDetalle']['precio_bruto'] = monto_bruto($d['VentaDetalle']['precio']);		
 				}
 			}
+		}
+
+		if ($peso_total > 0) {
+			$this->data['Venta']['peso_bulto_total'] = (float) round($peso_total, 2);
 		}
 	}
 
@@ -269,14 +295,14 @@ class Venta extends AppModel
 								)
 							),
 							'fields' => array(
-								'VentaDetalleProducto.id', 'VentaDetalleProducto.nombre', 'VentaDetalleProducto.codigo_proveedor'
+								'VentaDetalleProducto.id', 'VentaDetalleProducto.id_externo', 'VentaDetalleProducto.nombre', 'VentaDetalleProducto.codigo_proveedor', 'VentaDetalleProducto.cantidad_virtual', 'VentaDetalleProducto.stock_automatico', 'VentaDetalleProducto.ancho', 'VentaDetalleProducto.alto', 'VentaDetalleProducto.largo', 'VentaDetalleProducto.peso'
 							)
 						),
 						'conditions' => array(
 							'VentaDetalle.activo' => 1
 						),
 						'fields' => array(
-							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app'
+							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app', 'VentaDetalle.reservado_virtual'
 						)
 					),
 					'VentaEstado' => array(
@@ -292,14 +318,14 @@ class Venta extends AppModel
 					'VentaTransaccion',
 					'Tienda' => array(
 						'fields' => array(
-							'Tienda.id', 'Tienda.nombre', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.logo', 'Tienda.direccion', 'Tienda.facturacion_apikey', 'Tienda.emails_bcc', 'Tienda.url', 'Tienda.direccion'
+							'Tienda.id', 'Tienda.nombre', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.logo', 'Tienda.direccion', 'Tienda.facturacion_apikey', 'Tienda.emails_bcc', 'Tienda.url', 'Tienda.direccion', 'Tienda.stock_automatico', 'activo_enviame', 'apihost_enviame', 'apikey_enviame', 'company_enviame', 'bodega_enviame', 'meta_ids_enviame', 'peso_enviame', 'volumen_enviame'
 						)
 					),
 					'Marketplace' => array(
 						'fields' => array(
 							'Marketplace.id', 'Marketplace.nombre', 'Marketplace.fee', 'Marketplace.marketplace_tipo_id',
 							'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key',
-							'Marketplace.refresh_token', 'Marketplace.expires_token', 'Marketplace.access_token'
+							'Marketplace.refresh_token', 'Marketplace.expires_token', 'Marketplace.access_token', 'Marketplace.stock_automatico'
 						),
 						'MarketplaceTipo' => array(
 							'fields' => array(
@@ -342,8 +368,8 @@ class Venta extends AppModel
 				),
 				'fields' => array(
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
-					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.comuna_entrega', 'Venta.nombre_receptor',
-					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito'
+					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.metodo_envio_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.comuna_entrega', 'Venta.nombre_receptor',
+					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito', 'Venta.etiqueta_envio_externa'
 				)
 			)
 		);
@@ -523,7 +549,6 @@ class Venta extends AppModel
 			'type' => 'INNER',
 			'conditions' => array(
 				'venta_detalles.venta_id = Venta.id',
-				"venta_detalles.cantidad_entregada = venta_detalles.cantidad",
 				'venta_detalles.fecha_completado >= DATE_ADD(CURDATE(),INTERVAL -1 DAY)'
 			)
 		);
@@ -592,6 +617,12 @@ class Venta extends AppModel
 			if ($detalle['cantidad_reservada'] > 0) {
 				$vDetalle->saveField('cantidad_reservada', 0);
 			}
+
+			# Nuevo stock virtual
+			if ($detalle['reservado_virtual']) { 
+				ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($detalle['venta_detalle_producto_id'], $detalle['cantidad'], 'aumentar');
+				$vDetalle->saveField('reservado_virtual', 0);
+			}
 		}
 
 		$this->saveField('picking_estado', 'no_definido');
@@ -618,17 +649,22 @@ class Venta extends AppModel
 		# solo se procesa si el estado de la venta ha cambiado
 		if ($venta['Venta']['venta_estado_id'] != $venta['Venta']['estado_anterior'] ) {
 			foreach ($venta['VentaDetalle'] as $ip => $producto) {
-
-				if ($producto['cantidad_reservada'] != 0)
-					continue;
-
-				$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], $producto['cantidad']);
 				
 				ClassRegistry::init('VentaDetalle')->id = $producto['id'];
-				ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $reservado);
-				ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $producto['cantidad']);
 
-				$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $reservado;
+				if ($producto['cantidad_reservada'] == 0) {
+					$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], $producto['cantidad']);
+					ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $reservado);
+					ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $producto['cantidad']);
+
+					$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $reservado;
+				}				
+
+				# Nuevo stock virtual
+				if (!$producto['reservado_virtual']) { 
+					ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($producto['venta_detalle_producto_id'], $producto['cantidad']);
+					ClassRegistry::init('VentaDetalle')->saveField('reservado_virtual', 1);
+				}
 
 			}
 		}
@@ -642,6 +678,73 @@ class Venta extends AppModel
 			}
 			$this->saveField('subestado_oc', 'no_entregado');
 		}
+
+		return;
+	}
+
+
+	/**
+	 * [pagar_manual description]
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function entregar($id)
+	{
+		$this->id = $id;
+		if (!$this->exists()) {
+			return false;
+		}
+
+		$venta = $this->obtener_venta_por_id($id);
+
+		$detalles = array();
+
+		# solo se procesa si el estado de la venta ha cambiado
+		if ($venta['Venta']['venta_estado_id'] != $venta['Venta']['estado_anterior'] ) {
+
+			foreach ($venta['VentaDetalle'] as $ip => $producto) {
+
+				if ($producto['cantidad_reservada'] > 0){
+
+					# crear salida de productos
+					$detalles[$ip]['VentaDetalle']['id']               = $producto['id'];
+					$detalles[$ip]['VentaDetalle']['completo']         = ($venta['VentaDetalle'][$ip]['cantidad'] == $producto['cantidad_reservada']) ? 1 : 0;
+					$detalles[$ip]['VentaDetalle']['fecha_completado'] = date('Y-m-d H:i:s');
+
+					$detalles[$ip]['VentaDetalle']['cantidad_reservada']         = 0;
+					$detalles[$ip]['VentaDetalle']['cantidad_entregada']         = $producto['cantidad_reservada'];
+					$detalles[$ip]['VentaDetalle']['cantidad_pendiente_entrega'] = $producto['cantidad'] - $producto['cantidad_reservada'];
+
+					ClassRegistry::init('Bodega')->crearSalidaBodega($producto['venta_detalle_producto_id'], null, $producto['cantidad_reservada'], 'VT');
+
+				}else{
+					throw new Exception("No se permite entregar un pedido que no tiene los productos reservados.", 1);
+					
+					$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], $producto['cantidad']);
+					
+					$detalles[$ip]['VentaDetalle']['id']                         = $producto['id'];
+					$detalles[$ip]['VentaDetalle']['cantidad_reservada']         = $reservado;
+					$detalles[$ip]['VentaDetalle']['cantidad_pendiente_entrega'] = $producto['cantidad'];
+				
+				}
+
+				# Nuevo stock virtual
+				if ($producto['reservado_virtual']) { 
+					ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($producto['venta_detalle_producto_id'], $producto['cantidad']);
+					$detalles[$ip]['VentaDetalle']['reservado_virtual'] = 1;
+				}
+
+			}
+			
+			# Guardamos los cambios
+			ClassRegistry::init('VentaDetalle')->saveMany($detalles);
+
+		}
+
+		# Pedido está entregado completo
+		$this->saveField('picking_estado', 'empaquetado');			
+		$this->saveField('subestado_oc', 'entregado');
+		$this->saveField('fecha_completado', date('Y-m-d H:i:s'));		
 
 		return;
 	}
@@ -669,6 +772,12 @@ class Venta extends AppModel
 			ClassRegistry::init('VentaDetalle')->id = $producto['VentaDetalle']['id'];
 			ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', 0);
 			ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $producto['VentaDetalle']['cantidad']);
+
+			# Nuevo stock virtual
+			if ($producto['VentaDetalle']['reservado_virtual']) { 
+				ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($producto['VentaDetalle']['venta_detalle_producto_id'], $producto['VentaDetalle']['cantidad'], 'aumentar');
+				ClassRegistry::init('VentaDetalle')->saveField('reservado_virtual', 0);
+			}
 		}
 
 		$this->saveField('picking_estado', 'no_definido');

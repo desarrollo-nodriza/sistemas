@@ -90,7 +90,37 @@ class VentaEstado extends AppModel
 	}
 
 
-	public function es_estado_cancelado($estado_id)
+	public function es_estado_entregado($estado_id)
+	{
+		$est = $this->find('first', array(
+			'conditions' => array(
+				'VentaEstado.id' => $estado_id
+			),
+			'contain' => array(
+				'VentaEstadoCategoria' => array(
+					'fields' => array(
+						'VentaEstadoCategoria.id',
+						'VentaEstadoCategoria.final'
+					)
+				)
+			),
+			'fields' => array(
+				'VentaEstado.id'
+			)
+		));
+		
+		if (empty($est))
+			return false;
+
+		if (empty($est['VentaEstadoCategoria']))
+			return false;
+
+		return $est['VentaEstadoCategoria']['final'];
+
+	}
+
+
+	public function es_estado_rechazo($estado_id)
 	{
 		$est = $this->find('first', array(
 			'conditions' => array(
@@ -116,6 +146,35 @@ class VentaEstado extends AppModel
 			return false;
 
 		return $est['VentaEstadoCategoria']['rechazo'];
+	}
+
+
+	public function es_estado_cancelado($estado_id)
+	{
+		$est = $this->find('first', array(
+			'conditions' => array(
+				'VentaEstado.id' => $estado_id
+			),
+			'contain' => array(
+				'VentaEstadoCategoria' => array(
+					'fields' => array(
+						'VentaEstadoCategoria.id',
+						'VentaEstadoCategoria.cancelado'
+					)
+				)
+			),
+			'fields' => array(
+				'VentaEstado.id'
+			)
+		));
+
+		if (empty($est))
+			return false;
+
+		if (empty($est['VentaEstadoCategoria']))
+			return false;
+
+		return $est['VentaEstadoCategoria']['cancelado'];
 	}
 
 

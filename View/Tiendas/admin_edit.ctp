@@ -6,10 +6,10 @@
 <?=$this->Form->input('id');?>
 <div class="page-content-wrap">
 	<div class="row">
-		<div class="col-xs-12 col-sm-5">
+		<div class="col-xs-12 col-sm-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3 class="panel-title">Configuración de la tienda</h3>
+					<h3 class="panel-title"><i class="fa fa-cog"></i> Configuración de la tienda</h3>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
@@ -62,39 +62,7 @@
 							<tr>
 								<th><?= $this->Form->label('emails_bcc', 'Email para <br> Copia oculta'); ?></th>
 								<td><?= $this->Form->input('emails_bcc', array('placeholder' => 'Emails separados por coma (,)')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('apiurl_prestashop', 'Api Url Prestashop'); ?></th>
-								<td><?= $this->Form->input('apiurl_prestashop'); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('apikey_prestashop', 'Api Key Prestashop'); ?></th>
-								<td><?= $this->Form->input('apikey_prestashop'); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('apiurl_linio', 'Api Url Linio'); ?></th>
-								<td><?= $this->Form->input('apiurl_linio'); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('apiuser_linio', 'Api User Linio'); ?></th>
-								<td><?= $this->Form->input('apiuser_linio'); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('apikey_linio', 'Api Key Linio'); ?></th>
-								<td><?= $this->Form->input('apikey_linio'); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('facturacion_apikey', 'Api Key Libredte'); ?></th>
-								<td><?= $this->Form->input('facturacion_apikey'); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('sincronizacion_automatica_linio', 'Sincronización Automática de Linio'); ?></th>
-								<td><?= $this->Form->input('sincronizacion_automatica_linio', array('class' => 'icheckbox')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('url_almaceamiento_externo', 'S3 endpoint'); ?></th>
-								<td><?= $this->Form->input('url_almaceamiento_externo'); ?></td>
-							</tr>
+							</tr>							
 						</table>
 						<div class="pull-right">
 							<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
@@ -103,11 +71,9 @@
 					</div>
 				</div>
 			</div>
-		</div>
-		<div class="col-xs-12 col-sm-7">
 			<div class="panel panel-default">
 				<div class="panel-heading">
-					<h3 class="panel-title">Información del Comercio</h3>
+					<h3 class="panel-title"><i class="fa fa-info"></i> Información del Comercio</h3>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
@@ -139,7 +105,7 @@
 							<? if ( !empty($this->request->data['Tienda']['logo']) ) : ?>
 								<tr>
 									<th><?= $this->Form->label('', 'Logo actual'); ?></th>
-									<td><?=$this->Html->image($this->request->data['Tienda']['logo']['path'], array('class' => 'img-responsive'));?></td>
+									<td><?=$this->Html->image($this->request->data['Tienda']['logo']['path'], array('class' => 'img-responsive', 'style' => 'max-width: 100px'));?></td>
 								</tr>
 								<tr>
 									<th><?= $this->Form->label('logo', 'Actualiza (300x135)'); ?></th>
@@ -159,9 +125,156 @@
 					</div>
 				</div>
 			</div>
-			<div class="panel panel-default">
+		</div>
+		<div class="col-xs-12 col-sm-6">
+
+			<h2><i class="fa fa-bug"></i> Integraciones & Extensiones</h2>
+			
+			<div class="panel panel-default panel-toggled">
 				<div class="panel-heading">
-					<h3 class="panel-title">Notificaciones Push</h3>
+					<h3 class="panel-title"><i class="fa fa-refresh"></i> Stock sincronizado</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					
+					<p>Activa la sincronización de stock de todos los canales de venta como prestashop, linio y mercadolibre. Recuerda que debes mantener el "stock virtual" de tus productos actualizado. Así evitas que los productos se desactiven en los distintos canales. </p>
+
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('stock_automatico', 'Stock sincronizado'); ?></th>
+								<td><?= $this->Form->input('stock_automatico', array('class' => 'icheckbox')); ?></td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
+
+
+			<div class="panel panel-default panel-toggled">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-hdd-o"></i> Almacenamiento externo</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					
+					<p>Agrega el Endpoint de tu Bucket S3 para tomar las imagenes de los productos desde ahí (Solo prestashop). </p>
+
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('url_almaceamiento_externo', 'S3 endpoint'); ?></th>
+								<td><?= $this->Form->input('url_almaceamiento_externo'); ?></td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
+
+
+			<div class="panel panel-default panel-toggled">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-shopping-bag"></i> Prestashop</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('apiurl_prestashop', 'Api Url Prestashop'); ?></th>
+								<td><?= $this->Form->input('apiurl_prestashop'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('apikey_prestashop', 'Api Key Prestashop'); ?></th>
+								<td><?= $this->Form->input('apikey_prestashop'); ?></td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default panel-toggled">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-shopping-bag"></i> Linio <small>(No disponible en la siguente versión)</small></h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('apiurl_linio', 'Api Url Linio'); ?></th>
+								<td><?= $this->Form->input('apiurl_linio'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('apiuser_linio', 'Api User Linio'); ?></th>
+								<td><?= $this->Form->input('apiuser_linio'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('apikey_linio', 'Api Key Linio'); ?></th>
+								<td><?= $this->Form->input('apikey_linio'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('sincronizacion_automatica_linio', 'Sincronización Automática de Linio'); ?></th>
+								<td><?= $this->Form->input('sincronizacion_automatica_linio', array('class' => 'icheckbox')); ?></td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default panel-toggled">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-book"></i> Libredte</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('facturacion_apikey', 'Api Key Libredte'); ?></th>
+								<td><?= $this->Form->input('facturacion_apikey'); ?></td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
+			
+			<div class="panel panel-default panel-toggled">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-bell"></i> Notificaciones Push</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
@@ -182,6 +295,68 @@
 					</div>
 				</div>
 			</div>
+
+			<div class="panel panel-default panel-toggled">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-truck"></i> Envíame</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive" style="overflow: unset;">
+						<table class="table table-bordered">
+							<tr>
+								<td><?= $this->Form->label('activo_enviame', '¿Activar integración con Envíame?'); ?></td>
+								<td><?= $this->Form->input('activo_enviame', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('apihost_enviame', 'Api Host Envíame'); ?></td>
+								<td><?= $this->Form->input('apihost_enviame', array('placeholder' => 'Ej: https://stage.api.enviame.io/api')); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('apikey_enviame', 'Api Key Envíame'); ?></td>
+								<td><?= $this->Form->input('apikey_enviame'); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('company_enviame', 'ID de la empresa en Envíame'); ?></td>
+								<td><?= $this->Form->input('company_enviame'); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('bodega_enviame', 'Bodega de la empresa en Envíame'); ?></td>
+								<td><?= $this->Form->input('bodega_enviame'); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('peso_enviame', 'Descativar si el peso del bulto es mayor a'); ?></td>
+								<td>
+									<div class="input-group">
+										<?= $this->Form->input('peso_enviame'); ?>
+										<span class="input-group-addon add-on">KG</span>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('volumen_enviame', 'Volumen máximo de un bulto'); ?></td>
+								<td>
+									<div class="input-group">
+										<?= $this->Form->input('volumen_enviame'); ?>
+										<span class="input-group-addon add-on">M3</span>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('meta_ids_enviame', 'Métodos de envio usados en Envíame (multiple)'); ?></td>
+								<td><?= $this->Form->select('meta_ids_enviame', $metodo_envios, array('class' => 'form-control', 'multiple' => true, 'empty' => false, 'style' => 'min-height: 150px')); ?></td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
+<?= $this->Form->end(); ?>

@@ -63,7 +63,7 @@
 									</table>
 								</td>
 								<td valign="center" align="center" style="vertical-align: middle; padding: 15px;">
-									<h1 class="text-center"><b>OC #<?= $this->request->data['OrdenCompra']['id']; ?></b></h1>
+									<h1 class="text-center"><b>OC #<?= (Configure::read('debug') > 0) ? 'NO APLICA' : $this->request->data['OrdenCompra']['id']; ?></b></h1>
 								</td>
 							</tr>
 							<tr>
@@ -142,7 +142,7 @@
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['descripcion'];?></td>
 									<td><?= CakeNumber::currency( ($ocp['OrdenComprasVentaDetalleProducto']['total_neto'] / $ocp['OrdenComprasVentaDetalleProducto']['cantidad']), 'CLP'); ?></td>
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
-									<td><?=$this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad', $ipp), array('class' => 'form-control is-number not-blank js-cantidad', 'placeholder' => 'Ingrese cantidad disponible', 'min' => 0, 'max' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad'], 'value' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad']))?></td>
+									<td><?=$this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad', $ipp), array('class' => 'form-control is-number not-blank js-cantidad', 'placeholder' => 'Ingrese cantidad disponible', 'min' => 0, 'max' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad'], 'value' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad'], 'readonly' => true))?></td>
 									<td>
 										<?= $this->Form->select(sprintf('VentaDetalleProducto.%d.estado_proveedor', $ipp), $estados, array('empty' => false, 'default' => 'accept', 'class' => 'form-control js-opcion'))?>
 										<div class="hidden js-wrapper-nota">

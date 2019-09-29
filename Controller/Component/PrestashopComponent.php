@@ -327,7 +327,7 @@ class PrestashopComponent extends Component
 			
 			$opt           = array('resource' => 'orders');
 			$opt['putXml'] = $xml->asXML();
-			$opt['id'] 	   = $estado_id; 
+			$opt['id'] 	   = $id_venta; 
 			$xml           = $this->ConexionPrestashop->edit($opt);
 			
 		} catch (PrestaShopWebserviceException $ex) {
@@ -719,6 +719,41 @@ class PrestashopComponent extends Component
 
 	}
 
+
+	/**
+	 * [prestashop_activar_desactivar_producto description]
+	 * @param  [type]  $id     [description]
+	 * @param  integer $activo [description]
+	 * @return [type]          [description]
+	 */
+	public function prestashop_activar_desactivar_producto($id, $activo = 1)
+	{	
+		try {
+
+			$opt                       = array();
+			$opt['resource']           = 'products';
+			$opt['id'] = $id;
+
+			$xml       = $this->ConexionPrestashop->get($opt);
+			$resources = $xml->children()->children();
+			
+			$resources->available_for_order = $activo;
+			
+			$opt           = array('resource' => 'products');
+			$opt['putXml'] = $xml->asXML();
+			$opt['id'] 	   = $id; 
+			$xml           = $this->ConexionPrestashop->edit($opt);
+			
+		} catch (PrestaShopWebserviceException $ex) {
+			
+			 // No actualizado
+			return false;
+		}
+
+		return true;
+
+	}
+
 	/**
 	 * Obtiene todos los productos publicados en prestashop (solo los activos)
 	 * @param  array  $filter   arreglo con la condición de búqueda de productos (por defecto trae los roductos activos)
@@ -729,7 +764,7 @@ class PrestashopComponent extends Component
 		ini_set('max_execution_time', 0);
 
 		$opt             = array();
-		$opt['display'] = '[id,name,price,active,quantity,supplier_reference,id_manufacturer,id_default_image,link_rewrite]';
+		$opt['display'] = '[id,name,price,active,quantity,supplier_reference,id_manufacturer,id_default_image,link_rewrite,width,height,depth,weight]';
 		
 		$opt['resource'] = 'products';
 

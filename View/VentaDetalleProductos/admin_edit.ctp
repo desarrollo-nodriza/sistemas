@@ -89,6 +89,10 @@
 									<span class="help-block">Unidades aun en bodega.</span>
 								</td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('stock_automatico', 'Sincronizar stock'); ?></th>
+								<td><?= $this->Form->input('stock_automatico', array('class' => 'icheckbox')); ?></td>
+							</tr>
 						</table>
 					</div>
 				</div>
@@ -102,13 +106,40 @@
 				<div class="col-xs-12">
 					<div class="panel panel-info">
 		                <div class="panel-heading">
+		                    <h3 class="panel-title"><i class="fa fa-arrows" aria-hidden="true"></i> Dimensiones</h3>
+		                </div>
+		                <div class="panel-body">
+		                	<div class="table-responsive">
+								<table class="table table-bordered">
+									<tr>
+										<th><?= $this->Form->label('peso', 'Peso bulto (kg)'); ?></th>
+										<td><?= $this->Form->input('peso', array('class' => 'form-control is-number', 'type' => 'text')); ?></td>
+									</tr>
+									<tr>
+										<th><?= $this->Form->label('alto', 'Alto bulto (cm)'); ?></th>
+										<td><?= $this->Form->input('alto', array('class' => 'form-control is-number', 'type' => 'text')); ?></td>
+									</tr>
+									<tr>
+										<th><?= $this->Form->label('ancho', 'Ancho bulto (cm)'); ?></th>
+										<td><?= $this->Form->input('ancho', array('class' => 'form-control is-number', 'type' => 'text')); ?></td>
+									</tr>
+									<tr>
+										<th><?= $this->Form->label('largo', 'Largo bulto (cm)'); ?></th>
+										<td><?= $this->Form->input('largo', array('class' => 'form-control is-number', 'type' => 'text')); ?></td>
+									</tr>
+								</table>
+		                	</div>
+		                </div>                             
+		            </div>
+					<div class="panel panel-info">
+		                <div class="panel-heading">
 		                    <h3 class="panel-title"><i class="fa fa-cubes" aria-hidden="true"></i> Unidades reservadas</h3>
 		                    <ul class="panel-controls"> 
 		                    	<li><a href="#" class="panel-collapse"><span class="fa fa-angle-up"></span></a></li>
 		                    </ul>
 		                </div>
 		                <div class="panel-body">
-		                	<div class="table-responsive">
+		                	<div class="table-responsive" style="max-height: 470px;">
 								<table class="table table-bordered">
 									<caption>Cantidades reservadas en distintas ventas</caption>
 									<thead>
@@ -134,7 +165,7 @@
 		                </div>                             
 		            </div>
 				</div>
-				<div class="col-xs-12">
+				<!--<div class="col-xs-12">
 					<div class="panel panel-info panel-toggled">
 		                <div class="panel-heading">
 		                    <h3 class="panel-title"><i class="fa fa-money" aria-hidden="true"></i> Ventas</h3>
@@ -156,7 +187,7 @@
 		                        
 		                    </div>
 		                </div>                             
-		            </div>
+		            </div>-->
 
 				</div>
 

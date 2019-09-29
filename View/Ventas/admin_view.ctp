@@ -260,6 +260,7 @@
 												<tr>
 													<th><?=__('Transportista');?></th>
 													<th><?=__('N° de seguimiento');?></th>
+													<th><?=__('Etiqueta');?></th>
 													<th><?=__('Plazo entrega aprox');?></th>
 													<th><?=__('Seguimiento');?></th>
 													<th><?=__('Acciones'); ?></th>
@@ -269,6 +270,7 @@
 												<tr class="hidden clone-tr">
 													<td><?=$this->Form->select('Transporte.999.transporte_id', $transportes, array('disabled' => true, 'empty' => 'Seleccione', 'class' => 'form-control not-blank js-select-transporte'))?></td>
 													<td><?=$this->Form->input('Transporte.999.cod_seguimiento', array('disabled' => true, 'class' => 'form-control not-blank', 'placeholder' => 'Ej: 9999999999'));?></td>
+													<td>No aplica</td>
 													<td><span class="js-fecha-entrega">Seleccione tranporte</span></td>
 													<td><span class="js-btn-seguimiento">Seleccione tranporte</span></td>
 													<td valign="center"><button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button></td>
@@ -279,6 +281,13 @@
 														<tr>
 															<td><?=$this->Form->select(sprintf('Transporte.%d.transporte_id', $it), $transportes, array('empty' => 'Seleccione', 'class' => 'form-control not-blank js-select-transporte', 'default' => $transporte['id']))?></td>
 															<td><?=$this->Form->input(sprintf('Transporte.%d.cod_seguimiento', $it), array('value' => $transporte['TransportesVenta']['cod_seguimiento'], 'class' => 'form-control not-blank', 'placeholder' => 'Ej: 9999999999'));?></td>
+															<td>
+																<? if (!empty($transporte['TransportesVenta']['etiqueta'])) : ?>
+																<a href="<?=$transporte['TransportesVenta']['etiqueta']?>" class="btn btn-xs btn-primary" target="_blank"><i class="fa fa-file-pdf-o"></i> Ver</a>
+																<? else : ?>													
+																No aplica
+																<? endif; ?>
+															</td>
 															<td><span class="js-fecha-entrega"><?=$transporte['tiempo_entrega']; ?></span></td>
 															<td><span class="js-btn-seguimiento"><?=$transporte['url_seguimiento']; ?></td>
 															<td valign="center">
@@ -349,8 +358,22 @@
 
 
 				            <!-- DESCARGAR ETIQUETA -->
-				            <?= $this->Html->link('<i class="fa fa-cube"></i><p>Etiqueta</p>', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'tile tile-warning js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => 'Generar Etiqueta', 'escape' => false)); ?>
+							
+							<? if (!empty($venta['Venta']['etiqueta_envio_externa'])) : ?>
+							
+							<div class="row">
+								<div class="col-xs-12 col-md-6">
+				            	<?= $this->Html->link('<i class="fa fa-cube"></i><p>Etiqueta interna</p>', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'tile tile-warning js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => 'Generar Etiqueta', 'escape' => false)); ?>
+				            	</div>
+								<div class="col-xs-12 col-md-6">
+									<a href="<?=$venta['Venta']['etiqueta_envio_externa']?>" target="_blank" class="tile tile-info"><i class="fa fa-truck"></i><p>Etiqueta Externa</p></a>
+								</div>
+							</div>
+							<? else : ?>
+								
+							<?= $this->Html->link('<i class="fa fa-cube"></i><p>Etiqueta interna</p>', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'tile tile-warning js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => 'Generar Etiqueta', 'escape' => false)); ?>
 
+							<? endif; ?>
 
 				            <? if (!$venta['Venta']['prioritario']) : ?>
 							<?= $this->Form->postLink('<i class="fa fa-check"></i><p>Marcar como prioritaria</p>', array('action' => 'marcar_prioritaria', $venta['Venta']['id']), array('class' => 'tile tile-danger', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>

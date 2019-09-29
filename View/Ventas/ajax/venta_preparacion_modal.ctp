@@ -4,7 +4,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="venta<?=$venta['Venta']['id'];?>Label">Vista rápida venta #<?=$venta['Venta']['id']; ?> <a data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$venta['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= h($venta['VentaEstado']['VentaEstadoCategoria']['estilo']); ?>"><?= h($venta['VentaEstado']['VentaEstadoCategoria']['nombre']); ?></a></h4>
+        <h4 class="modal-title" id="venta<?=$venta['Venta']['id'];?>Label">Embalando paquetes de la venta #<?=$venta['Venta']['id']; ?> <a data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$venta['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= h($venta['VentaEstado']['VentaEstadoCategoria']['estilo']); ?>"><?= h($venta['VentaEstado']['VentaEstadoCategoria']['nombre']); ?></a></h4>
       </div>
       <div class="modal-body">
 		<div class="row">
@@ -22,7 +22,7 @@
 						</tr>
 						<tr>
 							<td>Canal de venta</td>
-							<td>#<?=$venta['Venta']['id_externo']?> - <?=(empty($venta['Marketplace'])) ? $venta['Tienda']['nombre'] : $venta['Marketplace']['nombre'] ;?> </td>
+							<td>#<?=$venta['Venta']['id_externo']?> - <?=(empty($venta['Venta']['marketplace_id'])) ? $venta['Tienda']['nombre'] : $venta['Marketplace']['nombre'] ;?> </td>
 						</tr>
 					</table>
 				</div>
@@ -95,15 +95,43 @@
 		      			<td><?=$venta['MetodoEnvio']['nombre'];?></td>
 		      		</tr>
 		      	</table>
+		      	<? if (!empty($bultos)) : ?>
 		      	<hr>
+		      	<h4><i class="fa fa-cubes"></i> Bultos a armar</h4>
+		      	<table class="table table-bordered">
+		      	<? $i = 1; ?>
+		      	<? foreach ($bultos as $ib => $b) : ?>
+					<tr>
+						<td style="width: 170px;">
+							Bulto #<?=$i;?>
+							<br>
+							<b>Dimensiones aprox:</b> 
+								<ul>
+									<li>Largo <?=$b['paquete']['length']; ?> cm</li>
+									<li>Ancho <?=$b['paquete']['width']; ?> cm</li>
+									<li>Alto <?=$b['paquete']['height']; ?> cm</li>
+								</ul>
+							<br>
+							<b>Peso aprox:</b>
+								<ul>
+									<li><?=$b['paquete']['weight']; ?> kg</li>
+								</ul>
+						</td>
+						<td><ul><?= $b['items']; ?></ul></td>
+					</tr>
+				<? $i++; ?>
+		      	<? endforeach; ?>
+		      	</table>
+		      	<hr>
+		      	<? endif; ?>
 		      	<h4><i class="fa fa-shopping-cart"></i> Productos</h4>
 		      	<table class="table table-bordered">
 		      		<thead>
 		      			<th>Id</th>
 		      			<th>Nombre</th>
 		      			<th>Cantidad</th>
-		      			<th>Pendiente preparación</th>
-		      			<th>Stock reservado</th>
+		      			<th>Pendiente <br> preparación</th>
+		      			<th>Stock <br> reservado</th>
 		      			<th></th>
 		      		</thead>
 		      	<? foreach ($venta['VentaDetalle'] as $ivd => $d) : ?>

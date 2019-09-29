@@ -68,8 +68,9 @@ class VentasController extends AppController {
 		$FiltroMedioPago            = '';
 		$FiltroVentaEstadoCategoria = '';
 		$FiltroPrioritario          = '';
+		$FiltroPicking              = '';
 		$FiltroFechaDesde           = '';
-		$FiltroFechaHasta          = '';
+		$FiltroFechaHasta           = '';
 
 		$backurl = array(
             'action' => 'index'
@@ -83,9 +84,7 @@ class VentasController extends AppController {
 
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
-
 			$this->filtrar('ventas', 'index');
-
 		}
 
 
@@ -174,6 +173,13 @@ class VentasController extends AppController {
 							$condiciones['Venta.prioritario'] = $FiltroPrioritario;
 						} 
 						break;
+					case 'picking_estado':
+						$FiltroPicking = $valor;
+
+						if ($FiltroPicking != "") {
+							$condiciones['Venta.picking_estado'] = $FiltroPicking;
+						} 
+						break;
 					case 'FechaDesde':
 						$FiltroFechaDesde = trim($valor);
 
@@ -207,33 +213,6 @@ class VentasController extends AppController {
 				}
 			}
 		}
-
-
-		# Es bodega
-		try {
-			$permisos = $this->hasPermission();
-		} catch (Exception $e) {
-			$permisos = $e;
-		}
-
-		/*if (isset($permisos['storage'])) {
-
-			if ($permisos['storage']) {
-
-				$joins[] = array(
-					'table' => 'rp_venta_estados',
-					'alias' => 'ventas_estados',
-					'type' => 'INNER',
-					'conditions' => array(
-						'ventas_estados.id = Venta.venta_estado_id',
-						"ventas_estados.permitir_retiro_oc"  => 1
-					)
-				);
-
-				#$condiciones["Venta.subestado_oc !="] = 'entregado';	
-			}
-		}*/
-
 
 		$paginate = array(
 			'recursive' => 0,
@@ -332,6 +311,8 @@ class VentasController extends AppController {
 			)
 		);
 
+		$picking = ClassRegistry::init('Venta')->picking_estados_lista;
+		
 		# Mercadolibre conectar
 		$meliConexion = $this->admin_verificar_conexion_meli();
 
@@ -339,8 +320,179 @@ class VentasController extends AppController {
 
 		$this->set(compact(
 			'ventas', 'tiendas', 'marketplaces', 'ventaEstadoCategorias', 'medioPagos',
-			'FiltroVenta', 'FiltroCliente', 'FiltroTienda', 'FiltroMarketplace', 'FiltroMedioPago', 'FiltroVentaEstadoCategoria', 'FiltroPrioritario', 'FiltroFechaDesde', 'FiltroFechaHasta', 'meliConexion'
+			'FiltroVenta', 'FiltroCliente', 'FiltroTienda', 'FiltroMarketplace', 'FiltroMedioPago', 'FiltroVentaEstadoCategoria', 'FiltroPrioritario', 'FiltroPicking', 'FiltroFechaDesde', 'FiltroFechaHasta', 'meliConexion', 'picking'
 		));
+
+	}
+
+
+	public function admin_obtener_venta_manual()
+	{
+		$log = array();
+
+		if ($this->request->is('post')) {
+			
+			#Vemos si existe en la BD
+			$qry = array(
+				'conditions' => array(
+					'Venta.id_externo' => $this->request->data['Venta']['id_externo'],
+					'Venta.tienda_id' => $this->request->data['Venta']['tienda_id']
+				),
+				'fields' => array(
+					'Venta.id', 'Venta.id_externo', 'Venta.venta_estado_id', 'Venta.estado_anterior', 'Venta.venta_estado_responsable'
+				)
+			);
+
+
+			$tipo_canal = 'Prestashop';
+
+			if (!empty($this->request->data['Venta']['marketplace_id'])) {
+				$qry = array_replace_recursive($qry, array(
+					'conditions' => array(
+						'Venta.marketplace_id' => $this->request->data['Venta']['marketplace_id']
+					)
+				));
+
+				$tipo_market = ClassRegistry::init('Marketplace')->field('marketplace_tipo_id', array('id' => $this->request->data['Venta']['marketplace_id']));
+
+				$tipo_canal = ($tipo_market == 1) ? 'Linio' : 'Mercadolibre';
+			}
+
+			$existe = $this->Venta->find('first', $qry);
+
+			$id_externo = trim($this->request->data['Venta']['id_externo']);
+
+			switch ($tipo_canal) {
+				case 'Prestashop':
+
+					if (empty($existe)) {
+
+						$accion = $this->crear_venta_prestashop($this->request->data['Venta']['tienda_id'], $id_externo);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Prestashop crear: ' . $this->Auth->user('email'),
+								'modulo' => 'Ventas',
+								'modulo_accion' => json_encode($this->request->data)
+							)
+						);
+
+						if ($accion) {
+							$this->Session->setFlash('Venta #'. $id_externo . ' creada con éxito', null, array(), 'success');
+						}else{
+							$this->Session->setFlash('No fue posible obtener la venta. Verifique los campos.', null, array(), 'danger');
+						}
+
+					}else{
+
+						$accion = $this->actualizar_venta_prestashop($this->request->data['Venta']['tienda_id'], $id_externo);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Prestashop actualizar: ' . $this->Auth->user('email'),
+								'modulo' => 'Ventas',
+								'modulo_accion' => json_encode($this->request->data)
+							)
+						);
+
+						if ($accion) {
+							$this->Session->setFlash('Venta #'. $id_externo . ' actualizada con éxito', null, array(), 'success');
+						}else{
+							$this->Session->setFlash('No fue posible obtener la venta. Verifique los campos.', null, array(), 'danger');
+						}
+					}
+
+					break;
+				
+				case 'Linio':
+					
+					if (empty($existe)) {
+						$accion = $this->crear_venta_linio($this->request->data['Venta']['marketplace_id'], $id_externo);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Linio crear: ' . $this->Auth->user('email'),
+								'modulo' => 'Ventas',
+								'modulo_accion' => json_encode($this->request->data)
+							)
+						);
+
+						if ($accion) {
+							$this->Session->setFlash('Venta #'. $id_externo . ' creada con éxito', null, array(), 'success');
+						}else{
+							$this->Session->setFlash('No fue posible obtener la venta. Verifique los campos.', null, array(), 'danger');
+						}
+
+					}else{
+
+						$accion = $this->actualizar_venta_linio($this->request->data['Venta']['marketplace_id'], $id_externo, $existe);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Linio actualizar: ' . $this->Auth->user('email'),
+								'modulo' => 'Ventas',
+								'modulo_accion' => json_encode($this->request->data)
+							)
+						);
+
+						if ($accion) {
+							$this->Session->setFlash('Venta #'. $id_externo . ' actualizada con éxito', null, array(), 'success');
+						}else{
+							$this->Session->setFlash('No fue posible obtener la venta. Verifique los campos.', null, array(), 'danger');
+						}
+					}
+
+
+					break;
+				case 'Mercadolibre':
+					
+					if (!empty($existe)) {
+
+						$accion = $this->actualizar_venta_meli($this->request->data['Venta']['marketplace_id'], $id_externo);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Meli Actualizar: ' . $this->Auth->user('email'),
+								'modulo' => 'Ventas',
+								'modulo_accion' => json_encode($this->request->data)
+							)
+						);
+
+						if ($accion) {
+							$this->Session->setFlash('Venta #'. $id_externo . ' actualizada con éxito', null, array(), 'success');
+						}else{
+							$this->Session->setFlash('No fue posible obtener la venta. Verifique los campos.', null, array(), 'danger');
+						}
+
+					}else{
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Meli Crear: ' . $this->Auth->user('email'),
+								'modulo' => 'Ventas',
+								'modulo_accion' => json_encode($this->request->data)
+							)
+						);
+
+						$accion = $this->crear_venta_meli($this->request->data['Venta']['marketplace_id'], $id_externo);
+
+						if ($accion) {
+							$this->Session->setFlash('Venta #'. $id_externo . ' creada con éxito', null, array(), 'success');
+						}else{
+							$this->Session->setFlash('No fue posible obtener la venta. Verifique los campos.', null, array(), 'danger');
+						}
+					}
+
+					break;
+			}
+
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
+		}
+
+		$this->redirect($this->referer('/', true));
 
 	}
 
@@ -380,8 +532,31 @@ class VentasController extends AppController {
 
 		$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
 		$tamano = '500x500';
+
+		$volumenMaximo = $venta['Tienda']['volumen_enviame'];
 		
-		$this->set(compact('venta', 'url', 'tamano'));
+		$Enviame = $this->Components->load('Enviame');
+
+		# Iniciamos LAFF
+		$Enviame->LAFFinit();
+
+		# Bultos sugeridos
+		$bultos = $Enviame->obtener_bultos_venta($venta, $volumenMaximo);
+		
+		# Información de los bultos
+		foreach ($bultos as $ib => $b) : 	
+			
+			$items = array(); 
+			
+			foreach ($b['items'] as $item) : 
+				$items[] = '<li>' . Hash::extract($venta['VentaDetalle'], '{n}.VentaDetalleProducto[id='.$item['id'].'].nombre')[0] . '</li>';
+			endforeach;
+      		
+      		$bultos[$ib]['items'] = implode('', $items);
+      		
+      	endforeach;
+
+		$this->set(compact('venta', 'url', 'tamano', 'bultos'));
 
 		$vista = $this->render('venta_preparacion_modal');
 
@@ -591,6 +766,24 @@ class VentasController extends AppController {
 
 			if ($subestado == 'empaquetado') {
 
+				$venta = $this->Venta->obtener_venta_por_id($id);
+
+				$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
+
+				# Creamos pedido en enviame si corresponde
+				if ( in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame)
+					&& !empty($venta['Tienda']['activo_enviame'])) {
+					
+					$Enviame = $this->Components->load('Enviame');
+
+					# conectamos con enviame
+					$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame']);
+
+					$Enviame->crearEnvio($venta);
+
+				}
+
+
 				foreach ($detalles as $idd => $d) {
 
 					# Pedido completado
@@ -601,7 +794,7 @@ class VentasController extends AppController {
 					$detalles[$idd]['VentaDetalle']['cantidad_entregada']         = $d['VentaDetalle']['cantidad_reservada'];
 					$detalles[$idd]['VentaDetalle']['cantidad_pendiente_entrega'] = $d['VentaDetalle']['cantidad'] - $d['VentaDetalle']['cantidad_reservada'];
 
-					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], 'OC');
+					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], 'VT');
 						
 				}
 
@@ -1065,33 +1258,25 @@ class VentasController extends AppController {
 			)
 		);
 
-		$nuevaCantidad = 0;	
-
 		if (empty($producto)) {
 
-			$data = array();
-			$data['VentaDetalleProducto']['id']         			= $DetalleVenta['product_id'];
-			$data['VentaDetalleProducto']['id_externo'] 			= $DetalleVenta['product_id'];
-			$data['VentaDetalleProducto']['nombre']     			= $DetalleVenta['product_name'];
-			$data['VentaDetalleProducto']['cantidad_virtual']     	= 10 + $DetalleVenta['product_quantity'];
+			$item = $this->Prestashop->prestashop_obtener_producto($DetalleVenta['product_id']);
+
+			$producto = array();
+			$producto['VentaDetalleProducto']['id']         			= $DetalleVenta['product_id'];
+			$producto['VentaDetalleProducto']['id_externo'] 			= $DetalleVenta['product_id'];
+			$producto['VentaDetalleProducto']['nombre']     			= $DetalleVenta['product_name'];
+			$producto['VentaDetalleProducto']['cantidad_virtual']     	= $this->Prestashop->prestashop_obtener_stock_producto($DetalleVenta['product_id']);
+			$producto['VentaDetalleProducto']['ancho']					= round($item['width'], 2);
+			$producto['VentaDetalleProducto']['alto']					= round($item['height'], 2);
+			$producto['VentaDetalleProducto']['largo']					= round($item['depth'], 2);
+			$producto['VentaDetalleProducto']['peso']					= round($item['weight'], 2);
 
 			$this->Venta->VentaDetalle->VentaDetalleProducto->create();
-			$this->Venta->VentaDetalle->VentaDetalleProducto->save($data);
-			
-			$nuevaCantidad = $data['VentaDetalleProducto']['cantidad_virtual'] - $DetalleVenta['product_quantity'];
-
-		}else{
-
-			if ($producto['VentaDetalleProducto']['cantidad_virtual'] > $DetalleVenta['product_quantity']) {
-				$nuevaCantidad = $producto['VentaDetalleProducto']['cantidad_virtual'] - $DetalleVenta['product_quantity'];
-			}
-		
+			$this->Venta->VentaDetalle->VentaDetalleProducto->save($producto);
 		}
-		
-		# Descontar stock virtual y refrescar canales
-		#$productosController = new VentaDetalleProductosController();
 
-		#$productosController->descontar_stock_virtual($DetalleVenta['product_id'], $DetalleVenta['product_id'], $nuevaCantidad, $excluir);
+		return $producto['id_externo'];
 
 	}
 
@@ -1126,21 +1311,8 @@ class VentasController extends AppController {
 			$this->Venta->VentaDetalle->VentaDetalleProducto->create();
 			$this->Venta->VentaDetalle->VentaDetalleProducto->save($data);
 
-			$nuevaCantidad = $data['VentaDetalleProducto']['cantidad_virtual'] - 1; # Linio separa los items de una compra aunque su cantidad sea mayor a 1
-
 			
-		}else{
-
-			if ($producto['VentaDetalleProducto']['cantidad_virtual'] > 1) {
-				$nuevaCantidad = $producto['VentaDetalleProducto']['cantidad_virtual'] - 1;
-			}
-
 		}
-
-		# Descontar stock virtual y refrescar canales
-		#$productosController = new VentaDetalleProductosController();
-
-		#$productosController->descontar_stock_virtual($DetalleVenta['Sku'], $DetalleVenta['Sku'], $nuevaCantidad, $excluir);
 
 		return $DetalleVenta['Sku'];
 
@@ -1832,7 +2004,7 @@ class VentasController extends AppController {
 
 					# Devolvemos el stock reservado si corresponde
 					$this->Venta->cancelar_venta($venta['Venta']['id']);
-
+					$this->actualizar_canales_stock($venta['Venta']['id']);
 
 
 				}
@@ -1944,7 +2116,7 @@ class VentasController extends AppController {
 			foreach ($ventas as $iv => $venta) {
 
 				$this->Venta->pagar_venta($venta['Venta']['id']);
-
+				$this->actualizar_canales_stock($venta['Venta']['id']);
 			}
 		}
 
@@ -2266,6 +2438,8 @@ class VentasController extends AppController {
 											$totalDespacho = $totalDespacho + round($DetalleVenta['ShippingAmount'], 2);
 											// Se agrega el valor de la compra sumanod el precio de los productos
 											$NuevaVenta['Venta']['total'] = $NuevaVenta['Venta']['total'] + $NuevoDetalle['precio_bruto'];
+											# costo de despacho
+											$NuevaVenta['Venta']['costo_envio'] = $NuevaVenta['Venta']['costo_envio'] + round($DetalleVenta['ShippingAmount'], 2);
 											$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 											
 											//se toma el id de producto para usarlo luego en la sincronización de stock
@@ -2495,178 +2669,147 @@ class VentasController extends AppController {
 		$condiciones = array();
 		$joins = array();
 
-		//----------------------------------------------------------------------------------------------------
-		//info de venta
-		$FiltroVenta = "";
-		
-		if (isset($this->request->data['Venta']['filtroventa'])) {
+		$FiltroVenta                = '';
+		$FiltroCliente              = '';
+		$FiltroTienda               = '';
+		$FiltroMarketplace          = '';
+		$FiltroMedioPago            = '';
+		$FiltroVentaEstadoCategoria = '';
+		$FiltroPrioritario          = '';
+		$FiltroPicking              = '';
+		$FiltroFechaDesde           = '';
+		$FiltroFechaHasta           = '';
 
-			$FiltroVenta = trim($this->request->data['Venta']['filtroventa']);
+		// Filtrado de ordenes por formulario
+		if ( $this->request->is('post') ) {
+			$this->filtrar('ventas', 'exportar');
+		}
 
-			if ($FiltroVenta != "") {
 
-				$condiciones["OR"] = array(
-					"Venta.id LIKE '%" .$FiltroVenta. "%'",
-					"Venta.id_externo LIKE '%" .$FiltroVenta. "%'",
-					"Venta.referencia LIKE '%" .$FiltroVenta. "%'"
-				);
-				
+		# Filtrar
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'filtroventa':
+						$FiltroVenta = trim($valor);
+
+						if ($FiltroVenta != "") {
+
+							$condiciones["OR"] = array(
+								"Venta.id LIKE '%" .$FiltroVenta. "%'",
+								"Venta.id_externo LIKE '%" .$FiltroVenta. "%'",
+								"Venta.referencia LIKE '%" .$FiltroVenta. "%'"
+							);
+							
+						}
+						break;
+					case 'filtrocliente':
+						$FiltroCliente = trim($valor);
+
+						if ($FiltroCliente != "") {
+
+							$joins[] = array(
+								'table' => 'rp_venta_clientes',
+								'alias' => 'clientes',
+								'type' => 'INNER',
+								'conditions' => array(
+									'clientes.id = Venta.venta_cliente_id',
+									'OR' => array(
+										"clientes.nombre LIKE '%" .$FiltroCliente. "%'",
+										"clientes.apellido LIKE '%" .$FiltroCliente. "%'",
+										"clientes.rut LIKE '%" .$FiltroCliente. "%'",
+										"clientes.email LIKE '%" .$FiltroCliente. "%'",
+										"clientes.telefono LIKE '%" .$FiltroCliente. "%'"
+									)
+								)
+							);
+							
+						}
+						break;
+					case 'tienda_id':
+						$FiltroTienda = $valor;
+
+						if ($FiltroTienda != "") {
+							$condiciones['Venta.tienda_id'] = $FiltroTienda;
+						} 
+						break;
+					case 'marketplace_id':
+						$FiltroMarketplace = $valor;
+
+						if ($FiltroMarketplace != "") {
+							$condiciones['Venta.marketplace_id'] = ($FiltroMarketplace == 0) ? null : $FiltroMarketplace;
+						} 
+						break;
+					case 'medio_pago_id':
+						$FiltroMedioPago = $valor;
+
+						if ($FiltroMedioPago != "") {
+							$condiciones['Venta.medio_pago_id'] = $FiltroMedioPago;
+						} 
+						break;
+					case 'venta_estado_categoria_id':
+						$FiltroVentaEstadoCategoria = $valor;
+
+						if ($FiltroVentaEstadoCategoria != "") {
+
+							$joins[] = array(
+								'table' => 'rp_venta_estados',
+								'alias' => 'ventas_estados',
+								'type' => 'INNER',
+								'conditions' => array(
+									'ventas_estados.id = Venta.venta_estado_id',
+									"ventas_estados.venta_estado_categoria_id = " .$FiltroVentaEstadoCategoria
+								)
+							);
+
+						}
+						break;
+					case 'prioritario':
+						$FiltroPrioritario = $valor;
+
+						if ($FiltroPrioritario != "") {
+							$condiciones['Venta.prioritario'] = $FiltroPrioritario;
+						} 
+						break;
+					case 'picking_estado':
+						$FiltroPicking = $valor;
+
+						if ($FiltroPicking != "") {
+							$condiciones['Venta.picking_estado'] = $FiltroPicking;
+						} 
+						break;
+					case 'FechaDesde':
+						$FiltroFechaDesde = trim($valor);
+
+						if ($FiltroFechaDesde != "") {
+
+							$ArrayFecha = explode("-", $FiltroFechaDesde);
+
+							$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
+
+							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 00:00:00"));
+
+							$condiciones["Venta.fecha_venta >="] = $Fecha;
+
+						}
+						break;
+					case 'FechaHasta':
+						$FiltroFechaHasta = trim($valor);
+
+						if ($FiltroFechaHasta != "") {
+
+							$ArrayFecha = explode("-", $FiltroFechaHasta);
+
+							$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
+
+							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 23:59:59"));
+
+							$condiciones["Venta.fecha_venta <="] = $Fecha;
+
+						} 
+						break;
+				}
 			}
-
-		}
-
-		//----------------------------------------------------------------------------------------------------
-		//info de cliente
-		$FiltroCliente = "";
-		
-		if (isset($this->request->data['Venta']['filtrocliente'])) {
-
-			$FiltroCliente = trim($this->request->data['Venta']['filtrocliente']);
-
-			if ($FiltroCliente != "") {
-
-				$joins[] = array(
-					'table' => 'rp_venta_clientes',
-					'alias' => 'clientes',
-					'type' => 'INNER',
-					'conditions' => array(
-						'clientes.id = Venta.venta_cliente_id',
-						'OR' => array(
-							"clientes.nombre LIKE '%" .$FiltroCliente. "%'",
-							"clientes.apellido LIKE '%" .$FiltroCliente. "%'",
-							"clientes.rut LIKE '%" .$FiltroCliente. "%'",
-							"clientes.email LIKE '%" .$FiltroCliente. "%'",
-							"clientes.telefono LIKE '%" .$FiltroCliente. "%'"
-						)
-					)
-				);
-				
-			}
-
-		}
-
-		//----------------------------------------------------------------------------------------------------
-		//tienda
-		$FiltroTienda = "";
-		
-		if (isset($this->request->data['Venta']['tienda_id'])) {
-
-			$FiltroTienda = $this->request->data['Venta']['tienda_id'];
-
-			if ($FiltroTienda != "") {
-				$condiciones['Venta.tienda_id'] = $FiltroTienda;
-			} 
-
-		}
-
-		//----------------------------------------------------------------------------------------------------
-		//marketplace
-		$FiltroMarketplace = "";
-		
-		if (isset($this->request->data['Venta']['marketplace_id'])) {
-
-			$FiltroMarketplace = $this->request->data['Venta']['marketplace_id'];
-
-			if ($FiltroMarketplace != "") {
-				$condiciones['Venta.marketplace_id'] = $FiltroMarketplace;
-			} 
-
-		}
-
-		//----------------------------------------------------------------------------------------------------
-		//medio de pago
-		$FiltroMedioPago = "";
-		
-		if (isset($this->request->data['Venta']['medio_pago_id'])) {
-
-			$FiltroMedioPago = $this->request->data['Venta']['medio_pago_id'];
-
-			if ($FiltroMedioPago != "") {
-				$condiciones['Venta.medio_pago_id'] = $FiltroMedioPago;
-			} 
-
-		}
-
-		//----------------------------------------------------------------------------------------------------
-		//estado de venta
-		$FiltroVentaEstadoCategoria = "";
-		
-		if (isset($this->request->data['Venta']['venta_estado_categoria_id'])) {
-
-			$FiltroVentaEstadoCategoria = $this->request->data['Venta']['venta_estado_categoria_id'];
-
-			if ($FiltroVentaEstadoCategoria != "") {
-
-				$joins[] = array(
-					'table' => 'rp_venta_estados',
-					'alias' => 'ventas_estados',
-					'type' => 'INNER',
-					'conditions' => array(
-						'ventas_estados.id = Venta.venta_estado_id',
-						"ventas_estados.venta_estado_categoria_id = " .$FiltroVentaEstadoCategoria
-					)
-				);
-
-			} 
-
-		}
-
-		//----------------------------------------------------------------------------------------------------
-		//venta atendida
-		$FiltroAtendida = "";
-		
-		if (isset($this->request->data['Venta']['atendida'])) {
-
-			$FiltroAtendida = $this->request->data['Venta']['atendida'];
-
-			if ($FiltroAtendida != "") {
-				$condiciones['Venta.atendida'] = $FiltroAtendida;
-			} 
-
-		}
-
-		//----------------------------------------------------------------------------------------------------
-		//fecha desde
-		$FiltroFechaDesde = "";
-
-		if (isset($this->request->data['Venta']['FechaDesde'])) {
-
-			$FiltroFechaDesde = trim($this->request->data['Venta']['FechaDesde']);
-
-			if ($FiltroFechaDesde != "") {
-
-				$ArrayFecha = explode("-", $FiltroFechaDesde);
-
-				$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
-
-				$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 00:00:00"));
-
-				$condiciones["Venta.fecha_venta >="] = $Fecha;
-
-			} 
-
-		}
-
-		//----------------------------------------------------------------------------------------------------
-		//fecha hasta
-		$FiltroFechaHasta = "";
-
-		if (isset($this->request->data['Venta']['FechaHasta'])) {
-
-			$FiltroFechaHasta = trim($this->request->data['Venta']['FechaHasta']);
-
-			if ($FiltroFechaHasta != "") {
-
-				$ArrayFecha = explode("-", $FiltroFechaHasta);
-
-				$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
-
-				$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 23:59:59"));
-
-				$condiciones["Venta.fecha_venta <="] = $Fecha;
-
-			} 
-
 		}
 
 		//----------------------------------------------------------------------------------------------------
@@ -2718,7 +2861,7 @@ class VentasController extends AppController {
 				'order' => 'Venta.fecha_venta DESC'
 			)
 		);
-	
+		
 		$this->set(compact('datos'));
 
 	}
@@ -2729,7 +2872,7 @@ class VentasController extends AppController {
 	 * @param  [type] $id Identificador de la venta
 	 */
 	public function admin_view ($id = null) 
-	{
+	{	
 
 		if ( ! $this->Venta->exists($id) ) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
@@ -2956,18 +3099,32 @@ class VentasController extends AppController {
 			}
 			
 			if ($resCambio) {
+
+				# Enviar email al cliente
 				if (!empty($plantillaEmail) && $notificar) {
 					$notificado = $this->notificar_cambio_estado($id_venta, $plantillaEmail, $estado_nuevo_nombre);
 				}
 
 				# si es un estado pagado se reserva el stock disponible
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id)) {
+				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
 					$this->Venta->pagar_venta($id_venta);
+					$this->actualizar_canales_stock($id_venta);
+				}
+
+				# Se entrega la venta
+				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
+					$this->Venta->entregar($id_venta);
 				}
 
 				# si es un estado cancelado se devuelve el stock a la bodega
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
-					$this->Venta->cancelar_venta($id_venta);	
+				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
+					$this->Venta->cancelar_venta($id_venta);
+					$this->actualizar_canales_stock($id_venta);
+				}
+
+				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id) ) {
+					$this->Venta->cancelar_venta($id_venta);
+					$this->actualizar_canales_stock($id_venta);
 				}
 				
 			}else{
@@ -3019,13 +3176,25 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id)) {
+			if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
 				$this->Venta->pagar_venta($id_venta);
+				$this->actualizar_canales_stock($id_venta);
+			}
+
+			# se entrega la venta
+			if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
+				$this->Venta->entregar($id_venta);
 			}
 
 			# si es un estado cancelado se devuelve el stock a la bodega
+			if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
+				$this->Venta->revertir_venta($id_venta);
+				$this->actualizar_canales_stock($id_venta);
+			}
+
 			if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
-				$this->Venta->cancelar_venta($id_venta);	
+				$this->Venta->cancelar_venta($id_venta);
+				$this->actualizar_canales_stock($id_venta);
 			}
 			
 		# Meli
@@ -3048,7 +3217,11 @@ class VentasController extends AppController {
 		}
 	}
 
-
+	/**
+	 * [admin_reservar_stock_venta description]
+	 * @param  string $id [description]
+	 * @return [type]     [description]
+	 */
 	public function admin_reservar_stock_venta($id = '')
 	{
 		$venta = $this->Venta->obtener_venta_por_id($id);
@@ -3080,6 +3253,63 @@ class VentasController extends AppController {
 	}
 
 
+	/**
+	 * [actualizar_canales_stock description]
+	 * @param  [type] $id_venta [description]
+	 * @return [type]           [description]
+	 */
+	public function actualizar_canales_stock($id_venta, $excluir = array())
+	{	
+		$venta = $this->Venta->obtener_venta_por_id($id_venta);
+
+		# si a tienda tiene desactivada la opcion de stock se termina el flujo
+		if (!$venta['Tienda']['stock_automatico']) {
+			return false;
+		}
+
+		# si el marketplace tiene desactivada la opcion de stock se termina el flujo
+		if (!empty($venta['Marketplace'])) {
+			if (!$venta['Marketplace']['stock_automatico']) {
+				return false;
+			}
+		}
+
+		$ventaDetalles = array();
+
+		foreach ($venta['VentaDetalle'] as $ip => $producto) {
+
+			# si el producto tiene desactivada la opcion de stock se termina el flujo
+			if (!$producto['VentaDetalleProducto']['stock_automatico']) {
+				continue;
+			}
+			
+			# Descontar stock virtual y refrescar canales
+			$productosController = new VentaDetalleProductosController();
+
+			if (Configure::read('debug') > 0) {
+				$res = true;
+			}else{
+				$res = $productosController->actualizar_canales_stock($producto['VentaDetalleProducto']['id_externo'], $producto['VentaDetalleProducto']['cantidad_virtual'], $excluir);
+			}
+			
+			if (empty($res['errors'])) {
+				return true;
+			}
+			
+
+		}
+
+		return false;
+	}
+
+
+	/**
+	 * [admin_liberar_stock_reservado description]
+	 * @param  string $id           [description]
+	 * @param  string $id_detalle   [description]
+	 * @param  [type] $cant_liberar [description]
+	 * @return [type]               [description]
+	 */
 	public function admin_liberar_stock_reservado($id = '', $id_detalle = '', $cant_liberar)
 	{
 		$venta = $this->Venta->obtener_venta_por_id($id);
@@ -3827,7 +4057,7 @@ class VentasController extends AppController {
 		$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta);
 		
 		$archivos[] = $url_etiqueta_envio['path'];
-
+		
 		# Unimos todos los PDFS obtenidos
 		if (!empty($archivos)) {
 			
@@ -5048,12 +5278,9 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['comuna_entrega']    =  $detalle_venta['AddressShipping']['City'];
 		$NuevaVenta['Venta']['nombre_receptor']   =  $detalle_venta['AddressShipping']['FirstName'] . ' ' . $detalle_venta['AddressShipping']['LastName'];
 		$NuevaVenta['Venta']['fono_receptor']     =  trim($detalle_venta['AddressShipping']['Phone']) . '-' .  trim($detalle_venta['AddressShipping']['Phone2']) ;
-		
-		$totalDespacho = (float) 0;
 
-		$metodo_envio  = '';
 
-		$NuevaVenta['Venta']['costo_envio']      = (float) $totalDespacho;
+		$NuevaVenta['Venta']['costo_envio']      = (float) 0;
 		
 		//se obtiene el estado de la venta
 		$NuevaVenta['Venta']['venta_estado_id']  = $this->obtener_estado_id($detalle_venta['Statuses']['Status'], $marketplace['Marketplace']['marketplace_tipo_id']);
@@ -5063,7 +5290,7 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['medio_pago_id']    = $this->obtener_medio_pago_id($detalle_venta['PaymentMethod']);
 
 		//se obtiene el metodo de envio
-		$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id($metodo_envio);
+		$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id('');
 		
 		//se obtiene el cliente
 		$NuevaVenta['Venta']['venta_cliente_id'] = $this->obtener_cliente_id($detalle_venta);
@@ -5073,7 +5300,7 @@ class VentasController extends AppController {
 
 		# si es un estado pagado se reserva el stock disponible
 		if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) ) {
-			$ActualizarVenta['Venta']['prioritario'] = 1;
+			#$ActualizarVenta['Venta']['prioritario'] = 1;
 		}
 
 		# Guardar n° de seguimiento
@@ -5084,11 +5311,8 @@ class VentasController extends AppController {
 
 			$DetalleVenta['Sku'] = intval($DetalleVenta['Sku']);
 
-			# Evitamos que se vuelva actualizar el stock en linio
-			$excluirLinio = array('Linio' => array($marketplace_id));
-
 			//se guarda el producto si no existe
-			$idNuevoProducto = $this->linio_guardar_producto($DetalleVenta, $excluirLinio);
+			$idNuevoProducto = $this->linio_guardar_producto($DetalleVenta);
 
 			$NuevoDetalle = array();
 			$NuevoDetalle['venta_detalle_producto_id'] = $idNuevoProducto;
@@ -5105,13 +5329,13 @@ class VentasController extends AppController {
 			$NuevoDetalle['cantidad_reservada']         = 0;
 			$NuevoDetalle['cantidad']         			= 1;
 
-			# OBtenemos el último metodo de envio
-			$metodo_envio = $DetalleVenta['ShipmentProvider'];
-
 			$totalDespacho = $totalDespacho + round($DetalleVenta['ShippingAmount'], 2);
 
 			// Se agrega el valor de la compra sumando el precio de los productos
 			$NuevaVenta['Venta']['total'] = $NuevaVenta['Venta']['total'] + $NuevoDetalle['precio_bruto'];
+			
+			# costo de despacho
+			$NuevaVenta['Venta']['costo_envio'] = $NuevaVenta['Venta']['costo_envio'] + round($DetalleVenta['ShippingAmount'], 2);
 
 			$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 
@@ -5140,6 +5364,10 @@ class VentasController extends AppController {
 
 		$NuevaVenta['VentaTransaccion'][] = $NuevaTransaccion;
 
+
+		# Evitamos que se vuelva actualizar el stock en linio
+		$excluirLinio = array('Linio' => array($marketplace_id));
+
 		//se guarda la venta
 		$this->Venta->create();
 		if ($this->Venta->saveAll($NuevaVenta) ) {
@@ -5159,13 +5387,9 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($this->Venta->id);
-			}
-
-			# si es un estado rechazo se devuelve el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($NuevaVenta['Venta']['venta_estado_id']) ) {
-				$this->Venta->revertir_venta($this->Venta->id);
+				$this->actualizar_canales_stock($this->Venta->id, $excluirLinio);
 			}
 
 			return true;
@@ -5174,6 +5398,90 @@ class VentasController extends AppController {
 			return false;
 		}
 		
+	}
+
+
+	public function actualizar_venta_linio($marketplace_id, $id_externo, $venta, $nuevo_estado = '')
+	{	
+
+		if (empty($nuevo_estado)) {
+
+			$marketplace = ClassRegistry::init('Marketplace')->find('first', array(
+				'conditions' => array(
+					'Marketplace.id' => $marketplace_id
+				),
+				'fields' => array(
+					'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key', 'Marketplace.tienda_id', 'Marketplace.fee', 'Marketplace.marketplace_tipo_id', 'Marketplace.nombre'
+				)
+			));
+
+			# Cliente Linio	
+			$this->Linio->crearCliente($marketplace['Marketplace']['api_host'], $marketplace['Marketplace']['api_user'], $marketplace['Marketplace']['api_key']);
+
+			$detalle_venta = $this->Linio->linio_obtener_venta($id_externo, true);
+
+			$nuevo_estado = $detalle_venta['Statuses']['Status'];
+		}
+
+		$nw_estado_id = $this->obtener_estado_id($nuevo_estado, $marketplace['Marketplace']['marketplace_tipo_id']);
+
+		$venta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
+		$venta['Venta']['venta_estado_id']          = $nw_estado_id;
+		$venta['Venta']['venta_estado_responsable'] = 'Linio Webhook';
+
+		# si es un estado pagado se reserva el stock disponible
+		if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id']) ) {
+			#$venta['Venta']['prioritario'] = 1;
+		}
+
+		# si es un estado rechazo se devuelve el stock disponible
+		if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($venta['Venta']['venta_estado_id']) ) {
+			$venta['Venta']['prioritario'] = 0;
+		}
+
+		if ($this->Venta->save($venta)) {
+
+			$tienda = ClassRegistry::init('Tienda')->obtener_tienda($marketplace['Marketplace']['tienda_id'], array('Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
+
+			if ($tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
+				$this->Pushalert = $this->Components->load('Pushalert');
+
+				$this->Pushalert::$api_key = $tienda['Tienda']['notificacion_apikey'];
+
+				$tituloPush = sprintf('Actualización de venta en %s', $marketplace['Marketplace']['nombre']);
+				$mensajePush = sprintf('La venta #%d cambió a %s', $venta['Venta']['id'], ClassRegistry::init('VentaEstado')->obtener_estado_por_id($venta['Venta']['venta_estado_id'])['VentaEstado']['nombre'] );
+				$urlPush = Router::url('/', true) . 'ventas/view/' . $venta['Venta']['id'];
+
+				$this->Pushalert->enviarNotificacion($tituloPush, $mensajePush, $urlPush);	
+			}
+
+			# Evitamos que se vuelva actualizar el stock en linio
+			$excluirLinio = array('Linio' => array($marketplace_id));
+
+			# si es un estado pagado se reserva el stock disponible
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($nw_estado_id) ) {
+				$this->Venta->pagar_venta($venta['Venta']['id']);
+				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirLinio);
+			}
+
+			# si es un estado rechazo se devuelve el stock disponible
+			if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($nw_estado_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($nw_estado_id) ) {
+				$this->Venta->revertir_venta($venta['Venta']['id']);
+				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirLinio);
+			}
+
+			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($nw_estado_id) ) {
+				$this->Venta->cancelar_venta($venta['Venta']['id']);
+				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirLinio);
+			}
+
+			return true;
+
+		}else{
+			
+			return false;
+		
+		}
 	}
 
 
@@ -5242,11 +5550,11 @@ class VentasController extends AppController {
 
 		# si es un estado pagado se reserva el stock disponible
 		if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) ) {
-			$ActualizarVenta['Venta']['prioritario'] = 1;
+			#$ActualizarVenta['Venta']['prioritario'] = 1;
 		}
 
 		# si es un estado rechazo se devuelve el stock disponible
-		if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
+		if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($ActualizarVenta['Venta']['venta_estado_id']) ) {
 			$ActualizarVenta['Venta']['prioritario'] = 0;
 		}
 
@@ -5270,6 +5578,8 @@ class VentasController extends AppController {
 			$ActualizarVenta['VentaTransaccion'][] = $NuevaTransaccion;
 		}
 
+		# Evitamos que se vuelva actualizar el stock en prestashop
+		$excluirMeli = array('Mercadolibre' => array($marketplace_id));
 		
 		// Se guarda la venta
 		if($this->Venta->saveAll($ActualizarVenta)){
@@ -5289,13 +5599,25 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) ) {
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($venta['Venta']['id']);
+				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirMeli);
+			}
+
+			# se entrega la venta
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) && ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
+				$this->Venta->entregar($venta['Venta']['id']);
 			}
 
 			# si es un estado rechazo se devuelve el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
+			if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
 				$this->Venta->revertir_venta($venta['Venta']['id']);
+				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirMeli);
+			}
+
+			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
+				$this->Venta->cancelar_venta($venta['Venta']['id']);
+				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirMeli);
 			}
 
 			return true;
@@ -5332,23 +5654,6 @@ class VentasController extends AppController {
 		# No existe
 		if (empty($marketplace)) {
 			return false;
-		}
-
-		#Vemos si existe en la BD
-		$existe = $this->Venta->find('first', array(
-			'conditions' => array(
-				'Venta.id_externo'     => $id_externo,
-				'Venta.marketplace_id' => $marketplace_id
-			),
-			'fields' => array(
-				'Venta.id'
-			)
-		));
-
-		if (!empty($existe)) {
-
-			return $this->actualizar_venta_meli($marketplace_id, $id_externo);
-
 		}
 
 		# componente on the fly!
@@ -5477,11 +5782,8 @@ class VentasController extends AppController {
 					continue;
 				}
 
-				# Evitamos que se vuelva actualizar el stock en meli
-				$excluirMeli = array('Mercadolibre' => array($marketplace_id));
-
 				//se guarda el producto si no existe
-				$idNuevoProducto = $this->linio_guardar_producto($DetalleVenta, $excluirMeli);
+				$idNuevoProducto = $this->linio_guardar_producto($DetalleVenta);
 
 				$NuevoDetalle                               = array();
 				$NuevoDetalle['venta_detalle_producto_id']  = $idNuevoProducto;
@@ -5493,9 +5795,12 @@ class VentasController extends AppController {
 			} // fin no empty
 		
 		} //fin ciclo detalle de venta
-
+		
 		//se guarda la venta
 		$this->Venta->create();
+
+		# Evitamos que se vuelva actualizar el stock en prestashop
+		$excluirMeli = array('Mercadolibre' => array($marketplace_id));
 		
 		if ( $this->Venta->saveAll($NuevaVenta) ) {
 
@@ -5514,13 +5819,9 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($this->Venta->id);
-			}
-
-			# si es un estado rechazo se devuelve el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($NuevaVenta['Venta']['venta_estado_id']) ) {
-				$this->Venta->revertir_venta($this->Venta->id);
+				$this->actualizar_canales_stock($this->Venta->id, $excluirMeli);
 			}
 
 			return true;
@@ -5537,7 +5838,7 @@ class VentasController extends AppController {
 	 * @param  [type] $id_externo [description]
 	 * @return [type]             [description]
 	 */
-	public function crear_venta_prestashop($tienda_id, $id_externo, $nuevo_estado)
+	public function crear_venta_prestashop($tienda_id, $id_externo, $nuevo_estado = '')
 	{	
 		$tienda = ClassRegistry::init('Tienda')->find('first', array(
 			'conditions' => array(
@@ -5559,6 +5860,10 @@ class VentasController extends AppController {
 		$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
 
 		$nwVenta = $this->Prestashop->prestashop_obtener_venta($id_externo); 
+
+		if (empty($nuevo_estado)) {
+			$nuevo_estado = $nwVenta['current_state'];
+		}
 
 		//datos de la venta a registrar
 		$NuevaVenta                         = array();
@@ -5715,11 +6020,8 @@ class VentasController extends AppController {
 
 					$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 
-					# Evitamos que se vuelva actualizar el stock en prestashop
-					$excluirPrestashop = array('Prestashop' => array($tienda_id));
-
 					//se guarda el producto si no existe
-					$this->prestashop_guardar_producto($DetalleVenta, $excluirPrestashop);
+					$this->prestashop_guardar_producto($DetalleVenta);
 
 				}
 				
@@ -5744,14 +6046,14 @@ class VentasController extends AppController {
 
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($this->Venta->id);
+				
+				# Evitamos que se vuelva actualizar el stock en prestashop
+				$excluirPrestashop = array('Prestashop' => array($tienda_id));
+				$this->actualizar_canales_stock($this->Venta->id, $excluirPrestashop);
 			}
 
-			# si es un estado rechazo se devuelve el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($NuevaVenta['Venta']['venta_estado_id']) ) {
-				$this->Venta->revertir_venta($this->Venta->id);
-			}
 
 			return true;
 		}else{
@@ -5761,7 +6063,14 @@ class VentasController extends AppController {
 	}
 
 
-	public function actualizar_venta_prestashop($tienda_id, $id_externo, $nuevo_estado)
+	/**
+	 * [actualizar_venta_prestashop description]
+	 * @param  [type] $tienda_id    [description]
+	 * @param  [type] $id_externo   [description]
+	 * @param  [type] $nuevo_estado [description]
+	 * @return [type]               [description]
+	 */
+	public function actualizar_venta_prestashop($tienda_id, $id_externo, $nuevo_estado = '')
 	{
 		$tienda = ClassRegistry::init('Tienda')->find('first', array(
 			'conditions' => array(
@@ -5798,9 +6107,16 @@ class VentasController extends AppController {
 
 		$nwVenta = $this->Prestashop->prestashop_obtener_venta($id_externo); 
 
+		if (empty($nuevo_estado)) {
+			$nuevo_estado = $nwVenta['current_state'];
+		}
+
 		//datos de la venta a registrar
 		$ActualizarVenta                        = array();
 		$ActualizarVenta['Venta']['id']			= $venta['Venta']['id'];
+		$ActualizarVenta['Venta']['descuento']   = round($nwVenta['total_discounts_tax_incl'], 2);
+		$ActualizarVenta['Venta']['costo_envio'] = round($nwVenta['total_shipping_tax_incl'], 2);
+		$ActualizarVenta['Venta']['total']       = round($nwVenta['total_paid'], 2);
 
 		//se obtienen las transacciones de una venta
 		//si la venta tiene transacciones asociadas
@@ -5918,6 +6234,10 @@ class VentasController extends AppController {
 		//se obtiene el cliente
 		$ActualizarVenta['Venta']['venta_cliente_id'] = $this->Prestashop->prestashop_obtener_cliente($nwVenta['id_customer']);
 		
+
+		# Evitamos que se vuelva actualizar el stock en prestashop
+		$excluirPrestashop = array('Prestashop' => array($tienda_id));
+
 		//se guarda la venta
 		if ( $this->Venta->saveAll($ActualizarVenta) ){
 
@@ -5934,13 +6254,25 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) ) {
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($venta['Venta']['id']);
+				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirPrestashop);
+			}
+
+			# se entrega la venta
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) && ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
+				$this->Venta->entregar($venta['Venta']['id']);
 			}
 
 			# si es un estado rechazo se devuelve el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
+			if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
 				$this->Venta->revertir_venta($venta['Venta']['id']);
+				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirPrestashop);
+			}
+
+			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
+				$this->Venta->cancelar_venta($venta['Venta']['id']);
+				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirPrestashop);
 			}
 
 			return true;
@@ -7031,61 +7363,16 @@ class VentasController extends AppController {
 
 			}else{
 
-				$nw_estado_id = $this->obtener_estado_id($this->request->data['payload']['NewStatus'], $venta['Marketplace']['marketplace_tipo_id']);
-
-				$venta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
-				$venta['Venta']['venta_estado_id']          = $nw_estado_id;
-				$venta['Venta']['venta_estado_responsable'] = 'Linio Webhook';
-
-				# si es un estado pagado se reserva el stock disponible
-				if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id']) ) {
-					$venta['Venta']['prioritario'] = 1;
-				}
-
-				# si es un estado rechazo se devuelve el stock disponible
-				if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($venta['Venta']['venta_estado_id']) ) {
-					$venta['Venta']['prioritario'] = 0;
-				}
-
-				if ($this->Venta->save($venta)) {
-
-					$marketplace = ClassRegistry::init('Marketplace')->find('first', array(
-						'conditions' => array(
-							'Marketplace.id' => $marketplace_id
-						),
-						'fields' => array(
-							'Marketplace.tienda_id', 'Marketplace.nombre'
-						)
-					));
-
-					$tienda = ClassRegistry::init('Tienda')->obtener_tienda($marketplace['Marketplace']['tienda_id'], array('Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
-
-					if ($tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
-						$this->Pushalert = $this->Components->load('Pushalert');
-
-						$this->Pushalert::$api_key = $tienda['Tienda']['notificacion_apikey'];
-
-						$tituloPush = sprintf('Actualización de venta en %s', $marketplace['Marketplace']['nombre']);
-						$mensajePush = sprintf('La venta #%d cambió a %s', $venta['Venta']['id'], ClassRegistry::init('VentaEstado')->obtener_estado_por_id($venta['Venta']['venta_estado_id'])['VentaEstado']['nombre'] );
-						$urlPush = Router::url('/', true) . 'ventas/view/' . $venta['Venta']['id'];
-
-						$this->Pushalert->enviarNotificacion($tituloPush, $mensajePush, $urlPush);	
-					}
-
-					# si es un estado pagado se reserva el stock disponible
-					if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($nw_estado_id) ) {
-						$this->Venta->pagar_venta($venta['Venta']['id']);
-					}
-
-					# si es un estado rechazo se devuelve el stock disponible
-					if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($nw_estado_id) ) {
-						$this->Venta->revertir_venta($venta['Venta']['id']);
-					}
-
+				$accion = $this->actualizar_venta_linio($marketplace_id, $this->request->data['payload']['OrderId'], $venta, $this->request->data['payload']['NewStatus']);
+				
+				if ($accion) {
+					
 					$respuesta['code'] = 200;
 					$respuesta['created'] = true;
 					$respuesta['message'] = 'Venta #'. $this->request->data['payload']['OrderId'].' actualizada con éxito';
+
 				}
+
 			}
 
 		}
@@ -7138,7 +7425,32 @@ class VentasController extends AppController {
 
 		$log = array();
 
-		if ($tipo == 'crear') {
+		$id_venta = str_replace('/orders/', '', $this->request->data['resource']);
+
+		#Vemos si existe en la BD
+		$existe = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id_externo'     => $id_venta,
+				'Venta.marketplace_id' => $marketplace_id
+			),
+			'fields' => array(
+				'Venta.id'
+			)
+		));
+
+		if (!empty($existe)) {
+
+			$accion = $this->actualizar_venta_meli($marketplace_id, $id_venta);
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Meli Notification Actualizar',
+					'modulo' => 'Ventas',
+					'modulo_accion' => json_encode($this->request->data)
+				)
+			);
+
+		}else{
 
 			$log[] = array(
 				'Log' => array(
@@ -7148,17 +7460,15 @@ class VentasController extends AppController {
 				)
 			);
 
-			$id_venta = str_replace('/orders/', '', $this->request->data['resource']);
-
 			$accion = $this->crear_venta_meli($marketplace_id, $id_venta);
+		
+		}
 
-			if ($accion) {
-				
-				$respuesta['code'] = 200;
-				$respuesta['created'] = true;
-				$respuesta['message'] = 'Venta #'. $id_venta . ' creada/actualizada con éxito';
-
-			}
+		if ($accion) {
+			
+			$respuesta['code'] = 200;
+			$respuesta['created'] = true;
+			$respuesta['message'] = 'Venta #'. $id_venta . ' creada/actualizada con éxito';
 
 		}
 

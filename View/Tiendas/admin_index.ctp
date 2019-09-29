@@ -23,6 +23,7 @@
 									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('url', 'URL', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('configuracion', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('stock_automatico', 'Stock sincronizado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('activo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('created', 'Fecha de creación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
@@ -34,6 +35,7 @@
 									<td><?= h($tienda['Tienda']['nombre']); ?>&nbsp;</td>
 									<td><?= h($tienda['Tienda']['url']); ?>&nbsp;</td>
 									<td><?= h($tienda['Tienda']['configuracion']); ?>&nbsp;</td>
+									<td><?= ($tienda['Tienda']['stock_automatico'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td><?= ($tienda['Tienda']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td><?= h($tienda['Tienda']['created']); ?>&nbsp;</td>
 									<td>

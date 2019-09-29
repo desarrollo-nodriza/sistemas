@@ -484,6 +484,252 @@ class VentaDetalleProductosController extends AppController
 	}
 
 
+	public function admin_edicion_masiva()
+	{	
+		$tipoPermitido = array(
+			'xlsx',
+			'xls',
+			'csv'
+		);
+
+		$datos = array();
+
+		$markets = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1)));
+
+		$tiendas = ClassRegistry::init('Tienda')->find('list', array('conditions' => array('activo' => 1)));
+
+		if ( $this->request->is('post') || $this->request->is('put')) {
+
+			ini_set('max_execution_time', 0);
+			ini_set('post_max_size', '1G');
+			ini_set('memory_limit', -1);
+			ini_set('max_input_vars', 1000000);
+
+			if ($this->request->data['VentaDetalleProducto']['archivo']['error'] == 0 ) {
+				# Reconocer cabecera e idenitficador
+				if ($this->request->data['VentaDetalleProducto']['archivo']['error'] != 0) {
+					$this->Session->setFlash('El archivo contiene errores o está dañado.', null, array(), 'danger');
+					$this->redirect(array('action' => 'edicionMasiva'));
+				}
+
+				$ext = pathinfo($this->request->data['VentaDetalleProducto']['archivo']['name'], PATHINFO_EXTENSION);
+
+				if (!in_array($ext, $tipoPermitido)) {
+					$this->Session->setFlash('El formato '.$ext.' no es válido. Los formatos permitidos son: ' . implode($tipoPermitido, ','), null, array(), 'danger');
+					$this->redirect(array('action' => 'edicionMasiva'));
+				}
+
+				$spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($this->request->data['VentaDetalleProducto']['archivo']['tmp_name']);
+				$sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+				
+				if (isset($sheetData[1])) {
+					foreach ($sheetData[1] as $k => $cabecera) {
+						$datos['options'][$k] = $cabecera;
+					}						
+				}
+				
+				$datos['data'] = $sheetData;
+				
+				$this->Session->write('edicionMasiva', $datos);
+
+			}else{
+
+				$dataToSave = array();	
+
+				foreach ($this->request->data['Indice'] as $a => $i) {
+					if (empty($i)) {
+						unset($this->request->data['Indice'][$a]);
+					}
+				}
+
+				$columna = array();
+
+				# Se obtienen los índices para cada elemento
+				$columna['id_productos']     = array_search('id_producto', $this->request->data['Indice']);
+				$columna['id_marca']         = array_search('marca_id', $this->request->data['Indice']);
+				$columna['nombre']           = array_search('nombre', $this->request->data['Indice']);
+				$columna['precio_costo']     = array_search('precio_costo', $this->request->data['Indice']);
+				$columna['cantidad_virtual'] = array_search('cantidad_virtual', $this->request->data['Indice']);
+				$columna['cod_proveedor']    = array_search('codigo_proveedor', $this->request->data['Indice']);
+				$columna['ancho']            = array_search('ancho', $this->request->data['Indice']);
+				$columna['alto']             = array_search('alto', $this->request->data['Indice']);
+				$columna['largo']            = array_search('largo', $this->request->data['Indice']);
+				$columna['peso']             = array_search('peso', $this->request->data['Indice']);
+
+				foreach ($markets as $im => $m) {
+					$columna['mp_precio_' . $im]       = array_search('mp_precio_' . $im, $this->request->data['Indice']);
+					$columna['mp_preciooferta_' . $im] = array_search('mp_preciooferta_' . $im, $this->request->data['Indice']);
+					$columna['mp_activo_' . $im]       = array_search('mp_activo_' . $im, $this->request->data['Indice']);
+				}
+
+				foreach ($tiendas as $im => $m) {
+					$columna['tn_precio_' . $im]       = array_search('tn_precio_' . $im, $this->request->data['Indice']);
+					$columna['tn_preciooferta_' . $im] = array_search('tn_preciooferta_' . $im, $this->request->data['Indice']);
+					$columna['tn_activo_' . $im]       = array_search('tn_activo_' . $im, $this->request->data['Indice']);
+				}
+				
+
+				if (!empty($this->Session->read('edicionMasiva.data'))) {
+					
+					foreach ($this->Session->read('edicionMasiva.data') as $indice => $valor) {
+						
+						if (empty($valor[$columna['id_productos']]) || $indice == 1) {
+							continue;
+						}
+
+						if (!$this->VentaDetalleProducto->exists($valor[$columna['id_productos']])) {
+							continue;
+						}
+
+						# Datos necesarios para reaizar un ingreso
+						$dataToSave[$indice]['VentaDetalleProducto']['id']      = $valor[$columna['id_productos']];
+
+						if (!empty($valor[$columna['id_marca']])) {
+							$dataToSave[$indice]['VentaDetalleProducto']['marca_id']         = $valor[$columna['id_marca']];
+						}
+
+						if (!empty($valor[$columna['nombre']])) {
+							$dataToSave[$indice]['VentaDetalleProducto']['nombre']           = $valor[$columna['nombre']];
+						}
+
+						if (isset($valor[$columna['cantidad_virtual']])) {
+							$dataToSave[$indice]['VentaDetalleProducto']['cantidad_virtual'] = $valor[$columna['cantidad_virtual']];
+						}
+						
+						if (!empty($valor[$columna['precio_costo']])) {
+							$dataToSave[$indice]['VentaDetalleProducto']['precio_costo']     = $valor[$columna['precio_costo']];
+						}
+						
+						if (!empty($valor[$columna['cod_proveedor']])) {
+							$dataToSave[$indice]['VentaDetalleProducto']['codigo_proveedor'] = $valor[$columna['cod_proveedor']];
+						}
+
+						if (!empty($valor[$columna['ancho']])) {
+							$dataToSave[$indice]['VentaDetalleProducto']['ancho']         	 = round($valor[$columna['ancho']], 2);
+						}
+
+						if (!empty($valor[$columna['alto']])) {
+							$dataToSave[$indice]['VentaDetalleProducto']['alto']             = round($valor[$columna['alto']], 2);
+						}
+
+						if (!empty($valor[$columna['largo']])) {
+							$dataToSave[$indice]['VentaDetalleProducto']['largo']            = round($valor[$columna['largo']], 2);
+						}
+
+						if (!empty($valor[$columna['peso']])) {
+							$dataToSave[$indice]['VentaDetalleProducto']['peso']             = round($valor[$columna['peso']], 2);
+						}
+
+						foreach ($tiendas as $im => $m) {
+
+							$im = (int) $im;
+
+							if (!empty($valor[$columna['tn_precio_' . $im]])) {
+								$dataToSave[$indice]['Tienda'][$im]['id']     = $im;
+								$dataToSave[$indice]['Tienda'][$im]['precio'] = $valor[$columna['tn_precio_' . $im]];
+							}
+
+							if (!empty($valor[$columna['tn_preciooferta_' . $im]])) {
+								$dataToSave[$indice]['Tienda'][$im]['id']        = $im;
+								$dataToSave[$indice]['Tienda'][$im]['precio_oferta'] = $valor[$columna['tn_preciooferta_' . $im]];
+							}
+
+							if (isset($valor[$columna['tn_activo_' . $im]])) {
+								$dataToSave[$indice]['Tienda'][$im]['id'] = $im;
+								$dataToSave[$indice]['Tienda'][$im]['activo'] = $valor[$columna['tn_activo_' . $im]];
+							}
+
+							if (isset($valor[$columna['cantidad_virtual']])) {
+								$dataToSave[$indice]['Tienda'][$im]['id'] = $im;
+								$dataToSave[$indice]['Tienda'][$im]['cantidad_virtual'] = $valor[$columna['cantidad_virtual']];
+							}
+							
+						}
+
+						foreach ($markets as $im => $m) {
+
+							if (!empty($valor[$columna['mp_precio_' . $im]])) {
+								$dataToSave[$indice]['Marketplace'][$im]['id']     = $im;
+								$dataToSave[$indice]['Marketplace'][$im]['precio'] = $valor[$columna['mp_precio_' . $im]];
+							}
+
+							if (!empty($valor[$columna['mp_preciooferta_' . $im]])) {
+								$dataToSave[$indice]['Marketplace'][$im]['id']            = $im;
+								$dataToSave[$indice]['Marketplace'][$im]['precio_oferta'] = $valor[$columna['mp_preciooferta_' . $im]];
+							}
+
+							if (isset($valor[$columna['mp_activo_' . $im]])) {
+								$dataToSave[$indice]['Marketplace'][$im]['id']     = $im;
+								$dataToSave[$indice]['Marketplace'][$im]['activo'] = $valor[$columna['mp_activo_' . $im]];
+							}
+
+							if (isset($valor[$columna['cantidad_virtual']])) {
+								$dataToSave[$indice]['Marketplace'][$im]['id']     = $im;
+								$dataToSave[$indice]['Marketplace'][$im]['cantidad_virtual'] = $valor[$columna['cantidad_virtual']];
+							}
+							
+						}
+
+					}
+
+				}
+				
+				if (empty($dataToSave)) {
+					$this->Session->setFlash('No se encontraron valores para actualizar.', null, array(), 'warning');
+					$this->redirect(array('action' => 'edicion_masiva'));
+				}
+				
+				$result = $this->actualizar_producto_masivo($dataToSave);
+				
+				if (!empty($result['errores'])) {
+					$this->Session->setFlash($this->crearAlertaUl($result['errores'], 'Errores encontrados'), null, array(), 'danger');
+				}
+
+				if (!empty($result['procesados'])) {
+					$this->Session->setFlash($this->crearAlertaUl($result['procesados'], 'Procesados con éxito'), null, array(), 'success');
+				}
+
+				$this->Session->delete('edicionMasiva');
+
+			}
+
+		}
+
+		$columnas = array(
+			'id_producto'      => 'Id del producto',
+			'marca_id'         => 'Marca (ID)',
+			'nombre'           => 'Nombre',
+			'cantidad_virtual' => 'Cantidad virtual',
+			'precio_costo'     => 'Precio costo',
+			'codigo_proveedor' => 'Código Proveedor',
+			'ancho'            => 'Ancho bulto (2 decimales)',
+			'alto'             => 'Alto bulto (2 decimales)',
+			'largo'            => 'Largo/profundidad bulto (2 decimales)',
+			'peso'             => 'Peso bulto (2 decimales)'
+		);		
+
+		foreach ($tiendas as $im => $m) {
+			#$columnas['tn_precio_' . $im] = 'Precio normal (' . $m . ')';
+			#$columnas['tn_preciooferta_' . $im] = 'Precio oferta (' . $m . ')';
+			$columnas['tn_activo_' . $im] = 'Activar/Desactivar en ' . $m . ' (1/0)';
+		}
+
+		foreach ($markets as $im => $m) {
+			$columnas['mp_precio_' . $im] = 'Precio normal (' . $m . ')';
+			$columnas['mp_preciooferta_' . $im] = 'Precio oferta (' . $m . ')';
+			$columnas['mp_activo_' . $im] = 'Activar/Desactivar en ' . $m . ' (1/0)';
+		}
+
+		$marcas = ClassRegistry::init('Marca')->find('list', array('conditions' => array('activo' => 1)));
+
+		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos/index');
+		BreadcrumbComponent::add('Edición masiva');
+
+		$this->set(compact('marcas', 'columnas'));
+
+	}
+
+
 	public function admin_moverInventarioMasivo()
 	{	
 		$tipoPermitido = array(
@@ -721,6 +967,254 @@ class VentaDetalleProductosController extends AppController
 
 	}
 
+	/**
+	 * [actualizar_producto_masivo description]
+	 * @param  array  $data [description]
+	 * @return [type]       [description]
+	 */
+	public function actualizar_producto_masivo($data = array()) 
+	{
+		$resultado = array(
+			'errores' => array(),
+			'procesados' => array()
+		);
+
+		foreach ($data as $id => $p) {
+			
+			# No existe
+			if (!$this->VentaDetalleProducto->exists($p['VentaDetalleProducto']['id'])) {
+				$resultado['errores'][] = '404 - Item id #' . $p['VentaDetalleProducto']['id'] . ' no existe en los registros.';
+				continue;
+			}
+
+			# No se pudo guardar
+			if (!$this->VentaDetalleProducto->save($p)) {
+				$resultado['errores'][] = 'Imposible guardar Item id #' . $p['VentaDetalleProducto']['id'] . '.';
+				continue;
+			}
+
+			$subProcesados['success'][] = 'Campos locaes item #' . $p['VentaDetalleProducto']['id'] . ' actualizados con exitos.';
+
+			$id_externo = $this->VentaDetalleProducto->field('id_externo', array('id' => $p['VentaDetalleProducto']['id']));
+
+			$subProcesados = array('success' => array(), 'errors' => array());
+
+			$this->Prestashop      = $this->Components->load('Prestashop');
+			$this->Linio           = $this->Components->load('Linio');
+			$this->MeliMarketplace = $this->Components->load('MeliMarketplace');
+
+			
+			# Cambios en la tienda
+			if (isset($p['Tienda'])) {
+				foreach ($p['Tienda'] as $it => $t) {
+					
+					$tienda = ClassRegistry::init('Tienda')->find('first', array(
+						'conditions' => array(
+							'Tienda.id' => $t['id']
+						),
+						'fields' => array(
+							'Tienda.nombre', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop'
+						)
+					));
+
+					if (is_null($this->Prestashop->ConexionPrestashop)) {
+						$this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
+					};
+					
+					if (isset($t['activo'])) { 
+						$cambioActivo = $this->Prestashop->prestashop_activar_desactivar_producto($id_externo, $t['activo']); 
+						$subProcesados['success'][] = ($t['activo']) ? sprintf('%s: Item #%d activado con éxito.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d desactivado con éxito.',$tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']) ; 
+					}
+
+					# Stock en toolmania
+					if (isset($t['cantidad_virtual'])) {
+						$item 		= $this->Prestashop->prestashop_producto_existe($id_externo);
+						$actualizar = $this->Prestashop->prestashop_actualizar_stock($item['item']['associations']['stock_availables']['stock_available']['id'], $t['cantidad_virtual']);
+						
+						if ($actualizar) {
+							$subProcesados['success'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']);			
+						}else{
+							$subProcesados['errors'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']);
+						}
+
+					}
+
+				}
+			}
+
+
+			# Cambios en MP
+			if (isset($p['Marketplace'])) {
+				
+				foreach ($p['Marketplace'] as $im => $m) {
+					
+					$market = ClassRegistry::init('Marketplace')->find('first', array(
+						'conditions' => array(
+							'Marketplace.id' => $m['id']
+						),
+						'fields' => array(
+							'Marketplace.id', 'Marketplace.nombre', 'Marketplace.porcentaje_adicional', 'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key', 'Marketplace.marketplace_tipo_id', 'Marketplace.refresh_token', 'Marketplace.expires_token', 'Marketplace.access_token', 'Marketplace.seller_id'
+						)
+					));
+
+					# Linio
+					if ($market['Marketplace']['marketplace_tipo_id'] == 1) {
+						
+						if (is_null($this->Linio->LinioConexion)) {
+							$this->Linio->crearCliente($market['Marketplace']['api_host'], $market['Marketplace']['api_user'], $market['Marketplace']['api_key']);
+						};
+
+						# Cambiar estado producto (activar desactivar)
+						if (isset($m['activo'])) {
+							
+							$estado = ($m['activo']) ? 'active' : 'inactive';
+							$cambioEstado = $this->Linio->actualizar_estado_producto($id_externo, $estado);
+
+							if ($cambioEstado['code'] == 200) {
+								$subProcesados['success'][] = ($m['activo']) ? sprintf('%s: Item #%d - Activado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d - Desactivado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) ; 
+							}else{
+
+								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioEstado['message']); 
+							}
+						}
+
+						# Cambio de stock
+						if (isset($m['cantidad_virtual'])) {
+
+							$actualizar = $this->Linio->actualizar_stock_producto(array(), $id_externo, $m['cantidad_virtual']);
+					
+							if ($actualizar['code'] == 200) {
+								$subProcesados['success'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);					
+							}else{
+								$subProcesados['errors'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);
+							}
+
+						}
+
+						# Cambiar precio producto (precio normal)
+						if (isset($m['precio'])) {
+
+							$aumento = (float) ($market['Marketplace']['porcentaje_adicional'] > 0) ? (100-$market['Marketplace']['porcentaje_adicional']) / 100 : 0;
+
+							$precio = ($aumento > 0) ? ($m['precio']/$aumento) : $m['precio'] ;
+
+							$cambioPrecio = $this->Linio->actualizar_precio_producto($id_externo, $precio);
+
+							if ($cambioPrecio['code'] == 200) {
+								$subProcesados['success'][] =  sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['message']); 
+							}else{
+								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['message']);
+							}
+						}
+
+						# Cambiar precio producto (precio normal)
+						if (isset($m['precio_oferta'])) {
+
+							$aumento = (float) ($market['Marketplace']['porcentaje_adicional'] > 0) ? (100-$market['Marketplace']['porcentaje_adicional']) / 100 : 0;
+
+							$precio = ($aumento > 0) ? ($m['precio_oferta']/$aumento) : $m['precio_oferta'] ;
+							
+							$cambioPrecioOferta = $this->Linio->actualizar_precio_oferta_producto($id_externo, $precio);
+
+							if ($cambioPrecioOferta['code'] == 200) {
+								$subProcesados['success'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecioOferta['message']); 
+							}else{
+								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecioOferta['message']);; 
+							}
+						}
+
+					}
+
+					# Meli
+					if ($market['Marketplace']['marketplace_tipo_id'] == 2) {
+						
+						if (is_null($this->MeliMarketplace::$MeliConexion)) {
+							$this->MeliMarketplace->crearCliente( $market['Marketplace']['api_user'], $market['Marketplace']['api_key'], $market['Marketplace']['access_token'], $market['Marketplace']['refresh_token'] );
+							$this->MeliMarketplace->mercadolibre_conectar('', $market['Marketplace']);
+						};
+
+						$itemMeli = $this->MeliMarketplace->mercadolibre_producto_existe($id_externo, $market['Marketplace']['seller_id']);
+						
+						if (!$itemMeli['existe']) {
+							continue;
+						}
+
+						# Cambiar estado producto (activar desactivar)
+						if (isset($m['activo'])) {
+							
+							$estado = ($m['activo']) ? 'active' : 'paused';
+							$cambioEstado = $this->MeliMarketplace->mercadolibre_cambiar_estado($itemMeli['item']['id'], $estado);
+
+							if ($cambioEstado['httpCode'] == 200) {
+								$subProcesados['success'][] = ($m['activo']) ? sprintf('%s: Item #%d - Activado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d - Desactivado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) ;  
+							}else{
+								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioEstado['body']['message']); 
+							}
+						}
+
+						# Cambios en stock
+						if (isset($m['cantidad_virtual'])) {
+
+							$actualizar = $this->MeliMarketplace->mercadolibre_actualizar_stock($itemMeli['item']['id'], $m['cantidad_virtual']);
+					
+							if ($actualizar['httpCode'] == 200) {
+								$subProcesados['success'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);					
+							}else{
+								$subProcesados['errors'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);
+							}
+						}
+
+						# Cambiar precio producto (precio normal)
+						if (isset($m['precio'])) {
+
+							$aumento = (float) ($market['Marketplace']['porcentaje_adicional'] > 0) ? (100-$market['Marketplace']['porcentaje_adicional']) / 100 : 0;
+
+							$costo_tranporte = $this->MeliMarketplace->mercadolibre_obtener_costo_envio($itemMeli['item']['id']);
+
+							# Se agrega el porcentaje adicional + el costo de envio
+							$precio = ($aumento > 0) ? ($m['precio']/$aumento) + $costo_tranporte : $m['precio'] + $costo_tranporte;
+
+							$cambioPrecio = $this->MeliMarketplace->mercadolibre_cambiar_precio($itemMeli['item']['id'], $precio);
+
+							if ($cambioPrecio['httpCode'] == 200) {
+								$subProcesados['success'][] = sprintf('%s: Item #%d - Precio actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']); 
+							}else{
+								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['body']['message']); 
+							}
+						}
+
+						# Cambiar precio producto (precio normal)
+						if (isset($m['precio_oferta'])) {
+
+							$aumento = (float) ($market['Marketplace']['porcentaje_adicional'] > 0) ? (100-$market['Marketplace']['porcentaje_adicional']) / 100 : 0;
+
+							$costo_tranporte = $this->MeliMarketplace->mercadolibre_obtener_costo_envio($itemMeli['item']['id']);
+
+							# Se agrega el porcentaje adicional + el costo de envio
+							$precio_oferta = ($aumento > 0) ? ($m['precio_oferta']/$aumento) + $costo_tranporte : $m['precio_oferta'] + $costo_tranporte;
+
+							$cambioPrecioOferta = $this->MeliMarketplace->mercadolibre_cambiar_precio_oferta($itemMeli['item']['id'], $precio_oferta);
+
+							if ($cambioPrecioOferta['httpCode'] == 200) {
+								$subProcesados['success'][] = sprintf('%s: Item #%d - Precio actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']); 
+							}else{
+								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['body']['message']);
+							}
+						}
+
+					}
+				}
+
+			}
+			
+			$resultado['procesados'] = $subProcesados['success'];
+			$resultado['errores']    = $subProcesados['errors'];
+			
+		}
+
+		return $resultado;
+	}
+
 
 	public function admin_add()
 	{
@@ -833,14 +1327,6 @@ class VentaDetalleProductosController extends AppController
 						)
 					),
 					'PrecioEspecificoProducto'
-				),
-				'fields' => array(
-					'VentaDetalleProducto.id',
-					'VentaDetalleProducto.id_externo',
-					'VentaDetalleProducto.nombre',
-					'VentaDetalleProducto.precio_costo',
-					'VentaDetalleProducto.cantidad_virtual',
-					'VentaDetalleProducto.codigo_proveedor'
 				)
 			));
 		}
@@ -1015,10 +1501,8 @@ class VentaDetalleProductosController extends AppController
 
 	}
 
-	public function descontar_stock_virtual($id, $id_externo, $nuevaCantidad, $excluir = array(), $devueltos = null)
+	public function descontar_stock_virtual($id, $id_externo, $nuevaCantidad)
 	{	
-
-		$bodega = ClassRegistry::init('Bodega')->find('first');
 
 		$this->VentaDetalleProducto->id = $id;
 
@@ -1062,15 +1546,48 @@ class VentaDetalleProductosController extends AppController
 		set_time_limit(-1);
 		ini_set('memory_limit', -1);
 
-		$datos			= $this->VentaDetalleProducto->find('all', array(
-			'recursive'				=> -1
-		));
+		$qry = array(
+			'recursive'	=> -1
+		);
 
+		# Filtrar
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'id':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('VentaDetalleProducto.id_externo' => str_replace('%2F', '/', urldecode($valor) ) )));
+						break;
+					case 'nombre':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('VentaDetalleProducto.nombre LIKE' => '%'.trim(str_replace('%2F', '/', urldecode($valor) )).'%')));
+						break;
+					case 'marca':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('VentaDetalleProducto.marca_id' => $valor)));
+						break;
+				}
+			}
+		}
+		
+		$datos			= $this->VentaDetalleProducto->find('all', $qry);
+
+		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('Bodega.activo' => 1)));
+
+		foreach ($datos as $id => $p) {
+			
+			foreach ($bodegas as $ib => $b) {
+				$datos[$id]['VentaDetalleProducto']['stock_fisico_' . strtolower(Inflector::slug($b))] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($p['VentaDetalleProducto']['id'], $ib, true);		
+			}
+
+			$datos[$id]['VentaDetalleProducto']['stock_fisico_total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($p['VentaDetalleProducto']['id'], true);
+			$datos[$id]['VentaDetalleProducto']['stock_reservado']    = $this->VentaDetalleProducto->obtener_cantidad_reservada($p['VentaDetalleProducto']['id']);
+		}
 		
 		$campos			= array_keys($this->VentaDetalleProducto->_schema);
 		$modelo			= $this->VentaDetalleProducto->alias;
-
-		$this->set(compact('datos', 'campos', 'modelo'));
+		
+		$this->set(compact('datos', 'campos', 'modelo', 'bodegas'));
 	}
 
 
@@ -1396,13 +1913,15 @@ class VentaDetalleProductosController extends AppController
 			'successes' => array()
 		);
 
+		$log = array();
+
 		foreach ($canales as $ic => $canal) {
 
 			if ($ic === 'Prestashop' ) {
 				foreach ($canal as $i => $c) {
 
 					# si se excluye se termina
-					if (isset($excluir['Prestashop'][$i])) {
+					if (isset($excluir['Prestashop']) && in_array($i, $excluir['Prestashop'])) {
 						break;
 					}
 
@@ -1410,15 +1929,26 @@ class VentaDetalleProductosController extends AppController
 						continue;
 					}
 
-					$actualizar = $this->Prestashop->prestashop_actualizar_stock($c['item']['associations']['stock_availables']['stock_available']['id'], $nuevo_stock);
+					if (Configure::read('debug') > 0) {
+			        	$actualizar = true;
+			      	}else{
+			      		$actualizar = $this->Prestashop->prestashop_actualizar_stock($c['item']['associations']['stock_availables']['stock_available']['id'], $nuevo_stock);
+			      	}
 
 					if ($actualizar && $c['existe']) {
 						$result['successes'][] = sprintf('Item %d actualizado con éxto en %s', $id_externo, $c['nombre']);					
 					}else{
 						$result['errors'][] = sprintf('Error al actualizar el item %d en %s o no existe en el canal', $id_externo, $c['nombre']);
 					}
- 
 				}
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Prestashop actualizar canal',
+						'modulo' => 'VentaDetalleProductos',
+						'modulo_accion' => json_encode($result)
+					)
+				);
 			}
 
 			if ($ic === 'Linio') {
@@ -1426,7 +1956,7 @@ class VentaDetalleProductosController extends AppController
 				foreach ($canal as $i => $c) {
 					
 					# si se excluye se termina
-					if (isset($excluir['Linio'][$i])) {
+					if (isset($excluir['Linio']) && in_array($i, $excluir['Linio'])) {
 						break;
 					}
 					
@@ -1434,8 +1964,13 @@ class VentaDetalleProductosController extends AppController
 						continue;
 					}
 
-					$actualizar = $this->Linio->actualizar_stock_producto(array(), $id_externo, $nuevo_stock);
-
+					if (Configure::read('debug') > 0) {
+						$actualizar = array('code' => 200);
+					}else{
+						$actualizar = $this->Linio->actualizar_stock_producto(array(), $id_externo, $nuevo_stock);
+					}
+					
+					
 					if ($actualizar['code'] == 200 && $c['existe']) {
 						$result['successes'][] = sprintf('Item %d actualizado con éxto en %s', $id_externo, $c['nombre']);					
 					}else{
@@ -1444,6 +1979,13 @@ class VentaDetalleProductosController extends AppController
 
 					sleep(3);
 
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Linio actualizar canal',
+							'modulo' => 'VentaDetalleProductos',
+							'modulo_accion' => json_encode($result)
+						)
+					);
 				}
 			}
 
@@ -1451,25 +1993,40 @@ class VentaDetalleProductosController extends AppController
 				foreach ($canal as $i => $c) {
 
 					# si se excluye se termina
-					if (isset($excluir['Mercadolibre'][$i])) {
+					if (isset($excluir['Mercadolibre']) && in_array($i, $excluir['Mercadolibre'])) {
 						break;
 					}
 
 					if (!$c['existe']) {
 						continue;
 					}
-
-					$actualizar = $this->MeliMarketplace->mercadolibre_actualizar_stock($c['item']['id'], $nuevo_stock);
 					
+					if (Configure::read('debug') > 0) {
+						$actualizar = array('httpCode' => 200);
+					}else{
+						$actualizar = $this->MeliMarketplace->mercadolibre_actualizar_stock($c['item']['id'], $nuevo_stock);
+					}
+
 					if ($actualizar['httpCode'] == 200) {
 						$result['successes'][] = sprintf('Item %d actualizado con éxto en %s', $id_externo, $c['nombre']);					
 					}else{
 						$result['errors'][] = sprintf('Error al actualizar el item %d en %s o no existe en el canal', $id_externo, $c['nombre']);
 					}
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Mercadolibre actualizar canal',
+							'modulo' => 'VentaDetalleProductos',
+							'modulo_accion' => json_encode($result)
+						)
+					);
 				}
 			}
 		
 		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 
 		return $result;
 	}
@@ -1537,7 +2094,11 @@ class VentaDetalleProductosController extends AppController
 				$productosLocales[$ip]['VentaDetalleProducto']['codigo_proveedor'] = $p['supplier_reference'];
 				$productosLocales[$ip]['VentaDetalleProducto']['marca_id'] 		   = $p['id_manufacturer'];
 				$productosLocales[$ip]['VentaDetalleProducto']['nombre']           = $p['name']['language'];
-				
+				$productosLocales[$ip]['VentaDetalleProducto']['ancho']			   = round($p['width'], 2);
+				$productosLocales[$ip]['VentaDetalleProducto']['alto']			   = round($p['height'], 2);
+				$productosLocales[$ip]['VentaDetalleProducto']['largo']			   = round($p['depth'], 2);
+				$productosLocales[$ip]['VentaDetalleProducto']['peso']			   = round($p['weight'], 2);
+					
 
 			}
 

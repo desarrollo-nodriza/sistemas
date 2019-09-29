@@ -90,7 +90,7 @@
 										<?= $this->Form->input('ProveedoresEmail.999.email', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-email not-blank', 'placeholder' => 'Ej: pp@email.cl')); ?>
 									</td>
 									<td>
-										<?= $this->Form->select('ProveedoresEmail.999.tipo', array('destinatario' => 'Envio simple', 'copia' => 'Enviar copia', 'copia oculta' => 'Enviar copia oculta'), array('disabled' => true, 'class' => 'form-control not-blank', 'default' => 1, 'empty' => false)); ?>
+										<?= $this->Form->select('ProveedoresEmail.999.tipo', array('validador' => 'Valida la oc', 'destinatario' => 'Envio simple', 'copia' => 'Enviar copia', 'copia oculta' => 'Enviar copia oculta'), array('disabled' => true, 'class' => 'form-control not-blank', 'default' => 1, 'empty' => false)); ?>
 									</td>
 									<td>
 										<?= $this->Form->input('ProveedoresEmail.999.activo', array('type' => 'checkbox', 'disabled' => true, 'class' => '', 'value' => 1)); ?>
@@ -107,7 +107,7 @@
 										<?= $this->Form->input(sprintf('ProveedoresEmail.%d.email', $ip), array('type' => 'text', 'class' => 'form-control is-email not-blank', 'placeholder' => 'Ej: pp@email.cl', 'value' => $email['email'])); ?>
 									</td>
 									<td>
-										<?= $this->Form->select(sprintf('ProveedoresEmail.%d.tipo', $ip), array('destinatario' => 'Envio simple', 'copia' => 'Enviar copia', 'copia oculta' => 'Enviar copia oculta'), array('class' => 'form-control not-blank', 'default' => $email['tipo'], 'empty' => false)); ?>
+										<?= $this->Form->select(sprintf('ProveedoresEmail.%d.tipo', $ip), array('validador' => 'Valida la oc', 'destinatario' => 'Envio simple', 'copia' => 'Enviar copia', 'copia oculta' => 'Enviar copia oculta'), array('class' => 'form-control not-blank', 'default' => $email['tipo'], 'empty' => false)); ?>
 									</td>
 									<td>
 										<?= $this->Form->input(sprintf('ProveedoresEmail.%d.activo', $ip), array('type' => 'checkbox', 'class' => '', 'checked' => $email['activo'])); ?>

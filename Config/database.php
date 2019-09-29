@@ -7,7 +7,7 @@ class DATABASE_CONFIG
 		'host'			=> '45.79.26.106',
 		'login'			=> 'nodriza',
 		'password'		=> 'IgP_8111980_IgP',
-		'database'		=> 'sistemav3',
+		'database'		=> 'sistemas_dev',
 		'prefix'		=> 'rp_',
 		'encoding'		=> 'utf8'
 	);
@@ -19,7 +19,7 @@ class DATABASE_CONFIG
 		'host'			=> '45.79.26.106',
 		'login'			=> 'nodriza',
 		'password'		=> 'IgP_8111980_IgP',
-		'database'		=> 'sistemav3',
+		'database'		=> 'sistemas_dev',
 		'prefix'		=> 'rp_',
 		'encoding'		=> 'utf8'
 	);

@@ -25,6 +25,7 @@ class OrdenCompra extends AppModel
 
 	public $estado_proveedor = array(
 		'accept'      => 'Aceptado',
+		'modified'    => 'Modificar cantidad',
 		'stockout'    => 'Sin stock',
 		'price_error' => 'Error de precio'
 	);

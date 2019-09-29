@@ -399,4 +399,40 @@ class VentaDetalleProducto extends AppModel
 	}
 
 
+	/**
+	 * Modifica las cnatidades vituales de un item
+	 * @param  [type] $id    [description]
+	 * @param  [type] $stock [description]
+	 * @param  string $tipo  descontar|aumentar
+	 * @return bool
+	 */
+	public function actualizar_stock_virtual($id, $stock, $tipo = 'descontar')
+	{		
+		$this->id = $id;
+		if ($tipo == 'descontar') {
+			$nwStock = ($this->field('cantidad_virtual') - $stock);
+		}else if ($tipo == 'aumentar') {
+			$nwStock = ($this->field('cantidad_virtual') + $stock);
+		}else{
+			return false;
+		}
+
+		return $this->saveField('cantidad_virtual', $nwStock);
+	}
+
+
+	public function obtener_cantidad_vendida($id)
+	{
+		$ventas = ClassRegistry::init('VentaDetalle')->find('all', array(
+			'conditions' => array(
+				'VentaDetalle.venta_detalle_producto_id' => $id
+			),
+			'fields' => array(
+				'VentaDetalle.cantidad_pendiente_entrega'
+			)
+		));	
+
+		return array_sum(Hash::extract($ventas, '{n}.VentaDetalle.cantidad_pendiente_entrega'));
+	}
+
 }

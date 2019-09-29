@@ -16,7 +16,9 @@ class TiendasController extends AppController
 	public function admin_add()
 	{
 		if ( $this->request->is('post') )
-		{
+		{	
+			$this->request->data['Tienda']['meta_ids_enviame'] = implode(',', $this->request->data['Tienda']['meta_ids_enviame']);
+
 			$this->Tienda->create();
 			if ( $this->Tienda->save($this->request->data) )
 			{
@@ -31,6 +33,10 @@ class TiendasController extends AppController
 
 		BreadcrumbComponent::add('Tiendas ', '/tiendas');
 		BreadcrumbComponent::add('Agregar ');
+
+		$metodo_envios = ClassRegistry::init('MetodoEnvio')->find('list');
+	
+		$this->set(compact('metodo_envios'));
 	}
 
 	public function admin_edit($id = null)
@@ -42,7 +48,10 @@ class TiendasController extends AppController
 		}
 
 		if ( $this->request->is('post') || $this->request->is('put') )
-		{
+		{	
+
+			$this->request->data['Tienda']['meta_ids_enviame'] = implode(',', $this->request->data['Tienda']['meta_ids_enviame']);
+			
 			if ( $this->Tienda->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
@@ -60,8 +69,14 @@ class TiendasController extends AppController
 			));
 		}
 
+		$this->request->data['Tienda']['meta_ids_enviame'] = explode(',', $this->request->data['Tienda']['meta_ids_enviame']);
+
 		BreadcrumbComponent::add('Tiendas ', '/tiendas');
 		BreadcrumbComponent::add('Editar ');
+
+		$metodo_envios = ClassRegistry::init('MetodoEnvio')->find('list');
+
+		$this->set(compact('metodo_envios'));
 	}
 
 	public function admin_delete($id = null)
