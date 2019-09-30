@@ -657,7 +657,22 @@ class AppController extends Controller
 				'apiurl_linio',
 				'apikey_linio',
 				'sincronizacion_automatica_linio',
-				'dias_retraso'
+				'dias_retraso',
+				'facturacion_apikey',
+				'actualizacion_automatica_ventas',
+				'dias_retraso',
+				'url_almaceamiento_externo',
+				'activar_notificaciones',
+				'notificacion_apikey',
+				'stock_automatico',
+				'apihost_enviame',
+				'apikey_enviame',
+				'company_enviame',
+				'bodega_enviame',
+				'activo_enviame',
+				'meta_ids_enviame',
+				'peso_enviame',
+				'volumen_enviame'
 			); 
 
 			# Verificar que la tienda esté configurada
