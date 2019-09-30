@@ -1253,6 +1253,7 @@ class VentasController extends AppController {
 				),
 				'fields' => array(
 					'VentaDetalleProducto.id',
+					'VentaDetalleProducto.id_externo',
 					'VentaDetalleProducto.cantidad_virtual'
 				)
 			)
@@ -1276,7 +1277,7 @@ class VentasController extends AppController {
 			$this->Venta->VentaDetalle->VentaDetalleProducto->save($producto);
 		}
 
-		return $producto['id_externo'];
+		return $producto['VentaDetalleProducto']['id_externo'];
 
 	}
 
@@ -2872,7 +2873,7 @@ class VentasController extends AppController {
 	 * @param  [type] $id Identificador de la venta
 	 */
 	public function admin_view ($id = null) 
-	{	
+	{
 
 		if ( ! $this->Venta->exists($id) ) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
@@ -6837,6 +6838,7 @@ class VentasController extends AppController {
 
 				throw new CakeException($response);
 			}
+
 
 			if (Configure::read('debug') > 0) {
 				$resCambio = true;
