@@ -50,7 +50,7 @@ class EnviameComponent extends Component
 		$bodega 	   = $venta['Tienda']['bodega_enviame'];
 		
 		if ($pesoTotal >= $pesoMaximo || $volumenMaximo == 0) {
-			return;
+			return false;
 		}		
 		
 		$paquetes = $this->obtener_bultos_venta($venta, $volumenMaximo);
@@ -93,10 +93,20 @@ class EnviameComponent extends Component
 			'tracking_number' => ''
 		);
 
+		$logs = array();
+
 		$resultado = $this->Enviame->crear_envio_como_empresa($shipping_order, $shipping_destination, $shipping_origin, $carrier);
 
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Picking Enviame',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($resultado)
+			)
+		);
+
 		if ($resultado['httpCode'] != 201) {
-			return array();
+			return false;
 		}
 
 		$enviameRes = to_array($resultado)['body']['data'];
@@ -122,6 +132,9 @@ class EnviameComponent extends Component
 				)
 			)
 		);
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 
 		return ClassRegistry::init('Venta')->saveAll($nwVenta);
 
