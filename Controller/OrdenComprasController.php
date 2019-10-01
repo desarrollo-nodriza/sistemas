@@ -1285,7 +1285,7 @@ class OrdenComprasController extends AppController
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 			
-			if ($this->OrdenCompra->save($this->request->data) && $this->guardarEmailValidado($id)) {
+			if ($this->guardarEmailValidado($id) && $this->OrdenCompra->save($this->request->data)) {
 				$this->Session->setFlash('Método de pago asignado con éxito.', null, array(), 'success');
 				$this->redirect(array('action' => 'index_asignacion_moneda'));
 			}else{

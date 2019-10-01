@@ -74,7 +74,7 @@ class EnviarCorreosShell extends AppShell
 		{
 			$this->CakeEmail
 				->reset()
-				->config('gmail')
+				#->config('gmail')
 				->emailFormat('html')
 				->domain($this->host)
 				->from(array($datos['Correo']['remitente_email'] => $datos['Correo']['remitente_nombre']))
