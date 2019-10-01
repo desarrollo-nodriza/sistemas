@@ -1144,7 +1144,7 @@ class OrdenComprasController extends AppController
 		
 			$this->Email = new CakeEmail();
 			$this->Email
-			->config('gmail')
+			#->config('gmail')
 			->viewVars(compact('mensaje'))
 			->emailFormat('html')
 			->from(array($this->Session->read('Auth.Administrador.email') => 'Nodriza Spa') )
@@ -1740,7 +1740,7 @@ class OrdenComprasController extends AppController
 			
 				$this->Email = new CakeEmail();
 				$this->Email
-				->config('gmail')
+				#->config('gmail')
 				->viewVars(compact('mensaje'))
 				->emailFormat('html')
 				->from(array($this->Session->read('Auth.Administrador.email') => 'Nodriza Spa') )
@@ -2438,7 +2438,7 @@ class OrdenComprasController extends AppController
 	
 		$this->Email = new CakeEmail();
 		$this->Email
-		->config('gmail')
+		##->config('gmail')
 		->viewVars(compact('mensaje', 'oc', 'url', 'token'))
 		->emailFormat('html')
 		->from(array($this->Session->read('Auth.Administrador.email') => 'Nodriza Spa') )
