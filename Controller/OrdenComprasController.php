@@ -1275,6 +1275,20 @@ class OrdenComprasController extends AppController
 	}
 
 
+	public function admin_notificar_proveedor($id)
+	{
+
+		if ($this->guardarEmailValidado($id)) {
+			#$this->Session->setFlash('Notificado con éxito.', null, array(), 'success');
+			$this->redirect($this->referer('/', true));
+		}else{
+			$this->Session->setFlash('No fue posible notificar al proveedor.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+	}
+
+
 	public function admin_asignar_moneda($id)
 	{
 		if ( ! $this->OrdenCompra->exists($id) )
@@ -2435,7 +2449,19 @@ class OrdenComprasController extends AppController
 
 		# creamos un token de acceso vía email
 		$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];		
-	
+		
+
+		$log = array(
+			'Log' => array(
+				'administrador' => 'Validar Proveedor #' . $oc['Proveedor']['id'],
+				'modulo' => 'OrdenCompras',
+				'modulo_accion' => $url . '/socio/oc/' . $oc['OrdenCompra']['id'] . '?access_token=' . $token
+			)
+		);
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
+
 		$this->Email = new CakeEmail();
 		$this->Email
 		##->config('gmail')

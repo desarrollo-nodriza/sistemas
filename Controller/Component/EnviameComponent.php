@@ -50,7 +50,7 @@ class EnviameComponent extends Component
 		$bodega 	   = $venta['Tienda']['bodega_enviame'];
 		
 		if ($pesoTotal >= $pesoMaximo || $volumenMaximo == 0) {
-			return false;
+			return 'Error de pesos';
 		}		
 		
 		$paquetes = $this->obtener_bultos_venta($venta, $volumenMaximo);
@@ -96,7 +96,7 @@ class EnviameComponent extends Component
 		$logs = array();
 
 		$resultado = $this->Enviame->crear_envio_como_empresa($shipping_order, $shipping_destination, $shipping_origin, $carrier);
-
+		
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Picking Enviame',
@@ -105,8 +105,12 @@ class EnviameComponent extends Component
 			)
 		);
 
-		if ($resultado['httpCode'] != 201) {
-			return false;
+		if ($resultado['httpCode'] >= 300 || empty($resultado['body'])) {
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
+			return 'Codigo respusta: ' . $resultado['httpCode'];
 		}
 
 		$enviameRes = to_array($resultado)['body']['data'];

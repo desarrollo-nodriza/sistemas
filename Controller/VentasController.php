@@ -760,6 +760,8 @@ class VentasController extends AppController {
 			exit;
 		}
 
+		$log = array();
+
 		$subestado = (isset($this->request->data['Venta']['picking_estado'])) ? $this->request->data['Venta']['picking_estado'] : '';
 
 		if ($cambiar_estado) {
@@ -770,6 +772,14 @@ class VentasController extends AppController {
 
 				$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
 
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Cambiar estado venta: Enviame',
+						'modulo' => 'Ventas',
+						'modulo_accion' => json_encode($metodo_envio_enviame)
+					)
+				);
+
 				# Creamos pedido en enviame si corresponde
 				if ( in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame)
 					&& $venta['Tienda']['activo_enviame']) {
@@ -779,9 +789,20 @@ class VentasController extends AppController {
 					# conectamos con enviame
 					$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame']);
 
-					$Enviame->crearEnvio($venta);
+					$resultadoEnviame = $Enviame->crearEnvio($venta);
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Cambiar estado venta: Ingresa Enviame',
+							'modulo' => 'Ventas',
+							'modulo_accion' => 'creado: ' . $resultadoEnviame
+						)
+					);
 
 				}
+
+				ClassRegistry::init('Log')->create();
+				ClassRegistry::init('Log')->saveMany($log);
 
 
 				foreach ($detalles as $idd => $d) {
