@@ -1540,7 +1540,7 @@ class VentaDetalleProductosController extends AppController
 		$this->redirect(array('action' => 'index'));
 	}
 
-	public function admin_exportar()
+	public function admin_exportar($canales = false)
 	{	
 		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
 		set_time_limit(-1);
@@ -1573,6 +1573,21 @@ class VentaDetalleProductosController extends AppController
 		$datos			= $this->VentaDetalleProducto->find('all', $qry);
 
 		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('Bodega.activo' => 1)));
+			
+		$meliConexion = array();
+
+		$campos			= array_keys($this->VentaDetalleProducto->_schema);
+		$modelo			= $this->VentaDetalleProducto->alias;
+
+		$marketplaces = ClassRegistry::init('Marketplace')->find('all', array(
+			'conditions' => array(
+				'Marketplace.tienda_id' => $this->Session->read('Tienda.id')
+			)
+		));
+
+		$campos[] = 'Stock fisico total';
+		$campos[] = 'Stock reservado';
+
 
 		foreach ($datos as $id => $p) {
 			
@@ -1582,10 +1597,46 @@ class VentaDetalleProductosController extends AppController
 
 			$datos[$id]['VentaDetalleProducto']['stock_fisico_total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($p['VentaDetalleProducto']['id'], true);
 			$datos[$id]['VentaDetalleProducto']['stock_reservado']    = $this->VentaDetalleProducto->obtener_cantidad_reservada($p['VentaDetalleProducto']['id']);
+
+			# Vemos el detalle en los canales
+			if ($canales) {
+
+				foreach ($marketplaces as $im => $m) {
+					
+					if ($m['Marketplace']['marketplace_tipo_id'] == 1)
+						continue;
+
+					if (!isset($meliConexion[$m['Marketplace']['id']])) {
+						# Para la consola se carga el componente on the fly!
+						$meliConexion[$m['Marketplace']['id']] = $this->Components->load('MeliMarketplace');
+
+						# cliente Meli
+						$meliConexion[$m['Marketplace']['id']]->crearCliente( $m['Marketplace']['api_user'], $m['Marketplace']['api_key'], $m['Marketplace']['access_token'], $m['Marketplace']['refresh_token'] );
+					}
+					
+					$result = $meliConexion[$m['Marketplace']['id']]->mercadolibre_conectar('', $m['Marketplace']);
+					
+					if ($result['success']) {
+						
+						$meli           = $meliConexion[$m['Marketplace']['id']]->mercadolibre_producto_existe($p['VentaDetalleProducto']['id_externo'], $m['Marketplace']['seller_id']);
+						
+						if (!$meli['existe']) {
+							continue;
+						}
+						
+						$datos[$id]['VentaDetalleProducto']['precio_' . strtolower(Inflector::slug($m['Marketplace']['nombre']))] = $meli['item']['precio'];
+						
+						$datos[$id]['VentaDetalleProducto']['envio_'  . strtolower(Inflector::slug($m['Marketplace']['nombre']))] = $meliConexion[$m['Marketplace']['id']]->mercadolibre_obtener_costo_envio($meli['item']['id']);
+
+						$campos[] = 'Precio ' . $m['Marketplace']['nombre'];
+						$campos[] = 'Costo transporte ' . $m['Marketplace']['nombre'];
+					}
+
+				}
+				
+			}
+
 		}
-		
-		$campos			= array_keys($this->VentaDetalleProducto->_schema);
-		$modelo			= $this->VentaDetalleProducto->alias;
 		
 		$this->set(compact('datos', 'campos', 'modelo', 'bodegas'));
 	}

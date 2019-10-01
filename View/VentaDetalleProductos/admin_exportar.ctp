@@ -18,9 +18,6 @@ foreach ($bodegas as $ib => $bodega) {
 	array_push($cabeceras, array_merge(array('label' => 'Stock ' . $bodega), $opciones));
 }
 
-array_push($cabeceras, array_merge(array('label' => 'Stock fisico total'), $opciones));
-array_push($cabeceras, array_merge(array('label' => 'Stock reservado'), $opciones));
-
 $this->PhpSpreadsheet->addTableHeader($cabeceras, array('bold' => true));
 
 /**

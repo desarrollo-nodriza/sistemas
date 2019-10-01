@@ -772,7 +772,7 @@ class VentasController extends AppController {
 
 				# Creamos pedido en enviame si corresponde
 				if ( in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame)
-					&& !empty($venta['Tienda']['activo_enviame'])) {
+					&& $venta['Tienda']['activo_enviame']) {
 					
 					$Enviame = $this->Components->load('Enviame');
 
