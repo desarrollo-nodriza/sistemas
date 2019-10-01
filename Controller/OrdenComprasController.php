@@ -1681,6 +1681,11 @@ class OrdenComprasController extends AppController
 					
 				}
 
+				# Quitamos el envio de emails
+				$this->Session->setFlash('Estado actualizado con éxito.', null, array(), 'success');
+				$this->redirect(array('action' => 'index_validada_proveedores'));
+
+
 				$pdfOc = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1,100) . '.pdf';
 
 				$this->generar_pdf($ocs, $pdfOc);
