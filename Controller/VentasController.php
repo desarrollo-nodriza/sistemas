@@ -818,7 +818,7 @@ class VentasController extends AppController {
 					$Enviame = $this->Components->load('Enviame');
 
 					# conectamos con enviame
-					$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame']);
+					$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
 
 					$resultadoEnviame = $Enviame->crearEnvio($venta);
 

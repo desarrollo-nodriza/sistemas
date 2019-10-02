@@ -20,9 +20,9 @@ class EnviameComponent extends Component
 		prx($enviame->obtener_bodegas());
 	 */
 
-	public function conectar($apikey, $empresa)
+	public function conectar($apikey, $empresa, $host = '')
 	{
-		$this->Enviame = new Enviame($apikey, $empresa);
+		$this->Enviame = new Enviame($apikey, $empresa, $host);
 		$this->LAFFPack = new LAFFPack();
 	}
 
