@@ -651,6 +651,7 @@ class AppController extends Controller
 			$semaforo = true;
 
 			$camposVacios = array(
+				'emails_bcc',
 				'principal',
 				'apiurl_prestashop',
 				'apikey_prestashop',
