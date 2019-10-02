@@ -62,14 +62,14 @@
 							</div>
 						</div>
 
-						<div class="col-xs-6 col-sm-6 col-md-3">
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
 							<div class="form-group">
 								<label>Tienda</label>
 								<?= $this->Form->input('tienda_id', array('class' => 'form-control', 'empty' => 'Tienda', 'required' => false, 'default' => $FiltroTienda)); ?>
 							</div>
 						</div>
 
-						<div class="col-xs-6 col-sm-6 col-md-3">
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
 							<div class="form-group">
 								<label>Marketplace</label>
 								<?= $this->Form->input('marketplace_id', array('class' => 'form-control', 'empty' => 'Marketplace', 'required' => false, 'default' => $FiltroMarketplace)); ?>
@@ -78,7 +78,6 @@
 
 						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
 							<div class="form-group">
-								<br />
 								<label>Estado</label>
 								<?= $this->Form->input('venta_estado_categoria_id', array('class' => 'form-control', 'empty' => 'Estado', 'required' => false, 'default' => $FiltroVentaEstadoCategoria)); ?>
 							</div>
@@ -97,6 +96,14 @@
 								<br />
 								<label>Venta urgente</label>
 								<?= $this->Form->input('prioritario', array('class' => 'form-control', 'empty' => 'Seleccione', 'options' => array('1' => 'Atención urgente', '0' => 'Atencion normal'), 'required' => false, 'default' => $FiltroPrioritario)); ?>
+							</div>
+						</div>
+
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
+							<div class="form-group">
+								<br />
+								<label>Facturadas</label>
+								<?= $this->Form->input('facturado', array('class' => 'form-control', 'empty' => 'Seleccione', 'options' => array('1' => 'Facturadas', '0' => 'No facturadas'), 'required' => false, 'default' => $FiltroDte)); ?>
 							</div>
 						</div>
 

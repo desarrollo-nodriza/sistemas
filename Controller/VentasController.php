@@ -71,6 +71,7 @@ class VentasController extends AppController {
 		$FiltroPicking              = '';
 		$FiltroFechaDesde           = '';
 		$FiltroFechaHasta           = '';
+		$FiltroDte           	    = '';
 
 		$backurl = array(
             'action' => 'index'
@@ -210,6 +211,25 @@ class VentasController extends AppController {
 
 						} 
 						break;
+					case 'facturado':
+
+						$FiltroDte = trim($valor);
+
+						if ($FiltroDte == 1) {
+							$joins[] = array(
+								'table' => 'rp_dtes',
+								'alias' => 'dtes',
+								'type' => 'INNER',
+								'conditions' => array(
+									'dtes.venta_id = Venta.id',
+									"dtes.tipo_documento" => array(33, 39),
+									"dtes.estado = 'dte_real_emitido'",
+									"dtes.invalidado = 0"
+								)
+							);
+						}
+
+						break;
 				}
 			}
 		}
@@ -264,7 +284,7 @@ class VentasController extends AppController {
 				'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo',
 				'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.prioritario', 'Venta.picking_estado'
 			),
-			'order' => array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC'),
+			'order' => array('Venta.fecha_venta' => 'DESC'),
 			'limit' => 20
 		);
 
@@ -320,7 +340,7 @@ class VentasController extends AppController {
 
 		$this->set(compact(
 			'ventas', 'tiendas', 'marketplaces', 'ventaEstadoCategorias', 'medioPagos',
-			'FiltroVenta', 'FiltroCliente', 'FiltroTienda', 'FiltroMarketplace', 'FiltroMedioPago', 'FiltroVentaEstadoCategoria', 'FiltroPrioritario', 'FiltroPicking', 'FiltroFechaDesde', 'FiltroFechaHasta', 'meliConexion', 'picking'
+			'FiltroVenta', 'FiltroCliente', 'FiltroTienda', 'FiltroMarketplace', 'FiltroMedioPago', 'FiltroVentaEstadoCategoria', 'FiltroPrioritario', 'FiltroPicking', 'FiltroFechaDesde', 'FiltroFechaHasta', 'FiltroDte', 'meliConexion', 'picking'
 		));
 
 	}
