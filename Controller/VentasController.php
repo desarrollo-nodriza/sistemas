@@ -227,6 +227,17 @@ class VentasController extends AppController {
 									"dtes.invalidado = 0"
 								)
 							);
+						}else{
+							$joins[] = array(
+								'table' => 'rp_dtes',
+								'alias' => 'dtes',
+								'type' => 'LEFT',
+								'conditions' => array(
+									'dtes.venta_id = Venta.id'
+								)
+							);
+
+							$condiciones["dtes.id ="] = NULL;
 						}
 
 						break;
