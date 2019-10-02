@@ -18,6 +18,18 @@ foreach ($bodegas as $ib => $bodega) {
 	array_push($cabeceras, array_merge(array('label' => 'Stock ' . $bodega), $opciones));
 }
 
+array_push($cabeceras, array_merge(array('label' => 'Stock Total'), $opciones));
+array_push($cabeceras, array_merge(array('label' => 'Stock Reservado'), $opciones));
+
+foreach ($marketplaces as $im => $m) {
+
+	if ($m['Marketplace']['marketplace_tipo_id'] != 2)
+		continue;
+	
+	array_push($cabeceras, array_merge(array('label' => 'Precio ' . $m['Marketplace']['nombre']), $opciones));
+	array_push($cabeceras, array_merge(array('label' => 'Costo transporte ' . $m['Marketplace']['nombre']), $opciones));
+}
+
 $this->PhpSpreadsheet->addTableHeader($cabeceras, array('bold' => true));
 
 /**

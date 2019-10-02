@@ -672,7 +672,8 @@ class AppController extends Controller
 				'activo_enviame',
 				'meta_ids_enviame',
 				'peso_enviame',
-				'volumen_enviame'
+				'volumen_enviame',
+				'mandrill_apikey'
 			); 
 
 			# Verificar que la tienda esté configurada

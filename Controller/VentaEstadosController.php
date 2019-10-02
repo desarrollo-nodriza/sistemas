@@ -32,17 +32,16 @@ class VentaEstadosController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{
+			if (empty($this->request->data['VentaEstado']['origen'])) {
+				$this->request->data['VentaEstado']['origen'] = 0;
+			}
 
 			if ($this->request->data['VentaEstado']['preparacion']) {
-
-				if (!isset($this->request->data['VentaEstado']['canal'])) {
-					$this->request->data['VentaEstado']['canal'] = 0;
-				}
 
 				$estados = $this->VentaEstado->find('all', array(
 					'conditions' => array(
 						'preparacion' => 1,
-						'origen' => $this->request->data['VentaEstado']['canal']
+						'origen' => $this->request->data['VentaEstado']['origen']
 					),
 					'fields' => array(
 						'id', 'preparacion'
@@ -57,7 +56,7 @@ class VentaEstadosController extends AppController
 					$this->VentaEstado->saveMany($estados);	
 				}					
 			}
-
+			
 			if ( $this->VentaEstado->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');

@@ -530,11 +530,13 @@ class CotizacionesController extends AppController
 		$this->CakePdf->viewVars(compact('tienda', 'cotizacion' ,'productos'));
 		$this->CakePdf->write(APP . 'webroot' . DS . 'Pdf' . DS . 'Cotizaciones' . DS . $cotizacion['Cotizacion']['fecha_cotizacion'] . DS . 'cotizacion_' . $cotizacion['Cotizacion']['id'] . '_' . $cotizacion['Cotizacion']['email_cliente'] . '_' . Inflector::slug($cotizacion['Cotizacion']['created']) . '.pdf');
 
+		$cotizacion_nombre = 'cotizacion_' . $cotizacion['Cotizacion']['id'] . '_' . $cotizacion['Cotizacion']['email_cliente'] . '_' . Inflector::slug($cotizacion['Cotizacion']['created']) . '.pdf';
+
 		# Ruta para guardar en la Base de datos
-		$archivo = Router::url('/', true) . 'Pdf/Cotizaciones/' . $cotizacion['Cotizacion']['fecha_cotizacion'] . '/cotizacion_' . $cotizacion['Cotizacion']['id'] . '_' . $cotizacion['Cotizacion']['email_cliente'] . '_' . Inflector::slug($cotizacion['Cotizacion']['created']) . '.pdf';
+		$archivo = Router::url('/', true) . 'Pdf/Cotizaciones/' . $cotizacion['Cotizacion']['fecha_cotizacion'] . '/' . $cotizacion_nombre;
 
 		# Ruta absoluta del archivo para adjuntarlo	
-		$archivoAbsoluto = APP . 'webroot' . DS . 'Pdf' . DS . 'Cotizaciones' . DS . $cotizacion['Cotizacion']['fecha_cotizacion'] . DS . 'cotizacion_' . $cotizacion['Cotizacion']['id'] . '_' . $cotizacion['Cotizacion']['email_cliente'] . '_' . Inflector::slug($cotizacion['Cotizacion']['created']) . '.pdf';
+		$archivoAbsoluto = APP . 'webroot' . DS . 'Pdf' . DS . 'Cotizaciones' . DS . $cotizacion['Cotizacion']['fecha_cotizacion'] . DS . $cotizacion_nombre;
 
 		if( ! $this->Cotizacion->saveField('archivo', $archivo)) {
 			throw new Exception("Error al generar el PDF. No se pudo guardar el archivo", 411);
@@ -548,31 +550,67 @@ class CotizacionesController extends AppController
 			*/
 			$email = $cotizacion['Cotizacion']['email_cliente'];
 
-			$bccArray = array();
 			# BCC
 			if ( !empty($tienda['Tienda']['emails_bcc']) ) {
 				$bcc = explode( ',', trim($tienda['Tienda']['emails_bcc']) );
-				$bccArray = array();
-				foreach ($bcc as $key => $value) {
-					$bccArray[$value] = $value;
-				}
+			}
+			
+			/**
+			 * Clases requeridas
+			 */
+			$this->View           = new View();
+			$this->View->viewPath = 'Cotizaciones' . DS . 'emails';
+			$this->View->layout   = 'backend' . DS . 'emails';
+			
+			$this->View->set(compact('cotizacion', 'tienda'));
+			
+			$html = $this->View->render('cotizacion_cliente');
+			
+			$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $this->Session->read('Tienda.id')));
+
+			if (empty($mandrill_apikey)) {
+				return false;
 			}
 
-			App::uses('CakeEmail', 'Network/Email');
-		
-			$this->Email = new CakeEmail();
-			$this->Email
-			->config('gmail')
-			->viewVars(compact('cotizacion', 'tienda'))
-			->emailFormat('html')
-			->from(array($cotizacion['Cotizacion']['email_vendedor'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
-			->to($email)
-			->addBcc( $bcc ) 
-			->template('cotizacion_cliente')
-			->attachments(array($archivoAbsoluto))
-			->subject('[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url']);
+			$mandrill = $this->Components->load('Mandrill');
+
+			$mandrill->conectar($mandrill_apikey);
+
+			$asunto = '[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url'];
 			
-			if( $this->Email->send() ) {
+			$remitente = array(
+				'email' => 'cotizaciones@nodriza.cl',
+				'nombre' => sprintf('Ventas %s', $tienda['Tienda']['nombre'])
+			);
+
+			$destinatarios = array(
+				array(
+					'email' => trim($email)
+				)
+			);
+
+			foreach ($bcc as $ibc => $bc) {
+				$destinatarios[] = array(
+					'email' => $bc,
+					'type' => 'bcc'
+				);
+			}
+
+			$adjuntos = array(
+				array(
+                	'type' => 'application/pdf',
+                	'name' => $cotizacion_nombre,
+                	'content' => chunk_split(base64_encode(file_get_contents($archivoAbsoluto)))
+            	)
+			);
+
+            $cabeceras = array(
+				'Reply-To' => $cotizacion['Cotizacion']['email_vendedor']
+			);
+			
+			$enviado = $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios, $cabeceras, $adjuntos);
+
+			if( $enviado ) {
 				# Enviado
 				$this->Cotizacion->saveField('enviado', 1);
 				return "Ok";
@@ -713,33 +751,72 @@ class CotizacionesController extends AppController
 			*/
 			$email = $cotizacion['Cotizacion']['email_cliente'];
 			
+			$cotizacion_nombre = 'cotizacion_' . $cotizacion['Cotizacion']['id'] . '_' . $cotizacion['Cotizacion']['email_cliente'] . '_' . Inflector::slug($cotizacion['Cotizacion']['created']) . '.pdf';
+
 			# Ruta absoluta del archivo para adjuntarlo	
-			$archivoAbsoluto = APP . 'webroot' . DS . 'Pdf' . DS . 'Cotizaciones' . DS . $cotizacion['Cotizacion']['fecha_cotizacion'] . DS . 'cotizacion_' . $cotizacion['Cotizacion']['id'] . '_' . $cotizacion['Cotizacion']['email_cliente'] . '_' . Inflector::slug($cotizacion['Cotizacion']['created']) . '.pdf';
+			$archivoAbsoluto = APP . 'webroot' . DS . 'Pdf' . DS . 'Cotizaciones' . DS . $cotizacion['Cotizacion']['fecha_cotizacion'] . DS . $cotizacion_nombre;
 
 			# BCC
 			if ( !empty($tienda['Tienda']['emails_bcc']) ) {
 				$bcc = explode( ',', trim($tienda['Tienda']['emails_bcc']) );
-				$bccArray = array();
-				foreach ($bcc as $key => $value) {
-					$bccArray[$value] = $value;
-				}
 			}
+
+			/**
+			 * Clases requeridas
+			 */
+			$this->View           = new View();
+			$this->View->viewPath = 'Cotizaciones' . DS . 'emails';
+			$this->View->layout   = 'backend' . DS . 'emails';
 			
-			App::uses('CakeEmail', 'Network/Email');
-		
-			$this->Email = new CakeEmail();
-			$this->Email
-			->config('gmail')
-			->viewVars(compact('cotizacion', 'tienda'))
-			->emailFormat('html')
-			->from(array($cotizacion['Cotizacion']['email_vendedor'] => sprintf('Ventas %s', $tienda['Tienda']['nombre']) ))
-			->to($email)
-			->addBcc($bcc) 
-			->template('cotizacion_cliente')
-			->attachments(array($archivoAbsoluto))
-			->subject('[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url']);
+			$this->View->set(compact('cotizacion', 'tienda'));
 			
-			if( $this->Email->send() ) {
+			$html = $this->View->render('cotizacion_cliente');
+			
+			$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $this->Session->read('Tienda.id')));
+
+			if (empty($mandrill_apikey)) {
+				return false;
+			}
+
+			$mandrill = $this->Components->load('Mandrill');
+
+			$mandrill->conectar($mandrill_apikey);
+
+			$asunto = '[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url'];
+			
+			$remitente = array(
+				'email' => 'cotizaciones@nodriza.cl',
+				'nombre' => sprintf('Ventas %s', $tienda['Tienda']['nombre'])
+			);
+
+			$destinatarios = array(
+				array(
+					'email' => trim($email)
+				)
+			);
+
+			foreach ($bcc as $ibc => $bc) {
+				$destinatarios[] = array(
+					'email' => $bc,
+					'type' => 'bcc'
+				);
+			}
+
+			$adjuntos = array(
+				array(
+                	'type' => 'application/pdf',
+                	'name' => $cotizacion_nombre,
+                	'content' => chunk_split(base64_encode(file_get_contents($archivoAbsoluto)))
+            	)
+			);
+
+            $cabeceras = array(
+				'Reply-To' => $cotizacion['Cotizacion']['email_vendedor']
+			);
+			
+			$enviado = $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios, $cabeceras, $adjuntos);
+				
+			if( $enviado ) {
 				# Enviado
 				$this->Cotizacion->saveField('enviado', 1);
 				$this->Session->setFlash('Se ha enviado con éxito el email al cliente.', null, array(), 'success');

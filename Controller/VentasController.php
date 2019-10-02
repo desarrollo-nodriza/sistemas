@@ -4396,11 +4396,11 @@ class VentasController extends AppController {
 	public function notificar_cambio_estado($id_venta = null, $plantillaEmail = null, $nombre_estado_nuevo = '')
 	{	
 		if (Configure::read('debug') > 0) {
-            return true;
+            #return true;
       	}
 
 		$venta = $this->Venta->obtener_venta_por_id($id_venta);
-
+		
 		$plantillaDefault = @$venta['VentaEstado']['VentaEstadoCategoria']['plantilla'];
 		$estadoDefault    = @$venta['VentaEstado']['nombre'];
 
@@ -4423,10 +4423,9 @@ class VentasController extends AppController {
 		/**
 		 * Clases requeridas
 		 */
-		$this->View					= new View();
-		$this->View->viewPath		= 'VentaEstados' . DS . 'emails';
-		$this->View->layout		= 'backend' . DS . 'emails';
-		$this->Correo	    = ClassRegistry::init('Correo');
+		$this->View           = new View();
+		$this->View->viewPath = 'VentaEstados' . DS . 'emails';
+		$this->View->layout   = 'backend' . DS . 'emails';
 		
 		/**
 		 * QR
@@ -4439,35 +4438,33 @@ class VentasController extends AppController {
 		 */
 		$this->View->set(compact('venta', 'urlQr', 'tamanoQr'));
 		$html = $this->View->render($plantillaEmail);
+
+		$mandrill_apikey = $venta['Tienda']['mandrill_apikey'];
+
+		if (empty($mandrill_apikey)) {
+			return false;
+		}
+
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = '['.$venta['Tienda']['nombre'].'] Venta #' . $id_venta . ' - ' . $nombre_estado_nuevo;
 		
-		$data = array(
-			'estado'					=> 'Notificación venta #' . $id_venta . '-' . $plantillaEmail,
-			'html'						=> $html,
-			'asunto'					=> '['.$venta['Tienda']['nombre'].'] Venta #' . $id_venta . ' - ' . $nombre_estado_nuevo,
-			'destinatario_email'		=> trim($venta['VentaCliente']['email']),
-			'destinatario_nombre'		=> $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'],
-			'remitente_email'			=> 'ventas@toolmania.cl',
-			'remitente_nombre'			=> 'Ventas ' . $venta['Tienda']['nombre'],
-			'cc_email'					=> '',
-			'bcc_email'					=> $venta['Tienda']['emails_bcc'],
-			'traza'						=> null,
-			'proceso_origen'			=> null,
-			'procesado'					=> 0,
-			'enviado'					=> 0,
-			'reintentos'				=> 0,
-			'atachado'					=> null
+		$remitente = array(
+			'email' => 'no-reply@nodriza.cl',
+			'nombre' => 'Ventas ' . $venta['Tienda']['nombre']
 		);
 
-		/**
-		 * Guarda el email a enviar
-		 */
-		$this->Correo->create();
-		if ( $this->Correo->save($data) ) {
-			return true;
-		}
+		$destinatarios = array(
+			array(
+				'email' => trim($venta['VentaCliente']['email']),
+				'name' => $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido']
+			)
+		);
 		
-		return false;
-
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+		
 	}
 
 

@@ -1540,14 +1540,16 @@ class VentaDetalleProductosController extends AppController
 		$this->redirect(array('action' => 'index'));
 	}
 
-	public function admin_exportar($canales = false)
+	public function admin_exportar($canales = false, $limite = 100000, $offset = 0)
 	{	
 		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
 		set_time_limit(-1);
 		ini_set('memory_limit', -1);
 
 		$qry = array(
-			'recursive'	=> -1
+			'recursive'	=> -1,
+			'limit' => $limite,
+			'offset' => $offset
 		);
 
 		# Filtrar
@@ -1585,10 +1587,6 @@ class VentaDetalleProductosController extends AppController
 			)
 		));
 
-		$campos[] = 'Stock fisico total';
-		$campos[] = 'Stock reservado';
-
-
 		foreach ($datos as $id => $p) {
 			
 			foreach ($bodegas as $ib => $b) {
@@ -1614,8 +1612,8 @@ class VentaDetalleProductosController extends AppController
 						$meliConexion[$m['Marketplace']['id']]->crearCliente( $m['Marketplace']['api_user'], $m['Marketplace']['api_key'], $m['Marketplace']['access_token'], $m['Marketplace']['refresh_token'] );
 					}
 					
-					$result = $meliConexion[$m['Marketplace']['id']]->mercadolibre_conectar('', $m['Marketplace']);
-					
+					$result = $meliConexion[$m['Marketplace']['id']]->mercadolibre_conectar('', $m['Marketplace']);									
+
 					if ($result['success']) {
 						
 						$meli           = $meliConexion[$m['Marketplace']['id']]->mercadolibre_producto_existe($p['VentaDetalleProducto']['id_externo'], $m['Marketplace']['seller_id']);
@@ -1628,8 +1626,6 @@ class VentaDetalleProductosController extends AppController
 						
 						$datos[$id]['VentaDetalleProducto']['envio_'  . strtolower(Inflector::slug($m['Marketplace']['nombre']))] = $meliConexion[$m['Marketplace']['id']]->mercadolibre_obtener_costo_envio($meli['item']['id']);
 
-						$campos[] = 'Precio ' . $m['Marketplace']['nombre'];
-						$campos[] = 'Costo transporte ' . $m['Marketplace']['nombre'];
 					}
 
 				}
@@ -1638,7 +1634,7 @@ class VentaDetalleProductosController extends AppController
 
 		}
 		
-		$this->set(compact('datos', 'campos', 'modelo', 'bodegas'));
+		$this->set(compact('datos', 'campos', 'modelo', 'bodegas', 'marketplaces'));
 	}
 
 

@@ -345,6 +345,29 @@
 					</div>
 				</div>
 			</div>
+
+			<div class="panel panel-default panel-toggled">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-envelope"></i> Envio de correos con Mandrill</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<td><?= $this->Form->label('mandrill_apikey', 'Api Key Mandrill'); ?></td>
+								<td><?= $this->Form->input('mandrill_apikey'); ?></td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

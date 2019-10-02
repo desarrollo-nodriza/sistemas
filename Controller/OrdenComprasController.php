@@ -1255,7 +1255,7 @@ class OrdenComprasController extends AppController
 
 				$emails = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
 
-				if ( $this->OrdenCompra->saveAll($this->request->data) && $this->guardarEmailAsignarPago($id, $emails) )
+				if ( $this->OrdenCompra->saveAll($this->request->data) && $this->guardarEmailAsignarPago($ocs, $emails) )
 				{	
 					$this->Session->setFlash('Estado actualizado con éxito.', null, array(), 'success');
 				}
@@ -1695,98 +1695,18 @@ class OrdenComprasController extends AppController
 					
 				}
 
-				# Quitamos el envio de emails
-				$this->Session->setFlash('Estado actualizado con éxito.', null, array(), 'success');
-				$this->redirect(array('action' => 'index_validada_proveedores'));
-
 
 				$pdfOc = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1,100) . '.pdf';
 
 				$this->generar_pdf($ocs, $pdfOc);
 
 				$this->OrdenCompra->id = $id;
-				
-				$rutaArchivos = array(
-					sprintf('order_compra_%d.pdf', rand(1000, 100000)) => array(
-						'file' => APP . 'webroot' . DS . 'Pdf' . DS . 'OrdenCompra' . DS . $id . DS . $pdfOc,
-						#'mimetype' => $this->getFileMimeType(APP . 'webroot' . DS . 'Pdf' . DS . 'OrdenCompra' . DS . $id . DS . $this->request->data['OrdenCompra']['pdf']),
-					)
-				);
+				$this->OrdenCompra->saveField('pdf', $pdfOc);
+				$this->OrdenCompra->saveField('estado', 'enviado');
+				$this->OrdenCompra->saveField('fecha_enviado', date('Y-m-d H:i:s'));
 
-				
-				if (count(Hash::extract($ocs['OrdenCompraAdjunto'], '{n}.id'))) {
-					
-					foreach ($ocs['OrdenCompraAdjunto'] as $ioca => $oca) {
-
-						if (empty($oca['adjunto']))
-							continue;
-
-						if (!$oca['incluir_email'])
-							continue;
-
-						$extp = pathinfo(APP . 'webroot' . DS . 'img' . DS . 'OrdenCompraAdjunto' . DS . $oca['id'] . DS . $oca['adjunto'], PATHINFO_EXTENSION);
-						
-						$rutaArchivos[sprintf('adjunto_%d.%s', rand(1000, 100000), $extp)] = array(
-							'file' => APP . 'webroot' . DS . 'img' . DS . 'OrdenCompraAdjunto' . DS . $oca['id'] . DS . $oca['adjunto']
-						);
-
-					}
-
-				}
-
-				if (!empty($ocs['OrdenCompra']['adjunto'])) {
-
-					$ext = pathinfo(APP . 'webroot' . DS . 'img' . DS . str_replace('/', DS, $ocs['OrdenCompra']['adjunto']['path']), PATHINFO_EXTENSION);
-
-					$rutaArchivos[sprintf('adjunto_%d.%s', rand(1000, 100000), $ext)] = array(
-						'file' => APP . 'webroot' . DS . 'img' . DS . str_replace('/', DS, $ocs['OrdenCompra']['adjunto']['path']),
-						#'mimetype' => $this->getFileMimeType(APP . 'webroot' . DS . 'img' . DS . str_replace('/', DS, $this->request->data['OrdenCompra']['adjunto']['path'])),
-					);
-				}
-
-				$mensaje = $this->OrdenCompra->field('mensaje_final');
-				
-				$to  = Hash::extract($this->request->data, 'email_contacto_empresa.{n}[tipo=destinatario].email');
-				$cc  = Hash::extract($this->request->data, 'email_contacto_empresa.{n}[tipo=copia].email');
-				$bcc = Hash::extract($this->request->data, 'email_contacto_empresa.{n}[tipo=copia oculta].email');
-				
-				App::uses('CakeEmail', 'Network/Email');
-			
-				$this->Email = new CakeEmail();
-				$this->Email
-				#->config('gmail')
-				->viewVars(compact('mensaje'))
-				->emailFormat('html')
-				->from(array($this->Session->read('Auth.Administrador.email') => 'Nodriza Spa') )
-				->replyTo(array($ocs['Administrador']['email'] => $ocs['Administrador']['nombre']))
-				->to($to)
-				->cc($cc)
-				->bcc($bcc)
-				->template('oc_proveedor_final')
-				->attachments($rutaArchivos)
-				->subject(sprintf('[OC] #%d Se ha procesado una Orden de compra desde Nodriza Spa', $id));
-
-				# Actualizamos el asunto del email
-				if (isset($this->request->query['update'])) { 
-					$this->Email->subject(sprintf('[OC] #%d actualizada desde Nodriza Spa', $id));
-				}
-								
-				if( $this->Email->send() ) {
-
-					# Cambiar estado OC a enviado
-					# Solo creación
-					if (!isset($this->request->query['update'])) {
-						$this->OrdenCompra->saveField('pdf', $pdfOc);
-						$this->OrdenCompra->saveField('estado', 'enviado');
-						$this->OrdenCompra->saveField('fecha_enviado', date('Y-m-d H:i:s'));
-					}
-
-					$this->Session->setFlash('Email y adjuntos enviados con éxito', null, array(), 'success');
-
-				}else{
-					$this->Session->setFlash('Ocurrió un error al enviar el email. Intente nuevamente.', null, array(), 'danger');
-				}
-
+				# Quitamos el envio de emails
+				$this->Session->setFlash('Estado actualizado con éxito.', null, array(), 'success');
 				$this->redirect(array('action' => 'index_validada_proveedores'));
 
 			}else{
@@ -2263,39 +2183,37 @@ class OrdenComprasController extends AppController
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		$this->Correo				= ClassRegistry::init('Correo');
 		
 		$url = Router::fullBaseUrl();
 
 		$this->View->set(compact('ocs', 'url'));
 		$html						= $this->View->render('notificar_revision_oc');
-
-		/**
-		 * Guarda el email a enviar
-		 */
-		$this->Correo->create();
 		
-		if ( $this->Correo->save(array(
-			'estado'					=> 'Notificación revisar ocs',
-			'html'						=> $html,
-			'asunto'					=> '[NDRZ] OC para revisión',
-			'destinatario_email'		=> trim(implode(',', $emails)),
-			'destinatario_nombre'		=> '',
-			'remitente_email'			=> 'cristian.rojas@nodriza.cl',
-			'remitente_nombre'			=> 'Sistemas - Nodriza Spa',
-			'cc_email'					=> '',
-			'bcc_email'					=> 'cristian.rojas@nodriza.cl',
-			'traza'						=> null,
-			'proceso_origen'			=> null,
-			'procesado'					=> 0,
-			'enviado'					=> 0,
-			'reintentos'				=> 0,
-			'atachado'					=> null
-		)) ) {
-			return true;
+		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $ocs['tienda_id']));
+
+		if (empty($mandrill_apikey)) {
+			return false;
 		}
 
-		return false;
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = '[NDRZ] OC para '. strtolower($ocs['razon_social_empresa']).' lista para revisión.';
+		
+		$remitente = array(
+			'email' => 'oc@nodriza.cl',
+			'nombre' => 'Sistema de Órdenes de compra Nodriza'
+		);
+
+		$destinatarios = array();
+
+		foreach ($emails as $im => $e) {
+			$destinatarios[$im]['email'] = $e;
+		}
+
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
 	}
 
 
@@ -2313,39 +2231,46 @@ class OrdenComprasController extends AppController
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		$this->Correo				= ClassRegistry::init('Correo');
 		
 		$url = Router::fullBaseUrl();
 
 		$this->View->set(compact('id', 'url'));
 		$html						= $this->View->render('notificar_rechazo_oc');
 
-		/**
-		 * Guarda el email a enviar
-		 */
-		$this->Correo->create();
-		
-		if ( $this->Correo->save(array(
-			'estado'					=> 'Notificación rechazo oc',
-			'html'						=> $html,
-			'asunto'					=> sprintf('[NDRZ] OC #%d rechazada', $id),
-			'destinatario_email'		=> trim(implode(',', $emails)),
-			'destinatario_nombre'		=> '',
-			'remitente_email'			=> 'cristian.rojas@nodriza.cl',
-			'remitente_nombre'			=> 'Sistemas - Nodriza Spa',
-			'cc_email'					=> '',
-			'bcc_email'					=> 'cristian.rojas@nodriza.cl',
-			'traza'						=> null,
-			'proceso_origen'			=> null,
-			'procesado'					=> 0,
-			'enviado'					=> 0,
-			'reintentos'				=> 0,
-			'atachado'					=> null
-		)) ) {
-			return true;
+		$oc = $this->OrdenCompra->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id
+			),
+			'fields' => array(
+				'OrdenCompra.tienda_id'
+			)
+		));
+
+		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $oc['OrdenCompra']['tienda_id']));
+
+		if (empty($mandrill_apikey)) {
+			return false;
 		}
 
-		return false;
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = sprintf('[NDRZ] OC #%d rechazada', $id);
+		
+		$remitente = array(
+			'email' => 'oc@nodriza.cl',
+			'nombre' => 'Sistema de Órdenes de compra Nodriza'
+		);
+
+		$destinatarios = array();
+
+		foreach ($emails as $im => $e) {
+			$destinatarios[$im]['email'] = $e;
+		}
+		
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
 	}
 
 
@@ -2355,7 +2280,7 @@ class OrdenComprasController extends AppController
 	 * @param  array  $emails [description]
 	 * @return [type]         [description]
 	 */
-	private function guardarEmailStockout($ventas, $productos, $emails = array())
+	private function guardarEmailStockout($id, $ventas, $productos, $emails = array())
 	{	
 		/**
 		 * Clases requeridas
@@ -2363,39 +2288,46 @@ class OrdenComprasController extends AppController
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		$this->Correo				= ClassRegistry::init('Correo');
 		
 		$url = Router::fullBaseUrl();
 
 		$this->View->set(compact('ventas', 'productos', 'url'));
 		$html						= $this->View->render('notificar_stockout_ventas');
 
-		/**
-		 * Guarda el email a enviar
-		 */
-		$this->Correo->create();
-		
-		if ( $this->Correo->save(array(
-			'estado'					=> 'Notificación stockout',
-			'html'						=> $html,
-			'asunto'					=> sprintf('[NDRZ] Hay %d ventas con productos en stockout.', count($ventas)),
-			'destinatario_email'		=> trim(implode(',', $emails)),
-			'destinatario_nombre'		=> '',
-			'remitente_email'			=> 'cristian.rojas@nodriza.cl',
-			'remitente_nombre'			=> 'Sistemas - Nodriza Spa',
-			'cc_email'					=> '',
-			'bcc_email'					=> 'cristian.rojas@nodriza.cl',
-			'traza'						=> null,
-			'proceso_origen'			=> null,
-			'procesado'					=> 0,
-			'enviado'					=> 0,
-			'reintentos'				=> 0,
-			'atachado'					=> null
-		)) ) {
-			return true;
+		$oc = $this->OrdenCompra->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id
+			),
+			'fields' => array(
+				'OrdenCompra.tienda_id'
+			)
+		));
+
+		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $oc['OrdenCompra']['tienda_id']));
+
+		if (empty($mandrill_apikey)) {
+			return false;
 		}
 
-		return false;
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = sprintf('[NDRZ] Hay %d ventas con productos en stockout.', count($ventas));
+		
+		$remitente = array(
+			'email' => 'oc@nodriza.cl',
+			'nombre' => 'Sistema de Órdenes de compra Nodriza'
+		);
+
+		$destinatarios = array();
+
+		foreach ($emails as $im => $e) {
+			$destinatarios[$im]['email'] = $e;
+		}
+		
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
 	}
 
 
@@ -2436,92 +2368,75 @@ class OrdenComprasController extends AppController
 		$mensaje = sprintf('Estimados %s, la OC #%d emitida por "%s" se encuentra disponible para ser validada.', $oc['Proveedor']['nombre'], $oc['OrdenCompra']['id'], $oc['Tienda']['nombre']);
 
 				
-		$to  = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=validador].email');
-		$to2 = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=destinatario].email');
-		$cc  = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=copia].email');
-		$bcc = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=copia oculta].email');
+		$validadores = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=validador].email');
+		$receptores  = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=destinatario].email');
+		$cc          = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=copia].email');
+		$bcc         = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=copia oculta].email');
 
-		$destinatario = (!empty($to)) ? $to : $to2;
+		$to = (!empty($validadores)) ? $validadores : $receptores;
 		
-		App::uses('CakeEmail', 'Network/Email');
+		#App::uses('CakeEmail', 'Network/Email');
 
 		$url = Router::fullBaseUrl();
 
 		# creamos un token de acceso vía email
 		$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];		
-		
 
-		$log = array(
-			'Log' => array(
-				'administrador' => 'Validar Proveedor #' . $oc['Proveedor']['id'],
-				'modulo' => 'OrdenCompras',
-				'modulo_accion' => $url . '/socio/oc/' . $oc['OrdenCompra']['id'] . '?access_token=' . $token
-			)
-		);
-
-		ClassRegistry::init('Log')->create();
-		ClassRegistry::init('Log')->save($log);
-
-		$this->Email = new CakeEmail();
-		$this->Email
-		##->config('gmail')
-		->viewVars(compact('mensaje', 'oc', 'url', 'token'))
-		->emailFormat('html')
-		->from(array($this->Session->read('Auth.Administrador.email') => 'Nodriza Spa') )
-		->replyTo(array($oc['Administrador']['email'] => $oc['Administrador']['nombre']))
-		->to($destinatario)
-		->cc($cc)
-		->bcc($bcc)
-		->template('oc_proveedor')
-		->subject(sprintf('[OC] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id));		
-		
-		if( $this->Email->send() ) {
-			$this->Session->setFlash('Email enviado con éxito', null, array(), 'success');
-			return true;
-		}else{
-			$this->Session->setFlash('Ocurrió un error al enviar el email. Intente nuevamente.', null, array(), 'danger');
-			return false;
-		}
-
-		/**
-		 * Clases requeridas
-		 */
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		$this->Correo				= ClassRegistry::init('Correo');
 		
 		$url = Router::fullBaseUrl();
 
-		$this->View->set(compact('id', 'url'));
-		$html						= $this->View->render('notificar_validado_oc');
-
-		/**
-		 * Guarda el email a enviar
-		 */
-		$this->Correo->create();
+		$this->View->set(compact('mensaje', 'oc', 'url', 'token'));
+		$html						= $this->View->render('notificar_proveedor_oc');
 		
-		if ( $this->Correo->save(array(
-			'estado'					=> 'Notificación validado oc',
-			'html'						=> $html,
-			'asunto'					=> sprintf('[NDRZ] OC #%d lista para pagar', $id),
-			'destinatario_email'		=> trim(implode(',', $emails)),
-			'destinatario_nombre'		=> '',
-			'remitente_email'			=> 'cristian.rojas@nodriza.cl',
-			'remitente_nombre'			=> 'Sistemas - Nodriza Spa',
-			'cc_email'					=> '',
-			'bcc_email'					=> 'cristian.rojas@nodriza.cl',
-			'traza'						=> null,
-			'proceso_origen'			=> null,
-			'procesado'					=> 0,
-			'enviado'					=> 0,
-			'reintentos'				=> 0,
-			'atachado'					=> null
-		)) ) {
-			return true;
+		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $oc['OrdenCompra']['tienda_id']));
+
+		if (empty($mandrill_apikey)) {
+			return false;
 		}
 
-		return false;
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = sprintf('[OC] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
+		
+		$remitente = array(
+			'email' => 'oc@nodriza.cl',
+			'nombre' => 'Sistema de Órdenes de compra Nodriza'
+		);
+
+		$destinatarios = array();
+
+		foreach ($to as $id => $des) {
+			$destinatarios[] = array(
+				'email' => $des,
+				'type' => 'to'
+			);
+		}
+
+		foreach ($cc as $ic => $c) {
+			$destinatarios[] = array(
+				'email' => $c,
+				'type' => 'cc'
+			);
+		}
+
+		foreach ($bcc as $ibc => $bc) {
+			$destinatarios[] = array(
+				'email' => $bc,
+				'type' => 'bcc'
+			);
+		}
+
+		$cabeceras = array(
+			'Reply-To' => $oc['Administrador']['email']
+		);
+		
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios, $cabeceras);
+
 	}
 
 
@@ -2531,7 +2446,7 @@ class OrdenComprasController extends AppController
 	 * @param  array  $emails [description]
 	 * @return [type]         [description]
 	 */
-	private function guardarEmailAsignarPago($id, $emails = array())
+	private function guardarEmailAsignarPago($oc, $emails = array())
 	{
 		/**
 		 * Clases requeridas
@@ -2539,39 +2454,39 @@ class OrdenComprasController extends AppController
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		$this->Correo				= ClassRegistry::init('Correo');
 		
 		$url = Router::fullBaseUrl();
+
+		$id = $oc['OrdenCompra']['id'];
 
 		$this->View->set(compact('id', 'url'));
 		$html						= $this->View->render('notificar_asignar_moneda_oc');
 
-		/**
-		 * Guarda el email a enviar
-		 */
-		$this->Correo->create();
-		
-		if ( $this->Correo->save(array(
-			'estado'					=> 'Notificación asignar pago oc',
-			'html'						=> $html,
-			'asunto'					=> sprintf('[NDRZ] Asignar pago para OC #%d ', $id),
-			'destinatario_email'		=> trim(implode(',', $emails)),
-			'destinatario_nombre'		=> '',
-			'remitente_email'			=> 'cristian.rojas@nodriza.cl',
-			'remitente_nombre'			=> 'Sistemas - Nodriza Spa',
-			'cc_email'					=> '',
-			'bcc_email'					=> 'cristian.rojas@nodriza.cl',
-			'traza'						=> null,
-			'proceso_origen'			=> null,
-			'procesado'					=> 0,
-			'enviado'					=> 0,
-			'reintentos'				=> 0,
-			'atachado'					=> null
-		)) ) {
-			return true;
+		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $oc['OrdenCompra']['tienda_id']));
+
+		if (empty($mandrill_apikey)) {
+			return false;
 		}
 
-		return false;
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = sprintf('[NDRZ] Asignar pago para OC #%d ', $id);
+		
+		$remitente = array(
+			'email' => 'oc@nodriza.cl',
+			'nombre' => 'Sistema de Órdenes de compra Nodriza'
+		);
+
+		$destinatarios = array();
+
+		foreach ($emails as $im => $e) {
+			$destinatarios[$im]['email'] = $e;
+		}
+		
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
 	}
 
 
@@ -2581,7 +2496,7 @@ class OrdenComprasController extends AppController
 	 * @param  array  $emails [description]
 	 * @return [type]         [description]
 	 */
-	private function guardarEmailValidadoProveedor($id, $emails = array())
+	private function guardarEmailValidadoProveedor($oc, $emails = array())
 	{	
 		/**
 		 * Clases requeridas
@@ -2589,39 +2504,38 @@ class OrdenComprasController extends AppController
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		$this->Correo				= ClassRegistry::init('Correo');
 		
 		$url = Router::fullBaseUrl();
+		$id = $oc['OrdenCompra']['id'];
 
 		$this->View->set(compact('id', 'url'));
 		$html						= $this->View->render('notificar_validado_oc');
 
-		/**
-		 * Guarda el email a enviar
-		 */
-		$this->Correo->create();
-		
-		if ( $this->Correo->save(array(
-			'estado'					=> 'Notificación validado oc',
-			'html'						=> $html,
-			'asunto'					=> sprintf('[NDRZ] OC #%d lista para pagar', $id),
-			'destinatario_email'		=> trim(implode(',', $emails)),
-			'destinatario_nombre'		=> '',
-			'remitente_email'			=> 'cristian.rojas@nodriza.cl',
-			'remitente_nombre'			=> 'Sistemas - Nodriza Spa',
-			'cc_email'					=> '',
-			'bcc_email'					=> 'cristian.rojas@nodriza.cl',
-			'traza'						=> null,
-			'proceso_origen'			=> null,
-			'procesado'					=> 0,
-			'enviado'					=> 0,
-			'reintentos'				=> 0,
-			'atachado'					=> null
-		)) ) {
-			return true;
+		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $oc['OrdenCompra']['tienda_id']));
+
+		if (empty($mandrill_apikey)) {
+			return false;
 		}
 
-		return false;
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = sprintf('[NDRZ] OC #%d lista para pagar', $id);
+		
+		$remitente = array(
+			'email' => 'oc@nodriza.cl',
+			'nombre' => 'Sistema de Órdenes de compra Nodriza'
+		);
+
+		$destinatarios = array();
+
+		foreach ($emails as $im => $e) {
+			$destinatarios[$im]['email'] = $e;
+		}
+		
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
 	}
 
 
@@ -2639,7 +2553,6 @@ class OrdenComprasController extends AppController
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		$this->Correo				= ClassRegistry::init('Correo');
 		
 		$url = Router::fullBaseUrl();
 
@@ -2887,7 +2800,7 @@ class OrdenComprasController extends AppController
 					$emailsVentas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('ventas');
 
 					if (!empty($emailsVentas)) {
-						$this->guardarEmailStockout($ventasNotificar, $itemes['stockout'], $emailsVentas);
+						$this->guardarEmailStockout($id, $ventasNotificar, $itemes['stockout'], $emailsVentas);
 					}
 				}
 
@@ -2937,7 +2850,7 @@ class OrdenComprasController extends AppController
 					$emailsFinanzas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
 
 					if (!empty($emailsFinanzas)) {
-						$this->guardarEmailValidadoProveedor($id, $emailsFinanzas);
+						$this->guardarEmailValidadoProveedor($oc, $emailsFinanzas);
 					}
 					
 					$pdfOc = 'orden_compra_' . $id . '_' . strtolower(Inflector::slug($oc['Proveedor']['nombre'])) . '_' . rand(1,100) . '.pdf';
