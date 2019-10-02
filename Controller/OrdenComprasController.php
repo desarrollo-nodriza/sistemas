@@ -751,12 +751,12 @@ class OrdenComprasController extends AppController
 						}
 
 					}
-
+					
 					# Actualizamos ventas completas para que sean empaquetadas
 					if (!empty($ventasCompletas)) {
 						foreach ($ventasCompletas as $id_venta => $id_producto) {
 							ClassRegistry::init('Venta')->id = $id_venta;
-							ClassRegistry::init('Venta')->saveField('subestado', 'empaquetar');
+							ClassRegistry::init('Venta')->saveField('picking_estado', 'empaquetar');
 						}
 					}
 				}
@@ -2189,7 +2189,7 @@ class OrdenComprasController extends AppController
 		$this->View->set(compact('ocs', 'url'));
 		$html						= $this->View->render('notificar_revision_oc');
 		
-		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $ocs['tienda_id']));
+		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $ocs[0]['OrdenCompra']['tienda_id']));
 
 		if (empty($mandrill_apikey)) {
 			return false;
@@ -2199,7 +2199,12 @@ class OrdenComprasController extends AppController
 
 		$mandrill->conectar($mandrill_apikey);
 
-		$asunto = '[NDRZ] OC para '. strtolower($ocs['razon_social_empresa']).' lista para revisión.';
+		$asunto = '[NDRZ] OC para '. strtolower($ocs[0]['OrdenCompra']['razon_social_empresa']).' lista para revisión.';
+
+		if (Configure::read('debug') > 0) {
+			$asunto = '[NDRZ-DEV] OC para '. strtolower($ocs[0]['OrdenCompra']['razon_social_empresa']).' lista para revisión.';
+		}
+		
 		
 		$remitente = array(
 			'email' => 'oc@nodriza.cl',
@@ -2258,6 +2263,10 @@ class OrdenComprasController extends AppController
 
 		$asunto = sprintf('[NDRZ] OC #%d rechazada', $id);
 		
+		if (Configure::read('debug') > 0) {
+			$asunto = sprintf('[NDRZ-DEV] OC #%d rechazada', $id);
+		}
+
 		$remitente = array(
 			'email' => 'oc@nodriza.cl',
 			'nombre' => 'Sistema de Órdenes de compra Nodriza'
@@ -2315,6 +2324,10 @@ class OrdenComprasController extends AppController
 
 		$asunto = sprintf('[NDRZ] Hay %d ventas con productos en stockout.', count($ventas));
 		
+		if (Configure::read('debug') > 0) {
+			$asunto = sprintf('[NDRZ-DEV] Hay %d ventas con productos en stockout.', count($ventas));
+		}
+
 		$remitente = array(
 			'email' => 'oc@nodriza.cl',
 			'nombre' => 'Sistema de Órdenes de compra Nodriza'
@@ -2403,6 +2416,10 @@ class OrdenComprasController extends AppController
 
 		$asunto = sprintf('[OC] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
 		
+		if (Configure::read('debug') > 0) {
+			$asunto = sprintf('[OC-DEV] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
+		}
+
 		$remitente = array(
 			'email' => 'oc@nodriza.cl',
 			'nombre' => 'Sistema de Órdenes de compra Nodriza'
@@ -2474,6 +2491,10 @@ class OrdenComprasController extends AppController
 
 		$asunto = sprintf('[NDRZ] Asignar pago para OC #%d ', $id);
 		
+		if (Configure::read('debug') > 0) {
+			$asunto = sprintf('[NDRZ-DEV] Asignar pago para OC #%d ', $id);
+		}
+
 		$remitente = array(
 			'email' => 'oc@nodriza.cl',
 			'nombre' => 'Sistema de Órdenes de compra Nodriza'
@@ -2523,6 +2544,10 @@ class OrdenComprasController extends AppController
 
 		$asunto = sprintf('[NDRZ] OC #%d lista para pagar', $id);
 		
+		if (Configure::read('debug') > 0) {
+			$asunto = sprintf('[NDRZ-DEV] OC #%d lista para pagar', $id);
+		}
+
 		$remitente = array(
 			'email' => 'oc@nodriza.cl',
 			'nombre' => 'Sistema de Órdenes de compra Nodriza'

@@ -4395,8 +4395,8 @@ class VentasController extends AppController {
 	 */
 	public function notificar_cambio_estado($id_venta = null, $plantillaEmail = null, $nombre_estado_nuevo = '')
 	{	
-		if (Configure::read('debug') > 0) {
-            #return true;
+		if (Configure::read('debug') > 1) {
+            return true;
       	}
 
 		$venta = $this->Venta->obtener_venta_por_id($id_venta);
@@ -4451,6 +4451,10 @@ class VentasController extends AppController {
 
 		$asunto = '['.$venta['Tienda']['nombre'].'] Venta #' . $id_venta . ' - ' . $nombre_estado_nuevo;
 		
+		if (Configure::read('debug') > 1) {
+			$asunto = '['.$venta['Tienda']['nombre'].'-DEV] Venta #' . $id_venta . ' - ' . $nombre_estado_nuevo;
+		}
+
 		$remitente = array(
 			'email' => 'no-reply@nodriza.cl',
 			'nombre' => 'Ventas ' . $venta['Tienda']['nombre']
