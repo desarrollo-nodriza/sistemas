@@ -799,42 +799,44 @@ class VentasController extends AppController {
 
 			if ($subestado == 'empaquetado') {
 
-				$venta = $this->Venta->obtener_venta_por_id($id);
-
-				$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
-
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'Cambiar estado venta: Enviame',
-						'modulo' => 'Ventas',
-						'modulo_accion' => json_encode($metodo_envio_enviame)
-					)
-				);
-
-				# Creamos pedido en enviame si corresponde
-				if ( in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame)
-					&& $venta['Tienda']['activo_enviame']) {
+				# Usar envio externo
+				if ($this->request->data['Venta']['envio_externo']) {
 					
-					$Enviame = $this->Components->load('Enviame');
+					$venta = $this->Venta->obtener_venta_por_id($id);
 
-					# conectamos con enviame
-					$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
-
-					$resultadoEnviame = $Enviame->crearEnvio($venta);
+					$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
 
 					$log[] = array(
 						'Log' => array(
-							'administrador' => 'Cambiar estado venta: Ingresa Enviame',
+							'administrador' => 'Cambiar estado venta: Enviame',
 							'modulo' => 'Ventas',
-							'modulo_accion' => 'creado: ' . $resultadoEnviame
+							'modulo_accion' => json_encode($metodo_envio_enviame)
 						)
 					);
 
+					# Creamos pedido en enviame si corresponde
+					if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) {
+						
+						$Enviame = $this->Components->load('Enviame');
+
+						# conectamos con enviame
+						$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
+
+						$resultadoEnviame = $Enviame->crearEnvio($venta);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Cambiar estado venta: Ingresa Enviame',
+								'modulo' => 'Ventas',
+								'modulo_accion' => 'creado: ' . $resultadoEnviame
+							)
+						);
+
+					}
+
+					ClassRegistry::init('Log')->create();
+					ClassRegistry::init('Log')->saveMany($log);	
 				}
-
-				ClassRegistry::init('Log')->create();
-				ClassRegistry::init('Log')->saveMany($log);
-
 
 				foreach ($detalles as $idd => $d) {
 
@@ -4110,6 +4112,54 @@ class VentasController extends AppController {
 		$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta);
 		
 		$archivos[] = $url_etiqueta_envio['path'];
+
+		# Unimos todos los PDFS obtenidos
+		if (!empty($archivos)) {
+			
+			$this->layoutPath = '';
+			$this->layout = 'ajax';
+
+			$pdf = $this->unir_documentos($archivos, $id);
+
+			if ($ajax) {
+				echo json_encode($pdf);
+				exit;
+			}
+
+		}else{
+
+			if ($ajax) {
+				echo '';
+				exit;
+			}
+
+			$this->Session->setFlash('No hay documentos para generar.', null, array(), 'warning');
+			$this->redirect(array('action' => 'view', $id));
+		}
+
+	}
+
+
+	public function admin_generar_dte_etiqueta($id, $ajax = false)
+	{	
+		# Toda la información de la venta
+		$venta = $this->preparar_venta($id);
+
+		# Variable que contendrá los documentos
+		$archivos = array();
+
+		# Obtenemos DTE
+		if (!empty($venta['Dte'])) {
+			$dtes = $this->obtener_dtes_pdf_venta($venta['Dte']);
+		
+			foreach ($dtes as $dte) {
+				$archivos[] = $dte['path'];
+			}
+		}
+		
+		$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta, 'vertical');
+		
+		$archivos[] = $url_etiqueta_envio['path'];
 		
 		# Unimos todos los PDFS obtenidos
 		if (!empty($archivos)) {
@@ -4213,9 +4263,10 @@ class VentasController extends AppController {
 	/**
 	 * Genera la etiqueta de envio default intenra y retorna la url púbica y absoluta del archivo.
 	 * @param  array  $venta [description]
+	 * @param  string $orientacion horizontal/vertical
 	 * @return [type]        [description]
 	 */
-	public function obtener_etiqueta_envio_default_url($venta = array())
+	public function obtener_etiqueta_envio_default_url($venta = array(), $orientacion = 'horizontal')
 	{	
 		# Dejamos solo DTES validos
 		if (!empty($venta['Dte'])) {
@@ -4235,10 +4286,23 @@ class VentasController extends AppController {
 
 		$this->set(compact('venta', 'logo', 'url', 'tamano'));
 
-		$vista = $this->render('etiqueta_envio_default');
+		if ($orientacion == 'horizontal') {
+			$vista = $this->render('etiqueta_envio_default');	
+		}
+		
+		if ($orientacion == 'vertical') {
+			$vista = $this->render('etiqueta_envio_default_vertical');	
+		}
+
 		$html  = $vista->body();
-		#prx($html);
-		$url   = $this->generar_pdf($html, $venta['Venta']['id'], 'transporte', 'landscape');
+		
+		if ($orientacion == 'horizontal') {
+			$url   = $this->generar_pdf($html, $venta['Venta']['id'], 'transporte', 'landscape');
+		}
+
+		if ($orientacion == 'vertical') {
+			$url   = $this->generar_pdf($html, $venta['Venta']['id'], 'transporte', 'portrait');
+		}
 
 		return $url;
 	}
@@ -4396,7 +4460,7 @@ class VentasController extends AppController {
 	 * @param  string $orientacion [description]
 	 * @return [type]              [description]
 	 */
-	public function generar_pdf($html = '', $venta_id = '', $nombre = '', $orientacion = 'potrait') {
+	public function generar_pdf($html = '', $venta_id = '', $nombre = '', $orientacion = 'potrait', $tamano = 'A4') {
 
 		$nombre = $nombre . rand();
 		$rutaAbsoluta = APP . 'webroot' . DS . 'Pdf' . DS . 'Venta' . DS . $venta_id . DS . $nombre . '.pdf';
@@ -4404,6 +4468,7 @@ class VentasController extends AppController {
 		try {
 			$this->CakePdf = new CakePdf();
 			$this->CakePdf->orientation($orientacion);
+			$this->CakePdf->pageSize($tamano);
 			@$this->CakePdf->write($rutaAbsoluta, true, $html);	
 		} catch (Exception $e) { 
 			return array();

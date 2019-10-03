@@ -60,6 +60,8 @@ class EnviameComponent extends Component
 		$anchoTotal = array_sum(Hash::extract(Hash::extract($paquetes, '{n}.paquete'), '{n}.width'));
 		$altoTotal  = array_sum(Hash::extract(Hash::extract($paquetes, '{n}.paquete'), '{n}.height'));
 
+		$volumen = $this->calcular_volumen( $largoTotal, $anchoTotal, $altoTotal);
+
 		$shipping_order = array(
 			'imported_id' => $venta['Venta']['id'],
 			'order_price' => round($venta['Venta']['total'], 0),
@@ -67,7 +69,7 @@ class EnviameComponent extends Component
 			'content_description' => 'Bulto preparado por ' . $venta['Venta']['picking_email'] . ' para la venta ID-EX #' . $venta['Venta']['id_externo'],
 			'type' => 'delivery',
 			'weight' => $pesoTotal,
-			'volume' => $this->calcular_volumen( $largoTotal, $anchoTotal, $altoTotal)
+			'volume' => ($volumen == 0) ? 0.045 : $volumen
 		);
 
 		$shipping_destination = array(
@@ -95,11 +97,26 @@ class EnviameComponent extends Component
 
 		$logs = array();
 
+		 $requestLog = array(
+            'shipping_order'       => $shipping_order,
+            'shipping_destination' => $shipping_destination,
+            'shipping_origin'      => $shipping_origin,
+            'carrier'              => $carrier
+        );
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Picking Enviame Request',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($requestLog)
+			)
+		);
+
 		$resultado = $this->Enviame->crear_envio_como_empresa($shipping_order, $shipping_destination, $shipping_origin, $carrier);
 		
 		$log[] = array(
 			'Log' => array(
-				'administrador' => 'Picking Enviame',
+				'administrador' => 'Picking Enviame Response',
 				'modulo' => 'Ventas',
 				'modulo_accion' => json_encode($resultado)
 			)
@@ -110,7 +127,7 @@ class EnviameComponent extends Component
 			ClassRegistry::init('Log')->create();
 			ClassRegistry::init('Log')->saveMany($log);
 
-			return 'Codigo respusta: ' . $resultado['httpCode'];
+			return 'Codigo respuesta: ' . $resultado['httpCode'];
 		}
 
 		$enviameRes = to_array($resultado)['body']['data'];
@@ -121,6 +138,9 @@ class EnviameComponent extends Component
 				'codigo' => $enviameRes['carrier']
 			)
 		);
+
+		# Generamos la etiqueta
+		$this->Enviame->generar_etiquetas(array($enviameRes['identifier']));
 		
 		# Se guarda la información del tracking en la venta
 		$nwVenta = array(

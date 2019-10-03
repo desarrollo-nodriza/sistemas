@@ -203,6 +203,7 @@
 						<tr>
 							<td>Método envio seleccionado</td>
 							<td><?=$venta['MetodoEnvio']['nombre'];?></td>
+							<td>¿Usar Envíame? <?=$this->Form->input('envio_externo', array('class' => 'icheckbox', 'type' => 'checkbox', 'checked' => true)); ?></td>
 						</tr>
 					</table>
 				</div>
@@ -394,3 +395,12 @@
 	<? endif; ?>
 
 <? endif; ?>
+
+<script type="text/javascript">
+	$('input.icheckbox').iCheck(
+	{
+		checkboxClass	: 'icheckbox_flat-red',
+		radioClass		: 'iradio_flat-red',
+		increaseArea	: '20%'
+	});
+</script>

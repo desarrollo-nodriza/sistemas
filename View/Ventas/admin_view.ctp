@@ -354,31 +354,28 @@
 						<div class="col-xs-12 col-sm-4">
 								
 							<!-- DESCARGAR DOCUMENTOS -->
-				            <?= $this->Html->link('<i class="fa fa-file-pdf-o"></i><p>Envio, etiqueta, DTE</p>', array('controller' => 'ventas', 'action' => 'consultar_dte', $venta['Venta']['id']), array('class' => 'tile tile-success js-generar-documentos-venta-modal', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
-
-
-				            <!-- DESCARGAR ETIQUETA -->
+				            <?= $this->Html->link('<i class="fa fa-file-pdf-o"></i><p>Envio, etiqueta, DTE</p>', array('controller' => 'ventas', 'action' => 'consultar_dte', $venta['Venta']['id']), array('class' => 'tile small tile-success js-generar-documentos-venta-modal', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
 							
-							<? if (!empty($venta['Venta']['etiqueta_envio_externa'])) : ?>
+							<? if (!empty($venta['Dte'])) : ?>
 							
-							<div class="row">
-								<div class="col-xs-12 col-md-6">
-				            	<?= $this->Html->link('<i class="fa fa-cube"></i><p>Etiqueta interna</p>', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'tile tile-warning js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => 'Generar Etiqueta', 'escape' => false)); ?>
-				            	</div>
-								<div class="col-xs-12 col-md-6">
-									<a href="<?=$venta['Venta']['etiqueta_envio_externa']?>" target="_blank" class="tile tile-info"><i class="fa fa-truck"></i><p>Etiqueta Externa</p></a>
-								</div>
-							</div>
-							<? else : ?>
-								
-							<?= $this->Html->link('<i class="fa fa-cube"></i><p>Etiqueta interna</p>', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'tile tile-warning js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => 'Generar Etiqueta', 'escape' => false)); ?>
-
+							<!-- DTE y ETIQUETA --> 
+							<?= $this->Html->link('<i class="fa fa-file"></i><p>DTE y Etiqueta</p>', array('controller' => 'ventas', 'action' => 'generar_dte_etiqueta', $venta['Venta']['id'], 1), array('class' => 'tile small tile-primary js-generar-etiqueta-venta-dte', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
+							
 							<? endif; ?>
 
+				            <!-- DESCARGAR ETIQUETAS -->
+							<? if (!empty($venta['Venta']['etiqueta_envio_externa'])) : ?>
+				            	
+								<a href="<?=$venta['Venta']['etiqueta_envio_externa']?>" target="_blank" class="tile small tile-info"><i class="fa fa-truck"></i><p>Etiqueta Externa</p></a>
+								
+							<? endif; ?>
+
+							<?= $this->Html->link('<i class="fa fa-cube"></i><p>Etiqueta interna</p>', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'tile small tile-warning js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => 'Generar Etiqueta', 'escape' => false)); ?>
+
 				            <? if (!$venta['Venta']['prioritario']) : ?>
-							<?= $this->Form->postLink('<i class="fa fa-check"></i><p>Marcar como prioritaria</p>', array('action' => 'marcar_prioritaria', $venta['Venta']['id']), array('class' => 'tile tile-danger', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
+							<?= $this->Form->postLink('<i class="fa fa-check"></i><p>Marcar como prioritaria</p>', array('action' => 'marcar_prioritaria', $venta['Venta']['id']), array('class' => 'tile small tile-danger', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
 							<? else : ?>
-							<?= $this->Form->postLink('<i class="fa fa-remove"></i><p>Marcar no prioritaria</p>', array('action' => 'marcar_no_prioritaria', $venta['Venta']['id']), array('class' => 'tile tile-default', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
+							<?= $this->Form->postLink('<i class="fa fa-remove"></i><p>Marcar no prioritaria</p>', array('action' => 'marcar_no_prioritaria', $venta['Venta']['id']), array('class' => 'tile small tile-default', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
 							<? endif; ?>
 							
 							<? if (isset($venta['VentaExterna']['facturacion'])) : ?>

@@ -46,6 +46,8 @@
 .wizard .stepContainer, .wizard .actionBar {height: auto !important;}
 
 .widget , .tile {min-height: 120px !important;}
+.tile.small {min-height: inherit !important; padding: 5px 10px !important;}
+.tile.small i {font-size: 40px; line-height: 50px;}
 .tile {padding: 20px 10px !important;}
 .description-graph {float: left; width: 100%; margin-left: 7px;}
 .input-group {max-width: 197px;}
