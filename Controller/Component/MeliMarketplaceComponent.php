@@ -443,7 +443,7 @@ class MeliMarketplaceComponent extends Component
 			//
 		}
 		
-		if ($producto['httpCode'] < 300) {
+		if ($producto['httpCode'] < 300 && !empty($producto['body'])) {
 			if (!empty(Hash::extract($producto['body'], 'results.{n}')) ) {
 				
 				$item                   = $this->mercadolibre_obtener_producto($producto['body']['results'][0]);
