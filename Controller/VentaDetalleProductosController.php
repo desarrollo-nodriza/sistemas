@@ -435,7 +435,8 @@ class VentaDetalleProductosController extends AppController
 				if (!empty($this->Session->read('ajustarInventarioMasivo.data'))) {
 					
 					foreach ($this->Session->read('ajustarInventarioMasivo.data') as $indice => $valor) {
-						if (empty($valor[$columna_id_productos]) || empty($valor[$columna_cantidad]) || $indice == 1) {
+						
+						if (empty($valor[$columna_id_productos]) || $indice == 1) {
 							continue;
 						}
 
@@ -445,13 +446,13 @@ class VentaDetalleProductosController extends AppController
 
 						# Datos necesarios para reaizar un ingreso
 						$dataToSave[$indice]['id_producto'] = $valor[$columna_id_productos];
-						$dataToSave[$indice]['cantidad']    = $valor[$columna_cantidad];
+						$dataToSave[$indice]['cantidad']    = (empty($valor[$columna_cantidad])) ? 0 : $valor[$columna_cantidad];
 						$dataToSave[$indice]['bodega_id']   = $this->request->data['VentaDetalleProducto']['bodega']; 
 
 					}
 
 				}
-
+				
 				if (empty($dataToSave)) {
 					$this->Session->setFlash('No se encontraron valores para actualizar.', null, array(), 'warning');
 					$this->redirect(array('action' => 'ajustarInventarioMasivo'));

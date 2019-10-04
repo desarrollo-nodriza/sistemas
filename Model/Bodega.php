@@ -489,7 +489,7 @@ class Bodega extends AppModel
 			if ($ii) {
 				$result['procesados'] = (isset($result['procesados'])) ? $result['procesados']+1 : 1;
 			}else{
-				$result['errores'][] = sprintf('Item %d no pudo ser ajustado, verifique los campos e intente nuevamente.', $value['id_producto']);
+				$result['errores'][] = sprintf('Item %d no pudo ser ajustado, o no es necesario ajustarlo.', $value['id_producto']);
 			}
 
 		}
