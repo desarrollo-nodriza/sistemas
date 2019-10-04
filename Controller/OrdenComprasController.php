@@ -2350,7 +2350,7 @@ class OrdenComprasController extends AppController
 	 * @param  array  $emails [description]
 	 * @return [type]         [description]
 	 */
-	private function guardarEmailValidado($id)
+	public function guardarEmailValidado($id, $recordatorio = false)
 	{	
 		$oc = $this->OrdenCompra->find('first', array(
 			'conditions' => array(
@@ -2388,19 +2388,31 @@ class OrdenComprasController extends AppController
 
 		$to = (!empty($validadores)) ? $validadores : $receptores;
 		
-		#App::uses('CakeEmail', 'Network/Email');
+		# Obtenemos token y lo validamos
+		$gettoken = ClassRegistry::init('Token')->find('first', array(
+			'conditions' => array(
+				'Token.proveedor_id' => $oc['Proveedor']['id']
+			),
+			'order' => array('Token.created' => 'DESC')
+		));
 
-		$url = Router::fullBaseUrl();
-
-		# creamos un token de acceso vía email
-		$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];		
-
+		if (!empty($gettoken) && !ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])) {
+			# creamos un token de acceso vía email
+			$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];	
+		}else{
+			$token = $gettoken['Token']['token'];
+		}
+		
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
 		$url = Router::fullBaseUrl();
 
+		if (empty($url)) {
+			$url = (Configure::read('debug') > 1) ? FULL_BASE_URL_DEV : FULL_BASE_URL;
+		}
+		
 		$this->View->set(compact('mensaje', 'oc', 'url', 'token'));
 		$html						= $this->View->render('notificar_proveedor_oc');
 		
@@ -2414,12 +2426,21 @@ class OrdenComprasController extends AppController
 
 		$mandrill->conectar($mandrill_apikey);
 
-		$asunto = sprintf('[OC] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
+		if ($recordatorio) {
+			$asunto = sprintf('[OC-RECORDATORIO] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
+		}else{
+			$asunto = sprintf('[OC] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
+		}
+		
 		
 		if (Configure::read('debug') > 0) {
-			$asunto = sprintf('[OC-DEV] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
+			if ($recordatorio) {
+				$asunto = sprintf('[OC-DEV-RECORDATORIO] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
+			}else{
+				$asunto = sprintf('[OC-DEV] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
+			}
 		}
-
+		
 		$remitente = array(
 			'email' => 'oc@nodriza.cl',
 			'nombre' => 'Sistema de Órdenes de compra Nodriza'
