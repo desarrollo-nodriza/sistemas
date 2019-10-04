@@ -4055,7 +4055,7 @@ class VentasController extends AppController {
 
 		# Obtenemos DTE
 		if (!empty($venta['Dte'])) {
-			$dtes = $this->obtener_dtes_pdf_venta($venta['Dte']);
+			$dtes = $this->obtener_dtes_pdf_venta($venta['Dte'], 2);
 		
 			foreach ($dtes as $dte) {
 				$archivos[] = $dte['path'];
@@ -4150,7 +4150,7 @@ class VentasController extends AppController {
 
 		# Obtenemos DTE
 		if (!empty($venta['Dte'])) {
-			$dtes = $this->obtener_dtes_pdf_venta($venta['Dte']);
+			$dtes = $this->obtener_dtes_pdf_venta($venta['Dte'], 1);
 		
 			foreach ($dtes as $dte) {
 				$archivos[] = $dte['path'];
@@ -4301,7 +4301,7 @@ class VentasController extends AppController {
 		}
 
 		if ($orientacion == 'vertical') {
-			$url   = $this->generar_pdf($html, $venta['Venta']['id'], 'transporte', 'portrait');
+			$url   = $this->generar_pdf($html, $venta['Venta']['id'], 'transporte', 'portrait', 'nodriza');
 		}
 
 		return $url;
@@ -4340,7 +4340,7 @@ class VentasController extends AppController {
 	 * @param  array  $dtes [description]
 	 * @return [type]       [description]
 	 */
-	public function obtener_dtes_pdf_venta($dtes = array())
+	public function obtener_dtes_pdf_venta($dtes = array(), $copias = 1)
 	{	
 		$rutas = array();
 
@@ -4356,15 +4356,11 @@ class VentasController extends AppController {
 
 			# solo boleta o factura no invalidada
 			if ($dte['tipo_documento'] == 39 || $dte['tipo_documento'] == 33) {
-				# Ruta absoluta PDF DTE
-				$rutas[$i]['path'] = APP . 'webroot' . DS. 'Dte' . DS . $dte['venta_id'] . DS . $dte['id'] . DS . $dte['pdf'];
-				$rutas[$i]['public'] = Router::url('/', true) . 'Dte/' . $dte['venta_id'] . '/' . $dte['id'] . $dte['pdf'] . '.pdf';	
 
-				# Si es boleta la agregamos 2 veces
-				if ($dte['tipo_documento'] == 39) {
+				for ($ix=0; $ix < $copias; $ix++) { 
 					# Ruta absoluta PDF DTE
-					$rutas[$i.$i]['path'] = APP . 'webroot' . DS. 'Dte' . DS . $dte['venta_id'] . DS . $dte['id'] . DS . $dte['pdf'];
-					$rutas[$i.$i]['public'] = Router::url('/', true) . 'Dte/' . $dte['venta_id'] . '/' . $dte['id'] . $dte['pdf'] . '.pdf';
+					$rutas[$i.$ix]['path'] = APP . 'webroot' . DS. 'Dte' . DS . $dte['venta_id'] . DS . $dte['id'] . DS . $dte['pdf'];
+					$rutas[$i.$ix]['public'] = Router::url('/', true) . 'Dte/' . $dte['venta_id'] . '/' . $dte['id'] . $dte['pdf'] . '.pdf';
 				}
 			}
 		}
@@ -5257,7 +5253,7 @@ class VentasController extends AppController {
 
 					$venta['Dte'] = Hash::extract($nwDte, '{n}.Dte');
 
-					$dtes = $this->obtener_dtes_pdf_venta($venta['Dte']);
+					$dtes = $this->obtener_dtes_pdf_venta($venta['Dte'], 2);
 					
 					if (empty($dtes)) {
 						continue;
