@@ -622,7 +622,7 @@ class VentasController extends AppController {
 		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
 		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', 15, 0, $estados_ids);
 		$ventas_empaquetando_total = $this->Venta->obtener_ventas_preparar('empaquetando', -1, 0, $estados_ids);
-		$ventas_empaquetado        = $this->Venta->obtener_ventas_preparadas('empaquetado', 15, 0, $estados_preparados_ids);
+		$ventas_empaquetado        = $this->Venta->obtener_ventas_preparadas('empaquetado', 40, 0, $estados_preparados_ids);
 		$ventas_empaquetado_total  = $this->Venta->obtener_ventas_preparadas('empaquetado', -1, 0, $estados_preparados_ids);
 		
 		$this->layout = 'ajax';
@@ -6142,6 +6142,19 @@ class VentasController extends AppController {
 				
 			} //fin ciclo detalle de venta
 		}
+
+		$log = array();
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop Crear Venta',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($NuevaVenta)
+			)
+		);
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 		
 		//se guarda la venta
 		$this->Venta->create();
@@ -6352,6 +6365,19 @@ class VentasController extends AppController {
 
 		# Evitamos que se vuelva actualizar el stock en prestashop
 		$excluirPrestashop = array('Prestashop' => array($tienda_id));
+
+		$log = array();
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop Actualizar Venta',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($ActualizarVenta)
+			)
+		);
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 
 		//se guarda la venta
 		if ( $this->Venta->saveAll($ActualizarVenta) ){

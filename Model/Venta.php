@@ -532,7 +532,7 @@ class Venta extends AppModel
 	 */
 	public function obtener_ventas_preparadas($estado = '', $limit = 10, $offset = 0, $estados_ids = array())
 	{	
-		$joins[] = array(
+		/*$joins[] = array(
 			'table' => 'rp_venta_estados',
 			'alias' => 'ventas_estados',
 			'type' => 'INNER',
@@ -541,7 +541,7 @@ class Venta extends AppModel
 				"ventas_estados.venta_estado_categoria_id" => $estados_ids,
 				"ventas_estados.permitir_retiro_oc"  => 1
 			)
-		);
+		);*/
 
 		$joins[] = array(
 			'table' => 'rp_venta_detalles',
@@ -573,7 +573,7 @@ class Venta extends AppModel
 			'joins'  => $joins,
 			'limit'  => $limit,
 			'offset' => $offset,
-			'order'  => array('Venta.prioritario' => 'desc', 'Venta.fecha_venta' => 'asc', 'Venta.modified' => 'desc'),
+			'order'  => array('Venta.prioritario' => 'desc', 'Venta.modified' => 'desc', 'Venta.fecha_venta' => 'asc'),
 			'group'  => 'Venta.id',
 			'fields' => array(
 				'Venta.id', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.fecha_venta'
