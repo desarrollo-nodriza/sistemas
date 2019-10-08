@@ -205,6 +205,16 @@ Router::connect(
 );
 
 
+Router::connect(
+    '/api/ventas/enviame_webhook', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'enviame_webhook',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+
 /**
  * Transporte
  */

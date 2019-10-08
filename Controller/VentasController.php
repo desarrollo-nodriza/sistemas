@@ -5780,7 +5780,7 @@ class VentasController extends AppController {
 		$this->MeliMarketplace->mercadolibre_conectar('', $marketplace['Marketplace']);
 
 		$ventaMeli = $this->MeliMarketplace->mercadolibre_obtener_venta($marketplace['Marketplace']['access_token'], $id_externo);
-		
+
 		if (empty($ventaMeli)) {
 			return false;
 		}
@@ -6610,6 +6610,94 @@ class VentasController extends AppController {
 	}
 
 
+	# https://sistemasdev.nodriza.cl/api/ventas/enviame_webhook.json?token=bf085eddd7e1fbebbbfb938804598ced13adfd1b622b7bf0
+	public function api_enviame_webhook()
+	{
+		# Solo método POST
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$token      = @$this->request->query['token'];
+
+		$data = $this->request->data;
+
+		$log = array();
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Enviame Webhook',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($data)
+			)
+		);
+
+		if (!$this->Venta->exists($data['order_number'])) {
+			$response = array(
+				'code'    => 506, 
+				'name' => 'error',
+				'message' => 'La venta ' . $data['order_number'] . ' no existe.'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$nuevo_estado = '';
+
+		switch ($data['status_id']) {
+			case 9:
+				$nuevo_estado = 'shipped';
+				break;
+			
+			case 10:
+				$nuevo_estado = 'delivered';
+				break;
+		}
+
+		App::uses('HttpSocket', 'Network/Http');
+		$socket			= new HttpSocket();
+		$request		= $socket->post(
+			Router::url('/api/ventas/change_state/'.$data['order_number'].'.json?token=' . $token, true),
+			array(
+				'type' => $nuevo_estado
+			)
+		);
+
+		$this->set(array(
+			'response' => json_decode($request->body(), true),
+            '_serialize' => array('response')
+        ));
+		
+	}
+
 	/**
 	 * [api_cambiar_estado description]
 	 * @param  string $id [description]
@@ -6654,13 +6742,11 @@ class VentasController extends AppController {
 		$tipoEstado = @$this->request->data['type']; // POST
 		$chofer     = @$this->request->data['driver']; // POST
 
+
 		$tiposPermitidos = array(
 			'shipped', // En transito
 			'delivered',
-			'enviado' // Enviado por carrier
-		);
-
-		$tiposPermitidos = array(
+			'enviado', // Enviado por carrier
 			'despacho_interno', // Despacho transporte interno, selecciona chofer (Enviado)
 			'despacho_externo', // Despacho transporte externo, seleccionar transportista usado (Enviado)
 			'despacho_transito', // Despacho en transito, selecciona chofer (En transito)
