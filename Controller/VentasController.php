@@ -346,7 +346,7 @@ class VentasController extends AppController {
 		
 		# Mercadolibre conectar
 		$meliConexion = $this->admin_verificar_conexion_meli();
-
+		
 		BreadcrumbComponent::add('Ventas', '/ventas');
 
 		$this->set(compact(
@@ -506,7 +506,7 @@ class VentasController extends AppController {
 						);
 
 						$accion = $this->crear_venta_meli($this->request->data['Venta']['marketplace_id'], $id_externo);
-
+						
 						if ($accion) {
 							$this->Session->setFlash('Venta #'. $id_externo . ' creada con éxito', null, array(), 'success');
 						}else{
@@ -1177,8 +1177,7 @@ class VentasController extends AppController {
 			'all',
 			array(
 				'conditions' => array(
-					'Tienda.activo' => 1,
-					'Tienda.actualizacion_automatica_ventas' => 1
+					'Tienda.activo' => 1
 				),
 				'contain' => array(
 					'Marketplace' => array(
@@ -1615,7 +1614,7 @@ class VentasController extends AppController {
 			# Para la consola se carga el componente on the fly!
 			$this->MeliMarketplace = $this->Components->load('MeliMarketplace');
 		}
-
+		
 		$siteId      = 'MLC';
 		$results     = array();
 		$response    = array();
@@ -1629,6 +1628,7 @@ class VentasController extends AppController {
 
 						$this->MeliMarketplace->crearCliente($marketplace['api_user'], $marketplace['api_key'], $marketplace['access_token'], $marketplace['refresh_token']);
 						$results[$marketplace['id']] = $this->MeliMarketplace->mercadolibre_conectar($code, $marketplace, $redirectURI, $siteId);	
+						
 					}else{
 
 						$results[$marketplace['id']]['errors'] = sprintf('%s no tiene configurado su API_USER y API_KEY', $marketplace['nombre']);
@@ -1671,7 +1671,7 @@ class VentasController extends AppController {
 			'success' => array(),
 			'errors' => array()
 		);
-
+		
 		if(isset($_GET['code']) || isset($marketplace['access_token'])) {
 			// If code exist and session is empty
 			if(isset($_GET['code']) && !isset($marketplace['access_token'])) {
@@ -5615,7 +5615,7 @@ class VentasController extends AppController {
 				'Marketplace.activo' => 1
 			),
 			'fields' => array(
-				'Marketplace.id', 'Marketplace.nombre', 'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key', 'Marketplace.tienda_id', 'Marketplace.fee', 'Marketplace.marketplace_tipo_id', 'Marketplace.access_token', 'Marketplace.refresh_token', 'Marketplace.expires_token'
+				'Marketplace.id', 'Marketplace.nombre', 'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key', 'Marketplace.tienda_id', 'Marketplace.fee', 'Marketplace.marketplace_tipo_id', 'Marketplace.access_token', 'Marketplace.refresh_token', 'Marketplace.expires_token', 'Marketplace.seller_id'
 			)
 		));
 
@@ -5758,7 +5758,7 @@ class VentasController extends AppController {
 				'Marketplace.activo' => 1
 			),
 			'fields' => array(
-				'Marketplace.id', 'Marketplace.nombre', 'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key', 'Marketplace.tienda_id', 'Marketplace.fee', 'Marketplace.marketplace_tipo_id', 'Marketplace.access_token', 'Marketplace.refresh_token', 'Marketplace.expires_token'
+				'Marketplace.id', 'Marketplace.nombre', 'Marketplace.api_host', 'Marketplace.api_user', 'Marketplace.api_key', 'Marketplace.tienda_id', 'Marketplace.fee', 'Marketplace.marketplace_tipo_id', 'Marketplace.access_token', 'Marketplace.refresh_token', 'Marketplace.expires_token', 'Marketplace.seller_id'
 			)
 		));
 
@@ -5780,7 +5780,7 @@ class VentasController extends AppController {
 		$this->MeliMarketplace->mercadolibre_conectar('', $marketplace['Marketplace']);
 
 		$ventaMeli = $this->MeliMarketplace->mercadolibre_obtener_venta($marketplace['Marketplace']['access_token'], $id_externo);
-
+		
 		if (empty($ventaMeli)) {
 			return false;
 		}
