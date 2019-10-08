@@ -6612,7 +6612,21 @@ class VentasController extends AppController {
 
 	# https://sistemasdev.nodriza.cl/api/ventas/enviame_webhook.json?token=bf085eddd7e1fbebbbfb938804598ced13adfd1b622b7bf0
 	public function api_enviame_webhook()
-	{
+	{	
+
+		$log = array();
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Enviame Webhook',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($this->request)
+			)
+		);
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
+
 		# Solo método POST
 		if (!$this->request->is('post')) {
 			$response = array(
@@ -6650,15 +6664,6 @@ class VentasController extends AppController {
 
 		$data = $this->request->data;
 
-		$log = array();
-
-		$log[] = array(
-			'Log' => array(
-				'administrador' => 'Enviame Webhook',
-				'modulo' => 'Ventas',
-				'modulo_accion' => json_encode($data)
-			)
-		);
 
 		if (!$this->Venta->exists($data['order_number'])) {
 			$response = array(
