@@ -2646,7 +2646,11 @@ class VentaDetalleProductosController extends AppController
 				'id_externo'       => $this->request->data['id_externo'],
 				'marca_id'         => $this->request->data['marca_id'],
 				'nombre'           => $this->request->data['nombre'],
-				'codigo_proveedor' => $this->request->data['codigo_proveedor']
+				'codigo_proveedor' => $this->request->data['codigo_proveedor'],
+				'peso'			   => $this->request->data['peso'],
+				'ancho'			   => $this->request->data['ancho'],
+				'alto'			   => $this->request->data['alto'],
+				'largo'			   => $this->request->data['largo'],
 			)
 		);
 
