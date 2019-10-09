@@ -5976,6 +5976,10 @@ class VentasController extends AppController {
 
 		$nwVenta = $this->Prestashop->prestashop_obtener_venta($id_externo); 
 
+		if (empty($nwVenta)) {
+			return false;
+		}
+
 		if (empty($nuevo_estado)) {
 			$nuevo_estado = $nwVenta['current_state'];
 		}
@@ -6234,6 +6238,10 @@ class VentasController extends AppController {
 		$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
 
 		$nwVenta = $this->Prestashop->prestashop_obtener_venta($id_externo); 
+
+		if (empty($nwVenta)) {
+			return false;
+		}
 
 		if (empty($nuevo_estado)) {
 			$nuevo_estado = $nwVenta['current_state'];
@@ -6677,7 +6685,7 @@ class VentasController extends AppController {
 
 		switch ($data['status_id']) {
 			case 9:
-				$nuevo_estado = 'shipped';
+				$nuevo_estado = 'enviado';
 				break;
 			
 			case 10:
