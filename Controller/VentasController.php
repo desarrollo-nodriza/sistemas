@@ -6614,9 +6614,7 @@ class VentasController extends AppController {
 	public function api_enviame_webhook()
 	{	
 
-		$log = array();
-
-		$log[] = array(
+		$log = array(
 			'Log' => array(
 				'administrador' => 'Enviame Webhook',
 				'modulo' => 'Ventas',
@@ -6625,7 +6623,7 @@ class VentasController extends AppController {
 		);
 
 		ClassRegistry::init('Log')->create();
-		ClassRegistry::init('Log')->saveMany($log);
+		ClassRegistry::init('Log')->save($log);
 
 		# Solo método POST
 		if (!$this->request->is('post')) {
@@ -6695,6 +6693,17 @@ class VentasController extends AppController {
 				'type' => $nuevo_estado
 			)
 		);
+
+		$log = array(
+			'Log' => array(
+				'administrador' => 'Enviame Webhook',
+				'modulo' => 'Ventas',
+				'modulo_accion' => $request->body()
+			)
+		);
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
 
 		$this->set(array(
 			'response' => json_decode($request->body(), true),
