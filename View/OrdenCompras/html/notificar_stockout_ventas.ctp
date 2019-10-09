@@ -65,12 +65,12 @@
                   <? foreach ($ventas as $iv => $venta) : ?>
                     <tr>
                       <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left; font-weight: 600;">Identificador de la venta</td>
-                      <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= $venta['Venta']['id']?> - <?= $venta['Venta']['id_externo']; ?></td>
+                      <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;">Id #<?= $venta['Venta']['id']?> - Id externo #<?= $venta['Venta']['id_externo']; ?></td>
                       <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left; font-weight: 600;">Canal de venta</td>
                       <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= (empty($venta['Venta']['markeplace_id'])) ? $venta['Tienda']['nombre'] : $venta['Marketplace']['nombre']; ?></td>
                       <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><a href="<?= $url; ?>/ventas/view/<?=$venta['Venta']['id']; ?>" target="_blank">Ir a la venta</a></td>
                     </tr>
-                    <tr>
+                    <!--<tr>
                       <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"> Items</td>
                       <td colspan="4">
                         <? foreach ($venta['VentaDetalle'] as $id => $p) : ?>
@@ -82,7 +82,7 @@
                           </table>
                         <? endforeach; ?>
                       </td>
-                    </tr>
+                    </tr>-->
                   <? endforeach; ?>
                     <tr>
                       <td></td>

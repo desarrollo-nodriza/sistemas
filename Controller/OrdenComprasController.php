@@ -1376,7 +1376,7 @@ class OrdenComprasController extends AppController
 			$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('revision_oc');
 
 			if (!empty($emailsNotificar)) {
-				$this->guardarEmailRevision($this->request->data['OrdenesCompra'], $emailsNotificar);
+				$this->guardarEmailRevision($this->request->data['OrdenesCompra'][0], $emailsNotificar);
 			}
 
 			$this->Session->setFlash('¡Éxito! Se ha enviado a revisión la OC.', null, array(), 'success');
@@ -1778,7 +1778,7 @@ class OrdenComprasController extends AppController
 				$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('revision_oc');
 
 				if (!empty($emailsNotificar)) {
-					$this->guardarEmailRevision($this->request->data['OrdenCompra'], $emailsNotificar);
+					$this->guardarEmailRevision($this->request->data, $emailsNotificar);
 				}
 
 				$this->Session->setFlash('¡Éxito! Se ha enviado a revisión la OC.', null, array(), 'success');
@@ -2175,8 +2175,7 @@ class OrdenComprasController extends AppController
 	 * @return [type]         [description]
 	 */
 	private function guardarEmailRevision($ocs = array(), $emails = array()) 
-    {
-
+    {	
 		/**
 		 * Clases requeridas
 		 */
@@ -2189,7 +2188,7 @@ class OrdenComprasController extends AppController
 		$this->View->set(compact('ocs', 'url'));
 		$html						= $this->View->render('notificar_revision_oc');
 		
-		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $ocs[0]['OrdenCompra']['tienda_id']));
+		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $ocs['OrdenCompra']['tienda_id']));
 
 		if (empty($mandrill_apikey)) {
 			return false;
@@ -2199,10 +2198,10 @@ class OrdenComprasController extends AppController
 
 		$mandrill->conectar($mandrill_apikey);
 
-		$asunto = '[NDRZ] OC para '. strtolower($ocs[0]['OrdenCompra']['razon_social_empresa']).' lista para revisión.';
+		$asunto = '[NDRZ] OC para '. strtolower($ocs['OrdenCompra']['razon_social_empresa']).' lista para revisión.';
 
 		if (Configure::read('debug') > 0) {
-			$asunto = '[NDRZ-DEV] OC para '. strtolower($ocs[0]['OrdenCompra']['razon_social_empresa']).' lista para revisión.';
+			$asunto = '[NDRZ-DEV] OC para '. strtolower($ocs['OrdenCompra']['razon_social_empresa']).' lista para revisión.';
 		}
 		
 		
@@ -2322,10 +2321,10 @@ class OrdenComprasController extends AppController
 
 		$mandrill->conectar($mandrill_apikey);
 
-		$asunto = sprintf('[NDRZ] Hay %d ventas con productos en stockout.', count($ventas));
-		
 		if (Configure::read('debug') > 0) {
 			$asunto = sprintf('[NDRZ-DEV] Hay %d ventas con productos en stockout.', count($ventas));
+		}else{
+			$asunto = sprintf('[NDRZ] Hay %d ventas con productos en stockout.', count($ventas));
 		}
 
 		$remitente = array(
@@ -2717,6 +2716,8 @@ class OrdenComprasController extends AppController
 				# si es error de stock se decuenta las unidades rechazadas
 				if ($p['estado_proveedor'] == 'stockout' || $p['estado_proveedor'] == 'modified') {
 
+					$cantidad = $p['cantidad_solicitada'];
+
 					if ($p['cantidad'] > 0) {
 						
 						$itemsAceptados[$ip] = $p;
@@ -2758,7 +2759,7 @@ class OrdenComprasController extends AppController
 				$itemes[$p['estado_proveedor']][$ip]['nota_proveedor']            = $p['nota_proveedor'];
 			}
 			
-			$total_rechazados  = array_sum(Hash::extract($itemsRechazados, '{n}.cantidad'));
+			$total_rechazados  = array_sum(Hash::extract($itemsRechazados, '{n}.cantidad_solicitada'));
 			$total_stockout    = count(Hash::extract($itemes, 'stockout.{n}.venta_detalle_producto_id'));
 			$total_price_error = count(Hash::extract($itemes, 'price_error.{n}.venta_detalle_producto_id'));
 			$total_solicitados = array_sum(Hash::extract($oc['VentaDetalleProducto'], '{n}.OrdenComprasVentaDetalleProducto.cantidad'));
@@ -2771,9 +2772,9 @@ class OrdenComprasController extends AppController
 
 			# si la cantidad de itemes rechazado es igual a la cantidad de produtos pedidos se devuelve toda la OC
 			if ($total_rechazados == $total_solicitados) {
-				$this->request->data['OrdenCompra']['estado'] = 'iniciado';
+				$this->request->data['OrdenCompra']['estado'] = 'cancelada';
 			}
-
+			
 			# Flujo para cuando un producto no tenga stock
 			if ($total_stockout > 0 && $total_rechazados != $total_solicitados) {
 				# Notificar a ventas para que coordine con el cliente
@@ -2811,6 +2812,7 @@ class OrdenComprasController extends AppController
 
 			}
 			
+
 			# Continuan sólo los itemes aceptados
 			if (count($itemsAceptados) > 0) {
 
@@ -2837,7 +2839,7 @@ class OrdenComprasController extends AppController
 				$this->request->data['OrdenCompra']['total']           = ($total_neto - $this->request->data['OrdenCompra']['descuento_monto']) + $this->request->data['OrdenCompra']['iva'];
 
 			}
-			
+
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 
 				# notificar stockout a ventas
@@ -2846,7 +2848,8 @@ class OrdenComprasController extends AppController
 					$emailsVentas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('ventas');
 
 					if (!empty($emailsVentas)) {
-						$this->guardarEmailStockout($id, $ventasNotificar, $itemes['stockout'], $emailsVentas);
+						$enviado = $this->guardarEmailStockout($id, $ventasNotificar, $itemes['stockout'], $emailsVentas);
+						debug($enviado);
 					}
 				}
 
@@ -2863,7 +2866,7 @@ class OrdenComprasController extends AppController
 				}
 
 				# Notifcar rechazo completo a comerial
-				if ($this->request->data['OrdenCompra']['estado'] == 'iniciado') {
+				if ($this->request->data['OrdenCompra']['estado'] == 'cancelada') {
 					$email_comercial = $oc['OrdenCompra']['email_comercial'];
 					$this->guardarEmailRechazo($id, array($email_comercial));
 
