@@ -632,7 +632,7 @@ class VentasController extends AppController {
 
 		$estados_preparados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
 
-		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', 15, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
+		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
 		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
 		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', 15, 0, $estados_ids);
 		$ventas_empaquetando_total = $this->Venta->obtener_ventas_preparar('empaquetando', -1, 0, $estados_ids);
