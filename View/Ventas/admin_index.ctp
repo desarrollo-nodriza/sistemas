@@ -103,7 +103,7 @@
 							<div class="form-group">
 								<br />
 								<label>Facturadas</label>
-								<?= $this->Form->input('facturado', array('class' => 'form-control', 'empty' => 'Seleccione', 'options' => array('1' => 'Facturadas', '0' => 'No facturadas'), 'required' => false, 'default' => $FiltroDte)); ?>
+								<?= $this->Form->input('facturado', array('class' => 'form-control', 'empty' => 'Seleccione', 'options' => array('1' => 'Facturadas', '2' => 'Mal facturadas', '0' => 'No facturadas'), 'required' => false, 'default' => $FiltroDte)); ?>
 							</div>
 						</div>
 

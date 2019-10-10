@@ -219,7 +219,7 @@ class VentasController extends AppController {
 
 						$FiltroDte = trim($valor);
 
-						if ($FiltroDte == 1) {
+						if ($FiltroDte == 1) { // Facturao
 							$joins[] = array(
 								'table' => 'rp_dtes',
 								'alias' => 'dtes',
@@ -231,26 +231,30 @@ class VentasController extends AppController {
 									"dtes.invalidado = 0"
 								)
 							);
-						}else{
-
+						}else if ($FiltroDte == 2){ # Mal facturado
 							
+							$joins[] = array(
+								'table' => 'rp_dtes',
+								'alias' => 'dtes',
+								'type' => 'INNER',
+								'conditions' => array(
+									'dtes.venta_id = Venta.id',
+									'dtes.estado != "dte_real_emitido"'
+								)
+							);
+						
+						}else{ # Sin factura
+
 							$joins[] = array(
 								'table' => 'rp_dtes',
 								'alias' => 'dtes',
 								'type' => 'LEFT',
 								'conditions' => array(
-									'Venta.id' => 'dtes.venta_id'
+									'dtes.venta_id = Venta.id',
 								)
 							);
 
-							$qry = 'SELECT d.id FROM rp_dtes as d WHERE d.venta_id = Venta.id AND d.tipo_documento IN (33,39) AND d.invalidado = 0 AND d.estado = "dte_real_emitido"';
-
-							$condiciones['OR'] = array(
-								array('dtes.id' => NULL),
-								'NOT' => array(
-									array('dtes.id' => array(compact($qry)))
-								)
-							);
+							$condiciones['dtes.id'] = NULL;
 						}
 
 						break;
@@ -5231,6 +5235,9 @@ class VentasController extends AppController {
 		if ($this->request->is('post')) {
 
 			foreach ($this->request->data['Venta'] as $iv => $v) {
+
+				if ($iv == 'return_url')
+					continue;
 
 				# No existe a venta
 				if (!$this->Venta->exists($v['id'])) {
