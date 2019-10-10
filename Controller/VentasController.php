@@ -625,13 +625,16 @@ class VentasController extends AppController {
 	 */
 	public function admin_obtener_ventas_preparacion($limit1 = 10, $offset1 = 0, $limit2 = 10, $offset2 = 0, $id_venta = 0, $id_metodo_envio = 0, $id_marketplace = 0, $id_tienda = 0)
 	{	
+		ini_set('memory_limit', '-1');
+		set_time_limit(0);
+
 		$estados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0, 'excluir_preparacion' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
 
 		$estados_preparados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
 
-		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
+		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', 15, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
 		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
-		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', 25, 0, $estados_ids);
+		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', 15, 0, $estados_ids);
 		$ventas_empaquetando_total = $this->Venta->obtener_ventas_preparar('empaquetando', -1, 0, $estados_ids);
 		$ventas_empaquetado        = $this->Venta->obtener_ventas_preparadas('empaquetado', 40, 0, $estados_preparados_ids);
 		$ventas_empaquetado_total  = $this->Venta->obtener_ventas_preparadas('empaquetado', -1, 0, $estados_preparados_ids);
