@@ -4,10 +4,10 @@ $(function() {
 
 		var ejecutando = false;
 		
-		var limiteEmpaquetar = 15;
+		var limiteEmpaquetar = -1;
 		var offsetEmpaquetar = 0;
 
-		var limiteEmpaquetando = 15;
+		var limiteEmpaquetando = 25;
 		var offsetEmpaquetando = 0;
 
 		var modalAbierto = null;
