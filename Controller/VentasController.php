@@ -60,6 +60,10 @@ class VentasController extends AppController {
 
 		$condiciones = array();
 		$joins = array();
+		$fields = array(
+			'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo',
+			'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.prioritario', 'Venta.picking_estado'
+		);
 
 		$FiltroVenta                = '';
 		$FiltroCliente              = '';
@@ -228,16 +232,25 @@ class VentasController extends AppController {
 								)
 							);
 						}else{
+
+							
 							$joins[] = array(
 								'table' => 'rp_dtes',
 								'alias' => 'dtes',
 								'type' => 'LEFT',
 								'conditions' => array(
-									'dtes.venta_id = Venta.id'
+									'Venta.id' => 'dtes.venta_id'
 								)
 							);
 
-							$condiciones["dtes.id ="] = NULL;
+							$qry = 'SELECT d.id FROM rp_dtes as d WHERE d.venta_id = Venta.id AND d.tipo_documento IN (33,39) AND d.invalidado = 0 AND d.estado = "dte_real_emitido"';
+
+							$condiciones['OR'] = array(
+								array('dtes.id' => NULL),
+								'NOT' => array(
+									array('dtes.id' => array(compact($qry)))
+								)
+							);
 						}
 
 						break;
@@ -291,10 +304,8 @@ class VentasController extends AppController {
 			),
 			'conditions' => $condiciones,
 			'joins' => $joins,
-			'fields' => array(
-				'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo',
-				'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.prioritario', 'Venta.picking_estado'
-			),
+			'fields' => $fields,
+			'group' => array('Venta.id'),
 			'order' => array('Venta.fecha_venta' => 'DESC'),
 			'limit' => 20
 		);
@@ -303,7 +314,7 @@ class VentasController extends AppController {
 		$this->paginate = $paginate;
 
 		$ventas = $this->paginate();
-
+		
 		//----------------------------------------------------------------------------------------------------
 		$tiendas = $this->Venta->Tienda->find(
 			'list',
@@ -618,9 +629,9 @@ class VentasController extends AppController {
 
 		$estados_preparados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
 
-		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', 15, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
+		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
 		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
-		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', 15, 0, $estados_ids);
+		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', 25, 0, $estados_ids);
 		$ventas_empaquetando_total = $this->Venta->obtener_ventas_preparar('empaquetando', -1, 0, $estados_ids);
 		$ventas_empaquetado        = $this->Venta->obtener_ventas_preparadas('empaquetado', 40, 0, $estados_preparados_ids);
 		$ventas_empaquetado_total  = $this->Venta->obtener_ventas_preparadas('empaquetado', -1, 0, $estados_preparados_ids);
