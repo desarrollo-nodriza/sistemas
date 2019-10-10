@@ -2774,12 +2774,6 @@ class OrdenComprasController extends AppController
 			if ($total_rechazados == $total_solicitados) {
 				$this->request->data['OrdenCompra']['estado'] = 'cancelada';
 			}
-			
-			# Flujo para cuando un producto no tenga stock
-			if ($total_stockout > 0 && $total_rechazados != $total_solicitados) {
-				# Notificar a ventas para que coordine con el cliente
-				$ventasNotificar = $this->OrdenCompra->obtener_ventas_por_productos($oc['OrdenCompra']['parent_id'], Hash::extract($itemes['stockout'], '{n}.venta_detalle_producto_id'));
-			}
 
 			# flujo para cuando un producto tenga un error de precio
 			if ($total_price_error > 0 && $total_rechazados != $total_solicitados) {
@@ -2841,6 +2835,14 @@ class OrdenComprasController extends AppController
 			}
 
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
+
+
+				# Flujo para cuando un producto no tenga stock
+				if ($total_stockout > 0 && $total_rechazados != $total_solicitados) {
+					# Notificar a ventas para que coordine con el cliente
+					$ventasNotificar = $this->OrdenCompra->obtener_ventas_por_productos($oc['OrdenCompra']['parent_id'], Hash::extract($itemes['stockout'], '{n}.venta_detalle_producto_id'));
+				}
+
 
 				# notificar stockout a ventas
 				if (!empty($ventasNotificar)) {
