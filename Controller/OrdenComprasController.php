@@ -1279,7 +1279,7 @@ class OrdenComprasController extends AppController
 	{
 
 		if ($this->guardarEmailValidado($id)) {
-			#$this->Session->setFlash('Notificado con éxito.', null, array(), 'success');
+			$this->Session->setFlash('Notificado con éxito.', null, array(), 'success');
 			$this->redirect($this->referer('/', true));
 		}else{
 			$this->Session->setFlash('No fue posible notificar al proveedor.', null, array(), 'danger');
@@ -1303,7 +1303,7 @@ class OrdenComprasController extends AppController
 				$this->Session->setFlash('Método de pago asignado con éxito.', null, array(), 'success');
 				$this->redirect(array('action' => 'index_asignacion_moneda'));
 			}else{
-				$this->Session->setFlash('Ocurrió un error al asignar el método de pago.', null, array(), 'danger');
+				$this->Session->setFlash('Ocurrió un error al asignar el método de pago o no fue posible enviar el email al proveedor.', null, array(), 'danger');
 				$this->redirect(array('action' => 'asignar_moneda', $id));
 			}
 
@@ -2386,7 +2386,7 @@ class OrdenComprasController extends AppController
 		$bcc         = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=copia oculta].email');
 
 		$to = (!empty($validadores)) ? $validadores : $receptores;
-		
+
 		# Obtenemos token y lo validamos
 		$gettoken = ClassRegistry::init('Token')->find('first', array(
 			'conditions' => array(
@@ -2394,14 +2394,18 @@ class OrdenComprasController extends AppController
 			),
 			'order' => array('Token.created' => 'DESC')
 		));
-
+		
 		if (!empty($gettoken) && !ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])) {
 			# creamos un token de acceso vía email
-			$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];	
+			$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];
 		}else{
 			$token = $gettoken['Token']['token'];
 		}
 		
+		if (empty($token)) {
+			return false;
+		}
+
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
