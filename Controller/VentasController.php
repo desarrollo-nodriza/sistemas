@@ -4365,7 +4365,7 @@ class VentasController extends AppController {
 		$html  = $vista->body();
 		
 		if ($orientacion == 'horizontal') {
-			$url   = $this->generar_pdf($html, $venta['Venta']['id'], 'transporte', 'landscape');
+			$url   = $this->generar_pdf($html, $venta['Venta']['id'], 'transporte', 'landscape', '10x15');
 		}
 
 		if ($orientacion == 'vertical') {
