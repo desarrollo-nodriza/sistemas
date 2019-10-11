@@ -68,7 +68,7 @@ class Token extends AppModel
 	 * @param  integer $duracion         horas de duración del token
 	 * @return bool
 	 */
-	public function crear_token($administrador_id, $tienda_id = '', $duracion = 6)
+	public function crear_token($administrador_id, $tienda_id = '', $duracion = 8)
 	{	
 		$expira = new DateTime(date('Y-m-d H:i:s'));
 		$expira->modify(sprintf('+%d hours', $duracion));
@@ -125,7 +125,22 @@ class Token extends AppModel
 			);
 
 		}else{
-			return $this->validationErrors;
+
+			$log = array(
+				'Log' => array(
+					'administrador' => 'Crear Token Proveedor: ' . $proveedor_id,
+					'modulo' => 'Ventas',
+					'modulo_accion' => json_encode($this->validationErrors)
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->save($log);
+
+			return array(
+				'expires_token' => '',
+				'token'         => ''
+			);
 		}
 	}
 

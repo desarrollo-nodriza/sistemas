@@ -2395,13 +2395,18 @@ class OrdenComprasController extends AppController
 			'order' => array('Token.created' => 'DESC')
 		));
 		
-		if (!empty($gettoken) && !ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])) {
+		if (empty($gettoken)) {
 			# creamos un token de acceso vía email
 			$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];
+
+		}else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])){
+			# creamos un token de acceso vía email
+			$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];
+
 		}else{
 			$token = $gettoken['Token']['token'];
 		}
-		
+
 		if (empty($token)) {
 			return false;
 		}
