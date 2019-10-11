@@ -13,8 +13,11 @@
 			        <li><a href="#tab-dtes" data-toggle="tab"><i class="fa fa-file"></i> Dte's</a></li>
 					<? endif; ?>
 			        <?php if (isset($venta['Envio'])) :  ?>
-			    		<li><a href="#tab-envio" data-toggle="tab"><i class="fa fa-truck"></i> Direcciones</a></li>
+			    	<li><a href="#tab-envio" data-toggle="tab"><i class="fa fa-truck"></i> Direcciones</a></li>
 			    	<?php endif; ?>
+					
+					<li><a href="#tab-transporte" data-toggle="tab"><i class="fa fa-truck"></i> Transporte Externo</a></li>
+			    	
 			    </ul>
 
 			    <div class="tab-content">
@@ -741,8 +744,96 @@
 						} // fin Envio
 						
 						?>
+					
 
-
+					<?php //-------------------------------------------------- Tab transporte -------------------------------------------------- ?>
+					<div class="tab-pane panel-body" id="tab-transporte">
+						<div class="row mb-5 mt-5">
+							<div class="col-xs-12 col-md-6">
+								<h3><i class="fa fa-truck"></i> Transporte externo</h3>
+							</div>
+							<div class="col-xs-12 col-md-6">
+								<div class="btn-group pull-right">
+									<? if (!empty($enviame_info)) : ?>
+									<a href="<?=$enviame_info['label']['PDF'];?>" target="_blank" class="btn btn-info"><i class="fa fa-file-pdf-o"></i> Etiqueta Envíame</a>
+									<a href="<?=$enviame_info['links'][2]['href'];?>" target="_blank" class="btn btn-primary"><i class="fa fa-file-pdf-o"></i> Seguimiento</a>
+									<? endif; ?>
+								</div>
+							</div>
+						</div>
+						<? if (!empty($enviame_info)) : ?>
+						<div class="row mt-5">
+							<div class="col-xs-12 col-md-6">
+								<div class="table-responsive">
+									<table class="table table-bordered">
+										<caption>Información del Envio</caption>
+										<tr>
+											<th>Identificador Envíame</th>
+											<td><?=$enviame_info['identifier']?></td>
+										</tr>
+										<tr>
+											<th>Identificador Interno</th>
+											<td><?=$enviame_info['imported_id']?></td>
+										</tr>
+										<tr>
+											<th>Estado del envio</th>
+											<td><?=$enviame_info['status']['name']?></td>
+										</tr>
+										<tr>
+											<th>Carrier</th>
+											<td><?=$enviame_info['carrier']?></td>
+										</tr>
+										<tr>
+											<th>N° Seguimiento</th>
+											<td><?=$enviame_info['tracking_number']?></td>
+										</tr>
+										<tr>
+											<th>Fecha creación</th>
+											<td><?=$enviame_info['created_at']?></td>
+										</tr>
+										<tr>
+											<th>Entrega aproximada</th>
+											<td><?=$enviame_info['deadline_at']?></td>
+										</tr>
+									</table>
+								</div>
+							</div>
+							<div class="col-xs-12 col-md-6">
+								<div class="table-responsive">
+									<table class="table table-bordered">
+										<caption>Receptor Informado</caption>
+										<tr>
+											<th>Nombre del receptor</th>
+											<td><?=$enviame_info['customer']['full_name']?></td>
+										</tr>
+										<tr>
+											<th>Fono del receptor</th>
+											<td><?=$enviame_info['customer']['phone']?></td>
+										</tr>
+										<tr>
+											<th>Email del receptor</th>
+											<td><?=$enviame_info['customer']['email']?></td>
+										</tr>
+										<tr>
+											<th>Dirección de entrega</th>
+											<td><?=$enviame_info['shipping_address']['full_address']?></td>
+										</tr>
+										<tr>
+											<th>Comuna de entrega</th>
+											<td><?=$enviame_info['shipping_address']['place']?></td>
+										</tr>
+									</table>
+								</div>
+							</div>
+						</div>
+						<? else : ?>
+						<div class="row mt-5">
+							<div class="col-xs-12">
+								<?= $this->Html->link('Crear Envio en Envíame', array('action' => 'generar_envio_externo_manual', $venta['Venta']['id']), array('class' => 'btn btn-lg btn-success btn-block')); ?>
+							</div>
+						</div>
+						<? endif; ?>
+					</div>
 			    </div>
 
 			</div>

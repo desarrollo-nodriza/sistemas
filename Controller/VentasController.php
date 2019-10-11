@@ -239,7 +239,11 @@ class VentasController extends AppController {
 								'type' => 'INNER',
 								'conditions' => array(
 									'dtes.venta_id = Venta.id',
-									'dtes.estado != "dte_real_emitido"'
+									"dtes.estado <> 'dte_real_emitido'",
+									'OR' => array(
+							            'dtes.id' => NULL,
+							            'dtes.estado' => array('no_generado', 'dte_temporal_no_emitido')
+							        )
 								)
 							);
 						
@@ -755,6 +759,44 @@ class VentasController extends AppController {
 		echo json_encode($response);
 		exit;
 	}
+
+
+
+	public function admin_generar_envio_externo_manual($id)
+	{	
+
+		if ( ! $this->Venta->exists($id) ) {
+			$this->Session->setFlash('El registro no es válido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$venta = $this->Venta->obtener_venta_por_id($id);
+
+		$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
+
+		# Creamos pedido en enviame si corresponde
+		if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) {
+			
+			$Enviame = $this->Components->load('Enviame');
+
+			# conectamos con enviame
+			$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
+
+			$resultadoEnviame = $Enviame->crearEnvio($venta);
+
+			if ($resultadoEnviame) {
+				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
+			}else{
+				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
+			}
+		}else{
+			$this->Session->setFlash('La venta no aplica a la regla de Envíame.', null, array(), 'danger');
+		}
+
+		$this->redirect($this->referer('/', true));
+
+	}
+
 
 
 	/**
@@ -2984,11 +3026,19 @@ class VentasController extends AppController {
 		));
 
 		$transportes = ClassRegistry::init('Transporte')->find('list', array('conditions' => array('activo' => 1)));
+
+		# Información de envíame
+		$Enviame = $this->Components->load('Enviame');
 		
+		# conectamos con enviame
+		$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
+
+		$enviame_info = $Enviame->obtener_envio($id);
+
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
-		$this->set(compact('venta', 'ventaEstados', 'transportes'));
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info'));
 
 	}
 

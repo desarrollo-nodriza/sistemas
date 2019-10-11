@@ -33,6 +33,18 @@ class EnviameComponent extends Component
 	}
 
 
+	public function obtener_envio($id)
+	{	
+		$info = to_array($this->Enviame->ver_envio($id));
+
+		if ($info['httpCode'] == 200) {
+			return $info['body']['data'];
+		}else{
+			return array();
+		}
+	}
+
+
 	public function obtener_bodegas()
 	{
 		return $this->Enviame->ver_bodegas();
