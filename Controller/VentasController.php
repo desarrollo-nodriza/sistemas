@@ -783,7 +783,7 @@ class VentasController extends AppController {
 			$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
 
 			$resultadoEnviame = $Enviame->crearEnvio($venta);
-			
+
 			if ($resultadoEnviame) {
 				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
 			}else{
@@ -6303,7 +6303,7 @@ class VentasController extends AppController {
 				'Tienda.id' => $tienda_id
 			),
 			'fields' => array(
-				'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.activar_notificaciones', 'Tienda.notificacion_apikey', 'Tienda.nombre'
+				'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.activar_notificaciones', 'Tienda.notificacion_apikey', 'Tienda.nombre', 'Tienda.configuracion'
 			)
 		));
 
@@ -6331,8 +6331,8 @@ class VentasController extends AppController {
 		# Cliente Prestashop
 		$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
 
-		$nwVenta = $this->Prestashop->prestashop_obtener_venta($id_externo); 
-
+		$nwVenta = $this->Prestashop->prestashop_obtener_venta($id_externo, $tienda); 
+		
 		if (empty($nwVenta)) {
 			return false;
 		}

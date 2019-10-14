@@ -43,21 +43,105 @@ class PrestashopComponent extends Component
 	}
 
 
+	/**
+	 * Método antiguo para obtener ventas desde prestashop
+	 * @param  array  $params [description]
+	 * @param  array  $tienda [description]
+	 * @return [type]         [description]
+	 */
+	private function prestashop_obtener_ventas_antiguo($params = array(), $tienda = array())
+	{
+		# Modelos que requieren agregar configuración
+		$this->cambiarDatasource(array('Orden'), $tienda);
+
+		$ordenes	= ClassRegistry::init('Orden')->find('all', $params);
+
+		$result = array();
+
+		if (!empty($ordenes)) {
+
+			foreach ($ordenes as $key => $value) {
+				$result['order'][$key]['id']                       = $value['Orden']['id_order'];
+				$result['order'][$key]['id_address_delivery']      = $value['Orden']['id_address_delivery'];
+				$result['order'][$key]['id_customer']              = $value['Orden']['id_customer'];
+				$result['order'][$key]['current_state']            = $value['Orden']['current_state'];
+				$result['order'][$key]['date_add']                 = $value['Orden']['date_add'];
+				$result['order'][$key]['payment']                  = $value['Orden']['payment'];
+				$result['order'][$key]['total_discounts_tax_incl'] = $value['Orden']['total_discounts_tax_incl'];
+				$result['order'][$key]['total_paid']               = $value['Orden']['total_paid'];
+				$result['order'][$key]['total_products']           = $value['Orden']['total_products'];
+				$result['order'][$key]['total_shipping_tax_incl']  = $value['Orden']['total_shipping_tax_incl'];
+				$result['order'][$key]['reference']                = $value['Orden']['reference'];
+				$result['order'][$key]['id_carrier']               = $value['Orden']['id_carrier'];
+			}
+		}
+
+		return $result;
+
+	}
+
+
+
+	/**
+	 * Método antiguo para obtener ventas desde prestashop
+	 * @param  array  $params [description]
+	 * @param  array  $tienda [description]
+	 * @return [type]         [description]
+	 */
+	private function prestashop_obtener_venta_antiguo($params = array(), $tienda = array())
+	{	
+		App::uses('AppController', 'Controller');
+		$app = new AppController();
+
+		# Modelos que requieren agregar configuración
+		$app->cambiarDatasource(array('Orden'), $tienda);
+
+		$orden	= ClassRegistry::init('Orden')->find('first', $params);
+
+		$result = array();
+
+		if (!empty($orden)) {
+
+			$result['order']['id']                       = $orden['Orden']['id_order'];
+			$result['order']['id_address_delivery']      = $orden['Orden']['id_address_delivery'];
+			$result['order']['id_customer']              = $orden['Orden']['id_customer'];
+			$result['order']['current_state']            = $orden['Orden']['current_state'];
+			$result['order']['date_add']                 = $orden['Orden']['date_add'];
+			$result['order']['payment']                  = $orden['Orden']['payment'];
+			$result['order']['total_discounts_tax_incl'] = $orden['Orden']['total_discounts_tax_incl'];
+			$result['order']['total_paid']               = $orden['Orden']['total_paid'];
+			$result['order']['total_products']           = $orden['Orden']['total_products'];
+			$result['order']['total_shipping_tax_incl']  = $orden['Orden']['total_shipping_tax_incl'];
+			$result['order']['reference']                = $orden['Orden']['reference'];
+			$result['order']['id_carrier']               = $orden['Orden']['id_carrier'];
+			
+		}
+
+		return $result;
+
+	}
+
+
 
 	/****************************************************************************************************/
 	//obtiene las órdenes por id
-	public function prestashop_obtener_venta ($id) {
+	public function prestashop_obtener_venta ($id, $tienda = array()) {
 
-		$opt = array();
-		$opt['resource'] = 'orders';
-		$opt['display'] = '[id,id_customer,id_carrier,current_state,date_add,payment,total_discounts_tax_incl,total_paid,total_products,total_shipping_tax_incl,reference,id_address_delivery,id_address_invoice]';
-		$opt['filter[id]'] = '[' .$id. ']';
+		if (empty($tienda)) {
+			$opt = array();
+			$opt['resource'] = 'orders';
+			$opt['display'] = '[id,id_customer,id_carrier,current_state,date_add,payment,total_discounts_tax_incl,total_paid,total_products,total_shipping_tax_incl,reference,id_address_delivery,id_address_invoice]';
+			$opt['filter[id]'] = '[' .$id. ']';
 
-		$xml                 = $this->ConexionPrestashop->get($opt);
+			$xml                 = $this->ConexionPrestashop->get($opt);
+			
+			$PrestashopResources = $xml->children()->children();
+			
+			$DataVenta          = to_array($PrestashopResources);
+		}else{
+			$DataVenta          = $this->prestashop_obtener_venta_antiguo( array('conditions' => array('Orden.id_order' => $id)), $tienda );
+		}
 		
-		$PrestashopResources = $xml->children()->children();
-		
-		$DataVenta          = to_array($PrestashopResources);
 		
 		if (empty($DataVenta)) {
 			return array();
