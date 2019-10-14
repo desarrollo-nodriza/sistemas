@@ -783,7 +783,7 @@ class VentasController extends AppController {
 			$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
 
 			$resultadoEnviame = $Enviame->crearEnvio($venta);
-
+			
 			if ($resultadoEnviame) {
 				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
 			}else{
@@ -3027,6 +3027,8 @@ class VentasController extends AppController {
 
 		$transportes = ClassRegistry::init('Transporte')->find('list', array('conditions' => array('activo' => 1)));
 
+		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
+
 		# Información de envíame
 		$Enviame = $this->Components->load('Enviame');
 		
@@ -3038,8 +3040,29 @@ class VentasController extends AppController {
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
-		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info'));
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas'));
 
+	}
+
+
+	public function admin_edit($id)
+	{
+		if ( ! $this->Venta->exists($id) ) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		if ($this->request->is('post') || $this->request->is('put')) {
+			
+			if ($this->Venta->save($this->request->data)) {
+				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
+			}else{
+				$this->Session->setFlash('No fue posible actualizar la venta.', null, array(), 'danger');
+			}
+
+		}
+
+		$this->redirect($this->referer('/', true));
 	}
 
 

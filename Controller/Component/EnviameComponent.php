@@ -62,7 +62,7 @@ class EnviameComponent extends Component
 		$bodega 	   = $venta['Tienda']['bodega_enviame'];
 		
 		if ($pesoTotal >= $pesoMaximo || $volumenMaximo == 0) {
-			return 'Error de pesos';
+			return false;
 		}		
 		
 		$paquetes = $this->obtener_bultos_venta($venta, $volumenMaximo);
@@ -139,7 +139,7 @@ class EnviameComponent extends Component
 			ClassRegistry::init('Log')->create();
 			ClassRegistry::init('Log')->saveMany($log);
 
-			return 'Codigo respuesta: ' . $resultado['httpCode'];
+			return false;
 		}
 
 		$enviameRes = to_array($resultado)['body']['data'];

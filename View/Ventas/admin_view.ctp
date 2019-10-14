@@ -33,6 +33,9 @@
 									<h3 class="panel-title"><i class="fa fa-info" aria-hidden="true"></i> <?=__('Información de la venta'); ?></h3>
 								</div>
 								<div class="panel-body">
+								<?= $this->Form->create('Venta', array('url' => array('action' => 'edit', $venta['Venta']['id']), 'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+									<?=$this->Form->input('id');?>
+
 									<div class="table-responsive">
 										<table class="table table-bordered">
 											<tr>
@@ -67,7 +70,19 @@
 											</tr>
 											<tr>
 												<th>Comuna despacho</th>
-												<td><?= $venta['Venta']['comuna_entrega']; ?></td>
+												<td>
+													<div class="input-group">
+	                                                    <?=$this->Form->input('comuna_entrega', array('value' => $venta['Venta']['comuna_entrega'], 'class' => 'form-control js-comuna-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['comuna_entrega']));?>
+	                                                    <span class="input-group-btn">
+	                                                        <button class="btn btn-default toggle" type="button"><i class="fa fa-refresh"></i> <i class="fa fa-close" style="display: none;"></i></button>
+	                                                    </span>
+	                                                </div>
+	                                                <span class="comuna-select hide">
+														<?=$this->Form->label('comuna_entrega', 'Cambiar comuna entrega', array('class' => 'mt-5 pt-5')); ?>
+		                                                <?=$this->Form->select('comuna_entrega_select', $comunas, array('empty' => 'Seleccione', 'default' => $venta['Venta']['comuna_entrega'], 'class' => 'form-control js-comuna-select')); ?>
+	                                                	<?=$this->Form->button('Guardar cambios', array('type' => 'submit', 'class' => 'btn btn-warning btn-block mt-5')); ?>
+	                                                </span>    
+                                                </td>
 											</tr>
 											<tr>
 												<th>Método de envio</th>
@@ -154,6 +169,7 @@
 											</tr>
 										</table>
 									</div>
+								<?= $this->Form->end(); ?>
 								</div>
 								
 								<? if ($venta['Venta']['picking_estado'] != 'empaquetado' && $permisos['storage']) : ?>

@@ -784,6 +784,26 @@ $(function() {
 					ver_imagen_producto($(this));
 				});
 
+
+				$('.toggle').on('click', function(e){
+					
+					$(this).find('.fa').toggle();
+					$(this).parents('td').eq(0).find('.comuna-select').toggleClass('hide');
+
+					if ($(this).parents('td').eq(0).find('.comuna-select').hasClass('hide')) {
+						$('.js-comuna-entrega').val( $('.js-comuna-entrega').data('value') );
+					}
+
+				});
+
+				$('.js-comuna-select').on('change', function(){
+					var val = $(this).val();
+					if (val != '') {
+						$('.js-comuna-entrega').val(val);
+					}
+
+				});
+
 			}
 		}	
 
