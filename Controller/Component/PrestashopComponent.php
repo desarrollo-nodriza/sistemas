@@ -821,7 +821,7 @@ class PrestashopComponent extends Component
 			$xml       = $this->ConexionPrestashop->get($opt);
 			$resources = $xml->children()->children();
 			
-			$resources->available_for_order = $activo;
+			$resources->active = $activo;
 			
 			$opt           = array('resource' => 'products');
 			$opt['putXml'] = $xml->asXML();
