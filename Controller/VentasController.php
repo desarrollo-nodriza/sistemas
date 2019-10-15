@@ -64,6 +64,7 @@ class VentasController extends AppController {
 			'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo',
 			'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.prioritario', 'Venta.picking_estado'
 		);
+		$group = array();
 
 		$FiltroVenta                = '';
 		$FiltroCliente              = '';
@@ -233,6 +234,43 @@ class VentasController extends AppController {
 							);
 						}else if ($FiltroDte == 2){ # Mal facturado
 							
+							/**
+							$db = $this->Venta->Dte->getDataSource();
+							
+							$subQuery = $db->buildStatement(
+							    array(
+							        'fields'     => array('Dte2.venta_id'),
+							        'table'      => $db->fullTableName($this->Venta->Dte),
+							        'alias'      => 'Dte2',
+							        'limit'      => null,
+							        'offset'     => null,
+							        'joins'      => array(),
+							        'conditions' => array('Dte2.estado' => 'dte_real_emitido', 'Dte2.venta_id <>' => NULL, 'Dte2.tipo_documento' => array(33, 39), 'Dte2.invalidado' => 0),
+							        'order'      => null,
+							        'group'      => null
+							    ),
+							    $this->Venta->Dte
+							);
+
+							$subQuery = 'Venta.id NOT IN (' . $subQuery . ') ';
+							$subQueryExpression = $db->expression($subQuery);
+							
+							$joins[] = array(
+								'table' => 'rp_dtes',
+								'alias' => 'dtes',
+								'type' => 'INNER',
+								'conditions' => array(
+									'dtes.venta_id = Venta.id',
+									'OR' => array(
+							            'dtes.id' => NULL,
+							            'dtes.estado' => array('no_generado', 'dte_temporal_no_emitido')
+							        )
+								)
+							);
+
+							$condiciones[] = $subQueryExpression->value;
+							*/
+
 							$joins[] = array(
 								'table' => 'rp_dtes',
 								'alias' => 'dtes',
@@ -246,6 +284,8 @@ class VentasController extends AppController {
 							        )
 								)
 							);
+
+							$group[] = 'Venta.id';
 						
 						}else{ # Sin factura
 
@@ -313,7 +353,7 @@ class VentasController extends AppController {
 			'conditions' => $condiciones,
 			'joins' => $joins,
 			'fields' => $fields,
-			'group' => array('Venta.id'),
+			'group' => $group,
 			'order' => array('Venta.fecha_venta' => 'DESC'),
 			'limit' => 20
 		);
@@ -1380,12 +1420,12 @@ class VentasController extends AppController {
 			$producto['VentaDetalleProducto']['id']         			= $DetalleVenta['product_id'];
 			$producto['VentaDetalleProducto']['id_externo'] 			= $DetalleVenta['product_id'];
 			$producto['VentaDetalleProducto']['nombre']     			= $DetalleVenta['product_name'];
-			$producto['VentaDetalleProducto']['cantidad_virtual']     	= $this->Prestashop->prestashop_obtener_stock_producto($DetalleVenta['product_id']);
+			$producto['VentaDetalleProducto']['cantidad_virtual']     	= @$this->Prestashop->prestashop_obtener_stock_producto($DetalleVenta['product_id'])['stock_available']['quantity'];
 			$producto['VentaDetalleProducto']['ancho']					= round($item['width'], 2);
 			$producto['VentaDetalleProducto']['alto']					= round($item['height'], 2);
 			$producto['VentaDetalleProducto']['largo']					= round($item['depth'], 2);
 			$producto['VentaDetalleProducto']['peso']					= round($item['weight'], 2);
-
+			
 			$this->Venta->VentaDetalle->VentaDetalleProducto->create();
 			$this->Venta->VentaDetalle->VentaDetalleProducto->save($producto);
 		}

@@ -252,7 +252,7 @@ class PrestashopComponent extends Component
 		$MetodoEnvio = ClassRegistry::init('MetodoEnvio')->find('first',
 			array(
 				'conditions' => array(
-					'MetodoEnvio.nombre' => trim($DataVentaDetalle['carrier']['name'])
+					'MetodoEnvio.nombre' => @trim($DataVentaDetalle['carrier']['name'])
 				),
 				'fields' => array(
 					'MetodoEnvio.id' 
@@ -485,7 +485,7 @@ class PrestashopComponent extends Component
 			'first',
 			array(
 				'conditions' => array(
-					'VentaCliente.email' => $cliente['customer']['email']
+					'VentaCliente.email' => @$cliente['customer']['email']
 				),
 				'fields' => array(
 					'VentaCliente.id'

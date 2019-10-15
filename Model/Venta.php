@@ -532,16 +532,6 @@ class Venta extends AppModel
 	 */
 	public function obtener_ventas_preparadas($estado = '', $limit = 10, $offset = 0, $estados_ids = array())
 	{	
-		/*$joins[] = array(
-			'table' => 'rp_venta_estados',
-			'alias' => 'ventas_estados',
-			'type' => 'INNER',
-			'conditions' => array(
-				'ventas_estados.id = Venta.venta_estado_id',
-				"ventas_estados.venta_estado_categoria_id" => $estados_ids,
-				"ventas_estados.permitir_retiro_oc"  => 1
-			)
-		);*/
 
 		$joins[] = array(
 			'table' => 'rp_venta_detalles',
@@ -668,7 +658,7 @@ class Venta extends AppModel
 
 			}
 		}
-
+		
 		if (array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada')) == array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad'))) {
 
 			$picking_estado = $this->field('picking_estado');
@@ -678,7 +668,7 @@ class Venta extends AppModel
 			}
 			$this->saveField('subestado_oc', 'no_entregado');
 		}
-
+		
 		return;
 	}
 

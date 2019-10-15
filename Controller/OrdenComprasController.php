@@ -755,8 +755,20 @@ class OrdenComprasController extends AppController
 					# Actualizamos ventas completas para que sean empaquetadas
 					if (!empty($ventasCompletas)) {
 						foreach ($ventasCompletas as $id_venta => $id_producto) {
-							ClassRegistry::init('Venta')->id = $id_venta;
-							ClassRegistry::init('Venta')->saveField('picking_estado', 'empaquetar');
+
+							$venta = ClassRegistry::init('Venta')->find('first', array(
+								'conditions' => array(
+									'Venta.id' => $id_venta
+								),
+								'contain' => array(
+									'VentaDetalle'
+								)
+							));
+
+							if ( array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad')) == array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_reservada')) ) {
+								ClassRegistry::init('Venta')->id = $id_venta;
+								ClassRegistry::init('Venta')->saveField('picking_estado', 'empaquetar');
+							}
 						}
 					}
 				}
