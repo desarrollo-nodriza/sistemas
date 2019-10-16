@@ -250,7 +250,7 @@
 										<td>
 											
 											<?= date_format(date_create($venta['Venta']['fecha_venta']), 'd/m/Y H:i:s'); ?>
-											<? if (!$venta['Venta']['atendida']) : 
+											<? if ($venta['Venta']['picking_estado'] == 'no_definido' && $venta['VentaEstado']['VentaEstadoCategoria']['venta']) : 
 												
 												$retrasoMensaje = $this->Html->calcular_retraso(date_format(date_create($venta['Venta']['fecha_venta']), 'Y-m-d H:i:s'));
 

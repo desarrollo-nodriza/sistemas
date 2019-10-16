@@ -145,6 +145,7 @@
 									<thead>
 										<th>Id venta</th>
 										<th>Estado</th>
+										<th>Fecha<br>venta</th>
 										<th>Cantidad<br>vendida</th>
 										<th>Cantidad<br>reservada</th>
 										<th>Acciones</th>
@@ -154,6 +155,18 @@
 										<tr>
 											<td><?= $this->Html->link($vd['venta_id'], array('controller' => 'ventas', 'action' => 'view', $vd['venta_id']), array('target' => '_blank')); ?></td>
 											<td><a data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$vd['Venta']['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= h($vd['Venta']['VentaEstado']['VentaEstadoCategoria']['estilo']); ?>"><?= h($vd['Venta']['VentaEstado']['VentaEstadoCategoria']['nombre']); ?></a>&nbsp;</td>
+											<td>
+												<?= date_format(date_create($vd['Venta']['fecha_venta']), 'd/m/Y H:i:s'); ?>
+												<? if ($vd['Venta']['picking_estado'] == 'no_definido' && $vd['Venta']['VentaEstado']['VentaEstadoCategoria']['venta']) : 
+												
+													$retrasoMensaje = $this->Html->calcular_retraso(date_format(date_create($vd['Venta']['fecha_venta']), 'Y-m-d H:i:s'));
+
+												if (!empty($retrasoMensaje)) : ?>
+													<?=$retrasoMensaje;?>
+												<?
+												endif;
+											  endif;?>			
+											</td>
 											<td><?= $vd['cantidad']; ?></td>
 											<td><?= $vd['cantidad_reservada']; ?></td>
 											<td>

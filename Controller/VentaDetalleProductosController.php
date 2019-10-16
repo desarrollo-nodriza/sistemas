@@ -1299,14 +1299,15 @@ class VentaDetalleProductosController extends AppController
 					'VentaDetalle' => array(
 						'Venta' => array(
 							'fields' => array(
-								'Venta.id', 'Venta.referencia', 'Venta.venta_estado_id'
+								'Venta.id', 'Venta.referencia', 'Venta.venta_estado_id', 'Venta.fecha_venta', 'Venta.picking_estado'
 							),
 							'VentaEstado' => array(
 								'fields' => array('VentaEstado.id', 'VentaEstado.nombre'),
 								'VentaEstadoCategoria' => array(
-									'fields' => array('VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo')
+									'fields' => array('VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.venta')
 								)
-							)
+							),
+							'order' => array('Venta.fecha_venta' => 'DESC')
 						)
 					),
 					'Bodega' => array(
