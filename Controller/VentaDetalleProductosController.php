@@ -1382,6 +1382,23 @@ class VentaDetalleProductosController extends AppController
 		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes'));
 	}
 
+
+	public function admin_reservar_stock($id_detalle)
+	{	
+
+		$cant = ClassRegistry::init('Venta')->reservar_stock_producto($id_detalle);
+
+		if ($cant == 1) {
+			$this->Session->setFlash('Cantidad reservada: ' . $cant . ' unidad.', null, array(), 'success');
+		}elseif($cant > 1) {
+			$this->Session->setFlash('Cantidad reservada: ' . $cant . ' unidades.', null, array(), 'success');
+		}elseif ($cant == 0) {
+			$this->Session->setFlash('No fue posible reservar el stock. Cantidad reservada: ' . $cant . '.', null, array(), 'warning');
+		}
+
+		$this->redirect($this->referer('/', true));
+	}
+
 	
 	/**
 	 * Modificar los precios especificos de cada prodcuto via ajax

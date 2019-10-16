@@ -131,7 +131,48 @@
 		                	</div>
 		                </div>                             
 		            </div>
-					<div class="panel panel-info">
+		            <div class="panel panel-info">
+		                <div class="panel-heading">
+		                    <h3 class="panel-title"><i class="fa fa-money" aria-hidden="true"></i> Unidades vendidas</h3>
+		                    <ul class="panel-controls"> 
+		                    	<li><a href="#" class="panel-collapse"><span class="fa fa-angle-up"></span></a></li>
+		                    </ul>
+		                </div>
+		                <div class="panel-body">
+		                	<div class="table-responsive" style="max-height: 470px;">
+								<table class="table table-bordered datatable">
+									<caption>Cantidades vendidas</caption>
+									<thead>
+										<th>Id venta</th>
+										<th>Estado</th>
+										<th>Cantidad<br>vendida</th>
+										<th>Cantidad<br>reservada</th>
+										<th>Acciones</th>
+									</thead>
+									<tbody>
+									<? foreach ($this->request->data['VentaDetalle'] as $ivd => $vd) : ?>
+										<tr>
+											<td><?= $this->Html->link($vd['venta_id'], array('controller' => 'ventas', 'action' => 'view', $vd['venta_id']), array('target' => '_blank')); ?></td>
+											<td><a data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$vd['Venta']['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= h($vd['Venta']['VentaEstado']['VentaEstadoCategoria']['estilo']); ?>"><?= h($vd['Venta']['VentaEstado']['VentaEstadoCategoria']['nombre']); ?></a>&nbsp;</td>
+											<td><?= $vd['cantidad']; ?></td>
+											<td><?= $vd['cantidad_reservada']; ?></td>
+											<td>
+												<div class="btn-group">
+												<?=$this->Html->link('<i class="fa fa-hand-paper-o"></i> Reservar', array('controller' => 'VentaDetalleProductos', 'action' => 'reservar_stock', $vd['id']), array('class' => 'btn btn-success btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Reservar stock'))?>
+
+												<? if ($vd['cantidad_reservada'] > 0) : ?>
+												<?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('controller' => 'ventas', 'action' => 'liberar_stock_reservado', $vd['Venta']['id'], $vd['id'], $vd['cantidad_reservada']), array('class' => 'btn btn-warning btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?>
+												<? endif; ?>
+												</div>
+											</td>
+										</tr>
+									<? endforeach; ?>										
+									</tbody>	
+								</table>
+		                	</div>
+		                </div>                             
+		            </div>
+					<div class="panel panel-info panel-toggled">
 		                <div class="panel-heading">
 		                    <h3 class="panel-title"><i class="fa fa-cubes" aria-hidden="true"></i> Unidades reservadas</h3>
 		                    <ul class="panel-controls"> 

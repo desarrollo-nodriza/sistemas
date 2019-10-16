@@ -18,7 +18,7 @@ class RecordatorioOrdenCompraShell extends AppShell {
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->save($log);
 
-		$ocs = ClassRegistry::init('OrdenCompra')->obtener_oc_en_proveedor();
+		$ocs = ClassRegistry::init('OrdenCompra')->obtener_ocs_por_estado('asignacion_moneda');
 
 		$controller = new OrdenComprasController(new CakeRequest(), new CakeResponse());
 
@@ -42,6 +42,15 @@ class RecordatorioOrdenCompraShell extends AppShell {
 			foreach ($ocs as $ic => $oc) {
 				$controller->guardarEmailValidado($oc['OrdenCompra']['id'], true);
 			}
+
+			$log = array('Log' => array(
+				'administrador' => 'Demonio',
+				'modulo' => 'OrdenCompra',
+				'modulo_accion' => 'Oc notificadas: ' . date('Y-m-d H:i:s') . ' - ' . json_encode($ocs)
+			));
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->save($log);
 
 		}
 

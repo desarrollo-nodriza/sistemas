@@ -167,6 +167,21 @@ Router::connect(
     )
 );
 
+
+Router::connect(
+    '/Campana/google/:tienda/:feed', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'campanas', 
+        'action' => 'feed',
+        'google' => true,
+        'prefix' => 'google'),
+    array(
+        'pass' => array('tienda', 'feed'),
+        'tienda' => '[0-9]+',
+        'feed' => '[0-9]+',
+    )
+);
+
 Router::connect('/login', array('controller' => 'administradores', 'action' => 'login', 'admin' => true));
 Router::connect('/logout', array('controller' => 'administradores', 'action' => 'logout', 'admin' => true));
 

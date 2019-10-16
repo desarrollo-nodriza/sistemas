@@ -431,11 +431,11 @@ class OrdenCompra extends AppModel
 		return $descuento;
 	}
 
-	public function obtener_oc_en_proveedor()
+	public function obtener_ocs_por_estado($estado = '')
 	{
 		return $this->find('all', array(
 			'conditions' => array(
-				'OrdenCompra.estado' => 'asignacion_moneda',
+				'OrdenCompra.estado' => $estado,
 				'OrdenCompra.validado_proveedor' => 0
 			)
 		));

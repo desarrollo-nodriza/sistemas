@@ -234,7 +234,7 @@ class VentasController extends AppController {
 							);
 						}else if ($FiltroDte == 2){ # Mal facturado
 							
-							/**
+							
 							$db = $this->Venta->Dte->getDataSource();
 							
 							$subQuery = $db->buildStatement(
@@ -260,17 +260,17 @@ class VentasController extends AppController {
 								'alias' => 'dtes',
 								'type' => 'INNER',
 								'conditions' => array(
-									'dtes.venta_id = Venta.id',
-									'OR' => array(
-							            'dtes.id' => NULL,
-							            'dtes.estado' => array('no_generado', 'dte_temporal_no_emitido')
-							        )
+									'dtes.venta_id = Venta.id'									
 								)
 							);
 
-							$condiciones[] = $subQueryExpression->value;
-							*/
+							#$condiciones[] = $subQueryExpression->value;
+							$condiciones['OR'] = array(
+								'dtes.id' => NULL,
+							    $subQueryExpression->value
+							);
 
+							/*
 							$joins[] = array(
 								'table' => 'rp_dtes',
 								'alias' => 'dtes',
@@ -283,7 +283,7 @@ class VentasController extends AppController {
 							            'dtes.estado' => array('no_generado', 'dte_temporal_no_emitido')
 							        )
 								)
-							);
+							);*/
 
 							$group[] = 'Venta.id';
 						
