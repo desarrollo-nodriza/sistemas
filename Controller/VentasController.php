@@ -312,7 +312,7 @@ class VentasController extends AppController {
 				'VentaEstado' => array(
 					'VentaEstadoCategoria' => array(
 						'fields' => array(
-							'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.venta'
+							'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.venta', 'VentaEstadoCategoria.final'
 						)
 					),
 					'fields' => array(

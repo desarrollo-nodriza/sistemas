@@ -10,7 +10,8 @@ class Rol extends AppModel
 
 
 	public $app = array(
-		'general'			 => 'No definido',
+		'general'            => 'No definido',
+		'vendedor'           => 'Vendedor',
 		'encargado_bodega'   => 'Encargado de bodega',
 		'chofer_transporte'  => 'Chofer',
 		'ayudante_bodega'    => 'Ayudante de bodega',

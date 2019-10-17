@@ -1304,7 +1304,7 @@ class VentaDetalleProductosController extends AppController
 							'VentaEstado' => array(
 								'fields' => array('VentaEstado.id', 'VentaEstado.nombre'),
 								'VentaEstadoCategoria' => array(
-									'fields' => array('VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.venta')
+									'fields' => array('VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.venta', 'VentaEstadoCategoria.final')
 								)
 							),
 							'order' => array('Venta.fecha_venta' => 'DESC')

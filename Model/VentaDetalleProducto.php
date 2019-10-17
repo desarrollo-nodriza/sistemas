@@ -125,6 +125,7 @@ class VentaDetalleProducto extends AppModel
 			'contain' => array(
 				'PrecioEspecificoProducto' => array(
 					'conditions' => array(
+						'PrecioEspecificoProducto.activo' => 1,
 						'OR' => array(
 							'PrecioEspecificoProducto.descuento_infinito' => 1,
 							'AND' => array(
@@ -139,6 +140,7 @@ class VentaDetalleProducto extends AppModel
 				),
 				'Marca' => array(
 					'PrecioEspecificoMarca' => array(
+						'PrecioEspecificoMarca.activo' => 1,
 						'conditions' => array(
 							'OR' => array(
 								'PrecioEspecificoMarca.descuento_infinito' => 1,
@@ -351,6 +353,7 @@ class VentaDetalleProducto extends AppModel
 			'contain' => array(
 				'PrecioEspecificoProducto' => array(
 					'conditions' => array(
+						'PrecioEspecificoProducto.activo' => 1,
 						'OR' => array(
 							'PrecioEspecificoProducto.descuento_infinito' => 1,
 							'AND' => array(
@@ -366,6 +369,7 @@ class VentaDetalleProducto extends AppModel
 				'Marca' => array(
 					'PrecioEspecificoMarca' => array(
 						'conditions' => array(
+							'PrecioEspecificoMarca.activo' => 1,
 							'OR' => array(
 								'PrecioEspecificoMarca.descuento_infinito' => 1,
 								'AND' => array(

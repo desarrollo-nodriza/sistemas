@@ -157,7 +157,7 @@
 											<td><a data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$vd['Venta']['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= h($vd['Venta']['VentaEstado']['VentaEstadoCategoria']['estilo']); ?>"><?= h($vd['Venta']['VentaEstado']['VentaEstadoCategoria']['nombre']); ?></a>&nbsp;</td>
 											<td>
 												<?= date_format(date_create($vd['Venta']['fecha_venta']), 'd/m/Y H:i:s'); ?>
-												<? if ($vd['Venta']['picking_estado'] == 'no_definido' && $vd['Venta']['VentaEstado']['VentaEstadoCategoria']['venta']) : 
+												<? if ($vd['Venta']['picking_estado'] == 'no_definido' && $vd['Venta']['VentaEstado']['VentaEstadoCategoria']['venta'] && !$vd['Venta']['VentaEstado']['VentaEstadoCategoria']['final']) : 
 												
 													$retrasoMensaje = $this->Html->calcular_retraso(date_format(date_create($vd['Venta']['fecha_venta']), 'Y-m-d H:i:s'));
 
