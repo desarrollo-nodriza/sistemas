@@ -925,7 +925,8 @@ class MeliMarketplaceComponent extends Component
 			}
 
 			if ($precioAdicional > 0 && $publicar['httpCode'] < 300) {
-				$actualizar['price'] = (!empty($actualizar)) ? round($actualizar['price'] / $precioAdicional, 0) : round($publicar['body']['price'] / $precioAdicional, 0) ;
+				$margenAdicional = 1 + ($precioAdicional/100);
+				$actualizar['price'] = (!empty($actualizar)) ? round($actualizar['price'] * $margenAdicional, 0) : round($publicar['body']['price'] * $margenAdicional, 0) ;
 			}
 
 
@@ -991,7 +992,7 @@ class MeliMarketplaceComponent extends Component
 		if (empty($item) || empty($id)) {
 			return '';
 		}
-
+		
 		$publicar = to_array(self::$MeliConexion->put('/items/' . $id, $item, array('access_token' => self::$accessToken)));
 		
 		$actualizar = array();
@@ -1001,9 +1002,11 @@ class MeliMarketplaceComponent extends Component
 			$costoEnvio = $this->mercadolibre_obtener_costo_envio($publicar['body']['id']);
 			$actualizar['price'] = $publicar['body']['price'] + $costoEnvio;
 		}
-
+		
 		if ($precioAdicional > 0 && $publicar['httpCode'] < 300) {
-			$actualizar['price'] = (!empty($actualizar)) ? round($actualizar['price'] / $precioAdicional, 0) : round($publicar['body']['price'] / $precioAdicional, 0) ;
+			$margenAdicional = 1 + ($precioAdicional/100);
+			
+			$actualizar['price'] = (!empty($actualizar)) ? round($actualizar['price'] * $margenAdicional, 0) : round($publicar['body']['price'] * $margenAdicional, 0) ;
 		}
 
 
@@ -1011,7 +1014,7 @@ class MeliMarketplaceComponent extends Component
 		if (!empty($item['pictures'])) {
 			$actualizar['pictures'] =  $item['pictures'];
 		}
-
+		
 		if (!empty($descripcion)) {
 			$this->mercadolibre_modificar_descripcion($id, $descripcion);
 		}
