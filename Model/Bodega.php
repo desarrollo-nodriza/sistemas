@@ -101,7 +101,8 @@ class Bodega extends AppModel
 	{
 		$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
 			'conditions' => array(
-				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto,
+				'BodegasVentaDetalleProducto.tipo' => array('OC', 'II')
 			)
 		));
 
@@ -132,7 +133,8 @@ class Bodega extends AppModel
 		$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
 			'conditions' => array(
 				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto,
-				'BodegasVentaDetalleProducto.bodega_id' => $bodega_id
+				'BodegasVentaDetalleProducto.bodega_id' => $bodega_id,
+				'BodegasVentaDetalleProducto.tipo' => array('OC', 'II')
 			)
 		));
 

@@ -1306,9 +1306,10 @@ class VentaDetalleProductosController extends AppController
 								'VentaEstadoCategoria' => array(
 									'fields' => array('VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.venta', 'VentaEstadoCategoria.final')
 								)
-							),
-							'order' => array('Venta.fecha_venta' => 'DESC')
-						)
+							)
+						),
+						'limit' => 80,
+						'order' => array('VentaDetalle.id' => 'DESC')
 					),
 					'Bodega' => array(
 						'fields' => array(
