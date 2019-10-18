@@ -196,7 +196,12 @@
 												<?php $TotalProductos = 0; foreach ($venta['VentaDetalle'] as $indice => $detalle) : $TotalProductos = $TotalProductos + ($detalle['precio'] * $detalle['cantidad']); ?>
 													<tr>
 														<td>
-															<?=($detalle['confirmado_app']) ? '<i class="fa fa-mobile text-success" data-toggle="tooltip" title="Confirmado vía app"></i>' : '' ; ?> <?= $detalle['VentaDetalleProducto']['id']; ?>
+															<?=($detalle['confirmado_app']) ? '<i class="fa fa-mobile text-success" data-toggle="tooltip" title="Confirmado vía app"></i>' : '' ; ?> 
+															<? if ($permisos['edit']) : ?>
+															<?= $this->Html->link($detalle['VentaDetalleProducto']['id'], array('controller' => 'ventaDetalleProductos', 'action' => 'edit', $detalle['VentaDetalleProducto']['id']), array('target' => '_blank')); ?>
+															<? else : ?>
+																<?= $detalle['VentaDetalleProducto']['id'];?>
+															<? endif; ?>
 														</td>
 														<td data-toggle="tooltip" title="<?=$detalle['VentaDetalleProducto']['nombre'];?>" class="td-producto">
 															<? if (!empty($detalle['VentaDetalleProducto']['imagenes'])) : ?>
