@@ -2295,6 +2295,67 @@ class OrdenComprasController extends AppController
 
 
 	/**
+	 * [guardarEmailRechazo description]
+	 * @param  [type] $id     [description]
+	 * @param  array  $emails [description]
+	 * @return [type]         [description]
+	 */
+	private function guardarEmailRechazoProveedor($id, $emails = array())
+	{	
+		/**
+		 * Clases requeridas
+		 */
+		$this->View					= new View();
+		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
+		$this->View->layoutPath		= 'Correos' . DS . 'html';
+		
+		$url = Router::fullBaseUrl();
+
+		$this->View->set(compact('id', 'url'));
+		$html						= $this->View->render('notificar_rechazo_proveedor');
+
+		$oc = $this->OrdenCompra->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id
+			),
+			'fields' => array(
+				'OrdenCompra.tienda_id'
+			)
+		));
+
+		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $oc['OrdenCompra']['tienda_id']));
+
+		if (empty($mandrill_apikey)) {
+			return false;
+		}
+
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = sprintf('[NDRZ] OC #%d rechazada por proveedor', $id);
+		
+		if (Configure::read('debug') > 0) {
+			$asunto = sprintf('[NDRZ-DEV] OC #%d rechazada por proveedor', $id);
+		}
+
+		$remitente = array(
+			'email' => 'oc@nodriza.cl',
+			'nombre' => 'Sistema de Órdenes de compra Nodriza'
+		);
+
+		$destinatarios = array();
+
+		foreach ($emails as $im => $e) {
+			$destinatarios[$im]['email'] = $e;
+		}
+		
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
+	}
+
+
+	/**
 	 * [guardarEmailStockout description]
 	 * @param  array  $ventas [description]
 	 * @param  array  $emails [description]
@@ -2891,7 +2952,7 @@ class OrdenComprasController extends AppController
 				# Notifcar rechazo completo a comerial
 				if ($this->request->data['OrdenCompra']['estado'] == 'cancelada') {
 					$email_comercial = $oc['OrdenCompra']['email_comercial'];
-					$this->guardarEmailRechazo($id, array($email_comercial));
+					$this->guardarEmailRechazoProveedor($id, array($email_comercial));
 
 					# Mostramos mensaje de co guardada
 					$redirect = sprintf('%s/socio/oc/%d?access_token=%s&success=true',Router::fullBaseUrl(), $id, $this->request->query['access_token']);

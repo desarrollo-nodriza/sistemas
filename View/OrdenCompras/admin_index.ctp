@@ -151,6 +151,20 @@
             </div>
             </a>
         </div>
+        <div class="col-xs-12 col-md-4">
+            <a href="<?=Router::url('/', false);?>ordenCompras/index_canceladas">
+            <div class="widget widget-danger widget-item-icon">
+                <div class="widget-item-left">
+                    <span class="fa fa-frown-o"></span>
+                </div>
+                <div class="widget-data">
+                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=cancelada].id'));?></div>
+                    <div class="widget-title">Canceladas</div>
+                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
+                </div>                         
+            </div>
+            </a>
+        </div>
     </div>
     
 	<br>

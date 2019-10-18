@@ -34,12 +34,12 @@
               <TR style="HEIGHT: 20px">
                 <TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; WIDTH: 100%; VERTICAL-ALIGN: top; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; TEXT-ALIGN: center; PADDING-TOP: 35px; PADDING-LEFT: 15px; BORDER-LEFT: medium none; PADDING-RIGHT: 15px; BACKGROUND-COLOR: #feffff">
                   <P style="FONT-SIZE: 16px; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a8a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>
-                    <STRONG>Se ha rechazado la OC #<?=$id;?> por área comercial.</STRONG>
+                    <STRONG>Se ha rechazado la OC #<?=$id;?> por el proveedor.</STRONG>
                   </P>
                   <P style="FONT-SIZE: 12px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>
-                  <BR>Para ver la OC pinche en el siguiente link:
+                  <BR>Para modificar la OC pinche en el siguiente link:
                   <BR>
-                    <a href="<?=$url;?>/ordenCompras/view/<?=$id;?>" style="background-color:#771D97; font-size: 14px; font-family: arial, helvetica, sans-serif; color: #ffffff; padding: 5px 15px; text-decoration: none; margin-top: 20px; display: inline-block; text-align: center;">Ir a sistemas</a>
+                    <a href="<?=$url;?>/ordenCompras/review/<?=$id;?>" style="background-color:#771D97; font-size: 14px; font-family: arial, helvetica, sans-serif; color: #ffffff; padding: 5px 15px; text-decoration: none; margin-top: 20px; display: inline-block; text-align: center;">Ir a sistemas</a>
                   <BR>
                   <BR>
                   <P style="FONT-SIZE: 12px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>Atte Equipo de Nodriza Spa.</P>
