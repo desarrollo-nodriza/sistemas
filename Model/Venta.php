@@ -615,7 +615,7 @@ class Venta extends AppModel
 			}
 		}
 
-		$this->saveField('picking_estado', 'no_definido');
+		$this->cambiar_estado_picking($id, 'no_definido');
 		$this->saveField('subestado_oc', 'no_entregado');
 
 		return;
@@ -637,11 +637,10 @@ class Venta extends AppModel
 		$venta = $this->obtener_venta_por_id($id);	
 
 		# solo se procesa si el estado de la venta ha cambiado
-		if ($venta['Venta']['venta_estado_id'] != $venta['Venta']['estado_anterior'] ) {
+		#if ($venta['Venta']['venta_estado_id'] != $venta['Venta']['estado_anterior'] ) {
 			foreach ($venta['VentaDetalle'] as $ip => $producto) {
 				
 				ClassRegistry::init('VentaDetalle')->id = $producto['id'];
-
 				if ($producto['cantidad_reservada'] == 0) {
 					$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], $producto['cantidad']);
 					ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $reservado);
@@ -657,14 +656,15 @@ class Venta extends AppModel
 				}
 
 			}
-		}
+		#}
 		
 		if (array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada')) == array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad'))) {
 
 			$picking_estado = $this->field('picking_estado');
-
+			
 			if (empty($picking_estado) || $picking_estado == 'no_definido' ) {
-				$this->saveField('picking_estado', 'empaquetar');
+				$this->cambiar_estado_picking($id, 'empaquetar');
+				#$this->saveField('picking_estado', 'empaquetar');
 			}
 			$this->saveField('subestado_oc', 'no_entregado');
 		}
@@ -732,7 +732,8 @@ class Venta extends AppModel
 		}
 
 		# Pedido está entregado completo
-		$this->saveField('picking_estado', 'empaquetado');			
+		$this->cambiar_estado_picking($id, 'empaquetado');
+					
 		$this->saveField('subestado_oc', 'entregado');
 		$this->saveField('fecha_completado', date('Y-m-d H:i:s'));		
 
@@ -770,7 +771,7 @@ class Venta extends AppModel
 			}
 		}
 
-		$this->saveField('picking_estado', 'no_definido');
+		$this->cambiar_estado_picking($id, 'no_definido');
 		$this->saveField('subestado_oc', 'no_entregado');
 
 		return;
@@ -822,6 +823,53 @@ class Venta extends AppModel
 		}
 
 		return $reservado;
+	}
+
+
+	/**
+	 * Cambiar estado picking de una venta y registra las fechas de cambios
+	 * @param  int 		$id             ID de la venta
+	 * @param  string   $picking_estado 'no_definido', 'empaquetar', 'empaquetando', 'empaquetado'
+	 * @param  string   $picking_email  Email de quien empaqueta (obligatorio para estado empaquetando)
+	 * @return bool
+	 */
+	public function cambiar_estado_picking($id, $picking_estado, $picking_email = '')
+	{
+		$save = array(
+			'Venta' => array(
+				'id' => $id,
+				'picking_estado' => $picking_estado
+			)
+		);
+
+		if (!empty($picking_email)) {
+			$save = array_replace_recursive($save, array('Venta' => array('picking_email' => $picking_email) ));
+		}
+
+		switch ($picking_estado) {
+			case 'no_definido':
+				$save = array_replace_recursive($save, array('Venta' => array('picking_email' => '', 'picking_fecha_inicio' => '', 'picking_fecha_temrino' => '')));
+				break;
+			
+			case 'empaquetar':
+				$save = array_replace_recursive($save, array('Venta' => array('picking_email' => '', 'picking_fecha_inicio' => '', 'picking_fecha_temrino' => '')));
+				break;
+
+			case 'empaquetando':
+
+				# emails es obligatorio en empaquetando
+				if (empty($picking_email))
+					return false;
+				
+				$save = array_replace_recursive($save, array('Venta' => array('picking_fecha_inicio' => date('Y-m-d H:i:s'))));
+				break;
+			case 'empaquetado':
+				$save = array_replace_recursive($save, array('Venta' => array('picking_fecha_termino' => date('Y-m-d H:i:s'))));
+				break;
+		}
+
+		return $this->save($save);
+
 	}
 
 

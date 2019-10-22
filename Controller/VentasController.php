@@ -3034,7 +3034,6 @@ class VentasController extends AppController {
 			$this->redirect(array('action' => 'index'));
 		}
 
-
 		if ($this->request->is('post') || $this->request->is('put')) {
 
 			if (CakeSession::check('Auth.Administrador.id')) {
