@@ -1522,36 +1522,6 @@ class OrdenComprasController extends AppController
 				'VentaDetalleProducto' => array(
 					'conditions' => array(
 						'VentaDetalleProducto.id' => Hash::extract($productosSolicitar, '{n}.id')
-					),
-					'PrecioEspecificoProducto' => array(
-						'conditions' => array(
-							'OR' => array(
-								'PrecioEspecificoProducto.descuento_infinito' => 1,
-								'AND' => array(
-									array('PrecioEspecificoProducto.fecha_inicio <=' => date('Y-m-d')),
-									array('PrecioEspecificoProducto.fecha_termino >=' => date('Y-m-d')),
-								)
-							)
-						),
-						'order' => array(
-							'PrecioEspecificoProducto.id' => 'DESC'
-						)
-					),
-					'Marca' => array(
-						'PrecioEspecificoMarca' => array(
-							'conditions' => array(
-								'OR' => array(
-									'PrecioEspecificoMarca.descuento_infinito' => 1,
-									'AND' => array(
-										array('PrecioEspecificoMarca.fecha_inicio <=' => date('Y-m-d')),
-										array('PrecioEspecificoMarca.fecha_termino >=' => date('Y-m-d')),
-									)
-								)
-							),
-							'order' => array(
-								'PrecioEspecificoMarca.id' => 'DESC'
-							)
-						)
 					)
 				),
 				'OrdenCompra' => array(
@@ -1559,16 +1529,12 @@ class OrdenComprasController extends AppController
 						'OrdenCompra.parent_id' => $id
 					)
 				)
-			)
+			),
+			'group' => array('Proveedor.id')
 		));
 
-		# Quitamos los duplicados
-		foreach ($proveedores as $ip => $p) {
-			if ( (count(Hash::extract($proveedores, '{n}.Proveedor[id=' . $p['Proveedor']['id'] .'].id' )) > 1) || empty($p['VentaDetalleProducto']) ) {
-				unset($proveedores[$ip]);
-			}
-		}
-
+		# $proveedores = array_map("unserialize", array_unique(array_map("serialize", $proveedores)));
+		
 		$tipoDescuento    = array(0 => '$', 1 => '%');
 
 		$descuentosMarcaCompuestos = array();
@@ -2195,7 +2161,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = Router::fullBaseUrl();
+		$url = FULL_BASE_URL;
 
 		$this->View->set(compact('ocs', 'url'));
 		$html						= $this->View->render('notificar_revision_oc');
@@ -2248,7 +2214,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = Router::fullBaseUrl();
+		$url = FULL_BASE_URL;
 
 		$this->View->set(compact('id', 'url'));
 		$html						= $this->View->render('notificar_rechazo_oc');
@@ -2309,7 +2275,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = Router::fullBaseUrl();
+		$url = FULL_BASE_URL;
 
 		$this->View->set(compact('id', 'url'));
 		$html						= $this->View->render('notificar_rechazo_proveedor');
@@ -2370,7 +2336,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = Router::fullBaseUrl();
+		$url = FULL_BASE_URL;
 
 		$this->View->set(compact('ventas', 'productos', 'url'));
 		$html						= $this->View->render('notificar_stockout_ventas');
@@ -2488,7 +2454,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = Router::fullBaseUrl();
+		$url = FULL_BASE_URL;
 
 		if (empty($url)) {
 			$url = (Configure::read('debug') > 1) ? FULL_BASE_URL_DEV : FULL_BASE_URL;
@@ -2574,7 +2540,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = Router::fullBaseUrl();
+		$url = FULL_BASE_URL;
 
 		$id = $oc['OrdenCompra']['id'];
 
@@ -2628,7 +2594,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = Router::fullBaseUrl();
+		$url = FULL_BASE_URL;
 		$id = $oc['OrdenCompra']['id'];
 
 		$this->View->set(compact('id', 'url'));
@@ -2681,7 +2647,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = Router::fullBaseUrl();
+		$url = FULL_BASE_URL;
 
 		$this->View->set(compact('id', 'url'));
 		$html						= $this->View->render('notificar_pagado_oc');
@@ -2928,12 +2894,11 @@ class OrdenComprasController extends AppController
 
 				# notificar stockout a ventas
 				if (!empty($ventasNotificar)) {
-
+					
 					$emailsVentas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('ventas');
 
 					if (!empty($emailsVentas)) {
 						$enviado = $this->guardarEmailStockout($id, $ventasNotificar, $itemes['stockout'], $emailsVentas);
-						debug($enviado);
 					}
 				}
 
@@ -2955,7 +2920,7 @@ class OrdenComprasController extends AppController
 					$this->guardarEmailRechazoProveedor($id, array($email_comercial));
 
 					# Mostramos mensaje de co guardada
-					$redirect = sprintf('%s/socio/oc/%d?access_token=%s&success=true',Router::fullBaseUrl(), $id, $this->request->query['access_token']);
+					$redirect = sprintf('%s/socio/oc/%d?access_token=%s&success=true',FULL_BASE_URL, $id, $this->request->query['access_token']);
 					$this->redirect($redirect);
 				}
 
@@ -2993,7 +2958,7 @@ class OrdenComprasController extends AppController
 					$this->request->data['OrdenCompra']['pdf'] = $pdfOc;
 					
 					# Redirigimos al PDF
-					$redirect = sprintf('%s/socio/oc/pdf/%d/%d?access_token=%s',Router::fullBaseUrl(), $id, $oc['OrdenCompra']['proveedor_id'], $this->request->query['access_token']);
+					$redirect = sprintf('%s/socio/oc/pdf/%d/%d?access_token=%s',FULL_BASE_URL, $id, $oc['OrdenCompra']['proveedor_id'], $this->request->query['access_token']);
 					$this->redirect($redirect);
 				}
 
@@ -3089,7 +3054,7 @@ class OrdenComprasController extends AppController
 			$this->OrdenCompra->saveField('pdf', $pdfOc);
 		}
 
-		$url = Router::fullBaseUrl();		
+		$url = FULL_BASE_URL;		
 
 		$this->layout = 'backend/socio';
 		
