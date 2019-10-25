@@ -2894,7 +2894,7 @@ class OrdenComprasController extends AppController
 
 				# notificar stockout a ventas
 				if (!empty($ventasNotificar)) {
-					
+
 					$emailsVentas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('ventas');
 
 					if (!empty($emailsVentas)) {
@@ -2920,7 +2920,7 @@ class OrdenComprasController extends AppController
 					$this->guardarEmailRechazoProveedor($id, array($email_comercial));
 
 					# Mostramos mensaje de co guardada
-					$redirect = sprintf('%s/socio/oc/%d?access_token=%s&success=true',FULL_BASE_URL, $id, $this->request->query['access_token']);
+					$redirect = sprintf('%ssocio/oc/%d?access_token=%s&success=true',FULL_BASE_URL, $id, $this->request->query['access_token']);
 					$this->redirect($redirect);
 				}
 
@@ -2958,7 +2958,7 @@ class OrdenComprasController extends AppController
 					$this->request->data['OrdenCompra']['pdf'] = $pdfOc;
 					
 					# Redirigimos al PDF
-					$redirect = sprintf('%s/socio/oc/pdf/%d/%d?access_token=%s',FULL_BASE_URL, $id, $oc['OrdenCompra']['proveedor_id'], $this->request->query['access_token']);
+					$redirect = sprintf('%ssocio/oc/pdf/%d/%d?access_token=%s',FULL_BASE_URL, $id, $oc['OrdenCompra']['proveedor_id'], $this->request->query['access_token']);
 					$this->redirect($redirect);
 				}
 
