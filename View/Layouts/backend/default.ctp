@@ -7,6 +7,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<?= $this->Html->meta('icon', '/backend/img/logo-small.png', array('type' => 'png')); ?>
 		<?= $this->Html->css(array(
+			'https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css',
 			sprintf('/backend/css/theme-%s', $this->Session->read('Tienda.tema')),
 			'/backend/css/icheck/skins/flat/red',
 			'/backend/css/jstree/jstree.min',
@@ -23,6 +24,9 @@
 		<?= $this->Html->scriptBlock("var webroot = '{$this->webroot}';"); ?>
 		<?= $this->Html->scriptBlock("var fullwebroot = '{$this->Html->url('', true)}';"); ?>
 		<?= $this->Html->script(array(
+			'https://www.gstatic.com/firebasejs/7.2.2/firebase-app.js',
+			'https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js',
+			'https://www.gstatic.com/firebasejs/6.2.0/firebase-auth.js',
 			'/backend/js/plugins/jquery/jquery.min',
 			'/backend/js/plugins/jquery/jquery-ui.min',
 			'/backend/js/plugins/bootstrap/bootstrap.min',
@@ -128,6 +132,7 @@
         <audio id="audio-alert" src="<?= $this->Html->url('/backend/audio/alert.mp3'); ?>" preload="auto"></audio>
         <audio id="audio-fail" src="<?= $this->Html->url('/backend/audio/fail.mp3'); ?>" preload="auto"></audio>
 		<?= $this->Html->script(array('/backend/js/actions')); ?>
+		<?= $this->Html->script(array('/backend/js/firebase')); ?>
 
         <!-- PushAlert -->
         <script type="text/javascript">

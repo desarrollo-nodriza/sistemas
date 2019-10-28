@@ -186,6 +186,105 @@ class AdministradoresController extends AppController
 		$this->layout	= 'login';
 	}
 
+
+	public function admin_login2()
+	{	
+
+		if ( $this->Auth->user() )
+		{
+			$this->redirect('/');
+		}
+
+		/**
+		 * Login normal
+		 */
+		if ( $this->request->is('post') )
+		{
+			if ( !$this->request->data['Administrador']['login_externo'] && $this->Auth->login() )
+			{	
+				# Obtenemos la tienda principal
+				$tiendaPrincipal = ClassRegistry::init('Tienda')->find('first', array(
+					'conditions' => array('Tienda.principal' => 1),
+					'order' => array('Tienda.modified' => 'DESC')
+					));
+				
+				if ( empty($tiendaPrincipal) ) {
+					
+					# Enviamos mensaje de porque la redirección
+					$this->Session->setFlash('No existe una tienda principal, porfavor contácte al encargado.', null, array(), 'danger');
+
+					# Elimina la sesión de google
+					$this->Session->delete('Google.token');
+					# Eliminamos la sesión tienda
+					$this->Session->delete('Tienda');
+					# Deslogeamos
+					$this->admin_logout();
+				}else {
+					$this->Session->setFlash('Su tienda principal es ' . $tiendaPrincipal['Tienda']['nombre'], null, array(), 'success');
+					$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
+				}
+
+				$this->Session->delete('Google.token');
+				$this->redirect($this->Auth->redirectUrl());
+			}
+			elseif ($this->request->data['Administrador']['login_externo']) {
+
+				/**
+				 * Verificamos que exista el usuario en la DB y esté activo
+				 */
+				$administrador			= $this->Administrador->find('first', array(
+					'conditions'			=> array('Administrador.email' => $this->request->data['Administrador']['email'])
+				));
+
+				if ( ! $administrador || ! $administrador['Administrador']['activo'] ) {
+					$this->Session->setFlash('No tienes acceso a esta aplicación.', null, array(), 'danger');
+				}else{	
+					
+					/**
+					 * Normaliza los datos segun AuthComponent::identify
+					 */
+					$administrador = $administrador['Administrador'];
+
+					# Obtenemos la tienda principal
+					$tiendaPrincipal = ClassRegistry::init('Tienda')->find('first', array(
+						'conditions' => array('Tienda.principal' => 1),
+						'order' => array('Tienda.modified' => 'DESC')
+						));
+
+					if ( empty($tiendaPrincipal) ) {
+				
+						# Enviamos mensaje de porque la redirección
+						$this->Session->setFlash('No existe una tienda principal, porfavor contácte al encargado.', null, array(), 'danger');
+
+						# Elimina la sesión de google
+						$this->Session->delete('Google.token');
+						# Eliminamos la sesión tienda
+						$this->Session->delete('Tienda');
+						# Deslogeamos
+						$this->admin_logout();
+					}else {
+						$this->Session->setFlash('Su tienda principal es ' . $tiendaPrincipal['Tienda']['nombre'], null, array(), 'success');
+						$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
+					}
+
+					/**
+					 * Logea al usuario y lo redirecciona
+					 */
+					
+					$this->Auth->login($administrador);
+					$this->Administrador->save(array('id' => $administrador['id'], 'last_login' => date('Y-m-d H:m:s')));
+					$this->redirect($this->Auth->redirectUrl());
+				}
+
+			}else{
+				$this->Session->setFlash('Nombre de usuario y/o clave incorrectos.', null, array(), 'danger');
+			}
+		}
+
+		$this->layout	= 'login';
+	}
+
+
 	public function admin_logout()
 	{	
 		/**
@@ -195,6 +294,7 @@ class AdministradoresController extends AppController
 		$this->Session->delete('Tienda');
 		$this->Session->delete('Marketplace');
 		$this->redirect($this->Auth->logout());
+
 	}
 
 	public function admin_lock()

@@ -33,7 +33,7 @@
 			</div>
 			<div class="mb-footer">
 				<div class="pull-right">
-					<?= $this->Html->link('Si', array('controller' => 'administradores', 'action' => 'logout'), array('class' => 'btn btn-success btn-lg')); ?>
+					<?= $this->Html->link('Si', array('controller' => 'administradores', 'action' => 'logout'), array('class' => 'btn btn-success btn-lg', 'id' => 'logout')); ?>
 					<button class="btn btn-default btn-lg mb-control-close">No</button>
 				</div>
 			</div>

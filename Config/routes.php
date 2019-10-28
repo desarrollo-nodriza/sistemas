@@ -182,7 +182,7 @@ Router::connect(
     )
 );
 
-Router::connect('/login', array('controller' => 'administradores', 'action' => 'login', 'admin' => true));
+Router::connect('/login', array('controller' => 'administradores', 'action' => 'login2', 'admin' => true));
 Router::connect('/logout', array('controller' => 'administradores', 'action' => 'logout', 'admin' => true));
 
 

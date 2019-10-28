@@ -21,7 +21,7 @@ class AppController extends Controller
 			'applicationName'		=> 'Newsletter Nodriza',
 			'developerKey'			=> 'cristian.rojas@nodriza.cl',
 			'clientId'				=> '1376469050-ckai861jm571qcguj2ohgepgb605uu2l.apps.googleusercontent.com',
-			'clientSecret'			=> 'Kfmh_BoEMaD6nbMHSfA8CEyW',
+			'clientSecret'			=> 'j-T-QC_nQJ2GTqUf_a-Z_J57',
 			//'redirectUri'			=> Router::url(array('controller' => 'administradores', 'action' => 'google', 'admin' => false), true)),
 			'approvalPrompt'		=> 'auto',
 			'accessType'			=> null,//'offline',
@@ -86,7 +86,7 @@ class AppController extends Controller
 
 			// Login action config
 			$this->Auth->loginAction['controller'] 	= 'administradores';
-			$this->Auth->loginAction['action'] 		= 'login';
+			$this->Auth->loginAction['action'] 		= 'login2';
 			$this->Auth->loginAction['admin'] 		= true;
 
 			// Login redirect and logout redirect
@@ -101,11 +101,11 @@ class AppController extends Controller
 			
 			/**
 			 * OAuth Google
-			 */
-			$this->Google->cliente->setRedirectUri(Router::url(array('controller' => 'administradores', 'action' => 'login'), true));
+			
+			$this->Google->cliente->setRedirectUri(Router::url(array('controller' => 'administradores', 'action' => 'login2'), true));
 			$this->Google->oauth();
 
-			if ( ! empty($this->request->query['code']) && $this->request->params['controller'] == 'administradores' && $this->request->params['action'] == 'admin_login')
+			if ( ! empty($this->request->query['code']) && $this->request->params['controller'] == 'administradores' && $this->request->params['action'] == 'admin_login2')
 			{
 				$this->Google->oauth->authenticate($this->request->query['code']);
 				$this->Session->write('Google', array(
@@ -117,7 +117,7 @@ class AppController extends Controller
 			if ( $this->Session->check('Google.token') )
 			{
 				$this->Google->cliente->setAccessToken($this->Session->read('Google.token'));
-			}
+			} */
 
 		}
 
@@ -238,7 +238,7 @@ class AppController extends Controller
 		$tiendasList = $this->obtenerTiendas();
 		
 		$showDashboard = getDashboard($this->Auth->user('rol_id'));
-		
+
 		$this->set(compact('avatar', 'modulosDisponibles', 'permisos', 'tiendasList', 'showDashboard'));
 	}
 
