@@ -1081,7 +1081,7 @@ class OrdenComprasController extends AppController
 			$this->Session->setFlash('No fue posible generar el PDF.', null, array(), 'danger');
 		}
 
-		$this->redirect(array('action' => 'ready', $id));
+		$this->redirect($this->referer('/', true));
 
 	}
 
@@ -2455,10 +2455,6 @@ class OrdenComprasController extends AppController
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
 		$url = FULL_BASE_URL;
-
-		if (empty($url)) {
-			$url = (Configure::read('debug') > 1) ? FULL_BASE_URL_DEV : FULL_BASE_URL;
-		}
 		
 		$this->View->set(compact('mensaje', 'oc', 'url', 'token'));
 		$html						= $this->View->render('notificar_proveedor_oc');
