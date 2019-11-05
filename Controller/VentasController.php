@@ -6719,7 +6719,7 @@ class VentasController extends AppController {
 				'host' => Router::url('/', true),
 				'endpoint' => sprintf('api/ventas/change_state/%d.json', $id),
 				'required_params' => array(
-					'type' => 'shipped OR delivered',
+					'type' => '',
 					'token' => 'your access token'
 				)
 			),
@@ -6728,11 +6728,13 @@ class VentasController extends AppController {
 
 		foreach ($venta['VentaDetalle'] as $i => $item) {
 			$respuesta['itemes'][$i] = array(
+				'id'               => $item['id'],
 				'nombre'           => $item['VentaDetalleProducto']['nombre'],
 				'cantidad'         => $item['cantidad'],
 				'precio_neto'      => $item['precio'],
 				'precio_bruto'     => $this->precio_bruto($item['precio']),
-				'precio_bruto_clp' => CakeNumber::currency($this->precio_bruto($item['precio']), 'CLP')
+				'precio_bruto_clp' => CakeNumber::currency($this->precio_bruto($item['precio']), 'CLP'),
+				'codigo_barra'     => null
 			);
 			
 			if (!empty($item['VentaDetalleProducto']['imagenes'])) {
@@ -6897,6 +6899,16 @@ class VentasController extends AppController {
 		$tipoEstado = @$this->request->data['type']; // POST
 		$chofer     = @$this->request->data['driver']; // POST
 
+		$log = array(
+			'Log' => array(
+				'administrador' => 'App Nodriza',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($this->request)
+			)
+		);
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
 
 		$tiposPermitidos = array(
 			'shipped', // En transito
@@ -7012,15 +7024,11 @@ class VentasController extends AppController {
 					}
 
 					# Guardar chofer
-					if (empty($venta['Venta']['chofer_email'])) {
-						$this->Venta->saveField('chofer_email', $chofer);	
-					}
+					$this->Venta->saveField('chofer_email', $chofer);	
 
 					# Guardar fecha de envio
-					if (empty($venta['Venta']['fecha_enviado'])) {
-						$this->Venta->saveField('fecha_enviado', date('Y-m-d H:i:s'));	
-					}
-
+					$this->Venta->saveField('fecha_enviado', date('Y-m-d H:i:s'));	
+					
 					break;
 				case 'entrega_domicilio':
 					# Obtenemos el estado de entregado
@@ -7054,9 +7062,7 @@ class VentasController extends AppController {
 						}
 
 						# Guardamos fecha entrega
-						if (empty($venta['Venta']['fecha_entregado'])) {
-							$this->Venta->saveField('fecha_entregado', date('Y-m-d H:i:s'));
-						}
+						$this->Venta->saveField('fecha_entregado', date('Y-m-d H:i:s'));
 
 					}
 
@@ -7093,9 +7099,7 @@ class VentasController extends AppController {
 						}
 
 						# Guardamos fecha entrega
-						if (empty($venta['Venta']['fecha_entregado'])) {
-							$this->Venta->saveField('fecha_entregado', date('Y-m-d H:i:s'));
-						}
+						$this->Venta->saveField('fecha_entregado', date('Y-m-d H:i:s'));
 
 					}
 
@@ -7105,8 +7109,14 @@ class VentasController extends AppController {
 					$estado_nuevo     = 'Enviado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 
-					if (!isset($this->request->data['carrier']))
-						break;
+					if (!isset($this->request->data['carrier'])){
+						$response = array(
+							'code'    => 404, 
+							'message' => 'Carrier is required'
+						);
+
+						throw new CakeException($response);
+					}
 
 					if (!ClassRegistry::init('Transporte')->exists($this->request->data['carrier'])) {
 						$response = array(
@@ -7188,137 +7198,17 @@ class VentasController extends AppController {
 					break;
 			}
 
-			# Mensaje de error en caso de que no exista el estado
-			if (empty($estado_nuevo)) {
-				$response = array(
-					'code'    => 404, 
-					'message' => 'State not allowed'
-				);
+			# Asignamos el nuevo estado a la venta intenra
+			$venta['Venta']['venta_estado_id'] = $estado_nuevo_arr['VentaEstado']['id'];
 
-				throw new CakeException($response);
-			}
-
-			# El estado ya se ha actualizado
-			if ($estado_actual == $estado_nuevo_arr['VentaEstado']['id']) {
-				$response = array(
-					'code'    => 500, 
-					'message' => 'The current state is the same that you try to update'
-				);
-
-				throw new CakeException($response);
-			}
-
-			# OBtenemos el ID prestashop del estado
-			$estadoPrestashop = $this->Prestashop->prestashop_obtener_estado_por_nombre($estado_nuevo);
-
-			if (empty($estadoPrestashop)) {
-				$response = array(
-					'code'    => 507, 
-					'message' => 'Can´t get state from Prestashop'
-				);
-
-				throw new CakeException($response);
-			}
-
-
-			if (Configure::read('debug') > 0) {
-				$resCambio = true;
-			}else{
-				$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
-			}
-
-			if ($resCambio) {
-
-				# Asignamos el nuevo estado a la venta intenra
-				$venta['Venta']['venta_estado_id'] = $estado_nuevo_arr['VentaEstado']['id'];
-			
-				# Plantilla nuevo estado
-				ClassRegistry::init('VentaEstado')->id = $venta['Venta']['venta_estado_id'];
-				$notificar        = ClassRegistry::init('VentaEstado')->field('notificacion_cliente');
-				$plantillaEmail   = ClassRegistry::init('VentaEstadoCategoria')->field('plantilla', array('id' => ClassRegistry::init('VentaEstado')->field('venta_estado_categoria_id')));	
-				
-				if (!empty($plantillaEmail) && $notificar) {
-					$this->notificar_cambio_estado($id, $plantillaEmail, $estado_nuevo);
-				}
-
-			}else{
-
-				$response = array(
-					'code'    => 506, 
-					'message' => 'Can´t save new state'
-				);
-
-				throw new CakeException($response);
-			}
-			
 		# Linio
 		}elseif ( $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) {
-			# Para la consola se carga el componente on the fly!
-			if ($this->shell) {
-				$this->Linio = $this->Components->load('Linio');
-			}
-			# cliente Linio
-			$this->Linio->crearCliente( $apiurllinio, $apiuserlinio, $apikeylinio );
-
-			$itemsVenta = $this->Linio->linio_obtener_venta_detalles($venta['Venta']['id_externo']);
-
-			if (!isset($itemsVenta[0])) {
-				$itemsVenta = array(
-					0 => $itemsVenta
-				);
-			}
-
 			switch ($tipoEstado) {
 				case 'despacho_externo':
 					# Obtenemos el estado de enviado
 					$estado_nuevo     = 'ready_to_ship';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					break;
-			}
-
-			# Mensaje de error en caso de que no exista el estado
-			if (empty($estado_nuevo)) {
-				$response = array(
-					'code'    => 404, 
-					'message' => 'State not allowed'
-				);
-
-				throw new CakeException($response);
-			}
-
-			if (!array_key_exists($estado_nuevo, $this->Linio->estados)) {
-				$response = array(
-					'code'    => 404, 
-					'message' => 'State not allowed'
-				);
-
-				throw new CakeException($response);
-			}
-
-
-			# El estado ya se ha actualizado
-			if ($estado_actual == $estado_nuevo_arr['VentaEstado']['id']) {
-				$response = array(
-					'code'    => 500, 
-					'message' => 'The current state is the same that you try to update'
-				);
-
-				throw new CakeException($response);
-			}
-
-			
-			# Pedimos retiro del pedido en Linio
-			foreach ($itemsVenta as $ii => $item) {
-
-				# Listo para envio pedido en Linio Por defecto se usa Blue Express
-				if(!$this->Linio->linio_listo_para_envio(array($item['OrderItemId']))){
-					$response = array(
-						'code'    => 507, 
-						'message' => 'Can´t update state in Marketplace'
-					);
-
-					throw new CakeException($response);
-				}
 			}
 
 			# Asignamos el nuevo estado a la venta intenra
@@ -7337,9 +7227,26 @@ class VentasController extends AppController {
 
 			throw new CakeException($response);
 		}
+
+		$this->request->data['Venta']['estado_anterior'] = $estado_actual;
+		$this->request->data['Venta']['venta_estado_id'] = $venta['Venta']['venta_estado_id'];
 		
+		try {
+			
+			$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $venta['Venta']['venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id']);
+		
+		} catch (Exception $e) {
+
+			$response = array(
+				'code'    => 506, 
+				'message' => $e->getMessage()
+			);
+
+			throw new CakeException($response);
+		}
+
 		# Guardamos el nuevo estado
-		if ($this->Venta->saveField('venta_estado_id', $venta['Venta']['venta_estado_id'])) {
+		if ($cambiar_estado) {
 			
 			$this->set(array(
 	            'response' => true,
@@ -7571,6 +7478,17 @@ class VentasController extends AppController {
 
 			throw new CakeException($response);
 		}
+
+		$log = array(
+			'Log' => array(
+				'administrador' => 'App Nodriza Picking',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($this->request)
+			)
+		);
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
 
 		$venta = $this->preparar_venta($id);
 
