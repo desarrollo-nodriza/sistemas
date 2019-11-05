@@ -16,7 +16,7 @@
                         <TABLE cellSpacing=0 cellPadding=0 border=0>
                           <TR>
                             <TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; BACKGROUND-COLOR: transparent">
-                              <img src="<?= $url; ?>/webroot/img/nodrizablanco.png" vspace=0 hspace=0 border=0 class="rimg" style="MAX-WIDTH: 135px; BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: block; BACKGROUND-COLOR: transparent"/>
+                              <img src="<?= $url; ?>webroot/img/nodrizablanco.png" vspace=0 hspace=0 border=0 class="rimg" style="MAX-WIDTH: 135px; BORDER-TOP: medium none; BORDER-RIGHT: medium none; BORDER-BOTTOM: medium none; BORDER-LEFT: medium none; DISPLAY: block; BACKGROUND-COLOR: transparent"/>
                             </TD>
                           </TR>
                         </TABLE>
@@ -68,7 +68,7 @@
                       <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;">Id #<?= $venta['Venta']['id']?> - Id externo #<?= $venta['Venta']['id_externo']; ?></td>
                       <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left; font-weight: 600;">Canal de venta</td>
                       <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= (empty($venta['Venta']['markeplace_id'])) ? $venta['Tienda']['nombre'] : $venta['Marketplace']['nombre']; ?></td>
-                      <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><a href="<?= $url; ?>/ventas/view/<?=$venta['Venta']['id']; ?>" target="_blank">Ir a la venta</a></td>
+                      <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><a href="<?= $url; ?>ventas/view/<?=$venta['Venta']['id']; ?>" target="_blank">Ir a la venta</a></td>
                     </tr>
                     <!--<tr>
                       <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"> Items</td>

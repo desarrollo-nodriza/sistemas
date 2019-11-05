@@ -39,7 +39,7 @@
                   <P style="FONT-SIZE: 12px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>
                   <BR>Para asignar el pago pinche en el siguiente link:
                   <BR>
-                    <a href="<?=$url;?>/ordenCompras/asignar_moneda/<?=$id;?>" style="background-color:#771D97; font-size: 14px; font-family: arial, helvetica, sans-serif; color: #ffffff; padding: 5px 15px; text-decoration: none; margin-top: 20px; display: inline-block; text-align: center;">Ir a sistemas</a>
+                    <a href="<?=$url;?>ordenCompras/asignar_moneda/<?=$id;?>" style="background-color:#771D97; font-size: 14px; font-family: arial, helvetica, sans-serif; color: #ffffff; padding: 5px 15px; text-decoration: none; margin-top: 20px; display: inline-block; text-align: center;">Ir a sistemas</a>
                   <BR>
                   <BR>
                   <P style="FONT-SIZE: 12px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>Atte Equipo de Nodriza Spa.</P>

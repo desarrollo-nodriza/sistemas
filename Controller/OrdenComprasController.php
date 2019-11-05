@@ -2161,7 +2161,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = FULL_BASE_URL;
+		$url = obtener_url_base();
 
 		$this->View->set(compact('ocs', 'url'));
 		$html						= $this->View->render('notificar_revision_oc');
@@ -2214,7 +2214,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = FULL_BASE_URL;
+		$url = obtener_url_base();
 
 		$this->View->set(compact('id', 'url'));
 		$html						= $this->View->render('notificar_rechazo_oc');
@@ -2275,7 +2275,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = FULL_BASE_URL;
+		$url = obtener_url_base();
 
 		$this->View->set(compact('id', 'url'));
 		$html						= $this->View->render('notificar_rechazo_proveedor');
@@ -2336,7 +2336,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = FULL_BASE_URL;
+		$url = obtener_url_base();
 
 		$this->View->set(compact('ventas', 'productos', 'url'));
 		$html						= $this->View->render('notificar_stockout_ventas');
@@ -2454,7 +2454,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = FULL_BASE_URL;
+		$url = obtener_url_base();
 		
 		$this->View->set(compact('mensaje', 'oc', 'url', 'token'));
 		$html						= $this->View->render('notificar_proveedor_oc');
@@ -2536,7 +2536,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = FULL_BASE_URL;
+		$url = obtener_url_base();
 
 		$id = $oc['OrdenCompra']['id'];
 
@@ -2590,7 +2590,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = FULL_BASE_URL;
+		$url = obtener_url_base();
 		$id = $oc['OrdenCompra']['id'];
 
 		$this->View->set(compact('id', 'url'));
@@ -2643,7 +2643,7 @@ class OrdenComprasController extends AppController
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		
-		$url = FULL_BASE_URL;
+		$url = obtener_url_base();
 
 		$this->View->set(compact('id', 'url'));
 		$html						= $this->View->render('notificar_pagado_oc');
@@ -2916,7 +2916,7 @@ class OrdenComprasController extends AppController
 					$this->guardarEmailRechazoProveedor($id, array($email_comercial));
 
 					# Mostramos mensaje de co guardada
-					$redirect = sprintf('%s/socio/oc/%d?access_token=%s&success=true',FULL_BASE_URL, $id, $this->request->query['access_token']);
+					$redirect = sprintf('%ssocio/oc/%d?access_token=%s&success=true',obtener_url_base(), $id, $this->request->query['access_token']);
 					$this->redirect($redirect);
 				}
 
@@ -2954,7 +2954,7 @@ class OrdenComprasController extends AppController
 					$this->request->data['OrdenCompra']['pdf'] = $pdfOc;
 					
 					# Redirigimos al PDF
-					$redirect = sprintf('%s/socio/oc/pdf/%d/%d?access_token=%s',FULL_BASE_URL, $id, $oc['OrdenCompra']['proveedor_id'], $this->request->query['access_token']);
+					$redirect = sprintf('%ssocio/oc/pdf/%d/%d?access_token=%s',obtener_url_base(), $id, $oc['OrdenCompra']['proveedor_id'], $this->request->query['access_token']);
 					$this->redirect($redirect);
 				}
 
@@ -3050,7 +3050,7 @@ class OrdenComprasController extends AppController
 			$this->OrdenCompra->saveField('pdf', $pdfOc);
 		}
 
-		$url = FULL_BASE_URL;		
+		$url = obtener_url_base();		
 
 		$this->layout = 'backend/socio';
 		
