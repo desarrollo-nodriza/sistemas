@@ -974,7 +974,7 @@ class ProductotiendasController extends AppController {
 					)
 				)
 			),
-			'limit' => 3)
+			'limit' => 10)
    		);
    		
    		if (empty($productos)) {
