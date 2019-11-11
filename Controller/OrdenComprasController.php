@@ -39,7 +39,7 @@ class OrdenComprasController extends AppController
 			switch ($campo) {
 				case 'id':
 
-					$find = $this->OrdenCompra->find('first', array('conditions' => array('id' => $valor, 'parent_id !=' => ''), 'fields' => array('parent_id')));
+					/*$find = $this->OrdenCompra->find('first', array('conditions' => array('id' => $valor, 'parent_id !=' => ''), 'fields' => array('parent_id')));
 
 					if(!empty($find)) {
 						$filtro = array_replace_recursive($filtro, array(
@@ -53,7 +53,14 @@ class OrdenComprasController extends AppController
 								'OrdenCompra.id' => $valor
 							)
 						));
-					}
+					}*/
+
+					$filtro = array_replace_recursive($filtro, array(
+						'conditions' => array(
+							'OrdenCompra.id' => $valor
+						)
+					));
+
 					break;
 				case 'venta':
 
@@ -167,7 +174,6 @@ class OrdenComprasController extends AppController
 				)
 			),
 			'conditions' => array(
-				'OrdenCompra.estado' => $estado,
 				'OR' => array(
 					array(
 						'OrdenCompra.parent_id !=' => '',
@@ -194,6 +200,10 @@ class OrdenComprasController extends AppController
 			),
 			'limit' => 20
 		);
+
+		if (!empty($estado)) {
+			$qry['conditions']['OrdenCompra.estado'] = $estado;
+		}
 
     	return $qry;
     }
@@ -440,6 +450,39 @@ class OrdenComprasController extends AppController
 
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
 		BreadcrumbComponent::add('En espera de pago', '/ordenCompras/index_validada_proveedores');
+
+		$ordenCompras	= $this->paginate();
+		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
+	}
+
+
+	/**
+	 * [admin_index_pagadas description]
+	 * @return [type] [description]
+	 */
+	public function admin_index_todo()
+	{	
+
+		// Filtrado de oc por formulario
+		if ( $this->request->is('post') ) {
+			$this->filtrar('ordenCompras', 'index_todo');
+		}
+
+		$paginate = $this->paginacion_index();
+
+		# Filtrar
+		if ( isset($this->request->params['named']) ) {
+			$this->reemplazar_filtro_recursivamente($paginate);
+		}
+		
+		$this->paginate = $paginate;
+
+		$estados = $this->OrdenCompra->estados;
+
+		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
+
+		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
+		BreadcrumbComponent::add('Todo', '/ordenCompras/index_todo');
 
 		$ordenCompras	= $this->paginate();
 		$this->set(compact('ordenCompras', 'estados', 'proveedores'));

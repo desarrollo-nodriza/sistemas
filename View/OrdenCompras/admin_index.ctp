@@ -165,6 +165,20 @@
             </div>
             </a>
         </div>
+        <div class="col-xs-12 col-md-4">
+            <a href="<?=Router::url('/', false);?>ordenCompras/index_todo">
+            <div class="widget widget-info widget-item-icon">
+                <div class="widget-item-left">
+                    <span class="fa fa-list"></span>
+                </div>
+                <div class="widget-data">
+                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra.id'));?></div>
+                    <div class="widget-title">Todo</div>
+                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
+                </div>                         
+            </div>
+            </a>
+        </div>
     </div>
     
 	<br>

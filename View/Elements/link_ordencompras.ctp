@@ -1,6 +1,7 @@
 <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
 	<div class="col-xs-12" style="display: flex; justify-content: space-between;align-items: center;">
 		<div class="btn-group"style="display: flex;justify-content: space-between;width: 100%;">
+			<?= $this->Html->link('<i class="fa fa-list"></i> Todo', array('action' => 'index_todo'), array('style' => 'margin-top: 0;', 'class' => 'btn btn-block btn-xs btn-info', 'escape' => false,)); ?>
 			<?= $this->Html->link('<i class="fa fa-ban"></i> Sin procesar', array('action' => 'index_no_procesadas'), array('style' => 'margin-top: 0;', 'class' => 'btn btn-block btn-xs btn-danger', 'escape' => false,)); ?>
 			<?= $this->Html->link('<i class="fa fa-pencil-square-o"></i> En revisión', array('action' => 'index_revision'), array('style' => 'margin-top: 0;', 'class' => 'btn btn-block btn-xs btn-warning', 'escape' => false)); ?>
 			<?= $this->Html->link('<i class="fa fa-money"></i> Asignación m. pago', array('action' => 'index_asignacion_moneda'), array('style' => 'margin-top: 0;', 'class' => 'btn btn-block btn-xs btn-info', 'escape' => false)); ?>

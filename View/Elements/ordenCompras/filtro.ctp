@@ -81,7 +81,7 @@
                 <?= $this->Form->button('<i class="fa fa-search" aria-hidden="true"></i> Filtrar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
             </div>
             <div class="pull-left">
-                <?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtro', array('action' => 'index_enviadas'), array('class' => 'btn btn-buscar btn-primary btn-block', 'escape' => false)); ?>
+                <?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtro', array('action' => 'index_todo'), array('class' => 'btn btn-buscar btn-primary btn-block', 'escape' => false)); ?>
             </div>
         </div>
     </div>
