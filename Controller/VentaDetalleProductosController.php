@@ -2299,6 +2299,91 @@ class VentaDetalleProductosController extends AppController
 	}
 
 
+	public function admin_obtenerqrsec()
+    {	
+
+    	$qr_obtenidos = array();
+
+    	if ($this->request->is('post')) {
+    			
+			$url_base = $this->request->data['Sec']['url'];
+			$nombre = $this->request->data['Sec']['nombre'];
+			$marcas = $this->request->data['Sec']['marca'];
+
+			if (empty($url_base) || empty($nombre) || empty($marcas)) {
+				$this->Session->setFlash('Todos los campos son obligatorios.', null, array(), 'danger');
+				$this->redirect(array('action' => 'obtenerqrsec'));
+			}
+
+			$urlContenedor = APP . 'webroot' . DS . 'img' . DS . 'VentaDetalleProducto' . DS;
+			
+			$productos = $this->VentaDetalleProducto->find('all', array('conditions' => array('VentaDetalleProducto.marca_id' => $marcas), 'fields' => array('VentaDetalleProducto.id', 'VentaDetalleProducto.codigo_proveedor', 'VentaDetalleProducto.nombre')));
+
+			$guardar = array();
+
+			foreach ($productos as $ip => $p) {
+
+				$url_sec = $url_base . str_replace('{ref}', $p['VentaDetalleProducto']['codigo_proveedor'], $nombre);
+
+				$init = curl_init();
+				curl_setopt($init, CURLOPT_URL, $url_sec);
+				curl_setopt($init, CURLOPT_RETURNTRANSFER, 1);
+				curl_setopt($init, CURLOPT_SSLVERSION, 3);
+
+				$resCurl = curl_exec($init);
+
+				curl_close($init);
+
+				if (empty($resCurl))
+					continue;
+
+				$sec_nombre = 'sec-' . strtolower(Inflector::slug($p['VentaDetalleProducto']['codigo_proveedor'])) . '.jpg';
+
+				$rutadescarga = $urlContenedor . $sec_nombre;
+
+				if (!is_dir($urlContenedor)) {
+					mkdir($urlContenedor, 0775);
+				}
+
+				if (!file_exists($rutadescarga)) {
+
+					$qr_sec = fopen($rutadescarga, "w+");
+
+					fputs($qr_sec, $resCurl);
+
+					fclose($qr_sec);
+				}
+				
+				$guardar[$ip]['VentaDetalleProducto']['id']     = $p['VentaDetalleProducto']['id'];
+				$guardar[$ip]['VentaDetalleProducto']['qr_sec'] = $sec_nombre;
+				
+				$qr_obtenidos[] = array(
+					'item' => $p['VentaDetalleProducto']['nombre'],
+					'url'  => $url_sec,
+					'qr'   => obtener_url_base() . 'webroot/img/VentaDetalleProducto/' . $sec_nombre
+				);
+				
+			}
+			
+			if (!empty($guardar)) {
+				if ($this->VentaDetalleProducto->saveMany($guardar)){
+					$this->Session->setFlash(sprintf('%d items actualizados con éxito.', count($guardar)), null, array(), 'success');
+				}else{
+					$this->Session->setFlash('No fue posible guardar la información.', null, array(), 'danger');
+				}
+			}else{
+				$this->Session->setFlash('No Se encontraron coincidencias en la url especificada.', null, array(), 'danger');
+			}
+
+    	}
+
+    	$marcas = ClassRegistry::init('Marca')->find('list');
+
+    	$this->set(compact('qr_obtenidos', 'marcas'));
+
+    }
+
+
 	/**
 	 * REST methods
 	 */
@@ -2386,6 +2471,16 @@ class VentaDetalleProductosController extends AppController
 		}else{
 			$producto['VentaDetalleProducto'] = array();
 		}
+
+
+		# Etiqueta sec
+		if (!empty($producto['VentaDetalleProducto']['qr_sec'])) {
+			
+			$url_sec = obtener_url_base() . 'webroot/img/VentaDetalleProducto/' . $producto['VentaDetalleProducto']['qr_sec'];
+			$producto['VentaDetalleProducto']['qr_sec'] = $url_sec;
+
+		}
+
 
         $this->set(array(
             'producto' => $producto['VentaDetalleProducto'],

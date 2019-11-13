@@ -867,6 +867,11 @@ $.extend({
 			$.app.generarSecreto.init();
 
 			$.app.obtenerMetodos();
+
+
+			$(document).on('click', '.start-loading-then-redirect', function(){
+				$.app.loader.mostrar();
+			});
 			
 		}
 	}

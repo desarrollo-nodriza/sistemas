@@ -496,7 +496,7 @@ class AdministradoresController extends AppController
     		}
 
     		# Crear Token
-    		$token = ClassRegistry::init('Token')->crear_token($usuario['Administrador']['id']);
+    		$token = ClassRegistry::init('Token')->crear_token($usuario['Administrador']['id'], null, 8760);
 
     		$this->set(array(
 	            'response' => $token,
