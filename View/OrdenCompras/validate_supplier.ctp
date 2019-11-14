@@ -135,14 +135,14 @@
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.descuento_producto', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['descuento_producto'])); ?>
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.tipo_descuento', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['tipo_descuento'])); ?>
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.estado_recibido', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['estado_recibido'])); ?>
-										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.cantidad_solicitada', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad'])); ?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.cantidad', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad'])); ?>
 										<?=$ocp['OrdenComprasVentaDetalleProducto']['codigo'];?>
 											
 									</td>
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['descripcion'];?></td>
 									<td><?= CakeNumber::currency( ($ocp['OrdenComprasVentaDetalleProducto']['total_neto'] / $ocp['OrdenComprasVentaDetalleProducto']['cantidad']), 'CLP'); ?></td>
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
-									<td><?=$this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad', $ipp), array('class' => 'form-control is-number not-blank js-cantidad', 'placeholder' => 'Ingrese cantidad disponible', 'min' => 0, 'max' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad'], 'value' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad'], 'readonly' => true))?></td>
+									<td><?=$this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad_validada_proveedor', $ipp), array('class' => 'form-control is-number not-blank js-cantidad', 'placeholder' => 'Ingrese cantidad disponible', 'min' => 0, 'max' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad'], 'value' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad'], 'readonly' => true))?></td>
 									<td>
 										<?= $this->Form->select(sprintf('VentaDetalleProducto.%d.estado_proveedor', $ipp), $estados, array('empty' => false, 'default' => 'accept', 'class' => 'form-control js-opcion'))?>
 										<div class="hidden js-wrapper-nota">

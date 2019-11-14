@@ -111,8 +111,8 @@
 			<td style="font-size: 10px !important;"><?=$ipp+1;?></td>
 			<td style="font-size: 10px !important;"><?=$ocp['OrdenComprasVentaDetalleProducto']['codigo'];?></td>
 			<td style="font-size: 10px !important;"><?=$ocp['OrdenComprasVentaDetalleProducto']['descripcion'];?></td>
-			<td style="font-size: 10px !important;"><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
-			<td style="font-size: 10px !important;"><?=CakeNumber::currency( ($ocp['OrdenComprasVentaDetalleProducto']['total_neto'] / $ocp['OrdenComprasVentaDetalleProducto']['cantidad']) , 'CLP');?></td>
+			<td style="font-size: 10px !important;"><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'];?></td>
+			<td style="font-size: 10px !important;"><?=CakeNumber::currency( ($ocp['OrdenComprasVentaDetalleProducto']['total_neto'] / $ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']) , 'CLP');?></td>
 			<!--<td style="font-size: 10px !important;"><?=($ocp['OrdenComprasVentaDetalleProducto']['tipo_descuento']) ? '%' : '$' ;?></td>
 			<td style="font-size: 10px !important;"><?=CakeNumber::currency( $ocp['OrdenComprasVentaDetalleProducto']['descuento_producto'] , 'CLP');?></td>-->
 			<td style="font-size: 10px !important;"><?=CakeNumber::currency($ocp['OrdenComprasVentaDetalleProducto']['total_neto'] , 'CLP');?></td>

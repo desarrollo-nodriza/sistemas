@@ -140,8 +140,8 @@ class VentaDetalleProducto extends AppModel
 				),
 				'Marca' => array(
 					'PrecioEspecificoMarca' => array(
-						'PrecioEspecificoMarca.activo' => 1,
 						'conditions' => array(
+							'PrecioEspecificoMarca.activo' => 1,
 							'OR' => array(
 								'PrecioEspecificoMarca.descuento_infinito' => 1,
 								'AND' => array(
@@ -247,19 +247,19 @@ class VentaDetalleProducto extends AppModel
 			if ($descuentosMarca[0]['descuento_compuesto']) {
 
 				$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $producto['Marca']['descuento_base']);
-				$respuesta['total_descuento']  = $precio_lista * $descCompuesto;
+				$respuesta['total_descuento']  = round($precio_lista * $descCompuesto);
 				$respuesta['nombre_descuento'] = 'Compuestos (%): ' . ($descCompuesto*100);
 				$respuesta['valor_descuento'] = $descCompuesto;
 
 			}else{
 
 				if ($producto['Marca']['PrecioEspecificoMarca'][0]['tipo_descuento']) {
-					$respuesta['total_descuento'] = $precio_lista * ($producto['Marca']['PrecioEspecificoMarca'][0]['descuento'] / 100); // Primer descuento
+					$respuesta['total_descuento'] = round($precio_lista * ($producto['Marca']['PrecioEspecificoMarca'][0]['descuento'] / 100)); // Primer descuento
 					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['Marca']['PrecioEspecificoMarca'][0]['nombre'] . ': % ' . $producto['Marca']['PrecioEspecificoMarca'][0]['descuento'];	
 					$respuesta['valor_descuento'] = $producto['Marca']['PrecioEspecificoMarca'][0]['descuento'];
 
 				}else{
-					$respuesta['total_descuento'] = $producto['Marca']['PrecioEspecificoMarca'][0]['descuento']; // Primer descuento
+					$respuesta['total_descuento'] = round($producto['Marca']['PrecioEspecificoMarca'][0]['descuento']); // Primer descuento
 					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['Marca']['PrecioEspecificoMarca'][0]['nombre'] . ': $ ' . CakeNumber::currency($producto['Marca']['PrecioEspecificoMarca'][0]['descuento'] , 'CLP');
 					$respuesta['valor_descuento'] = $producto['Marca']['PrecioEspecificoMarca'][0]['descuento'];
 				}
@@ -274,12 +274,12 @@ class VentaDetalleProducto extends AppModel
 			if ($descuentosProducto[0]['descuento_compuesto']) {
 				
 				if ($descCompuesto > 0) {
-					$respuesta['total_descuento']  = $precio_lista * $descCompuesto;	
+					$respuesta['total_descuento']  = round($precio_lista * $descCompuesto);	
 				}else{
 					
 					$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $producto['Marca']['descuento_base']);
 					
-					$respuesta['total_descuento']  = $precio_lista * $descCompuesto;
+					$respuesta['total_descuento']  = round($precio_lista * $descCompuesto);
 				}
 
 				$respuesta['nombre_descuento'] = 'Compuestos (%): ' . ($descCompuesto*100);
@@ -288,11 +288,11 @@ class VentaDetalleProducto extends AppModel
 			}else{
 
 				if ($producto['PrecioEspecificoProducto'][0]['tipo_descuento']) {
-					$respuesta['total_descuento'] = $precio_lista * ($producto['PrecioEspecificoProducto'][0]['descuento'] / 100); // Primer descuento
+					$respuesta['total_descuento'] = round($precio_lista * ($producto['PrecioEspecificoProducto'][0]['descuento'] / 100)); // Primer descuento
 					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['PrecioEspecificoProducto'][0]['nombre'] . ': % ' . $producto['PrecioEspecificoProducto'][0]['descuento'];
 					$respuesta['valor_descuento'] = $producto['PrecioEspecificoProducto'][0]['descuento'];
 				}else{
-					$respuesta['total_descuento'] = $producto['PrecioEspecificoProducto'][0]['descuento']; // Primer descuento
+					$respuesta['total_descuento'] = round($producto['PrecioEspecificoProducto'][0]['descuento']); // Primer descuento
 					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['PrecioEspecificoProducto'][0]['nombre'] . ': ' . CakeNumber::currency($producto['PrecioEspecificoProducto'][0]['descuento'] , 'CLP');
 					$respuesta['valor_descuento'] = $producto['PrecioEspecificoProducto'][0]['descuento'];
 				}
@@ -302,7 +302,7 @@ class VentaDetalleProducto extends AppModel
 		}
 
 		if (empty($descuentosMarca) && empty($descuentosProducto) && isset($producto['Marca']['descuento_base'])) {
-			$respuesta['total_descuento'] = $precio_lista * ($producto['Marca']['descuento_base'] / 100); // Primer descuento
+			$respuesta['total_descuento'] = round($precio_lista * ($producto['Marca']['descuento_base'] / 100)); // Primer descuento
 			$respuesta['nombre_descuento'] = 'Descuento base marca' . ': % ' . $producto['Marca']['descuento_base'];
 			$respuesta['valor_descuento'] = $producto['Marca']['descuento_base'];
 		}

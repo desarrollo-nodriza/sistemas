@@ -53,7 +53,7 @@
                     <? foreach ($productos as $p) : ?>
                       <tr>
                         <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= $p['descripcion']; ?></td>
-                        <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= $p['cantidad']; ?></td>
+                        <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= $p['cantidad_validada_proveedor']; ?></td>
                         <!--<td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= array_sum(Hash::extract($ventas, 'VentaDetalle.{n}[venta_detalle_producto_id='.$p['venta_detalle_producto_id'].'].cantidad')); ?></td>-->
                       </tr>
                     <? endforeach; ?>

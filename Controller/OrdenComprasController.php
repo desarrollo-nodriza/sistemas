@@ -1268,9 +1268,37 @@ class OrdenComprasController extends AppController
 				'Moneda',
 				'VentaDetalleProducto' => array(
 					'Marca' => array(
-						'PrecioEspecificoMarca'
+						'PrecioEspecificoMarca' => array(
+							'conditions' => array(
+								'PrecioEspecificoMarca.activo' => 1,
+								'OR' => array(
+									'PrecioEspecificoMarca.descuento_infinito' => 1,
+									'AND' => array(
+										array('PrecioEspecificoMarca.fecha_inicio <=' => date('Y-m-d')),
+										array('PrecioEspecificoMarca.fecha_termino >=' => date('Y-m-d')),
+									)
+								)
+							),
+							'order' => array(
+								'PrecioEspecificoMarca.id' => 'DESC'
+							)
+						)
 					),
-					'PrecioEspecificoProducto'
+					'PrecioEspecificoProducto' => array(
+						'conditions' => array(
+							'PrecioEspecificoProducto.activo' => 1,
+							'OR' => array(
+								'PrecioEspecificoProducto.descuento_infinito' => 1,
+								'AND' => array(
+									array('PrecioEspecificoProducto.fecha_inicio <=' => date('Y-m-d')),
+									array('PrecioEspecificoProducto.fecha_termino >=' => date('Y-m-d')),
+								)
+							)
+						),
+						'order' => array(
+							'PrecioEspecificoProducto.id' => 'DESC'
+						)
+					)
 				),
 				'Administrador',
 				'Tienda',
@@ -1868,9 +1896,37 @@ class OrdenComprasController extends AppController
 					'Moneda',
 					'VentaDetalleProducto' => array(
 						'Marca' => array(
-							'PrecioEspecificoMarca'
+							'PrecioEspecificoMarca' => array(
+								'conditions' => array(
+									'PrecioEspecificoMarca.activo' => 1,
+									'OR' => array(
+										'PrecioEspecificoMarca.descuento_infinito' => 1,
+										'AND' => array(
+											array('PrecioEspecificoMarca.fecha_inicio <=' => date('Y-m-d')),
+											array('PrecioEspecificoMarca.fecha_termino >=' => date('Y-m-d')),
+										)
+									)
+								),
+								'order' => array(
+									'PrecioEspecificoMarca.id' => 'DESC'
+								)
+							)
 						),
-						'PrecioEspecificoProducto'
+						'PrecioEspecificoProducto' => array(
+							'conditions' => array(
+								'PrecioEspecificoProducto.activo' => 1,
+								'OR' => array(
+									'PrecioEspecificoProducto.descuento_infinito' => 1,
+									'AND' => array(
+										array('PrecioEspecificoProducto.fecha_inicio <=' => date('Y-m-d')),
+										array('PrecioEspecificoProducto.fecha_termino >=' => date('Y-m-d')),
+									)
+								)
+							),
+							'order' => array(
+								'PrecioEspecificoProducto.id' => 'DESC'
+							)
+						)
 					),
 					'Administrador',
 					'Tienda',
@@ -2791,10 +2847,11 @@ class OrdenComprasController extends AppController
 			$itemes = array();
 			$itemsAceptados  = array();
 			$itemsRechazados = array();
-
+			
 			foreach ($this->request->data['VentaDetalleProducto'] as $ip => $p) {
 
-				$cantidad = $p['cantidad'];
+				$cantidad          = $p['cantidad'];
+				$cantidad_validada = $p['cantidad_validada_proveedor'];
 
 				if ($p['estado_proveedor'] == 'accept') {
 					$itemsAceptados[$ip] = $p;
@@ -2803,53 +2860,31 @@ class OrdenComprasController extends AppController
 				# si es error de stock se decuenta las unidades rechazadas
 				if ($p['estado_proveedor'] == 'stockout' || $p['estado_proveedor'] == 'modified') {
 
-					$cantidad = $p['cantidad_solicitada'];
+					# Si la cantidad solicitada fue modifcada por el proveedor
+					if ($cantidad_validada > 0) {
 
-					if ($p['cantidad'] > 0) {
-						
 						$itemsAceptados[$ip] = $p;
-						$itemes[$p['estado_proveedor']][$ip]['venta_detalle_producto_id'] = $p['venta_detalle_producto_id'];
-						$itemes[$p['estado_proveedor']][$ip]['codigo']                    = $p['codigo'];
-						$itemes[$p['estado_proveedor']][$ip]['descripcion']               = $p['descripcion'];
-						$itemes[$p['estado_proveedor']][$ip]['precio_unitario']           = $p['precio_unitario'];
-						$itemes[$p['estado_proveedor']][$ip]['total_neto']                = $p['total_neto'];
-						$itemes[$p['estado_proveedor']][$ip]['descuento_producto']        = $p['descuento_producto'];
-						$itemes[$p['estado_proveedor']][$ip]['tipo_descuento']            = $p['tipo_descuento'];
-						$itemes[$p['estado_proveedor']][$ip]['estado_recibido']           = $p['estado_recibido'];
-						$itemes[$p['estado_proveedor']][$ip]['cantidad']                  = $p['cantidad'];
-						$itemes[$p['estado_proveedor']][$ip]['estado_proveedor']          = $p['estado_proveedor'];
-						$itemes[$p['estado_proveedor']][$ip]['nota_proveedor']            = $p['nota_proveedor'];
+						
+						$itemes[$p['estado_proveedor']][$ip] = $p;
 
-						$cantidad = $p['cantidad_solicitada'] - $p['cantidad'];
 					}
 					
-					$p['estado_proveedor'] = 'stockout';
-					$p['cantidad'] = $cantidad;
+					# Se guardan como rechazados as unidades sobrantes
 					$itemsRechazados[$ip] = $p;
-					
+					$itemsRechazados[$ip]['estado_proveedor'] = 'stockout';
 				}
 
 				if ($p['estado_proveedor'] == 'price_error') {
 					$itemsRechazados[$ip] = $p;
 				}
 			
-				$itemes[$p['estado_proveedor']][$ip]['venta_detalle_producto_id'] = $p['venta_detalle_producto_id'];
-				$itemes[$p['estado_proveedor']][$ip]['codigo']                    = $p['codigo'];
-				$itemes[$p['estado_proveedor']][$ip]['descripcion']               = $p['descripcion'];
-				$itemes[$p['estado_proveedor']][$ip]['precio_unitario']           = $p['precio_unitario'];
-				$itemes[$p['estado_proveedor']][$ip]['total_neto']                = $p['total_neto'];
-				$itemes[$p['estado_proveedor']][$ip]['descuento_producto']        = $p['descuento_producto'];
-				$itemes[$p['estado_proveedor']][$ip]['tipo_descuento']            = $p['tipo_descuento'];
-				$itemes[$p['estado_proveedor']][$ip]['estado_recibido']           = $p['estado_recibido'];
-				$itemes[$p['estado_proveedor']][$ip]['cantidad']                  = $p['cantidad'];
-				$itemes[$p['estado_proveedor']][$ip]['estado_proveedor']          = $p['estado_proveedor'];
-				$itemes[$p['estado_proveedor']][$ip]['nota_proveedor']            = $p['nota_proveedor'];
+				$itemes[$p['estado_proveedor']][$ip] = $p;
 			}
-			
-			$total_rechazados  = array_sum(Hash::extract($itemsRechazados, '{n}.cantidad_solicitada'));
+
+			$total_rechazados  = array_sum(Hash::extract($itemsRechazados, '{n}.cantidad')) - array_sum(Hash::extract($itemsRechazados, '{n}.cantidad_validada_proveedor'));
 			$total_stockout    = count(Hash::extract($itemes, 'stockout.{n}.venta_detalle_producto_id'));
 			$total_price_error = count(Hash::extract($itemes, 'price_error.{n}.venta_detalle_producto_id'));
-			$total_solicitados = array_sum(Hash::extract($oc['VentaDetalleProducto'], '{n}.OrdenComprasVentaDetalleProducto.cantidad'));
+			$total_solicitados = array_sum(Hash::extract($itemes, 'accept.{n}.cantidad'));
 
 			# si existen itemes rechazados, se crea una nueva OC para el mismo proveedor pero con los produtos que correspondan
 			# sí el rechazo es por precio se notifica a validador interno
@@ -2903,12 +2938,13 @@ class OrdenComprasController extends AppController
 
 				# recalculamos los montos
 				foreach ($itemsAceptados as $i => $item) {
-					
-					$descuentos = ClassRegistry::init('VentaDetalleProducto')->obtener_descuento_por_producto_id($item['venta_detalle_producto_id']);
-					
+
+					$descuento_pp       = $item['descuento_producto'] / $item['cantidad'];
+					$descuento_pp_final = $descuento_pp * $item['cantidad_validada_proveedor'];
+
 					$this->request->data['VentaDetalleProducto'][$i]['precio_unitario']    = $item['precio_unitario'];
-					$this->request->data['VentaDetalleProducto'][$i]['total_neto']         = ($item['precio_unitario'] - $descuentos['total_descuento']) * $item['cantidad'];
-					$this->request->data['VentaDetalleProducto'][$i]['descuento_producto'] = $descuentos['total_descuento'] * $item['cantidad'];
+					$this->request->data['VentaDetalleProducto'][$i]['total_neto']         = ($item['precio_unitario'] * $item['cantidad_validada_proveedor']) - $descuento_pp_final;
+					$this->request->data['VentaDetalleProducto'][$i]['descuento_producto'] = $descuento_pp_final;
 
 					$total_neto = $total_neto + $this->request->data['VentaDetalleProducto'][$i]['total_neto'];
 				}
@@ -2920,7 +2956,7 @@ class OrdenComprasController extends AppController
 				$this->request->data['OrdenCompra']['total']           = ($total_neto - $this->request->data['OrdenCompra']['descuento_monto']) + $this->request->data['OrdenCompra']['iva'];
 
 			}
-
+			
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 
 
