@@ -2332,9 +2332,12 @@ class VentaDetalleProductosController extends AppController
 
 				$resCurl = curl_exec($init);
 
+				// Obtener el código de respuesta
+    			$httpcode = curl_getinfo( $init, CURLINFO_HTTP_CODE );
+
 				curl_close($init);
 
-				if (empty($resCurl))
+				if (empty($resCurl) || $httpcode == 400)
 					continue;
 
 				$sec_nombre = 'sec-' . strtolower(Inflector::slug($p['VentaDetalleProducto']['codigo_proveedor'])) . '.jpg';
