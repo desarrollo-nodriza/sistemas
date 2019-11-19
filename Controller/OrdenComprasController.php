@@ -269,7 +269,53 @@ class OrdenComprasController extends AppController
 			$this->filtrar('ordenCompras', 'index_no_procesadas');
 		}
 
-		$paginate = $this->paginacion_index();
+		$paginate =  array(
+			'recursive'			=> -1,
+			'contain' => array(
+				'Administrador' => array(
+					'fields' => array(
+						'Administrador.nombre'
+					)
+				),
+				'Proveedor' => array(
+					'fields' => array(
+						'Proveedor.nombre'
+					)
+				),
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.nombre'
+					)
+				)
+			),
+			'conditions' => array(
+				'OrdenCompra.estado' => null,
+				'OR' => array(
+					array(
+						'OrdenCompra.parent_id !=' => '',
+						'OrdenCompra.oc_manual' => 0
+					),
+					array(
+						'OrdenCompra.parent_id' => '',
+						'OrdenCompra.oc_manual' => 1
+					)
+				)
+			),
+			'fields' => array(
+				'OrdenCompra.id',
+				'OrdenCompra.estado',
+				'OrdenCompra.created',
+				'OrdenCompra.tienda_id',
+				'OrdenCompra.parent_id',
+				'OrdenCompra.administrador_id',
+				'OrdenCompra.email_finanza',
+				'OrdenCompra.oc_manual'
+			),
+			'order' => array(
+				'OrdenCompra.id' => 'DESC'
+			),
+			'limit' => 20
+		);
 
 		# Filtrar
 		if ( isset($this->request->params['named']) ) {
