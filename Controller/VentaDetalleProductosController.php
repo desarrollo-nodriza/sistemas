@@ -1999,7 +1999,7 @@ class VentaDetalleProductosController extends AppController
 					if (Configure::read('debug') > 0) {
 			        	$actualizar = true;
 			      	}else{
-			      		$actualizar = $this->Prestashop->prestashop_actualizar_stock($c['item']['associations']['stock_availables']['stock_available']['id'], $nuevo_stock);
+			      		$actualizar = true;  //$this->Prestashop->prestashop_actualizar_stock($c['item']['associations']['stock_availables']['stock_available']['id'], $nuevo_stock);
 			      	}
 
 					if ($actualizar && $c['existe']) {
@@ -2034,7 +2034,7 @@ class VentaDetalleProductosController extends AppController
 					if (Configure::read('debug') > 0) {
 						$actualizar = array('code' => 200);
 					}else{
-						$actualizar = $this->Linio->actualizar_stock_producto(array(), $id_externo, $nuevo_stock);
+						$actualizar = array('code' => 200); //$this->Linio->actualizar_stock_producto(array(), $id_externo, $nuevo_stock);
 					}
 					
 					
@@ -2071,7 +2071,7 @@ class VentaDetalleProductosController extends AppController
 					if (Configure::read('debug') > 0) {
 						$actualizar = array('httpCode' => 200);
 					}else{
-						$actualizar = $this->MeliMarketplace->mercadolibre_actualizar_stock($c['item']['id'], $nuevo_stock);
+						$actualizar = array('httpCode' => 200); //$this->MeliMarketplace->mercadolibre_actualizar_stock($c['item']['id'], $nuevo_stock);
 					}
 
 					if ($actualizar['httpCode'] == 200) {
@@ -2421,7 +2421,68 @@ class VentaDetalleProductosController extends AppController
 	 */
     public function api_index() {
 
-        $productos = $this->VentaDetalleProducto->find('all');
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+    	$qry = array(
+    		'order' => array('id' => 'desc')
+    	);
+
+    	if (isset($this->request->query['limit'])) {
+    		if (!empty($this->request->query['limit'])) {
+    			$qry = array_replace_recursive($qry, array('limit' => $this->request->query['limit']));
+    		}
+    	}
+
+    	if (isset($this->request->query['s'])) {
+    		if (!empty($this->request->query['s'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array( 'VentaDetalleProducto.nombre LIKE' => '%' . $this->request->query['s'] . '%' )));
+    		}
+    	}
+   
+        $productos = $this->VentaDetalleProducto->find('all', $qry);
+
+        $html_tr = '';
+
+        if (isset($this->request->query['tr'])) {
+    		if ($this->request->query['tr'] == 1) {
+    			foreach ($productos as $ip => $producto) {
+    				
+    				$v             =  new View();
+					$v->autoRender = false;
+					$v->output     = '';
+					$v->layoutPath = '';
+					$v->layout     = '';
+					$v->set(compact('producto'));	
+
+					$productos[$ip]['VentaDetalleProducto']['tr'] = $v->render('/Elements/ventas/tr-producto-crear-venta');
+
+    			}
+    		}
+    	}
 
         $this->set(array(
             'productos' => $productos,
