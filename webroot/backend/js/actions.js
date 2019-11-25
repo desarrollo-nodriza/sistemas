@@ -166,17 +166,17 @@ var page_actions = function(){
     });
 
     $(".panel-collapse").on("click",function(){
-        panel_collapse($(this).parents(".panel"));
+        panel_collapse($(this).parents(".panel").eq(0));
         $(this).parents(".dropdown").removeClass("open");
         return false;
     });
     $(".panel-remove").on("click",function(){
-        panel_remove($(this).parents(".panel"));
+        panel_remove($(this).parents(".panel").eq(0));
         $(this).parents(".dropdown").removeClass("open");
         return false;
     });
     $(".panel-refresh").on("click",function(){
-        var panel = $(this).parents(".panel");
+        var panel = $(this).parents(".panel").eq(0);
         panel_refresh(panel);
 
         setTimeout(function(){

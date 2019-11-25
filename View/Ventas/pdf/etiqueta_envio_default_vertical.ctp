@@ -24,7 +24,7 @@
 		</tr>
 		<tr>
 			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px;">Nombre:</td>
-			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px;"><?=$venta['Envio'][0]['nombre_receptor']; ?></td>
+			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px;"><?=(empty($venta['Venta']['nombre_receptor'])) ? $venta['VentaCliente']['nombre'] . $venta['VentaCliente']['apellido'] : $venta['Venta']['nombre_receptor'] ; ?></td>
 		</tr>
 		<tr>
 			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px;">Rut:</td>
@@ -32,11 +32,11 @@
 		</tr>
 		<tr>
 			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px;">Dirección:</td>
-			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px;"><?=$venta['Envio'][0]['direccion_envio']; ?></td>
+			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px;"><?=$venta['Venta']['direccion_entrega']; ?> - <?=$venta['Venta']['comuna_entrega']; ?></td>
 		</tr>
 		<tr>
 			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;">Fono:</td>
-			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;"><?=$venta['Envio'][0]['fono_receptor']; ?></td>
+			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;"><?= (empty($venta['Venta']['fono_receptor'])) ? $venta['VentaCliente']['telefono'] : $venta['Venta']['fono_receptor'] ; ?></td>
 		</tr>
 	</table>
 
@@ -49,11 +49,15 @@
 				Id externo:
 			</td>
 			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px;">
-				#<?=$venta['Venta']['id_externo']; ?> - 
-				<? if (empty($venta['Venta']['marketplace_id'])) : ?>
-					<?=$venta['Tienda']['nombre'];?>
+				<? if (!$venta['Venta']['venta_manual']) : ?>
+					Id externo: #<?=$venta['Venta']['id_externo']; ?> - 
+					<? if (empty($venta['Venta']['marketplace_id'])) : ?>
+						<?=$venta['Tienda']['nombre'];?>
+					<? else : ?>
+						<?=$venta['Marketplace']['nombre'];?>
+					<? endif; ?>
 				<? else : ?>
-					<?=$venta['Marketplace']['nombre'];?>
+					Pos de venta
 				<? endif; ?>
 			</td>
 		</tr>

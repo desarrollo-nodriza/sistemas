@@ -297,6 +297,28 @@ Router::connect(
 );
 
 
+/**
+ *  Clientes
+ */
+Router::connect(
+    '/api/clientes', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaClientes', 
+        'action' => 'index',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+
+Router::connect(
+    '/api/clientes/add', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaClientes', 
+        'action' => 'add',
+        'api' => true,
+        'prefix' => 'api')
+);
+
 
 
 

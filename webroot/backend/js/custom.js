@@ -88,131 +88,6 @@ jQuery(document).ready(function($)
 		}); 
 	}
 
-	// WIZARD
-	if($(".wizard").length > 0){
-
-        //Check count of steps in each wizard
-        $(".wizard > ul").each(function(){
-            $(this).addClass("steps_"+$(this).children("li").length);
-        });//end
-
-        // This par of code used for example
-        if($("#ReporteGenerateForm").length > 0){
-
-            var validator = $("#ReporteGenerateForm").validate({
-                    rules: {
-                        'data[Reporte][id_reporte]': {
-                            required: true
-                        },
-                        'data[Reporte][f_inicio]': {
-                            required: true
-                        },
-                        'data[Reporte][f_final]': {
-                            required: true,
-                        },
-                        'data[Reporte][id_grafico][]': {
-                            required: true
-                        },
-                        name: {
-                            required: true,
-                            maxlength: 10
-                        },
-                        adress: {
-                            required: true
-                        }
-                    },
-                    messages: {
-                    	'data[Reporte][id_reporte]': {
-                            required: 'Seleccione un reporte para continuar'
-                        },
-                        'data[Reporte][f_inicio]': {
-                            required: 'Seleccione una fecha inicial'
-                        },
-                        'data[Reporte][f_final]': {
-                            required: 'Seleccione una fecha final'
-                        },
-                        'data[Reporte][id_grafico][]': {
-                            required: 'Seleccione al menos un gráfico'
-                        }
-                    }
-                });
-
-        }// End of example
-
-        $(".wizard").smartWizard({
-            // This part of code can be removed FROM
-            onLeaveStep: function(obj){
-                var wizard = obj.parents(".wizard");
-
-                if(wizard.hasClass("wizard-validation")){
-
-                    var valid = true;
-
-                    $('input,select,textarea',$(obj.attr("href"))).each(function(i,v){
-                        valid = validator.element(v) && valid;
-                    });
-
-                    if(!valid){
-                        wizard.find(".stepContainer").removeAttr("style");
-                        validator.focusInvalid();
-                        return false;
-                    }
-
-                }
-
-                return true;
-            },// <-- TO
-
-            //This is important part of wizard init
-            onShowStep: function(obj){
-
-            	// Resume
-				var step1 = $('#ReporteIdReporte option:selected').text();
-				var step2_fi = $('#ReporteFInicio').val();
-				var step2_ff = $('#ReporteFFinal').val();
-				var $step3 = $('#ReporteIdGrafico option:selected');
-		
-				var step3Html = '<ul>';
-
-				$step3.each(function(){
-
-					step3Html += '<li>' + $(this).text() + '</li>';
-				});
-
-				step3Html += '</ul>';
-
-				var htmlResume = '<table class="table table-striped">';
-				htmlResume	+= '<thead>';
-				htmlResume	+= '<th>Reporte</th>';
-				htmlResume	+= '<th>Periodo</th>';
-				htmlResume	+= '<th>Gráficos</th>';
-				htmlResume	+= '</thead>';
-				htmlResume	+= '<tbody>';
-				htmlResume	+= '<tr>';
-				htmlResume	+= '<td>' + step1 + '</td>';
-				htmlResume	+= '<td>' + step2_fi + ' - ' + step2_ff + '</td>';
-				htmlResume	+= '<td> ' + step3Html + '</td>';
-				htmlResume	+= '</tr>';
-				htmlResume	+= '</tbody>';
-
-				$('#resume').html(htmlResume);
-
-                var wizard = obj.parents(".wizard");
-
-                if(wizard.hasClass("show-submit")){
-
-                    var step_num = obj.attr('rel');
-                    var step_max = obj.parents(".anchor").find("li").length;
-
-                    if(step_num == step_max){
-                        obj.parents(".wizard").find(".actionBar .btn-primary").css("display","block");
-                    }
-                }
-                return true;
-            }//End
-        });
-    }
-
     /**
      * Filtro de producto
      */
@@ -399,6 +274,14 @@ jQuery(document).ready(function($)
 			format		: 'yyyy-mm-dd'
 		});
 	}
+
+
+	if($(".timepicker").length > 0)
+        $('.timepicker').timepicker();
+
+    // 24 hours mode timepicker
+    if($(".timepicker24").length > 0)
+        $(".timepicker24").timepicker({minuteStep: 5,showSeconds: true,showMeridian: false});
 
 	/**
 	 * Buscador de OC - Datepicker rango fechas

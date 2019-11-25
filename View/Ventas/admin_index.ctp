@@ -71,8 +71,8 @@
 
 						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
 							<div class="form-group">
-								<label>Marketplace</label>
-								<?= $this->Form->input('marketplace_id', array('class' => 'form-control', 'empty' => 'Marketplace', 'required' => false, 'default' => $FiltroMarketplace)); ?>
+								<label>Canal de venta</label>
+								<?= $this->Form->input('marketplace_id', array('class' => 'form-control', 'empty' => 'Seleccione canal', 'required' => false, 'default' => $FiltroMarketplace)); ?>
 							</div>
 						</div>
 
@@ -205,7 +205,7 @@
 									<th style="width: 120px"><?= $this->Paginator->sort('medio_pago_id', 'Medio de Pago', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('venta_estado_categoria_id', 'Estado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('picking_estado', 'Picking', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('marketplace_id', 'Marketplace', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('marketplace_id', 'Canal de venta', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th style="width: 120px"><?= $this->Paginator->sort('cliente_id', 'Cliente', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('Dte.id', 'Dtes', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<!--<th><?= $this->Paginator->sort('atendida', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>-->
@@ -275,8 +275,12 @@
 
 										<!--<td><?= h($venta['Tienda']['nombre']); ?>&nbsp;</td>-->
 
-										<td><?= (!empty($venta['Venta']['marketplace_id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'] ; ?>&nbsp;</td>
-
+										<td>
+											<? if($venta['Venta']['venta_manual']) : ?>
+												<?= (!empty($venta['Venta']['marketplace_id'])) ? $venta['Marketplace']['nombre'] : 'Pos de Venta' ; ?>&nbsp;</td>
+											<? else : ?>
+												<?= (!empty($venta['Venta']['marketplace_id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'] ; ?>&nbsp;</td>
+											<? endif; ?>
 										<td>
 											<?php
 

@@ -586,7 +586,7 @@ class OrdenesController extends AppController
 			
 			//----------------------------------------------------------------------------------------------------
 			//carga de mensajes de prestashop
-			if (empty($venta['Marketplace']['id'])) {
+			if (empty($venta['Marketplace']['id']) && !empty($venta['Venta']['id_externo'])) {
 
 				$this->Prestashop->crearCliente($venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop']);
 
@@ -622,7 +622,7 @@ class OrdenesController extends AppController
 
 		$documentos = array();
 
-		if (empty($venta['Marketplace']['id'])) {
+		if (empty($venta['Marketplace']['id']) && !empty($venta['Venta']['id_externo'])) {
 
 			# Datos de facturación para compras por Prestashop
 			ToolmaniaComponent::$api_url = $this->Session->read('Tienda.apiurl_prestashop');

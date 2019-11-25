@@ -121,6 +121,15 @@ class Venta extends AppModel
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'VentaEstado')
 		),
+		'Administrador' => array(
+			'className'				=> 'Administrador',
+			'foreignKey'			=> 'administrador_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'VentaEstado')
+		),
 	);
 	public $hasMany = array(
 		'VentaDetalle' => array(
@@ -302,7 +311,7 @@ class Venta extends AppModel
 							'VentaDetalle.activo' => 1
 						),
 						'fields' => array(
-							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app', 'VentaDetalle.reservado_virtual'
+							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.precio_bruto', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app', 'VentaDetalle.reservado_virtual'
 						)
 					),
 					'VentaEstado' => array(
@@ -364,12 +373,17 @@ class Venta extends AppModel
 							'Dte.total', 'Dte.fecha', 'Dte.estado', 'Dte.venta_id', 'Dte.pdf', 'Dte.invalidado', 'Dte.administrador_id'
 						),
 						'order' => 'Dte.fecha DESC'
+					),
+					'Administrador' => array(
+						'fields' => array(
+							'Administrador.email', 'Administrador.nombre'
+						)
 					)
 				),
 				'fields' => array(
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
 					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.metodo_envio_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.comuna_entrega', 'Venta.nombre_receptor',
-					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito', 'Venta.etiqueta_envio_externa'
+					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito', 'Venta.etiqueta_envio_externa', 'Venta.venta_manual', 'Venta.administrador_id'
 				)
 			)
 		);
@@ -936,6 +950,33 @@ class Venta extends AppModel
 		}
 
 		return $items;
+	}
+
+
+	public function generar_referencia()
+	{
+		$ref = strtoupper(bin2hex(openssl_random_pseudo_bytes(3)));
+
+		while (!self::referencia_disponible($ref)) {
+			$ref = bin2hex(openssl_random_pseudo_bytes(3));
+		}
+
+		return $ref;
+	}
+
+	private function referencia_disponible($ref)
+	{
+		$venta = $this->find('count', array(
+			'conditions' => array(
+				'Venta.referencia' => $ref
+			)
+		));
+
+		if ($venta > 1) {
+			return false;
+		}
+
+		return true;
 	}
 
 }

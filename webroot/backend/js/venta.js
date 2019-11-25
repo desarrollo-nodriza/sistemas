@@ -556,7 +556,527 @@ $(function() {
 
 		}
 
+		var obtener_metodo_envio_venta = function($id){
+
+			$.app.loader.mostrar();
+
+			$.ajax({
+				url: webroot + 'metodoEnvios/ajax_obtener_metodo_envio/' + $id,
+				type: 'GET',
+			})
+			.done(function(res) {
+				
+				var $metodo_envio = JSON.parse(res);
+
+				if ($metodo_envio.MetodoEnvio.retiro_local) {
+					$('#VentaDireccionEntrega').parents('div').eq(0).addClass('hidden');
+					$('#VentaComunaEntrega').parents('div').eq(0).addClass('hidden');
+					$('#VentaFonoReceptor').parents('div').eq(0).addClass('hidden');
+					$('#VentaCostoEnvio').parents('div').eq(0).addClass('hidden');
+
+					$('#VentaDireccionEntrega').rules("remove", "required");
+				    $('#VentaComunaEntrega').rules("remove", "required");
+				    $('#VentaCostoEnvio').rules("remove", "required");
+
+				}else{
+					$('#VentaDireccionEntrega').parents('div').eq(0).removeClass('hidden');
+					$('#VentaComunaEntrega').parents('div').eq(0).removeClass('hidden');
+					$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
+					$('#VentaCostoEnvio').parents('div').eq(0).removeClass('hidden');
+
+					$('#VentaDireccionEntrega').rules("add", {
+				        required: true,
+				        messages: {
+				        	required: 'Campo requerido'
+				        }
+				    });
+
+				    $('#VentaComunaEntrega').rules("add", {
+				        required: true,
+				        messages: {
+				        	required: 'Campo requerido'
+				        }
+				    });
+
+				    $('#VentaCostoEnvio').rules("add", {
+				        required: true,
+				        messages: {
+				        	required: 'Campo requerido'
+				        }
+				    });
+				}
+
+			})
+			.fail(function() {
+				
+			})
+			.always(function(){
+				$.app.loader.ocultar();
+			});
+			
+		}
+
+		// Start Smart Wizard
+        var pasos_compra = function(){
+
+            if($("#buy-steps").length > 0){
+
+            	jQuery.validator.setDefaults({
+				  ignore: ''
+				});
+
+            	var validator = $('#VentaAdminAddForm').validate();
+
+            	var cantidad_producto = 0,
+            		subtotal_producto = 0,
+            		total_transporte = 0,
+            		total_productos = 0;
+
+                //Check count of steps in each wizard
+                $("#buy-steps > ul").each(function(){
+                    $(this).addClass("steps_"+$(this).children("li").length);
+                });//end
+
+                $("#buy-steps").smartWizard({
+                	lang: {
+                		next: "Siguiente",
+                		previous: "Anterior"
+                	},
+                	anchorSettings: {
+						anchorClickable: true, // Enable/Disable anchor navigation
+						enableAllAnchors: false, // Activates all anchors clickable all times
+						markDoneStep: true, // add done css
+						enableAnchorOnDoneStep: true // Enable/Disable the done steps navigation
+					},            
+                    // This part of code can be removed FROM
+                    onLeaveStep: function(obj){
+                        var wizard = obj.parents("#buy-steps");
+
+                        if(wizard.hasClass("wizard-validation")){
+
+                            var valid = true;
+
+                            $('input,textarea,select',$(obj.attr("href"))).each(function(i,v){
+                                valid = validator.element(v) && valid;
+                            });
+
+                            if(!valid){
+                                wizard.find(".stepContainer").removeAttr("style");
+                                validator.focusInvalid();
+
+                                noty({text: 'Complete todos los campos requeridos.', layout: 'topRight', type: 'error'});
+                                setTimeout(function(){
+									$.noty.closeAll();
+								}, 2000);
+
+                                return false;
+                            }
+
+                        }
+
+                        // Info
+                        if(obj.attr('rel') == 4 && $('.js-pagos-wrapper > tr:not(.hidden)').length == 0){
+
+                        	noty({text: 'Debe agregar al menos un pago', layout: 'topRight', type: 'error'});
+							
+							setTimeout(function(){
+								$.noty.closeAll();
+							}, 10000);
+
+							return false;
+                        }
+
+
+                        // Productos
+                        if(obj.attr('rel') == 2 && $('.js-productos-wrapper > tr').length == 0){
+
+                        	noty({text: 'Debe agregar al menos un producto', layout: 'topRight', type: 'error'});
+							
+							setTimeout(function(){
+								$.noty.closeAll();
+							}, 10000);
+
+							return false;
+                        }
+
+                        // Se calcula el total a pagar
+                        if(obj.attr('rel') == 1) {
+
+                        	$('#transporte').data('value', $('#VentaCostoEnvio').val());
+							recalcular_monto_pagar();
+
+                        	venta.clonarElemento( obj.parents('.wizard').eq(0).find('.stepContainer > #step-2').find('.js-pagos-wrapper > .clone-tr').eq(0) );
+
+                        }
+
+                        return true;
+
+                        
+                    },// <-- TO
+
+                    //This is important part of wizard init
+                    onShowStep: function(obj){
+                        var wizard = obj.parents("#buy-steps");
+
+                        if(wizard.hasClass("show-submit")){
+
+                            var step_num = obj.attr('rel');
+                            var step_max = obj.parents(".anchor").find("li").length;
+
+                            if(step_num == step_max){
+                                obj.parents("#buy-steps").find(".actionBar .btn-primary").css("display","block");
+                            }
+                        }
+
+                        page_content_onresize();
+
+                        return true;
+                    }//End
+                });
+            }
+
+        }// End Smart Wizard
+
+        var recalcular_monto_pagar = function(){
+
+        	var subtotal_pagar     = $('#subtotal').data('value'),
+				iva_pagar          = $('#iva').data('value'),
+				transporte         = parseFloat($('#transporte').data('value')),
+				descuento          = parseFloat($('#VentaDescuento').data('value')),
+				total_pagar        = $('#VentaTotal').data('value'),
+				subtotal_producto  = 0;
+
+			$('.js-subtotal-producto').each(function(){
+				var p_neto =  parseFloat($(this).data('value') / 1.19);
+        		subtotal_producto = parseFloat(subtotal_producto) + p_neto; 
+        	});
+
+
+        	subtotal_pagar = subtotal_producto;
+        	iva_pagar = parseFloat(subtotal_pagar * 1.19) - subtotal_pagar;
+
+        	$('#subtotal').data('value', subtotal_pagar.toFixed(2));
+        	$('#subtotal').text(subtotal_pagar.toFixed(2));
+
+        	$('#iva').data('value', iva_pagar.toFixed(2));
+        	$('#iva').text(iva_pagar.toFixed(2));
+
+        	$('#transporte').data('value', transporte.toFixed(2));
+			$('#transporte').text(transporte.toFixed(2));
+        	
+			$('#VentaDescuento').data('value', descuento.toFixed(2));
+
+			total_pagar = (parseFloat(subtotal_pagar) + parseFloat(iva_pagar) + parseFloat(transporte)) - parseFloat(descuento);
+
+			$('#VentaTotal').data('value', total_pagar);
+			$('#VentaTotal').val(total_pagar);
+
+			$('#total-resumen').text(total_pagar);
+			$('#total-resumen').mask('000.000.000.000.000', {reverse: true});
+
+			// PAgos y vuelto
+			var pagado = 0;
+			var vuelto = 0;
+			$('.js-monto-pago').each(function(){
+				if ($(this).val() > 0) {
+					pagado = parseFloat(pagado) + parseFloat($(this).val());
+				}
+			});
+
+			if (pagado > total_pagar) {
+				vuelto = parseFloat(pagado) - parseFloat(total_pagar);
+			}
+
+			$('#pagado-resumen').text(pagado);
+			$('#pagado-resumen').mask('000.000.000.000.000', {reverse: true});
+
+			$('#vuelto-resumen').text(vuelto);
+			$('#vuelto-resumen').mask('000.000.000.000.000', {reverse: true});
+
+        }
+
+        var calcular_monto_pagar = function(){
+
+        	recalcular_monto_pagar();
+
+        	$(document).on('change', '.js-cantidad-producto', function(){
+				
+        		var contexto = $(this).parents('tr').eq(0),
+        			cantidad = $(this).val(),
+        			monto = contexto.find('.js-precio-producto').val();
+
+				if ($(this).val() > 0 && monto > 0) {
+					
+					$(this).data('value', $(this).val());
+
+					var subtotal = parseInt(cantidad) * parseInt(monto);
+
+					contexto.find('.js-subtotal-producto').data('value', subtotal)
+					contexto.find('.js-subtotal-producto').text(subtotal);
+
+					recalcular_monto_pagar();
+				}
+
+			});
+
+			$(document).on('change', '.js-precio-producto', function(){
+
+				var contexto = $(this).parents('tr').eq(0),
+        			monto = $(this).val(),
+        			cantidad = contexto.find('.js-cantidad-producto').val();
+				
+				if ($(this).val() > 0 && cantidad > 0) {
+
+					$(this).data('value', $(this).val());
+
+					var subtotal = parseInt(cantidad) * parseInt(monto);
+
+					contexto.find('.js-subtotal-producto').data('value', subtotal)
+					contexto.find('.js-subtotal-producto').text(subtotal);
+
+					recalcular_monto_pagar();
+				}
+
+			});
+
+			$(document).on('change', '#VentaDescuento', function(){
+				$(this).data('value', $(this).val());
+				recalcular_monto_pagar();
+			});
+
+			$(document).on('click', '.js-recalcular-montos', function(e){
+				e.preventDefault();
+
+				var $th = $(this).parents('tr').eq(0);
+
+				$th.fadeOut('slow', function() {
+					$th.remove();
+					recalcular_monto_pagar();
+				});
+			});
+
+			$(document).on('change, focusout', '.js-monto-pago', function(){
+				if ($(this).val() > 0) {
+					$(this).data('value', $(this).val());
+					recalcular_monto_pagar();
+				}
+			});
+
+        }
+
 		return {
+			autocompletar_productos: function(){
+
+				$( "#obtener_producto" ).autocomplete({
+			      source: function( request, response ) {
+			        $.ajax( {
+			          url: webroot + 'api/productos.json',
+			          data: {
+			          	token : $('#VentaAccessToken').val(),
+			          	limit: 20,
+			            s: request.term,
+			            tr: 1 // Solicitamos que nos retorne el TR
+			          },
+			          success: function( data ) {
+
+			          	var $result = [];
+			          	
+			          	for (var i = 0; i < data.productos.length; i++) {
+
+			          		$result[i] = {
+			          			label :  data.productos[i].VentaDetalleProducto.nombre,
+			          			value :  data.productos[i].VentaDetalleProducto.nombre,
+			          			id :  data.productos[i].VentaDetalleProducto.id,
+			          			tr : data.productos[i].VentaDetalleProducto.tr
+			          		}
+			          	}
+			            response( $result );
+			          },
+			          fail: function(error){
+			          	noty({text: error.responseJSON.message, layout: 'topRight', type: 'error'});
+						setTimeout(function(){
+							$.noty.closeAll();
+						}, 10000);
+			          }
+			        } );
+			      },
+			      minLength: 3,
+			      select: function( event, ui ) {
+			      	
+			      	$('#obtener_producto').val('');
+
+			      	$('.js-productos-wrapper').append(ui.item.tr);
+
+			      	$.app.formularios.bind('#VentaAdminAddForm');
+
+			      }
+			    });
+
+			},
+			crear_cliente: function(){
+
+				$.app.loader.mostrar();
+
+				$('#success-mensaje').html('');
+				$('#success-mensaje').parents('.alert').eq(0).addClass('hidden');
+				$('#error-mensaje').html('');
+				$('#error-mensaje').parents('.alert').eq(0).addClass('hidden');
+
+				$.ajax({
+					url: webroot + 'api/clientes/add.json?token=' + $('#VentaAccessToken').val(),
+					type: 'POST',
+					data: {
+						nombre: $('#VentaClienteNombre').val(),
+						apellido: $('#VentaClienteApellido').val(),
+						email: $('#VentaClienteEmail').val(),
+						rut: $('#VentaClienteRut').val(),
+						telefono: $('#VentaClienteTelefono').val()
+					},
+				})
+				.done(function(res) {
+					
+					$('#success-mensaje').html('200: Cliente creado exitosamente.');
+					$('#success-mensaje').parents('.alert').eq(0).removeClass('hidden');
+
+					$('#VentaClienteNombre').val('');
+					$('#VentaClienteApellido').val('');
+					$('#VentaClienteEmail').val('');
+					$('#VentaClienteRut').val('');
+					$('#VentaClienteTelefono').val('');
+
+					$('#VentaVentaClienteId').val(res.response.cliente.id);
+					$('#obtener_cliente').val(res.response.cliente.email);
+
+					setTimeout(function(){
+						$('#modalCrearCliente').modal('hide');
+					}, 1500);
+
+				})
+				.fail(function(error, textStatus, message) {
+
+					$('#error-mensaje').html(error.responseJSON.code + ': ' + error.responseJSON.message);
+					$('#error-mensaje').parents('.alert').eq(0).removeClass('hidden');
+
+				})
+				.always(function(){
+					$.app.loader.ocultar();
+				});
+				
+			},
+			autocompletar_clientes: function(){
+
+				    $( "#obtener_cliente" ).autocomplete({
+				      source: function( request, response ) {
+				        $.ajax( {
+				          url: webroot + 'api/clientes.json',
+				          data: {
+				          	limit: 40,
+				            email: request.term
+				          },
+				          success: function( data ) {
+
+				          	var $result = [];
+				          	
+				          	for (var i = 0; i < data.clientes.length; i++) {
+
+				          		$result[i] = {
+				          			label :  data.clientes[i].VentaCliente.nombre + ' ' + data.clientes[i].VentaCliente.apellido + ' <' + data.clientes[i].VentaCliente.email + '>',
+				          			value :  data.clientes[i].VentaCliente.email,
+				          			id :  data.clientes[i].VentaCliente.id
+				          		}
+				          	}
+				            response( $result );
+				          }
+				        } );
+				      },
+				      minLength: 5,
+				      select: function( event, ui ) {
+
+				      	$('#VentaVentaClienteId').val(ui.item.id);
+
+				      }
+				    } );
+				
+			},
+			clonarElemento: function($ths){
+
+				var $contexto = $ths.parents('.panel,.table').eq(0).find('.clone-tr').eq(0);
+				var limite    = $ths.parents('.js-clone-wrapper').eq(0).data('filas');
+				var filas     = $ths.parents('.js-clone-wrapper').eq(0).find('tbody').find('tr:not(.hidden)').length;
+
+				if (typeof(limite) == 'undefined') {
+					limite = 200;
+				}
+
+				if ( filas == limite ) {
+					noty({text: 'No puede agregar más de ' + limite + ' filas.', layout: 'topRight', type: 'error'});
+					setTimeout(function(){
+						$.noty.closeAll();
+					}, 10000);
+					return;
+				}
+
+				var newTr = $contexto.clone();
+
+				newTr.removeClass('hidden');
+				newTr.removeClass('clone-tr');
+				newTr.find('input, select, textarea').each(function(){
+					$(this).removeAttr('disabled');
+				});
+
+				// Agregar nuevo campo
+				$contexto.parents('tbody').eq(0).append(newTr);
+
+				// Re indexar
+				$contexto.parents('tbody').eq(0).find('tr:not(.hidden)').each(function(indx){
+					
+					$(this).find('input, select, textarea').each(function() {
+						
+						var $that = $(this);
+
+						if ($that.hasClass('datepicker')) {
+							$that.datepicker({
+								language	: 'es',
+								format		: 'yyyy-mm-dd'
+							});
+						}
+
+						if ( typeof($that.attr('name')) != 'undefined' ) {
+
+							nombre		= $that.attr('name').replace(/(999)/g, (indx));
+							$that.attr('name', nombre);
+
+						}
+
+				      	$.app.formularios.bind('#VentaAdminAddForm');
+
+					});
+
+				});
+			},
+			clonar: function() {		
+
+				$(document).on('click', '.duplicate_tr, .copy_tr',function(e){
+
+					e.preventDefault();
+
+					venta.clonarElemento($(this));
+
+				});
+
+
+				$(document).on('click', '.remove_tr', function(e){
+
+					e.preventDefault();
+
+					var $th = $(this).parents('tr').eq(0);
+
+					$th.fadeOut('slow', function() {
+						$th.remove();
+					});
+
+				});
+			},
 			init: function(){
 
 				if ($('#preparacion_index').length) {
@@ -803,6 +1323,73 @@ $(function() {
 					}
 
 				});
+
+				if ($('.copy_tr').length) {
+					venta.clonar();
+				}
+
+
+				if ($('#VentaAdminAddForm').length) {
+
+					$('.js-metodo-envios-ajax').on('change', function(){
+						var $id = $(this).val();
+						if ($id != '') {
+							obtener_metodo_envio_venta($id);
+						}
+					});
+
+					if ($('.js-metodo-envios-ajax').val() != '') {
+						obtener_metodo_envio_venta($('.js-metodo-envios-ajax').val());
+					}
+
+				}
+
+				if ($('#obtener_cliente').length) {
+					venta.autocompletar_clientes();
+				}
+
+				if ($('#obtener_producto').length) {
+					venta.autocompletar_productos();
+				}
+
+				if ($('#VentaClienteAdminAddForm').length) {
+
+					var objForm = {
+			      		ignore : ':hidden:not(#VentaComunaEntrega)',
+			      		errorPlacement: function(error, element) {
+					    	if($(element).prop("id") === "VentaComunaEntrega") {
+						        error.insertAfter($(element).siblings('.bootstrap-select').eq(0));
+						    }
+						    else {
+						        error.insertAfter(element); // default error placement.
+						    }
+					  	}
+			      	};
+
+			      	$.app.formularios.bind('#VentaAdminAddForm', objForm);
+
+					$('#VentaClienteAdminAddForm').on('submit', function(e){
+						e.preventDefault();
+
+						if ($(this).valid()) {
+							venta.crear_cliente();
+						}
+
+					});
+
+					$(document).on('click', '.pago_tr', function(e){
+						e.preventDefault();
+
+						venta.clonarElemento( $(this) );
+					});
+
+					calcular_monto_pagar();
+				}
+
+				pasos_compra();
+
+
+
 
 			}
 		}	

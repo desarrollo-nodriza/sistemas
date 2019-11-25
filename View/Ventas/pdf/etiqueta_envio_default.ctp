@@ -20,16 +20,16 @@
 						<td style="font-size: 11px;"><strong>Destinatario</strong></td>
 					</tr>
 					<tr>
-						<td style="font-size: 11px;">Nombre: <?=$venta['Envio'][0]['nombre_receptor']; ?></td>
+						<td style="font-size: 11px;">Nombre: <?=(empty($venta['Venta']['nombre_receptor'])) ? $venta['VentaCliente']['nombre'] . $venta['VentaCliente']['apellido'] : $venta['Venta']['nombre_receptor'] ; ?></td>
 					</tr>
 					<tr>
 						<td style="font-size: 11px;">Rut: <?=$this->Html->rut($venta['VentaCliente']['rut']); ?></td>
 					</tr>
 					<tr>
-						<td style="font-size: 11px;">Dirección: <?=$venta['Envio'][0]['direccion_envio']; ?></td>
+						<td style="font-size: 11px;">Dirección: <?=$venta['Venta']['direccion_entrega']; ?> - <?=$venta['Venta']['comuna_entrega']; ?></td>
 					</tr>
 					<tr>
-						<td style="font-size: 11px;">Fono: <?=$venta['Envio'][0]['fono_receptor']; ?></td>
+						<td style="font-size: 11px;">Fono: <?= (empty($venta['Venta']['fono_receptor'])) ? $venta['VentaCliente']['telefono'] : $venta['Venta']['fono_receptor'] ; ?></td>
 					</tr>
 				</table>
 
@@ -39,11 +39,15 @@
 					</tr>
 					<tr>
 						<td style="font-size: 11px;">
-							Id externo: #<?=$venta['Venta']['id_externo']; ?> - 
-							<? if (empty($venta['Venta']['marketplace_id'])) : ?>
-								<?=$venta['Tienda']['nombre'];?>
+							<? if (!$venta['Venta']['venta_manual']) : ?>
+								Id externo: #<?=$venta['Venta']['id_externo']; ?> - 
+								<? if (empty($venta['Venta']['marketplace_id'])) : ?>
+									<?=$venta['Tienda']['nombre'];?>
+								<? else : ?>
+									<?=$venta['Marketplace']['nombre'];?>
+								<? endif; ?>
 							<? else : ?>
-								<?=$venta['Marketplace']['nombre'];?>
+								Pos de venta
 							<? endif; ?>
 						</td>
 					</tr>
@@ -53,7 +57,7 @@
 					</tr>
 					<? endif; ?>
 					<tr>
-						<td style="font-size: 11px;">Transportista: <?=$venta['VentaExterna']['transportista']; ?></td>
+						<td style="font-size: 11px;">Transportista: <?=$venta['MetodoEnvio']['nombre']; ?></td>
 					</tr>
 					<tr>
 						<td style="font-size: 11px;">Medio de pago: <?=$venta['MedioPago']['nombre']; ?></td>

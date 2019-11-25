@@ -149,4 +149,162 @@ class VentaClientesController extends AppController
 		
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}
+
+
+
+
+	/**
+	 * Lista todos los clientes
+	 * Endpoint :  /api/clientes.json
+	 */
+    public function api_index() {
+
+    	$qry = array(
+    		'order' => array('id' => 'desc')
+    	);
+
+    	if (isset($this->request->query['limit'])) {
+    		if (!empty($this->request->query['limit'])) {
+    			$qry = array_replace_recursive($qry, array('limit' => $this->request->query['limit']));
+    		}
+    	}
+
+    	if (isset($this->request->query['email'])) {
+    		if (!empty($this->request->query['email'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array( 'VentaCliente.email LIKE' => '%'.$this->request->query['email'].'%' )));
+    		}
+    	}
+   
+        $clientes = $this->VentaCliente->find('all', $qry);
+
+        $this->set(array(
+            'clientes' => $clientes,
+            '_serialize' => array('clientes')
+        ));
+    }
+
+
+
+    public function api_add() {
+
+		# Solo método POST
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		if (empty($this->request->data['nombre']) 
+			|| empty($this->request->data['apellido'])
+			|| empty($this->request->data['email'])) {
+			$response = array(
+				'code' => 504,
+				'created' => false,
+				'message' => 'Nombre, Apellido y Email son requeridos.'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		$existe = $this->VentaCliente->find('first', array('conditions' => array('email' => $this->request->data['email'])));
+
+		if (!empty($existe)) {
+
+			$response = array(
+				'code' => 504,
+				'created' => false,
+				'message' => 'Email ingresado ya existe.'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$resultado = array(
+			'code' => 201,
+			'created' => false,
+			'updated' => false
+		);
+
+		$log = array();
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Rest api',
+				'modulo' => 'Venta Clientes',
+				'modulo_accion' => json_encode($this->request->data)
+			)
+		);
+			
+		$data = array(
+			'VentaCliente' => array(
+				'nombre'   => $this->request->data['nombre'],
+				'apellido' => $this->request->data['apellido'],
+				'email'    => $this->request->data['email']
+			)
+		);
+
+		if (isset($this->request->data['rut'])) {
+			$data['VentaCliente']['rut'] = $this->request->data['rut'];
+		}
+
+		if (isset($this->request->data['telefono'])) {
+			$data['VentaCliente']['telefono'] = $this->request->data['telefono'];
+		}
+
+		
+		if ($this->VentaCliente->save($data)){
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Rest api',
+					'modulo' => 'VentaCliente',
+					'modulo_accion' => 'Creación: ' . json_encode($data)
+				)
+			);
+
+			$cliente = $this->VentaCliente->find('first', array('conditions' => array('id' => $this->VentaCliente->id)));
+
+			$resultado = array(
+				'code' => 200,
+				'created' => true,
+				'cliente' => $cliente['VentaCliente']
+			);
+		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
+
+		$this->set(array(
+			'response'   => $resultado,
+			'_serialize' => array('response')
+	    ));
+	}
 }

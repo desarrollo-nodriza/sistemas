@@ -22,7 +22,7 @@
 								<tr class="sort">
 									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('tiempo_entrega_estimado', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('es_despacho', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('retiro_local', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('activo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('created', 'Fecha de creación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
@@ -33,7 +33,7 @@
 								<tr>
 									<td><?= h($metodoEnvio['MetodoEnvio']['nombre']); ?>&nbsp;</td>
 									<td><?= h($metodoEnvio['MetodoEnvio']['tiempo_entrega_estimado']); ?>&nbsp;</td>
-									<td><?= ($metodoEnvio['MetodoEnvio']['es_despacho'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
+									<td><?= ($metodoEnvio['MetodoEnvio']['retiro_local'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td><?= ($metodoEnvio['MetodoEnvio']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td><?= h($metodoEnvio['MetodoEnvio']['created']); ?>&nbsp;</td>
 									<td>

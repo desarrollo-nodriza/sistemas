@@ -21,6 +21,10 @@
 								<td><?= $this->Form->input('tiempo_entrega_estimado'); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('retiro_local', 'Retiro en local'); ?></th>
+								<td><?= $this->Form->input('retiro_local', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>

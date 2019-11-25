@@ -130,4 +130,20 @@ class MetodoEnviosController extends AppController
 
 	}
 
+
+	public function admin_ajax_obtener_metodo_envio($id)
+	{
+
+		$this->layout = 'ajax';
+
+		$m = $this->MetodoEnvio->find('first', array(
+			'conditions' => array(
+				'MetodoEnvio.id' => $id
+			)
+		));
+
+		$this->set(compact('m'));
+
+	}
+
 }

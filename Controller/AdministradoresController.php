@@ -42,8 +42,13 @@ class AdministradoresController extends AppController
 					# Deslogeamos
 					$this->admin_logout();
 				}else {
+
+					# Crear Token
+    				$token = ClassRegistry::init('Token')->crear_token($this->Auth->id, null, 8760);
+
 					$this->Session->setFlash('Su tienda principal es ' . $tiendaPrincipal['Tienda']['nombre'], null, array(), 'success');
 					$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
+					$this->Session->write('Auth.Administrador.token', $token);
 				}
 
 				$this->Session->delete('Google.token');
@@ -220,8 +225,14 @@ class AdministradoresController extends AppController
 					# Deslogeamos
 					$this->admin_logout();
 				}else {
+
+					# Crear Token
+    				$token = ClassRegistry::init('Token')->crear_token($this->Session->read('Auth.Administrador.id'), null, 8760);
+
 					$this->Session->setFlash('Su tienda principal es ' . $tiendaPrincipal['Tienda']['nombre'], null, array(), 'success');
 					$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
+
+					$this->Session->write('Auth.Administrador.token', $token);
 				}
 
 				$this->Session->delete('Google.token');
@@ -263,6 +274,7 @@ class AdministradoresController extends AppController
 						# Deslogeamos
 						$this->admin_logout();
 					}else {
+
 						$this->Session->setFlash('Su tienda principal es ' . $tiendaPrincipal['Tienda']['nombre'], null, array(), 'success');
 						$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
 					}
@@ -273,6 +285,11 @@ class AdministradoresController extends AppController
 					
 					$this->Auth->login($administrador);
 					$this->Administrador->save(array('id' => $administrador['id'], 'last_login' => date('Y-m-d H:m:s')));
+					
+					# Crear Token
+    				$token = ClassRegistry::init('Token')->crear_token($administrador['id'], null, 8760);
+    				$this->Session->write('Auth.Administrador.token', $token);
+
 					$this->redirect($this->Auth->redirectUrl());
 				}
 

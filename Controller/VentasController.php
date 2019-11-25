@@ -62,7 +62,7 @@ class VentasController extends AppController {
 		$joins = array();
 		$fields = array(
 			'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo',
-			'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.prioritario', 'Venta.picking_estado'
+			'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.prioritario', 'Venta.picking_estado', 'Venta.venta_manual'
 		);
 		$group = array();
 
@@ -144,9 +144,16 @@ class VentasController extends AppController {
 					case 'marketplace_id':
 						$FiltroMarketplace = $valor;
 
-						if ($FiltroMarketplace != "") {
+						if ($FiltroMarketplace != "" && $FiltroMarketplace != 999) {
 							$condiciones['Venta.marketplace_id'] = ($FiltroMarketplace == 0) ? null : $FiltroMarketplace;
-						} 
+							$condiciones['Venta.venta_manual'] = 0;
+						}
+
+						// Pos de venta
+						if ($FiltroMarketplace == 999) {
+							$condiciones['Venta.venta_manual'] = 1;
+						}
+
 						break;
 					case 'medio_pago_id':
 						$FiltroMedioPago = $valor;
@@ -386,6 +393,7 @@ class VentasController extends AppController {
 		);
 
 		$marketplaces[0] = 'Sólo tienda';
+		$marketplaces[999] = 'Pos de Venta';
 
 		//----------------------------------------------------------------------------------------------------
 		$ventaEstadoCategorias = $this->Venta->VentaEstado->VentaEstadoCategoria->find('list');
@@ -3084,6 +3092,140 @@ class VentasController extends AppController {
 	}
 
 
+	/**
+	 * Crear venta manualmente
+	 */
+	public function admin_add($id = '')
+	{	
+		# Referencia de la venta
+		$referencia = ClassRegistry::init('Venta')->generar_referencia();
+
+		if (empty($id)) {
+			
+			$currVenta = array(
+				'Venta' => array(
+					'referencia'       => $referencia,
+					'tienda_id'        => $this->Session->read('Tienda.id'),
+					'venta_stado_id'   => 1,
+					'administrador_id' => $this->Auth->user('id'),
+					'venta_manual'     => 1,
+					'fecha_venta'      => date('Y-m-d H:i:s')
+				)
+			);
+
+			if ($this->Venta->save($currVenta)) {
+				$this->redirect(array('action' => 'add', $this->Venta->id));
+			}
+
+		}
+
+		if ($this->request->is('post') || $this->request->is('put')) {
+
+			if ($this->request->data['Venta']['total'] == 0) {
+				$this->Session->setFlash('El total de la venta no pude ser $0.', null, array(), 'success');
+				$this->redirect(array('action' => 'add', $this->Venta->id));
+			}
+
+			foreach ($this->request->data['VentaDetalle'] as $iv => $d) {
+				$this->request->data['VentaDetalle'][$iv]['precio'] = $this->precio_neto($d['precio_bruto']);
+				$this->request->data['VentaDetalle'][$iv]['cantidad_pendiente_entrega'] = $d['cantidad'];
+				$this->request->data['VentaDetalle'][$iv]['<!--  -->antidad_reservada'] = 0;			
+			}
+
+
+			$total_pagado = 0;	
+			foreach ($this->request->data['VentaTransaccion'] as $ip => $p) {
+				$total_pagado = $total_pagado + (float) $p['monto'];
+			}
+
+			if ($total_pagado == 0) {
+				$this->Session->setFlash('El total pagado no pude ser $0.', null, array(), 'success');
+				$this->redirect(array('action' => 'add', $this->Venta->id));
+			}
+
+			$estado_nuevo = '';
+
+			# si el monto pagado >= al monto vendido se cambia a pago aceptado.
+			if ($this->request->data['Venta']['total'] <= $total_pagado) {
+				
+				$estado_nuevo = 'Pago aceptado';
+
+				# Validamos la venta
+				$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
+				$this->request->data['Venta']['estado_anterior'] = $this->request->data['Venta']['venta_estado_id'];
+				$this->request->data['Venta']['venta_estado_id'] = $estado_nuevo_arr['VentaEstado']['id'];
+
+			}
+			
+
+			if ($this->Venta->saveAll($this->request->data) ) {
+
+				$tienda = ClassRegistry::init('Tienda')->obtener_tienda($this->request->data['Venta']['tienda_id'], array('Tienda.nombre', 'Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
+
+				if ($tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
+					$this->Pushalert = $this->Components->load('Pushalert');
+
+					$this->Pushalert::$api_key = $tienda['Tienda']['notificacion_apikey'];
+
+					$tituloPush = sprintf('Nueva venta en %s', $tienda['Tienda']['nombre']);
+					$mensajePush = sprintf('Pincha aquí para verla');
+					$urlPush = Router::url('/', true) . 'ventas/view/' . $id;
+
+					$this->Pushalert->enviarNotificacion($tituloPush, $mensajePush, $urlPush);	
+				}
+
+				# si es un estado pagado se reserva el stock disponible
+				if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($this->request->data['Venta']['venta_estado_id'])) {
+					$this->Venta->pagar_venta($id);
+					$this->actualizar_canales_stock($id);
+				}
+
+				# Plantilla nuevo estado
+				ClassRegistry::init('VentaEstado')->id = $this->request->data['Venta']['venta_estado_id'];
+				$notificar        = ClassRegistry::init('VentaEstado')->field('notificacion_cliente');
+				$plantillaEmail   = ClassRegistry::init('VentaEstadoCategoria')->field('plantilla', array('id' => ClassRegistry::init('VentaEstado')->field('venta_estado_categoria_id')));	
+				
+				if (!empty($plantillaEmail) && $notificar) {
+					$this->notificar_cambio_estado($id, $plantillaEmail, $estado_nuevo);
+				}
+
+				$this->Session->setFlash('Venta #' . $id . ' creada exitosamente.', null, array(), 'success');
+				$this->redirect(array('controller' => 'ordenes', 'action' => 'generar', $id));
+
+			}else{
+				$this->Session->setFlash('No fue posible crear la venta. Verifique los campos e intente nuevamente: ', null, array(), 'danger');
+				$this->redirect(array('action' => 'add', $id));
+			}
+
+		}
+
+		$this->request->data = $this->Venta->obtener_venta_por_id($id);
+
+		BreadcrumbComponent::add('Listado de ventas', '/ventas');
+		BreadcrumbComponent::add('Crear venta');
+
+		# Estados disponibles para esta venta
+		$ventaEstados = ClassRegistry::init('VentaEstado')->find('list', array('conditions' => array('activo' => 1)));
+
+		$transportes = ClassRegistry::init('Transporte')->find('list', array('conditions' => array('activo' => 1)));
+
+		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
+
+		$marketplaces = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1)));
+
+		$medioPagos = ClassRegistry::init('MedioPago')->find('list', array('conditions' => array('activo' => 1)));
+
+		$metodoEnvios = ClassRegistry::init('MetodoEnvio')->find('list', array('conditions' => array('activo' => 1)));
+
+		$clientes = ClassRegistry::init('VentaCliente')->find('list', array('fields' => array('VentaCliente.id', 'VentaCliente.email')));
+
+		
+
+		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios'));
+		
+	}
+
+
 	public function admin_edit($id)
 	{
 		if ( ! $this->Venta->exists($id) ) {
@@ -3787,7 +3929,7 @@ class VentasController extends AppController {
 		}	
 
 		# PRestashop
-		if (!$venta['Venta']['marketplace_id']) {
+		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) {
 
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
@@ -4033,7 +4175,7 @@ class VentasController extends AppController {
 		}	
 
 		# Prestashop
-		if (!$venta['Venta']['marketplace_id']) {
+		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) {
 			# Para la consola se carga el componente on the fly!
 			if ($this->shell) {
 				$this->Prestashop = $this->Components->load('Prestashop');
@@ -4425,7 +4567,7 @@ class VentasController extends AppController {
 		}
 
 		$html  = $vista->body();
-		
+
 		if ($orientacion == 'horizontal') {
 			$url   = $this->generar_pdf($html, $venta['Venta']['id'], 'transporte', 'landscape', '10x15');
 		}
@@ -5029,7 +5171,7 @@ class VentasController extends AppController {
 		}	
 
 		# Prestashop
-		if (!$venta['Venta']['marketplace_id']) {
+		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) {
 			# Para la consola se carga el componente on the fly!
 			if ($this->shell) {
 				$this->Prestashop = $this->Components->load('Prestashop');
