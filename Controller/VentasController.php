@@ -3123,13 +3123,13 @@ class VentasController extends AppController {
 
 			if ($this->request->data['Venta']['total'] == 0) {
 				$this->Session->setFlash('El total de la venta no pude ser $0.', null, array(), 'success');
-				$this->redirect(array('action' => 'add', $this->Venta->id));
+				$this->redirect(array('action' => 'add', $id));
 			}
 
 			foreach ($this->request->data['VentaDetalle'] as $iv => $d) {
 				$this->request->data['VentaDetalle'][$iv]['precio'] = $this->precio_neto($d['precio_bruto']);
 				$this->request->data['VentaDetalle'][$iv]['cantidad_pendiente_entrega'] = $d['cantidad'];
-				$this->request->data['VentaDetalle'][$iv]['<!--  -->antidad_reservada'] = 0;			
+				$this->request->data['VentaDetalle'][$iv]['cantidad_reservada'] = 0;			
 			}
 
 
@@ -3140,7 +3140,7 @@ class VentasController extends AppController {
 
 			if ($total_pagado == 0) {
 				$this->Session->setFlash('El total pagado no pude ser $0.', null, array(), 'success');
-				$this->redirect(array('action' => 'add', $this->Venta->id));
+				$this->redirect(array('action' => 'add', $id));
 			}
 
 			$estado_nuevo = '';
