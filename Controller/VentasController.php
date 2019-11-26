@@ -6961,6 +6961,10 @@ class VentasController extends AppController {
 		$nuevo_estado = '';
 
 		switch ($data['status_id']) {
+			case 5:
+				$nuevo_estado = 'enviado';
+				break;
+				
 			case 9:
 				$nuevo_estado = 'enviado';
 				break;
