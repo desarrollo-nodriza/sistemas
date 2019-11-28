@@ -6708,6 +6708,134 @@ class VentasController extends AppController {
 	/**
 	 * Métodos REST
 	 */
+	public function api_index()
+	{
+		$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	if (!$this->request->is('get')) {
+			$response = array(
+				'code'    => 510, 
+				'message' => 'Method not allowed'
+			);
+
+			throw new CakeException($response);
+		}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+    	$qry = array(
+    		'order' => array('Venta.fecha_venta' => 'desc'),
+    		'contain' => array(
+    			'VentaEstado' => array(
+    				'VentaEstadoCategoria'
+    			),
+    			'MetodoEnvio',
+    			'VentaDetalle' => array(
+    				'VentaDetalleProducto'
+    			)
+    		)
+    	);
+
+    	$paginacion = array(
+        	'limit' => 0,
+        	'offset' => 0,
+        	'total' => 0
+        );
+
+    	if (isset($this->request->query['id'])) {
+    		if (!empty($this->request->query['id'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array('Venta.id' => $this->request->query['id'])));
+    		}
+    	}
+
+    	if (isset($this->request->query['id_externo'])) {
+    		if (!empty($this->request->query['id_externo'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array('Venta.id_externo' => $this->request->query['id_externo'])));
+    		}
+    	}
+
+    	if (isset($this->request->query['desde'])) {
+    		if (!empty($this->request->query['desde'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array('Venta.fecha_venta >=' => $this->request->query['desde'])));
+    		}
+    	}
+
+    	if (isset($this->request->query['hasta'])) {
+    		if (!empty($this->request->query['hasta'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array('Venta.fecha_venta <=' => $this->request->query['hasta'])));
+    		}
+    	}
+
+    	if (isset($this->request->query['direction'])) {
+    		if (!empty($this->request->query['direction'])) {
+    			$qry = array_replace_recursive($qry, array('order' => array('Venta.fecha_venta' => $this->request->query['direction'])));
+    		}
+    	}
+
+    	if (isset($this->request->query['limit'])) {
+    		if (!empty($this->request->query['limit'])) {
+    			$qry = array_replace_recursive($qry, array('limit' => $this->request->query['limit']));
+    			$paginacion['limit'] = $this->request->query['limit'];
+    		}
+    	}
+
+    	if (isset($this->request->query['offset'])) {
+    		if (!empty($this->request->query['offset'])) {
+    			$qry = array_replace_recursive($qry, array('offset' => $this->request->query['offset']));
+    			$paginacion['offset'] = $this->request->query['offset'];
+    		}
+    	}
+
+    	if (isset($this->request->query['estado'])) {
+    		if (!empty($this->request->query['estado'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array( 'Venta.venta_estado_id' => $this->request->query['estado'] )));
+    		}
+    	}
+
+    	if (isset($this->request->query['envio'])) {
+    		if (!empty($this->request->query['envio'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array( 'Venta.metodo_envio_id' => $this->request->query['envio'] )));
+    		}
+    	}
+
+    	if (isset($this->request->query['picking'])) {
+    		if (!empty($this->request->query['picking'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array( 'Venta.picking_estado' => $this->request->query['picking'] )));
+    		}
+    	}
+   
+        $ventas = $this->Venta->find('all', $qry);
+
+        $paginacion['total'] = count($ventas);
+
+        $this->set(array(
+            'ventas' => $ventas,
+            'paginacion' => $paginacion,
+            '_serialize' => array('ventas', 'paginacion')
+        ));
+	}
 
 
 	public function api_venta_existe_externo($id)
@@ -6961,7 +7089,7 @@ class VentasController extends AppController {
 		$nuevo_estado = '';
 
 		switch ($data['status_id']) {
-			case 5:
+			case 26:
 				$nuevo_estado = 'enviado';
 				break;
 				

@@ -146,4 +146,35 @@ class MetodoEnviosController extends AppController
 
 	}
 
+
+	public function admin_crear_ruta()
+	{
+		$token = $this->Auth->user('token.token');
+
+		$estados = ClassRegistry::init('VentaEstado')->find('list', array(
+			'conditions' => array(
+				'VentaEstado.activo' => 1,
+				'VentaEstado.origen' => 0
+			),
+			'joins' => array(
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'VentaEstadoCategoria',
+					'type' => 'INNER',
+					'conditions' => array(
+						'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
+						'VentaEstadoCategoria.venta' => 1
+					)
+				)
+			)
+		));
+		
+		$metodoEnvios = $this->MetodoEnvio->find('list');
+
+		$this->set(compact('token', 'estados', 'metodoEnvios'));
+
+		BreadcrumbComponent::add('Calcular ruta');
+	
+	}
+
 }

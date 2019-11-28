@@ -2451,6 +2451,12 @@ class VentaDetalleProductosController extends AppController
     		'order' => array('id' => 'desc')
     	);
 
+    	if (isset($this->request->query['id'])) {
+    		if (!empty($this->request->query['id'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array( 'VentaDetalleProducto.id' => $this->request->query['id'])));
+    		}
+    	}
+
     	if (isset($this->request->query['limit'])) {
     		if (!empty($this->request->query['limit'])) {
     			$qry = array_replace_recursive($qry, array('limit' => $this->request->query['limit']));
