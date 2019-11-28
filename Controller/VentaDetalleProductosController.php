@@ -2551,6 +2551,8 @@ class VentaDetalleProductosController extends AppController
 
 		}
 
+		$producto['VentaDetalleProducto']['tiempo_entrega'] = $this->VentaDetalleProducto->obtener_tiempo_entrega($id);
+
 
         $this->set(array(
             'producto' => $producto['VentaDetalleProducto'],
