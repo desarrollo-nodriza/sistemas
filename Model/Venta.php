@@ -749,7 +749,7 @@ class Venta extends AppModel
 		$this->cambiar_estado_picking($id, 'empaquetado');
 					
 		$this->saveField('subestado_oc', 'entregado');
-		$this->saveField('fecha_completado', date('Y-m-d H:i:s'));		
+		$this->saveField('fecha_entregado', date('Y-m-d H:i:s'));		
 
 		return;
 	}

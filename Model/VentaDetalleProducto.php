@@ -441,7 +441,7 @@ class VentaDetalleProducto extends AppModel
 
 
 	public function obtener_tiempo_entrega($id)
-	{
+	{	
 		$producto = $this->find('first', array(
 			'conditions' => array(
 				'VentaDetalleProducto.id' => $id
@@ -451,24 +451,30 @@ class VentaDetalleProducto extends AppModel
 					'conditions' => array(
 						'OrdenCompra.estado' => 'recibido'
 					)
-				)
+				),
+				'VentaDetalle'
 			)
 		));
 
+		$ventas = ClassRegistry::init('Venta')->find('all', array(
+			'conditions' => array(
+				'Venta.id' => array_unique(Hash::extract($producto['VentaDetalle'], '{n}.venta_id')),
+				'Venta.fecha_entregado !=' => '' 
+			)
+		));
+
+
 		$avg = array();
-		foreach ($producto['OrdenCompra'] as $key => $value) {
-			$f_creacion  = date_create($value['created']);
-			$f_recepcion = date_create($value['fecha_recibido']);
-			$f_enviado   = date_create($value['fecha_enviado']);
+		foreach ($ventas as $key => $value) {
+			$f_creacion  = date_create($value['Venta']['fecha_venta']);
+			$f_recepcion = date_create($value['Venta']['fecha_entregado']);
 
 			$diferencia1 = date_diff($f_creacion, $f_recepcion);
-			$diferencia2 = date_diff($f_enviado, $f_recepcion);
-			$diferencia3 = date_diff($f_creacion, $f_enviado);
 
 			$avg[$key]['creado_recibido']['dias']   = $diferencia1->days;
 			$avg[$key]['creado_recibido']['horas']  = $diferencia1->h;
 		}
-
+		
 		if (count($avg) > 0) {
 			$promedio_creado_recibido  = (array_sum(Hash::extract($avg, '{n}.creado_recibido.dias')) / count($avg));	
 		}else{
