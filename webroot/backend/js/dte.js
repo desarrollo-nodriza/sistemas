@@ -675,7 +675,7 @@ $.extend({
 				});
 
 
-				$(document).on('click', '.duplicate_tr',function(e){
+				$(document).on('click', '#DteAdminGenerarForm .duplicate_tr',function(e){
 
 					e.preventDefault();
 

@@ -239,7 +239,7 @@
 										<th></th>
 									</thead>
 									<tbody>
-										<tr class="hidden clone-tr copy_tr" data-index="" style="min-height: 50px;">
+										<tr class="hidden clone-tr" data-index="" style="min-height: 50px;">
 											<td  class="permitido_modificar" valign="center">
 
 												<input type="text" class="form-control editable required editVlrCodigo" name="editVlrCodigo[99]" value="" data-original="" disabled="disabled">

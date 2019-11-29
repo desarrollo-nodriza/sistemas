@@ -766,7 +766,7 @@ $(function() {
         	
 			$('#VentaDescuento').data('value', descuento.toFixed(2));
 
-			total_pagar = (parseFloat(subtotal_pagar) + parseFloat(iva_pagar) + parseFloat(transporte)) - parseFloat(descuento);
+			total_pagar = parseFloat((parseFloat(subtotal_pagar) + parseFloat(iva_pagar) + parseFloat(transporte)) - parseFloat(descuento)).toFixed(2);
 
 			$('#VentaTotal').data('value', total_pagar);
 			$('#VentaTotal').val(total_pagar);
@@ -1056,7 +1056,7 @@ $(function() {
 			},
 			clonar: function() {		
 
-				$(document).on('click', '.duplicate_tr, .copy_tr',function(e){
+				$(document).on('click', '#VentaAdminAddForm .duplicate_tr, #VentaAdminAddForm .copy_tr',function(e){
 
 					e.preventDefault();
 
