@@ -71,6 +71,9 @@ class PagosController extends AppController
 					)
 				),
 				'OrdenCompraFactura' => array(
+					'conditions' => array(
+						'OrdenCompraFactura.tipo_documento' => 33
+					),
 					'fields' => array(
 						'OrdenCompraFactura.monto_facturado'
 					)
