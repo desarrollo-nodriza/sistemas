@@ -1897,6 +1897,9 @@ class VentaDetalleProductosController extends AppController
 			),
 			'contain' => array(
 				'Marketplace' => array(
+					'conditions' => array(
+						'Marketplace.activo' => 1
+					),
 					'MarketplaceTipo'
 				)
 			),
@@ -2447,6 +2450,12 @@ class VentaDetalleProductosController extends AppController
 			throw new CakeException($response);
 		}
 
+		$paginacion = array(
+        	'limit' => 0,
+        	'offset' => 0,
+        	'total' => 0
+        );
+
     	$qry = array(
     		'order' => array('id' => 'desc')
     	);
@@ -2460,6 +2469,14 @@ class VentaDetalleProductosController extends AppController
     	if (isset($this->request->query['limit'])) {
     		if (!empty($this->request->query['limit'])) {
     			$qry = array_replace_recursive($qry, array('limit' => $this->request->query['limit']));
+    			$paginacion['limit'] = $this->request->query['limit'];
+    		}
+    	}
+
+    	if (isset($this->request->query['offset'])) {
+    		if (!empty($this->request->query['offset'])) {
+    			$qry = array_replace_recursive($qry, array('offset' => $this->request->query['offset']));
+    			$paginacion['offset'] = $this->request->query['offset'];
     		}
     	}
 
@@ -2471,7 +2488,34 @@ class VentaDetalleProductosController extends AppController
    
         $productos = $this->VentaDetalleProducto->find('all', $qry);
 
-        $html_tr = '';
+        $paginacion['total'] = count($productos);
+
+    	if (isset($this->request->query['external'])) {
+    		
+    		# Iniciamos prestashop
+    		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array('Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop'));
+
+			$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
+
+    		foreach ($productos as $ip => $producto) {
+				
+    			$p = $this->Prestashop->prestashop_obtener_producto($producto['VentaDetalleProducto']['id_externo']);
+				
+				if (empty($p))
+					continue;
+
+				$descuento = $this->Prestashop->prestashop_obtener_descuento_producto($producto['VentaDetalleProducto']['id_externo'], $p['price']);
+
+    			$productos[$ip]['VentaDetalleProducto']['external'] = array(
+    				'precio_normal' => round($p['price']* 1.19),
+    				'precio_venta' => round( ($p['price'] - $descuento) * 1.19)
+    			);
+
+			}
+
+		}
+
+		$html_tr = '';
 
         if (isset($this->request->query['tr'])) {
     		if ($this->request->query['tr'] == 1) {
@@ -2486,13 +2530,23 @@ class VentaDetalleProductosController extends AppController
 
 					$productos[$ip]['VentaDetalleProducto']['tr'] = $v->render('/Elements/ventas/tr-producto-crear-venta');
 
+					$v2             =  new View();
+					$v2->autoRender = false;
+					$v2->output     = '';
+					$v2->layoutPath = '';
+					$v2->layout     = '';
+					$v2->set(compact('producto'));
+
+					$productos[$ip]['VentaDetalleProducto']['tr_prospecto'] = $v2->render('/Elements/prospectos/tr-producto');
+
     			}
     		}
     	}
 
         $this->set(array(
             'productos' => $productos,
-            '_serialize' => array('productos')
+            'paginacion' => $paginacion,
+            '_serialize' => array('productos', 'paginacion')
         ));
     }
 
@@ -2542,6 +2596,26 @@ class VentaDetalleProductosController extends AppController
 			$producto['VentaDetalleProducto'] = array();
 		}
 
+		if (isset($this->request->query['external'])) {
+
+			$canales = $this->verificar_canales($producto['VentaDetalleProducto']['id_externo']);
+
+			foreach ($canales as $ic => $canal) {
+				foreach ($canal as $i => $c) {
+
+					if (!$c['existe'])
+						continue;
+
+					$producto['VentaDetalleProducto'][$ic][$c['nombre']] = array(
+						'precio_venta'     => $c['item']['precio'],
+						'stock_disponible' => $c['item']['stock_disponible'],
+						'estado'           => $c['item']['estado']
+					);
+
+				}
+			}
+
+		}
 
 		# Etiqueta sec
 		if (!empty($producto['VentaDetalleProducto']['qr_sec'])) {
