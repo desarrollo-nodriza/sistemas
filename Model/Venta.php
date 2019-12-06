@@ -721,10 +721,6 @@ class Venta extends AppModel
 
 					ClassRegistry::init('Bodega')->crearSalidaBodega($producto['venta_detalle_producto_id'], null, $producto['cantidad_reservada'], 'VT');
 
-				}elseif($producto['cantidad_entregada'] > 0){
-
-					# Ya se quitaron los productos
-
 				}else{
 					throw new Exception("No se permite entregar un pedido que no tiene los productos reservados.", 1);
 					
@@ -744,10 +740,8 @@ class Venta extends AppModel
 
 			}
 			
-			if (!empty($detalles)) {
-				# Guardamos los cambios
-				ClassRegistry::init('VentaDetalle')->saveMany($detalles);	
-			}
+			# Guardamos los cambios
+			ClassRegistry::init('VentaDetalle')->saveMany($detalles);
 
 		}
 
