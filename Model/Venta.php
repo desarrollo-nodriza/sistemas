@@ -744,8 +744,10 @@ class Venta extends AppModel
 
 			}
 			
-			# Guardamos los cambios
-			ClassRegistry::init('VentaDetalle')->saveMany($detalles);
+			if (!empty($detalles)) {
+				# Guardamos los cambios
+				ClassRegistry::init('VentaDetalle')->saveMany($detalles);	
+			}
 
 		}
 
