@@ -769,6 +769,75 @@ class PrestashopComponent extends Component
 	}
 
 
+	public function prestashop_obtener_descuento_producto($id, $monto = 0) 
+	{
+		$opt                       = array();
+		$opt['resource']           = 'specific_prices';
+		$opt['filter[id_product]'] = $id;
+		$opt['display']            = 'full';
+
+		$descuentos = array();
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+		
+			$PrestashopResources = $xml->children()->children();
+			
+			$descuentos = to_array($PrestashopResources);
+
+				
+		} catch (Exception $e) {
+			// No existe en prestashop
+		}
+
+		if (empty($descuentos))
+			return 0;
+
+
+		if (count($descuentos) == 1) {
+			$descuentos[0] = $descuentos;
+			unset($descuentos['specific_price']);	
+		}
+
+		$hoy = date('Y-m-d H:i:s');
+
+		$descuento = array();;
+
+		foreach ($descuentos as $id => $d) {
+			
+			if ($d['specific_price']['from'] == '0000-00-00 00:00:00' && $d['specific_price']['to'] == '0000-00-00 00:00:00') {
+				$descuento['tipo']  = $d['specific_price']['reduction_type'];
+				$descuento['valor'] = $d['specific_price']['reduction'];
+			}
+
+			if ($d['specific_price']['from'] == '0000-00-00 00:00:00' && $d['specific_price']['to'] >= $hoy) {
+				$descuento['tipo']  = $d['specific_price']['reduction_type'];
+				$descuento['valor'] = $d['specific_price']['reduction'];
+			}
+
+			if ($d['specific_price']['from'] <= $hoy && $d['specific_price']['to'] == '0000-00-00 00:00:00') {
+				$descuento['tipo']  = $d['specific_price']['reduction_type'];
+				$descuento['valor'] = $d['specific_price']['reduction'];
+			}
+
+			if ($d['specific_price']['from'] <= $hoy && $d['specific_price']['to'] <= $hoy ) {
+				$descuento['tipo']  = $d['specific_price']['reduction_type'];
+				$descuento['valor'] = $d['specific_price']['reduction'];
+			}
+		}
+
+		$descuento_monto = 0;
+
+		if ($descuento['tipo'] == 'percentage') {
+			$descuento_monto = $monto * $descuento['valor'];
+		}else{
+			$descuento_monto = $descuento['valor'];
+		}
+
+		return $descuento_monto;
+	}
+
+
 	/**
 	 * Actualiza el stock disponible en prestashop
 	 * @param  [type] $stock_id   Identificador del stock (no id de producto)

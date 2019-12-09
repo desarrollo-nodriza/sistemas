@@ -206,6 +206,16 @@ Router::connect(
 
 
 Router::connect(
+    '/api/ventas', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'index',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+
+Router::connect(
     '/api/ventas/enviame_webhook', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'Ventas', 
@@ -320,6 +330,53 @@ Router::connect(
 );
 
 
+/**
+ *  Direcciones
+ */
+Router::connect(
+    '/api/direcciones', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Direcciones', 
+        'action' => 'index',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+Router::connect(
+    '/api/direcciones/add', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Direcciones', 
+        'action' => 'add',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+Router::connect(
+    '/api/direcciones/edit/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Direcciones', 
+        'action' => 'edit',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+Router::connect(
+    '/api/direcciones/view/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Direcciones', 
+        'action' => 'view',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
 
 
 Router::parseExtensions('json');
