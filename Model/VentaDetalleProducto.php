@@ -112,6 +112,38 @@ class VentaDetalleProducto extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'Prospecto' => array(
+			'className'				=> 'Prospecto',
+			'joinTable'				=> 'productos_prospectos',
+			'foreignKey'			=> 'venta_detalle_producto_id',
+			'associationForeignKey'	=> 'prospecto_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'ProductosProspecto',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		),
+		'Cotizacion' => array(
+			'className'				=> 'Cotizacion',
+			'joinTable'				=> 'cotizaciones_productos',
+			'foreignKey'			=> 'venta_detalle_producto_id',
+			'associationForeignKey'	=> 'cotizacion_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'CotizacionesProducto',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 

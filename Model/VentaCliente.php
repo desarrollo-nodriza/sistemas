@@ -7,6 +7,13 @@ class VentaCliente extends AppModel
 	 */
 	public $displayField	= 'nombre';
 
+
+	private static $tipo_cliente = array(
+		'persona' => 'Persona natural',
+		'empresa' => 'Empresa'
+	);
+
+
 	/**
 	 * ASOCIACIONES
 	 */
@@ -23,6 +30,38 @@ class VentaCliente extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'Direccion' => array(
+			'className'				=> 'Direccion',
+			'foreignKey'			=> 'venta_cliente_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'Prospecto' => array(
+			'className'				=> 'Prospecto',
+			'foreignKey'			=> 'venta_cliente_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
+
+
+	function obtener_tipo_cliente()
+	{
+		return self::$tipo_cliente;
+	}
 }

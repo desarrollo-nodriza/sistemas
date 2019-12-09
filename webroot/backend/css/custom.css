@@ -526,3 +526,37 @@ tfoot > tr > td, tfoot > tr:first-child > td {
 .fc-title {
     cursor: pointer;
 }
+
+#ProspectoDirecciones > .panel-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    flex-wrap: wrap;
+}
+
+.js-address-block {
+    cursor: pointer;
+    border: 1px solid transparent !important;
+}
+
+.js-address-block:hover {
+    opacity: 0.5;
+}
+
+.js-address-block.panel-success {
+    border: 1px solid #95b75d !important;
+}
+
+.js-address-block.panel-success .panel-heading {
+    background-color: #95b75d;
+    border-color: #95b75d;
+}
+
+.js-address-block.panel-success .panel-heading .panel-title {
+    color: #fff;
+}
+
+.js-address-block.panel-success .panel-heading ul.panel-controls > li > a {
+    border-color: #fff;
+    color: #fff;
+}

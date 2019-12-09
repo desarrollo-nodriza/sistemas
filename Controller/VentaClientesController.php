@@ -159,13 +159,60 @@ class VentaClientesController extends AppController
 	 */
     public function api_index() {
 
+    	# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
     	$qry = array(
-    		'order' => array('id' => 'desc')
+    		'order' => array('VentaCliente.id' => 'desc'),
+    		'contain' => array(
+    			'Direccion' => array(
+    				'Comuna'
+    			)
+    		)
     	);
+
+    	$paginacion = array(
+        	'limit' => 0,
+        	'offset' => 0,
+        	'total' => 0
+        );
+
+    	if (isset($this->request->query['id'])) {
+    		if (!empty($this->request->query['id'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array( 'VentaCliente.id' => $this->request->query['id'])));
+    		}
+    	}
 
     	if (isset($this->request->query['limit'])) {
     		if (!empty($this->request->query['limit'])) {
     			$qry = array_replace_recursive($qry, array('limit' => $this->request->query['limit']));
+    			$paginacion['limit'] = $this->request->query['limit'];
+    		}
+    	}
+
+    	if (isset($this->request->query['offset'])) {
+    		if (!empty($this->request->query['offset'])) {
+    			$qry = array_replace_recursive($qry, array('offset' => $this->request->query['offset']));
+    			$paginacion['offset'] = $this->request->query['offset'];
     		}
     	}
 
@@ -176,6 +223,26 @@ class VentaClientesController extends AppController
     	}
    
         $clientes = $this->VentaCliente->find('all', $qry);
+
+        foreach ($clientes as $ic => $c) {
+        	foreach ($c['Direccion'] as $id => $d) {
+
+        		$direccion = array(
+        			'Direccion' => $d,
+        			'Comuna' => $d['Comuna']
+        		);
+
+        		$v             =  new View();
+				$v->autoRender = false;
+				$v->output     = '';
+				$v->layoutPath = '';
+				$v->layout     = '';
+				$v->set(compact('direccion'));	
+
+				$clientes[$ic]['Direccion'][$id]['block'] = $v->render('/Elements/direcciones/address-block');
+        	}
+
+        }
 
         $this->set(array(
             'clientes' => $clientes,
@@ -221,20 +288,19 @@ class VentaClientesController extends AppController
 		}
 
 
-		if (empty($this->request->data['nombre']) 
-			|| empty($this->request->data['apellido'])
-			|| empty($this->request->data['email'])) {
+		if (empty($this->request->data['VentaCliente']['nombre'])
+			|| empty($this->request->data['VentaCliente']['email'])) {
 			$response = array(
 				'code' => 504,
 				'created' => false,
-				'message' => 'Nombre, Apellido y Email son requeridos.'
+				'message' => 'Nombre y Email son requeridos.'
 			);
 
 			throw new CakeException($response);
 		}
 
 
-		$existe = $this->VentaCliente->find('first', array('conditions' => array('email' => $this->request->data['email'])));
+		$existe = $this->VentaCliente->find('first', array('conditions' => array('email' => $this->request->data['VentaCliente']['email'])));
 
 		if (!empty($existe)) {
 
@@ -262,31 +328,15 @@ class VentaClientesController extends AppController
 				'modulo_accion' => json_encode($this->request->data)
 			)
 		);
-			
-		$data = array(
-			'VentaCliente' => array(
-				'nombre'   => $this->request->data['nombre'],
-				'apellido' => $this->request->data['apellido'],
-				'email'    => $this->request->data['email']
-			)
-		);
-
-		if (isset($this->request->data['rut'])) {
-			$data['VentaCliente']['rut'] = $this->request->data['rut'];
-		}
-
-		if (isset($this->request->data['telefono'])) {
-			$data['VentaCliente']['telefono'] = $this->request->data['telefono'];
-		}
 
 		
-		if ($this->VentaCliente->save($data)){
+		if ($this->VentaCliente->save($this->request->data)){
 
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Rest api',
 					'modulo' => 'VentaCliente',
-					'modulo_accion' => 'Creación: ' . json_encode($data)
+					'modulo_accion' => 'Creación: cliente id ' . $this->VentaCliente->id
 				)
 			);
 
