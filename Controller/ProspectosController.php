@@ -99,7 +99,7 @@ class ProspectosController extends AppController
 				if( $this->request->data['Prospecto']['cotizacion'] ) {
 
 					# Verificamos que exista la información mínima para pasar a cotización
-					if ( empty($this->request->data['Prospecto']['venta_cliente_id']) || empty($this->request->data['Prospecto']['direccion_id']) || empty($this->request->data['Prospecto']['descripcion']) || empty($this->request->data['VentaDetalleProducto'])) {
+					if ( empty($this->request->data['Prospecto']['venta_cliente_id']) || empty($this->request->data['Prospecto']['descripcion']) || empty($this->request->data['VentaDetalleProducto'])) {
 
 						# Se pasa a estado esperando información
 						$this->Prospecto->saveField('estado_prospecto_id', 'esperando_informacion');
@@ -153,7 +153,7 @@ class ProspectosController extends AppController
 			// Forzamos el id de tienda
 			$this->request->data['Prospecto']['tienda_id'] = $this->Session->read('Tienda.id');
 			$this->request->data['Prospecto']['estado_prospecto_id'] = 'creado';
-			
+
 			$this->Prospecto->ProductosProspecto->deleteAll(array('prospecto_id' => $id));
 
 			if ( $this->Prospecto->saveAll($this->request->data) )
@@ -162,7 +162,7 @@ class ProspectosController extends AppController
 				if( $this->request->data['Prospecto']['cotizacion'] ) {
 
 					# Verificamos que exista la información mínima para pasar a cotización
-					if ( empty($this->request->data['Prospecto']['venta_cliente_id']) || empty($this->request->data['Prospecto']['direccion_id']) || empty($this->request->data['Prospecto']['descripcion']) || empty($this->request->data['VentaDetalleProducto'])) {
+					if ( empty($this->request->data['Prospecto']['venta_cliente_id']) || empty($this->request->data['Prospecto']['descripcion']) || empty($this->request->data['VentaDetalleProducto'])) {
 
 						# Se pasa a estado esperando información
 						$this->Prospecto->saveField('estado_prospecto_id', 'esperando_informacion');

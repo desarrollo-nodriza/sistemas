@@ -309,17 +309,6 @@ var prospecto = function(){
 					e.preventDefault();
 				}
 
-				if ($('#ProspectoDireccionId').val() == '') {
-
-					noty({text: 'Seleccione una dirección.', layout: 'topRight', type: 'error'});
-
-					setTimeout(function(){
-						$.noty.closeAll();
-					}, 10000);
-					
-					e.preventDefault();
-				}
-
 				if ($('#ProspectoProductos > tr').length == 0) {
 
 					noty({text: 'Agrega al menos 1 producto.', layout: 'topRight', type: 'error'});

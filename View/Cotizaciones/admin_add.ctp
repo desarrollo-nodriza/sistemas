@@ -91,9 +91,16 @@
 											<tr>
 												<td>Teléfono:</td><td><?=$this->Form->input('fono_cliente', array('class' => 'mascara_fono form-control', 'value' => $prospecto['VentaCliente']['telefono']));?></td>
 											</tr>
+											<? if (!empty( $prospecto['Direccion']['calle'])) : ?>
 											<tr>
 												<td>Dirección:</td><td><?=$this->Form->input('direccion_cliente', array('value' => sprintf('%s #%s, %s. %s', $prospecto['Direccion']['calle'], $prospecto['Direccion']['numero'], $prospecto['Direccion']['depto'], $prospecto['Direccion']['Comuna']['nombre']) ));?></td>	
 											</tr>
+											<? else : ?>
+											<tr>
+												<td>Dirección:</td><td><?=$this->Form->input('direccion_cliente');?></td>	
+											</tr>
+											<? endif; ?>
+											
 											<tr>	
 												<td>Asunto:</td><td><?=$this->Form->input('asunto_cliente', array('value' => $prospecto['Prospecto']['descripcion']));?></td>
 											</tr>
