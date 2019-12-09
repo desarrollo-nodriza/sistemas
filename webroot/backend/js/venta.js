@@ -970,6 +970,7 @@ $(function() {
 				        $.ajax( {
 				          url: webroot + 'api/clientes.json',
 				          data: {
+				          	token : $('#VentaAccessToken').val(),
 				          	limit: 40,
 				            email: request.term
 				          },
@@ -1368,14 +1369,7 @@ $(function() {
 
 			      	$.app.formularios.bind('#VentaAdminAddForm', objForm);
 
-					$('#VentaClienteAdminAddForm').on('submit', function(e){
-						e.preventDefault();
-
-						if ($(this).valid()) {
-							venta.crear_cliente();
-						}
-
-					});
+					
 
 					$(document).on('click', '.pago_tr', function(e){
 						e.preventDefault();
