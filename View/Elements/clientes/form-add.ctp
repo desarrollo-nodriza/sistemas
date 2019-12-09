@@ -45,11 +45,11 @@
       		</div>
 
       		<div class="alert alert-danger hidden">
-				<span id="error-mensaje"></span>
+				<span id="error-mensaje-cliente"></span>
 			</div>
 
 			<div class="alert alert-success hidden">
-				<span id="success-mensaje"></span>
+				<span id="success-mensaje-cliente"></span>
 			</div>
       	
       </div>

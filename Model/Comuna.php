@@ -22,4 +22,20 @@ class Comuna extends AppModel
 			),
 		)
 	);
+
+	public $hasMany = array(
+		'Direccion' => array(
+			'className'				=> 'Direccion',
+			'foreignKey'			=> 'comuna_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		)
+	);
 }

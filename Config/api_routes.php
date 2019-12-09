@@ -329,6 +329,19 @@ Router::connect(
         'prefix' => 'api')
 );
 
+Router::connect(
+    '/api/clientes/view/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaClientes', 
+        'action' => 'view',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
 
 /**
  *  Direcciones

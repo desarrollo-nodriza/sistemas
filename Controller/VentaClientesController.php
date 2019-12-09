@@ -252,6 +252,77 @@ class VentaClientesController extends AppController
 
 
 
+    /**
+     * Visualiza un cliente
+     * Endpoint: /api/clientes/view/:id.json
+     * @param  [type] $id id externo del producto
+     */
+    public function api_view($id) {
+    	
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$cliente = $this->VentaCliente->find('first', array(
+			'conditions' => array(
+				'VentaCliente.id' => $id
+			),
+			'contain' => array(
+				'Direccion' => array(
+					'Comuna'
+				)
+			)
+		));
+
+		foreach ($cliente['Direccion'] as $id => $d) {
+
+    		$direccion = array(
+    			'Direccion' => $d,
+    			'Comuna' => $d['Comuna']
+    		);
+
+    		$v             =  new View();
+			$v->autoRender = false;
+			$v->output     = '';
+			$v->layoutPath = '';
+			$v->layout     = '';
+			$v->set(compact('direccion'));	
+
+			$cliente['Direccion'][$id]['block'] = $v->render('/Elements/direcciones/address-block');
+    	}
+
+        $this->set(array(
+            'cliente' => $cliente['VentaCliente'],
+            'direccion' => $cliente['Direccion'],
+            '_serialize' => array('cliente', 'direccion')
+        ));
+			
+    }
+
+
+
     public function api_add() {
 
 		# Solo método POST

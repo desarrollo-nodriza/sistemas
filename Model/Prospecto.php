@@ -7,6 +7,13 @@ class Prospecto extends AppModel
 	 */
 	public $displayField	= 'nombre';
 
+
+	private static $estados = array(
+		'creado' => 'Creado',
+		'cotizacion' => 'Paso a cotización',
+		'esperando_informacion' => 'Esperando información'
+	); 
+
 	/**
 	 * BEHAVIORS
 	 */
@@ -106,6 +113,24 @@ class Prospecto extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'ValidezFecha')
+		),
+		'VentaCliente' => array(
+			'className'				=> 'VentaCliente',
+			'foreignKey'			=> 'venta_cliente_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'ValidezFecha')
+		),
+		'Direccion' => array(
+			'className'				=> 'Direccion',
+			'foreignKey'			=> 'direccion_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'ValidezFecha')
 		)
 	);
 	public $hasMany = array(
@@ -140,11 +165,36 @@ class Prospecto extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'VentaDetalleProducto' => array(
+			'className'				=> 'VentaDetalleProducto',
+			'joinTable'				=> 'productos_prospectos',
+			'foreignKey'			=> 'prospecto_id',
+			'associationForeignKey'	=> 'venta_detalle_producto_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'ProductosProspecto',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 
 	public function beforeSave( $options = array() )
 	{	
 
+	}
+
+	public function obtener_estados($nombre = '')
+	{
+		if (empty($nombre)) {
+			return self::$estados;
+		}
+
+		return self::$estados[$nombre];
 	}
 }

@@ -154,6 +154,22 @@ class Cotizacion extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'VentaDetalleProducto' => array(
+			'className'				=> 'VentaDetalleProducto',
+			'joinTable'				=> 'cotizaciones_productos',
+			'foreignKey'			=> 'cotizacion_id',
+			'associationForeignKey'	=> 'venta_detalle_producto_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'with'					=> 'CotizacionesProducto',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 }

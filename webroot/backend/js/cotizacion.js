@@ -26,6 +26,7 @@ var cotizacion = function(){
 
 		},
 		init: function(){
+
 			$(document).on('change', '.js-calcular-totales', function(){
 				cotizacion.calcular_totales();
 			});
@@ -136,9 +137,52 @@ var prospecto = function(){
 		calcular_totales: function(){
 
 		},
+		obtener_cliente: function($id){
+
+			$.app.loader.mostrar();
+
+			var $token = $('.js-prospecto').data('token');
+
+			$.ajax({
+				url: webroot + 'api/clientes/view/' + $id + '.json?token=' + $token
+			})
+			.done(function(res) {
+				
+				$('#obtener_cliente').val(res.cliente.email);
+
+				var html_direccion = '';
+
+		      	for (var i = 0; i < res.direccion.length; i++) {
+		      		html_direccion += '<div class="col-xs-12 col-md-6">' + res.direccion[i].block + '</div>';
+		      	}
+
+		      	if (res.direccion.length == 0) {
+		      		html_direccion += '<p>El cliente seleccionado no tiene dirección, <button data-toggle="modal" data-target="#modalCrearDireccion" class="btn btn-success btn-xs">Creela aquí</button></p>';
+		      		$('#DireccionVentaClienteId').val(res.cliente.id);
+		      	}
+
+		      	$('#ProspectoDirecciones').find('.panel-body').html(html_direccion);
+
+		      	prospecto.seleccionar_direccion($('#ProspectoDireccionId').val());
+
+			})
+			.fail(function(err) {
+
+				noty({text: err.responseJSON.code + ': ' + err.responseJSON.message, layout: 'topRight', type: 'error'});
+
+				setTimeout(function(){
+					$.noty.closeAll();
+				}, 10000);
+			})
+			.always(function() {
+				$.app.loader.ocultar();
+			});
+			
+
+		},
 		autocompletar_clientes: function(){
 
-			var $token = $('#ProspectoAdminAddForm').data('token');
+			var $token = $('.js-prospecto').data('token');
 
 		    $( "#obtener_cliente" ).autocomplete({
 		      source: function( request, response ) {
@@ -193,7 +237,7 @@ var prospecto = function(){
 		},
 		autocompletar_productos: function(){
 			
-			var $token = $('#ProspectoAdminAddForm').data('token');
+			var $token = $('.js-prospecto').data('token');
 
 			$('#obtener_productos').autocomplete({
 		      source: function( request, response ) {
@@ -249,7 +293,11 @@ var prospecto = function(){
 				prospecto.autocompletar_productos();
 			}
 
-			$(document).on('submit', '#ProspectoAdminAddForm', function(e){
+			if ( $('#ProspectoVentaClienteId').length && $('#ProspectoVentaClienteId').val().length > 0) {
+				prospecto.obtener_cliente($('#ProspectoVentaClienteId').val());
+			}
+
+			$(document).on('submit', '.js-prospecto', function(e){
 				if ($('#ProspectoVentaClienteId').val() == '') {
 
 					noty({text: 'Seleccione o cree un cliente.', layout: 'topRight', type: 'error'});
@@ -391,6 +439,11 @@ var prospecto = function(){
 								
 			});
 
+			if ( $('#ProspectoDireccionId').val() != '' ) {
+				// Se carga la info de direccion
+				
+				
+			}
 
 			$(document).on('click', '.js-a-cotizacion', function(e){
 				e.preventDefault();

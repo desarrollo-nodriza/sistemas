@@ -62,11 +62,14 @@
 					</div>
 				</div>
 				<div class="panel-body">
+					
+					<?=$this->element('contador_resultados');?>
+
 					<div class="table-responsive">
 						<table class="table">
 							<thead>
 								<tr class="sort">
-									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('VentaCliente.email', 'Cliente', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('tienda_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('estado_prospecto_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('moneda_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -77,16 +80,16 @@
 							<tbody>
 								<?php foreach ( $prospectos as $prospecto ) : ?>
 								<tr>
-									<td><?= h($prospecto['Prospecto']['nombre']); ?>&nbsp;</td>
+									<td><?= h($prospecto['VentaCliente']['email']); ?>&nbsp;</td>
 									<td><?= h($prospecto['Tienda']['nombre']); ?>&nbsp;</td>
-									<td><?= h($prospecto['EstadoProspecto']['nombre']); ?>&nbsp;</td>
+									<td><?= h($prospecto['Prospecto']['estado_prospecto_id']); ?>&nbsp;</td>
 									<td><?= h($prospecto['Moneda']['nombre']); ?>&nbsp;</td>
 									<td><?= h($prospecto['Prospecto']['created']); ?>&nbsp;</td>
 									<td>
-									<? if ($permisos['edit'] && $prospecto['EstadoProspecto']['nombre'] != 'Finalizada') : ?>
+									<? if ($permisos['edit'] && $prospecto['Prospecto']['estado_prospecto_id'] != 'cotizacion') : ?>
 									<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $prospecto['Prospecto']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
 									<? endif; ?>
-									<? if ($permisos['delete'] && $prospecto['EstadoProspecto']['nombre'] != 'Finalizada') : ?>
+									<? if ($permisos['delete'] && $prospecto['Prospecto']['estado_prospecto_id'] != 'cotizacion') : ?>
 									<?= $this->Form->postLink('<i class="fa fa-remove"></i> Eliminar', array('action' => 'delete', $prospecto['Prospecto']['id']), array('class' => 'btn btn-xs btn-danger confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
 									<? endif; ?>
 									</td>

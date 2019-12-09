@@ -114,31 +114,31 @@
 								<td>Neto</td>
 								<td>Total</td>
 							</tr>
-							<? foreach ($productos as $inx => $producto) : ?>
+							<? foreach ($this->request->data['VentaDetalleProducto'] as $inx => $producto) : ?>
 								<tr>
-									<td><?=$producto['Productotienda']['reference'];?></td>
-									<td><?=$producto['Lang'][0]['ProductotiendaIdioma']['name'];?></td>
-									<td><?=$producto['Productotienda']['cantidad']; ?></td>
-									<td><?=$producto['Productotienda']['precio_neto']?></td>
-									<td><?=$producto['Productotienda']['total_neto']; ?></td>
+									<td><?=$producto['codigo_proveedor'];?></td>
+									<td><?=$producto['nombre'];?></td>
+									<td><?=$producto['CotizacionesProducto']['cantidad']; ?></td>
+									<td><?=CakeNumber::currency($producto['CotizacionesProducto']['precio_neto'], 'CLP'); ?></td>
+									<td><?=CakeNumber::currency($producto['CotizacionesProducto']['total_neto'], 'CLP'); ?></td>
 								</tr>								
 							<? endforeach; ?>
 							<tr>
-								<td colspan="4"><b>Total Neto</b></td><td><?=$this->request->data['Cotizacion']['total_neto'];?></td>
+								<td colspan="4"><b>Total Neto</b></td><td><?=CakeNumber::currency($this->request->data['Cotizacion']['total_neto'], 'CLP'); ?></td>
 							</tr>
 							<tr>
-								<td colspan="4"><b>Descuento</b></td><td><?=$this->request->data['Cotizacion']['descuento'];?></td>
-							</tr>
-							<tr>
-								<td colspan="4"><b>IVA</b></td><td><?=$this->request->data['Cotizacion']['iva'];?></td>
+								<td colspan="4"><b>IVA</b></td><td><?=CakeNumber::currency($this->request->data['Cotizacion']['iva'], 'CLP'); ?></td>
 							</tr>
 							<? if (!empty($this->request->data['Transporte']['id'])) : ?>
 							<tr>
-								<td colspan="4"><b><?= $this->request->data['Transporte']['nombre']; ?></b></td><td><?= $this->request->data['Cotizacion']['transporte'];?></td>
+								<td colspan="4"><b><?= $this->request->data['Transporte']['nombre']; ?></b></td><td><?=CakeNumber::currency($this->request->data['Cotizacion']['transporte'], 'CLP'); ?></td>
 							</tr>
 							<? endif; ?>
 							<tr>
-								<td colspan="4"><b>Total</b></td><td><?=$this->request->data['Cotizacion']['total_bruto'];?></td>
+								<td colspan="4"><b>Descuento</b></td><td><?=CakeNumber::currency($this->request->data['Cotizacion']['descuento'], 'CLP'); ?></td>
+							</tr>
+							<tr>
+								<td colspan="4"><b>Total</b></td><td><?=CakeNumber::currency($this->request->data['Cotizacion']['total_bruto'], 'CLP'); ?></td>
 							</tr>
 						</table>
 					</div>
