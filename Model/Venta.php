@@ -721,6 +721,12 @@ class Venta extends AppModel
 
 					ClassRegistry::init('Bodega')->crearSalidaBodega($producto['venta_detalle_producto_id'], null, $producto['cantidad_reservada'], 'VT');
 
+				}else if ($producto['cantidad_entregada'] == $producto['cantidad']) {
+
+					$detalles[$ip]['VentaDetalle'] = $producto;
+
+					continue;
+
 				}else{
 					throw new Exception("No se permite entregar un pedido que no tiene los productos reservados.", 1);
 					
