@@ -184,7 +184,7 @@
 									</tr>
 									<? if ( ! empty($prospecto['Prospecto']['transporte_id']) ) : ?>
 									<tr>
-										<td colspan="4"><b><?=$prospecto['Transporte']['nombre']; ?></b></td><td><?=$this->Form->input('transporte', array('value' => $prospecto['Transporte']['precio'], 'class' => 'not-blank is-number form-control'));?></td>
+										<td colspan="4"><b><?=$prospecto['Transporte']['nombre']; ?></b></td><td><?=$this->Form->input('transporte', array('value' => $prospecto['Transporte']['precio'], 'class' => 'not-blank is-number js-calcular-totales form-control'));?></td>
 									</tr>
 									<? endif; ?>
 									<tr>

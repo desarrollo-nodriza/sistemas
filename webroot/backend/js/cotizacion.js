@@ -27,6 +27,10 @@ var cotizacion = function(){
 		},
 		init: function(){
 
+			if($('#CotizacionAdminAddForm').length){
+				cotizacion.calcular_totales();
+			}
+
 			$(document).on('change', '.js-calcular-totales', function(){
 				cotizacion.calcular_totales();
 			});
