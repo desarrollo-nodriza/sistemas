@@ -875,7 +875,8 @@ $(function() {
 			          	token : $('#VentaAccessToken').val(),
 			          	limit: 20,
 			            s: request.term,
-			            tr: 1 // Solicitamos que nos retorne el TR
+			            tr: 1, // Solicitamos que nos retorne el TR
+			            external: 1
 			          },
 			          success: function( data ) {
 
@@ -887,7 +888,8 @@ $(function() {
 			          			label :  data.productos[i].VentaDetalleProducto.nombre,
 			          			value :  data.productos[i].VentaDetalleProducto.nombre,
 			          			id :  data.productos[i].VentaDetalleProducto.id,
-			          			tr : data.productos[i].VentaDetalleProducto.tr
+			          			tr : data.productos[i].VentaDetalleProducto.tr,
+			          			todo: data.productos[i].VentaDetalleProducto
 			          		}
 			          	}
 			            response( $result );
@@ -907,60 +909,37 @@ $(function() {
 
 			      	$('.js-productos-wrapper').append(ui.item.tr);
 
+			      	$('.js-productos-wrapper').find('tr[data-id="'+ui.item.id+'"]').eq(0).find('.js-precio-producto').val(ui.item.todo.external.precio_venta);
+
 			      	$.app.formularios.bind('#VentaAdminAddForm');
 
 			      }
 			    });
 
 			},
-			crear_cliente: function(){
+			crear_cliente: function(res){
 
-				$.app.loader.mostrar();
+				$('#success-mensaje-cliente').html('200: Cliente creado exitosamente.');
+				$('#success-mensaje-cliente').parents('.alert').eq(0).removeClass('hidden');
 
-				$('#success-mensaje').html('');
-				$('#success-mensaje').parents('.alert').eq(0).addClass('hidden');
-				$('#error-mensaje').html('');
-				$('#error-mensaje').parents('.alert').eq(0).addClass('hidden');
+				$('#VentaClienteNombre').val('');
+				$('#VentaClienteApellido').val('');
+				$('#VentaClienteEmail').val('');
+				$('#VentaClienteRut').val('');
+				$('#VentaClienteTelefono').val('');
 
-				$.ajax({
-					url: webroot + 'api/clientes/add.json?token=' + $('#VentaAccessToken').val(),
-					type: 'POST',
-					data: {
-						nombre: $('#VentaClienteNombre').val(),
-						apellido: $('#VentaClienteApellido').val(),
-						email: $('#VentaClienteEmail').val(),
-						rut: $('#VentaClienteRut').val(),
-						telefono: $('#VentaClienteTelefono').val()
-					},
-				})
-				.done(function(res) {
-					
-					$('#success-mensaje').html('200: Cliente creado exitosamente.');
-					$('#success-mensaje').parents('.alert').eq(0).removeClass('hidden');
+				$('#VentaVentaClienteId').val(res.response.cliente.id);
+				$('#obtener_cliente').val(res.response.cliente.email);
 
-					$('#VentaClienteNombre').val('');
-					$('#VentaClienteApellido').val('');
-					$('#VentaClienteEmail').val('');
-					$('#VentaClienteRut').val('');
-					$('#VentaClienteTelefono').val('');
+				setTimeout(function(){
+					$('#modalCrearCliente').modal('hide');
+					$('#success-mensaje-cliente').html('');
+					$('#error-mensaje-cliente').html('');
 
 					$('#VentaVentaClienteId').val(res.response.cliente.id);
 					$('#obtener_cliente').val(res.response.cliente.email);
 
-					setTimeout(function(){
-						$('#modalCrearCliente').modal('hide');
-					}, 1500);
-
-				})
-				.fail(function(error, textStatus, message) {
-
-					$('#error-mensaje').html(error.responseJSON.code + ': ' + error.responseJSON.message);
-					$('#error-mensaje').parents('.alert').eq(0).removeClass('hidden');
-
-				})
-				.always(function(){
-					$.app.loader.ocultar();
-				});
+				}, 1500);				
 				
 			},
 			autocompletar_clientes: function(){
@@ -1369,7 +1348,24 @@ $(function() {
 
 			      	$.app.formularios.bind('#VentaAdminAddForm', objForm);
 
-					
+					$(document).on('submit', '#VentaClienteAdminAddForm', function(e){
+						e.preventDefault();
+						var form = $(this);
+						if (!form.valid()) {
+							return false;
+						}
+
+						clientes.add(
+							function(res){
+								venta.crear_cliente(res);
+							},
+							function(err){
+								$('#error-mensaje-cliente').html(err.responseJSON.code + ': ' + err.responseJSON.message);
+								$('#error-mensaje-cliente').parents('.alert').eq(0).removeClass('hidden');
+							}
+						);
+
+					});	
 
 					$(document).on('click', '.pago_tr', function(e){
 						e.preventDefault();
