@@ -7092,7 +7092,15 @@ class VentasController extends AppController {
 			case 6:
 				$nuevo_estado = 'enviado';
 				break;
-				
+
+			case 7:
+				$nuevo_estado = 'enviado';
+				break;
+			
+			case 8:
+				$nuevo_estado = 'enviado';
+				break;
+
 			case 9:
 				$nuevo_estado = 'enviado';
 				break;
