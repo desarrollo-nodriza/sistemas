@@ -1285,13 +1285,27 @@ $(function() {
 				});
 
 
-				$('.toggle').on('click', function(e){
+				$('.toggle-comuna').on('click', function(e){
 					
 					$(this).find('.fa').toggle();
 					$(this).parents('td').eq(0).find('.comuna-select').toggleClass('hide');
 
 					if ($(this).parents('td').eq(0).find('.comuna-select').hasClass('hide')) {
 						$('.js-comuna-entrega').val( $('.js-comuna-entrega').data('value') );
+					}
+
+				});
+
+				$('.toggle-direccion').on('click', function(e){
+					
+					$(this).find('.fa').toggle();
+					$(this).parents('td').eq(0).find('.direccion-select').toggleClass('hide');
+
+					if ($(this).parents('td').eq(0).find('.direccion-select').hasClass('hide')) {
+						$('#VentaDireccionEntrega').attr('readonly', 'readonly');
+						$('.js-direccion-entrega').val( $('.js-direccion-entrega').data('value') );
+					}else{
+						$('#VentaDireccionEntrega').removeAttr('readonly');
 					}
 
 				});

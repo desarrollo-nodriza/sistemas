@@ -66,15 +66,35 @@
 											</tr>
 											<tr>
 												<th>Dirección despacho</th>
-												<td><?= $venta['Venta']['direccion_entrega']; ?></td>
+
+												<? if (empty($venta['Venta']['fecha_entregado'])): ?>
+													<td>
+														<div class="input-group">
+		                                                    <?=$this->Form->input('direccion_entrega', array('value' => $venta['Venta']['direccion_entrega'], 'type' => 'text', 'class' => 'form-control js-direccion-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['direccion_entrega']));?>
+		                                                    <span class="input-group-btn">
+		                                                        <button class="btn btn-default toggle-direccion" type="button"><i class="fa fa-refresh"></i> <i class="fa fa-close" style="display: none;"></i></button>
+		                                                    </span>
+		                                                </div>
+		                                                <span class="direccion-select hide">
+		                                                	<?=$this->Form->button('Guardar cambios', array('type' => 'submit', 'class' => 'btn btn-warning btn-block mt-5')); ?>
+		                                                </span>		
+													</td>
+												<? else : ?>
+													<td>
+														<?=$venta['Venta']['direccion_entrega']; ?>
+													</td>
+												<? endif; ?>
+												
 											</tr>
 											<tr>
 												<th>Comuna despacho</th>
+
+												<? if (empty($venta['Venta']['fecha_entregado'])): ?>
 												<td>
 													<div class="input-group">
 	                                                    <?=$this->Form->input('comuna_entrega', array('value' => $venta['Venta']['comuna_entrega'], 'class' => 'form-control js-comuna-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['comuna_entrega']));?>
 	                                                    <span class="input-group-btn">
-	                                                        <button class="btn btn-default toggle" type="button"><i class="fa fa-refresh"></i> <i class="fa fa-close" style="display: none;"></i></button>
+	                                                        <button class="btn btn-default toggle-comuna" type="button"><i class="fa fa-refresh"></i> <i class="fa fa-close" style="display: none;"></i></button>
 	                                                    </span>
 	                                                </div>
 	                                                <span class="comuna-select hide">
@@ -83,6 +103,9 @@
 	                                                	<?=$this->Form->button('Guardar cambios', array('type' => 'submit', 'class' => 'btn btn-warning btn-block mt-5')); ?>
 	                                                </span>    
                                                 </td>
+                                                <? else: ?>
+                                                	<td><?=$venta['Venta']['comuna_entrega']; ?></td>
+                                                <? endif; ?>
 											</tr>
 											<tr>
 												<th>Método de envio</th>
