@@ -409,6 +409,11 @@
 
 <?= $this->element('ventas/modal-venta-manual', array('tiendas' => $tiendas, 'marketplaces' => $marketplaces))?>
 
+<?= $this->Html->script(array(
+	'/backend/js/venta.js?v=' . rand()
+));?>
+<?= $this->fetch('script'); ?>
+
 <script type="text/javascript">
 
 	$(document).ready(function() {

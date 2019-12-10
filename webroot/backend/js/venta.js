@@ -438,7 +438,6 @@ $(function() {
 
 		}
 
-
 		var cambiar_venta_estado_empaquetado = function($ths, $data){
 			var id_venta 	= $ths.data('id'),
 				actualizado = false;

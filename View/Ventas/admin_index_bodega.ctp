@@ -134,3 +134,8 @@
 	
 </div>
 <!-- Fin modal -->
+
+<?= $this->Html->script(array(
+	'/backend/js/venta.js?v=' . rand()
+));?>
+<?= $this->fetch('script'); ?>

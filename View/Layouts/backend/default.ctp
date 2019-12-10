@@ -68,7 +68,6 @@
 			'/backend/js/orden_compra.js?v=' . rand(),
 			'/backend/js/print_js/print.min',
 			'/backend/js/logistica.js?v=' . rand(),
-			'/backend/js/venta.js?v=' . rand(),
 			'/backend/js/saldo.js?v=' . rand(),
 			//'/backend/js/orden_compra_pagos.js?v=' . rand(),
 			'/backend/js/pagos.js?v=' . rand(),

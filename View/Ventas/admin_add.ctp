@@ -1,5 +1,6 @@
 <?= $this->Html->script(array(
-	'/backend/js/plugins/smartwizard/jquery.smartWizard-2.0.min.js')); ?>
+	'/backend/js/plugins/smartwizard/jquery.smartWizard-2.0.min.js',
+	'/backend/js/venta.js?v=' . rand())); ?>
 <?= $this->fetch('script'); ?>
 
 <div class="page-title">
