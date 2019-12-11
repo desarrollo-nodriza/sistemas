@@ -28,6 +28,15 @@
 								</td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('tiempo_entrega_maximo', 'Tiempo máximo de entrega'); ?></th>
+								<td>
+									<div class="input-group" style="max-width: 100%;">
+                                        <?= $this->Form->input('tiempo_entrega_maximo', array('type' => 'text')); ?>
+                                        <span class="input-group-addon">Días</span>
+                                    </div>
+								</td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>

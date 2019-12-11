@@ -484,7 +484,8 @@ class VentaDetalleProducto extends AppModel
 						'OrdenCompra.estado' => 'recibido'
 					)
 				),
-				'VentaDetalle'
+				'VentaDetalle',
+				'Marca'
 			)
 		));
 
@@ -510,7 +511,7 @@ class VentaDetalleProducto extends AppModel
 		if (count($avg) > 0) {
 			$promedio_creado_recibido  = (array_sum(Hash::extract($avg, '{n}.creado_recibido.dias')) / count($avg));	
 		}else{
-			$promedio_creado_recibido  = 2;
+			$promedio_creado_recibido  = (!empty($producto['Marca']['tiempo_maximo_entrega'])) ? $producto['Marca']['tiempo_maximo_entrega'] : 2 ;
 		}
 
 		return ceil($promedio_creado_recibido);
