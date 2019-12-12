@@ -25,6 +25,10 @@
 								<td><?= $this->Form->select('categoria_id', $categorias, array('class' => 'form-control select js-select-categoria-main not-blank', 'data-live-search' => 'true')); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('excluir_stockout', 'Excluir productos sin stock'); ?></th>
+								<td><?= $this->Form->input('excluir_stockout', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>

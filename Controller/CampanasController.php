@@ -93,7 +93,7 @@ Class CampanasController extends AppController {
 
 		$categorias = $this->obtener_lista_categorias_tienda($this->Session->read('Tienda.id'));
 
-		BreadcrumbComponent::add('Campañas ', '/Campañas');
+		BreadcrumbComponent::add('Campañas ', '/campanas');
 		BreadcrumbComponent::add('Agregar ');
 
 		$this->set(compact('categorias'));
@@ -453,6 +453,11 @@ Class CampanasController extends AppController {
 		$sitioUrl = $this->formatear_url($tienda['Tienda']['url'], true);
 
 		foreach ($productostodos as $ip => $producto) {
+
+			# Se excluyen los productos sin stock
+			if ($producto['Stockdisponible']['quantity'] < 1 && $campana['Campana']['excluir_stockout'])
+				continue;
+
 			$cate = $productoTienda->getParentCategory($producto['Productotienda']['id_category_default'], $tienda['Tienda']['prefijo']);
 			
 			if (!empty($cate)) {

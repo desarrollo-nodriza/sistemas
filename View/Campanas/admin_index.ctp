@@ -24,6 +24,7 @@
 									<th><?= $this->Paginator->sort('nombre', 'Nombre campaña', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('categoria_id', 'Id categoria prestashop', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('url', 'Url campaña', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('excluir_stockout', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('activo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
 								</tr>
@@ -34,8 +35,9 @@
 									<td><?= h($campana['Campana']['id']); ?>&nbsp;</td>
 									<td><?= h($campana['Campana']['nombre']); ?>&nbsp;</td>
 									<td><?= h($campana['Campana']['categoria_id']); ?>&nbsp;</td>
-									<td><?= Router::url('/', true) . 'Campana/google/' . $this->Session->read('Tienda.id') . '/' . $campana['Campana']['id']; ?></td>
+									<td><?= Router::url('/', true) . 'feed/google/' . $this->Session->read('Tienda.id') . '/' . $campana['Campana']['id']; ?></td>
 									<td><?= ($campana['Campana']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
+									<td><?= ($campana['Campana']['excluir_stockout'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td>
 									<? if ($permisos['edit']) : ?>
 									<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $campana['Campana']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
