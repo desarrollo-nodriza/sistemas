@@ -418,7 +418,7 @@ class OrdenesController extends AppController
 				foreach ($this->request->data['DteDetalle'] as $k => $item) {
 
 					# Precio de transporte viene Bruto
-					if ($item['NmbItem'] != 'Transporte') {
+					if ($item['VlrCodigo'] != 'COD-Trns') {
 						$this->request->data['DteDetalle'][$k]['PrcItem'] = $this->precio_bruto($item['PrcItem']);
 					}
 					
@@ -1054,7 +1054,7 @@ class OrdenesController extends AppController
 	public function generarDte($id_dte = '')
 	{	
 		$dte = $this->LibreDte->prepararDte($this->request->data);
-
+		
 		if (!empty($id_dte)) {
 			# Obtener DTE interno por id
 			$dteInterno = $this->Orden->Dte->find('first', array('conditions' => array('id' => $id_dte)));
