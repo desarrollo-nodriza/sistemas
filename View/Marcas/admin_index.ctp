@@ -22,7 +22,7 @@
 									<tr class="sort">
 										<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('descuento_base', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-										<th><?= $this->Paginator->sort('tiempo_etrega_maximo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+										<th><?= $this->Paginator->sort('tiempo_entrega_maximo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('activo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('created', 'Fecha de creación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th>Acciones</th>
@@ -33,7 +33,7 @@
 									<tr>
 										<td><?= h($marca['Marca']['nombre']); ?>&nbsp;</td>
 										<td><?= h($marca['Marca']['descuento_base']); ?>%</td>
-										<td><?= h($marca['Marca']['tiempo_etrega_maximo']); ?> días</td>
+										<td><?= h($marca['Marca']['tiempo_entrega_maximo']); ?> días</td>
 										<td><?= ($marca['Marca']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 										<td><?= h($marca['Marca']['created']); ?>&nbsp;</td>
 										<td>

@@ -28,6 +28,16 @@
 				</div>
 
 				<hr>
+				<h4>><i class="fa fa-bell"></i> Nota interna</h4>
+				<div class="table-responsive">
+					<table class="table table-bordered">
+						<tr class="<?= (!empty($venta['Venta']['nota_interna'])) ? 'success' : '' ; ?>">
+			      			<td><?=$venta['Venta']['nota_interna'];?></td>
+			      		</tr>
+					</table>
+				</div>
+
+				<hr>
 
 				<h4><i class="fa fa-envelope" aria-hidden="true"></i> <?= __('Mensajes de la venta');?></h4>
 				

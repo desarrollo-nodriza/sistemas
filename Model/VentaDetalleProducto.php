@@ -61,6 +61,19 @@ class VentaDetalleProducto extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'Mensaje' => array(
+			'className'				=> 'Mensaje',
+			'foreignKey'			=> 'venta_detalle_producto_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
@@ -509,9 +522,16 @@ class VentaDetalleProducto extends AppModel
 		}
 		
 		if (count($avg) > 0) {
-			$promedio_creado_recibido  = (array_sum(Hash::extract($avg, '{n}.creado_recibido.dias')) / count($avg));	
+
+			$promedio_creado_recibido  = (array_sum(Hash::extract($avg, '{n}.creado_recibido.dias')) / count($avg));
+			
+			# Si el tiempo de entrega calcuado es mayor al tiempo de la marca se mantiene el de la marca.
+			if(!empty($producto['Marca']['tiempo_entrega_maximo']) && $promedio_creado_recibido > $producto['Marca']['tiempo_entrega_maximo']){
+				$promedio_creado_recibido = $producto['Marca']['tiempo_entrega_maximo'];
+			}
+		
 		}else{
-			$promedio_creado_recibido  = (!empty($producto['Marca']['tiempo_maximo_entrega'])) ? $producto['Marca']['tiempo_maximo_entrega'] : 2 ;
+			$promedio_creado_recibido = $producto['Marca']['tiempo_entrega_maximo'];
 		}
 
 		return ceil($promedio_creado_recibido);

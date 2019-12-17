@@ -240,137 +240,22 @@
 									</div>	
 
 								</div>
-							</div>	
+							</div>
 
-                        </div>
-
-                        <!--<div id="step-3">   
-							
-							
-
-                            
-
-                        </div>
-
-                        <div id="step-4">
-                        	
-							<div class="row mt-5">
-								<div class="col-xs-12 col-md-5">
-		                        	<div class="panel panel-default">
-										<div class="panel-heading">
-											<h5 class="panel-title"><i class="fa fa-usd" aria-hidden="true"></i> <?= __('Medio de pago');?></h5>
-										</div>
-										<div class="panel-body">
-											<div class="form-group">
-												<label><?=__('Medio de pago');?></label>
-												
-				                        	</div>
-
-				                        	
-											
-											
-										</div>
-		                        	</div>
+							<div class="panel panel-danger">
+								<div class="panel-body">
+									<h4><i class="fa fa-bell" aria-hidden="true"></i> <?= __('¿Deseas agregar una nota interna a la venta?');?></h4>
 								</div>
-								<div class="col-xs-12 col-md-7">
-									
-									<div class="panel panel-default">
-										<div class="panel-heading">
-											<h5 class="panel-title"><i class="fa fa-money" aria-hidden="true"></i> <?= __('Pagos');?></h5>
-											<ul class="panel-controls">
-						                        <li><a href="#" class="copy_tr"><span class="fa fa-plus"></span></a></li>
-						                    </ul>
-										</div>
-										<div class="panel-body">
-
-											<div class="table-responsive">
-												<table class="table table-bordered">
-													<caption>Registre voucher, efectivo o n° de transacción</caption>
-													<thead>
-														<th><?=__('Voucher/Alias/N° transacción');?></th>
-														<th><?=__('Monto');?></th>
-													</thead>
-													<tbody class="js-pagos-wrapper">
-														<tr class="hidden clone-tr">
-															<td>
-																<?=$this->Form->hidden('VentaTransaccion.999.fecha', array('disabled' => true, 'value' => date('Y-m-d'))); ?>
-																<?=$this->Form->input('VentaTransaccion.999.nombre', array('disabled' => true, 'class' => 'form-control not-blank', 'placeholder' => 'Ingrese Voucher/Alias/N° transacción'));?>		
-															</td>
-															<td><?=$this->Form->input('VentaTransaccion.999.monto', array('disabled' => true, 'type' => 'text', 'class' => 'form-control not-blank is-number js-monto-pago', 'placeholder' => 'Ingrese monto pagado'));?></td>
-															<td valign="center"><button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button></td>
-														</tr>
-													</tbody>
-												</table>
-											</div>
-										</div>
+								<div class="panel-body">
+									<div class="form-group">
+										<?=$this->Form->label('nota_interna', 'Ingrese una nota o comentario a la venta'); ?>
+										<?=$this->Form->input('nota_interna', array('class' => 'form-control', 'placeholder' => 'Ingrese nota'));?>
 									</div>
-									
-									
-									<div class="panel panel-default panel-toggled">
-										<div class="panel-heading">
-											<h3 class="panel-title"><i class="fa fa-envelope" aria-hidden="true"></i> ¿Deseas agregar un mensaje?</h3>
-											<ul class="panel-controls">
-												<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-						                        <li><a href="#" class="copy_tr"><span class="fa fa-plus"></span></a></li>
-						                    </ul>
-										</div>
-										<div class="panel-body">
-
-											<div class="table-responsive">
-												<table class="table table-bordered">
-													<caption>El mensaje no se enviará al cliente. Solo se guardará en el pedido.</caption>
-													<thead>
-														<tr>
-															<th><?=__('Asunto');?></th>
-															<th><?=__('Mensaje');?></th>
-															<th><?=__('Fecha');?></th>
-														</tr>
-													</thead>
-													<tbody class="">
-														<tr class="hidden clone-tr">
-															<td><?=$this->Form->input('VentaMensaje.999.asunto', array('disabled' => true, 'class' => 'form-control not-blank', 'placeholder' => 'Ingrese un asunto'))?></td>
-															<td><?=$this->Form->input('VentaMensaje.999.mensaje', array('disabled' => true, 'class' => 'form-control not-blank', 'placeholder' => 'Ingrese mensaje'));?></td>
-															<td><?=$this->Form->hidden('VentaMensaje.999.fecha', array('disabled' => true, 'class' => '', 'value' => date('Y-m-d H:i:s')));?><?=date('Y-m-d H:i:s');?></td>
-															<td valign="center"><button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button></td>
-														</tr>
-													</tbody>
-												</table>
-											</div>
-										</div>
-									</div>
-
 								</div>
 							</div>
 
-							<div class="row mt-5 mb-5">
-								<div class="col-xs-12 col-md-4 mb-5 mt-5">
-									<a href="#" class="tile tile-info">
-										<p>Total a pagar</p>
-		                                $<span id="total-pagar">0</span>
-		                            </a>
-		                        </div>
-		                        <div class="col-xs-12 col-md-4 mb-5 mt-5">
-									<a href="#" class="tile tile-info">
-										<p>Total a pagar</p>
-		                                $<span id="total-pagar">0</span>
-		                            </a>
-		                        </div>
-                        	</div>
-
                         </div>
-
-                        <div id="step-5">
-							
-							<div id="detalle-productos">
-							</div>
-
-							<div id="totales">
-				
-
-							</div>
-
-                        </div>-->
-                                                                                                                                
+                                                                          
                     </div>
 					
 					<?= $this->Form->end(); ?>

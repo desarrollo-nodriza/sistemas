@@ -77,6 +77,13 @@
 	      		</tr>
 	      	</table>
 	      	<hr>
+	      	<h4>><i class="fa fa-bell"></i> Nota interna</h4>
+	      	<table class="table table-bordered">
+	      		<tr class="<?= (!empty($venta['Venta']['nota_interna'])) ? 'success' : '' ; ?>">
+	      			<td><?=$venta['Venta']['nota_interna'];?></td>
+	      		</tr>
+	      	</table>
+	      	<hr>
 	      	<h4><i class="fa fa-shopping-cart"></i> Productos</h4>
 	      	<table class="table table-bordered">
 	      		<thead>
@@ -306,6 +313,17 @@
 				<div class="col-xs-12 col-md-4">
 					<h4><i class="fa fa-qrcode" aria-hidden="true"></i> App Nodriza</h4>
 					<img src="https://chart.googleapis.com/chart?chs=<?=$tamano;?>&cht=qr&chl=<?=$url;?>&choe=UTF-8" title="QR" class="img-responsive qr-code"/>
+					
+					<hr>
+					<h4><i class="fa fa-bell"></i> Nota interna</h4>
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr class="<?= (!empty($venta['Venta']['nota_interna'])) ? 'success' : '' ; ?>">
+				      			<td><?=$venta['Venta']['nota_interna'];?></td>
+				      		</tr>
+						</table>
+					</div>
+
 					<hr>
 
 					<h4><i class="fa fa-envelope" aria-hidden="true"></i> <?= __('Mensajes de la venta');?></h4>
