@@ -93,6 +93,7 @@ Class CampanasController extends AppController {
 
 		$categorias = $this->obtener_lista_categorias_tienda($this->Session->read('Tienda.id'));
 
+
 		BreadcrumbComponent::add('Campañas ', '/campanas');
 		BreadcrumbComponent::add('Agregar ');
 
@@ -129,9 +130,9 @@ Class CampanasController extends AppController {
 			));
 		}
 		
-		
 		$categorias = $this->obtener_lista_categorias_tienda($this->Session->read('Tienda.id'));
 		$subCategorias = $this->obtener_lista_categorias_tienda($this->Session->read('Tienda.id'), $this->request->data['Campana']['categoria_id']);
+		$subCategorias[1000000000] = 'Mejor precio del mercado';
 		
 		BreadcrumbComponent::add('Campañas ', '/campanas');
 		BreadcrumbComponent::add('Editar ');
@@ -325,7 +326,12 @@ Class CampanasController extends AppController {
 			# Se agregan las etiquetas correspondientes
 			foreach ($campana['CampanaEtiqueta'] as $ic => $c) {
 
-				$id_productos = ClassRegistry::init('Productotienda')->query(sprintf('SELECT * FROM %scategory_product WHERE id_category = %d', $tienda['Tienda']['prefijo'], $c['categoria_id'])); 
+				if($c['categoria_id'] == 1000000000) {
+					$id_productos = ClassRegistry::init('Productotienda')->query(sprintf('SELECT * FROM %scategory_product', $tienda['Tienda']['prefijo'])); 
+				}else{
+					$id_productos = ClassRegistry::init('Productotienda')->query(sprintf('SELECT * FROM %scategory_product WHERE id_category = %d', $tienda['Tienda']['prefijo'], $c['categoria_id'])); 
+				}
+				
 				$id_productos = Hash::extract($id_productos, '{n}.tm_category_product.id_product');
 				
 				// Buscamos los productos que cumplan con el criterio
@@ -432,8 +438,20 @@ Class CampanasController extends AppController {
 					if (!isset($productostodos[$p['Productotienda']['id_product']])) {
 						$productostodos[$p['Productotienda']['id_product']] = $p;
 					}
-					$productostodos[$p['Productotienda']['id_product']]['custom_label_' . $ic] = $c['nombre'];
 					
+					if($c['categoria_id'] == 1000000000) {
+						$prisync = $this->obtener_productos_mejor_precio($p['Productotienda']['reference']);
+
+						if (!empty($prisync)) {
+							if ($prisync[0]['PrisyncProducto']['mejor_precio']) {
+								$productostodos[$p['Productotienda']['id_product']]['custom_label_' . $ic] = 'Mejor precio mercado';
+							}
+						}
+
+					}else{
+						$productostodos[$p['Productotienda']['id_product']]['custom_label_' . $ic] = $c['nombre'];
+					}
+
 				}
 			}
 
@@ -561,4 +579,45 @@ Class CampanasController extends AppController {
 		exit;
 	}
 
+
+	public function obtener_productos_mejor_precio($ref = '', $micompania = 'toolmania')
+	{	
+
+		$qry = array(
+			'contain' => array(
+				'PrisyncRuta'
+			)
+		);
+
+		if (!empty($ref)) {
+			$qry = array_replace_recursive($qry, array(
+				'conditions' => array(
+					'PrisyncProducto.internal_code' => $ref
+				)
+			));
+		}
+
+		$productos = ClassRegistry::init('PrisyncProducto')->find('all', $qry);
+
+		foreach ($productos as $ip => $p) {
+			$mejor_precio = false;
+			
+			$competidores = Hash::sort(Hash::extract($p['PrisyncRuta'], '{n}[price>0]'), '{n}.price', 'asc', 'numeric');
+			
+			if (!empty($competidores)) {
+				$url      = parse_url($competidores[0]['url']);
+				$compania = explode('.', str_replace('www.', '', $url['host']));
+
+				if ($compania[0] == $micompania) {
+					$mejor_precio = true;
+				}
+			}
+
+			$productos[$ip]['PrisyncProducto']['mejor_precio'] = $mejor_precio;
+			
+		}
+
+
+		return $productos;
+	}
 }
