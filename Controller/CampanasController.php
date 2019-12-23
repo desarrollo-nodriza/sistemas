@@ -172,7 +172,7 @@ Class CampanasController extends AppController {
 
 
 	public function google_feed($id_tienda, $id_campana)
-	{
+	{	
 
 		if (!ClassRegistry::init('Tienda')->exists($id_tienda) || !$this->Campana->exists($id_campana)) {
 			return;
@@ -439,11 +439,17 @@ Class CampanasController extends AppController {
 						$productostodos[$p['Productotienda']['id_product']] = $p;
 					}
 					
-					if($c['categoria_id'] == 1000000000) {
+					if($c['categoria_id'] == 1000000000 && !empty($p['Productotienda']['reference'])) {
+						
 						$prisync = $this->obtener_productos_mejor_precio($p['Productotienda']['reference']);
 
 						if (!empty($prisync)) {
-							if ($prisync[0]['PrisyncProducto']['mejor_precio']) {
+
+							if (!isset($prisync['PrisyncProducto'])) {
+								prx($prisyn);
+							}
+
+							if ($prisync['PrisyncProducto']['mejor_precio']) {
 								$productostodos[$p['Productotienda']['id_product']]['custom_label_' . $ic] = 'Mejor precio mercado';
 							}
 						}
@@ -593,7 +599,8 @@ Class CampanasController extends AppController {
 			$qry = array_replace_recursive($qry, array(
 				'conditions' => array(
 					'PrisyncProducto.internal_code' => $ref
-				)
+				),
+				'order' => array('PrisyncProducto.modified' => 'DESC')
 			));
 		}
 
@@ -604,7 +611,7 @@ Class CampanasController extends AppController {
 			
 			$competidores = Hash::sort(Hash::extract($p['PrisyncRuta'], '{n}[price>0]'), '{n}.price', 'asc', 'numeric');
 			
-			if (!empty($competidores)) {
+			if (!empty($competidores) && count($competidores) > 1) {
 				$url      = parse_url($competidores[0]['url']);
 				$compania = explode('.', str_replace('www.', '', $url['host']));
 
@@ -617,7 +624,18 @@ Class CampanasController extends AppController {
 			
 		}
 
+		$nwProductos = array();
+		foreach ($productos as $ip => $p) {
+			if (!isset( $nwProductos[$p['PrisyncProducto']['id']] )) {
+				$nwProductos[$p['PrisyncProducto']['id']]['PrisyncProducto'] = $p['PrisyncProducto'];
+				$nwProductos[$p['PrisyncProducto']['id']]['PrisyncRuta'] = $p['PrisyncRuta'];
+			}
+		}
 
-		return $productos;
+		if (!empty($ref)) {
+			return reset($nwProductos); // retornamos solo el producto pedido
+		}else{
+			return $nwProductos;
+		}
 	}
 }
