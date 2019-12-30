@@ -624,7 +624,7 @@ class Venta extends AppModel
 
 			# Devolver stock a bodega
 			if ($detalle['cantidad_entregada'] > 0) {
-				ClassRegistry::init('Bodega')->crearEntradaBodega($detalle['venta_detalle_producto_id'], null, $detalle['cantidad_entregada'], $pmp, 'VT');
+				ClassRegistry::init('Bodega')->crearEntradaBodega($detalle['venta_detalle_producto_id'], null, $detalle['cantidad_entregada'], $pmp, 'VT', null, $id);
 				$vDetalle->saveField('cantidad_entregada', 0);
 				$vDetalle->saveField('cantidad_pendiente_entrega', $detalle['cantidad_entregada']);
 				$vDetalle->saveField('completo', 0);
@@ -732,7 +732,7 @@ class Venta extends AppModel
 					$detalles[$ip]['VentaDetalle']['cantidad_entregada']         = $producto['cantidad_reservada'];
 					$detalles[$ip]['VentaDetalle']['cantidad_pendiente_entrega'] = $producto['cantidad'] - $producto['cantidad_reservada'];
 
-					ClassRegistry::init('Bodega')->crearSalidaBodega($producto['venta_detalle_producto_id'], null, $producto['cantidad_reservada'], 'VT');
+					ClassRegistry::init('Bodega')->crearSalidaBodega($producto['venta_detalle_producto_id'], null, $producto['cantidad_reservada'], null, 'VT', null, $id);
 
 				}else if ($producto['cantidad_entregada'] == $producto['cantidad']) {
 

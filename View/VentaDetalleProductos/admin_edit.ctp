@@ -306,6 +306,7 @@
 			        <div class="table-responsive" style="max-height: 352px; overflow-y: auto;">
 						<table class="table table-bordered table-striped">
 							<thead>
+								<th><?=__('Id');?></th>
 								<th><?=__('Bodega');?></th>
 								<th><?=__('I/O');?></th>
 								<th><?=__('Costo');?></th>
@@ -314,10 +315,13 @@
 								<th><?=__('Fecha');?></th>
 								<th><?=__('Responsable');?></th>
 								<th><?=__('Glosa');?></th>
+								<th><?=__('OC');?></th>
+								<th><?=__('Venta');?></th>
 							</thead>
 							<tbody>
 							<? foreach ($movimientosBodega as $movimiento) : ?>
 								<tr>
+									<td><?=$movimiento['BodegasVentaDetalleProducto']['id'];?></td>
 									<td><?=$movimiento['BodegasVentaDetalleProducto']['bodega'];?></td>
 									<td><?=$movimiento['BodegasVentaDetalleProducto']['io'];?></td>
 									<td><?=$this->Number->currency($movimiento['BodegasVentaDetalleProducto']['valor'], 'CLP');?></td>
@@ -326,6 +330,20 @@
 									<td><?=$movimiento['BodegasVentaDetalleProducto']['fecha'];?></td>
 									<td><?=$movimiento['BodegasVentaDetalleProducto']['responsable'];?></td>
 									<td><?=$movimiento['BodegasVentaDetalleProducto']['glosa'];?></td>
+									<td>
+									<? if (!empty($movimiento['BodegasVentaDetalleProducto']['orden_compra_id'])) : ?>
+										<?=$this->Html->link('#' . $movimiento['BodegasVentaDetalleProducto']['orden_compra_id'], array('controller' => 'ordenCompras', 'action' => 'view', $movimiento['BodegasVentaDetalleProducto']['orden_compra_id']), array('target' => '_blank')); ?>
+									<? else : ?>
+										--
+									<? endif; ?>
+									</td>
+									<td>
+									<? if (!empty($movimiento['BodegasVentaDetalleProducto']['venta_id'])) : ?>
+										<?=$this->Html->link('#' . $movimiento['BodegasVentaDetalleProducto']['venta_id'], array('controller' => 'ventas', 'action' => 'view', $movimiento['BodegasVentaDetalleProducto']['venta_id']), array('target' => '_blank')); ?>
+									<? else : ?>
+										--
+									<? endif; ?>	
+									</td>
 								</tr>
 							<? endforeach; ?>
 							</tbody>
@@ -365,7 +383,7 @@
                 <div class="owl-carousel">
                 	<div>                                    
                         <div class="widget-title"><?=__('Stock Global');?></div>                                                                      
-                        <div class="widget-int"><?=array_sum(Hash::extract($this->request->data['Bodega'], '{n}.BodegasVentaDetalleProducto[io=IN].cantidad')) - array_sum(Hash::extract($this->request->data['Bodega'], '{n}.BodegasVentaDetalleProducto[io=ED].cantidad'));?></div>
+                        <div class="widget-int"><?=array_sum(Hash::extract($this->request->data['Bodega'], '{n}.BodegasVentaDetalleProducto.cantidad'));?></div>
                     </div>
                 </div>                                                        
             </div>

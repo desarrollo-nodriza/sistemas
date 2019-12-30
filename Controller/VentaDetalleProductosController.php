@@ -325,7 +325,7 @@ class VentaDetalleProductosController extends AppController
 					continue;
 				}
 
-				if (ClassRegistry::init('Bodega')->ajustarInventario($id, $m['bodega'], $m['ajustar'])) {
+				if (ClassRegistry::init('Bodega')->ajustarInventario($id, $m['bodega'], $m['ajustar'], $m['costo'])) {
 					$aceptados[] = $m['ajustar'] . ' items ajustados en bodega ' . $bodegas[$m['bodega']];
 				}
 
@@ -349,6 +349,9 @@ class VentaDetalleProductosController extends AppController
 			)
 		));
 
+		# Inventario
+		$movimientosBodega = Hash::sort(Hash::extract($this->request->data, 'Bodega.{n}.BodegasVentaDetalleProducto'), '{n}.fecha', 'desc');
+
 		if (!empty($errores)) {
 			$this->Session->setFlash($this->crearAlertaUl($errores, 'Errores encontrados'), null, array(), 'danger');
 		}
@@ -361,13 +364,14 @@ class VentaDetalleProductosController extends AppController
 		foreach ($bodegas as $ib => $b) {
 			$this->request->data['VentaDetalleProducto']['Total'][$ib]['bodega_id'] = $ib;
 			$this->request->data['VentaDetalleProducto']['Total'][$ib]['bodega_nombre'] = $b;
+			$this->request->data['VentaDetalleProducto']['Total'][$ib]['pmp'] = ClassRegistry::init('Bodega')->obtener_pmp_por_id($id);	
 			$this->request->data['VentaDetalleProducto']['Total'][$ib]['total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib, true);	
 		}
-
+		
 		BreadcrumbComponent::add('Listado de Movimientos', '/ventaDetalleProductos/movimientos');
 		BreadcrumbComponent::add('Ajuste de inventario');
 
-		$this->set(compact('bodegas'));
+		$this->set(compact('bodegas', 'movimientosBodega'));
 	}
 
 
@@ -426,6 +430,7 @@ class VentaDetalleProductosController extends AppController
 				# Se obtienen los índices para cada elemento
 				$columna_id_productos = array_search('id_producto', $this->request->data['Indice']); 
 				$columna_cantidad     = array_search('stock', $this->request->data['Indice']);
+				$columna_precio       = array_search('precio', $this->request->data['Indice']);
 
 				if (empty($columna_id_productos) || empty($columna_cantidad) || empty($this->request->data['VentaDetalleProducto']['bodega'])) {
 					$this->Session->setFlash('Falta indicar la columna de productos, cantidad y/o bodega.', null, array(), 'danger');
@@ -448,6 +453,7 @@ class VentaDetalleProductosController extends AppController
 						$dataToSave[$indice]['id_producto'] = $valor[$columna_id_productos];
 						$dataToSave[$indice]['cantidad']    = (empty($valor[$columna_cantidad])) ? 0 : $valor[$columna_cantidad];
 						$dataToSave[$indice]['bodega_id']   = $this->request->data['VentaDetalleProducto']['bodega']; 
+						$dataToSave[$indice]['precio']      = (empty($valor[$columna_precio])) ? 0 : $valor[$columna_precio];
 
 					}
 
@@ -476,11 +482,11 @@ class VentaDetalleProductosController extends AppController
 		}
 
 		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('activo' => 1)));
-
+		$cabeceras = array('id_producto' => 'Id del producto', 'stock' => 'Stock', 'precio' => 'Precio ingreso (opcional)');
 		BreadcrumbComponent::add('Listado de Movimientos', '/ventaDetalleProductos/movimientos');
 		BreadcrumbComponent::add('Ajustar inventario masivo');
 
-		$this->set(compact('bodegas'));
+		$this->set(compact('bodegas', 'cabeceras'));
 
 	}
 
@@ -1615,6 +1621,8 @@ class VentaDetalleProductosController extends AppController
 
 			$datos[$id]['VentaDetalleProducto']['stock_fisico_total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($p['VentaDetalleProducto']['id'], true);
 			$datos[$id]['VentaDetalleProducto']['stock_reservado']    = $this->VentaDetalleProducto->obtener_cantidad_reservada($p['VentaDetalleProducto']['id']);
+			$datos[$id]['VentaDetalleProducto']['ultimo_precio_compra'] = ClassRegistry::init('Bodega')->ultimo_precio_compra($p['VentaDetalleProducto']['id']);
+
 
 			# Vemos el detalle en los canales
 			if ($canales) {

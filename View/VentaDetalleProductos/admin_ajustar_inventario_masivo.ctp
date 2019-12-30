@@ -58,7 +58,7 @@
 										<label>
 											<?=strtoupper($cabecera);?>
 										</label>
-										<?=$this->Form->select('Indice.' . $i, array('id_producto' => 'Id del producto', 'stock' => 'Stock'), array('class' => 'form-control', 'empty' => 'Seleccione'));?>
+										<?=$this->Form->select('Indice.' . $i, $cabeceras, array('class' => 'form-control', 'empty' => 'Seleccione'));?>
 									</div>
 								</th>
 								<? endforeach; ?>

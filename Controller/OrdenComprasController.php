@@ -750,7 +750,7 @@ class OrdenComprasController extends AppController
 				));
 				
 				# Calcula la cantidad  de productos que faltan por recibir.
-				$cantidadFaltante = $pedido['OrdenComprasVentaDetalleProducto']['cantidad'] - $pedido['OrdenComprasVentaDetalleProducto']['cantidad_recibida'];
+				$cantidadFaltante = $pedido['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] - $pedido['OrdenComprasVentaDetalleProducto']['cantidad_recibida'];
 				$cantidadRecibida = $oc['Bodega'][0]['cantidad'];
 				$bodegaDestino    = $oc['Bodega'][0]['bodega_id'];
 
@@ -868,7 +868,7 @@ class OrdenComprasController extends AppController
 				# Se crea la entrada de productos
 				$precioCompra = round($pedido['OrdenComprasVentaDetalleProducto']['total_neto'] / $pedido['OrdenComprasVentaDetalleProducto']['cantidad'], 2);
 				
-				if (ClassRegistry::init('Bodega')->crearEntradaBodega($oc['VentaDetalleProducto']['id'], $bodegaDestino, $cantidadRecibida, $precioCompra, 'OC')) {
+				if (ClassRegistry::init('Bodega')->crearEntradaBodega($oc['VentaDetalleProducto']['id'], $bodegaDestino, $cantidadRecibida, $precioCompra, 'OC', $id)) {
 					$productosActualizado[] = $oc['VentaDetalleProducto']['id'];
 				}else{
 					$productosNoActualizado[] = $oc['VentaDetalleProducto']['id'];
@@ -1886,7 +1886,7 @@ class OrdenComprasController extends AppController
 		}
 
 		$monedas = $this->OrdenCompra->Moneda->find('list', array('conditions' => array('Moneda.activo' => 1)));
-		$proveedores = $this->OrdenCompra->Proveedor->find('list', array('conditions' => array('Proveedor.activo' => 1)));
+		$proveedores = $this->OrdenCompra->Proveedor->find('list', array('conditions' => array('Proveedor.activo' => 1), 'order' => array('nombre' => 'ASC')));
 
 		$tipoDescuento    = array(0 => '$', 1 => '%');
 
@@ -2916,33 +2916,35 @@ class OrdenComprasController extends AppController
 					}
 					
 					# Se guardan como rechazados as unidades sobrantes
-					$itemsRechazados[$ip] = $p;
-					$itemsRechazados[$ip]['estado_proveedor'] = 'stockout';
+					$itemsRechazados[$ip]                                   = $p;
+					$itemsRechazados[$ip]['estado_proveedor']               = 'stockout';
+					$itemes['stockout'][$ip]                                = $p;
 				}
 
 				if ($p['estado_proveedor'] == 'price_error') {
 					$itemsRechazados[$ip] = $p;
+					$itemsRechazados[$ip]['cantidad_validada_proveedor'] = 0;
 				}
 			
 				$itemes[$p['estado_proveedor']][$ip] = $p;
 			}
-
+			
 			$total_rechazados  = array_sum(Hash::extract($itemsRechazados, '{n}.cantidad')) - array_sum(Hash::extract($itemsRechazados, '{n}.cantidad_validada_proveedor'));
 			$total_stockout    = count(Hash::extract($itemes, 'stockout.{n}.venta_detalle_producto_id'));
 			$total_price_error = count(Hash::extract($itemes, 'price_error.{n}.venta_detalle_producto_id'));
-			$total_solicitados = array_sum(Hash::extract($itemes, 'accept.{n}.cantidad'));
+			$total_solicitados = array_sum(Hash::extract($oc, 'VentaDetalleProducto.{n}.OrdenComprasVentaDetalleProducto.cantidad'));
 
 			# si existen itemes rechazados, se crea una nueva OC para el mismo proveedor pero con los produtos que correspondan
 			# sí el rechazo es por precio se notifica a validador interno
 			# sí es rechazo por stockout se notifica a servicio al cliente que la venta no tendrá su producto
 			$nuevaOC = array();
 			$ventasNotificar = array();
-
+			
 			# si la cantidad de itemes rechazado es igual a la cantidad de produtos pedidos se devuelve toda la OC
 			if ($total_rechazados == $total_solicitados) {
 				$this->request->data['OrdenCompra']['estado'] = 'cancelada';
 			}
-
+			
 			# flujo para cuando un producto tenga un error de precio
 			if ($total_price_error > 0 && $total_rechazados != $total_solicitados) {
 				# Item se quita de la OC y se agrega a una nueva OC
@@ -3007,7 +3009,7 @@ class OrdenComprasController extends AppController
 
 
 				# Flujo para cuando un producto no tenga stock
-				if ($total_stockout > 0 && $total_rechazados != $total_solicitados) {
+				if ($total_stockout > 0) {
 					# Notificar a ventas para que coordine con el cliente
 					$ventasNotificar = $this->OrdenCompra->obtener_ventas_por_productos($oc['OrdenCompra']['parent_id'], Hash::extract($itemes['stockout'], '{n}.venta_detalle_producto_id'));
 				}

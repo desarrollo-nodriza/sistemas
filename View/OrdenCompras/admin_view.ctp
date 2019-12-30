@@ -186,6 +186,7 @@
 								<th>Código</th>
 								<th>Descripción</th>
 								<th>Cantidad pedida</th>
+								<th>Cantidad validada proveedor</th>
 								<th>Cantidad Recibida</th>
 								<th>N. Unitario</th>
 								<th>Descuento ($)</th>
@@ -196,11 +197,12 @@
 							<tboby class="">
 							<? foreach ($oc['VentaDetalleProducto'] as $ipp => $ocp) : ?>	
 								
-								<tr class="<?= ($ocp['OrdenComprasVentaDetalleProducto']['cantidad'] == $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida']) ? 'success' : 'danger' ;?>" >
+								<tr class="<?= ($ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] == $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida']) ? 'success' : 'danger' ;?>" >
 									<td><?=$ocp['id'];?></td>
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['codigo'];?></td>
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['descripcion'];?></td>
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
+									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'];?></td>
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'];?></td>
 									<td><?=CakeNumber::currency($ocp['OrdenComprasVentaDetalleProducto']['precio_unitario'] , 'CLP');?></td>
 									<td><?=CakeNumber::currency($ocp['OrdenComprasVentaDetalleProducto']['descuento_producto'] , 'CLP');?></td>
@@ -214,25 +216,25 @@
 							</tboby>
 							<tfoot>
 								<tr>
-									<td colspan="6"></td>
+									<td colspan="7"></td>
 									<td>Total neto</td>
 									<td><?=CakeNumber::currency($oc['OrdenCompra']['total_neto'] , 'CLP');?></td>
 									<td colspan="2"></td>
 								</tr>
 								<tr>
-									<td colspan="6"></td>
+									<td colspan="7"></td>
 									<td>Total Descuento</td>
 									<td><?=CakeNumber::currency($oc['OrdenCompra']['descuento_monto'] , 'CLP');?></td>
 									<td colspan="2"></td>
 								</tr>
 								<tr>
-									<td colspan="6"></td>
+									<td colspan="7"></td>
 									<td>IVA</td>
 									<td><?=CakeNumber::currency($oc['OrdenCompra']['iva'] , 'CLP');?></td>
 									<td colspan="2"></td>
 								</tr>
 								<tr>
-									<td colspan="6"></td>
+									<td colspan="7"></td>
 									<td>Total</td>
 									<td><?=CakeNumber::currency($oc['OrdenCompra']['total'] , 'CLP');?></td>
 									<td colspan="2"></td>

@@ -146,6 +146,30 @@ class AppController extends Controller
 
 		}
 
+		/**
+		 * Layout cliente
+		 */
+		if ( ! empty($this->request->params['cliente']) )
+		{
+			$this->layoutPath				= 'public';
+			AuthComponent::$sessionKey		= 'Auth.Cliente';
+			
+			// Login action config
+			$this->Auth->loginAction['controller'] 	= 'ventaClientes';
+			$this->Auth->loginAction['action'] 		= 'login';
+			$this->Auth->loginAction['cliente'] 		= true;
+
+			// Login redirect and logout redirect
+			$this->Auth->loginRedirect = '/cliente';
+			$this->Auth->logoutRedirect = '/cliente';
+
+			// Login Form config
+			$this->Auth->authenticate['Form']['userModel']		= 'VentaCliente';
+			$this->Auth->authenticate['Form']['fields']['username'] = 'usuario';
+			$this->Auth->authenticate['Form']['fields']['password'] = 'clave';
+
+		}
+
 
 		/**
 		 * Logout FB

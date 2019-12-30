@@ -23,6 +23,7 @@
 								<th>Precio uni</th>
 								<th>Total</th>
 								<th>Cantidad pedida</th>
+								<th>Cantidad validada proveedor</th>
 								<th>Cantidad recibida <br><small>(ya en stock)</small></th>
 								<th>Cantidad a ingresar</th>
 								<th>Bodega</th>
@@ -41,6 +42,7 @@
 									<td><?=CakeNumber::currency(($data['OrdenComprasVentaDetalleProducto']['total_neto'] / $data['OrdenComprasVentaDetalleProducto']['cantidad']), 'CLP');?></td>
 									<td><?=CakeNumber::currency($data['OrdenComprasVentaDetalleProducto']['total_neto'] , 'CLP');?></td>
 									<td><?=$data['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
+									<td><?=$data['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'];?></td>
 									<td><?=$data['OrdenComprasVentaDetalleProducto']['cantidad_recibida'];?></td>
 
 									<? if ($data['OrdenComprasVentaDetalleProducto']['cantidad'] > $data['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] ) : ?>
@@ -65,6 +67,28 @@
 							<? endforeach; ?>
 							
 							</tboby>
+							<tfoot>
+								<tr>
+									<td colspan="8"></td>
+									<td>Total neto</td>
+									<td><?=CakeNumber::currency($this->request->data['OrdenCompra']['total_neto'], 'CLP');?></td>
+								</tr>
+								<tr>
+									<td colspan="8"></td>
+									<td>Iva</td>
+									<td><?=CakeNumber::currency($this->request->data['OrdenCompra']['iva'], 'CLP');?></td>
+								</tr>
+								<tr>
+									<td colspan="8"></td>
+									<td>Descuento</td>
+									<td><?=CakeNumber::currency($this->request->data['OrdenCompra']['descuento_monto'], 'CLP');?></td>
+								</tr>
+								<tr>
+									<td colspan="8"></td>
+									<td>Total bruto</td>
+									<td><?=CakeNumber::currency($this->request->data['OrdenCompra']['total'], 'CLP');?></td>
+								</tr>
+							</tfoot>
 						</table>
 					</div>
 				</div>

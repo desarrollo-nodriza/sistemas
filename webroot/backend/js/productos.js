@@ -294,11 +294,133 @@ $.extend({
 
 			});
 		},
+		ajuste_inventario: function(){
+
+            	var validator = $('#VentaDetalleProductoAdminAjustarInventarioForm').validate({
+            		rules: {
+            			'tipo_ajuste': {
+            				required: true
+            			}
+            		},
+            		messages: {
+            			'tipo_ajuste': {
+            				required: 'Seleccione un tipo de ajuste'
+            			}
+            		}
+            	});
+
+
+                //Check count of steps in each wizard
+                $("#wizard-ajuste > ul").each(function(){
+                    $(this).addClass("steps_"+$(this).children("li").length);
+                });//end
+
+                $("#wizard-ajuste").smartWizard({
+                	lang: {
+                		next: "Siguiente",
+                		previous: "Anterior"
+                	},
+                	anchorSettings: {
+						anchorClickable: true, // Enable/Disable anchor navigation
+						enableAllAnchors: false, // Activates all anchors clickable all times
+						markDoneStep: true, // add done css
+						enableAnchorOnDoneStep: true // Enable/Disable the done steps navigation
+					},            
+                    // This part of code can be removed FROM
+                    onLeaveStep: function(obj){
+                        var wizard = obj.parents("#wizard-ajuste");
+
+                        if(wizard.hasClass("wizard-validation")){
+
+                            var valid = true;
+
+                            $('input,textarea,select',$(obj.attr("href"))).each(function(i,v){
+                                valid = validator.element(v) && valid;
+                            });
+
+                            if(!valid){
+                                wizard.find(".stepContainer").removeAttr("style");
+                                validator.focusInvalid();
+
+                                noty({text: 'Complete todos los campos requeridos.', layout: 'topRight', type: 'error'});
+                                setTimeout(function(){
+									$.noty.closeAll();
+								}, 2000);
+
+                                return false;
+                            }
+
+                        }
+
+                        return true;
+
+                        
+                    },// <-- TO
+
+                    //This is important part of wizard init
+                    onShowStep: function(obj){
+                        var wizard = obj.parents("#wizard-ajuste");
+
+                        if(wizard.hasClass("show-submit")){
+
+                            var step_num = obj.attr('rel');
+                            var step_max = obj.parents(".anchor").find("li").length;
+
+                            if(step_num == step_max){
+                                obj.parents("#wizard-ajuste").find(".actionBar .btn-primary").css("display","block");
+                            }
+                        }
+
+                        page_content_onresize();
+
+                        return true;
+                    }//End
+                });
+
+
+                $('#VentaDetalleProductoTipoAjusteAjustePrecio').on('change', function(){
+
+                	if ($(this).is(':checked')) {
+                		$('#lista-movimientos').removeClass('hidden');
+                	}
+
+                });
+
+                $('#VentaDetalleProductoTipoAjusteAjusteNormal').on('change', function(){
+
+                	if ($(this).is(':checked')) {
+                		$('#lista-movimientos').addClass('hidden');
+                		$('#lista-movimientos').find('input[name="movimiento_usar"]:checked').prop('checked', false);
+                	}
+
+                });
+
+                $('input[name="movimiento_usar"]').on('change', function(){
+                	if ($(this).is(':checked')) {
+
+                		var costo = $(this).parents('tr').eq(0).find('.js-costo').data('value');
+
+                		$('.js-costo-pmp').each(function(){
+                			$(this).val(costo);
+                		});
+                	}
+                });
+
+                $('.js-usar-pmp').on('click', function(){
+                	var input  = $(this).siblings('.js-costo-pmp');
+                	input.val($(this).data('value'));
+                });
+
+		},
 		init: function(){
 
 			if ($('.js-validate-producto').length ) {
 				$.producto.validar();
 				$.producto.clonar();
+			}
+
+			if ($('#wizard-ajuste').length) {
+				$.producto.ajuste_inventario();
 			}
 
 		}

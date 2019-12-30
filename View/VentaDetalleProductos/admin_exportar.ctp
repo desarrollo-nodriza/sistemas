@@ -20,6 +20,7 @@ foreach ($bodegas as $ib => $bodega) {
 
 array_push($cabeceras, array_merge(array('label' => 'Stock Total'), $opciones));
 array_push($cabeceras, array_merge(array('label' => 'Stock Reservado'), $opciones));
+array_push($cabeceras, array_merge(array('label' => 'UPC'), $opciones));
 
 foreach ($marketplaces as $im => $m) {
 

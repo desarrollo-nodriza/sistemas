@@ -377,11 +377,58 @@ Router::connect(
     )
 );
 
-
 Router::connect(
     '/api/direcciones/view/:id', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'Direcciones', 
+        'action' => 'view',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+/**
+ * Mensajes
+ */
+Router::connect(
+    '/api/mensajes', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Mensajes', 
+        'action' => 'index',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+Router::connect(
+    '/api/mensajes/add', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Mensajes', 
+        'action' => 'add',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+Router::connect(
+    '/api/mensajes/delete/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Mensajes', 
+        'action' => 'delete',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/api/mensajes/view/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Mensajes', 
         'action' => 'view',
         'api' => true,
         'prefix' => 'api'),

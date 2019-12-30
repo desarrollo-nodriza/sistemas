@@ -956,7 +956,7 @@ class VentasController extends AppController {
 					$detalles[$idd]['VentaDetalle']['cantidad_entregada']         = $d['VentaDetalle']['cantidad_reservada'];
 					$detalles[$idd]['VentaDetalle']['cantidad_pendiente_entrega'] = $d['VentaDetalle']['cantidad'] - $d['VentaDetalle']['cantidad_reservada'];
 
-					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], 'VT');
+					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], null, 'VT', null, $id);
 						
 				}
 
@@ -1065,7 +1065,7 @@ class VentasController extends AppController {
 					$detalles[$idd]['VentaDetalle']['cantidad_entregada']         = $d['VentaDetalle']['cantidad_reservada'];
 					$detalles[$idd]['VentaDetalle']['cantidad_pendiente_entrega'] = $d['VentaDetalle']['cantidad'] - $d['VentaDetalle']['cantidad_reservada'];
 
-					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], 'OC');
+					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], nul, 'VT', null, $id);
 						
 				}
 
@@ -3734,7 +3734,7 @@ class VentasController extends AppController {
 
 				}elseif ($detalle['cantidad_entregar'] > 0) {
 
-					if (ClassRegistry::init('Bodega')->crearSalidaBodega($detalle['venta_detalle_producto_id'], null, $detalle['cantidad_entregar'], 'OC')) {
+					if (ClassRegistry::init('Bodega')->crearSalidaBodega($detalle['venta_detalle_producto_id'], null, $detalle['cantidad_entregar'], null, 'VT', null, $id)) {
 
 						$aceptados[] = 'Item ' . ClassRegistry::init('VentaDetalleProducto')->field('nombre', $detalle['venta_detalle_producto_id']) . ': Se descontaron ' . $detalle['cantidad_entregar'] . ' items de bodega principal';
 
