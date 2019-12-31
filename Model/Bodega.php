@@ -264,10 +264,6 @@ class Bodega extends AppModel
 			return false;
 		}
 
-		if ($valor == 0) {
-			return 0;
-		}
-
 		# Bodega principal
 		if (empty($bodega_id)) {
 			$bodega_id = ClassRegistry::init('Bodega')->find('first', array('conditions' => array('Bodega.principal' => 1), 'limit' => 1, 'fields' => array('Bodega.id')))['Bodega']['id'];
