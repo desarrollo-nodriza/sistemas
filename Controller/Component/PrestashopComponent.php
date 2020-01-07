@@ -516,7 +516,7 @@ class PrestashopComponent extends Component
 	 * @param  int 		$venta_id_externo  	id venta   
 	 * @return array()
 	 */
-	public function prestashop_obtener_venta_mensajes($venta_id_externo)
+	public function prestashop_obtener_venta_mensajes($venta_id_externo, $limit = 2)
 	{
 		$res = array();
 
@@ -534,9 +534,11 @@ class PrestashopComponent extends Component
 			$CustomerThread = to_array($PrestashopResources);
 
 			$opt = array();
-			$opt['resource'] = 'customer_messages';
-			$opt['display'] = '[message,date_add]';
+			$opt['resource']                   = 'customer_messages';
+			$opt['display']                    = '[message,date_add]';
 			$opt['filter[id_customer_thread]'] = '[' .$CustomerThread['customer_thread']['id']. ']';
+			$opt['sort']                       = '[id_customer_thread_DESC]';
+			$opt['limit']                      = $limit;
 
 			$xml = $this->ConexionPrestashop->get($opt);
 
