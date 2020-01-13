@@ -474,7 +474,7 @@ class OrdenesController extends AppController
 				if (!empty($id_dte)) {
 					
 					# Si es NDC se anulan los items en la venta, se recalculan los montos de la venta y se devuelven a bodega los itmes cancelados si corresponde.
-					if (!empty($this->request->data['DteDetalle']) && $this->request->data['Dte']['tipo_documento'] == 61) {
+					if (!empty($this->request->data['DteDetalle']) && $this->request->data['Dte']['tipo_documento'] == 61 && $id_dte['Dte']['estado'] == 'dte_real_emitido') {
 						
 						$venta = ClassRegistry::init('Venta')->find('first', array(
 							'conditions' => array(
