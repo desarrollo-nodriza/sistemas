@@ -779,6 +779,7 @@ class OrdenesController extends AppController
 			unset($tipoDocumento['46']);
 
 		$tipoDocumentosReferencias = $this->LibreDte->tipoDocumento;
+		asort($tipoDocumentosReferencias);
 
 		# Array de comunas actualizadas
 		$comunasResult = ClassRegistry::init('Comuna')->find('list', array('order' => array('nombre' => 'ASC')));
