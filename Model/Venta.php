@@ -288,7 +288,7 @@ class Venta extends AppModel
 				}
 
 				# Sumatoria del total de la venta
-				$total_venta   = $total_venta + $d['VentaDetalle']['total_bruto'];
+				$total_venta   = $total_venta + round($d['VentaDetalle']['total_bruto']);
 			}
 			
 			$this->data['Venta']['total'] = $total_venta - $descuento + $costo_envio;	

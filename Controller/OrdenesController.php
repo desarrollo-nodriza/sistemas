@@ -441,7 +441,7 @@ class OrdenesController extends AppController
 					'DteDetalle.dte_id' => $this->request->data['Dte']['id']
 				), false);
 			}
-
+			
 			# Guardar información del DTE en base de datos local
 			if($this->Orden->Dte->saveAll($this->request->data)) {
 
@@ -472,7 +472,7 @@ class OrdenesController extends AppController
 				}
 
 				if (!empty($id_dte)) {
-
+					
 					# Si es NDC se anulan los items en la venta, se recalculan los montos de la venta y se devuelven a bodega los itmes cancelados si corresponde.
 					if (!empty($this->request->data['DteDetalle']) && $this->request->data['Dte']['tipo_documento'] == 61) {
 						
@@ -511,7 +511,12 @@ class OrdenesController extends AppController
 									$venta['VentaDetalle'][$ip]['cantidad_anulada'] = $detalle['QtyItem'];
 									$venta['VentaDetalle'][$ip]['monto_anulado']    = $detalle['QtyItem'] * $detalle['PrcItem'];
 									$venta['VentaDetalle'][$ip]['dte']              = $id_dte['Dte']['id'];
-									$venta['VentaDetalle'][$ip]['total_neto']       = $d['total_neto'] - ($detalle['QtyItem'] * $detalle['PrcItem']);
+									if ($d['cantidad'] == $detalle['QtyItem']) {
+										$venta['VentaDetalle'][$ip]['total_neto']   = 0;
+									}else{
+										$venta['VentaDetalle'][$ip]['total_neto']   = $d['total_neto'] - $venta['VentaDetalle'][$ip]['monto_anulado'];
+									}
+									
 									$venta['VentaDetalle'][$ip]['total_bruto']      = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
 
 									# Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
@@ -542,7 +547,7 @@ class OrdenesController extends AppController
 							}
 						}
 					}
-					
+
 					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte['Dte']['id'], $id_orden));
 				}
 
