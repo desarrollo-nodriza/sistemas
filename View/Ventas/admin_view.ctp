@@ -204,20 +204,21 @@
 								<!-- Productos --> 
 								<div class="panel-body">
 									<div class="table-responsive">
-										<table class="table table-striped table-bordered">
+										<table class="table table-bordered">
 											<thead>
 												<th>ID Producto</th>
 												<th>Nombre</th>
-												<th>Precio Neto</th>
-												<th>Precio Bruto</th>
+												<th>Precio<br/> Neto</th>
+												<th>Precio<br/> Bruto</th>
 												<th>Cantidad</th>
-												<th>Stock reservado</th>
+												<th>Stock<br/> reservado</th>
+												<th>Cant<br/> anulada</th>
 												<th>Subtotal</th>
 												<th>Opciones</th>
 											</thead>
 											<tbody>
-												<?php $TotalProductos = 0; foreach ($venta['VentaDetalle'] as $indice => $detalle) : $TotalProductos = $TotalProductos + ($detalle['precio'] * $detalle['cantidad']); ?>
-													<tr>
+												<?php $TotalProductos = 0; foreach ($venta['VentaDetalle'] as $indice => $detalle) : $TotalProductos = $TotalProductos + ($detalle['precio']* $detalle['cantidad'] - $detalle['monto_anulado']); ?>
+													<tr class="<?= ($detalle['cantidad'] == $detalle['cantidad_anulada']) ? 'danger' : '' ; ?>" >
 														<td>
 															<?=($detalle['confirmado_app']) ? '<i class="fa fa-mobile text-success" data-toggle="tooltip" title="Confirmado vía app"></i>' : '' ; ?> 
 															<? if ($permisos['edit']) : ?>
@@ -245,10 +246,17 @@
 															<?=$detalle['cantidad_reservada'];?>
 														</td>
 														<td>
-															<?= CakeNumber::currency($detalle['precio'] * $detalle['cantidad'], 'CLP'); ?>
+															<?=$detalle['cantidad_anulada'];?>
 														</td>
 														<td>
-														<? if ($venta['Venta']['picking_estado'] != 'empaquetado' && $permisos['storage']) : ?>
+															<?= CakeNumber::currency($detalle['total_neto'], 'CLP'); ?>
+														</td>
+														<td>
+														<? if ($detalle['cantidad'] == $detalle['cantidad_anulada'] && !empty($detalle['dte'])) : ?>
+															<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Ver NTC', array('controller' => 'ordenes', 'action' => 'editar', $detalle['dte'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-xs', 'data-toggle' => 'tooltip', 'title' => 'Ver nota de crédito', 'escape' => false, 'target' => '_blank')); ?>
+														<? endif; ?>
+
+														<? if ($venta['Venta']['picking_estado'] != 'empaquetado' && $permisos['storage']  && $detalle['cantidad'] != $detalle['cantidad_anulada'] ) : ?>
 															<?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('action' => 'liberar_stock_reservado', $venta['Venta']['id'], $detalle['id'], $detalle['cantidad_reservada']), array('class' => 'btn btn-warning btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?>
 														<? endif; ?>
 														</td>

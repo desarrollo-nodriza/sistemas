@@ -70,7 +70,7 @@
 						<td style="font-size: 11px;"><strong>Mensajes de la compra</strong></td><td></td>
 					</tr>
 					<tr>
-						<td style="font-size: 11px;">
+						<td style="font-size: 9px;">
 							<? if (!empty($venta['VentaMensaje'])) : ?>
 								<ul>
 								<? foreach ($venta['VentaMensaje'] as $im => $mensaje) : ?>

@@ -57,6 +57,15 @@ class Token extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
+		'VentaCliente' => array(
+			'className'				=> 'VentaCliente',
+			'foreignKey'			=> 'venta_cliente_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		)
 	);
 
@@ -144,6 +153,51 @@ class Token extends AppModel
 		}
 	}
 
+
+	public function crear_token_cliente($cliente_id, $tienda_id = '', $duracion = 48)
+	{	
+		$expira = new DateTime(date('Y-m-d H:i:s'));
+		$expira->modify(sprintf('+%d hours', $duracion));
+
+		$token_acceso = $this->generar_token(24);
+
+		$token['Token'] = array(
+			'venta_cliente_id' => $cliente_id,
+			'token'            => $token_acceso,
+			'expires'          => $expira->format('Y-m-d H:i:s')
+		);
+
+		if (!empty($tienda_id)) {
+			$token['Token']['tienda_id'] = $tienda_id;
+		}
+
+		$this->create();
+		if ($this->save($token)) {
+			
+			return array(
+				'expires_token' => $expira->format('Y-m-d H:i:s'),
+				'token'         => $token_acceso
+			);
+
+		}else{
+
+			$log = array(
+				'Log' => array(
+					'administrador' => 'Crear Token Cliente: ' . $cliente_id,
+					'modulo' => 'Ventas',
+					'modulo_accion' => json_encode($this->validationErrors)
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->save($log);
+
+			return array(
+				'expires_token' => '',
+				'token'         => ''
+			);
+		}
+	}
 
 
 	public function generar_token($largo = 24)

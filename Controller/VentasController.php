@@ -424,6 +424,46 @@ class VentasController extends AppController {
 	}
 
 
+	public function admin_recalcular_totales_ventas()
+	{	
+		ini_set('max_execution_time', '0');
+		
+		$ventas = $this->Venta->find('all', array(
+			'conditions' => array(
+				'Venta.fecha_venta >' => '2018-01-01 00:00:00'
+			),
+			'contain' => array(
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.id'
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id'
+			)
+		));
+
+		$total = 0;
+
+		foreach ($ventas as $iv => $v) {
+			foreach ($v['VentaDetalle'] as $ivd => $vd) {
+				if(ClassRegistry::init('VentaDetalle')->recalcular_total_producto($vd['id'])){
+					$total++;
+				}
+			}
+		}
+
+		prx($total);
+		
+	}
+
+
+
+	/**
+	 * [admin_obtener_venta_manual description]
+	 * @return [type] [description]
+	 */
 	public function admin_obtener_venta_manual()
 	{
 		$log = array();
@@ -2456,6 +2496,8 @@ class VentasController extends AppController {
 									$NuevoDetalle['cantidad']                   = $DetalleVenta['product_quantity'];
 									$NuevoDetalle['cantidad_pendiente_entrega'] = $DetalleVenta['product_quantity'];
 									$NuevoDetalle['cantidad_reservada'] 		= 0;
+									$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
+									$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 									if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
 										$NuevoDetalle['cantidad_reservada']     = ClassRegistry::init('Bodega')->calcular_reserva_stock($DetalleVenta['product_id'], $DetalleVenta['product_quantity']);	
 									}
@@ -2583,16 +2625,18 @@ class VentasController extends AppController {
 											$NuevoDetalle = array();
 											$NuevoDetalle['venta_detalle_producto_id'] = $idNuevoProducto;
 											if ( round($DetalleVenta['VoucherAmount']) > 0 ) {
-												$NuevoDetalle['precio']                    = $this->precio_neto(round($DetalleVenta['PaidPrice'] + $DetalleVenta['VoucherAmount'], 2));
+												$NuevoDetalle['precio']                    = monto_neto(round($DetalleVenta['PaidPrice'] + $DetalleVenta['VoucherAmount'], 2));
 												$NuevoDetalle['precio_bruto']              = round($DetalleVenta['PaidPrice'] + $DetalleVenta['VoucherAmount'], 2);	
 											}else{
-												$NuevoDetalle['precio']                    = $this->precio_neto(round($DetalleVenta['PaidPrice'], 2));
+												$NuevoDetalle['precio']                    = monto_neto(round($DetalleVenta['PaidPrice'], 2));
 												$NuevoDetalle['precio_bruto']              = $DetalleVenta['PaidPrice'];
 											}
 											
 											$NuevoDetalle['cantidad_pendiente_entrega'] = 1;
 											$NuevoDetalle['cantidad_reservada']         = 0;
 											$NuevoDetalle['cantidad']         			= 1;
+											$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
+											$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 											if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
 												$NuevoDetalle['cantidad_reservada']    = ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, 1);	
 											}
@@ -2763,11 +2807,13 @@ class VentasController extends AppController {
 											$idNuevoProducto = $this->linio_guardar_producto($DetalleVenta, $excluirMeli);
 											$NuevoDetalle                               = array();
 											$NuevoDetalle['venta_detalle_producto_id']  = $idNuevoProducto;
-											$NuevoDetalle['precio']                     = $this->precio_neto(round($DetalleVenta['unit_price'], 2));
+											$NuevoDetalle['precio']                     = monto_neto(round($DetalleVenta['unit_price'], 2));
 											$NuevoDetalle['precio_bruto']               = round($DetalleVenta['unit_price'], 2);
 											$NuevoDetalle['cantidad']                   = $DetalleVenta['quantity'];
 											$NuevoDetalle['cantidad_pendiente_entrega'] = $DetalleVenta['quantity'];
 											$NuevoDetalle['cantidad_reservada'] 		= 0;
+											$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
+											$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 											if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['metodo_envio_id'])) {
 												$NuevoDetalle['cantidad_reservada'] 	= ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, $DetalleVenta['quantity']);	
 											}											
@@ -3112,7 +3158,7 @@ class VentasController extends AppController {
 					'fecha_venta'      => date('Y-m-d H:i:s')
 				)
 			);
-
+			$this->Venta->create();
 			if ($this->Venta->save($currVenta)) {
 				$this->redirect(array('action' => 'add', $this->Venta->id));
 			}
@@ -3121,17 +3167,23 @@ class VentasController extends AppController {
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 
+			if (empty($this->request->data['Venta']['venta_cliente_id'])) {
+				$this->Session->setFlash('No se logró relacionar al cliente con la venta. Intentelo nuevamente.', null, array(), 'warning');
+				$this->redirect(array('action' => 'add', $id));
+			}
+
 			if ($this->request->data['Venta']['total'] == 0) {
-				$this->Session->setFlash('El total de la venta no pude ser $0.', null, array(), 'success');
+				$this->Session->setFlash('El total de la venta no pude ser $0.', null, array(), 'warning');
 				$this->redirect(array('action' => 'add', $id));
 			}
 
 			foreach ($this->request->data['VentaDetalle'] as $iv => $d) {
-				$this->request->data['VentaDetalle'][$iv]['precio'] = $this->precio_neto($d['precio_bruto']);
+				$this->request->data['VentaDetalle'][$iv]['precio']                     = monto_neto($d['precio_bruto']);
 				$this->request->data['VentaDetalle'][$iv]['cantidad_pendiente_entrega'] = $d['cantidad'];
-				$this->request->data['VentaDetalle'][$iv]['cantidad_reservada'] = 0;			
+				$this->request->data['VentaDetalle'][$iv]['cantidad_reservada']         = 0;
+				$this->request->data['VentaDetalle'][$iv]['total_neto']              = $this->request->data['VentaDetalle'][$iv]['precio'] * $d['cantidad'];			
+				$this->request->data['VentaDetalle'][$iv]['total_bruto']				= monto_bruto($this->request->data['VentaDetalle'][$iv]['total_neto']);
 			}
-
 
 			$total_pagado = 0;	
 			foreach ($this->request->data['VentaTransaccion'] as $ip => $p) {
@@ -3139,7 +3191,7 @@ class VentasController extends AppController {
 			}
 
 			if ($total_pagado == 0) {
-				$this->Session->setFlash('El total pagado no pude ser $0.', null, array(), 'success');
+				$this->Session->setFlash('El total pagado no pude ser $0.', null, array(), 'warning');
 				$this->redirect(array('action' => 'add', $id));
 			}
 
@@ -3157,7 +3209,6 @@ class VentasController extends AppController {
 
 			}
 			
-
 			if ($this->Venta->saveAll($this->request->data) ) {
 
 				$tienda = ClassRegistry::init('Tienda')->obtener_tienda($this->request->data['Venta']['tienda_id'], array('Tienda.nombre', 'Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
@@ -3206,21 +3257,19 @@ class VentasController extends AppController {
 
 		# Estados disponibles para esta venta
 		$ventaEstados = ClassRegistry::init('VentaEstado')->find('list', array('conditions' => array('activo' => 1)));
-
-		$transportes = ClassRegistry::init('Transporte')->find('list', array('conditions' => array('activo' => 1)));
-
-		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
-
-		$marketplaces = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1)));
-
-		$medioPagos = ClassRegistry::init('MedioPago')->find('list', array('conditions' => array('activo' => 1)));
-
-		$metodoEnvios = ClassRegistry::init('MetodoEnvio')->find('list', array('conditions' => array('activo' => 1)));
-
-		$clientes = ClassRegistry::init('VentaCliente')->find('list', array('fields' => array('VentaCliente.id', 'VentaCliente.email')));
-
 		
-
+		$transportes  = ClassRegistry::init('Transporte')->find('list', array('conditions' => array('activo' => 1)));
+		
+		$comunas      = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
+		
+		$marketplaces = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1)));
+		
+		$medioPagos   = ClassRegistry::init('MedioPago')->find('list', array('conditions' => array('activo' => 1)));
+		
+		$metodoEnvios = ClassRegistry::init('MetodoEnvio')->find('list', array('conditions' => array('activo' => 1)));
+		
+		$clientes     = ClassRegistry::init('VentaCliente')->find('list', array('fields' => array('VentaCliente.id', 'VentaCliente.email')));
+		
 		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios'));
 		
 	}
@@ -4632,7 +4681,7 @@ class VentasController extends AppController {
 				for ($ix=0; $ix < $copias; $ix++) { 
 					# Ruta absoluta PDF DTE
 					$rutas[$i.$ix]['path'] = APP . 'webroot' . DS. 'Dte' . DS . $dte['venta_id'] . DS . $dte['id'] . DS . $dte['pdf'];
-					$rutas[$i.$ix]['public'] = Router::url('/', true) . 'Dte/' . $dte['venta_id'] . '/' . $dte['id'] . $dte['pdf'] . '.pdf';
+					$rutas[$i.$ix]['public'] = Router::url('/', true) . 'Dte/' . $dte['venta_id'] . '/' . $dte['id'] . '/'.  $dte['pdf'];
 				}
 			}
 		}
@@ -4914,7 +4963,7 @@ class VentasController extends AppController {
 			if ($tipo_documento == 39) {
 				$dte['DteDetalle'][$cantidadItem]['PrcItem'] = round($venta['Venta']['costo_envio']);
 			}else{
-				$dte['DteDetalle'][$cantidadItem]['PrcItem'] = $this->precio_neto($venta['Venta']['costo_envio']);
+				$dte['DteDetalle'][$cantidadItem]['PrcItem'] = monto_neto($venta['Venta']['costo_envio']);
 			}
 			$dte['DteDetalle'][$cantidadItem]['QtyItem'] = 1;
 		}
@@ -4943,7 +4992,7 @@ class VentasController extends AppController {
 			if ($tipo_documento == 39) { # Boleta valores brutos o con iva
 				$dte['DscRcgGlobal']['ValorDR'] = $venta['Venta']['descuento'];
 			}else{
-				$dte['DscRcgGlobal']['ValorDR'] = $this->precio_neto($venta['Venta']['descuento']);
+				$dte['DscRcgGlobal']['ValorDR'] = monto_neto($venta['Venta']['descuento']);
 			}
 		}
 
@@ -5643,7 +5692,7 @@ class VentasController extends AppController {
 		$this->Linio->crearCliente($marketplace['Marketplace']['api_host'], $marketplace['Marketplace']['api_user'], $marketplace['Marketplace']['api_key']);
 
 		$detalle_venta = $this->Linio->linio_obtener_venta($id_externo, true); 
-
+		
 		# datos de la venta a registrar
 		$NuevaVenta = array();
 		$NuevaVenta['Venta']['tienda_id']      = $marketplace['Marketplace']['tienda_id'];
@@ -5651,7 +5700,6 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['id_externo']     = $id_externo;
 		$NuevaVenta['Venta']['referencia']     = $detalle_venta['OrderNumber'];
 		$NuevaVenta['Venta']['fecha_venta']    = $detalle_venta['CreatedAt'];
-		$NuevaVenta['Venta']['total']          = $detalle_venta['Price'];
 
 		# Dirección cliente
 		$direcciones = array(
@@ -5668,9 +5716,6 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['comuna_entrega']    =  $detalle_venta['AddressShipping']['City'];
 		$NuevaVenta['Venta']['nombre_receptor']   =  $detalle_venta['AddressShipping']['FirstName'] . ' ' . $detalle_venta['AddressShipping']['LastName'];
 		$NuevaVenta['Venta']['fono_receptor']     =  trim($detalle_venta['AddressShipping']['Phone']) . '-' .  trim($detalle_venta['AddressShipping']['Phone2']) ;
-
-
-		$NuevaVenta['Venta']['costo_envio']      = (float) 0;
 		
 		//se obtiene el estado de la venta
 		$NuevaVenta['Venta']['venta_estado_id']  = $this->obtener_estado_id($detalle_venta['Statuses']['Status'], $marketplace['Marketplace']['marketplace_tipo_id']);
@@ -5684,12 +5729,12 @@ class VentasController extends AppController {
 		
 		//se obtiene el cliente
 		$NuevaVenta['Venta']['venta_cliente_id'] = $this->obtener_cliente_id($detalle_venta);
-
-		$NuevaVenta['Venta']['total'] 			 = (float) 0; // El total se calcula en en base a la sumatoria de items
-
+		
+		$NuevaVenta['Venta']['descuento']        = (float) 0;
+		$NuevaVenta['Venta']['costo_envio']      = (float) 0;
 
 		# si es un estado pagado se reserva el stock disponible
-		if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) ) {
+		if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) ) {
 			#$ActualizarVenta['Venta']['prioritario'] = 1;
 		}
 
@@ -5708,21 +5753,18 @@ class VentasController extends AppController {
 			$NuevoDetalle['venta_detalle_producto_id'] = $idNuevoProducto;
 
 			if ( round($DetalleVenta['VoucherAmount']) > 0 ) {
-				$NuevoDetalle['precio']                    = $this->precio_neto(round($DetalleVenta['PaidPrice'] + $DetalleVenta['VoucherAmount'], 2));
+				$NuevoDetalle['precio']                    = monto_neto(round($DetalleVenta['PaidPrice'] + $DetalleVenta['VoucherAmount'], 2));
 				$NuevoDetalle['precio_bruto']              = round($DetalleVenta['PaidPrice'] + $DetalleVenta['VoucherAmount'], 2);	
 			}else{
-				$NuevoDetalle['precio']                    = $this->precio_neto(round($DetalleVenta['PaidPrice'], 2));
+				$NuevoDetalle['precio']                    = monto_neto(round($DetalleVenta['PaidPrice'], 2));
 				$NuevoDetalle['precio_bruto']              = $DetalleVenta['PaidPrice'];
 			}
 			
 			$NuevoDetalle['cantidad_pendiente_entrega'] = 1;
 			$NuevoDetalle['cantidad_reservada']         = 0;
 			$NuevoDetalle['cantidad']         			= 1;
-
-			$totalDespacho = $totalDespacho + round($DetalleVenta['ShippingAmount'], 2);
-
-			// Se agrega el valor de la compra sumando el precio de los productos
-			$NuevaVenta['Venta']['total'] = $NuevaVenta['Venta']['total'] + $NuevoDetalle['precio_bruto'];
+			$NuevoDetalle['total_neto']                 = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
+			$NuevoDetalle['total_bruto']				= (float) monto_bruto($NuevoDetalle['total_neto']);
 			
 			# costo de despacho
 			$NuevaVenta['Venta']['costo_envio'] = $NuevaVenta['Venta']['costo_envio'] + round($DetalleVenta['ShippingAmount'], 2);
@@ -5749,7 +5791,7 @@ class VentasController extends AppController {
 			$NuevaTransaccion['nombre'] = $detalle_venta['OrderNumber'];
 		}
 
-		$NuevaTransaccion['monto'] = (!empty($NuevaVenta['Venta']['total'])) ? $NuevaVenta['Venta']['total'] : 0;
+		$NuevaTransaccion['monto'] = (!empty($detalle_venta['Price'])) ? $detalle_venta['Price'] : 0;
 		$NuevaTransaccion['fee']   = ($NuevaTransaccion['monto'] * ($marketplace['Marketplace']['fee'] / 100));
 
 		$NuevaVenta['VentaTransaccion'][] = $NuevaTransaccion;
@@ -5757,7 +5799,7 @@ class VentasController extends AppController {
 
 		# Evitamos que se vuelva actualizar el stock en linio
 		$excluirLinio = array('Linio' => array($marketplace_id));
-
+		
 		//se guarda la venta
 		$this->Venta->create();
 		if ($this->Venta->saveAll($NuevaVenta) ) {
@@ -5818,11 +5860,6 @@ class VentasController extends AppController {
 		$venta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
 		$venta['Venta']['venta_estado_id']          = $nw_estado_id;
 		$venta['Venta']['venta_estado_responsable'] = 'Linio Webhook';
-
-		# si es un estado pagado se reserva el stock disponible
-		if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id']) ) {
-			#$venta['Venta']['prioritario'] = 1;
-		}
 
 		# si es un estado rechazo se devuelve el stock disponible
 		if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($venta['Venta']['venta_estado_id']) ) {
@@ -6066,9 +6103,7 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['id_externo']     = $ventaMeli['id'];
 		$NuevaVenta['Venta']['referencia']     = $ventaMeli['id'];
 
-		
 		$NuevaVenta['Venta']['fecha_venta']    = CakeTime::format($ventaMeli['date_created'], '%Y-%m-%d %H:%M:%S');
-		$NuevaVenta['Venta']['total']          = round($ventaMeli['total_amount'], 2);
 
 		//se obtiene el estado de la venta
 		$NuevaVenta['Venta']['venta_estado_id'] = $this->obtener_estado_id($ventaMeli['status'], $marketplace['Marketplace']['marketplace_tipo_id']);
@@ -6083,8 +6118,10 @@ class VentasController extends AppController {
 		# costo envio
 		if (isset($ventaMeli['shipping']['cost'])) {
 			$NuevaVenta['Venta']['costo_envio'] = $ventaMeli['shipping']['cost'];
-			$NuevaVenta['Venta']['total']       = round($ventaMeli['total_amount'] + $ventaMeli['shipping']['cost'], 2);
 		}
+
+		# Descuento a 0
+		$NuevaVenta['Venta']['descuento']       = 0;
 		
 		
 		// Detalles de envio
@@ -6156,7 +6193,7 @@ class VentasController extends AppController {
 			$NuevaVenta['VentaMensaje'][$im]['mensaje']  = $this->removeEmoji($mensaje['text']['plain']);
 
 		}
-
+		
 		//ciclo para recorrer el detalle de la venta
 		foreach ($ventaMeli['order_items'] as $DetalleVenta) {
 			if (!empty($DetalleVenta['item']['seller_custom_field']) ) {
@@ -6175,12 +6212,14 @@ class VentasController extends AppController {
 				//se guarda el producto si no existe
 				$idNuevoProducto = $this->linio_guardar_producto($DetalleVenta);
 
-				$NuevoDetalle                               = array();
-				$NuevoDetalle['venta_detalle_producto_id']  = $idNuevoProducto;
-				$NuevoDetalle['precio']                     = $this->precio_neto(round($DetalleVenta['unit_price'], 2));
-				$NuevoDetalle['precio_bruto']               = round($DetalleVenta['unit_price'], 2);				
-
-				$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
+				$NuevoDetalle                              = array();
+				$NuevoDetalle['venta_detalle_producto_id'] = $idNuevoProducto;
+				$NuevoDetalle['precio']                    = monto_neto(round($DetalleVenta['unit_price'], 2));
+				$NuevoDetalle['cantidad']                  = $DetalleVenta['quantity'];
+				$NuevoDetalle['precio_bruto']              = round($DetalleVenta['unit_price'], 2);				
+				$NuevoDetalle['total_neto']                = $NuevoDetalle['precio'];			
+				$NuevoDetalle['total_bruto']               = monto_bruto($NuevoDetalle['total_neto']);
+				$NuevaVenta['VentaDetalle'][]              = $NuevoDetalle;
 				
 			} // fin no empty
 		
@@ -6411,6 +6450,8 @@ class VentasController extends AppController {
 					$NuevoDetalle['cantidad']                   = $DetalleVenta['product_quantity'];
 					$NuevoDetalle['cantidad_pendiente_entrega'] = $DetalleVenta['product_quantity'];
 					$NuevoDetalle['cantidad_reservada'] 		= 0;
+					$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
+					$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 
 					$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 
@@ -6705,6 +6746,81 @@ class VentasController extends AppController {
 		}
 	}
 
+
+	/**
+	 * Clients
+	 */
+	public function cliente_compras()
+	{	
+
+		$paginate = array(
+			'recursive' => 0,
+			'conditions' => array(
+				'Venta.venta_cliente_id' => $this->Auth->user('id'),
+			),
+			'contain' => array(
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.cantidad', 'VentaDetalle.cantidad_anulada'
+					)
+				),
+				'VentaEstado' => array(
+					'fields' => array(
+						'VentaEstado.nombre', 'VentaEstado.venta_estado_categoria_id'
+					),
+					'VentaEstadoCategoria' => array(
+						'fields' => array(
+							'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.venta', 'VentaEstadoCategoria.final'
+						)
+					)
+				), 
+				'Dte' => array(
+					'fields' => array(
+						'Dte.id', 'Dte.tipo_documento', 'Dte.invalidado', 'Dte.estado', 'Dte.pdf'
+					)
+				)
+			),
+			'fields' => array('Venta.id', 'Venta.fecha_venta', 'Venta.total', 'Venta.venta_estado_id', 'Venta.picking_estado', 'Venta.referencia'),
+			'order' => array('Venta.fecha_venta' => 'DESC'),
+			'limit' => 20
+		);
+
+		//----------------------------------------------------------------------------------------------------
+		$this->paginate = $paginate;
+
+		$ventas = $this->paginate();
+
+		# Total comprado
+		foreach ($ventas as $iv => $v) {	
+			if (!empty($v['Dte'])) {
+				$ventas[$iv]['Dte'] = $this->obtener_dtes_pdf_venta($v['Dte']);
+			}
+		}
+
+		$this->layout = 'private';
+
+		BreadcrumbComponent::add('Dashboard', '/cliente');
+		BreadcrumbComponent::add('Mis compras', '/ventas/compras');
+		$PageTitle = 'Mis compras';
+		$this->set(compact('PageTitle', 'ventas'));
+	}
+
+
+	public function cliente_ver($id)
+	{
+		$venta = $this->preparar_venta($id);
+		$this->layout = 'private';
+
+		BreadcrumbComponent::add('Dashboard', '/cliente');
+		BreadcrumbComponent::add('Mis compras', '/ventas/compras');
+		BreadcrumbComponent::add('Compra ref: ' . $venta['Venta']['referencia'], '/ventas/ver/' . $id);
+
+		$PageTitle = 'Compra ref:' . $venta['Venta']['referencia'];
+		$this->set(compact('PageTitle', 'venta'));
+	}
+
+
+
 	/**
 	 * Métodos REST
 	 */
@@ -6773,6 +6889,12 @@ class VentasController extends AppController {
     	if (isset($this->request->query['id_externo'])) {
     		if (!empty($this->request->query['id_externo'])) {
     			$qry = array_replace_recursive($qry, array('conditions' => array('Venta.id_externo' => $this->request->query['id_externo'])));
+    		}
+    	}
+
+    	if (isset($this->request->query['venta_cliente_id'])) {
+    		if (!empty($this->request->query['venta_cliente_id'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array('Venta.venta_cliente_id' => $this->request->query['venta_cliente_id'])));
     		}
     	}
 

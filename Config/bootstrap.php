@@ -145,8 +145,10 @@ Configure::write('CakePdf', array(
  define('DOMPDF_ENABLE_REMOTE', true);
 
 // URL Base para consola
-if ( !defined('FULL_BASE_URL') ) {
-	define('FULL_BASE_URL', 'https://sistema.nodriza.cl/');
+if ( Configure::read('debug' > 1) ) {
+	@define('FULL_BASE_URL', 'https://sistemasdev.nodriza.cl/');
+}else{
+	@define('FULL_BASE_URL', 'https://sistema.nodriza.cl/');
 }
 
 // URL DEV Base para consola
@@ -162,6 +164,15 @@ function prx()
 	foreach ( func_get_args() as $arg )
 		pr($arg);
 	exit;
+}
+
+function obtener_url_base()
+{
+	if (Configure::read('debug') > 1) {
+		return 'https://sistemasdev.nodriza.cl/';
+	}else{
+		return 'https://sistema.nodriza.cl/';
+	}
 }
 
 function to_array($obj)
@@ -219,29 +230,43 @@ function abecedario($indice, $min = false)
 	return null;
 }
 
-function monto_bruto($precio = null, $iva = 19)
+function monto_bruto($precio = null, $iva = 19, $round = 2)
 {
 	if (!is_null($precio)) {
 
 		$iva = ($iva / 100) +1;
 
-		return round( $precio * $iva, 2 );
+		return round( $precio * $iva, $round );
 	}
 	
 	return 0;
 }
 
 
-function monto_neto($precio = null, $iva = 19)
+function quitar_iva($precio, $iva = 19)
 {
 	if (!is_null($precio)) {
 
-		$iva = $iva / 100;
+		$iva = ($iva / 100) +1;
 
-		return round( $precio * $iva, 2 );
+		return round( $precio / $iva, 2 );
 	}
 	
 	return 0;
+}
+
+function agregar_iva($precio, $iva = 19)
+{
+	$iva_monto = obtener_iva($precio, $iva);
+	return round($precio + $iva_monto, 2);
+}
+
+
+function monto_neto($precio = null, $iva = 19, $round = 2)
+{
+	$iva = ($iva / 100) +1;
+
+	return round( $precio / $iva, $round );
 }
 
 
@@ -284,4 +309,45 @@ function getDatesFromRange($start, $end, $format = 'Y-m-d') {
   
     // Return the array elements 
     return $array; 
-} 
+}
+
+
+function external_url_exists( $url = NULL ) {
+
+    if( empty( $url ) ){
+        return false;
+    }
+
+    $ch = curl_init( $url );
+ 
+    // Establecer un tiempo de espera
+    curl_setopt( $ch, CURLOPT_TIMEOUT, 5 );
+    curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 5 );
+
+    // Establecer NOBODY en true para hacer una solicitud tipo HEAD
+    curl_setopt( $ch, CURLOPT_NOBODY, true );
+    // Permitir seguir redireccionamientos
+    curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+    // Recibir la respuesta como string, no output
+    curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+
+    // Descomentar si tu servidor requiere un user-agent, referrer u otra configuración específica
+    // $agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36';
+    // curl_setopt($ch, CURLOPT_USERAGENT, $agent)
+
+    $data = curl_exec( $ch );
+
+    // Obtener el código de respuesta
+    $httpcode = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+    //cerrar conexión
+    curl_close( $ch );
+    
+    // Aceptar solo respuesta 200 (Ok), 301 (redirección permanente) o 302 (redirección temporal)
+    $accepted_response = array( 200, 301, 302 );
+    if( in_array( $httpcode, $accepted_response ) ) {
+        return true;
+    } else {
+        return false;
+    }
+
+}

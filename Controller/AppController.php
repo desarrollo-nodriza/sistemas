@@ -153,7 +153,7 @@ class AppController extends Controller
 		{
 			$this->layoutPath				= 'public';
 			AuthComponent::$sessionKey		= 'Auth.Cliente';
-			
+
 			// Login action config
 			$this->Auth->loginAction['controller'] 	= 'ventaClientes';
 			$this->Auth->loginAction['action'] 		= 'login';
@@ -165,10 +165,12 @@ class AppController extends Controller
 
 			// Login Form config
 			$this->Auth->authenticate['Form']['userModel']		= 'VentaCliente';
-			$this->Auth->authenticate['Form']['fields']['username'] = 'usuario';
+			$this->Auth->authenticate['Form']['fields']['username'] = 'email';
 			$this->Auth->authenticate['Form']['fields']['password'] = 'clave';
 
-		}
+			$this->Auth->allow('cliente_sended', 'cliente_sendFailed', 'cliente_authorization');
+			
+		}	
 
 
 		/**

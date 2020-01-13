@@ -181,7 +181,7 @@ class LibreDteComponent extends Component
 	 * @return
 	 */
 	public function crearDteReal($dte_temporal, &$dteInterno = array())
-	{
+	{		
 		// crear DTE real
 		$generar = $this->ConexionLibreDte->post('/dte/documentos/generar', $dte_temporal);
 	
@@ -764,11 +764,13 @@ class LibreDteComponent extends Component
 							'Dte.venta_id'       => $data['Dte']['venta_id']
 						),
 						'fields' => array(
-							'Dte.id'
+							'Dte.id', 'Dte.total'
 						)
 					));
 
-					if (!empty($dteReferenciado)) {
+					$totalDte = monto_bruto(array_sum(Hash::extract($data['DteDetalle'], '{n}.PrcItem')) * array_sum(Hash::extract($data['DteDetalle'], '{n}.QtyItem')));
+
+					if (!empty($dteReferenciado) && $totalDte == $dteReferenciado['Dte']['total']) {
 						ClassRegistry::init('Dte')->id = $dteReferenciado['Dte']['id'];
 						ClassRegistry::init('Dte')->saveField('invalidado', 1);
 					}

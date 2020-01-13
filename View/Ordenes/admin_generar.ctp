@@ -296,7 +296,7 @@
 
 												$TotalProductos = $TotalProductos + ($detalle['PrcItem'] * $detalle['QtyItem']); 
 
-												$this->Form->input(sprintf('DteDetalle.%d.id', $indice), array('type' => 'hidden', 'value' => $detalle['id']));
+												echo $this->Form->input(sprintf('DteDetalle.%d.id', $indice), array('type' => 'hidden', 'value' => $detalle['id']));
 											
 											?>
 
@@ -358,7 +358,10 @@
 
 											foreach ($venta['VentaDetalle'] as $indice => $detalle) : 
 
-												$TotalProductos = $TotalProductos + ($detalle['precio'] * $detalle['cantidad']); 
+												if ($detalle['cantidad_anulada'] == $detalle['cantidad'])
+													continue;
+
+												$TotalProductos = $TotalProductos + ($detalle['precio'] * ($detalle['cantidad'] - $detalle['cantidad_anulada']) ); 
 
 											?>
 
@@ -394,14 +397,14 @@
 												</td>
 												<td class="permitido_modificar" valign="center">
 														
-													<input type="text" class="form-control editable required editQtyItem" name="editQtyItem[<?=$indice;?>]" value="<?= number_format($detalle['cantidad'], 0, ".", "."); ?>" data-original="<?=$detalle['cantidad'];?>">
+													<input type="text" class="form-control editable required editQtyItem" name="editQtyItem[<?=$indice;?>]" value="<?= number_format($detalle['cantidad'] - $detalle['cantidad_anulada'], 0, ".", "."); ?>" data-original="<?=$detalle['cantidad'] - $detalle['cantidad_anulada'];?>">
 												
-													<?= $this->Form->input(sprintf('DteDetalle.%d.QtyItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => $detalle['cantidad'])); ?>
-													<?= $this->Form->input(sprintf('Detalle.%d.QtyItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => $detalle['cantidad'])); ?>
+													<?= $this->Form->input(sprintf('DteDetalle.%d.QtyItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => ($detalle['cantidad']-$detalle['cantidad_anulada']) )); ?>
+													<?= $this->Form->input(sprintf('Detalle.%d.QtyItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => ($detalle['cantidad']-$detalle['cantidad_anulada']) )); ?>
 												
 												</td>
 												<td valign="center">
-													<span class="precio_iva_total_productos"><?= CakeNumber::currency($detalle['precio'] * $detalle['cantidad'], 'CLP'); ?></span>
+													<span class="precio_iva_total_productos"><?= CakeNumber::currency($detalle['precio'] * ($detalle['cantidad'] - $detalle['cantidad_anulada'] ), 'CLP'); ?></span>
 												</td>
 												<td valign="center">
 													<button class="duplicate_tr btn-success"><i class="fa fa-plus"></i></button>

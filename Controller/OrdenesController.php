@@ -419,14 +419,14 @@ class OrdenesController extends AppController
 
 					# Precio de transporte viene Bruto
 					if ($item['VlrCodigo'] != 'COD-Trns') {
-						$this->request->data['DteDetalle'][$k]['PrcItem'] = $this->precio_bruto($item['PrcItem']);
+						$this->request->data['DteDetalle'][$k]['PrcItem'] = monto_bruto($item['PrcItem']);
 					}
 					
 				}
 
 				// Descuento Bruto en boletas
 				if ($this->request->data['DscRcgGlobal']['ValorDR'] > 0) {
-					$this->request->data['DscRcgGlobal']['ValorDR'] = $this->precio_bruto($this->request->data['editDiscount']);
+					$this->request->data['DscRcgGlobal']['ValorDR'] = monto_bruto($this->request->data['editDiscount']);
 				}
 			}
 
@@ -441,7 +441,7 @@ class OrdenesController extends AppController
 					'DteDetalle.dte_id' => $this->request->data['Dte']['id']
 				), false);
 			}
-			
+
 			# Guardar información del DTE en base de datos local
 			if($this->Orden->Dte->saveAll($this->request->data)) {
 
@@ -475,6 +475,76 @@ class OrdenesController extends AppController
 					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte['Dte']['id'], $id_orden));
 				}
 
+				# Si es NDC se anulan los items en la venta, se recalculan los montos de la venta y se devuelven a bodega los itmes cancelados si corresponde.
+				if (!empty($this->request->data['DteDetalle']) && $this->request->data['Dte']['tipo_documento'] == 61) {
+					
+					$venta = ClassRegistry::init('Venta')->find('first', array(
+						'conditions' => array(
+							'Venta.id' => $this->request->data['Dte']['venta_id']
+						),
+						'contain' => array(
+							'VentaDetalle' => array(
+								'fields' => array(
+									'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.cantidad', 'VentaDetalle.precio', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.total_neto'
+								)
+							)
+						),
+						'fields' => array(
+							'Venta.id', 'Venta.descuento', 'Venta.total'
+						)
+					));
+
+					# Obtenemos el porcentaje de descuento
+					if ($venta['Venta']['descuento'] > 0) {
+						$porcentaje_descuento = (($venta['Venta']['descuento']*100) / $venta['Venta']['total']) / 100 ;
+					}else{
+						$porcentaje_descuento = 0;
+					}
+
+					$itemsDevuletos = array();
+
+					# Aunlamos los items correspondientes
+					foreach ($venta['VentaDetalle'] as $ip => $d) {
+						foreach ($this->request->data['DteDetalle'] as $ide => $detalle) {
+
+							$id_item = str_replace('COD-', '', $detalle['VlrCodigo']);
+
+							if ($id_item == $d['venta_detalle_producto_id']) {
+								$venta['VentaDetalle'][$ip]['cantidad_anulada'] = $detalle['QtyItem'];
+								$venta['VentaDetalle'][$ip]['monto_anulado']    = $detalle['QtyItem'] * $detalle['PrcItem'];
+								$venta['VentaDetalle'][$ip]['dte']              = $id_dte['Dte']['id'];
+								$venta['VentaDetalle'][$ip]['total_neto']       = $d['total_neto'] - ($detalle['QtyItem'] * $detalle['PrcItem']);
+								$venta['VentaDetalle'][$ip]['total_bruto']      = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
+
+								# Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
+								if ($d['cantidad_entregada'] > 0) {
+
+									# Quitadmos de entregado los prductos devueltos
+									$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $d['cantidad_entregada'] - $detalle['QtyItem']; 
+									$itemsDevuletos[] = $venta['VentaDetalle'][$ip];
+								}
+							}
+						}
+					}
+					
+					# Recalculamos los totales de la venta
+					$subtotal_neto  = (float) array_sum(Hash::extract($venta['VentaDetalle'], '{n}.total_neto')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.monto_anulado'));
+					$subtotal_bruto = (float) monto_bruto($subtotal_neto);
+					$descuento      = (float) ($porcentaje_descuento > 0) ? round($subtotal_bruto * $porcentaje_descuento, 2) : 0;
+			
+					$venta['Venta']['descuento'] = $descuento;
+					
+					# Guardamos los cambios
+					ClassRegistry::init('Venta')->saveAll($venta);
+
+					# Re ingresamos los itemes devueltos
+					if (!empty($itemsDevuletos)) {
+						foreach ($itemsDevuletos as $i => $d) {
+							ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_anulada'], null, 'VT', null, $d['venta_id']);
+						}
+					}
+				}
+
 				$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
 
 			}else{
@@ -501,7 +571,7 @@ class OrdenesController extends AppController
 								'VentaDetalle.activo' => 1
 							),
 							'fields' => array(
-								'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id'
+								'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.cantidad_anulada', 'VentaDetalle.monto_anulado'
 							)
 						),
 						'VentaEstado' => array(

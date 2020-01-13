@@ -866,7 +866,7 @@ class OrdenComprasController extends AppController
 				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->saveField('cantidad_recibida', $cantidadRecibida); # Actualiamos la cantidad recibida
 
 				# Se crea la entrada de productos
-				$precioCompra = round($pedido['OrdenComprasVentaDetalleProducto']['total_neto'] / $pedido['OrdenComprasVentaDetalleProducto']['cantidad'], 2);
+				$precioCompra = round($pedido['OrdenComprasVentaDetalleProducto']['total_neto'] / $pedido['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'], 2);
 				
 				if (ClassRegistry::init('Bodega')->crearEntradaBodega($oc['VentaDetalleProducto']['id'], $bodegaDestino, $cantidadRecibida, $precioCompra, 'OC', $id)) {
 					$productosActualizado[] = $oc['VentaDetalleProducto']['id'];
@@ -2961,7 +2961,7 @@ class OrdenComprasController extends AppController
 				$nuevaOC['OrdenCompra']['total_neto']         = $total_neto;
 				$nuevaOC['OrdenCompra']['descuento']          = $oc['OrdenCompra']['descuento'];
 				$nuevaOC['OrdenCompra']['iva']                = obtener_iva($total_neto);
-				$nuevaOC['OrdenCompra']['descuento_monto']    = monto_neto( ($total_neto + $nuevaOC['OrdenCompra']['iva']) , $nuevaOC['OrdenCompra']['descuento']);
+				$nuevaOC['OrdenCompra']['descuento_monto']    = obtener_iva( ($total_neto + $nuevaOC['OrdenCompra']['iva']) , $nuevaOC['OrdenCompra']['descuento']);
 				$nuevaOC['OrdenCompra']['total']              = ($total_neto - $nuevaOC['OrdenCompra']['descuento_monto']) + $nuevaOC['OrdenCompra']['iva'];
 				$nuevaOC['OrdenCompra']['estado']             = 'iniciado';
 				$nuevaOC['OrdenCompra']['fecha']              = date('Y-m-d');
@@ -3000,7 +3000,7 @@ class OrdenComprasController extends AppController
 				$this->request->data['OrdenCompra']['total_neto']      = $total_neto;
 				$this->request->data['OrdenCompra']['descuento']       = $this->OrdenCompra->obtener_descuento_oc($id);
 				$this->request->data['OrdenCompra']['iva']             = obtener_iva($total_neto);
-				$this->request->data['OrdenCompra']['descuento_monto'] = monto_neto( ($total_neto + $this->request->data['OrdenCompra']['iva']) , $this->request->data['OrdenCompra']['descuento']);
+				$this->request->data['OrdenCompra']['descuento_monto'] = obtener_iva( ($total_neto + $this->request->data['OrdenCompra']['iva']) , $this->request->data['OrdenCompra']['descuento']);
 				$this->request->data['OrdenCompra']['total']           = ($total_neto - $this->request->data['OrdenCompra']['descuento_monto']) + $this->request->data['OrdenCompra']['iva'];
 
 			}

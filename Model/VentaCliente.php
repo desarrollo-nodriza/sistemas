@@ -56,6 +56,32 @@ class VentaCliente extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'Mensaje' => array(
+			'className'				=> 'Mensaje',
+			'foreignKey'			=> 'venta_cliente_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'Token' => array(
+			'className'				=> 'Token',
+			'foreignKey'			=> 'venta_cliente_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
@@ -63,5 +89,51 @@ class VentaCliente extends AppModel
 	function obtener_tipo_cliente()
 	{
 		return self::$tipo_cliente;
+	}
+
+
+	public function crear_token($cliente_id, $tienda_id = '', $duracion = 48)
+	{	
+		$expira = new DateTime(date('Y-m-d H:i:s'));
+		$expira->modify(sprintf('+%d hours', $duracion));
+
+		$token_acceso = ClassRegistry::init('Token')->generar_token(24);
+
+		$token['Token'] = array(
+			'venta_cliente_id' => $cliente_id,
+			'token'            => $token_acceso,
+			'expires'          => $expira->format('Y-m-d H:i:s')
+		);
+
+		if (!empty($tienda_id)) {
+			$token['Token']['tienda_id'] = $tienda_id;
+		}
+
+		ClassRegistry::init('Token')->create();
+		if (ClassRegistry::init('Token')->save($token)) {
+			
+			return array(
+				'expires_token' => $expira->format('Y-m-d H:i:s'),
+				'token'         => $token_acceso
+			);
+
+		}else{
+
+			$log = array(
+				'Log' => array(
+					'administrador' => 'Crear Token Cliente: ' . $cliente_id,
+					'modulo' => 'Ventas',
+					'modulo_accion' => json_encode(ClassRegistry::init('Token')->validationErrors)
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->save($log);
+
+			return array(
+				'expires_token' => '',
+				'token'         => ''
+			);
+		}
 	}
 }
