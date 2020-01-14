@@ -757,6 +757,7 @@ class LibreDteComponent extends Component
 
 				# Al ser nota de crédito invalida un documento de venta especifico...
 				if ($data['Dte']['tipo_documento'] == 61) {
+					
 					$dteReferenciado = ClassRegistry::init('Dte')->find('first', array(
 						'conditions' => array(
 							'Dte.folio'          => $ref['folio'],
@@ -768,12 +769,25 @@ class LibreDteComponent extends Component
 						)
 					));
 
-					$totalDte = monto_bruto(array_sum(Hash::extract($data['DteDetalle'], '{n}.PrcItem')) * array_sum(Hash::extract($data['DteDetalle'], '{n}.QtyItem')));
+					# Obteneoms otras notas de crédito
+					$ndcRelacionadas = ClassRegistry::init('Dte')->find('all', array(
+						'conditions' => array(
+							'Dte.venta_id' => $data['Dte']['venta_id'],
+							'Dte.tipo_documento' => 61, // Nota de credito
+							'Dte.invalidado' => 0,
+							'Dte.estado' => 'dte_real_emitido'
+						)
+					));
 
-					if (!empty($dteReferenciado) && $totalDte == $dteReferenciado['Dte']['total']) {
+					# Sumamos la cantidad ya anulada
+					$yaAnulado = array_sum(Hash::extract($ndcRelacionadas, '{n}.Dte.total'));
+					$totalAnulado = monto_bruto(array_sum(Hash::extract($data['DteDetalle'], '{n}.PrcItem')) * array_sum(Hash::extract($data['DteDetalle'], '{n}.QtyItem')), 19, 0) + $yaAnulado;
+					
+					if (!empty($dteReferenciado) && $totalAnulado == $dteReferenciado['Dte']['total']) {
 						ClassRegistry::init('Dte')->id = $dteReferenciado['Dte']['id'];
 						ClassRegistry::init('Dte')->saveField('invalidado', 1);
 					}
+
 				}
 
 				$count++;

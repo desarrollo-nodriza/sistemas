@@ -9,6 +9,7 @@ class AppController extends Controller
 	);
 	public $components	= array(
 		'Session',
+		'Cookie',
 		'Auth'		=> array(
 			'Form'				=> array(
 				'fields' => array(
@@ -66,7 +67,6 @@ class AppController extends Controller
 		
 		# Seguimiento
 		#$this->ejemploTracking();
-		
 
 		/**
 		 * Layout y permisos públicos

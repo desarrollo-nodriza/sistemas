@@ -24,7 +24,7 @@ class Venta extends AppModel
 		),
 		'empaquetado' => array(
 			'label' => 'Embalaje finalizado',
-			'leyenda' => 'Todos los productos estan embalados y listos para continuar con el flujo',
+			'leyenda' => 'Todos los productos estan embalados',
 			'color' => '#95B75D'
 		)
 	);
