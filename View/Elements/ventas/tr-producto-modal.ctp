@@ -11,7 +11,7 @@
 		<? endif; ?>
 		<?= $d['VentaDetalleProducto']['nombre']; ?>
 	</td>
-	<td><?=$d['cantidad'];?></td>
+	<td><?=$d['cantidad'] - $d['cantidad_anulada'];?></td>
 	<td><?=$d['cantidad_pendiente_entrega'];?></td>
 	<td><?=$d['cantidad_reservada'];?></td>
 	<? if ($confirmar) : ?>

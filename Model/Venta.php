@@ -454,7 +454,7 @@ class Venta extends AppModel
 							)
 						),
 						'fields' => array(
-							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app'
+							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_anulada', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app'
 						)
 					),
 					'Marketplace' => array(
@@ -500,7 +500,7 @@ class Venta extends AppModel
 			'type' => 'INNER',
 			'conditions' => array(
 				'venta_detalles.venta_id = Venta.id',
-				'venta_detalles.cantidad_reservada = venta_detalles.cantidad',
+				'venta_detalles.cantidad_reservada = (venta_detalles.cantidad - venta_detalles.cantidad_anulada)',
 			)
 		);
 
@@ -554,7 +554,7 @@ class Venta extends AppModel
 				'Venta.id'
 			),
 		));
-
+		
 		return $ventas;
 	}
 
@@ -574,8 +574,7 @@ class Venta extends AppModel
 			'alias' => 'venta_detalles',
 			'type' => 'INNER',
 			'conditions' => array(
-				'venta_detalles.venta_id = Venta.id',
-				'venta_detalles.fecha_completado >= DATE_ADD(CURDATE(),INTERVAL -1 DAY)'
+				'venta_detalles.venta_id = Venta.id'
 			)
 		);
 

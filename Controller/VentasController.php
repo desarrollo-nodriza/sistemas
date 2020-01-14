@@ -751,7 +751,7 @@ class VentasController extends AppController {
 			$venta  = $this->Venta->obtener_venta_por_id_tiny($ve['Venta']['id']);
 
 			# si la venta no tiene todos los productos se quita
-			if (array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad')) != array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_reservada')))
+			if ( (array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad')) - array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_anulada')) ) != array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_reservada')))
 				continue;
 
 			

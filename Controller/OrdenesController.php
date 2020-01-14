@@ -483,7 +483,7 @@ class OrdenesController extends AppController
 							'contain' => array(
 								'VentaDetalle' => array(
 									'fields' => array(
-										'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.cantidad', 'VentaDetalle.precio', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.total_neto'
+										'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.cantidad', 'VentaDetalle.precio', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.total_neto', 'VentaDetalle.cantidad_pendiente_entrega'
 									)
 								)
 							),
@@ -508,9 +508,10 @@ class OrdenesController extends AppController
 								$id_item = str_replace('COD-', '', $detalle['VlrCodigo']);
 
 								if ($id_item == $d['venta_detalle_producto_id']) {
-									$venta['VentaDetalle'][$ip]['cantidad_anulada'] = $detalle['QtyItem'];
-									$venta['VentaDetalle'][$ip]['monto_anulado']    = $detalle['QtyItem'] * $detalle['PrcItem'];
-									$venta['VentaDetalle'][$ip]['dte']              = $id_dte['Dte']['id'];
+									$venta['VentaDetalle'][$ip]['cantidad_anulada']           = $detalle['QtyItem'];
+									$venta['VentaDetalle'][$ip]['monto_anulado']              = $detalle['QtyItem'] * $detalle['PrcItem'];
+									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
+									$venta['VentaDetalle'][$ip]['dte']                        = $id_dte['Dte']['id'];
 									if ($d['cantidad'] == $detalle['QtyItem']) {
 										$venta['VentaDetalle'][$ip]['total_neto']   = 0;
 									}else{
