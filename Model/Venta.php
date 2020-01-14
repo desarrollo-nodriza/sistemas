@@ -300,6 +300,8 @@ class Venta extends AppModel
 			$this->data['Venta']['peso_bulto_total'] = (float) round($peso_total, 2);
 		}
 		
+		CakeLog::write('debug', json_encode($this->data));
+
 		return true;
 	}
 
