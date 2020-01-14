@@ -6450,7 +6450,7 @@ class VentasController extends AppController {
 					$NuevoDetalle['cantidad']                   = $DetalleVenta['product_quantity'];
 					$NuevoDetalle['cantidad_pendiente_entrega'] = $DetalleVenta['product_quantity'];
 					$NuevoDetalle['cantidad_reservada'] 		= 0;
-					$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
+					$NuevoDetalle['total_neto']              	= $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
 					$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 
 					$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;

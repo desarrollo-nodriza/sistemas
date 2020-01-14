@@ -286,12 +286,14 @@ class Venta extends AppModel
 				}else{
 					$peso_total    = $peso_total + round($peso_producto * $d['VentaDetalle']['cantidad'], 2);
 				}
-
 				# Sumatoria del total de la venta
 				$total_venta   = $total_venta + round($d['VentaDetalle']['total_bruto']);
 			}
 			
-			$this->data['Venta']['total'] = $total_venta - $descuento + $costo_envio;	
+			# si viene dado el campo total bruto de los items se calcula el total en base a ello, de lo contrario se mantiene el total
+			if (Hash::check($this->data['VentaDetalle'], '{n}.VentaDetalle.total_bruto')) {
+				$this->data['Venta']['total'] = $total_venta - $descuento + $costo_envio;	
+			}	
 			
 		}
 
@@ -300,8 +302,6 @@ class Venta extends AppModel
 			$this->data['Venta']['peso_bulto_total'] = (float) round($peso_total, 2);
 		}
 		
-		CakeLog::write('debug', json_encode($this->data));
-
 		return true;
 	}
 

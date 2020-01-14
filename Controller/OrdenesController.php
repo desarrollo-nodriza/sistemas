@@ -517,8 +517,6 @@ class OrdenesController extends AppController
 									}else{
 										$venta['VentaDetalle'][$ip]['total_neto']   = $d['total_neto'] - $venta['VentaDetalle'][$ip]['monto_anulado'];
 									}
-									
-									$venta['VentaDetalle'][$ip]['total_bruto']      = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
 
 									# Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
 									if ($d['cantidad_entregada'] > 0) {
@@ -528,6 +526,9 @@ class OrdenesController extends AppController
 										$itemsDevuletos[] = $venta['VentaDetalle'][$ip];
 									}
 								}
+
+								# Total bruto se calcula siempre
+								$venta['VentaDetalle'][$ip]['total_bruto']      = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
 							}
 						}
 						
