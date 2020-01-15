@@ -505,7 +505,7 @@
 
 				<div class="panel-footer">
 					<div class="pull-right">
-						<button type="submit" class="btn btn-primary"><i class="fa fa-file-text" aria-hidden="true"></i> Generar DTE</button>
+						<button type="submit" class="btn btn-primary start-loading-then-redirect"><i class="fa fa-file-text" aria-hidden="true"></i> Generar DTE</button>
 						<?= $this->Html->link('Cancelar y volver', array('controller' => 'ventas', 'action' => 'view', $this->request->data['Venta']['id']), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
