@@ -252,7 +252,7 @@
 															<?= CakeNumber::currency($detalle['total_neto'], 'CLP'); ?>
 														</td>
 														<td>
-														<? if ($detalle['cantidad'] == $detalle['cantidad_anulada'] && !empty($detalle['dte'])) : ?>
+														<? if ($detalle['cantidad_anulada'] > 0 && !empty($detalle['dte'])) : ?>
 															<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Ver NTC', array('controller' => 'ordenes', 'action' => 'editar', $detalle['dte'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-xs', 'data-toggle' => 'tooltip', 'title' => 'Ver nota de crédito', 'escape' => false, 'target' => '_blank')); ?>
 														<? endif; ?>
 
@@ -718,6 +718,10 @@
 																	<? if ($dte['estado'] != 'dte_real_emitido') : ?>
 																		<?= $this->Html->link('<i class="fa fa-trash"></i> Eliminar', array('controller' => 'ordenes','action' => 'delete_dte', $dte['id'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-xs', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
 																	<? endif; ?>
+																<? endif; ?>
+
+																<? if ($dte['tipo_documento'] == 33 || $dte['tipo_documento'] == 39 && $dte['invalidado'] == 0) : ?>
+																	<?= $this->Html->link('<i class="fa fa-file"></i> Generar NDC', array('controller' => 'ordenes', 'action' => 'generar', $venta['Venta']['id'], '?' => array('tipo' => 'nota-de-credito', 'dte' => $dte['id'])), array('class' => 'btn btn-warning btn-xs', 'rel' => 'tooltip', 'title' => 'Generar NDC', 'escape' => false)); ?>
 																<? endif; ?>                                                  
 				                                                    </ul>
 				                                                </div>

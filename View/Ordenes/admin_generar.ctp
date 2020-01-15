@@ -193,10 +193,10 @@
 										<tr>
 											<td>
 												<!--<?= $this->Form->select(sprintf('DteReferencia.%d.dte_referencia', $index), $dteEmitidos, array('class' => 'form-control id-referencia', 'empty' => 'Seleccione folio de ref.')); ?>-->
-												<?= $this->Form->input(sprintf('DteReferencia.%d.folio', $index), array('type' => 'text', 'class' => 'folio-referencia form-control', 'placeholder' => 'Igrese folio')); ?>
+												<?= $this->Form->input(sprintf('DteReferencia.%d.folio', $index), array('type' => 'text', 'class' => 'folio-referencia form-control', 'placeholder' => 'Ingrese folio', 'value' => $referencia['folio'])); ?>
 											</td>
-											<td><?= $this->Form->select(sprintf('DteReferencia.%d.tipo_documento', $index), $tipoDocumentosReferencias, array('class' => 'tipo-referencia form-control', 'empty' => 'Seleccione'))?></td>
-											<td><?= $this->Form->input(sprintf('DteReferencia.%d.fecha', $index), array('type' => 'text', 'class' => 'form-control datepicker fecha-referencia')); ?></td>
+											<td><?= $this->Form->select(sprintf('DteReferencia.%d.tipo_documento', $index), $tipoDocumentosReferencias, array('class' => 'tipo-referencia form-control', 'empty' => 'Seleccione', 'default' => $referencia['tipo_documento']))?></td>
+											<td><?= $this->Form->input(sprintf('DteReferencia.%d.fecha', $index), array('type' => 'text', 'class' => 'form-control datepicker fecha-referencia', 'value' => $referencia['fecha'])); ?></td>
 											<td><?= $this->Form->select(sprintf('DteReferencia.%d.codigo_referencia', $index),$codigoReferencia , array('class' => 'form-control', 'empty' => 'Seleccione código de ref.')); ?></td>
 											<td><?= $this->Form->input(sprintf('DteReferencia.%d.razon', $index), array('class' => 'form-control')); ?></td>
 											<td>

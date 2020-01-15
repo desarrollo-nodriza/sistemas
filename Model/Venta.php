@@ -916,7 +916,7 @@ class Venta extends AppModel
 				break;
 		}
 
-		return $this->save($save);
+		return $this->save($save, array('callbacks' => false));
 
 	}
 

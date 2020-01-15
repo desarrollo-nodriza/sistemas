@@ -483,7 +483,7 @@ class OrdenesController extends AppController
 							'contain' => array(
 								'VentaDetalle' => array(
 									'fields' => array(
-										'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.cantidad', 'VentaDetalle.precio', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.total_neto', 'VentaDetalle.cantidad_pendiente_entrega'
+										'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.cantidad', 'VentaDetalle.precio', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.total_neto', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada'
 									)
 								)
 							),
@@ -512,6 +512,17 @@ class OrdenesController extends AppController
 									$venta['VentaDetalle'][$ip]['monto_anulado']              = $detalle['QtyItem'] * $detalle['PrcItem'];
 									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
 									$venta['VentaDetalle'][$ip]['dte']                        = $id_dte['Dte']['id'];
+
+									# si la cantidad reservada es menor a la cantidad anulada, la reserva se lleva a 0
+									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) {
+										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = 0;
+									}
+
+									# si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
+									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem']) {
+										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
+									}
+
 									if ($d['cantidad'] == $detalle['QtyItem']) {
 										$venta['VentaDetalle'][$ip]['total_neto']   = 0;
 									}else{
@@ -536,7 +547,7 @@ class OrdenesController extends AppController
 						$subtotal_neto  = (float) array_sum(Hash::extract($venta['VentaDetalle'], '{n}.total_neto')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.monto_anulado'));
 						$subtotal_bruto = (float) monto_bruto($subtotal_neto);
 						$descuento      = (float) ($porcentaje_descuento > 0) ? round($subtotal_bruto * $porcentaje_descuento, 2) : 0;
-				
+					
 						$venta['Venta']['descuento'] = $descuento;
 						
 						# Guardamos los cambios
@@ -545,7 +556,8 @@ class OrdenesController extends AppController
 						# Re ingresamos los itemes devueltos
 						if (!empty($itemsDevuletos)) {
 							foreach ($itemsDevuletos as $i => $d) {
-								ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_anulada'], null, 'VT', null, $d['venta_id']);
+								$pmp = ClassRegistry::init('Bodega')->obtener_pmp_por_id($d['venta_detalle_producto_id']);
+								ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_anulada'], $pmp, 'VT', null, $d['venta_id']);
 							}
 						}
 					}
@@ -809,6 +821,54 @@ class OrdenesController extends AppController
 				)
 			)
 		);
+		
+		if(isset($this->request->query['tipo'])){
+			switch ($this->request->query['tipo']) {
+				case 'nota-de-credito':
+					
+					# Completamos el formulario con la info para una ndc
+					$this->request->data['Dte']['tipo_documento'] = 61;
+
+					if (empty($this->request->data['Dte']['rut_receptor']) && !empty($venta['VentaCliente']['rut'])) {
+
+						$venta['VentaCliente']['rut'] = str_replace('-', '', $venta['VentaCliente']['rut']);
+						$venta['VentaCliente']['rut'] = str_replace('.', '', $venta['VentaCliente']['rut']);
+
+						$rutContribuyente = substr($venta['VentaCliente']['rut'], 0, (strlen($venta['VentaCliente']['rut']) - 1));
+						$contribuyenteInfo = $this->admin_getContribuyenteInfo($rutContribuyente);
+						
+						$this->request->data['Dte']['rut_receptor']          = $contribuyenteInfo['rut'] . $contribuyenteInfo['dv'];
+						$this->request->data['Dte']['razon_social_receptor'] = $contribuyenteInfo['razon_social'];
+						$this->request->data['Dte']['giro_receptor']         = $contribuyenteInfo['giro'];
+						$this->request->data['Dte']['direccion_receptor']    = $contribuyenteInfo['direccion'];
+						$this->request->data['Dte']['comuna_receptor']       = $contribuyenteInfo['comuna_glosa'];
+
+					}
+
+					$dteReferencia = ClassRegistry::init('Dte')->find('first', array(
+						'conditions' => array(
+							'Dte.id' => $this->request->query['dte']
+						),
+						'fields' => array(
+							'Dte.folio',
+							'Dte.fecha',
+							'Dte.tipo_documento'
+						)
+					));
+
+					$this->request->data['Dte']['DteReferencia'][] = array(
+						'folio' => $dteReferencia['Dte']['folio'],
+						'tipo_documento' => $dteReferencia['Dte']['tipo_documento'],
+						'fecha' => $dteReferencia['Dte']['fecha']
+					);
+
+					break;
+				
+				default:
+					
+					break;
+			}
+		}
 		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
