@@ -104,7 +104,7 @@
 											</div>
 											<div class="form-group hidden">
 												<label><?=__('Telefono despacho');?></label>
-												<?= $this->Form->input('fono_receptor'); ?>
+												<?= $this->Form->input('fono_receptor', array('class' => 'form-control in-number', 'placeholder' => '9 9999 9999')); ?>
 											</div>
 											<div class="form-group hidden">
 												<label><?=__('Costo despacho');?></label>

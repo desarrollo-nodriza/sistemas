@@ -570,7 +570,7 @@ $(function() {
 				if ($metodo_envio.MetodoEnvio.retiro_local) {
 					$('#VentaDireccionEntrega').parents('div').eq(0).addClass('hidden');
 					$('#VentaComunaEntrega').parents('div').eq(0).addClass('hidden');
-					$('#VentaFonoReceptor').parents('div').eq(0).addClass('hidden');
+					$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
 					$('#VentaCostoEnvio').parents('div').eq(0).addClass('hidden');
 
 					$('#VentaDireccionEntrega').rules("remove", "required");

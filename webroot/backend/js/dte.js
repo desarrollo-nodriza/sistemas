@@ -321,6 +321,17 @@ $.extend({
 					  			}
 				  			}				  			
 				  		},
+				  		'data[Dte][tipo_ntc]' : {
+				  			required: {
+				  				depends : function(element) {
+					  				if ( $('#DteTipoDocumento').val() == 61 ) {
+					  					return true;
+					  				}else{
+					  					return false;
+					  				}
+					  			}
+				  			}				  			
+				  		},
 				  		'editTransport' : {
 				  			required : true,
 				  			number : true,
@@ -395,6 +406,9 @@ $.extend({
 				  		},
 				  		'data[Dte][nombre_chofer]' : {
 				  			required: 'Ingrese nombre del chofer'
+				  		},
+				  		'data[Dte][tipo_ntc]' : {
+				  			required: 'Seleccione el tipo de NDC que creará'
 				  		},
 				  		'editTransport' : {
 				  			required: 'Transporte debe ser mayor o igual a 0',
@@ -493,6 +507,18 @@ $.extend({
 					}
 				}
 			},
+			tipoNdc: {
+				habilitar: function(){
+					if ( $('.js-tipo-ndc').hasClass('hide') ) {
+						$('.js-tipo-ndc').removeClass('hide');
+					}
+				},
+				deshabilitar: function(){
+					if ( ! $('.js-tipo-ndc').hasClass('hide') ) {
+						$('.js-tipo-ndc').addClass('hide');
+					}
+				}
+			},
 			bind:function(){
 
 				var $selector = $('.js-dte-tipo');
@@ -503,6 +529,10 @@ $.extend({
 				if( $selector.val() == 39 ) {
 					$.dte.tipoDocumento.deshabilitar();
 					$.dte.bloquearCampos();
+				}else if ($selector.val() == 61){
+					$.dte.tipoDocumento.tipoNdc.habilitar();
+					$.dte.tipoDocumento.habilitar();
+					$.dte.desbloquearCampos();
 				}else{
 					$.dte.tipoDocumento.habilitar();
 					$.dte.desbloquearCampos();

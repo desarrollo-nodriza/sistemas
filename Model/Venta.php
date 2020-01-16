@@ -414,6 +414,48 @@ class Venta extends AppModel
 	}
 
 
+	/**
+	 * [obtener_ventas_por_oc description]
+	 * @param  [type] $id_oc [description]
+	 * @return [type]        [description]
+	 */
+	public function reservar_stock_por_oc($id_oc)
+	{
+		$ocVentas = ClassRegistry::init('OrdenCompra')->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id_oc
+			),
+			'contain' => array(
+				'Venta' => array(
+					'VentaDetalle' => array(
+						'fields' => array(
+							'VentaDetalle.id'
+						)
+					),
+					'fields' => array(
+						'Venta.id'
+					)
+				)
+			),
+			'fields' => array(
+				'OrdenCompra.id'
+			)
+		));
+
+		if (empty($ocVentas['Venta'])) {
+			return;
+		}
+		
+		foreach ($ocVentas['Venta'] as $iv => $venta) {
+			foreach ($venta['VentaDetalle'] as $id => $d) {
+				$reservado = $this->reservar_stock_producto($d['id']);
+			}
+		}
+
+		return;
+	}
+
+
 
 	public function obtener_venta_por_id_tiny($id)
 	{

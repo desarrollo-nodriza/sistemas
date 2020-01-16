@@ -1030,6 +1030,12 @@ $.extend({
 			$(document).on('click', '.start-loading-then-redirect', function(){
 				$.app.loader.mostrar();
 			});
+
+			$(document).on('click', '.start-loading-when-form-is-validate', function(){
+				if($(this).parents('form').eq(0).valid()){
+					$.app.loader.mostrar();
+				}
+			});
 			
 		}
 	}

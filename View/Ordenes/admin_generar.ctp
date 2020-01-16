@@ -218,6 +218,26 @@
 						</div>
 					</div>
 				</div>
+
+
+				<!-- Tipo de NDC -->
+				<div class="panel-body js-tipo-ndc hide">
+					<div class="row">
+						<div class="col-xs-12">
+							<h4 class="pull-left"><i class="fa fa-exclamation-triangle"></i> Tipo de Nota de crédito</h4>
+						</div>
+						<div class="col-xs-12">
+							<div class="table-responsive">
+								<table class="table table-bordered">
+									<tr>
+										<td>Seleccione tipo de nota de crédito</td>
+										<td><?=$this->Form->select('tipo_ntc', array('devolucion' => 'Devolución', 'cambio_dte' => 'Cambio de DTE'), array('class' => 'form-control not-blank', 'empty' => 'Seleccione'))?></td>
+									</tr>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
 			
 
 				<!-- ITEMS -->
@@ -505,7 +525,7 @@
 
 				<div class="panel-footer">
 					<div class="pull-right">
-						<button type="submit" class="btn btn-primary start-loading-then-redirect"><i class="fa fa-file-text" aria-hidden="true"></i> Generar DTE</button>
+						<button type="submit" class="btn btn-primary start-loading-when-form-is-validate"><i class="fa fa-file-text" aria-hidden="true"></i> Generar DTE</button>
 						<?= $this->Html->link('Cancelar y volver', array('controller' => 'ventas', 'action' => 'view', $this->request->data['Venta']['id']), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>

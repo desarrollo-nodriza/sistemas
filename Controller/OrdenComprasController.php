@@ -765,102 +765,6 @@ class OrdenComprasController extends AppController
 				if ( $cantidadFaltante > $oc['Bodega'][0]['cantidad'] ) {
 					$res['incompletos'][] = sprintf('#%s - %s (agregados: %d - faltantes: %d)', $oc['VentaDetalleProducto']['id'], $pedido['OrdenComprasVentaDetalleProducto']['descripcion'], $cantidadRecibida, ($cantidadFaltante - $cantidadRecibida) );
 				}
-			
-				# Obtenemos los productos vendidos que se solicitaron en ésta OC
-				$currentOC = $this->OrdenCompra->find('first', array(
-					'conditions' => array(
-						'OrdenCompra.id' => $id
-					),
-					'fields' => array(
-						'OrdenCompra.parent_id'
-					)
-				));	
-
-				
-
-				# Buscamos las ventas de la OC padre para reservar las cantidades que se estan pidiendo
-				if (!empty($currentOC['OrdenCompra']['parent_id'])) {
-
-					$padre = $this->OrdenCompra->find('first', array(
-						'conditions' => array(
-							'OrdenCompra.id' => $currentOC['OrdenCompra']['parent_id'],
-						),
-						'contain' => array(
-							'Venta' => array(
-								'VentaDetalle' => array(
-									'fields' => array(
-										'VentaDetalle.venta_detalle_producto_id', 
-										'VentaDetalle.cantidad_pendiente_entrega',
-										'VentaDetalle.cantidad_reservada',
-										'VentaDetalle.cantidad',
-										'VentaDetalle.completo',
-										'VentaDetalle.cantidad_entregada',
-										'VentaDetalle.venta_id'
-									)
-								),
-								'order' => array(
-									'Venta.fecha_venta' => 'asc'
-								),
-								'fields' => array(
-									'Venta.subestado_oc', 'Venta.fecha_venta'
-								)
-							)
-						),
-						'fields' => array(
-							'OrdenCompra.id', 'OrdenCompra.oc_manual'
-						)
-					));
-
-					# Listamos los productos vendidos que se pideron en ésta OC
-					$productos_vendidos = Hash::extract($padre['Venta'], '{n}.VentaDetalle.{n}[venta_detalle_producto_id='. $oc['VentaDetalleProducto']['id'].']');
-
-					$ventasCompletas = array();
-					
-					# Reservamos stock recibido
-					foreach ($productos_vendidos as $iv => $v) {
-
-						if ($v['completo']) {
-							continue;
-						}
-
-						ClassRegistry::init('VentaDetalle')->id = $v['id'];
-
-						$reservar = $v['cantidad'] - $v['cantidad_reservada'];
-						
-						if ($cantidadRecibida >= $reservar && $reservar > 0) {
-							ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $reservar);
-						}
-
-						if ($cantidadRecibida < $reservar) {
-							ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $cantidadRecibida);
-						}
-						
-						if ($cantidadRecibida >= $v['cantidad']) {
-							$ventasCompletas[$v['venta_id']][$v['venta_detalle_producto_id']] = $cantidadRecibida;
-						}
-
-					}
-					
-					# Actualizamos ventas completas para que sean empaquetadas
-					if (!empty($ventasCompletas)) {
-						foreach ($ventasCompletas as $id_venta => $id_producto) {
-
-							$venta = ClassRegistry::init('Venta')->find('first', array(
-								'conditions' => array(
-									'Venta.id' => $id_venta
-								),
-								'contain' => array(
-									'VentaDetalle'
-								)
-							));
-
-							if ( array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad')) == array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_reservada')) ) {
-								ClassRegistry::init('Venta')->id = $id_venta;
-								ClassRegistry::init('Venta')->saveField('picking_estado', 'empaquetar');
-							}
-						}
-					}
-				}
 
 				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->id = $pedido['OrdenComprasVentaDetalleProducto']['id'];
 				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->saveField('cantidad_recibida', $cantidadRecibida); # Actualiamos la cantidad recibida
@@ -869,7 +773,18 @@ class OrdenComprasController extends AppController
 				$precioCompra = round($pedido['OrdenComprasVentaDetalleProducto']['total_neto'] / $pedido['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'], 2);
 				
 				if (ClassRegistry::init('Bodega')->crearEntradaBodega($oc['VentaDetalleProducto']['id'], $bodegaDestino, $cantidadRecibida, $precioCompra, 'OC', $id)) {
+					
 					$productosActualizado[] = $oc['VentaDetalleProducto']['id'];
+
+					$this->OrdenCompra->id = $id;
+
+					$parent_id = $this->OrdenCompra->field('parent_id');
+
+					# Reservamos los productos de las ventas relacionadas a la OC padre
+					if (!empty($parent_id)) {
+						ClassRegistry::init('Venta')->reservar_stock_por_oc($parent_id);
+					}
+
 				}else{
 					$productosNoActualizado[] = $oc['VentaDetalleProducto']['id'];
 				}
