@@ -4977,7 +4977,7 @@ class VentasController extends AppController {
 
 			$dte['DteDetalle'][$k]['VlrCodigo'] = sprintf('COD-%d', $item['venta_detalle_producto_id']);
 			$dte['DteDetalle'][$k]['NmbItem'] = $item['VentaDetalleProducto']['nombre'];
-			$dte['DteDetalle'][$k]['QtyItem'] = $item['cantidad'];
+			$dte['DteDetalle'][$k]['QtyItem'] = $item['cantidad'] - $item['cantidad_anulada'];
 
 			if ($tipo_documento == 39) { # Boleta valores brutos o con iva
 				$dte['DteDetalle'][$k]['PrcItem'] = $this->precio_bruto($item['precio']);	
@@ -6800,7 +6800,7 @@ class VentasController extends AppController {
 		$this->layout = 'private';
 
 		BreadcrumbComponent::add('Dashboard', '/cliente');
-		BreadcrumbComponent::add('Mis compras', '/ventas/compras');
+		BreadcrumbComponent::add('Mis compras', '/cliente/mis-compras');
 		$PageTitle = 'Mis compras';
 		$this->set(compact('PageTitle', 'ventas'));
 	}
@@ -6812,8 +6812,8 @@ class VentasController extends AppController {
 		$this->layout = 'private';
 
 		BreadcrumbComponent::add('Dashboard', '/cliente');
-		BreadcrumbComponent::add('Mis compras', '/ventas/compras');
-		BreadcrumbComponent::add('Compra ref: ' . $venta['Venta']['referencia'], '/ventas/ver/' . $id);
+		BreadcrumbComponent::add('Mis compras', '/cliente/mis-compras');
+		BreadcrumbComponent::add('Compra ref: ' . $venta['Venta']['referencia'], '/mis-compras/' . $id);
 
 		$PageTitle = 'Compra ref:' . $venta['Venta']['referencia'];
 		$this->set(compact('PageTitle', 'venta'));
