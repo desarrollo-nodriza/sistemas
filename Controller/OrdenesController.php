@@ -488,7 +488,7 @@ class OrdenesController extends AppController
 								)
 							),
 							'fields' => array(
-								'Venta.id', 'Venta.descuento', 'Venta.total'
+								'Venta.id', 'Venta.descuento', 'Venta.total', 'Venta.costo_envio'
 							)
 						));
 
@@ -508,7 +508,7 @@ class OrdenesController extends AppController
 								$id_item = str_replace('COD-', '', $detalle['VlrCodigo']);
 
 								if ($id_item == $d['venta_detalle_producto_id']) {
-									$venta['VentaDetalle'][$ip]['cantidad_anulada']           = $d['cantidad_anulada'] - $detalle['QtyItem'];
+									$venta['VentaDetalle'][$ip]['cantidad_anulada']           = $d['cantidad_anulada'] + $detalle['QtyItem'];
 									$venta['VentaDetalle'][$ip]['monto_anulado']              = $venta['VentaDetalle'][$ip]['cantidad_anulada'] * $detalle['PrcItem'];
 									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
 									$venta['VentaDetalle'][$ip]['dte']                        = $id_dte['Dte']['id'];
