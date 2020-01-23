@@ -474,7 +474,7 @@ class OrdenesController extends AppController
 				if (!empty($id_dte)) {
 					
 					# Si es NDC se anulan los items en la venta, se recalculan los montos de la venta y se devuelven a bodega los itmes cancelados si corresponde.
-					if (!empty($this->request->data['DteDetalle']) && $this->request->data['Dte']['tipo_documento'] == 61 && $id_dte['Dte']['estado'] == 'dte_real_emitido' && $this->request->data['Dte']['tipo_ntc'] == 'devolucíon') {
+					if (!empty($this->request->data['DteDetalle']) && $this->request->data['Dte']['tipo_documento'] == 61 && $id_dte['Dte']['estado'] == 'dte_real_emitido' && $this->request->data['Dte']['tipo_ntc'] == 'devolucion') {
 						
 						$venta = ClassRegistry::init('Venta')->find('first', array(
 							'conditions' => array(
@@ -560,6 +560,12 @@ class OrdenesController extends AppController
 								ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_anulada'], $pmp, 'VT', null, $d['venta_id']);
 							}
 						}
+
+						# Reservamos stock
+						/*$ventasController = new VentasController();
+						$ventasController->shell = true;
+						$ventasController->admin_reservar_stock_venta($venta['Venta']['id']);
+						*/
 					}
 
 					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte['Dte']['id'], $id_orden));
