@@ -54,7 +54,8 @@ class LibreDteComponent extends Component
 		812 => 'Resolución del SNA donde califica Servicios de Exportación',
 		813 => 'Pasaporte',
 		814 => 'Certificado de Depósito Bolsa Prod. Chile',
-		815 => 'Vale de Prenda Bolsa Prod. Chile'
+		815 => 'Vale de Prenda Bolsa Prod. Chile',
+		'HES' => 'Hoja de entrada de servicios (HES)'
 	);
 
 
