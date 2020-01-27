@@ -789,7 +789,7 @@ class LibreDteComponent extends Component
 					$yaAnulado = array_sum(Hash::extract($ndcRelacionadas, '{n}.Dte.total'));
 					$totalAnulado = monto_bruto(array_sum(Hash::extract($data['DteDetalle'], '{n}.PrcItem')) * array_sum(Hash::extract($data['DteDetalle'], '{n}.QtyItem')), 19, 0) + $yaAnulado;
 					
-					if (!empty($dteReferenciado) && $totalAnulado == $dteReferenciado['Dte']['total']) {
+					if (!empty($dteReferenciado) && $totalAnulado >= $dteReferenciado['Dte']['total']) {
 						ClassRegistry::init('Dte')->id = $dteReferenciado['Dte']['id'];
 						ClassRegistry::init('Dte')->saveField('invalidado', 1);
 					}
