@@ -741,6 +741,7 @@ class LibreDteComponent extends Component
 				}
 
 				$DteReferencia[$i] = array(
+					'NroLinRef' => $count,
 					'TpoDocRef' => $ref['tipo_documento'],
 					'FolioRef' => $ref['folio'],
 					'FchRef' => $ref['fecha'],
