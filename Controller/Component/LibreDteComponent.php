@@ -740,7 +740,7 @@ class LibreDteComponent extends Component
 					continue;
 				}
 
-				$DteReferencia = array(
+				$DteReferencia[$i] = array(
 					'TpoDocRef' => $ref['tipo_documento'],
 					'FolioRef' => $ref['folio'],
 					'FchRef' => $ref['fecha'],
@@ -749,11 +749,11 @@ class LibreDteComponent extends Component
 				);
 
 				if (empty($ref['codigo_referencia'])) {
-					unset($DteReferencia['CodRef']);
+					unset($DteReferencia[$i]['CodRef']);
 				}
 
 				if (empty($ref['razon'])) {
-					unset($DteReferencia['RazonRef']);
+					unset($DteReferencia[$i]['RazonRef']);
 				}
 
 				# Al ser nota de crédito invalida un documento de venta especifico...
@@ -794,10 +794,7 @@ class LibreDteComponent extends Component
 				$count++;
 			}
 
-			$dte = array_replace_recursive($dte, array(
-				'Referencia' => $DteReferencia
-				)
-			);
+			$dte['Referencia'] = $DteReferencia;
 		}
 
 		return $dte;
