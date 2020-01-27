@@ -148,8 +148,13 @@ class LibreDteComponent extends Component
 	 */
 	public function crearDteTemporal($dataDte, &$dteInterno = array())
 	{	
+
+		CakeLog::write('debug', 'Dte temporal request: ' . json_encode($dataDte));
+
 		// crear DTE temporal
 		$emitir = $this->ConexionLibreDte->post('/dte/documentos/emitir', $dataDte);
+
+		CakeLog::write('debug', 'Dte temporal response: ' . json_encode($emitir));
 
 		if ($emitir['status']['code'] != 200) {
 
@@ -733,15 +738,14 @@ class LibreDteComponent extends Component
 		if ( isset($data['DteReferencia']) && !empty($data['DteReferencia']) ) {
 
 			$DteReferencia = array();
-			$count = 1;
+			$count = 0;
 			foreach ($data['DteReferencia'] as $i => $ref) {
 				
 				if (empty($ref['folio'])) {
 					continue;
 				}
 
-				$DteReferencia[$i] = array(
-					'NroLinRef' => $count,
+				$DteReferencia[$count] = array(
 					'TpoDocRef' => $ref['tipo_documento'],
 					'FolioRef' => $ref['folio'],
 					'FchRef' => $ref['fecha'],
@@ -750,11 +754,11 @@ class LibreDteComponent extends Component
 				);
 
 				if (empty($ref['codigo_referencia'])) {
-					unset($DteReferencia[$i]['CodRef']);
+					unset($DteReferencia[$count]['CodRef']);
 				}
 
 				if (empty($ref['razon'])) {
-					unset($DteReferencia[$i]['RazonRef']);
+					unset($DteReferencia[$count]['RazonRef']);
 				}
 
 				# Al ser nota de crédito invalida un documento de venta especifico...
