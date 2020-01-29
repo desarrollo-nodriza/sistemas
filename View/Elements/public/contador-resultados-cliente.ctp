@@ -1,0 +1,1 @@
+<?= $this->Paginator->counter('Página {:page} de {:pages}, mostrando {:current} resultados de {:count}.');?>

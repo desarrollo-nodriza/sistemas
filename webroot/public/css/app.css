@@ -1,0 +1,332 @@
+.wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+    height: 100vh;
+}
+
+
+#sidebar {
+    min-width: 220px;
+    max-width: 220px;
+    min-height: 100vh;
+    /*position: fixed;*/
+}
+
+#sidebar.active {
+    margin-left: -220px;
+}
+
+a[data-toggle="collapse"] {
+    position: relative;
+}
+
+.dropdown-toggle::after {
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+}
+
+
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: -220px;
+    }
+    #sidebar.active {
+        margin-left: 0;
+    }
+}
+
+body {
+    font-family: 'Lato', sans-serif;
+    background: #fafafa;
+}
+
+p {
+    font-family: 'Lato', sans-serif;
+}
+
+a, a:hover, a:focus {
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+#sidebar {
+    /* don't forget to add all the previously mentioned styles here too */
+    background: #3158A8;
+    color: #fff;
+    transition: all 0.3s;
+}
+
+#sidebar .sidebar-header {
+    padding: 10px;
+    background: #fff;
+    height: 72px;
+}
+
+#sidebar .sidebar-header .logo-sidebar {
+    max-width: 100px;
+}
+
+#sidebar ul.components {
+    padding: 20px 0;
+    border-bottom: 1px solid #47748b;
+}
+
+#sidebar ul.components p {
+    color: #fff;
+    font-weight: 300;
+    font-size: 1.3rem;
+    padding: 10px;
+}
+#sidebar ul.components p > span {
+    font-size: 0.7rem;
+}
+
+#sidebar ul.components li a {
+    padding: 15px 10px;
+    font-size: 1em;
+    display: block;
+    font-weight: 300;
+}
+
+#sidebar ul.components li a .svg-inline--fa {
+    margin-right: 15px;
+}
+
+#sidebar ul.components li a:hover {
+    color: #3158A8;
+    background: #fff;
+}
+
+#sidebar ul.components li.active > a, a[aria-expanded="true"] {
+    color: #fff;
+    background: #294D99;
+}
+ul ul a {
+    font-size: 0.9em !important;
+    padding-left: 30px !important;
+    background: #3158A8;
+}
+
+#sidebar .sidebar-footer {
+
+}
+
+#sidebar .sidebar-footer .logout {
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+#sidebar .sidebar-footer {
+    
+}
+
+#content {
+    display: block;
+    width: 100%;
+    position: relative;
+}
+
+@media screen and (max-width: 768px)
+{
+    #content {
+        background-color: #fff;
+        width: 100%;
+        left: 0;
+    }
+}
+
+.navbar {
+    height: 72px;
+}
+
+.navbar-nav {
+    width: 100%;
+}
+
+.navbar .navbar-toggler {
+    font-size: 1.4rem;
+    border: none;
+}
+
+.navbar .logo-navbar {
+    max-width: 80px;
+}
+
+.navbar .logout {
+    font-size: 1.4rem;
+}
+
+#navbarNav {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    z-index: 100;
+    border-top: 1px solid #264A95;
+    background-color: #3158A8;
+}
+
+#navbarNav ul > li {
+    border-bottom: 1px solid #264A95;
+}
+
+#navbarNav ul > li.active {
+    background-color: #264A95;
+}
+
+@media screen and (min-width: 768px)
+{
+    .breadcrumb {
+        height: 72px;
+    }
+}
+
+.breadcrumb {
+    background-color: #fff;
+}
+
+.breadcrumb > li > a {
+    padding: 0 1.2rem 0 1rem;
+    font-size: 1.5rem;
+    font-weight: 300;
+}
+
+.breadcrumb > li:not(.first)::marker {
+    content: "/";
+    font-size: 1.5rem;
+    font-weight: 300;
+}
+
+.breadcrumb > li.last > a {
+    font-weight: 400;
+}
+
+#wrapper-content {
+    overflow: auto;
+    position: relative;
+}
+
+@media screen and (min-width: 768px) {
+    #wrapper-content {
+        height: 85vh;
+    }
+}
+
+.pagination .page-item a {
+    position: relative;
+    display: block;
+    padding: .5rem .75rem;
+    margin-left: -1px;
+    line-height: 1.25;
+    color: #007bff;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+
+.pagination .page-item.disabled a {
+    color: #6c757d;
+    pointer-events: none;
+    cursor: auto;
+    background-color:#fff;
+    border-color:#dee2e6;
+}
+
+.pagination .page-item.active a {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+.pagination .page-item:first-child a {
+    margin-left: 0;
+    border-top-left-radius: .25rem;
+    border-bottom-left-radius: .25rem;
+}
+
+.pagination .page-item:last-child a {
+    border-top-right-radius: .25rem;
+    border-bottom-right-radius: .25rem;
+}
+
+
+.btn-lila {
+    background-color: #6600CC;
+    color: #fff;
+}
+
+.btn-link {
+    background-color: #999999;
+    color: #fff;
+}
+
+.btn-verde {
+    background-color: #007226;
+    color: #fff;
+}
+
+.nav-tabs .nav-link {
+    border-radius: 0;
+    font-size: 1.3rem;
+}
+
+.nav-tabs .nav-link.active {
+    font-weight: 400 !important;
+}
+
+.producto-td-imagen {
+    width: 10%;
+}
+
+@media screen and (max-width: 768px)
+{
+    .producto-td-imagen {
+        max-width: 50%;
+    }
+}
+
+/**
+ * Dashboard
+ */
+
+@media screen and (min-width: 768px) {
+    #dashboard .metrica {
+        width: 30%;
+    }
+}
+
+#dashboard .metrica .metrica-icono {
+    font-size: 2.6rem;
+}
+
+
+/**
+ *  Venta
+ */
+.card-message {
+    width: 100%;
+}
+
+.card-message p {
+    font-size: 0.95rem;
+}
+
+@media screen and (min-width: 768px) {
+
+}
+
+.highlight {
+  animation: highlight 4000ms ease-out;
+}
+@keyframes highlight {
+  0% {
+    background-color: #B2E5FF;
+  }
+  100 {
+    background-color: transparent;
+  }
+}

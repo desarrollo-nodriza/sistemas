@@ -92,6 +92,95 @@ Router::connect(
     )
 );
 
+/**
+ * Clientes
+ */
+Router::connect('/cliente', array('controller' => 'ventaClientes', 'action' => 'dashboard', 'cliente' => true, 'prefix' => 'cliente'));
+Router::connect('/cliente/login', array('controller' => 'ventaClientes', 'action' => 'login', 'cliente' => true, 'prefix' => 'cliente'));
+Router::connect('/cliente/logout', array('controller' => 'ventaClientes', 'action' => 'logout', 'cliente' => true, 'prefix' => 'cliente'));
+
+
+Router::connect(
+    '/cliente/dashboard', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'ventaClientes', 
+        'action' => 'dashboard',
+        'cliente' => true,
+        'prefix' => 'cliente'
+    )
+);
+
+Router::connect(
+    '/cliente/sended', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'ventaClientes', 
+        'action' => 'sended',
+        'cliente' => true,
+        'prefix' => 'cliente'
+    )
+);
+
+Router::connect(
+    '/cliente/sendFailed', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'ventaClientes', 
+        'action' => 'sendFailed',
+        'cliente' => true,
+        'prefix' => 'cliente'
+    )
+);
+
+Router::connect(
+    '/cliente/authorization', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'ventaClientes', 
+        'action' => 'authorization',
+        'cliente' => true,
+        'prefix' => 'cliente'
+    )
+);
+
+Router::connect(
+    '/cliente/mis-compras', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'ventas', 
+        'action' => 'compras',
+        'cliente' => true,
+        'prefix' => 'cliente'
+    )
+);
+
+Router::connect(
+    '/cliente/mis-compras/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'ventas', 
+        'action'     => 'ver',
+        'cliente'    => true,
+        'prefix'     => 'cliente'
+    ),
+    array(
+        'pass' => array('id'),
+        'id'   => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/cliente/:controller/:action/', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'cliente' => true,
+        'prefix' => 'cliente'
+    )
+);
+
+Router::connect(
+    '/cliente/:controller/:action/*', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'cliente' => true,
+        'prefix' => 'cliente'
+    )
+);
+
+
 
 /**
 * MELI

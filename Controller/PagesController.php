@@ -175,7 +175,7 @@ class PagesController extends AppController
 		# Obtenemos los marketplaces
 		$marketplaces = Hash::extract(ClassRegistry::init('Marketplace')->find('all', array(
 			'conditions' => array(
-				'Marketplace.activo' => 1
+				//'Marketplace.activo' => 1
 			),
 			'fields' => array(
 				'Marketplace.nombre AS canal_nombre',

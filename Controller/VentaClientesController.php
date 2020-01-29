@@ -1,5 +1,6 @@
 <?php
 App::uses('AppController', 'Controller');
+App::uses('VentasController', 'Controller');
 class VentaClientesController extends AppController
 {
 	public function admin_index()
@@ -150,6 +151,70 @@ class VentaClientesController extends AppController
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}
 
+
+	public function admin_view($id)
+	{
+		if ( ! $this->VentaCliente->exists($id) )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$cliente = $this->VentaCliente->find('first', array(
+			'conditions' => array(
+				'VentaCliente.id' => $id
+			),
+			'contain' => array(
+				'Direccion' => array(
+					'Comuna'
+				),
+				'Prospecto' => array(
+					'fields' => array(
+						'Prospecto.id', 'Prospecto.estado_prospecto_id'
+					),
+					'Cotizacion' => array(
+						'fields' => array(
+							'Cotizacion.id', 'Cotizacion.nombre', 'Cotizacion.created', 'Cotizacion.total_bruto'
+						)
+					)
+				),
+				'Venta' => array(
+					'order' => array('Venta.fecha_venta' => 'DESC'),
+					'fields' => array(
+						'Venta.id', 'Venta.fecha_venta', 'Venta.total', 'Venta.venta_estado_id', 'Venta.picking_estado'
+					),
+					'VentaEstado' => array(
+						'fields' => array(
+							'VentaEstado.nombre', 'VentaEstado.venta_estado_categoria_id'
+						),
+						'VentaEstadoCategoria' => array(
+							'fields' => array(
+								'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.venta', 'VentaEstadoCategoria.final'
+							)
+						)
+					)
+				)
+			)
+		));
+
+		$cliente['Metricas'] = array(
+			'total_comprado' => 0,
+			'total_cotizado' => array_sum(Hash::extract($cliente['Prospecto'], '{n}[estado_prospecto_id=cotizacion].Cotizacion.{n}.total_bruto')),
+			'cantidad_prospectos' => count($cliente['Prospecto'])
+		);
+
+		# Total comprado
+		foreach ($cliente['Venta'] as $iv => $v) {
+			if ($v['VentaEstado']['VentaEstadoCategoria']['venta']) {
+				$cliente['Metricas']['total_comprado'] = $cliente['Metricas']['total_comprado'] + $v['total'];
+			}
+		}
+
+		BreadcrumbComponent::add('Clientes', '/ventaClientes');
+		BreadcrumbComponent::add('Ver cliente');
+
+		$this->set(compact('cliente'));
+	}
 
 
 
@@ -321,8 +386,10 @@ class VentaClientesController extends AppController
 			
     }
 
-
-
+    /**
+     * [api_add description]
+     * @return [type] [description]
+     */
     public function api_add() {
 
 		# Solo método POST
@@ -428,4 +495,359 @@ class VentaClientesController extends AppController
 			'_serialize' => array('response')
 	    ));
 	}
-}
+
+
+	/** 
+	 *
+	 *	PUBLIC
+	 * 
+	 */
+	public function notificar_link_acceso($cliente_id = null)
+	{
+		$cliente = ClassRegistry::init('VentaCliente')->find('first', array(
+			'conditions' => array(
+				'VentaCliente.id' => $cliente_id				
+			)
+		));
+
+		# Obtenemos token y lo validamos
+		$gettoken = ClassRegistry::init('Token')->find('first', array(
+			'conditions' => array(
+				'Token.venta_cliente_id' => $cliente_id
+			),
+			'order' => array('Token.created' => 'DESC')
+		));
+		
+		if (empty($gettoken)) {
+			# creamos un token de acceso vía email
+			$token = ClassRegistry::init('Token')->crear_token_cliente($cliente_id)['token'];
+
+		}else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])){
+			# creamos un token de acceso vía email
+			$token = ClassRegistry::init('Token')->crear_token_cliente($cliente_id)['token'];
+
+		}else{
+			$token = $gettoken['Token']['token'];
+		}
+
+		if (empty($token)) {
+			return false;
+		}
+
+		$this->View					= new View();
+		$this->View->viewPath		= 'VentaClientes' . DS . 'emails';
+		$this->View->layoutPath		= 'Correos' . DS . 'html';
+		
+		$url = obtener_url_base();
+
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+	    	'Tienda.id', 'Tienda.nombre', 'Tienda.mandrill_apikey', 'Tienda.logo', 'Tienda.direccion'
+	    ));
+		
+		$this->View->set(compact('cliente', 'url', 'token', 'tienda'));
+		$html						= $this->View->render('cliente_link_acceso');
+		
+		$mandrill_apikey = $tienda['Tienda']['mandrill_apikey'];
+
+		if (empty($mandrill_apikey)) {
+			return false;
+		}
+
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = sprintf('[%s] Hemos enviado tu link mágico', rand(10, 1000));		
+		
+		if (Configure::read('debug') > 0) {
+			$asunto = sprintf('[DEV-%s] Hemos enviado tu link mágico', rand(10, 1000));
+		}
+		
+		$remitente = array(
+			'email' => 'clientes@nodriza.cl',
+			'nombre' => 'Sistema de clientes Nodriza Spa'
+		);
+
+		$destinatarios = array();
+
+		$destinatarios[] = array(
+			'email' => $cliente['VentaCliente']['email'],
+			'type' => 'to'
+		);
+		
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+	}
+
+
+	public function cliente_dashboard()
+	{
+		$PageTitle = 'Dashboard';
+
+		$cliente = $this->VentaCliente->find('first', array(
+			'conditions' => array(
+				'VentaCliente.id' => $this->Auth->user('id')
+			),
+			'contain' => array(
+				'Direccion' => array(
+					'Comuna'
+				),
+				'Prospecto' => array(
+					'fields' => array(
+						'Prospecto.id', 'Prospecto.estado_prospecto_id'
+					),
+					'Cotizacion' => array(
+						'fields' => array(
+							'Cotizacion.id', 'Cotizacion.nombre', 'Cotizacion.created', 'Cotizacion.total_bruto', 'Cotizacion.archivo'
+						)
+					)
+				),
+				'Venta' => array(
+					'order' => array('Venta.fecha_venta' => 'DESC'),
+					'fields' => array(
+						'Venta.id', 'Venta.fecha_venta', 'Venta.total', 'Venta.venta_estado_id', 'Venta.picking_estado', 'Venta.referencia'
+					),
+					'VentaDetalle' => array(
+						'fields' => array(
+							'VentaDetalle.cantidad', 'VentaDetalle.cantidad_anulada'
+						)
+					),
+					'VentaEstado' => array(
+						'fields' => array(
+							'VentaEstado.nombre', 'VentaEstado.venta_estado_categoria_id'
+						),
+						'VentaEstadoCategoria' => array(
+							'fields' => array(
+								'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.venta', 'VentaEstadoCategoria.final'
+							)
+						)
+					), 
+					'Dte' => array(
+						'fields' => array(
+							'Dte.id', 'Dte.tipo_documento', 'Dte.invalidado', 'Dte.estado', 'Dte.pdf'
+						)
+					)
+				)
+			)
+		));
+		
+		$cliente['Metricas'] = array(
+			'total_comprado' => 0,
+			'total_cotizado' => array_sum(Hash::extract($cliente['Prospecto'], '{n}[estado_prospecto_id=cotizacion].Cotizacion.{n}.total_bruto')),
+			'cantidad_prospectos' => count($cliente['Prospecto']),
+			'ultimas_ventas' => array()
+		);
+		
+		# Total comprado
+		foreach ($cliente['Venta'] as $iv => $v) {
+			if ($v['VentaEstado']['VentaEstadoCategoria']['venta']) {
+				$cliente['Metricas']['total_comprado'] = $cliente['Metricas']['total_comprado'] + $v['total'];
+			}
+
+			if ($iv < 5) {
+				$cliente['Metricas']['ultimas_ventas'][$iv] = $v;
+				
+				if (!empty($v['Dte'])) {
+					$cliente['Metricas']['ultimas_ventas'][$iv]['Dte'] = VentasController::obtener_dtes_pdf_venta($v['Dte']);
+				}
+			}
+		}
+
+		$cotizaciones = Hash::extract($cliente['Prospecto'], '{n}.Cotizacion.{n}');
+		arsort($cotizaciones);
+		$cotizaciones = array_slice($cotizaciones, 0, 5);
+
+		$this->layout = 'private';
+
+		BreadcrumbComponent::add('Dashboard', '/cliente');
+
+		$this->set(compact('PageTitle', 'cliente', 'cotizaciones'));
+	}
+
+	public function cliente_login()
+	{	
+		if ($this->Cookie->check('Cliente.mantener_sesion')) {
+
+			# Obtenemos al cliente
+			$cliente = ClassRegistry::init('VentaCliente')->find('first', array(
+				'conditions' => array(
+					'VentaCliente.email' => trim($this->Cookie->read('Cliente.email')),
+					'VentaCliente.activo' => 1
+				)
+			));
+
+			# Obtenemos token y lo validamos
+			$gettoken = ClassRegistry::init('Token')->find('first', array(
+				'conditions' => array(
+					'Token.venta_cliente_id' => $cliente['VentaCliente']['id']
+				),
+				'order' => array('Token.created' => 'DESC')
+			));
+			
+			if (empty($gettoken)) {
+				# creamos un token de acceso vía email
+				$token = ClassRegistry::init('Token')->crear_token_cliente($cliente['VentaCliente']['id'])['token'];
+
+			}else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])){
+				# creamos un token de acceso vía email
+				$token = ClassRegistry::init('Token')->crear_token_cliente($cliente['VentaCliente']['id'])['token'];
+
+			}else{
+				$token = $gettoken['Token']['token'];
+			}
+
+			if($this->Auth->login($cliente['VentaCliente'])) {
+
+				$c = array(
+					'VentaCliente' => $cliente['VentaCliente']
+				);
+
+				$c['VentaCliente']['ultimo_acceso'] = date('Y-m-d H:i:s');
+
+				$this->Session->write('Auth.Cliente.token', $token);
+
+				$this->VentaCliente->save($c);
+
+				$this->Session->setFlash('Haz accedido correctamente al sistema.', null, array(), 'success');
+
+				# Creamos coookie para mantener la sesión iniciada con 1 años de duración
+				$this->Cookie->write('Cliente.mantener_sesion', 1, true, '1 year');
+				$this->Cookie->write('Cliente.email', $cliente['VentaCliente']['email'], true, '1 year');
+
+				$this->redirect($this->Auth->redirectUrl());
+
+			}else{
+				$this->Session->setFlash('No es posible ingresar al sistema. Recuerda que debes haber efectuado alguna compra en nuestra tienda para estar en los registros.', null, array(), 'warning');
+				$this->redirect($this->Auth->logout());
+			}
+
+		}
+
+
+		if ( $this->request->is('post') )
+		{	
+
+			$cliente = ClassRegistry::init('VentaCliente')->find('first', array(
+				'conditions' => array(
+					'VentaCliente.email' => trim($this->request->data['email']),
+					'VentaCliente.activo' => 1
+				)
+			));
+
+			if (!empty($cliente)) {
+				
+				if ($this->notificar_link_acceso($cliente['VentaCliente']['id'])) {
+					$this->Session->setFlash('Notificación enviada con éxito.', null, array(), 'success');
+					$this->redirect(array('action' => 'sended'));
+				}else{
+					$this->Session->setFlash('Ocurrió un error al enviar la notificación.', null, array(), 'warning');
+					$this->redirect(array('action' => 'sendFailed'));
+				}
+
+				/*if ($this->Auth->login()) {
+		            return $this->redirect($this->Auth->redirect());
+		        } else {
+		        	$this->Session->setFlash('Nombre de usuario y/o clave incorrectos.', null, array(), 'danger');
+		        }*/
+			}else{
+
+				$causas = array(
+					'Email erroneo',
+					'Cuenta desactivada',
+					'No tiene compras registradas'
+				);
+
+				$this->Session->setFlash('No es posible continuar.' . $this->crearAlertaUl($causas, 'Posibles errores'), null, array(), 'danger');
+				$this->redirect(array('action' => 'login'));
+			}
+			
+	    }
+
+	    $PageTitle = 'Login';
+	    $tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+	    	'Tienda.id', 'Tienda.nombre', 'Tienda.logo', 'Tienda.url'
+	    ));
+
+	    $this->set(compact('PageTitle', 'tienda'));
+	}
+
+
+	public function cliente_logout()
+	{	
+		$this->Cookie->delete('Cliente.mantener_sesion');
+		$this->redirect($this->Auth->logout());
+	}
+
+
+	/**
+	 * Autoriza y logea a un cliente dado su token de acceso válido
+	 */
+	public function cliente_authorization()
+	{	
+		if (!isset($this->request->query['access_token'])) {
+			$this->Session->setFlash('El link de acceso no es válido o ya caducó. Intenta solicitando un link nuevo.', null, array(), 'danger');
+			$this->redirect(array('action' => 'login'));
+		}
+
+		$token = $this->request->query['access_token'];
+
+		# Validamos el token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$this->Session->setFlash('El link de acceso no es válido o ya caducó. Intenta solicitando un link nuevo.', null, array(), 'danger');
+			$this->redirect(array('action' => 'login'));
+		}
+
+		# El token es válido, obtenemos al cliente por su token y lo logeamos.
+		$cliente = ClassRegistry::init('Token')->find('first', array(
+			'conditions' => array(
+				'Token.token' => $token
+			),
+			'contain' => array(
+				'VentaCliente'
+			)
+		));
+
+		if($this->Auth->login($cliente['VentaCliente'])) {
+
+			$c = array(
+				'VentaCliente' => $cliente['VentaCliente']
+			);
+
+			$c['VentaCliente']['ultimo_acceso'] = date('Y-m-d H:i:s');
+
+			$this->Session->write('Auth.Cliente.token', $token);
+
+			$this->VentaCliente->save($c);
+
+			$this->Session->setFlash('Haz accedido correctamente al sistema.', null, array(), 'success');
+
+			# Creamos coookie para mantener la sesión iniciada con 1 años de duración
+			$this->Cookie->write('Cliente.mantener_sesion', 1, true, '1 year');
+			$this->Cookie->write('Cliente.email', $cliente['VentaCliente']['email'], true, '1 year');
+
+			$this->redirect($this->Auth->redirectUrl());
+		}else{
+			$this->Session->setFlash('No es posible ingresar al sistema. Recuerda que debes haber efectuado alguna compra en nuestra tienda para estar en los registros.', null, array(), 'warning');
+			$this->redirect($this->Auth->logout());
+		}
+
+
+		
+	}
+
+	public function cliente_sended()
+	{
+		$PageTitle = 'Notificación enviada';
+
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+	    	'Tienda.id', 'Tienda.nombre', 'Tienda.logo', 'Tienda.url'
+	    ));
+
+		$this->set(compact('PageTitle', 'tienda'));
+	}
+
+	public function cliente_sendFailed()
+	{
+		
+	}
+
+}	
