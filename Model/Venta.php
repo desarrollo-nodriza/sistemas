@@ -14,7 +14,7 @@ class Venta extends AppModel
 		),
 		'empaquetar' => array(
 			'label' => 'Listo para embalar',
-			'leyenda' => 'Tu pedido pronto será empaquetado por nuestra bodega',
+			'leyenda' => 'Tus productos ya se encuentran en nuestra bodega para ser preparados',
 			'color' => '#3FBAE4'
 		),
 		'empaquetando' => array(
@@ -277,6 +277,10 @@ class Venta extends AppModel
 		if (isset($this->data['VentaDetalle'])) {
 
 			foreach ($this->data['VentaDetalle'] as $i => $d) {
+
+				if (!isset($d['VentaDetalle']['venta_detalle_producto_id']))
+					continue;
+
 				# Obtenemos el peso del producto
 				$peso_producto = (float) ClassRegistry::init('VentaDetalleProducto')->field('peso', array('id' => $d['VentaDetalle']['venta_detalle_producto_id']));
 
@@ -286,6 +290,7 @@ class Venta extends AppModel
 				}else{
 					$peso_total    = $peso_total + round($peso_producto * $d['VentaDetalle']['cantidad'], 2);
 				}
+
 				# Sumatoria del total de la venta
 				$total_venta   = $total_venta + round($d['VentaDetalle']['total_bruto']);
 			}
@@ -335,7 +340,7 @@ class Venta extends AppModel
 							'VentaDetalle.activo' => 1
 						),
 						'fields' => array(
-							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.precio_bruto', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app', 'VentaDetalle.reservado_virtual', 'VentaDetalle.cantidad_anulada', 'VentaDetalle.monto_anulado', 'VentaDetalle.dte', 'VentaDetalle.total_neto', 'VentaDetalle.total_bruto'
+							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.precio_bruto', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.completo', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app', 'VentaDetalle.reservado_virtual', 'VentaDetalle.cantidad_anulada', 'VentaDetalle.monto_anulado', 'VentaDetalle.dte', 'VentaDetalle.total_neto', 'VentaDetalle.total_bruto', 'VentaDetalle.cantidad_en_espera', 'VentaDetalle.fecha_llegada_en_espera'
 						)
 					),
 					'VentaEstado' => array(
@@ -375,6 +380,33 @@ class Venta extends AppModel
 						'fields' => array(
 							'MetodoEnvio.id', 'MetodoEnvio.nombre', 'MetodoEnvio.retiro_local'
 						)
+					),
+					'Mensaje' => array(
+						'conditions' => array(
+							'Mensaje.parent_id' => null,
+						),
+						'RespuestaMensaje' => array(
+							'fields' => array(
+								'RespuestaMensaje.id', 'RespuestaMensaje.parent_id', 'RespuestaMensaje.venta_cliente_id', 'RespuestaMensaje.administrador_id', 'RespuestaMensaje.venta_id', 'RespuestaMensaje.venta_detalle_producto_id', 'RespuestaMensaje.mensaje', 'RespuestaMensaje.adjunto', 'RespuestaMensaje.created', 'RespuestaMensaje.autor', 'RespuestaMensaje.origen'
+							)
+						),
+						'Administrador' => array(
+							'fields' => array(
+								'Administrador.nombre',
+								'Administrador.email'
+							)
+						),
+						'VentaCliente' => array(
+							'fields' => array(
+								'VentaCliente.nombre',
+								'VentaCliente.apellido',
+								'VentaCliente.email'
+							)
+						),
+						'fields' => array(
+							'Mensaje.id', 'Mensaje.parent_id', 'Mensaje.venta_cliente_id', 'Mensaje.administrador_id', 'Mensaje.venta_id', 'Mensaje.venta_detalle_producto_id', 'Mensaje.mensaje', 'Mensaje.adjunto', 'Mensaje.created', 'Mensaje.autor', 'Mensaje.origen'
+						),
+						'order' => array('Mensaje.created' => 'DESC')
 					),
 					'VentaCliente' => array(
 						'fields' => array(
@@ -498,7 +530,7 @@ class Venta extends AppModel
 							)
 						),
 						'fields' => array(
-							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_anulada', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app'
+							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_anulada', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app', 'VentaDetalle.cantidad_en_espera'
 						)
 					),
 					'Marketplace' => array(
@@ -543,8 +575,7 @@ class Venta extends AppModel
 			'alias' => 'venta_detalles',
 			'type' => 'INNER',
 			'conditions' => array(
-				'venta_detalles.venta_id = Venta.id',
-				'venta_detalles.cantidad_reservada = (venta_detalles.cantidad - venta_detalles.cantidad_anulada)',
+				'venta_detalles.venta_id = Venta.id'
 			)
 		);
 
@@ -590,6 +621,17 @@ class Venta extends AppModel
 		$ventas =  $this->find('all', array(
 			'conditions' => $conditions,
 			'joins'  => $joins,
+			'contain' => array(
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.cantidad',
+						'VentaDetalle.cantidad_reservada',
+						'VentaDetalle.cantidad_anulada',
+						'VentaDetalle.cantidad_en_espera',
+						'VentaDetalle.cantidad_entregada'
+					)
+				)
+			),
 			'limit'  => $limit,
 			'offset' => $offset,
 			'order'  => array('Venta.prioritario' => 'desc', 'Venta.fecha_venta' => 'asc', 'Venta.modified' => 'desc'),
@@ -598,7 +640,19 @@ class Venta extends AppModel
 				'Venta.id'
 			),
 		));
-		
+
+		# Quitamos las ventas que no tengan sus itemes correcto
+		foreach ($ventas as $iv => $v) {
+			
+			$cant_reservada = array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_reservada'));
+			$cant_cant = array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_en_espera')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_entregada'));
+
+			if ($cant_reservada != $cant_cant || $cant_reservada == 0) {
+				unset($ventas[$iv]);
+			}
+
+		}
+
 		return $ventas;
 	}
 
@@ -721,8 +775,8 @@ class Venta extends AppModel
 			foreach ($venta['VentaDetalle'] as $ip => $producto) {
 				
 				ClassRegistry::init('VentaDetalle')->id = $producto['id'];
-				if ($producto['cantidad_reservada'] == 0) {
-					$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], ($producto['cantidad'] - $producto['cantidad_anulada']) );
+				if ($producto['cantidad_reservada'] == 0 && $producto['cantidad_entregada'] < $producto['cantidad'] ) {
+					$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], ($producto['cantidad'] - $producto['cantidad_anulada'] - $producto['cantidad_en_espera'] - $producto['cantidad_entregada']) );
 					ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $reservado);
 					ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $producto['cantidad']);
 
@@ -740,7 +794,7 @@ class Venta extends AppModel
 		#}
 		
 		$cant_reservada_sum = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
-		$cant_vendida_sum   = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada'));
+		$cant_vendida_sum   = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));
 
 		if ( $cant_reservada_sum == $cant_vendida_sum ) {
 
@@ -880,33 +934,52 @@ class Venta extends AppModel
 			return 0;
 		}
 
-		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente
-		if (ClassRegistry::init('VentaDetalle')->field('cantidad_reservada') == (ClassRegistry::init('VentaDetalle')->field('cantidad') - ClassRegistry::init('VentaDetalle')->field('cantidad_anulada')) ) {
+		$cant_reservada = ClassRegistry::init('VentaDetalle')->field('cantidad_reservada');
+		$cant_cant      = ClassRegistry::init('VentaDetalle')->field('cantidad') - ClassRegistry::init('VentaDetalle')->field('cantidad_anulada');
+		$cant_entregada = ClassRegistry::init('VentaDetalle')->field('cantidad_entregada');
+		$cant_en_espera = ClassRegistry::init('VentaDetalle')->field('cantidad_en_espera');
+
+		if ($cant_cant == $cant_entregada) {
 			return 0;
 		}
 
-		$reservar = (ClassRegistry::init('VentaDetalle')->field('cantidad') - ClassRegistry::init('VentaDetalle')->field('cantidad_anulada')) - ClassRegistry::init('VentaDetalle')->field('cantidad_reservada');
-
-		$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock(ClassRegistry::init('VentaDetalle')->field('venta_detalle_producto_id'), $reservar);
+		$reservar = $cant_cant - $cant_reservada - $cant_entregada;
 		
-		$save = array(
-			'VentaDetalle' => array(
-				'id' => $id,
-				'cantidad_reservada' => $reservado
-			)
-		);
+		$reservado = $cant_reservada + ClassRegistry::init('Bodega')->calcular_reserva_stock(ClassRegistry::init('VentaDetalle')->field('venta_detalle_producto_id'), $reservar);
 
-		if(!ClassRegistry::init('VentaDetalle')->save($save))
-			return 0;
+		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente
+		if ($cant_reservada != $cant_cant ) {
+			
+			$save = array(
+				'VentaDetalle' => array(
+					'id' => $id,
+					'cantidad_reservada' => $reservado
+				)
+			);
+
+			if ($cant_en_espera > $reservado) {
+				$save['VentaDetalle']['cantidad_en_espera'] = $cant_en_espera - $reservado;
+			}
+
+			if ($cant_en_espera <= $reservado && $cant_cant == ($reservado + $cant_entregada) ) {
+				$save['VentaDetalle']['cantidad_en_espera'] = 0;
+			}
+			
+			if(!ClassRegistry::init('VentaDetalle')->save($save))
+				return 0;
+		}
 
 		$venta = $this->obtener_venta_por_id(ClassRegistry::init('VentaDetalle')->field('venta_id'));
+		
+		$total_cantidad = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));
+		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 
-		if (array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada')) == (array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) ) ) {
+		if ( $total_reservado == $total_cantidad ) {
 			$this->id = $venta['Venta']['id'];
 
 			$picking_estado = $this->field('picking_estado');
 
-			if (empty($picking_estado) || $picking_estado == 'no_definido' ) {
+			if (empty($picking_estado) || $picking_estado == 'no_definido' || $picking_estado == 'empaquetado' ) {
 				$this->saveField('picking_estado', 'empaquetar');
 			}
 			$this->saveField('subestado_oc', 'no_entregado');
@@ -1055,4 +1128,109 @@ class Venta extends AppModel
 		return true;
 	}
 
+
+	public function obtener_ventas_productos_retraso_ids()
+	{	
+
+		$ventasRestrasos =  ClassRegistry::init('VentaDetalle')->find('all', array(
+			'conditions' => array(
+				'VentaDetalle.cantidad_en_espera >' => 0
+			),
+			'fields' => array(
+				'VentaDetalle.venta_id'
+			)
+		));
+
+		$ventasStockout = ClassRegistry::init('OrdenComprasVenta')->find('all', array(
+			'joins' => array(
+				array(
+					'table' => 'rp_orden_compras',
+					'alias' => 'oc',
+					'type' => 'INNER',
+					'conditions' => array(
+						'oc.id = OrdenComprasVenta.orden_compra_id'
+					)
+				),
+				array(
+					'table' => 'rp_orden_compras',
+					'alias' => 'oc_2',
+					'type' => 'INNER',
+					'conditions' => array(
+						'oc_2.parent_id = oc.id'
+					)
+				),
+				array(
+					'table' => 'rp_orden_compras_venta_detalle_productos',
+					'alias' => 'oc_productos',
+					'type' => 'INNER',
+					'conditions' => array(
+						'oc_productos.orden_compra_id = oc_2.id',
+						'oc_productos.estado_proveedor != "accept"'
+					)
+				),
+				array(
+					'table' => 'rp_venta_detalles',
+					'alias' => 'vd',
+					'type' => 'INNER',
+					'conditions' => array(
+						'vd.venta_id = OrdenComprasVenta.venta_id',
+						'vd.cantidad_anulada < vd.cantidad'
+					)
+				)
+			),
+			'fields' => array('OrdenComprasVenta.venta_id')
+		));
+
+		$ids_1 = Hash::extract($ventasRestrasos, '{n}.VentaDetalle.venta_id');
+		$ids_2 = Hash::extract($ventasStockout, '{n}.OrdenComprasVenta.venta_id');
+		$ids   = array_unique(array_merge($ids_1, $ids_2));
+
+
+		return $ids;
+	}
+
+
+
+	public function obtener_ventas_sin_reserva()
+	{
+		$filter = array(
+			'joins' => array(
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'estado',
+					'type' => 'INNER',
+					'conditions' => array(
+						'estado.id = Venta.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'estado_categoria',
+					'type' => 'INNER',
+					'conditions' => array(
+						'estado_categoria.id = estado.venta_estado_categoria_id',
+						'estado_categoria.venta = 1',
+						'estado_categoria.final = 0'
+					)
+				)
+			),
+			'contain' => array(
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.id'
+					)
+				)
+			),
+			'conditions' => array(
+				'Venta.fecha_venta >=' => date("Y-m-d H:i:s",strtotime(date('Y-m-d')."-1 month"))
+			),
+			'order' => array('Venta.fecha_venta' => 'ASC'),
+			'fields' => array(
+				'Venta.id'
+			)
+		);
+
+		return $this->find('all', $filter);
+
+	}
 }

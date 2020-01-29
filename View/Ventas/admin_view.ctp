@@ -195,7 +195,7 @@
 								<?= $this->Form->end(); ?>
 								</div>
 								
-								<? if ($venta['Venta']['picking_estado'] != 'empaquetado' && $permisos['storage']) : ?>
+								<? if ( ($venta['Venta']['picking_estado'] != 'empaquetado' || array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_en_espera')) > 0)  && $permisos['storage']) : ?>
 								<div class="panel-body">
 									<?=$this->Html->link('<i class="fa fa-hand-paper-o"></i> Reservar stock manualmente', array('action' => 'reservar_stock_venta', $venta['Venta']['id']), array('class' => 'btn btn-primary pull-right', 'escape' => false))?>
 								</div>
@@ -218,7 +218,7 @@
 											</thead>
 											<tbody>
 												<?php $TotalProductos = 0; foreach ($venta['VentaDetalle'] as $indice => $detalle) : $TotalProductos = $TotalProductos + ($detalle['precio']* $detalle['cantidad'] - $detalle['monto_anulado']); ?>
-													<tr class="<?= ($detalle['cantidad'] == $detalle['cantidad_anulada']) ? 'danger' : '' ; ?>" >
+													<tr class="<?= ($detalle['cantidad'] == $detalle['cantidad_anulada']) ? 'danger' : '' ; ?>  <?= ($detalle['cantidad'] == $detalle['cantidad_entregada']) ? 'success' : '' ; ?>" >
 														<td>
 															<?=($detalle['confirmado_app']) ? '<i class="fa fa-mobile text-success" data-toggle="tooltip" title="Confirmado vía app"></i>' : '' ; ?> 
 															<? if ($permisos['edit']) : ?>
@@ -226,6 +226,10 @@
 															<? else : ?>
 																<?= $detalle['VentaDetalleProducto']['id'];?>
 															<? endif; ?>
+
+															<? if ($detalle['cantidad_en_espera'] > 0) : ?>
+																<?=$this->Html->calcular_llegada($detalle['fecha_llegada_en_espera']); ?>
+															<? endif;?>
 														</td>
 														<td data-toggle="tooltip" title="<?=$detalle['VentaDetalleProducto']['nombre'];?>" class="td-producto">
 															<? if (!empty($detalle['VentaDetalleProducto']['imagenes'])) : ?>
@@ -253,12 +257,51 @@
 														</td>
 														<td>
 														<? if ($detalle['cantidad_anulada'] > 0 && !empty($detalle['dte'])) : ?>
-															<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Ver NTC', array('controller' => 'ordenes', 'action' => 'editar', $detalle['dte'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-xs', 'data-toggle' => 'tooltip', 'title' => 'Ver nota de crédito', 'escape' => false, 'target' => '_blank')); ?>
+															<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Ver NTC', array('controller' => 'ordenes', 'action' => 'editar', $detalle['dte'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-block btn-xs', 'data-toggle' => 'tooltip', 'title' => 'Ver nota de crédito', 'escape' => false, 'target' => '_blank')); ?>
 														<? endif; ?>
 
-														<? if ($venta['Venta']['picking_estado'] != 'empaquetado' && $permisos['storage']  && $detalle['cantidad'] != $detalle['cantidad_anulada'] ) : ?>
-															<?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('action' => 'liberar_stock_reservado', $venta['Venta']['id'], $detalle['id'], $detalle['cantidad_reservada']), array('class' => 'btn btn-warning btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?>
+														<? if ($permisos['storage'] && $detalle['cantidad_reservada'] > 0 ) : ?>
+															<?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('action' => 'liberar_stock_reservado', $venta['Venta']['id'], $detalle['id'], $detalle['cantidad_reservada']), array('class' => 'btn btn-warning btn-block btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?>
 														<? endif; ?>
+
+														<? if ($permisos['storage'] && ($detalle['cantidad_reservada'] + $detalle['cantidad_entregada']) < ($detalle['cantidad'] - $detalle['cantidad_anulada'])) : ?>
+															<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-en-espera-producto-<?=$detalle['id'];?>"><i class="fa fa-clock-o"></i> <?= ($detalle['cantidad_en_espera'] == 0) ? 'Agendar' : 'Re-agendar'; ?></button>
+
+															<!-- Modal -->
+															<div class="modal fade" id="modal-en-espera-producto-<?=$detalle['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-en-espera-producto-<?=$detalle['id'];?>-label">
+																<div class="modal-dialog" role="document">
+																	<div class="modal-content">
+																		<?= $this->Form->create('Venta', array('url' => array('action' => 'en_espera', $venta['Venta']['id']), 'class' => 'form-horizontal js-formulario', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+																		<div class="modal-header">
+																			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+																			<h4 class="modal-title" id="modal-en-espera-producto-<?=$detalle['id'];?>-label"><i class="fa fa-clock-o"></i> <?= ($detalle['cantidad_en_espera'] == 0) ? 'Agendar' : 'Re-agendar'; ?> llegada <?= $this->Text->truncate($detalle['VentaDetalleProducto']['nombre'], 40); ?></h4>
+																		</div>
+																		<div class="modal-body">
+																			<? if ($detalle['cantidad_en_espera'] > 0) : ?>
+																			<label class="label label-info label-form">Ya se ha agendado una fecha de llegada del/los productos.</label>
+																			<? endif; ?>
+																		</div>
+																		<div class="modal-body">
+																			<?=$this->Form->hidden(sprintf('%d.VentaDetalle.id', $detalle['id']), array('value' => $detalle['id'])); ?>
+																			<div class="form-group">
+																				<?=$this->Form->label(sprintf('%d.VentaDetalle.cantidad_en_espera', $detalle['id']), 'Cantidad a esperar'); ?>
+																				<?=$this->Form->input(sprintf('%d.VentaDetalle.cantidad_en_espera', $detalle['id']), array('type' => 'text', 'class' => 'form-control not-blank is-number', 'min' => 0, 'max' => ($detalle['cantidad'] - $detalle['cantidad_anulada'] - $detalle['cantidad_reservada']), 'placeholder' => 'Ingrese la cantidad a la espera', 'value' => $detalle['cantidad_en_espera'])); ?>
+																			</div>
+																			<div class="form-group">
+																				<?=$this->Form->label(sprintf('%d.VentaDetalle.fecha_llegada_en_espera', $detalle['id']), 'Ingrese una fecha de llegada'); ?>
+																				<?=$this->Form->input(sprintf('%d.VentaDetalle.fecha_llegada_en_espera', $detalle['id']), array('type' => 'text', 'class' => 'form-control not-blank datepicker', 'placeholder' => date('Y-m-d'), 'value' => $detalle['fecha_llegada_en_espera'])); ?>
+																			</div>
+																		</div>
+																		<div class="modal-footer">
+																			<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+																			<button type="submit" class="btn btn-primary">Agendar llegada</button>
+																		</div>
+																		<?= $this->Form->end(); ?>
+																	</div>
+																</div>
+															</div>
+
+														<? endif ?>
 														</td>
 													</tr>
 												<? endforeach; ?>

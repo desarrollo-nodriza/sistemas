@@ -1391,7 +1391,10 @@ $(function() {
 
 				pasos_compra();
 
-
+				$('.btn-expandir-venta').on('click', function(){
+					$(this).parents('tr').eq(0).toggleClass('expanded');
+					$(this).parents('tr').eq(0).next().toggleClass('expanded-div');
+				});
 
 
 			}

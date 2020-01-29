@@ -1,5 +1,6 @@
 <?php
 App::uses('AppModel', 'Model');
+
 class OrdenCompra extends AppModel
 {
 	/**
@@ -20,6 +21,21 @@ class OrdenCompra extends AppModel
 		'pendiente_factura' => 'Factura pendiente',
 		'recibido'          => 'Finalizado',
 		'cancelada'          => 'Cancelada'
+	);
+
+
+	public $estadosColor = array(
+		''                  => 'danger',
+		'iniciado'          => 'warning',
+		'validado'          => 'primary',
+		'asignacion_moneda' => 'info',
+		'validado_proveedor'=> 'primary',
+		'pagado'            => 'success',
+		'enviado'           => 'primary',
+		'incompleto'        => 'warning',
+		'pendiente_factura' => 'warning',
+		'recibido'          => 'success',
+		'cancelada'         => 'danger'
 	);
 
 
@@ -45,6 +61,55 @@ class OrdenCompra extends AppModel
 			)
 		)
 	);
+
+	public $belongsTo = array(
+		'ParentOrdenCompra' => array(
+			'className'				=> 'OrdenCompra',
+			'foreignKey'			=> 'parent_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Comentario')
+		),
+		'Administrador' => array(
+			'className'				=> 'Administrador',
+			'foreignKey'			=> 'administrador_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
+		),
+		'Tienda' => array(
+			'className'				=> 'Tienda',
+			'foreignKey'			=> 'tienda_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
+		),
+		'Moneda' => array(
+			'className'				=> 'Moneda',
+			'foreignKey'			=> 'moneda_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
+		),
+		'Proveedor' => array(
+			'className'				=> 'Proveedor',
+			'foreignKey'			=> 'proveedor_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
+		)
+	);
+
 
 	public $hasMany = array(
 		'ChildOrdenCompra' => array(
@@ -127,46 +192,6 @@ class OrdenCompra extends AppModel
 		)
 	);
 
-
-	public $belongsTo = array(
-		'Administrador' => array(
-			'className'				=> 'Administrador',
-			'foreignKey'			=> 'administrador_id',
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
-		),
-		'Tienda' => array(
-			'className'				=> 'Tienda',
-			'foreignKey'			=> 'tienda_id',
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
-		),
-		'Moneda' => array(
-			'className'				=> 'Moneda',
-			'foreignKey'			=> 'moneda_id',
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
-		),
-		'Proveedor' => array(
-			'className'				=> 'Proveedor',
-			'foreignKey'			=> 'proveedor_id',
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
-		)
-	);
-
 	public $hasAndBelongsToMany = array(
 		'Venta' => array(
 			'className'				=> 'Venta',
@@ -228,6 +253,13 @@ class OrdenCompra extends AppModel
 	        }
 	    }
 	    return $results;
+	}
+
+
+	public function beforeSave($options = array()) {
+		parent::beforeSave($options);
+
+		return true;
 	}
 
 

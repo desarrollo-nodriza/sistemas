@@ -28,7 +28,7 @@
 				</div>
 
 				<hr>
-				<h4>><i class="fa fa-bell"></i> Nota interna</h4>
+				<h4><i class="fa fa-bell"></i> Nota interna</h4>
 				<div class="table-responsive">
 					<table class="table table-bordered">
 						<tr class="<?= (!empty($venta['Venta']['nota_interna'])) ? 'success' : '' ; ?>">
@@ -139,7 +139,6 @@
 		      		<thead>
 		      			<th>Id</th>
 		      			<th>Nombre</th>
-		      			<th>Cantidad</th>
 		      			<th>Pendiente <br> preparación</th>
 		      			<th>Stock <br> reservado</th>
 		      			<th></th>

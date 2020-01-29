@@ -89,7 +89,6 @@
 	      		<thead>
 	      			<th>Id</th>
 	      			<th>Nombre</th>
-	      			<th>Cantidad</th>
 	      			<th>Pendiente preparación</th>
 	      			<th>Stock reservado</th>
 	      		</thead>
@@ -213,7 +212,7 @@
 						<tr>
 							<td>Método envio seleccionado</td>
 							<td><?=$venta['MetodoEnvio']['nombre'];?></td>
-							<td>¿Usar Envíame? <?=$this->Form->input('envio_externo', array('class' => 'icheckbox', 'type' => 'checkbox', 'checked' => true)); ?></td>
+							<td>¿Usar Envíame? <?=$this->Form->input('envio_externo', array('class' => 'icheckbox', 'type' => 'checkbox', 'checked' => false)); ?></td>
 						</tr>
 					</table>
 				</div>
@@ -398,7 +397,6 @@
 			      		<thead>
 			      			<th>Id</th>
 			      			<th>Nombre</th>
-			      			<th>Cantidad</th>
 			      			<th>Pendiente preparación</th>
 			      			<th>Stock reservado</th>
 			      		</thead>

@@ -213,9 +213,10 @@ class Administrador extends AppModel
 	 * bodegas: Notifica segun la fecha de llegada de un producto de bodega.
 	 * 
 	 * @param  	string $tipo (pagar_oc, revision_oc, ventas, bodegas)
+	 * @param   bool   $incluir_nombre
 	 * @return 	array    Lista de emails
 	 */
-	public function obtener_email_por_tipo_notificacion($tipo = '')
+	public function obtener_email_por_tipo_notificacion($tipo = '', $incluir_nombre = false)
 	{
 
 		if (empty($tipo))
@@ -227,7 +228,8 @@ class Administrador extends AppModel
 			),
 			'fields' => array(
 				'Administrador.email',
-				'Administrador.notificaciones'
+				'Administrador.notificaciones',
+				'Administrador.nombre'
 			)
 		));
 
@@ -240,7 +242,12 @@ class Administrador extends AppModel
 				$confNotificacion = json_decode($admin['Administrador']['notificaciones'], true);
 				
 				if ( array_key_exists($tipo, $confNotificacion) && $confNotificacion[$tipo] ) {
-					$emailsNotificar[] = $admin['Administrador']['email'];
+					if ($incluir_nombre) {
+						$emailsNotificar[$ia]['email'] = $admin['Administrador']['email'];
+						$emailsNotificar[$ia]['name'] = $admin['Administrador']['nombre'];
+					}else{
+						$emailsNotificar[] = $admin['Administrador']['email'];
+					}
 				}
 			}
 		}

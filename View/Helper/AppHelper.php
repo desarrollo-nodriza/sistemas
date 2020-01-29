@@ -176,6 +176,26 @@ class AppHelper extends Helper
     }
 
 
+    public function calcular_llegada($fecha = '')
+    {
+    	if (!empty($fecha)) {
+    		
+			$fechaLlegada = new DateTime($fecha . ' 23:59:59');
+			$hoy          = new DateTime(date('Y-m-d H:i:s'));
+
+			$llegada      = $fechaLlegada->diff($hoy);
+			
+			if ($llegada->days > 0) {
+				return ($llegada->days > 1) ? sprintf('<label class="label btn-block label-danger"><i class="fa fa-clock-o" aria-hidden="true"></i> Llega en %d días</label>', $llegada->days) : sprintf('<label class="label label-warning"><i class="fa fa-clock-o" aria-hidden="true"></i> Llega mañana</label>');
+			}else{
+				return '<label class="label label-success btn-block"><i class="fa fa-clock-o"></i> Llega hoy</span>';
+			}
+
+			return '';
+    	}
+    }
+
+
     /**
      * Retorna un rut formateado
      * @param  [type] $rut [description]
@@ -200,5 +220,11 @@ class AppHelper extends Helper
 		}
 
 		return $opciones;
+	}
+
+
+	public function colorOc($estado)
+	{
+		return ClassRegistry::init('OrdenCompra')->estadosColor[$estado];
 	}
 }

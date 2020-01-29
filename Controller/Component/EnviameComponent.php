@@ -188,6 +188,10 @@ class EnviameComponent extends Component
 		$bultos = array();
 
 		foreach ($venta['VentaDetalle'] as $ivd => $d) {
+
+			if ($d['cantidad_reservada'] == 0) {
+				continue;
+			}
 			
 			$alto  = $d['VentaDetalleProducto']['alto'];
 			$ancho = $d['VentaDetalleProducto']['ancho'];

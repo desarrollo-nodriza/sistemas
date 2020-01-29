@@ -750,11 +750,6 @@ class VentasController extends AppController {
 			
 			$venta  = $this->Venta->obtener_venta_por_id_tiny($ve['Venta']['id']);
 
-			# si la venta no tiene todos los productos se quita
-			if ( (array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad')) - array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_anulada')) ) != array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_reservada')))
-				continue;
-
-			
 			$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
 			$tamano = '500x500';
 			
@@ -1104,6 +1099,7 @@ class VentasController extends AppController {
 					$detalles[$idd]['VentaDetalle']['cantidad_reservada']         = 0;
 					$detalles[$idd]['VentaDetalle']['cantidad_entregada']         = $d['VentaDetalle']['cantidad_reservada'];
 					$detalles[$idd]['VentaDetalle']['cantidad_pendiente_entrega'] = $d['VentaDetalle']['cantidad'] - $d['VentaDetalle']['cantidad_reservada'];
+					$detalles[$idd]['VentaDetalle']['cantidad_en_espera'] 		  = $d['VentaDetalle']['cantidad_en_espera'] - $d['VentaDetalle']['cantidad_reservada'];
 
 					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], nul, 'VT', null, $id);
 						
@@ -3138,6 +3134,76 @@ class VentasController extends AppController {
 	}
 
 
+	public function admin_specials()
+	{	
+		$ids = $this->Venta->obtener_ventas_productos_retraso_ids();
+
+		$qry = array(
+			'recursive' => -1,
+			'order' => array('Venta.fecha_venta' => 'DESC'),
+			'contain' => array(
+				'VentaDetalle' => array(
+					'VentaDetalleProducto'
+				),
+				'OrdenCompra' => array(
+					'ChildOrdenCompra' => array(
+						'VentaDetalleProducto'
+					)
+				),
+				'VentaEstado' => array(
+					'VentaEstadoCategoria'
+				),
+				'Dte',
+				'MedioPago',
+				'Tienda',
+				'Marketplace',
+				'VentaCliente'
+			),
+			'conditions' => array(
+				'Venta.id' => $ids
+			),
+			'limit' => 10
+		);
+
+		$this->paginate = $qry;
+
+		$ventas = $this->paginate();
+			
+		foreach ($ventas as $iv => $v) {
+			
+			$items = array(); 
+			foreach ($v['VentaDetalle'] as $ivd => $vd) :
+				$ventas[$iv]['OrdenCompraDetalle'] = Hash::extract($v['OrdenCompra'], '{n}.ChildOrdenCompra.{n}.VentaDetalleProducto.{n}[id='.$vd['venta_detalle_producto_id'].'].OrdenComprasVentaDetalleProducto[estado_proveedor!=accept]');	
+			endforeach;
+
+		}
+
+		BreadcrumbComponent::add('Ventas', '/index');
+		BreadcrumbComponent::add('Ventas especiales');
+		$this->set(compact('ventas'));
+
+	}
+
+
+	/**
+	 * Intenta reservar el stock a la ventas más antiguas primero
+	 * @return void
+	 */
+	public function reservar_ventas_sin_reserva()
+	{
+
+		$ventas = $this->Venta->obtener_ventas_sin_reserva();
+
+		foreach ($ventas as $venta) {
+			foreach ($venta['VentaDetalle'] as $detalle) {
+				$this->Venta->reservar_stock_producto($detalle['id']);
+			}	
+		}
+
+		return;
+	}
+
+
 	/**
 	 * Crear venta manualmente
 	 */
@@ -3283,13 +3349,33 @@ class VentasController extends AppController {
 		}
 
 		if ($this->request->is('post') || $this->request->is('put')) {
-			
 			if ($this->Venta->save($this->request->data)) {
 				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
 			}else{
 				$this->Session->setFlash('No fue posible actualizar la venta.', null, array(), 'danger');
 			}
+		}
 
+		$this->redirect($this->referer('/', true));
+	}
+
+
+	public function admin_en_espera($id)
+	{
+		if ( ! $this->Venta->exists($id) ) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		if ($this->request->is('post') || $this->request->is('put')) {
+			if ($this->Venta->VentaDetalle->saveMany($this->request->data)) {
+				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
+				$this->shell = true;
+				$this->admin_reservar_stock_venta($id);
+				$this->shell = false;
+			}else{
+				$this->Session->setFlash('No fue posible actualizar la venta.', null, array(), 'danger');
+			}
 		}
 
 		$this->redirect($this->referer('/', true));
@@ -3616,15 +3702,19 @@ class VentasController extends AppController {
 			}
 		}
 
-		if (!empty($result['success'])) {
+		if (!empty($result['success']) && !$this->shell) {
 			$this->Session->setFlash($this->crearAlertaUl($result['success'], 'Resultados'), null, array(), 'success');
 		}
 
-		if (!empty($result['warning'])) {
+		if (!empty($result['warning']) && !$this->shell) {
 			$this->Session->setFlash($this->crearAlertaUl($result['warning'], 'Resultados'), null, array(), 'warning');
 		}
 
-		$this->redirect($this->referer('/', true));
+		if ($this->shell) {
+			return $result;
+		}else{
+			$this->redirect($this->referer('/', true));
+		}
 
 	}
 
@@ -3750,6 +3840,77 @@ class VentasController extends AppController {
 	}
 
 
+	public function admin_notificar_llegada_productos($ids)
+	{
+
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+			'mandrill_apikey', 'nombre'
+		));
+
+		$detalles = ClassRegistry::init('VentaDetalle')->find('all', array(
+			'conditions' => array(
+				'VentaDetalle.id' => $ids
+			),
+			'contain' => array(
+				'Venta' => array(
+					'VentaCliente' => array(
+						'fields' => array('VentaCliente.nombre', 'VentaCliente.email')
+					),
+					'fields' => array('Venta.id', 'Venta.referencia')
+				),
+				'VentaDetalleProducto' => array(
+					'fields' => array(
+						'VentaDetalleProducto.nombre', 'VentaDetalleProducto.codigo_proveedor'
+					)
+				)
+			)
+		));
+
+
+		/**
+		 * Clases requeridas
+		 */
+		$this->View           = new View();
+		$this->View->viewPath = 'Ventas' . DS . 'html';
+		$this->View->layout   = 'backend' . DS . 'emails';
+		
+		$this->View->set(compact('detalles'));
+		
+		$html = $this->View->render('notificar_llegada_producto_agendado');
+
+		$mandrill_apikey = $tienda['Tienda']['mandrill_apikey'];
+
+		if (empty($mandrill_apikey)) {
+			return false;
+		}
+
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = '[Nodriza Spa-'.rand(100,10000).'] Recordatorio de llegada de productos';
+		
+		if (Configure::read('debug') > 1) {
+			$asunto = '[Nodriza Spa-'.rand(100,10000).'-DEV] Recordatorio de llegada de productos';
+		}
+
+		$remitente = array(
+			'email' => 'no-reply@nodriza.cl',
+			'nombre' => 'Nodriza Spa'
+		);
+
+		$emails = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('ventas');
+
+		$destinatarios = array();
+
+		foreach ($emails as $im => $e) {
+			$destinatarios[$im]['email'] = $e;
+		}
+		
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
+	}
+
 	/**
 	 * Permite decontar desde bodega la cantidad de productos solicitadas por una venta.
 	 * @return [type] [description]
@@ -3761,7 +3922,9 @@ class VentasController extends AppController {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
-
+		
+		$this->Session->setFlash('Método inactivo temporalmente.', null, array(), 'danger');
+		$this->redirect(array('action' => 'index'));
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 
@@ -6816,9 +6979,16 @@ class VentasController extends AppController {
 		BreadcrumbComponent::add('Compra ref: ' . $venta['Venta']['referencia'], '/mis-compras/' . $id);
 
 		$PageTitle = 'Compra ref:' . $venta['Venta']['referencia'];
-		$this->set(compact('PageTitle', 'venta'));
-	}
 
+		$tab_activo = 'venta';
+
+		if (isset($this->request->query['tab'])) {
+			$tab_activo = $this->request->query['tab'];
+		}
+
+
+		$this->set(compact('PageTitle', 'venta', 'tab_activo'));
+	}
 
 
 	/**

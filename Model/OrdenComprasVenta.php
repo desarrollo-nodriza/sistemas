@@ -36,6 +36,28 @@ class OrdenComprasVenta extends AppModel
 		*/
 	);
 
+
+	public $belongsTo = array(
+		'Venta' => array(
+			'className'				=> 'Venta',
+			'foreignKey'			=> 'venta_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Venta')
+		),
+		'OrdenCompra' => array(
+			'className'				=> 'OrdenCompra',
+			'foreignKey'			=> 'orden_compra_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'VentaDetalleProducto')
+		)
+	);
+
 	/**
 	 * VALIDACIONES
 	 

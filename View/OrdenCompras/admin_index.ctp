@@ -12,7 +12,7 @@
 	<div class="row">
 		<div class="col-xs-12 col-md-4">
 			<a href="<?=Router::url('/', false);?>ordenCompras/index_no_procesadas">
-            <div class="widget widget-danger widget-item-icon">
+            <div class="widget widget-<?=$this->Html->colorOc('');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-ban"></span>
                 </div>
@@ -26,7 +26,7 @@
 		</div>
 		<div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_revision">
-			<div class="widget widget-warning widget-item-icon">
+			<div class="widget widget-<?=$this->Html->colorOc('iniciado');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-pencil-square-o"></span>
                 </div>
@@ -40,7 +40,7 @@
 		</div>
         <div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_asignacion_moneda">
-            <div class="widget widget-primary widget-item-icon">
+            <div class="widget widget-<?=$this->Html->colorOc('validado');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-user"></span>
                 </div>
@@ -54,7 +54,7 @@
         </div>
         <div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_validadas">
-            <div class="widget widget-info widget-item-icon">
+            <div class="widget widget-<?=$this->Html->colorOc('asignacion_moneda');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-money"></span>
                 </div>
@@ -68,7 +68,7 @@
         </div>
         <div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_validada_proveedores">
-            <div class="widget widget-primary widget-item-icon">
+            <div class="widget widget-<?=$this->Html->colorOc('validado_proveedor');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-user"></span>
                 </div>
@@ -82,7 +82,7 @@
         </div>
 		<div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_pagadas">
-			<div class="widget widget-success widget-item-icon">
+			<div class="widget widget-<?=$this->Html->colorOc('pagado');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-envelope"></span>
                 </div>
@@ -96,7 +96,7 @@
 		</div>
 		<div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_enviadas">
-			<div class="widget widget-primary widget-item-icon">
+			<div class="widget widget-<?=$this->Html->colorOc('enviado');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-truck"></span>
                 </div>
@@ -110,7 +110,7 @@
 		</div>	
 		<div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_incompletas">
-			<div class="widget widget-danger widget-item-icon">
+			<div class="widget widget-<?=$this->Html->colorOc('incompleto');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-meh-o"></span>
                 </div>
@@ -125,7 +125,7 @@
 
         <div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_pendiente_facturas">
-            <div class="widget widget-danger widget-item-icon">
+            <div class="widget widget-<?=$this->Html->colorOc('pendiente_factura');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-exclamation-circle"></span>
                 </div>
@@ -139,7 +139,7 @@
         </div>
         <div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_finalizadas">
-            <div class="widget widget-success widget-item-icon">
+            <div class="widget widget-<?=$this->Html->colorOc('recibido');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-smile-o"></span>
                 </div>
@@ -153,7 +153,7 @@
         </div>
         <div class="col-xs-12 col-md-4">
             <a href="<?=Router::url('/', false);?>ordenCompras/index_canceladas">
-            <div class="widget widget-danger widget-item-icon">
+            <div class="widget widget-<?=$this->Html->colorOc('cancelada');?> widget-item-icon">
                 <div class="widget-item-left">
                     <span class="fa fa-frown-o"></span>
                 </div>

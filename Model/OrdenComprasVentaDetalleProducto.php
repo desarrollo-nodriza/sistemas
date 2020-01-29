@@ -36,6 +36,28 @@ class OrdenComprasVentaDetalleProducto extends AppModel
 		*/
 	);
 
+
+	public $belongsTo = array(
+		'VentaDetalleProducto' => array(
+			'className'				=> 'VentaDetalleProducto',
+			'foreignKey'			=> 'venta_detalle_producto_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Venta')
+		),
+		'OrdenCompra' => array(
+			'className'				=> 'OrdenCompra',
+			'foreignKey'			=> 'orden_compra_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'OrdenCompra')
+		)
+	);
+
 	/**
 	 * VALIDACIONES
 	 

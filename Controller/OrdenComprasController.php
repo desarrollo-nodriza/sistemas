@@ -258,6 +258,62 @@ class OrdenComprasController extends AppController
 	}
 
 
+	public function admin_resumen()
+	{
+		$qry = array(
+			'conditions' => array(
+				'OR' => array(
+					array(
+						'OrdenCompra.parent_id !=' => '',
+						'OrdenCompra.oc_manual' => 0
+					),
+					array(
+						'OrdenCompra.parent_id' => '',
+						'OrdenCompra.oc_manual' => 1
+					)
+				)
+			),
+			'fields' => array(
+				'OrdenCompra.id',
+				'OrdenCompra.estado',
+				'OrdenCompra.proveedor_id'
+			)
+		);
+
+		$estados = $this->OrdenCompra->estados;
+		$proveedores = $this->OrdenCompra->Proveedor->find('list');
+
+		$ocs = $this->OrdenCompra->find('all', $qry);
+		
+		$matriz = array();
+		
+		foreach ($proveedores as $idp => $p) {
+
+			$matriz['proveedor'][$idp]['nombre'] = $p;
+			
+			$ocsProveedor = Hash::extract($ocs, '{n}.OrdenCompra[proveedor_id='.$idp.']');
+
+			foreach ($estados as $slug => $e) {
+
+				$matriz['proveedor'][$idp]['total'][$slug] = 0;
+
+				foreach ($ocsProveedor as $iocp => $oc) {
+					if ($oc['estado'] == $slug || $oc['estado'] == '') {
+						$matriz['proveedor'][$idp]['total'][$slug] = $matriz['proveedor'][$idp]['total'][$slug]+1;	
+					}
+				}
+			}
+			
+		}
+
+		BreadcrumbComponent::add('Ordenes de compra', '/ordenCompras');
+		BreadcrumbComponent::add('Resumen');
+
+		$this->set(compact('matriz', 'estados'));
+
+	}
+
+
 	/**
 	 * [admin_index_no_procesadas description]
 	 * @return [type] [description]
@@ -783,6 +839,15 @@ class OrdenComprasController extends AppController
 					# Reservamos los productos de las ventas relacionadas a la OC padre
 					if (!empty($parent_id)) {
 						ClassRegistry::init('Venta')->reservar_stock_por_oc($parent_id);
+					}else{
+						# Reservamos las ventas mas antiguas
+						$ventasSinReserva = ClassRegistry::init('Venta')->obtener_ventas_sin_reserva();
+
+						foreach ($ventasSinReserva as $venta) {
+							foreach ($venta['VentaDetalle'] as $detalle) {
+								ClassRegistry::init('Venta')->reservar_stock_producto($detalle['id']);
+							}	
+						}
 					}
 
 				}else{

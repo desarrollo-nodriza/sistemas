@@ -560,3 +560,15 @@ tfoot > tr > td, tfoot > tr:first-child > td {
     border-color: #fff;
     color: #fff;
 }
+
+tr.expanded {
+    border-top: 2px solid #1D2127;
+    border-left: 2px solid #1D2127;
+    border-right: 2px solid #1D2127;
+}
+
+tr.expanded-div {
+    border-bottom: 2px solid #1D2127;
+    border-left: 2px solid #1D2127;
+    border-right: 2px solid #1D2127;
+}
