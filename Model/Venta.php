@@ -1133,6 +1133,34 @@ class Venta extends AppModel
 	{	
 
 		$ventasRestrasos =  ClassRegistry::init('VentaDetalle')->find('all', array(
+			'joins' => array(
+				array(
+					'table' => 'rp_ventas',
+					'alias' => 'ventas',
+					'type' => 'INNER',
+					'conditions' => array(
+						'ventas.id = VentaDetalle.venta_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'venta_estados',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_estados.id = ventas.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'venta_estados_cat',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
+						'venta_estados_cat.venta = 1',
+						'venta_estados_cat.final = 0'
+					)
+				)
+			),
 			'conditions' => array(
 				'VentaDetalle.cantidad_en_espera >' => 0
 			),
@@ -1175,6 +1203,32 @@ class Venta extends AppModel
 					'conditions' => array(
 						'vd.venta_id = OrdenComprasVenta.venta_id',
 						'vd.cantidad_anulada < vd.cantidad'
+					)
+				),
+				array(
+					'table' => 'rp_ventas',
+					'alias' => 'ventas',
+					'type' => 'INNER',
+					'conditions' => array(
+						'ventas.id = vd.venta_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'venta_estados',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_estados.id = ventas.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'venta_estados_cat',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
+						'venta_estados_cat.venta = 1',
+						'venta_estados_cat.final = 0'
 					)
 				)
 			),
