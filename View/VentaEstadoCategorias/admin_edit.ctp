@@ -44,6 +44,13 @@
 									</td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('envio', 'Estado de envio'); ?></th>
+									<td>
+										<?= $this->Form->input('envio', array('class' => 'icheckbox')); ?>
+										<span class="help-block">Marca la venta como enviada</span>
+									</td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('final', 'Estado final'); ?></th>
 									<td>
 										<?= $this->Form->input('final', array('class' => 'icheckbox')); ?>

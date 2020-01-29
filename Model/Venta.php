@@ -1157,6 +1157,7 @@ class Venta extends AppModel
 					'conditions' => array(
 						'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
 						'venta_estados_cat.venta = 1',
+						'venta_estados_cat.envio = 0',
 						'venta_estados_cat.final = 0'
 					)
 				)
@@ -1228,6 +1229,7 @@ class Venta extends AppModel
 					'conditions' => array(
 						'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
 						'venta_estados_cat.venta = 1',
+						'venta_estados_cat.envio = 0',
 						'venta_estados_cat.final = 0'
 					)
 				)
