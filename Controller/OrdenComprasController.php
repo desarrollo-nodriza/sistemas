@@ -298,7 +298,7 @@ class OrdenComprasController extends AppController
 				$matriz['proveedor'][$idp]['total'][$slug] = 0;
 
 				foreach ($ocsProveedor as $iocp => $oc) {
-					if ($oc['estado'] == $slug || $oc['estado'] == '') {
+					if ($oc['estado'] == $slug) {
 						$matriz['proveedor'][$idp]['total'][$slug] = $matriz['proveedor'][$idp]['total'][$slug]+1;	
 					}
 				}
