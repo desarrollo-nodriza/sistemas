@@ -106,7 +106,7 @@ class Bodega extends AppModel
 			)
 		));
 
-		$pmp = ClassRegistry::init('VentaDetalleProducto')->field('precio_costo', array('id' => $id_producto));
+		$pmp = ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($id_producto);
 			
 		if (!empty($historico)) {
 			// Sumatoria de las cantidades
@@ -139,7 +139,7 @@ class Bodega extends AppModel
 			)
 		));
 
-		$pmp = ClassRegistry::init('VentaDetalleProducto')->field('precio_costo', array('id' => $id_producto));
+		$pmp = ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($id_producto);
 
 		if (!empty($historico)) {
 			// Sumatoria de las cantidades
