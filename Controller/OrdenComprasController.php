@@ -1099,12 +1099,10 @@ class OrdenComprasController extends AppController
 			));
 		}
 		
-		$url_retorno = Router::url( $this->referer(), true );
-
-		BreadcrumbComponent::add('Ordenes de compra ', $url_retorno);
+		BreadcrumbComponent::add('Ordenes de compra ', array('action' => 'index_todo'));
 		BreadcrumbComponent::add('Ver OC ');
 
-		$this->set(compact('ocs', 'url_retorno'));
+		$this->set(compact('ocs'));
 
 	}
 
@@ -2091,6 +2089,155 @@ class OrdenComprasController extends AppController
 		$modelo			= $this->OrdenCompra->alias;
 
 		$this->set(compact('datos', 'campos', 'modelo'));
+	}
+
+
+
+	public function admin_validar_stock_manual($id)
+	{
+		$this->OrdenCompra->id = $id;
+		if ( ! $this->OrdenCompra->exists() )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		if ($this->request->is('put')) {
+
+			$oc = $this->OrdenCompra->find('first', array(
+				'conditions' => array(
+					'OrdenCompra.id' => $id
+				),
+				'contain' => array(
+					'Moneda',
+					'VentaDetalleProducto',
+					'Administrador',
+					'Venta' => array(
+						'VentaDetalle',
+						'Tienda'
+					),
+					'Tienda',
+					'Proveedor'
+				)
+			));
+
+			$itemes = array();
+			$itemsAceptados  = array();
+			$itemsRechazados = array();
+			
+			foreach ($this->request->data['VentaDetalleProducto'] as $ip => $p) {
+
+				$cantidad          = $p['cantidad'];
+				$cantidad_validada = $p['cantidad_validada_proveedor'];
+
+				if ($p['estado_proveedor'] == 'accept') {
+					$itemsAceptados[$ip] = $p;
+				}
+
+				# si es error de stock se decuenta las unidades rechazadas
+				if ($p['estado_proveedor'] == 'stockout' || $p['estado_proveedor'] == 'modified') {
+
+					# Si la cantidad solicitada fue modifcada por el proveedor
+					if ($cantidad_validada > 0) {
+
+						$itemsAceptados[$ip] = $p;
+						
+						$itemes[$p['estado_proveedor']][$ip] = $p;
+
+					}
+					
+					# Se guardan como rechazados as unidades sobrantes
+					$itemsRechazados[$ip]                                   = $p;
+					$itemsRechazados[$ip]['estado_proveedor']               = 'stockout';
+					$itemes['stockout'][$ip]                                = $p;
+				}
+			
+				$itemes[$p['estado_proveedor']][$ip] = $p;
+			}
+			
+			$total_rechazados  = array_sum(Hash::extract($itemsRechazados, '{n}.cantidad')) - array_sum(Hash::extract($itemsRechazados, '{n}.cantidad_validada_proveedor'));
+			$total_stockout    = count(Hash::extract($itemes, 'stockout.{n}.venta_detalle_producto_id'));
+			$total_solicitados = array_sum(Hash::extract($oc, 'VentaDetalleProducto.{n}.OrdenComprasVentaDetalleProducto.cantidad'));
+
+			# si existen itemes rechazados, se crea una nueva OC para el mismo proveedor pero con los produtos que correspondan
+			# sí el rechazo es por precio se notifica a validador interno
+			# sí es rechazo por stockout se notifica a servicio al cliente que la venta no tendrá su producto
+			$nuevaOC = array();
+			$ventasNotificar = array();
+			
+			$total_neto      = 0;
+
+			# recalculamos los montos
+			foreach ($itemsAceptados as $i => $item) {
+
+				if ($item['cantidad_validada_proveedor'] == 0) continue;
+
+				$descuento_pp       = $item['descuento_producto'] / $item['cantidad'];
+				$descuento_pp_final = $descuento_pp * $item['cantidad_validada_proveedor'];
+
+				$this->request->data['VentaDetalleProducto'][$i]['precio_unitario']    = $item['precio_unitario'];
+				$this->request->data['VentaDetalleProducto'][$i]['total_neto']         = ($item['precio_unitario'] * $item['cantidad_validada_proveedor']) - $descuento_pp_final;
+				$this->request->data['VentaDetalleProducto'][$i]['descuento_producto'] = $descuento_pp_final;
+
+				$total_neto = $total_neto + $this->request->data['VentaDetalleProducto'][$i]['total_neto'];
+			}
+
+			$this->request->data['OrdenCompra']['estado']          = 'recibido';
+			$this->request->data['OrdenCompra']['total_neto']      = $total_neto;
+			$this->request->data['OrdenCompra']['descuento']       = $this->OrdenCompra->obtener_descuento_oc($id);
+			$this->request->data['OrdenCompra']['iva']             = obtener_iva($total_neto);
+			$this->request->data['OrdenCompra']['descuento_monto'] = obtener_iva( ($total_neto + $this->request->data['OrdenCompra']['iva']) , $this->request->data['OrdenCompra']['descuento']);
+			$this->request->data['OrdenCompra']['total']           = ($total_neto - $this->request->data['OrdenCompra']['descuento_monto']) + $this->request->data['OrdenCompra']['iva'];
+
+
+			# si la cantidad de itemes rechazado es igual a la cantidad de produtos pedidos se devuelve toda la OC
+			if ($total_rechazados == $total_solicitados) {
+				$this->request->data['OrdenCompra']['estado'] = 'cancelada';
+			}
+			
+			
+			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
+
+				$this->Session->setFlash('OC actualizada con éxito.', null, array(), 'success');
+				$this->redirect(array('action' => 'view', $id));
+
+			}else{
+
+				$this->Session->setFlash('No fue posible actualizar la OC.', null, array(), 'danger');
+				$this->redirect(array('action' => 'view', $id));
+			}
+
+		}else{
+
+			$qry = array(
+				'conditions' => array(
+					'OrdenCompra.id' => $id,
+					'OrdenCompra.estado' => 'incompleto'
+				),
+				'contain' => array(
+					'Proveedor',
+					'Tienda',
+					'VentaDetalleProducto',
+					'Moneda'
+				)
+			);
+
+			$this->request->data = $this->OrdenCompra->find('first', $qry);
+		}
+
+		if ( empty($this->request->data) )
+		{
+			$this->Session->setFlash('La OC ya no se encuentra en este apartado.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index_todo', 'id' => $id));
+		}
+
+
+		BreadcrumbComponent::add('Ordenes de compra ', array('action' => 'index'));
+		BreadcrumbComponent::add('Validar OC');
+
+		$estados = $this->OrdenCompra->estado_proveedor;
+		unset($estados['price_error']);
+		$this->set(compact('estados'));
 	}
 
 

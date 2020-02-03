@@ -44,7 +44,7 @@
 							<tbody>
 								<?php foreach ( $ordenCompras as $ordenCompra ) : ?>
 
-								<?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('completar', 'cancelar')));?>
+								<?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('completar', 'cancelar', 'stock')));?>
 								
 								<?php endforeach; ?>
 							</tbody>

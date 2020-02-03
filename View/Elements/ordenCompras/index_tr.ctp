@@ -39,6 +39,10 @@
         <?= $this->Html->link('<i class="fa fa-envelope"></i> Notificar', array('action' => 'notificar_proveedor', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-block btn-warning', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
     <? endif; ?>
 
+    <? if (in_array('stock', $accion) && $permisos['send']) : ?>
+        <?= $this->Html->link('<i class="fa fa-pencil"></i> Validar', array('action' => 'validar_stock_manual', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-block btn-warning', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+    <? endif; ?>
+
     <?= $this->Html->link('<i class="fa fa-eye"></i> Ver', array('action' => 'view', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-block btn-info', 'rel' => 'tooltip', 'title' => 'Revisar este registro', 'escape' => false)); ?>
     
     <? if (in_array('cancelar', $accion) && $permisos['edit']) : ?>
