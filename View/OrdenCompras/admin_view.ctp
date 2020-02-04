@@ -197,7 +197,7 @@
 							<tboby class="">
 							<? foreach ($oc['VentaDetalleProducto'] as $ipp => $ocp) : ?>	
 								
-								<tr class="<?= ($ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] == $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida']) ? 'success' : 'danger' ;?>" >
+								<tr class="<?= ($ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] == $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] && ($ocp['OrdenComprasVentaDetalleProducto']['estado_proveedor'] == 'accept' || $ocp['OrdenComprasVentaDetalleProducto']['estado_proveedor'] == 'modified')) ? 'success' : 'danger' ;?>" >
 									<td><?=$ocp['id'];?></td>
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['codigo'];?></td>
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['descripcion'];?></td>

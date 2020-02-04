@@ -2195,7 +2195,6 @@ class OrdenComprasController extends AppController
 				$this->request->data['OrdenCompra']['estado'] = 'cancelada';
 			}
 			
-			
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 
 				$this->Session->setFlash('OC actualizada con éxito.', null, array(), 'success');
