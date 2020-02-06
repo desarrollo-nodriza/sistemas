@@ -945,11 +945,14 @@ class Venta extends AppModel
 
 		$reservar = $cant_cant - $cant_reservada - $cant_entregada;
 		
-		$reservado = $cant_reservada + ClassRegistry::init('Bodega')->calcular_reserva_stock(ClassRegistry::init('VentaDetalle')->field('venta_detalle_producto_id'), $reservar);
+		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock(ClassRegistry::init('VentaDetalle')->field('venta_detalle_producto_id'), $reservar);
+		$reservado  = $cant_reservada + $disponible;
 
 		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente
 		if ($cant_reservada != $cant_cant ) {
 			
+			$cant_cant = $cant_cant - $cant_entregada;
+
 			$save = array(
 				'VentaDetalle' => array(
 					'id' => $id,
@@ -957,14 +960,19 @@ class Venta extends AppModel
 				)
 			);
 
-			if ($cant_en_espera > $reservado) {
-				$save['VentaDetalle']['cantidad_en_espera'] = $cant_en_espera - $reservado;
+			if ($cant_en_espera == $reservado && $reservado != $cant_cant) {
+				$save['VentaDetalle']['cantidad_en_espera'] = $cant_cant - $reservado;
 			}
-
-			if ($cant_en_espera <= $reservado && $cant_cant == ($reservado + $cant_entregada) ) {
+			else if ($cant_en_espera < $reservado && $reservado != $cant_cant){
+				$save['VentaDetalle']['cantidad_en_espera'] = $cant_cant - $reservado;
+			}
+			else if ($cant_en_espera > $reservado && $reservado != $cant_cant){
+				$save['VentaDetalle']['cantidad_en_espera'] = ($cant_cant - $cant_en_espera) + $reservado;
+			}
+			else if ($reservado == $cant_cant && $reservado == $cant_cant) {
 				$save['VentaDetalle']['cantidad_en_espera'] = 0;
 			}
-			
+
 			if(!ClassRegistry::init('VentaDetalle')->save($save))
 				return 0;
 		}

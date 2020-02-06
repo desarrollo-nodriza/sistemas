@@ -99,6 +99,7 @@
 								<tr class="sort">
 									<th style="width: 120px;"><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th style="max-width: 300px;"><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('codigo_proveedor', 'Ref Proveedor', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('marca_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('precio_costo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('cantidad_virtual', 'Stock fisico', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -114,6 +115,7 @@
 										<b>Id Ext:</b> <?= h($ventadetalleproducto['VentaDetalleProducto']['id_externo']); ?>&nbsp;
 									</td>
 									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['nombre']); ?>&nbsp;</td>
+									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['codigo_proveedor']); ?>&nbsp;</td>
 									<td><?= h($ventadetalleproducto['Marca']['nombre']); ?>&nbsp;</td>
 									<td><?= CakeNumber::currency(h($ventadetalleproducto['VentaDetalleProducto']['costo']), 'CLP'); ?>&nbsp;</td>
 									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['stock']); ?>&nbsp;</td>

@@ -2257,11 +2257,39 @@ class OrdenComprasController extends AppController
 
 		$ventas          = $this->OrdenCompra->Venta->find('all', array(
 			'conditions' => array(
-				'Venta.fecha_venta >' => $hace_un_mes,
-				'Venta.picking_estado' => 'no_definido'
+				'Venta.fecha_venta >' => $hace_un_mes
 			),
 			'fields' => array(
-				'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.prioritario'
+				'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.prioritario', 'Venta.picking_estado'
+			),
+			'joins' => array(
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'venta_estados',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_estados.id = Venta.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'venta_estados_cat',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
+						'venta_estados_cat.venta = 1',
+						'venta_estados_cat.final = 0'
+					)
+				),
+				array(
+					'table' => 'rp_venta_detalles',
+					'alias' => 'venta_detalles',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_detalles.venta_id = Venta.id',
+						'venta_detalles.cantidad_reservada < venta_detalles.cantidad',
+					)
+				),
 			),
 			'contain' => array(
 				'Dte' => array(
@@ -2296,7 +2324,7 @@ class OrdenComprasController extends AppController
 			'offset' => $this->request->query['offset'],
 			'order' => array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC')
 		));
-
+		
 		if (empty($ventas)) {
 			echo 0;
 			exit;
