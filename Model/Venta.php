@@ -938,6 +938,7 @@ class Venta extends AppModel
 		$cant_cant      = ClassRegistry::init('VentaDetalle')->field('cantidad') - ClassRegistry::init('VentaDetalle')->field('cantidad_anulada');
 		$cant_entregada = ClassRegistry::init('VentaDetalle')->field('cantidad_entregada');
 		$cant_en_espera = ClassRegistry::init('VentaDetalle')->field('cantidad_en_espera');
+		$fecha_llegada  = ClassRegistry::init('VentaDetalle')->field('fecha_llegada_en_espera');
 
 		if ($cant_cant == $cant_entregada) {
 			return 0;
@@ -974,6 +975,10 @@ class Venta extends AppModel
 			}
 			else if ($reservado == $cant_cant && $reservado == $cant_cant) {
 				$save['VentaDetalle']['cantidad_en_espera'] = 0;
+			}
+
+			if (empty($fecha_llegada)) {
+				unset($save['VentaDetalle']['cantidad_en_espera']);
 			}
 			
 			if(!ClassRegistry::init('VentaDetalle')->save($save))
