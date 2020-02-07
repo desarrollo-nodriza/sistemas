@@ -185,8 +185,10 @@ class AppHelper extends Helper
 
 			$llegada      = $fechaLlegada->diff($hoy);
 			
-			if ($llegada->days > 0) {
+			if ($llegada->days > 0 && $fechaLlegada > $hoy) {
 				return ($llegada->days > 1) ? sprintf('<label class="label btn-block label-danger"><i class="fa fa-clock-o" aria-hidden="true"></i> Llega en %d días</label>', $llegada->days) : sprintf('<label class="label label-warning"><i class="fa fa-clock-o" aria-hidden="true"></i> Llega mañana</label>');
+			}else if($llegada->days > 0 && $fechaLlegada < $hoy) {
+				return '<label class="label label-info btn-block"><i class="fa fa-clock-o"></i> Llegó hace '. $llegada->days . ' dia/s</span>';
 			}else{
 				return '<label class="label label-success btn-block"><i class="fa fa-clock-o"></i> Llega hoy</span>';
 			}
