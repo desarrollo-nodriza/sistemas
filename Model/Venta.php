@@ -963,16 +963,19 @@ class Venta extends AppModel
 			if ($cant_en_espera == $reservado && $reservado != $cant_cant) {
 				$save['VentaDetalle']['cantidad_en_espera'] = $cant_cant - $reservado;
 			}
+			else if ($reservado == 0) {
+				$save['VentaDetalle']['cantidad_en_espera'] = $cant_en_espera;	
+			}
 			else if ($cant_en_espera < $reservado && $reservado != $cant_cant){
 				$save['VentaDetalle']['cantidad_en_espera'] = $cant_cant - $reservado;
 			}
 			else if ($cant_en_espera > $reservado && $reservado != $cant_cant){
-				$save['VentaDetalle']['cantidad_en_espera'] = ($cant_cant - $cant_en_espera) + $reservado;
+				$save['VentaDetalle']['cantidad_en_espera'] = $cant_en_espera - $reservado;
 			}
 			else if ($reservado == $cant_cant && $reservado == $cant_cant) {
 				$save['VentaDetalle']['cantidad_en_espera'] = 0;
 			}
-
+			
 			if(!ClassRegistry::init('VentaDetalle')->save($save))
 				return 0;
 		}
