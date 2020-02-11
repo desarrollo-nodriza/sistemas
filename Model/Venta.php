@@ -645,7 +645,7 @@ class Venta extends AppModel
 		foreach ($ventas as $iv => $v) {
 			
 			$cant_reservada = array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_reservada'));
-			$cant_cant = array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_en_espera')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_entregada'));
+			$cant_cant = array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_entregada'));
 
 			if ($cant_reservada != $cant_cant || $cant_reservada == 0) {
 				unset($ventas[$iv]);
@@ -987,7 +987,7 @@ class Venta extends AppModel
 
 		$venta = $this->obtener_venta_por_id(ClassRegistry::init('VentaDetalle')->field('venta_id'));
 		
-		$total_cantidad = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));
+		$total_cantidad = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));
 		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 
 		if ( $total_reservado == $total_cantidad && $total_reservado > 0) {
