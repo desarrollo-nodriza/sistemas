@@ -2320,6 +2320,9 @@ class OrdenComprasController extends AppController
 					)
 				)
 			),
+			'group' => array(
+				'Venta.id'
+			),
 			'limit' => $this->request->query['limit'],
 			'offset' => $this->request->query['offset'],
 			'order' => array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC')
