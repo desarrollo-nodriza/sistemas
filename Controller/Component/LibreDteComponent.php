@@ -775,13 +775,22 @@ class LibreDteComponent extends Component
 						)
 					));
 
-					# Obteneoms otras notas de crédito
+					# Obteneoms otras notas de crédito para el folio referenciado
 					$ndcRelacionadas = ClassRegistry::init('Dte')->find('all', array(
 						'conditions' => array(
 							'Dte.venta_id' => $data['Dte']['venta_id'],
 							'Dte.tipo_documento' => 61, // Nota de credito
 							'Dte.invalidado' => 0,
 							'Dte.estado' => 'dte_real_emitido'
+						),
+						'joins' => array(
+							'table' => 'rp_dte_referencias',
+							'alias' => 'dte_referencia',
+							'type' => 'INNER',
+							'conditions' => array(
+								'dte_referencia.dte_id = Dte.id',
+								'dte_referencia.folio' => $ref['folio']
+							)
 						)
 					));
 
