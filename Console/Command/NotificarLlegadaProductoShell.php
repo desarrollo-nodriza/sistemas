@@ -20,8 +20,35 @@ class NotificarLlegadaProductoShell extends AppShell {
 		$ventaDetalles = ClassRegistry::init('VentaDetalle')->find('all', array(
 			'conditions' => array(
 				'VentaDetalle.cantidad_en_espera >' => 0,
-				'VentaDetalle.fecha_llegada_en_espera <=' =>  date('Y-m-d')
-			), 
+				'VentaDetalle.fecha_llegada_en_espera <=' =>  date('Y-m-d'),
+				'VentaDetalle.cantidad_anulada < VentaDetalle.cantidad',
+			),
+			'contain' => array(
+				'Venta' => array(
+					'fields' => array(
+						'Venta.venta_estado_id'
+					)
+				)
+			),
+			'joins' => array(
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'estado',
+					'type' => 'INNER',
+					'conditions' => array(
+						'estado.id = Venta.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'estado_cat',
+					'type' => 'INNER',
+					'conditions' => array(
+						'estado_cat.id = estado.venta_estado_categoria_id',
+						'estado_cat.venta = 1'
+					)
+				)
+			),
 			'fields' => array(
 				'VentaDetalle.id'
 			)
