@@ -2116,6 +2116,7 @@ class OrdenComprasController extends AppController
 						'VentaDetalle',
 						'Tienda'
 					),
+					'OrdenCompraFactura',
 					'Tienda',
 					'Proveedor'
 				)
@@ -2182,7 +2183,14 @@ class OrdenComprasController extends AppController
 				$total_neto = $total_neto + $this->request->data['VentaDetalleProducto'][$i]['total_neto'];
 			}
 
-			$this->request->data['OrdenCompra']['estado']          = 'recibido';
+			if ($oc['OrdenCompra']['estado'] == 'enviado') {
+				$this->request->data['OrdenCompra']['estado'] = 'enviado';
+			}else if (count(Hash::extract($oc, 'OrdenCompraFactura.{n}[tipo_documento=33]')) == 0){
+				$this->request->data['OrdenCompra']['estado'] = 'pendiente_factura';
+			}else {
+				$this->request->data['OrdenCompra']['estado'] = 'recibido';
+			}
+
 			$this->request->data['OrdenCompra']['total_neto']      = $total_neto;
 			$this->request->data['OrdenCompra']['descuento']       = $this->OrdenCompra->obtener_descuento_oc($id);
 			$this->request->data['OrdenCompra']['iva']             = obtener_iva($total_neto);
@@ -2198,7 +2206,16 @@ class OrdenComprasController extends AppController
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 
 				$this->Session->setFlash('OC actualizada con éxito.', null, array(), 'success');
-				$this->redirect(array('action' => 'view', $id));
+
+				if ($this->request->data['OrdenCompra']['estado'] == 'enviado') {
+					$this->Session->setFlash('Ahora puede continuar con el flujo de esta OC.', null, array(), 'warning');
+					$this->redirect(array('action' => 'reception', $id));	
+				}else if($this->request->data['OrdenCompra']['estado'] == 'pendiente_factura'){
+					$this->Session->setFlash('Se requiere un DTE para continuar.', null, array(), 'warning');
+					$this->redirect(array('action' => 'reception', $id));
+				}else{
+					$this->redirect(array('action' => 'view', $id));
+				}
 
 			}else{
 
@@ -2211,7 +2228,7 @@ class OrdenComprasController extends AppController
 			$qry = array(
 				'conditions' => array(
 					'OrdenCompra.id' => $id,
-					'OrdenCompra.estado' => 'incompleto'
+					'OrdenCompra.estado' => array('incompleto', 'enviado')
 				),
 				'contain' => array(
 					'Proveedor',

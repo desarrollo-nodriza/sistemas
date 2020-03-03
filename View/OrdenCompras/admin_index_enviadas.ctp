@@ -45,11 +45,11 @@
 								<?php foreach ( $ordenCompras as $ordenCompra ) : ?>
 
 									<? if ($ordenCompra['OrdenCompra']['estado'] == 'incompleto') : ?>
-									<?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('completar')));?>
+									<?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('completar', 'stock')));?>
 									<? endif; ?>
 
 									<? if ($ordenCompra['OrdenCompra']['estado'] == 'enviado') : ?>
-									<?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('recepcionar')));?>
+									<?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('recepcionar', 'stock')));?>
 									<? endif; ?>
 								
 								<?php endforeach; ?>
