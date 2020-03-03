@@ -784,12 +784,14 @@ class LibreDteComponent extends Component
 							'Dte.estado' => 'dte_real_emitido'
 						),
 						'joins' => array(
-							'table' => 'rp_dte_referencias',
-							'alias' => 'dte_referencia',
-							'type' => 'INNER',
-							'conditions' => array(
-								'dte_referencia.dte_id = Dte.id',
-								'dte_referencia.folio' => $ref['folio']
+							array(
+								'table' => 'rp_dte_referencias',
+								'alias' => 'dte_referencia',
+								'type' => 'INNER',
+								'conditions' => array(
+									'dte_referencia.dte_id = Dte.id',
+									'dte_referencia.folio' => $ref['folio']
+								)
 							)
 						)
 					));
