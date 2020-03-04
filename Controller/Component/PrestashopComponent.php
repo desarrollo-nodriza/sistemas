@@ -536,7 +536,7 @@ class PrestashopComponent extends Component
 			$opt = array();
 			$opt['resource']                   = 'customer_messages';
 			$opt['display']                    = '[message,date_add]';
-			$opt['filter[id_customer_thread]'] = '[' .$CustomerThread['customer_thread']['id']. ']';
+			$opt['filter[id_customer_thread]'] = '[' .@$CustomerThread['customer_thread']['id']. ']';
 			$opt['sort']                       = '[id_customer_thread_DESC]';
 			$opt['limit']                      = $limit;
 
