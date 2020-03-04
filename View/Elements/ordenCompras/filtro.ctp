@@ -5,23 +5,25 @@
     $prov = (isset($this->request->params['named']['prov'])) ? $this->request->params['named']['prov'] : '' ;
     $dtf = (isset($this->request->params['named']['dtf'])) ? $this->request->params['named']['dtf'] : '' ;
     $dtt = (isset($this->request->params['named']['dtt'])) ? $this->request->params['named']['dtt'] : '' ;
+    $ret = (isset($this->request->params['named']['ret'])) ? $this->request->params['named']['ret'] : '' ;
 ?>
 <div class="panel panel-default">
     <div class="panel-heading">
         <h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
     </div>
     <div class="panel-body">
-        <div class="col-sm-3 col-xs-12">
+        <div class="col-sm-2 col-xs-12">
             <div class="form-group">
                 <label>ID OC:</label>
                 <?=$this->Form->input('id', array(
                     'type' => 'text',
                     'class' => 'form-control',
+                    'placeholder' => 'Ingrese ID de OC',
                     'value' => $id
                     ));?>
             </div>
         </div>
-        <div class="col-sm-3 col-xs-12">
+        <div class="col-sm-2 col-xs-12">
             <div class="form-group">
                 <label>ID Venta:</label>
                 <? if (!empty($venta)) : ?>
@@ -29,6 +31,7 @@
                     <?=$this->Form->input('venta', array(
                     'type' => 'text',
                     'class' => 'form-control',
+                    'placeholder' => 'Ingrese ID de venta',
                     'value' => $venta
                     ));?>
                     <span class="input-group-addon add-on">
@@ -40,7 +43,8 @@
                 <?=$this->Form->input('venta', array(
                     'type' => 'text',
                     'class' => 'form-control',
-                    'value' => $venta
+                    'value' => $venta,
+                    'placeholder' => 'Ingrese ID de venta'
                     ));?>
                 <? endif; ?>
             </div>
@@ -56,6 +60,19 @@
                     'value' => $prov
                     )
                 );?>
+            </div>
+        </div>
+        <div class="col-sm-2 col-xs-12">
+            <div class="form-group">
+                <label>Retirar OC:</label>
+                <?=$this->Form->select('ret', array(
+                        'si' => 'Retiro marcado',
+                        'no' => 'Retiro no marcado'
+                    ), array(
+                    'class' => 'form-control',
+                    'empty' => 'Seleccione',
+                    'default' => $ret
+                    ));?>
             </div>
         </div>
         <div class="col-sm-3 col-xs-12">

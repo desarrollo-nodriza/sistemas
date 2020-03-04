@@ -43,6 +43,14 @@
         <?= $this->Html->link('<i class="fa fa-pencil"></i> Validar', array('action' => 'validar_stock_manual', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-block btn-warning', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
     <? endif; ?>
 
+    <? if (in_array('retiro', $accion) && $ordenCompra['OrdenCompra']['retiro']) : ?>
+        <?= $this->Html->link('<i class="fa fa-truck"></i> Quitar retiro', array('action' => 'estado_retiro', $ordenCompra['OrdenCompra']['id'], 0), array('class' => 'btn btn-xs btn-block btn-danger', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+    <? endif; ?>
+
+    <? if (in_array('retiro', $accion) && !$ordenCompra['OrdenCompra']['retiro']) : ?>
+        <?= $this->Html->link('<i class="fa fa-truck"></i> Retiro', array('action' => 'estado_retiro', $ordenCompra['OrdenCompra']['id'], 1), array('class' => 'btn btn-xs btn-block btn-primary', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+    <? endif; ?>
+
     <?= $this->Html->link('<i class="fa fa-eye"></i> Ver', array('action' => 'view', $ordenCompra['OrdenCompra']['id']), array('class' => 'btn btn-xs btn-block btn-info', 'rel' => 'tooltip', 'title' => 'Revisar este registro', 'escape' => false)); ?>
     
     <? if (in_array('cancelar', $accion) && $permisos['edit']) : ?>

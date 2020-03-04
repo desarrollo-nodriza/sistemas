@@ -121,6 +121,15 @@ class OrdenComprasController extends AppController
 					));
 					
 					break;
+				case 'ret':
+
+					$filtro = array_replace_recursive($filtro, array(
+						'conditions' => array(
+							'OrdenCompra.retiro' => ($valor == 'si') ? 1 : 0
+						)
+					));
+					
+					break;
 				case 'dtf':
 
 					$find = $this->OrdenCompra->find('all', array('conditions' => array('created >=' => trim($valor), 'parent_id !=' => ''), 'fields' => array('parent_id')));
@@ -193,7 +202,8 @@ class OrdenComprasController extends AppController
 				'OrdenCompra.parent_id',
 				'OrdenCompra.administrador_id',
 				'OrdenCompra.email_finanza',
-				'OrdenCompra.oc_manual'
+				'OrdenCompra.oc_manual',
+				'OrdenCompra.retiro'
 			),
 			'order' => array(
 				'OrdenCompra.id' => 'DESC'
@@ -365,7 +375,8 @@ class OrdenComprasController extends AppController
 				'OrdenCompra.parent_id',
 				'OrdenCompra.administrador_id',
 				'OrdenCompra.email_finanza',
-				'OrdenCompra.oc_manual'
+				'OrdenCompra.oc_manual',
+				'OrdenCompra.retiro'
 			),
 			'order' => array(
 				'OrdenCompra.id' => 'DESC'
@@ -2072,6 +2083,31 @@ class OrdenComprasController extends AppController
 			$this->redirect($this->referer('/', true));
 		}
 		$this->Session->setFlash('Error al eliminar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
+		$this->redirect($this->referer('/', true));
+	}
+
+
+	/**
+	 * [admin_estado_retiro description]
+	 * @param  [type] $id     [description]
+	 * @param  [type] $estado [description]
+	 * @return [type]         [description]
+	 */
+	public function admin_estado_retiro($id, $estado)
+	{
+		$this->OrdenCompra->id = $id;
+		if ( ! $this->OrdenCompra->exists() )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		if ($this->OrdenCompra->saveField('retiro', $estado)) {
+			$this->Session->setFlash('Estado del retiro modificado con éxito.', null, array(), 'success');
+		}else{
+			$this->Session->setFlash('No fue posible actualizar el estado de retiro.', null, array(), 'danger');
+		}
+
 		$this->redirect($this->referer('/', true));
 	}
 
