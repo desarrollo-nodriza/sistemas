@@ -640,7 +640,9 @@ class LibreDteComponent extends Component
 		# Incluye medio de pago
 		if (!empty($data['medio_de_pago'])) {
 			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
-				'FmaPago' => $data['medio_de_pago']
+				'IdDoc' => array(
+					'FmaPago' => $data['medio_de_pago']
+				)
 			));
 		}
 
