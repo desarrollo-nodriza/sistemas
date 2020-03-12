@@ -848,6 +848,9 @@ class PrestashopComponent extends Component
 	 */
 	public function prestashop_actualizar_stock($stock_id, $NuevoStock)
 	{	
+
+		return false;
+
 		try {
 
 			$opt                       = array();
@@ -883,6 +886,9 @@ class PrestashopComponent extends Component
 	 */
 	public function prestashop_activar_desactivar_producto($id, $activo = 1)
 	{	
+
+		return false;
+
 		try {
 
 			$opt                       = array();
