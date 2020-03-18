@@ -700,7 +700,11 @@ class AppController extends Controller
 				'meta_ids_enviame',
 				'peso_enviame',
 				'volumen_enviame',
-				'mandrill_apikey'
+				'mandrill_apikey',
+				'sii_rut',
+				'sii_clave',
+				'libredte_token',
+				'sincronizar_compras'
 			); 
 
 			# Verificar que la tienda esté configurada
