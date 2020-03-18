@@ -645,7 +645,7 @@ class Venta extends AppModel
 		foreach ($ventas as $iv => $v) {
 			
 			$cant_reservada = array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_reservada'));
-			$cant_cant = array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_entregada'));
+			$cant_cant = array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cantidad_entregada')) - array_sum(Hash::extract($v['VentaDetalle'], '{n}.cant_en_espera'));
 
 			if ($cant_reservada != $cant_cant || $cant_reservada == 0) {
 				unset($ventas[$iv]);
