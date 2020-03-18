@@ -2,10 +2,11 @@
 	<h2><i class="fa fa-list" aria-hidden="true"></i> Recepción de productos</h2>
 </div>
 
-<?= $this->Form->create('OrdenCompra', array('class' => 'form-horizontal js-validate-oc js-recepcion', 'type' => 'file',  'data-valid' => false, 'data-id' => $this->request->data['OrdenCompra']['id'],'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-<?= $this->Form->hidden('url_retorno', array('value' => $url_retorno)); ?>
+<?= $this->Form->create('OrdenCompra', array('class' => 'form-horizontal js-validate-oc js-recepcion', 'type' => 'file',  'data-valid' => false, 'data-id' => $this->request->data['OrdenCompra']['id'],'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'), 'data-token' => $this->Session->read('Auth.Administrador.token.token'))); ?>
+
 <?= $this->Form->hidden('rut_proveedor', array('value' => $this->request->data['Proveedor']['rut_empresa'])); ?>
 <?= $this->Form->hidden('rut_tienda', array('value' => $this->request->data['Tienda']['rut'])); ?>
+
 <div class="page-content-wrap">
 	<div class="row">
 		<div class="col-xs-12">
@@ -45,9 +46,9 @@
 									<td><?=$data['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'];?></td>
 									<td><?=$data['OrdenComprasVentaDetalleProducto']['cantidad_recibida'];?></td>
 
-									<? if ($data['OrdenComprasVentaDetalleProducto']['cantidad'] > $data['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] ) : ?>
+									<? if ($data['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] > $data['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] ) : ?>
 
-									<td><?=$this->Form->input(sprintf('%d.Bodega.0.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'max' => $data['OrdenComprasVentaDetalleProducto']['cantidad']));?></td>
+									<td><?=$this->Form->input(sprintf('%d.Bodega.0.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'max' => $data['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']));?></td>
 									
 									<? else : ?>
 
@@ -86,7 +87,7 @@
 								<tr>
 									<td colspan="8"></td>
 									<td>Total bruto</td>
-									<td><?=CakeNumber::currency($this->request->data['OrdenCompra']['total'], 'CLP');?></td>
+									<td id="total-bruto" data-value="<?=$this->request->data['OrdenCompra']['total']; ?>"><?=CakeNumber::currency($this->request->data['OrdenCompra']['total'], 'CLP');?></td>
 								</tr>
 							</tfoot>
 						</table>
@@ -123,13 +124,13 @@
 							<tbody class="">
 								<tr class="hidden clone-tr">
 									<td>
-										<?= $this->Form->select('OrdenCompraFactura.999.tipo_documento', $tipo_documento , array( 'disabled' => true, 'class' => 'form-control not-blank', 'empty' => 'Seleccione tipo documento')); ?>
+										<?= $this->Form->select('OrdenCompraFactura.999.tipo_documento', $tipo_documento , array( 'disabled' => true, 'class' => 'form-control not-blank js-tipo-documento-compra', 'empty' => 'Seleccione tipo documento')); ?>
 									</td>
 									<td>
-										<?= $this->Form->input('OrdenCompraFactura.999.folio', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej: 4433')); ?>
+										<?= $this->Form->input('OrdenCompraFactura.999.folio', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank js-folio-dte-compra', 'placeholder' => 'Ej: 4433')); ?>
 									</td>
 									<td>
-										<?= $this->Form->input('OrdenCompraFactura.999.monto_facturado', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej: 299900')); ?>
+										<?= $this->Form->input('OrdenCompraFactura.999.monto_facturado', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank js-dte-monto-compra', 'placeholder' => 'Ej: 299900')); ?>
 									</td>	
 									<td>
 										<?= $this->Form->input('OrdenCompraFactura.999.nota', array('type' => 'textarea', 'disabled' => true, 'class' => 'form-control', 'placeholder' => 'Agregue un nota (opcional)')); ?>
@@ -169,7 +170,7 @@
 				<div class="panel-footer">
 					<div class="pull-right">
 						<button type="submit" class="btn btn-success esperar-carga" autocomplete="off" data-loading-text="Espera un momento..."><i class="fa fa-check"></i> Guardar cambios</button>
-						<?= $this->Html->link('Volver', $url_retorno, array('class' => 'btn btn-danger')); ?>
+						<?= $this->Html->link('Volver', array('action' => 'index', 'sta' => 'espera_recepcion'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>

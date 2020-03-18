@@ -572,3 +572,96 @@ tr.expanded-div {
     border-left: 2px solid #1D2127;
     border-right: 2px solid #1D2127;
 }
+
+#oc-links {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 60px;
+}
+
+#oc-links > a.btn {
+    margin-top: 0; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    word-wrap: break-word;
+    white-space: normal;
+    line-height: 14px;
+    padding: 5px;
+    transition: min-width 0.3 linear;
+    min-width: 0;
+}
+
+#oc-links > a:nth-child(1){
+    order: 1 !important;
+}
+
+#oc-links > a:nth-child(2){
+    order: 2;
+}
+
+#oc-links > a:nth-child(3){
+    order: 3;
+}
+
+#oc-links > a:nth-child(4){
+    order: 4;
+}
+
+#oc-links > a:nth-child(5){
+    order: 5;
+}
+
+#oc-links > a:nth-child(6){
+    order: 6;
+}
+
+#oc-links > a:nth-child(7){
+    order: 7;
+}
+
+#oc-links > a:nth-child(8){
+    order: 8;
+}
+
+#oc-links > a:nth-child(9){
+    order: 9;
+}
+
+#oc-links > a:nth-child(10){
+    order: 10;
+}
+
+#oc-links > a:nth-child(11){
+    order: 11 !important;
+}
+
+@media screen and (min-width: 768px) {
+    #oc-links > a.btn:hover {
+        min-width: 15%;
+    }
+
+    #oc-links > a.btn > span {
+        max-width: 85px;
+    }
+
+    #oc-links > a.btn.selected {
+        min-width: 22%;
+        background-color: green;
+        flex-direction: row;
+        font-size: 16px;
+        order: 1;
+        -ms-flex-order: 1;
+    }
+
+    #oc-links > a.btn.selected > i {
+        font-size: 25px;
+    }
+
+    #oc-links > a.btn.selected > span {
+        max-width: 100%;
+    }
+
+}

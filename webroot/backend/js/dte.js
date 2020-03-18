@@ -516,6 +516,7 @@ $.extend({
 				deshabilitar: function(){
 					if ( ! $('.js-tipo-ndc').hasClass('hide') ) {
 						$('.js-tipo-ndc').addClass('hide');
+						$('.js-tipo-ndc').find('#DteTipoNtc').val('');
 					}
 				}
 			},
@@ -528,6 +529,7 @@ $.extend({
 
 				if( $selector.val() == 39 ) {
 					$.dte.tipoDocumento.deshabilitar();
+					$.dte.tipoDocumento.tipoNdc.deshabilitar();
 					$.dte.bloquearCampos();
 				}else if ($selector.val() == 61){
 					$.dte.tipoDocumento.tipoNdc.habilitar();
@@ -535,6 +537,7 @@ $.extend({
 					$.dte.desbloquearCampos();
 				}else{
 					$.dte.tipoDocumento.habilitar();
+					$.dte.tipoDocumento.tipoNdc.deshabilitar();
 					$.dte.desbloquearCampos();
 				}
 
@@ -561,6 +564,12 @@ $.extend({
 					if ($(this).val() == 61 || $(this).val() == 56 || $(this).val() == 52) {
 						$.dte.tipoDocumento.Referencia.habilitar();
 						$.dte.desbloquearCampos();
+					}
+
+					if ($(this).val() == 61) {
+						$.dte.tipoDocumento.tipoNdc.habilitar();
+					}else{
+						$.dte.tipoDocumento.tipoNdc.deshabilitar();
 					}
 
 				});

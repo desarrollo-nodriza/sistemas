@@ -368,6 +368,41 @@
 					</div>
 				</div>
 			</div>
+
+			<div class="panel panel-default panel-toggled">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-list"></i> Conexión SII</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<td><?= $this->Form->label('sii_rut', 'Rut Empresa'); ?></td>
+								<td><?= $this->Form->input('sii_rut', array('placeholder' => 'Ingrese Rut sin puntos')); ?></td>
+							</tr>,
+							<tr>
+								<td><?= $this->Form->label('sii_clave', 'Clave SII'); ?></td>
+								<td><?= $this->Form->input('sii_clave'); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('libredte_token', 'Token obtenido desde https://api.libredte.cl/'); ?></td>
+								<td><?= $this->Form->input('libredte_token'); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('sincronizar_compras', '¿Activar conexión SII?'); ?></td>
+								<td><?= $this->Form->input('sincronizar_compras', array('class' => 'icheckbox')); ?></td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

@@ -44,8 +44,9 @@
                     <caption style="border: 1px solid #dbdbdb;padding: 10px;text-align: left; font-weight: 600;">Listado de productos con stockout</caption>
                     <thead>
                       <tr>
-                        <th style="border: 1px solid #dbdbdb;padding: 10px;text-align: center;">Nombre del producto</th>
-                        <th style="border: 1px solid #dbdbdb;padding: 10px;text-align: center;">Cantidad disponible en proveedor</th>
+                        <th style="border: 1px solid #dbdbdb;padding: 10px;text-align: center;">Nombre <br>del producto</th>
+                        <th style="border: 1px solid #dbdbdb;padding: 10px;text-align: center;">Cantidad disponible <br>en proveedor</th>
+                        <th style="border: 1px solid #dbdbdb;padding: 10px;text-align: center;">Razón <br>proveedor</th>
                         <!--<th style="border: 1px solid #dbdbdb;padding: 10px;text-align: center;">Cantidad vendida</th>-->
                       </tr>
                     </thead>
@@ -54,6 +55,7 @@
                       <tr>
                         <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= $p['descripcion']; ?></td>
                         <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= $p['cantidad_validada_proveedor']; ?></td>
+                        <td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= $p['nota_proveedor']; ?></td>
                         <!--<td style="border: 1px solid #dbdbdb;padding: 10px;text-align: left;"><?= array_sum(Hash::extract($ventas, 'VentaDetalle.{n}[venta_detalle_producto_id='.$p['venta_detalle_producto_id'].'].cantidad')); ?></td>-->
                       </tr>
                     <? endforeach; ?>

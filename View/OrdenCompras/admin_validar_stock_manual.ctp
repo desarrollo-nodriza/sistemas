@@ -66,6 +66,7 @@
 				<div class="panel-footer">
 					<div class="pull-right">
 						<?=$this->Form->button('<i class="fa fa-check"></i> Completar', array('type' => 'submit', 'class' => 'btn btn-success', 'escape' => false)); ?>
+						<?= $this->Html->link('Volver', array('action' => 'index', 'sta' => 'espera_recepcion'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>

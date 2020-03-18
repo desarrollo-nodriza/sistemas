@@ -4,7 +4,7 @@
 
 <?= $this->Form->create('OrdenCompra', array('class' => 'form-horizontal form-pay', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'), 'data-id' => $this->request->data['OrdenCompra']['id'])); ?>
 <?= $this->Form->input('id');?>
-<?=$this->Form->hidden('estado', array('value' => 'asignacion_moneda'));?>
+<?=$this->Form->hidden('estado', array('value' => 'validacion_externa'));?>
 <?=$this->Form->hidden('descuento', array('value' => $this->request->data['OrdenCompra']['descuento']));?>
 <?=$this->Form->hidden('descuento_monto', array('value' => $this->request->data['OrdenCompra']['descuento_monto']));?>
 <?=$this->Form->hidden('total', array('value' => $this->request->data['OrdenCompra']['total']));?>

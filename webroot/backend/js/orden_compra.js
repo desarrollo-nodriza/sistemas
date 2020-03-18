@@ -1049,6 +1049,70 @@ $.extend({
 				
 			});
 		},
+		obtener_dte_compra: function(contexto){ 
+			
+			if (contexto.find('.js-tipo-documento-compra').val() != 33) {
+				return;
+			}
+
+			$('.loader').addClass('show');
+
+			$.ajax({
+				url: webroot + 'api/compras/documentos.json?token=' + $('.js-recepcion').data('token'),
+				data: {
+					folio : contexto.find('.js-folio-dte-compra').val(),
+					rut_emisor : function(){
+						var rut = $('#OrdenCompraRutProveedor').val();
+						// Quitamos puntos
+						rut = rut.replace(/\./g, '');
+						// Quitamos DV
+						rut = rut.slice(0, rut.length - 2);
+						return rut;
+					},
+					tipo_documento : contexto.find('.js-tipo-documento-compra').val()
+				},
+			})
+			.done(function(res) {
+				if (res.dtes.length == 0) {
+					contexto.find('.js-folio-dte-compra').val('');
+
+					noty({text: 'El folio ingresado no es válido', layout: 'topRight', type: 'error'});
+					
+					setTimeout(function(){
+						$.noty.closeAll();
+					}, 10000);
+
+				}else if (res.dtes[0].DteCompra.monto_total != $('#total-bruto').data('value')){
+
+					contexto.find('.js-dte-monto-compra').val(res.dtes[0].DteCompra.monto_total);
+
+					noty({text: 'El monto total de la factura es diferente al monto total de la OC', layout: 'topRight', type: 'error'});
+					
+					setTimeout(function(){
+						$.noty.closeAll();
+					}, 10000);
+
+				}else{
+
+					contexto.find('.js-dte-monto-compra').val(res.dtes[0].DteCompra.monto_total);
+
+					noty({text: 'Factura obtenida exitosamente.', layout: 'topRight', type: 'success'});
+					
+					setTimeout(function(){
+						$.noty.closeAll();
+					}, 10000);
+
+				}
+			})
+			.fail(function(err) {
+				console.log(err);
+			})
+			.always(function(){
+				$('.loader').removeClass('show');
+			});
+			
+
+		},	
 		init: function(){
 			if ( $('.js-validate-oc').length ) {
 				$.ordenCompra.validate();
@@ -1113,6 +1177,16 @@ $.extend({
 				var $form = $(this).parents('.fake-form').eq(0);
 
 				$.ordenCompra.modificar_precio_lista_especifico( $form, $form.find('.js-fake-form-body').eq(0), $form.data('id') );
+			});
+
+
+			$(document).on('focusout', '.js-folio-dte-compra', function(){
+				$.ordenCompra.obtener_dte_compra($(this).parents('tr').eq(0));
+			});
+
+			$(document).on('change', '.js-tipo-documento-compra', function(){
+				$(this).parents('tr').eq(0).find('.js-folio-dte-compra').val('');
+				$(this).parents('tr').eq(0).find('.js-dte-monto-compra').val('');
 			});
 		}
 	}

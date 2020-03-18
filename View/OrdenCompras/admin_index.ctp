@@ -1,5 +1,5 @@
 <div class="page-title">
-	<h2><span class="fa fa-list"></span> Ordenes de compra</h2>
+	<h2 style="text-transform: capitalize;"><?= $titulo_index; ?></h2>
 	<div class="btn-group pull-right">
 	<? if ($permisos['add']) :  ?>
 		<?= $this->Html->link('<i class="fa fa-plus"></i> Nueva OC Ventas', array('action' => 'add'), array('class' => 'btn btn-primary', 'escape' => false)); ?>
@@ -9,179 +9,107 @@
 </div>
 
 <div class="page-content-wrap">
-	<div class="row">
-		<div class="col-xs-12 col-md-4">
-			<a href="<?=Router::url('/', false);?>ordenCompras/index_no_procesadas">
-            <div class="widget widget-<?=$this->Html->colorOc('');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-ban"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=$sin_iniciar;?></div>
-                    <div class="widget-title">Sin procesar</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-		</div>
-		<div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_revision">
-			<div class="widget widget-<?=$this->Html->colorOc('iniciado');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-pencil-square-o"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=iniciado].id'));?></div>
-                    <div class="widget-title">En revisión</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-		</div>
-        <div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_asignacion_moneda">
-            <div class="widget widget-<?=$this->Html->colorOc('validado');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-user"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=validado].id'));?></div>
-                    <div class="widget-title">Asignación de m. de pago</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-        </div>
-        <div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_validadas">
-            <div class="widget widget-<?=$this->Html->colorOc('asignacion_moneda');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-money"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=asignacion_moneda].id'));?></div>
-                    <div class="widget-title">Espera de validación</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-        </div>
-        <div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_validada_proveedores">
-            <div class="widget widget-<?=$this->Html->colorOc('validado_proveedor');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-user"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=validado_proveedor].id'));?></div>
-                    <div class="widget-title">Espera de pago</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-        </div>
-		<div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_pagadas">
-			<div class="widget widget-<?=$this->Html->colorOc('pagado');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-envelope"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=pagado].id'));?></div>
-                    <div class="widget-title">Listas para envio</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-		</div>
-		<div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_enviadas">
-			<div class="widget widget-<?=$this->Html->colorOc('enviado');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-truck"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=enviado].id'));?></div>
-                    <div class="widget-title">Enviadas</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-		</div>	
-		<div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_incompletas">
-			<div class="widget widget-<?=$this->Html->colorOc('incompleto');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-meh-o"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=incompleto].id'));?></div>
-                    <div class="widget-title">Incompletas</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-		</div>		
+    
+    <?=$this->element('ordenCompras/acceso_rapido');?>
 
-        <div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_pendiente_facturas">
-            <div class="widget widget-<?=$this->Html->colorOc('pendiente_factura');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-exclamation-circle"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=pendiente_factura].id'));?></div>
-                    <div class="widget-title">Pendiente Factura</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-        </div>
-        <div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_finalizadas">
-            <div class="widget widget-<?=$this->Html->colorOc('recibido');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-smile-o"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=recibido].id'));?></div>
-                    <div class="widget-title">Completas</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-        </div>
-        <div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_canceladas">
-            <div class="widget widget-<?=$this->Html->colorOc('cancelada');?> widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-frown-o"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra[estado=cancelada].id'));?></div>
-                    <div class="widget-title">Canceladas</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
-        </div>
-        <div class="col-xs-12 col-md-4">
-            <a href="<?=Router::url('/', false);?>ordenCompras/index_todo">
-            <div class="widget widget-info widget-item-icon">
-                <div class="widget-item-left">
-                    <span class="fa fa-list"></span>
-                </div>
-                <div class="widget-data">
-                    <div class="widget-int num-count"><?=count(Hash::extract($ocs, '{n}.OrdenCompra.id'));?></div>
-                    <div class="widget-title">Todo</div>
-                    <div class="widget-subtitle">Pincha AQUÍ para ver</div>
-                </div>                         
-            </div>
-            </a>
+    <div class="row">
+        <div class="col-xs-12">
+            <?=$this->element('ordenCompras/filtro');?>
         </div>
     </div>
-    
-	<br>
-	<hr>
-	<br>
+
+	<div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Listado de ordenes de compra</h3>
+                    <div class="btn-group pull-right">
+                    <? if ($permisos['add']) :  ?>
+                        <?= $this->Html->link('<i class="fa fa-plus"></i> Nueva OC Ventas', array('action' => 'add'), array('class' => 'btn btn-primary', 'escape' => false)); ?>
+                        <?= $this->Html->link('<i class="fa fa-hand-pointer-o"></i> Nueva OC Manual', array('action' => 'add_manual'), array('class' => 'btn btn-success', 'escape' => false)); ?>
+                    <? endif; ?>
+                        
+                    <? $export = array(
+                        'action' => 'exportar'
+                        );
+
+                    if (isset($this->request->params['named'])) {
+                        $export = array_replace_recursive($export, $this->request->params['named']);
+                    }?>
+
+                    <?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>
+
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <?=$this->element('contador_resultados'); ?>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr class="sort">
+                                    <th><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+                                    <th><?= $this->Paginator->sort('administrador_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+                                    <th><?= $this->Paginator->sort('proveedor_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+                                    <th><?= $this->Paginator->sort('estado', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+                                    <th><?= $this->Paginator->sort('oc_manual', 'OC Manual', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+                                    <th><?= $this->Paginator->sort('created', 'Fecha de creación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ( $ordenCompras as $ordenCompra ) : ?>
+
+                                    <? if ($ordenCompra['OrdenCompra']['estado'] == 'creada') : ?>
+                                    <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('editar', 'cancelar')));?>
+                                    <? endif; ?>
+                
+                                    <? if ($ordenCompra['OrdenCompra']['estado'] == 'validacion_comercial') : ?>
+                                    <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('revisar')));?>
+                                    <? endif; ?>
+
+                                    <? if ($ordenCompra['OrdenCompra']['estado'] == 'asignacion_metodo_pago') : ?>
+                                    <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('asignar_pagar')));?>
+                                    <? endif; ?>
+
+                                    <? if ($ordenCompra['OrdenCompra']['estado'] == 'validacion_externa') : ?>
+                                    <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('notificar_proveedor')));?>
+                                    <? endif; ?>
+
+                                    <? if ($ordenCompra['OrdenCompra']['estado'] == 'pago_finanzas') : ?>
+                                    <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('pagar')));?>
+                                    <? endif; ?>
+
+                                    <? if ($ordenCompra['OrdenCompra']['estado'] == 'espera_recepcion') : ?>
+                                    <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('recepcionar', 'stock', 'retiro')));?>
+                                    <? endif; ?>
+
+                                    <? if ($ordenCompra['OrdenCompra']['estado'] == 'recepcion_incompleta') : ?>
+                                    <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('completar', 'stock', 'retiro')));?>
+                                    <? endif; ?>
+
+                                    <? if ($ordenCompra['OrdenCompra']['estado'] == 'espera_dte') : ?>
+                                    <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array('completar')));?>
+                                    <? endif; ?>
+
+                                    <? if ($ordenCompra['OrdenCompra']['estado'] == 'recepcion_completa') : ?>
+                                    <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array()));?>
+                                    <? endif; ?>
+                                
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="pull-right">
+                        <ul class="pagination">
+                            <?= $this->Paginator->prev('« Anterior', array('tag' => 'li'), null, array('tag' => 'li', 'disabledTag' => 'a', 'class' => 'first disabled hidden')); ?>
+                            <?= $this->Paginator->numbers(array('tag' => 'li', 'currentTag' => 'a', 'modulus' => 10, 'currentClass' => 'active', 'separator' => '')); ?>
+                            <?= $this->Paginator->next('Siguiente »', array('tag' => 'li'), null, array('tag' => 'li', 'disabledTag' => 'a', 'class' => 'last disabled hidden')); ?>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

@@ -225,7 +225,13 @@ class AppHelper extends Helper
 	}
 
 
-	public function colorOc($estado)
+	public function estadosOc()
+	{
+		return ClassRegistry::init('OrdenCompra')->estados;
+	}
+
+
+	public function estadoOcOpt($estado)
 	{
 		return ClassRegistry::init('OrdenCompra')->estadosColor[$estado];
 	}

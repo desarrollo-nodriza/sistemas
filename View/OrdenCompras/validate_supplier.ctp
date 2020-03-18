@@ -21,7 +21,7 @@
 	<?= $this->Form->input('id');?>
 	<?= $this->Form->hidden('validado_proveedor', array('value' => 1));?>
 	<?= $this->Form->hidden('fecha_validado_proveedor', array('value' => date('Y-m-d H:i:s')));?>
-	<?= $this->Form->hidden('estado', array('value' => 'validado_proveedor'));?>
+	<?= $this->Form->hidden('estado', array('value' => 'pago_finanzas'));?>
 
 	<div class="row" style="margin-top: 30px;">
 		<div class="col-xs-12">

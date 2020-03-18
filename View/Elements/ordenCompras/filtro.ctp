@@ -1,13 +1,17 @@
-<?= $this->Form->create('Filtro', array('url' => array('controller' => 'ordenCompras', 'action' => str_replace('admin_', '', $this->request->action)), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
+<?= $this->Form->create('OrdenCompra', array('inputDefaults' => array('div' => false, 'label' => false))); ?>
 <? 
     $id  = (isset($this->request->params['named']['id'])) ? $this->request->params['named']['id'] : '' ;
     $venta  = (isset($this->request->params['named']['venta'])) ? $this->request->params['named']['venta'] : '' ;
     $prov = (isset($this->request->params['named']['prov'])) ? $this->request->params['named']['prov'] : '' ;
+    $sta = (isset($this->request->params['named']['sta'])) ? $this->request->params['named']['sta'] : '' ;
     $dtf = (isset($this->request->params['named']['dtf'])) ? $this->request->params['named']['dtf'] : '' ;
     $dtt = (isset($this->request->params['named']['dtt'])) ? $this->request->params['named']['dtt'] : '' ;
     $ret = (isset($this->request->params['named']['ret'])) ? $this->request->params['named']['ret'] : '' ;
+
+    echo $this->Form->hidden('sta', array('value' => $sta));
+
 ?>
-<div class="panel panel-default">
+<div class="panel panel-primary">
     <div class="panel-heading">
         <h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
     </div>

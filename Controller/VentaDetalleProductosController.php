@@ -123,7 +123,7 @@ class VentaDetalleProductosController extends AppController
 			'contain' => array(
 				'VentaDetalleProducto' => array(
 					'fields' => array(
-						'VentaDetalleProducto.nombre'
+						'VentaDetalleProducto.nombre', 'VentaDetalleProducto.id'
 					)
 				)			
 			)
@@ -324,8 +324,8 @@ class VentaDetalleProductosController extends AppController
 				if ($m['ajustar']=='') {
 					continue;
 				}
-
-				if (ClassRegistry::init('Bodega')->ajustarInventario($id, $m['bodega'], $m['ajustar'], $m['costo'])) {
+		
+				if (ClassRegistry::init('Bodega')->ajustarInventario($id, $m['bodega'], $m['ajustar'], $m['costo'], $m['glosa'])) {
 					$aceptados[] = $m['ajustar'] . ' items ajustados en bodega ' . $bodegas[$m['bodega']];
 				}
 
@@ -364,7 +364,7 @@ class VentaDetalleProductosController extends AppController
 		foreach ($bodegas as $ib => $b) {
 			$this->request->data['VentaDetalleProducto']['Total'][$ib]['bodega_id'] = $ib;
 			$this->request->data['VentaDetalleProducto']['Total'][$ib]['bodega_nombre'] = $b;
-			$this->request->data['VentaDetalleProducto']['Total'][$ib]['pmp'] = ClassRegistry::init('Bodega')->obtener_pmp_por_id($id);	
+			$this->request->data['VentaDetalleProducto']['Total'][$ib]['pmp'] = ClassRegistry::init('Bodega')->obtener_pmp_por_producto_bodega($id, $ib);	
 			$this->request->data['VentaDetalleProducto']['Total'][$ib]['total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib, true);	
 		}
 		
@@ -1372,7 +1372,7 @@ class VentaDetalleProductosController extends AppController
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_id'] = $ib;
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_nombre'] = $b;
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib);
-			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['pmp'] = ClassRegistry::init('Bodega')->obtener_pmp_por_id($id, $ib);
+			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['pmp'] = ClassRegistry::init('Bodega')->obtener_pmp_por_producto_bodega($id, $ib);
 		}
 
 		if (!in_array(1, Hash::extract($canales, '{s}.{n}.existe'))) {

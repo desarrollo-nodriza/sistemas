@@ -231,7 +231,7 @@
 								<table class="table table-bordered">
 									<tr>
 										<td>Seleccione tipo de nota de crédito</td>
-										<td><?=$this->Form->select('tipo_ntc', array('devolucion' => 'Devolución', 'cambio_dte' => 'Cambio de DTE'), array('class' => 'form-control not-blank', 'empty' => 'Seleccione'))?></td>
+										<td><?=$this->Form->select('tipo_ntc', $tipos_ndc, array('class' => 'form-control not-blank', 'empty' => 'Seleccione'))?></td>
 									</tr>
 								</table>
 							</div>

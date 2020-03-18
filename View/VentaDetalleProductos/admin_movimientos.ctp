@@ -114,21 +114,21 @@
 							<thead>
 								<tr class="sort">
 									<th style="width: 100px;"><?= $this->Paginator->sort('venta_detalle_producto_id', __('Producto'), array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('bodega_id', __('Bodega'), array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th style="width: 100px;"><?= $this->Paginator->sort('bodega_id', __('Bodega'), array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('io', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('tipo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('cantidad', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('valor', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('total', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('fecha', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('responsable', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th style="width: 100px;"><?= $this->Paginator->sort('responsable', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th style="width: 100px;"><?= $this->Paginator->sort('glosa', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 								</tr>
 							</thead>
 							<tbody>
 								<?php foreach ( $movimientos as $movimiento ) : ?>
 								<tr>
-									<td><?= h($movimiento['VentaDetalleProducto']['nombre']); ?>&nbsp;</td>
+									<td><?= $movimiento['VentaDetalleProducto']['id'] . '<br>' . h($movimiento['VentaDetalleProducto']['nombre']); ?>&nbsp;</td>
 									<td><?= h($movimiento['BodegasVentaDetalleProducto']['bodega']); ?>&nbsp;</td>
 									<td><?= h($movimiento['BodegasVentaDetalleProducto']['io']); ?>&nbsp;</td>
 									<td><?= h($movimiento['BodegasVentaDetalleProducto']['tipo']); ?>&nbsp;</td>

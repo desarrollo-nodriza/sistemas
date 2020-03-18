@@ -189,7 +189,7 @@
 				<div class="panel-footer">
 					<div class="pull-right">
 						<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalComentario">Continuar</button>
-						<?= $this->Html->link('Volver', array('action' => 'index_revision'), array('class' => 'btn btn-danger')); ?>
+						<?= $this->Html->link('Volver', array('action' => 'index', 'sta' => 'validacion_comercial'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>

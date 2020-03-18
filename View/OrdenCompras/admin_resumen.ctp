@@ -10,7 +10,7 @@
 
 <div class="page-content-wrap">
 	
-	<?=$this->element('link_ordencompras');?>
+	<?=$this->element('ordenCompras/acceso_rapido');?>
 
 	<div class="row">
 
@@ -24,7 +24,8 @@
 								<tr>
 									<th>Proveedor / Estado</th>
 								<?  foreach ($estados as $slug => $estado) : ?>
-									<th><a class="label label-form label-<?=$this->Html->colorOc($slug);?>"><?=$estado; ?></a></th>
+									<? $opts = $this->Html->estadoOcOpt($slug); ?>
+									<th><a class="label label-form" style="color: <?=$opts['txt']; ?>; background-color: <?=$opts['bgr']; ?>; min-width: 90px; white-space: normal;" ><?=$estado; ?></a></th>
 								<? endforeach; ?>
 								</tr>
 							</thead>
@@ -33,7 +34,10 @@
 								<tr>
 									<td><?=$x['nombre']; ?></td>
 								<? foreach ($x['total'] as $slug => $y) : ?>
-									<td><span class="center-block text-center text-<?=$this->Html->colorOc($slug);?>"><?=$y;?></span></td>
+									
+									<? $opts = $this->Html->estadoOcOpt($slug); ?>
+
+									<td><span class="center-block text-center" style="color: <?=$opts['bgr']; ?>;"><?=$y;?></span></td>
 								<? endforeach; ?>
 								</tr>
 							<? endforeach; ?>

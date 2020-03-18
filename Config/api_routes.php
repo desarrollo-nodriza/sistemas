@@ -439,4 +439,16 @@ Router::connect(
 );
 
 
+/**
+ * Dte  comrpas
+ */
+Router::connect(
+    '/api/compras/documentos', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'DteCompras', 
+        'action' => 'index',
+        'api' => true,
+        'prefix' => 'api')
+);
+
 Router::parseExtensions('json');

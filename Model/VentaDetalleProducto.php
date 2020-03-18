@@ -74,6 +74,19 @@ class VentaDetalleProducto extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'Pmp' => array(
+			'className'				=> 'Pmp',
+			'foreignKey'			=> 'venta_detalle_producto_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
@@ -477,11 +490,11 @@ class VentaDetalleProducto extends AppModel
 				'VentaDetalle.venta_detalle_producto_id' => $id
 			),
 			'fields' => array(
-				'VentaDetalle.cantidad_pendiente_entrega'
+				'VentaDetalle.cantidad_entregada'
 			)
 		));	
 
-		return array_sum(Hash::extract($ventas, '{n}.VentaDetalle.cantidad_pendiente_entrega'));
+		return array_sum(Hash::extract($ventas, '{n}.VentaDetalle.cantidad_entregada'));
 	}
 
 

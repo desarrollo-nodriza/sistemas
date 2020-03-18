@@ -568,6 +568,86 @@ class OrdenesController extends AppController
 						*/
 					}
 
+					# Si es nota de credito por garantia no se devuelve el stock a bodega pero se anula el item de la venta
+					if (!empty($this->request->data['DteDetalle']) && $this->request->data['Dte']['tipo_documento'] == 61 && $id_dte['Dte']['estado'] == 'dte_real_emitido' && $this->request->data['Dte']['tipo_ntc'] == 'garantia') {
+						
+						$venta = ClassRegistry::init('Venta')->find('first', array(
+							'conditions' => array(
+								'Venta.id' => $this->request->data['Dte']['venta_id']
+							),
+							'contain' => array(
+								'VentaDetalle' => array(
+									'fields' => array(
+										'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.cantidad', 'VentaDetalle.precio', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.total_neto', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_anulada'
+									)
+								)
+							),
+							'fields' => array(
+								'Venta.id', 'Venta.descuento', 'Venta.total', 'Venta.costo_envio'
+							)
+						));
+
+						# Obtenemos el porcentaje de descuento
+						if ($venta['Venta']['descuento'] > 0) {
+							$porcentaje_descuento = (($venta['Venta']['descuento']*100) / $venta['Venta']['total']) / 100 ;
+						}else{
+							$porcentaje_descuento = 0;
+						}
+
+						$itemsDevuletos = array();
+
+						# Aunlamos los items correspondientes
+						foreach ($venta['VentaDetalle'] as $ip => $d) {
+							foreach ($this->request->data['DteDetalle'] as $ide => $detalle) {
+
+								$id_item = str_replace('COD-', '', $detalle['VlrCodigo']);
+
+								if ($id_item == $d['venta_detalle_producto_id']) {
+									$venta['VentaDetalle'][$ip]['cantidad_anulada']           = $d['cantidad_anulada'] + $detalle['QtyItem'];
+									$venta['VentaDetalle'][$ip]['monto_anulado']              = $venta['VentaDetalle'][$ip]['cantidad_anulada'] * $detalle['PrcItem'];
+									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
+									$venta['VentaDetalle'][$ip]['dte']                        = $id_dte['Dte']['id'];
+
+									# si la cantidad reservada es menor a la cantidad anulada, la reserva se lleva a 0
+									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) {
+										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = 0;
+									}
+
+									# si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
+									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem']) {
+										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
+									}
+
+									if ($d['cantidad'] == $detalle['QtyItem']) {
+										$venta['VentaDetalle'][$ip]['total_neto']   = 0;
+									}else{
+										$venta['VentaDetalle'][$ip]['total_neto']   = $d['total_neto'] - ($detalle['QtyItem'] * $detalle['PrcItem']);
+									}
+
+									# Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
+									if ($d['cantidad_entregada'] > 0) {
+
+										# Quitadmos de entregado los prductos devueltos
+										$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $d['cantidad_entregada'] - $detalle['QtyItem']; 
+									}
+								}
+
+								# Total bruto se calcula siempre
+								$venta['VentaDetalle'][$ip]['total_bruto']      = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
+							}
+						}
+						
+						# Recalculamos los totales de la venta
+						$subtotal_neto  = (float) array_sum(Hash::extract($venta['VentaDetalle'], '{n}.total_neto')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.monto_anulado'));
+						$subtotal_bruto = (float) monto_bruto($subtotal_neto);
+						$descuento      = (float) ($porcentaje_descuento > 0) ? round($subtotal_bruto * $porcentaje_descuento, 2) : 0;
+					
+						$venta['Venta']['descuento'] = $descuento;
+						
+						# Guardamos los cambios
+						ClassRegistry::init('Venta')->saveAll($venta);
+					}
+
 					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte['Dte']['id'], $id_orden));
 				}
 
@@ -875,12 +955,14 @@ class OrdenesController extends AppController
 					break;
 			}
 		}
+
+		$tipos_ndc = $this->Orden->get_tipos_ndc();
 		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');
 		
-		$this->set(compact('venta', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias'));
+		$this->set(compact('venta', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc'));
 
 	}
 

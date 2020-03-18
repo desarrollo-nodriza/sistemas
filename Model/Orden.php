@@ -18,6 +18,13 @@ Class Orden extends AppModel {
 		'webpay_detail_order'
 	);
 
+
+	private static $tipo_ndc = array(
+		'devolucion' => 'Devolución', 
+		'cambio_dte' => 'Cambio de DTE', 
+		'garantia' => 'Garantía'
+	);
+
 	public $belongsTo = array(
 		'OrdenEstado' => array(
 			'className'				=> 'OrdenEstado',
@@ -173,6 +180,13 @@ Class Orden extends AppModel {
 		}
 
 		return $sf;	
+	}
+
+
+	public function get_tipos_ndc(){
+
+		return self::$tipo_ndc;
+
 	}
 
 	/*public function getUniqReference($id_cart = '') {

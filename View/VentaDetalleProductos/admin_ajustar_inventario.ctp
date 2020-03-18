@@ -103,6 +103,7 @@
 										<th>Costo unitario</th>
 										<th>Cantidad actual</th>
 										<th>Nueva cantidad</th>
+										<th>Glosa (opcional)</th>
 									</thead>
 									<tbody>
 									<? foreach ($this->request->data['VentaDetalleProducto']['Total'] as $it => $cant) : ?>
@@ -116,6 +117,7 @@
 											</td>
 											<td><?= $cant['total'];?></td>
 											<td><?=$this->Form->input(sprintf('%d.ajustar', $it), array('type'=> "text", 'class' => 'is-number form-control', 'min' => 0));?></td>
+											<td><?=$this->Form->textarea(sprintf('%d.glosa', $it), array('class' => 'form-control', 'placeholder' => 'si se deja vacía, se usará la glosa por defecto.', 'row' => 2));?></td>
 										</tr>
 									<? endforeach; ?>
 									</tbody>

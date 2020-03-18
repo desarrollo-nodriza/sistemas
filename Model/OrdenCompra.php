@@ -10,22 +10,31 @@ class OrdenCompra extends AppModel
 
 
 	public $estados = array(
-		''                  => 'No procesada',
-		'iniciado'          => 'En revisión',
-		'validado'          => 'En asignación de m. de pago',
-		'asignacion_moneda' => 'En revisión proveedor',
-		'validado_proveedor'=> 'En proceso de pago',
-		'pagado'            => 'Pagado',
-		'enviado'           => 'Enviado',
-		'incompleto'        => 'Recibido incompleto',
-		'pendiente_factura' => 'Factura pendiente',
-		'recibido'          => 'Finalizado',
-		'cancelada'          => 'Cancelada'
+		/*''                   => 'No procesada',
+		'iniciado'           => 'En revisión',
+		'validado'           => 'En asignación de m. de pago',
+		'asignacion_moneda'  => 'En revisión proveedor',
+		'validado_proveedor' => 'En proceso de pago',
+		'pagado'             => 'Pagado',
+		'enviado'            => 'Enviado',
+		'incompleto'         => 'Recibido incompleto',
+		'pendiente_factura'  => 'Factura pendiente',
+		'recibido'           => 'Finalizado',*/
+		'creada'                 => 'Creadas no procesada',
+		'validacion_comercial'   => 'En revisión comercial',
+		'asignacion_metodo_pago' => 'En asignación de m. de pago',
+		'validacion_externa'     => 'En revisión proveedor',
+		'pago_finanzas'          => 'En proceso de pago',
+		'espera_recepcion'       => 'En espera de recepción',
+		'espera_dte'             => 'Con factura pendiente',
+		'recepcion_incompleta'   => 'Recibidas incompleta',
+		'recepcion_completa'     => 'Finalizadas',
+		'cancelada'              => 'Canceladas',
 	);
 
 
 	public $estadosColor = array(
-		''                  => 'danger',
+		/*''                  => 'danger',
 		'iniciado'          => 'warning',
 		'validado'          => 'primary',
 		'asignacion_moneda' => 'info',
@@ -34,8 +43,57 @@ class OrdenCompra extends AppModel
 		'enviado'           => 'primary',
 		'incompleto'        => 'warning',
 		'pendiente_factura' => 'warning',
-		'recibido'          => 'success',
-		'cancelada'         => 'danger'
+		'recibido'          => 'success',*/
+		'creada'                 => array(
+			'ico' => 'fa-info', // Fontawesome 3
+			'bgr' => '#68D9FE',
+			'txt' => '#fff'
+		),
+		'validacion_comercial'   => array(
+			'ico' => 'fa-pencil-square-o', // Fontawesome 3
+			'bgr' => '#FE9E1B',
+			'txt' => '#fff'
+		),
+		'asignacion_metodo_pago' => array(
+			'ico' => 'fa-money',
+			'bgr' => '#191C22',
+			'txt' => '#fff'
+		),
+		'validacion_externa'     => array(
+			'ico' => 'fa-user',
+			'bgr' => '#4DA0BC',
+			'txt' => '#fff'
+		),
+		'pago_finanzas'          => array(
+			'ico' => 'fa-money',
+			'bgr' => '#424242',
+			'txt' => '#fff'
+		),
+		'espera_recepcion'       => array(
+			'ico' => 'fa-truck',
+			'bgr' => '#FF9400',
+			'txt' => '#fff'
+		),
+		'espera_dte'             => array(
+			'ico' => 'fa-exclamation-circle',
+			'bgr' => '#EDED10',
+			'txt' => '#000'
+		),
+		'recepcion_incompleta'   => array(
+			'ico' => 'fa-meh-o',
+			'bgr' => '#AA2927',
+			'txt' => '#fff'
+		),
+		'recepcion_completa'     => array(
+			'ico' => 'fa-smile-o',
+			'bgr' => '#65B541',
+			'txt' => '#fff'
+		),
+		'cancelada'              => array(
+			'ico' => 'fa-trash',
+			'bgr' => '#B64645',
+			'txt' => '#fff'
+		),
 	);
 
 

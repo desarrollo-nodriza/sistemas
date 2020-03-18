@@ -7,7 +7,7 @@
 		
 	<?= $this->Form->input('administrador_id', array('value' => $this->Session->read('Auth.Administrador.id'), 'type' => 'hidden')); ?>
 	<?= $this->Form->input('tienda_id', array('value' => $this->Session->read('Tienda.id'), 'type' => 'hidden')); ?>
-	<?= $this->Form->input('estado', array('value' => 'iniciado', 'type' => 'hidden')); ?>
+	<?= $this->Form->input('estado', array('value' => 'validacion_comercial', 'type' => 'hidden')); ?>
 	<?= $this->Form->input('oc_manual', array('value' => 1, 'type' => 'hidden')); ?>
 
 	<div class="page-content-wrap">

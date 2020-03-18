@@ -4,7 +4,7 @@
 
 <?= $this->Form->create('OrdenCompra', array('class' => 'form-horizontal js-validate-oc', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 	<?= $this->Form->input('id');?>
-	<?= $this->Form->input('estado', array('value' => 'iniciado', 'type' => 'hidden')); ?>
+	<?= $this->Form->input('estado', array('value' => 'validacion_comercial', 'type' => 'hidden')); ?>
 	
 	<div class="page-content-wrap">
 

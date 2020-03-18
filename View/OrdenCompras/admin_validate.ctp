@@ -5,8 +5,6 @@
 <? if (!empty($productosIncompletos)) : ?>
 <?= $this->Form->create('Form', array('url' => array('controller' => 'VentaDetalleProductos', 'action' => 'guardar_proveedores_producto' ), 'class' => 'form-horizontal js-validate-producto', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 
-	<?= $this->Form->hidden('redirect_url', array('value' => $this->here) ); ?>
-
 	<div class="page-content-wrap">
 		<div class="row">
 			<div class="col-xs-12">
@@ -47,6 +45,7 @@
 							</div>
 						</div>
 						<? endforeach; ?>
+					</div>
 					<div class="panel-footer">
 						<div class="pull-right">
 							<button type="submit" class="btn btn-primary">Guardar relación y continuar</button>
@@ -93,7 +92,9 @@
 			<?= $this->Form->input(sprintf('%d.OrdenCompra.tienda_id', $ip), array('value' => $this->Session->read('Tienda.id'), 'type' => 'hidden')); ?>
 			<?= $this->Form->input(sprintf('%d.OrdenCompra.parent_id', $ip), array('value' => $this->request->data['OrdenCompra']['id'], 'type' => 'hidden')); ?>
 			<?= $this->Form->input(sprintf('%d.OrdenCompra.proveedor_id', $ip), array('value' => $p['Proveedor']['id'], 'type' => 'hidden')); ?>
-			<?= $this->Form->input(sprintf('%d.OrdenCompra.estado', $ip), array('value' => 'iniciado', 'type' => 'hidden')); ?>
+			<?= $this->Form->input(sprintf('%d.OrdenCompra.estado', $ip), array('value' => 'validacion_comercial', 'type' => 'hidden')); ?>
+
+
 			<div class="page-content-wrap">
 				<div class="row">
 					<div class="col-xs-12">
@@ -239,6 +240,10 @@
 											</tr>
 											<? endif; ?>
 										<? endforeach; ?>
+
+										<? foreach ($this->request->data['Venta'] as $iv => $venta) {
+											echo $this->Form->hidden(sprintf('%d.Venta.%d.venta_id', $ip, $iv), array('value' => $venta['id']));
+										} ?>
 										
 										</tboby>
 										<tfoot>
@@ -291,7 +296,7 @@
 					<div class="col-xs-12">
 						<div class="pull-right">
 							<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Enviar a revisión">
-							<?= $this->Html->link('Cancelar', array('action' => 'index_no_procesadas'), array('class' => 'btn btn-danger')); ?>
+							<?= $this->Html->link('Cancelar', array('action' => 'index', 'sta' => 'creada'), array('class' => 'btn btn-danger')); ?>
 						</div>
 					</div>
 				</div>

@@ -10,14 +10,14 @@ class OrdenComprasController extends AppController
      * @param 		$accion 		String 		Nombre del método receptor de la petición
      * @return 		void
      */
-    public function filtrar($controlador = '', $accion = '')
+    public function filtrar($controlador = '', $accion = 'index')
     {
     	$redirect = array(
     		'controller' => $controlador,
     		'action' => $accion
     		);
 
-		foreach ($this->request->data['Filtro'] as $campo => $valor) {
+		foreach ($this->request->data['OrdenCompra'] as $campo => $valor) {
 			if (!empty($valor)) {
 				$redirect[$campo] = $valor;
 			}
@@ -39,27 +39,12 @@ class OrdenComprasController extends AppController
 			switch ($campo) {
 				case 'id':
 
-					/*$find = $this->OrdenCompra->find('first', array('conditions' => array('id' => $valor, 'parent_id !=' => ''), 'fields' => array('parent_id')));
-
-					if(!empty($find)) {
-						$filtro = array_replace_recursive($filtro, array(
-							'conditions' => array(
-								'OrdenCompra.id' => $find['OrdenCompra']['parent_id']
-							)
-						));
-					}else{
-						$filtro = array_replace_recursive($filtro, array(
-							'conditions' => array(
-								'OrdenCompra.id' => $valor
-							)
-						));
-					}*/
-
 					$filtro = array_replace_recursive($filtro, array(
 						'conditions' => array(
-							'OrdenCompra.id' => $valor
+							'OrdenCompra.id' => trim($valor)
 						)
 					));
+					
 
 					break;
 				case 'venta':
@@ -98,19 +83,9 @@ class OrdenComprasController extends AppController
 					break;
 				case 'sta':
 
-					$find = $this->OrdenCompra->find('all', array('conditions' => array('estado' => $valor, 'parent_id !=' => ''), 'fields' => array('parent_id')));
-
-					# Obtenemos los ids padres para filtrarlos.
-					if (!empty($find)) {
-						$filtro = array_replace_recursive($filtro, array(
-						'conditions' => array(
-							'OrdenCompra.id' => Hash::extract($find, '{n}.OrdenCompra.parent_id')
-						)));
-					}else{
-						$filtro = array_replace_recursive($filtro, array(
+					$filtro = array_replace_recursive($filtro, array(
 						'conditions' => array('OrdenCompra.estado' => $valor)));
-					}
-
+					
 					break;
 				case 'prov':
 
@@ -222,52 +197,42 @@ class OrdenComprasController extends AppController
 	public function admin_index()
 	{	
 
-		$ocs = $this->OrdenCompra->find('all', array(
-			'conditions' => array(
-				'OR' => array(
-					array(
-						'OrdenCompra.parent_id !=' => '',
-						'OrdenCompra.oc_manual' => 0,
-						'OrdenCompra.estado !=' => ''
-					),
-					array(
-						'OrdenCompra.parent_id' => '',
-						'OrdenCompra.oc_manual' => 1,
-						'OrdenCompra.estado !=' => ''
-					)
-				)
-			),
-			'fields' => array(
-				'estado', 'id'
-			)
-		)); 
+		$paginate = $this->paginacion_index();
 
-		$sin_iniciar = $this->OrdenCompra->find('count', array(
-			'conditions' => array(
-				'OR' => array(
-					array(
-						'OrdenCompra.parent_id !=' => '',
-						'OrdenCompra.oc_manual' => 0,
-						'OrdenCompra.estado' => ''
-					),
-					array(
-						'OrdenCompra.parent_id' => '',
-						'OrdenCompra.oc_manual' => 1,
-						'OrdenCompra.estado' => ''
-					)
-				)
-			),
-			'fields' => array(
-				'estado', 'id'
-			)
-		)); 
+		$titulo_index = '<i class="fa fa-list"></i> Todas las Órdenes de Compra';
+
+		# Filtrar
+		if ( isset($this->request->params['named']) ) {
+			$this->reemplazar_filtro_recursivamente($paginate);
+
+			if (isset($this->request->params['named']['sta'])) {
+				$titulo_index = sprintf('<i class="fa %s"></i> Órdenes de compra %s', $this->OrdenCompra->estadosColor[$this->request->params['named']['sta']]['ico'] , $this->OrdenCompra->estados[$this->request->params['named']['sta']]);	
+			}
+
+		}
+
+		if ( $this->request->is('post') ) {
+			$this->filtrar('ordenCompras');
+		}
+	
+		$this->paginate = $paginate;
+
+		$ordenCompras	= $this->paginate();
 
 		BreadcrumbComponent::add('Ordenes de compra ');
 
-		$this->set(compact('ocs', 'sin_iniciar'));
+		$estados = $this->OrdenCompra->estados;
+
+		$proveedores = ClassRegistry::init('Proveedor')->find('list');
+
+		$this->set(compact('ordenCompras', 'estados', 'proveedores', 'titulo_index'));
 	}
 
 
+	/**
+	 * Muetsra por proveedor, la cantidad de OC en sus respectivos estados.
+	 * @return [type] [description]
+	 */
 	public function admin_resumen()
 	{
 		$qry = array(
@@ -325,450 +290,6 @@ class OrdenComprasController extends AppController
 
 
 	/**
-	 * [admin_index_no_procesadas description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_no_procesadas()
-	{	
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_no_procesadas');
-		}
-
-		$paginate =  array(
-			'recursive'			=> -1,
-			'contain' => array(
-				'Administrador' => array(
-					'fields' => array(
-						'Administrador.nombre'
-					)
-				),
-				'Proveedor' => array(
-					'fields' => array(
-						'Proveedor.nombre'
-					)
-				),
-				'Tienda' => array(
-					'fields' => array(
-						'Tienda.nombre'
-					)
-				)
-			),
-			'conditions' => array(
-				'OrdenCompra.estado' => null,
-				'OR' => array(
-					array(
-						'OrdenCompra.parent_id !=' => '',
-						'OrdenCompra.oc_manual' => 0
-					),
-					array(
-						'OrdenCompra.parent_id' => '',
-						'OrdenCompra.oc_manual' => 1
-					)
-				)
-			),
-			'fields' => array(
-				'OrdenCompra.id',
-				'OrdenCompra.estado',
-				'OrdenCompra.created',
-				'OrdenCompra.tienda_id',
-				'OrdenCompra.parent_id',
-				'OrdenCompra.administrador_id',
-				'OrdenCompra.email_finanza',
-				'OrdenCompra.oc_manual',
-				'OrdenCompra.retiro'
-			),
-			'order' => array(
-				'OrdenCompra.id' => 'DESC'
-			),
-			'limit' => 20
-		);
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('En Revisión', '/ordenCompras/index_no_procesadas');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	
-	}
-
-
-	/**
-	 * [admin_index_revision description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_revision()
-	{
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_revision');
-		}
-
-		$paginate = $this->paginacion_index(array('iniciado'));
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('En Revisión', '/ordenCompras/index_revision');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-	/**
-	 * [admin_index_enviadas description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_enviadas()
-	{	
-
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_enviadas');
-		}
-
-		$paginate = $this->paginacion_index(array('enviado'));
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('Incompletas', '/ordenCompras/index_incompletas');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-	/**
-	 * [admin_index_validadas description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_validadas()
-	{	
-
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_validadas');
-		}
-
-		$paginate = $this->paginacion_index(array('asignacion_moneda'));
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('En espera de pago', '/ordenCompras/index_validadas');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-	/**
-	 * [admin_index_validadas description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_asignacion_moneda()
-	{	
-
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_asignacion_moneda');
-		}
-
-		$paginate = $this->paginacion_index(array('validado'));
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('En espera de asignación de m. de pago', '/ordenCompras/index_asignacion_moneda');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-
-	/**
-	 * [admin_index_validadas_proveedor description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_validada_proveedores()
-	{	
-
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_validada_proveedores');
-		}
-
-		$paginate = $this->paginacion_index(array('validado_proveedor'));
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('En espera de pago', '/ordenCompras/index_validada_proveedores');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-	/**
-	 * [admin_index_pagadas description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_todo()
-	{	
-
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_todo');
-		}
-
-		$paginate = $this->paginacion_index();
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('Todo', '/ordenCompras/index_todo');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-	/**
-	 * [admin_index_pagadas description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_pagadas()
-	{	
-
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_pagadas');
-		}
-
-		$paginate = $this->paginacion_index(array('pagado'));
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('Pagadas', '/ordenCompras/index_pagadas');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-	/**
-	 * [admin_index_incompletas description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_incompletas()
-	{	
-
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_incompletas');
-		}
-
-		$paginate = $this->paginacion_index(array('incompleto'));
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('Incompletas', '/ordenCompras/index_incompletas');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-	/**
-	 * [admin_index_finalizadas description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_finalizadas()
-	{	
-
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_finalizadas');
-		}
-
-		$paginate = $this->paginacion_index(array('recibido'));
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('Finalizadas', '/ordenCompras/index_finalizadas');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-
-	/**
-	 * [admin_index_canceladas description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_canceladas()
-	{	
-
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_canceladas');
-		}
-
-		$paginate = $this->paginacion_index(array('cancelada'));
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('Canceladas', '/ordenCompras/index_canceladas');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-	/**
-	 * [admin_index_pendiente_facturas description]
-	 * @return [type] [description]
-	 */
-	public function admin_index_pendiente_facturas()
-	{	
-
-		// Filtrado de oc por formulario
-		if ( $this->request->is('post') ) {
-			$this->filtrar('ordenCompras', 'index_pendiente_facturas');
-		}
-
-		$paginate = $this->paginacion_index(array('pendiente_factura'));
-
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			$this->reemplazar_filtro_recursivamente($paginate);
-		}
-		
-		$this->paginate = $paginate;
-
-		$estados = $this->OrdenCompra->estados;
-
-		$proveedores = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('activo' => 1)));
-
-		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('Finalizadas', '/ordenCompras/index_pendiente_facturas');
-
-		$ordenCompras	= $this->paginate();
-		$this->set(compact('ordenCompras', 'estados', 'proveedores'));
-	}
-
-
-	/**
 	 * Para finalizar una OC como recibida debe indicarse el/las facturas
 	 * que respaldan los porductos ingresados.
 	 * @param  [type] $id [description]
@@ -779,7 +300,7 @@ class OrdenComprasController extends AppController
 		if ( ! $this->OrdenCompra->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index_enviadas'));
+			$this->redirect(array('action' => 'index', 'sta' => 'espera_recepcion'));
 		}
 
 		$productosActualizado   = array();
@@ -791,18 +312,17 @@ class OrdenComprasController extends AppController
 		);
 
 		if ($this->request->is('post') || $this->request->is('put')) {
-
+			
 			# Variables usados directamente que deben ser quitadas del post una vez asigandas.
-			$url_retorno   = $this->request->data['OrdenCompra']['url_retorno'];
 			$rut_proveedor = $this->request->data['OrdenCompra']['rut_proveedor'];
 			$rut_tienda    = $this->request->data['OrdenCompra']['rut_tienda'];
 
-			unset($this->request->data['OrdenCompra']['url_retorno']);
 			unset($this->request->data['OrdenCompra']['rut_proveedor']);
 			unset($this->request->data['OrdenCompra']['rut_tienda']);
 			
 			foreach ($this->request->data['OrdenCompra'] as $key => $oc) {
 
+				# Se debe inngresar un Documeto para hacer la recepcón
 				if (!isset($this->request->data['OrdenCompraFactura']) || empty($this->request->data['OrdenCompraFactura'])) {
 					$this->Session->setFlash('No ha asignado pagos a esta OC.', null, array(), 'danger');
 					$this->redirect(array('action' => 'reception', $id));
@@ -835,7 +355,7 @@ class OrdenComprasController extends AppController
 
 				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->id = $pedido['OrdenComprasVentaDetalleProducto']['id'];
 				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->saveField('cantidad_recibida', $cantidadRecibida); # Actualiamos la cantidad recibida
-
+				
 				# Se crea la entrada de productos
 				$precioCompra = round($pedido['OrdenComprasVentaDetalleProducto']['total_neto'] / $pedido['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'], 2);
 				
@@ -849,7 +369,7 @@ class OrdenComprasController extends AppController
 
 					# Reservamos los productos de las ventas relacionadas a la OC padre
 					if (!empty($parent_id)) {
-						ClassRegistry::init('Venta')->reservar_stock_por_oc($parent_id);
+						ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
 					}else{
 						# Reservamos las ventas mas antiguas
 						$ventasSinReserva = ClassRegistry::init('Venta')->obtener_ventas_sin_reserva();
@@ -882,7 +402,8 @@ class OrdenComprasController extends AppController
 			$ocSave = array(
 				'OrdenCompra' => array(
 					'id' => $id ,
-					'estado' => 'recibido'
+					'estado' => 'recepcion_completa',
+					'retiro' => 0
 				)
 			);
 
@@ -898,7 +419,7 @@ class OrdenComprasController extends AppController
 			if (!empty($res['incompletos'])) {
 				$ocSave = array_replace_recursive($ocSave, array(
 					'OrdenCompra' => array(
-						'estado' => 'incompleto'
+						'estado' => 'recepcion_incompleta'
 					)
 				));
 			}
@@ -957,10 +478,10 @@ class OrdenComprasController extends AppController
 			}
 
 			# OC queda en estado de espera de factura
-			if ($ocSave['OrdenCompra']['estado'] == 'recibido' && count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33]')) == 0 ) {
-				$ocSave['OrdenCompra']['estado'] = 'pendiente_factura';
-			}elseif ($ocSave['OrdenCompra']['estado'] == 'recibido' && count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33]')) > 0) {
-				$ocSave['OrdenCompra']['estado'] = 'recibido';
+			if ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33]')) == 0 ) {
+				$ocSave['OrdenCompra']['estado'] = 'espera_dte';
+			}elseif ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33]')) > 0) {
+				$ocSave['OrdenCompra']['estado'] = 'recepcion_completa';
 			}
 
 			$ocSave = array_replace_recursive($ocSave, array(
@@ -978,7 +499,7 @@ class OrdenComprasController extends AppController
 				$this->redirect(array('action' => 'reception', $id));
 			}
 
-			$this->redirect(array('action' => 'index_enviadas'));
+			$this->redirect(array('action' => 'index', 'sta' => 'espera_recepcion'));
 
 		}
 
@@ -1009,7 +530,7 @@ class OrdenComprasController extends AppController
 			50 => 'Guia de despacho manual'
  		);
 
-		BreadcrumbComponent::add('Ordenes de compra ', '/index_enviadas');
+		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras/index/sta:' . $this->request->data['OrdenCompra']['estado']);
 		BreadcrumbComponent::add('Recepción OC');
 
 		$this->set(compact('bodegas', 'url_retorno', 'tipo_documento'));
@@ -1110,7 +631,7 @@ class OrdenComprasController extends AppController
 			));
 		}
 		
-		BreadcrumbComponent::add('Ordenes de compra ', array('action' => 'index_todo'));
+		BreadcrumbComponent::add('Ordenes de compra ', array('action' => 'index'));
 		BreadcrumbComponent::add('Ver OC ');
 
 		$this->set(compact('ocs'));
@@ -1291,7 +812,7 @@ class OrdenComprasController extends AppController
 		if ( ! $this->OrdenCompra->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index_revision'));
+			$this->redirect(array('action' => 'index', 'sta' => 'validacion_comercial'));
 		}
 
 
@@ -1357,7 +878,7 @@ class OrdenComprasController extends AppController
 			if (isset($this->request->data['OrdenCompra']['estado'])) {
 
 				$this->OrdenCompra->id = $id;
-				$this->OrdenCompra->saveField('estado', ''); # Vacio vuelve a bodega
+				$this->OrdenCompra->saveField('estado', 'creada'); # Vacio vuelve a bodega
 				$this->OrdenCompra->saveField('comentario_validar', $this->request->data['OrdenCompra']['comentario_validar']); # Guarda comentario
 
 				$emails = array($ocs['Administrador']['email']);
@@ -1366,7 +887,7 @@ class OrdenComprasController extends AppController
 
 			}else{
 
-				$this->request->data['OrdenCompra']['estado']             = 'validado'; # Pasa a finanzas
+				$this->request->data['OrdenCompra']['estado']             = 'asignacion_metodo_pago'; # Pasa a finanzas
 				$this->request->data['OrdenCompra']['nombre_validado']    = $this->Session->read('Auth.Administrador.nombre'); # Guardamos el nombre de quien validó la OC
 				$this->request->data['OrdenCompra']['email_comercial']    = $this->Session->read('Auth.Administrador.email'); # Guardamos el email de quien validó la OC
 				$this->request->data['OrdenCompra']['validado_proveedor'] = 0;
@@ -1380,8 +901,12 @@ class OrdenComprasController extends AppController
 
 			}
 
-			$this->redirect(array('action' => 'index_revision'));
+			$this->redirect(array('action' => 'index', 'sta' => 'validacion_comercial'));
 
+		}
+
+		if ($ocs['OrdenCompra']['validado_proveedor']) {
+			$this->Session->setFlash('Esta OC fue reiniciada por el proveedor.', null, array(), 'success');
 		}
 
 		$estados_proveedor = $this->OrdenCompra->estado_proveedor;
@@ -1412,14 +937,14 @@ class OrdenComprasController extends AppController
 		if ( ! $this->OrdenCompra->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index_asignacion_moneda'));
+			$this->redirect($this->referer('/', true));
 		}
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 			
 			if ($this->guardarEmailValidado($id) && $this->OrdenCompra->save($this->request->data)) {
 				$this->Session->setFlash('Método de pago asignado con éxito.', null, array(), 'success');
-				$this->redirect(array('action' => 'index_asignacion_moneda'));
+				$this->redirect(array('action' => 'index', 'sta' => 'asignacion_metodo_pago'));
 			}else{
 				$this->Session->setFlash('Ocurrió un error al asignar el método de pago o no fue posible enviar el email al proveedor.', null, array(), 'danger');
 				$this->redirect(array('action' => 'asignar_moneda', $id));
@@ -1465,7 +990,7 @@ class OrdenComprasController extends AppController
 		if ( ! $this->OrdenCompra->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index_no_procesadas'));
+			$this->redirect($this->referer('/', true));
 		}
 
 
@@ -1480,7 +1005,7 @@ class OrdenComprasController extends AppController
 				if (!isset($d['OrdenCompra']['parent_id']) || !isset($d['VentaDetalleProducto'])) {
 					continue;
 				}
-
+				
 				if ( ! $this->OrdenCompra->saveAll($d, array('deep' => true)) ) {
 					$this->Session->setFlash('Ocurrió un error al guardar la OC. Verifique la información.', null, array(), 'danger');
 					$this->redirect(array('action' => 'validate', $id));
@@ -1489,7 +1014,7 @@ class OrdenComprasController extends AppController
 			}
 
 			$this->OrdenCompra->id = $id;
-			$this->OrdenCompra->saveField('estado', 'iniciado');
+			$this->OrdenCompra->saveField('estado', 'creada');
 
 			$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('revision_oc');
 
@@ -1498,7 +1023,7 @@ class OrdenComprasController extends AppController
 			}
 
 			$this->Session->setFlash('¡Éxito! Se ha enviado a revisión la OC.', null, array(), 'success');
-			$this->redirect(array('action' => 'index_no_procesadas'));
+			$this->redirect(array('action' => 'index'));
 		}
 
 		$this->request->data = $this->OrdenCompra->find('first', array(
@@ -1575,7 +1100,7 @@ class OrdenComprasController extends AppController
 		# Si no hay producto que pedir se cancela el paso
 		if (empty($productosSolicitar)) {
 			$this->Session->setFlash('No hay productos que agregar a la OC.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index_no_procesadas'));
+			$this->redirect(array('action' => 'index'));
 		}
 
 		# Ordenamos los productos que se deben solicitar por proveedor
@@ -1634,7 +1159,7 @@ class OrdenComprasController extends AppController
 					'conditions' => array(
 						'OrdenCompra.parent_id' => $id
 					)
-				)
+				),
 			),
 			'group' => array('Proveedor.id')
 		));
@@ -1662,7 +1187,7 @@ class OrdenComprasController extends AppController
 		$marcas 		  = ClassRegistry::init('Marca')->find('list');
 		$monedas          = $this->OrdenCompra->Moneda->find('list', array('conditions' => array('Moneda.activo' => 1)));
 
-
+		
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
 		BreadcrumbComponent::add('Revisión ');		
 
@@ -1681,7 +1206,7 @@ class OrdenComprasController extends AppController
 		if ( ! $this->OrdenCompra->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index_validadas'));
+			$this->redirect(array('action' => 'index', 'sta' => 'pago_finanzas'));
 		}
 
 		$ocs = $this->OrdenCompra->find('first', array(
@@ -1703,7 +1228,7 @@ class OrdenComprasController extends AppController
 
 		if (!empty($ocs['OrdenCompra']['nombre_pagado']) && !isset($this->request->query['update'])) {
 			$this->Session->setFlash('La OC #' . $id . ' ya fue pagada por ' . $ocs['OrdenCompra']['nombre_pagado'], null, array(), 'success');
-			$this->redirect(array('action' => 'index_validadas'));
+			$this->redirect(array('action' => 'index', 'sta' => 'pago_finanzas'));
 		}
 
 		if ($this->request->is('post') || $this->request->is('put')) {
@@ -1711,7 +1236,7 @@ class OrdenComprasController extends AppController
 			$data = array(
 				'OrdenCompra' => array(
 					'id'                 => $id,
-					'estado'             => 'pagado',
+					'estado'             => 'espera_recepcion',
 					//'moneda_id'          => $this->request->data['OrdenCompra']['moneda_id'],
 					'nombre_pagado'      => $this->Session->read('Auth.Administrador.nombre'),
 					'email_finanza'      => $this->Session->read('Auth.Administrador.email'),
@@ -1786,12 +1311,12 @@ class OrdenComprasController extends AppController
 
 				$this->OrdenCompra->id = $id;
 				$this->OrdenCompra->saveField('pdf', $pdfOc);
-				$this->OrdenCompra->saveField('estado', 'enviado');
+				$this->OrdenCompra->saveField('estado', 'espera_recepcion');
 				$this->OrdenCompra->saveField('fecha_enviado', date('Y-m-d H:i:s'));
 
 				# Quitamos el envio de emails
 				$this->Session->setFlash('Estado actualizado con éxito.', null, array(), 'success');
-				$this->redirect(array('action' => 'index_validada_proveedores'));
+				$this->redirect(array('action' => 'index', 'sta' => 'pago_finanzas'));
 
 			}else{
 				$this->Session->setFlash('Ocurrió un error al actualizar estado de la OC. Verifique los campos e intente nuevamente', null, array(), 'danger');
@@ -1896,7 +1421,7 @@ class OrdenComprasController extends AppController
 		if ( ! $this->OrdenCompra->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index_no_procesadas'));
+			$this->redirect(array('action' => 'index', 'sta' => 'creada'));
 		}
 
 		if ( $this->request->is('post') || $this->request->is('put') )
@@ -1914,7 +1439,7 @@ class OrdenComprasController extends AppController
 				}
 
 				$this->Session->setFlash('¡Éxito! Se ha enviado a revisión la OC.', null, array(), 'success');
-				$this->redirect(array('action' => 'index_no_procesadas'));
+				$this->redirect(array('action' => 'index', 'sta' => 'creada'));
 			}
 			else
 			{
@@ -2117,7 +1642,8 @@ class OrdenComprasController extends AppController
 	 * @return [type] [description]
 	 */
 	public function admin_exportar()
-	{
+	{	
+
 		$datos			= $this->OrdenCompra->find('all', array(
 			'recursive'				=> -1
 		));
@@ -2219,12 +1745,12 @@ class OrdenComprasController extends AppController
 				$total_neto = $total_neto + $this->request->data['VentaDetalleProducto'][$i]['total_neto'];
 			}
 
-			if ($oc['OrdenCompra']['estado'] == 'enviado') {
-				$this->request->data['OrdenCompra']['estado'] = 'enviado';
+			if ($oc['OrdenCompra']['estado'] == 'espera_recepcion') {
+				$this->request->data['OrdenCompra']['estado'] = 'espera_recepcion';
 			}else if (count(Hash::extract($oc, 'OrdenCompraFactura.{n}[tipo_documento=33]')) == 0){
-				$this->request->data['OrdenCompra']['estado'] = 'pendiente_factura';
+				$this->request->data['OrdenCompra']['estado'] = 'espera_dte';
 			}else {
-				$this->request->data['OrdenCompra']['estado'] = 'recibido';
+				$this->request->data['OrdenCompra']['estado'] = 'recepcion_completa';
 			}
 
 			$this->request->data['OrdenCompra']['total_neto']      = $total_neto;
@@ -2241,12 +1767,28 @@ class OrdenComprasController extends AppController
 			
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 
+				# Flujo para cuando un producto no tenga stock
+				if ($total_stockout > 0) {
+					# Notificar a ventas para que coordine con el cliente
+					$ventasNotificar = $this->OrdenCompra->obtener_ventas_por_productos($oc['OrdenCompra']['parent_id'], Hash::extract($itemes['stockout'], '{n}.venta_detalle_producto_id'));
+				}
+
+				# notificar stockout a ventas
+				if (!empty($ventasNotificar)) {
+
+					$emailsVentas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('ventas');
+
+					if (!empty($emailsVentas)) {
+						$enviado = $this->guardarEmailStockout($id, $ventasNotificar, $itemes['stockout'], $emailsVentas);
+					}
+				}
+
 				$this->Session->setFlash('OC actualizada con éxito.', null, array(), 'success');
 
-				if ($this->request->data['OrdenCompra']['estado'] == 'enviado') {
+				if ($this->request->data['OrdenCompra']['estado'] == 'espera_recepcion') {
 					$this->Session->setFlash('Ahora puede continuar con el flujo de esta OC.', null, array(), 'warning');
 					$this->redirect(array('action' => 'reception', $id));	
-				}else if($this->request->data['OrdenCompra']['estado'] == 'pendiente_factura'){
+				}else if($this->request->data['OrdenCompra']['estado'] == 'espera_dte'){
 					$this->Session->setFlash('Se requiere un DTE para continuar.', null, array(), 'warning');
 					$this->redirect(array('action' => 'reception', $id));
 				}else{
@@ -2264,7 +1806,7 @@ class OrdenComprasController extends AppController
 			$qry = array(
 				'conditions' => array(
 					'OrdenCompra.id' => $id,
-					'OrdenCompra.estado' => array('incompleto', 'enviado')
+					'OrdenCompra.estado' => array('recepcion_incompleta', 'espera_recepcion')
 				),
 				'contain' => array(
 					'Proveedor',
@@ -2280,7 +1822,7 @@ class OrdenComprasController extends AppController
 		if ( empty($this->request->data) )
 		{
 			$this->Session->setFlash('La OC ya no se encuentra en este apartado.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index_todo', 'id' => $id));
+			$this->redirect(array('action' => 'index', 'id' => $id));
 		}
 
 
@@ -2695,7 +2237,7 @@ class OrdenComprasController extends AppController
 
 		$this->View->set(compact('ventas', 'productos', 'url'));
 		$html						= $this->View->render('notificar_stockout_ventas');
-
+		
 		$oc = $this->OrdenCompra->find('first', array(
 			'conditions' => array(
 				'OrdenCompra.id' => $id
@@ -3149,13 +2691,16 @@ class OrdenComprasController extends AppController
 			# sí es rechazo por stockout se notifica a servicio al cliente que la venta no tendrá su producto
 			$nuevaOC = array();
 			$ventasNotificar = array();
-			
-			# si la cantidad de itemes rechazado es igual a la cantidad de produtos pedidos se devuelve toda la OC
+
+
+			# si la cantidad de itemes rechazado es igual a la cantidad de produtos pedidos se devuelve toda la OC (stockout)
 			if ($total_rechazados == $total_solicitados) {
 				$this->request->data['OrdenCompra']['estado'] = 'cancelada';
 			}
+
 			
-			# flujo para cuando un producto tenga un error de precio
+			# Error de precio en algunos productos de la oc
+			# pasan a una nueva oc que se envia a revisión comercial y la actual continua solo con los itemes aceptados.
 			if ($total_price_error > 0 && $total_rechazados != $total_solicitados) {
 				# Item se quita de la OC y se agrega a una nueva OC
 				
@@ -3173,10 +2718,10 @@ class OrdenComprasController extends AppController
 				$nuevaOC['OrdenCompra']['iva']                = obtener_iva($total_neto);
 				$nuevaOC['OrdenCompra']['descuento_monto']    = obtener_iva( ($total_neto + $nuevaOC['OrdenCompra']['iva']) , $nuevaOC['OrdenCompra']['descuento']);
 				$nuevaOC['OrdenCompra']['total']              = ($total_neto - $nuevaOC['OrdenCompra']['descuento_monto']) + $nuevaOC['OrdenCompra']['iva'];
-				$nuevaOC['OrdenCompra']['estado']             = 'iniciado';
+				$nuevaOC['OrdenCompra']['estado']             = 'validacion_comercial';
 				$nuevaOC['OrdenCompra']['fecha']              = date('Y-m-d');
 				$nuevaOC['OrdenCompra']['vendedor']           = '(Auto) Nodriza Spa';
-				$nuevaOC['OrdenCompra']['validado_proveedor'] = 1;
+				$nuevaOC['OrdenCompra']['validado_proveedor'] = 0;
 
 				# quitamos el id
 				unset($nuevaOC['OrdenCompra']['id']);
@@ -3184,6 +2729,11 @@ class OrdenComprasController extends AppController
 				unset($nuevaOC['OrdenCompra']['modified']);
 				unset($nuevaOC['OrdenCompra']['moneda_id']);
 
+			}
+
+			# OC completa con error de precio vuelve a validación
+			if ($total_price_error > 0 && $total_rechazados == $total_solicitados) {
+				$this->request->data['OrdenCompra']['estado'] = 'validacion_comercial';
 			}
 			
 
@@ -3221,7 +2771,7 @@ class OrdenComprasController extends AppController
 				# Flujo para cuando un producto no tenga stock
 				if ($total_stockout > 0) {
 					# Notificar a ventas para que coordine con el cliente
-					$ventasNotificar = $this->OrdenCompra->obtener_ventas_por_productos($oc['OrdenCompra']['parent_id'], Hash::extract($itemes['stockout'], '{n}.venta_detalle_producto_id'));
+					$ventasNotificar = $this->OrdenCompra->obtener_ventas_por_productos($oc['OrdenCompra']['id'], Hash::extract($itemes['stockout'], '{n}.venta_detalle_producto_id'));
 				}
 
 
@@ -3248,7 +2798,7 @@ class OrdenComprasController extends AppController
 				}
 
 				# Notifcar rechazo completo a comerial
-				if ($this->request->data['OrdenCompra']['estado'] == 'cancelada') {
+				if ($this->request->data['OrdenCompra']['estado'] == 'cancelada' || $this->request->data['OrdenCompra']['estado'] == 'validacion_comercial') {
 					$email_comercial = $oc['OrdenCompra']['email_comercial'];
 					$this->guardarEmailRechazoProveedor($id, array($email_comercial));
 
@@ -3258,7 +2808,7 @@ class OrdenComprasController extends AppController
 				}
 
 				# Genera el PDF
-				if ($this->request->data['OrdenCompra']['estado'] == 'validado_proveedor') {
+				if ($this->request->data['OrdenCompra']['estado'] == 'pago_finanzas') {
 
 					$oc = $this->OrdenCompra->find('first', array(
 						'conditions' => array(
@@ -3275,7 +2825,7 @@ class OrdenComprasController extends AppController
 							'Tienda',
 							'Proveedor'
 						)
-					));
+					));					
 					
 					# Notificar a finanzas (en espera)
 					$emailsFinanzas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
@@ -3306,7 +2856,7 @@ class OrdenComprasController extends AppController
 				'conditions' => array(
 					'OrdenCompra.id' => $id,
 					'OrdenCompra.validado_proveedor' => 0,
-					'OrdenCompra.estado' => 'asignacion_moneda'
+					'OrdenCompra.estado' => 'validacion_externa'
 				),
 				'contain' => array(
 					'Proveedor',
