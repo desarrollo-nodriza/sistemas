@@ -94,6 +94,10 @@
                                     <? if ($ordenCompra['OrdenCompra']['estado'] == 'recepcion_completa') : ?>
                                     <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array()));?>
                                     <? endif; ?>
+
+                                    <? if ($ordenCompra['OrdenCompra']['estado'] == 'cancelada') : ?>
+                                    <?=$this->element('ordenCompras/index_tr', array('ordenCompra' => $ordenCompra, 'accion' => array()));?>
+                                    <? endif; ?>
                                 
                                 <?php endforeach; ?>
                             </tbody>
