@@ -1502,14 +1502,8 @@ class VentaDetalleProductosController extends AppController
 	{	
 		$noGuardados = 0;
 
-		$redirect = '/';
-
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-			$redirect = $this->request->data['Form']['redirect_url'];
-
-			unset($this->request->data['Form']['redirect_url']);
-
 			foreach ($this->request->data['Form'] as $key => $value) {
 				if(!$this->VentaDetalleProducto->saveAll($value)){
 					$noGuardados++;
@@ -1523,7 +1517,7 @@ class VentaDetalleProductosController extends AppController
 			$this->Session->setFlash('¡Excelente! Todos los productos tiene su proveedor y marca relacionado.', null, array(), 'success');
 		}
 
-		$this->redirect($redirect);
+		$this->redirect($this->referer('/', true));
 
 	}
 
