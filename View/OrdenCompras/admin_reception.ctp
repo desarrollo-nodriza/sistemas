@@ -124,13 +124,13 @@
 							<tbody class="">
 								<tr class="hidden clone-tr">
 									<td>
-										<?= $this->Form->select('OrdenCompraFactura.999.tipo_documento', $tipo_documento , array( 'disabled' => true, 'class' => 'form-control not-blank js-tipo-documento-compra', 'empty' => 'Seleccione tipo documento')); ?>
+										<?= $this->Form->select('OrdenCompraFactura.999.tipo_documento', $tipo_documento , array( 'disabled' => true, 'class' => 'form-control not-blank js-tipo-documento-compras', 'empty' => 'Seleccione tipo documento')); ?>
 									</td>
 									<td>
-										<?= $this->Form->input('OrdenCompraFactura.999.folio', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank js-folio-dte-compra', 'placeholder' => 'Ej: 4433')); ?>
+										<?= $this->Form->input('OrdenCompraFactura.999.folio', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank js-folio-dte-compras', 'placeholder' => 'Ej: 4433')); ?>
 									</td>
 									<td>
-										<?= $this->Form->input('OrdenCompraFactura.999.monto_facturado', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank js-dte-monto-compra', 'placeholder' => 'Ej: 299900')); ?>
+										<?= $this->Form->input('OrdenCompraFactura.999.monto_facturado', array('type' => 'text', 'disabled' => true, 'class' => 'form-control is-number not-blank js-dte-monto-compras', 'placeholder' => 'Ej: 299900')); ?>
 									</td>	
 									<td>
 										<?= $this->Form->input('OrdenCompraFactura.999.nota', array('type' => 'textarea', 'disabled' => true, 'class' => 'form-control', 'placeholder' => 'Agregue un nota (opcional)')); ?>
