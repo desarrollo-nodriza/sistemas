@@ -10,7 +10,9 @@
 
 			$select_todo = (empty($sta)) ? 'selected' : '';
 
-			echo $this->Html->link('<i class="fa fa-list"></i> <span>Todo</span>', array('action' => 'index'), array('class' => 'btn btn-block btn-xs btn-info ' . $select_todo, 'escape' => false,));
+			$total = $this->Html->estado_oc_total();
+
+			echo $this->Html->link('<i class="fa fa-list"></i> <span>Todo</span> <span>(' . $total . ')</span>', array('action' => 'index'), array('class' => 'btn btn-block btn-xs btn-info ' . $select_todo, 'escape' => false,));
 
 			foreach ($estados as $ie => $e): 
 
@@ -21,7 +23,9 @@
 
 				$selected = ($sta == $ie) ? 'selected' : '';
 
-				echo $this->Html->link('<i class="fa ' . $opts['ico'] . '"></i> <span>' . $e . '</span>', array('action' => 'index', 'sta' => $ie), array('style' => ' background-color:' . $opts['bgr'] . '; color: ' . $opts['txt'] . '; ', 'class' => 'btn btn-block btn-xs text-center ' . $selected, 'escape' => false));
+				$total_estado = $this->Html->estado_oc_total($ie);
+
+				echo $this->Html->link('<i class="fa ' . $opts['ico'] . '"></i> <span>' . $e . '</span> <span>(' . $total_estado . ')</span>', array('action' => 'index', 'sta' => $ie), array('style' => ' background-color:' . $opts['bgr'] . '; color: ' . $opts['txt'] . '; ', 'class' => 'btn btn-block btn-xs text-center ' . $selected, 'escape' => false));
 
 			 endforeach ?>
 

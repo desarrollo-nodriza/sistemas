@@ -321,6 +321,34 @@ class OrdenCompra extends AppModel
 	}
 
 
+	public function get_total($estado = '')
+	{	
+		$qry = array(
+			'conditions' => array(
+				'OR' => array(
+					array(
+						'OrdenCompra.parent_id !=' => '',
+						'OrdenCompra.oc_manual' => 0
+					),
+					array(
+						'OrdenCompra.parent_id' => '',
+						'OrdenCompra.oc_manual' => 1
+					)
+				)
+			)
+		);
+
+		if (!empty($estado)) {
+			$qry = array_replace_recursive($qry, array(
+				'conditions' => array(
+					'OrdenCompra.estado' => $estado
+				)
+			));
+		}
+
+		return $this->find('count', $qry);
+	}
+
 	public function obtener_metricas()
 	{
 		$ocs = $this->find('all', array(

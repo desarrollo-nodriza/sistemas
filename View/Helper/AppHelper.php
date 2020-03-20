@@ -235,4 +235,10 @@ class AppHelper extends Helper
 	{
 		return ClassRegistry::init('OrdenCompra')->estadosColor[$estado];
 	}
+
+
+	public function estado_oc_total($estado = '')
+	{
+		return ClassRegistry::init('OrdenCompra')->get_total($estado);
+	}
 }
