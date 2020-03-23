@@ -213,6 +213,13 @@
 											</tr>
 										<? foreach ($p['VentaDetalleProducto'] as $ipp => $pp) : ?>	
 											<? if (count(Hash::extract($productosSolicitar, '{n}[id=' . $pp['id'] . '].id')) > 0) : ?>
+
+											<? foreach ($this->request->data['Venta'] as $iv => $venta) {
+												if (count(Hash::extract($venta['VentaDetalle'], '{n}[venta_detalle_producto_id='.$pp['id'].'].venta_detalle_producto_id'))) {
+													echo $this->Form->hidden(sprintf('%d.Venta.%d.venta_id', $ip, $iv), array('value' => $venta['id']));	
+												}
+											} ?>
+
 											<tr>
 												<td>
 													<?= $this->Form->input(sprintf('%d.VentaDetalleProducto.%d.venta_detalle_producto_id', $ip, $ipp), array('value' => $pp['id'], 'type' => 'text', 'class' => 'form-control js-id-producto not-blank')); ?>
@@ -240,10 +247,6 @@
 											</tr>
 											<? endif; ?>
 										<? endforeach; ?>
-
-										<? foreach ($this->request->data['Venta'] as $iv => $venta) {
-											echo $this->Form->hidden(sprintf('%d.Venta.%d.venta_id', $ip, $iv), array('value' => $venta['id']));
-										} ?>
 										
 										</tboby>
 										<tfoot>

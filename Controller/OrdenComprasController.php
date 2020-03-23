@@ -1391,7 +1391,7 @@ class OrdenComprasController extends AppController
 				}
 
 				$this->Session->setFlash('¡Éxito! Se ha enviado a revisión la OC.', null, array(), 'success');
-				$this->redirect(array('action' => 'index_no_procesadas'));
+				$this->redirect(array('action' => 'index'));
 			}
 			else
 			{
@@ -1527,7 +1527,7 @@ class OrdenComprasController extends AppController
 		if ( ! $this->OrdenCompra->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index_no_procesadas'));
+			$this->redirect(array('action' => 'index'));
 		}
 
 		if ( $this->request->is('post') || $this->request->is('put') )
@@ -1910,6 +1910,9 @@ class OrdenComprasController extends AppController
 					)
 				),
 				'OrdenCompra' => array(
+					'conditions' => array(
+						'OrdenCompra.parent_id' => null
+					),
 					'fields' => array(
 						'OrdenCompra.id'
 					)
