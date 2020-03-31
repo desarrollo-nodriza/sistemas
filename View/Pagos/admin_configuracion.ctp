@@ -39,6 +39,28 @@
 						</table>
 					</div>
 				</div>
+
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<caption>Facturas relacionadas</caption>
+							<thead>
+								<tr>
+									<th>Folio</th>
+									<th>Monto facturado</th>
+								</tr>
+							</thead>
+							<tbody>
+							<? foreach ($oc['OrdenCompraFactura'] as $i => $fac) : ?>
+							<tr>
+								<td><?=$fac['folio']; ?></td>
+								<td><?=$this->Number->currency($fac['monto_facturado'], 'CLP'); ?></td>
+							</tr>
+							<? endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -66,6 +88,7 @@
 									<th>Fecha de pago</th>
 									<th>Documento relacionado</th>
 									<th>Documento</th>
+									<th>Pago finalizado</th>
 									<th>Quitar</th>
 								</tr>
 							</thead>
@@ -92,6 +115,9 @@
 									</td>
 									<td>
 										<?= $this->Form->input('999.Pago.adjunto', array('disabled' => true, 'type' => 'file', 'class' => 'not-blank js-comprobante')); ?>
+									</td>
+									<td>
+										<?= $this->Form->input('999.Pago.pagado', array('disabled' => true, 'type' => 'checkbox', 'class' => 'js-finalizar', 'checked' => true)); ?>
 									</td>
 									<td valign="center">
 										<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
@@ -129,6 +155,9 @@
 										<?= $this->Form->input(sprintf('%d.Pago.adjunto', $ip), array('type' => 'file', 'class' => 'js-comprobante', 'disabled' => ($pago['pagado']) ? true : false )); ?>
 									</td>
 								<? endif; ?>
+								<td>
+									<?=$this->Form->input(sprintf('%d.Pago.pagado', $ip), array('class' => '', 'type' => 'checkbox', 'checked' => $pago['pagado'])); ?>
+								</td>
 								<td valign="center">
 									<? if (!$pago['pagado']) : ?>
 									<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>

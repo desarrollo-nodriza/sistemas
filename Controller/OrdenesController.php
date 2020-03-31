@@ -915,22 +915,6 @@ class OrdenesController extends AppController
 					# Completamos el formulario con la info para una ndc
 					$this->request->data['Dte']['tipo_documento'] = 61;
 
-					if (empty($this->request->data['Dte']['rut_receptor']) && !empty($venta['VentaCliente']['rut'])) {
-
-						$venta['VentaCliente']['rut'] = str_replace('-', '', $venta['VentaCliente']['rut']);
-						$venta['VentaCliente']['rut'] = str_replace('.', '', $venta['VentaCliente']['rut']);
-
-						$rutContribuyente = substr($venta['VentaCliente']['rut'], 0, (strlen($venta['VentaCliente']['rut']) - 1));
-						$contribuyenteInfo = $this->admin_getContribuyenteInfo($rutContribuyente);
-						
-						$this->request->data['Dte']['rut_receptor']          = $contribuyenteInfo['rut'] . $contribuyenteInfo['dv'];
-						$this->request->data['Dte']['razon_social_receptor'] = $contribuyenteInfo['razon_social'];
-						$this->request->data['Dte']['giro_receptor']         = $contribuyenteInfo['giro'];
-						$this->request->data['Dte']['direccion_receptor']    = $contribuyenteInfo['direccion'];
-						$this->request->data['Dte']['comuna_receptor']       = $contribuyenteInfo['comuna_glosa'];
-
-					}
-
 					$dteReferencia = ClassRegistry::init('Dte')->find('first', array(
 						'conditions' => array(
 							'Dte.id' => $this->request->query['dte']
@@ -938,6 +922,11 @@ class OrdenesController extends AppController
 						'fields' => array(
 							'Dte.folio',
 							'Dte.fecha',
+							'Dte.rut_receptor',
+							'Dte.razon_social_receptor',
+							'Dte.giro_receptor',
+							'Dte.direccion_receptor',
+							'Dte.comuna_receptor',
 							'Dte.tipo_documento'
 						)
 					));
@@ -947,6 +936,12 @@ class OrdenesController extends AppController
 						'tipo_documento' => $dteReferencia['Dte']['tipo_documento'],
 						'fecha' => $dteReferencia['Dte']['fecha']
 					);
+					
+					$this->request->data['Dte']['rut_receptor']          = $dteReferencia['Dte']['rut_receptor'];
+					$this->request->data['Dte']['razon_social_receptor'] = $dteReferencia['Dte']['razon_social_receptor'];
+					$this->request->data['Dte']['giro_receptor']         = $dteReferencia['Dte']['giro_receptor'];
+					$this->request->data['Dte']['direccion_receptor']    = $dteReferencia['Dte']['direccion_receptor'];
+					$this->request->data['Dte']['comuna_receptor']       = $dteReferencia['Dte']['comuna_receptor'];
 
 					break;
 				

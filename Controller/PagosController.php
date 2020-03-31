@@ -36,7 +36,7 @@ class PagosController extends AppController
 
 			# Los pagos al día los finalizamos
 			foreach ($this->request->data as $ip => $pago) {
-				if (isset($pago['Pago']['fecha_pago']) && $pago['Pago']['fecha_pago'] <= date('Y-m-d') && $pago['Pago']['monto_pagado'] > 0) {
+				if (isset($pago['Pago']['fecha_pago']) && $pago['Pago']['fecha_pago'] <= date('Y-m-d') && $pago['Pago']['monto_pagado'] > 0 && $pago['Pago']['pagado'] == true) {
 					$this->request->data[$ip]['Pago']['pagado'] = 1;
 				}
 			}
@@ -75,7 +75,7 @@ class PagosController extends AppController
 						'OrdenCompraFactura.tipo_documento' => 33
 					),
 					'fields' => array(
-						'OrdenCompraFactura.monto_facturado'
+						'OrdenCompraFactura.monto_facturado', 'OrdenCompraFactura.folio'
 					)
 				),
 				'Proveedor' => array(

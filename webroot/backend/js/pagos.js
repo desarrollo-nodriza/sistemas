@@ -225,9 +225,6 @@ $.extend({
 				.done(function(res) {
 
 					$result = $.parseJSON(res);
-					
-					
-
 
 					if ($result.comprobante_requerido && $contexto.find('.js-comprobante').length) {
 						$contexto.find('.js-comprobante').rules("add", {
@@ -245,6 +242,7 @@ $.extend({
 						$contexto.find('.js-monto-pagado').rules("remove", "required");
 						$contexto.find('.js-identificador-pago').rules("remove", "required");
 						$contexto.find('.js-cuenta-pago').rules("remove", "required");
+						$contexto.find('.js-finalizar').prop('checked', true);
 
 						$.pagos.configurar_pagos.dividirMontos();
 
@@ -259,6 +257,8 @@ $.extend({
 					        	required: 'Ingrese fecha del pago'
 					        }
 					    });
+
+					    $contexto.find('.js-finalizar').prop('checked', false);
 
 					}else{
 						$contexto.find('.js-agendar').rules("remove", "required");
