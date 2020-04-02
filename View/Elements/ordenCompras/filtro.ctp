@@ -2,6 +2,7 @@
 <? 
     $id  = (isset($this->request->params['named']['id'])) ? $this->request->params['named']['id'] : '' ;
     $venta  = (isset($this->request->params['named']['venta'])) ? $this->request->params['named']['venta'] : '' ;
+    $prod  = (isset($this->request->params['named']['prod'])) ? $this->request->params['named']['prod'] : '' ;
     $prov = (isset($this->request->params['named']['prov'])) ? $this->request->params['named']['prov'] : '' ;
     $sta = (isset($this->request->params['named']['sta'])) ? $this->request->params['named']['sta'] : '' ;
     $dtf = (isset($this->request->params['named']['dtf'])) ? $this->request->params['named']['dtf'] : '' ;
@@ -53,7 +54,33 @@
                 <? endif; ?>
             </div>
         </div>
-        <div class="col-sm-3 col-xs-12">
+        <div class="col-sm-2 col-xs-12">
+            <div class="form-group">
+                <label>ID Producto:</label>
+                <? if (!empty($prod)) : ?>
+                <div class="input-group" style="max-width: 100%;">
+                    <?=$this->Form->input('prod', array(
+                    'type' => 'text',
+                    'class' => 'form-control',
+                    'placeholder' => 'Ingrese ID de producto',
+                    'value' => $prod
+                    ));?>
+                    <span class="input-group-addon add-on">
+                    <?=$this->Html->link('<span class="fa fa-eye"></span>', array('controller' => 'ventaDetalleProductos', 'action' => 'edit', $prod), array('escape' => false, 'target' => '_blank', 'style' => 'color:#fff !important'));?>
+                    </span>
+                </div>
+                
+                <? else : ?>
+                <?=$this->Form->input('prod', array(
+                    'type' => 'text',
+                    'class' => 'form-control',
+                    'value' => $prod,
+                    'placeholder' => 'Ingrese ID de producto'
+                    ));?>
+                <? endif; ?>
+            </div>
+        </div>
+        <div class="col-sm-2 col-xs-12">
             <div class="form-group">
                 <label>Proveedor</label>
                 <?=$this->Form->select('prov', $proveedores,
@@ -79,7 +106,7 @@
                     ));?>
             </div>
         </div>
-        <div class="col-sm-3 col-xs-12">
+        <div class="col-sm-2 col-xs-12">
             <label>Emitidos entre</label>
             <div class="input-group">
                 <?=$this->Form->input('dtf', array(
@@ -102,7 +129,7 @@
                 <?= $this->Form->button('<i class="fa fa-search" aria-hidden="true"></i> Filtrar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
             </div>
             <div class="pull-left">
-                <?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtro', array('action' => 'index_todo'), array('class' => 'btn btn-buscar btn-primary btn-block', 'escape' => false)); ?>
+                <?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtro', array('action' => 'index'), array('class' => 'btn btn-buscar btn-primary btn-block', 'escape' => false)); ?>
             </div>
         </div>
     </div>

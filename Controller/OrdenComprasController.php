@@ -81,6 +81,23 @@ class OrdenComprasController extends AppController
 					));
 
 					break;
+				case 'prod':
+			
+					$filtro = array_replace_recursive($filtro, array(
+						'joins' => array(
+							array(
+								'table' => 'orden_compras_venta_detalle_productos',
+								'alias' => 'OrdenComprasVentaDetalleProducto',
+								'type'  => 'inner',
+								'conditions' => array(
+									'OrdenComprasVentaDetalleProducto.orden_compra_id = OrdenCompra.id',
+									'OrdenComprasVentaDetalleProducto.venta_detalle_producto_id' => trim($valor)
+								)
+							)
+						)
+					));
+
+					break;
 				case 'sta':
 
 					$filtro = array_replace_recursive($filtro, array(
@@ -133,6 +150,7 @@ class OrdenComprasController extends AppController
 					break;
 			}
 		}
+
     }
 
 
