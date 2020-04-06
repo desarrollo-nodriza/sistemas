@@ -225,9 +225,14 @@ class AppHelper extends Helper
 	}
 
 
-	public function estadosOc()
-	{
-		return ClassRegistry::init('OrdenCompra')->estados;
+	public function estadosOc($estado = '')
+	{	
+		if (empty($estado)) {
+			return ClassRegistry::init('OrdenCompra')->estados;
+		}else{
+			return ClassRegistry::init('OrdenCompra')->estados[$estado];
+		}
+		
 	}
 
 

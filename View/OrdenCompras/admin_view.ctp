@@ -12,12 +12,19 @@
 					<h3 class="panel-title text-uppercase"><i class="fa fa-file"></i> OC para <b><?=$oc['Proveedor']['nombre'];?></b></h3>
 				</div>
 				<div class="panel-body">
+					
+					<? 
+
+					$estado = $this->Html->estadosOc($oc['OrdenCompra']['estado']);
+					$estadoOpts = $this->Html->estadoOcOpt($oc['OrdenCompra']['estado']);
+
+					?>
 
 					<div class="row">
 						<div class="col-xs-12">
-							<div class="alert alert-<?= ($oc['OrdenCompra']['estado'] == 'cancelada') ? 'danger' :  'info' ; ?>" role="alert">
+							<div class="alert alert-lg" style="background-color: <?=$estadoOpts['bgr']; ?>" role="alert">
                                 <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
-                                <strong>Estado del la OC: </strong> <?= (!empty($oc['OrdenCompra']['estado'])) ? $oc['OrdenCompra']['estado'] : 'No iniciado' ;  ?>
+                                <strong style=" color:<?= $estadoOpts['txt']; ?>;">Estado del la OC: <?= '<i class="fa ' . $estadoOpts['ico'] . '"></i> ' . $estado; ?></strong>
                             </div>
 						</div>
 						<? if (!empty($oc['OrdenCompra']['razon_cancelada'])) : ?>
