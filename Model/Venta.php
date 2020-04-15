@@ -1179,7 +1179,8 @@ class Venta extends AppModel
 				)
 			),
 			'conditions' => array(
-				'VentaDetalle.cantidad_en_espera >' => 0
+				'VentaDetalle.cantidad_en_espera >' => 0,
+				'VentaDetalle.cantidad_anulada' => 0
 			),
 			'fields' => array(
 				'VentaDetalle.venta_id'
