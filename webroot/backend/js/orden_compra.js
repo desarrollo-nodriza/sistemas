@@ -274,12 +274,12 @@ $.extend({
 					}
 
 					if ($that.hasClass('js-cantidad-producto')) {
-						$ths.rules("add", {
+						$that.rules("add", {
 					        number: true,
-					        min: $ths.attr('min'),
+					        min: $that.attr('min'),
 					        messages: {
 					        	number: 'Ingrese solo números',
-					        	min: 'La cantidad mínima de compra para este item es de ' + $ths.attr('min')
+					        	min: 'La cantidad mínima de compra para este item es de ' + $that.attr('min')
 					        }
 					    });
 					}
