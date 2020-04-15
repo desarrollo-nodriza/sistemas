@@ -227,9 +227,9 @@
 												<td><?= $this->Form->input(sprintf('%d.VentaDetalleProducto.%d.codigo', $ip, $ipp), array('type' => 'text', 'class' => 'form-control not-blank js-codigo-producto', 'value' => $pp['codigo_proveedor'])); ?></td>
 												<td><?= $this->Form->input(sprintf('%d.VentaDetalleProducto.%d.descripcion', $ip, $ipp), array('type' => 'text', 'class' => 'form-control not-blank js-descripcion-producto', 'value' => $pp['nombre'], 'style' =>'width: 200px;')); ?></td>
 												<? if (!empty(Hash::extract($productosSolicitar, '{n}[id=' . $pp['id'] . '].cantidad_oc'))) : ?>
-												<td><?= $this->Form->input(sprintf('%d.VentaDetalleProducto.%d.cantidad', $ip, $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-producto', 'value' => Hash::extract($productosSolicitar, '{n}[id=' . $pp['id'] . '].cantidad_oc')[0])); ?></td>
+												<td><?= $this->Form->input(sprintf('%d.VentaDetalleProducto.%d.cantidad', $ip, $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-producto', 'min' => $pp['cant_minima_compra'], 'value' => Hash::extract($productosSolicitar, '{n}[id=' . $pp['id'] . '].cantidad_oc')[0])); ?></td>
 												<? else : ?>
-												<td><?= $this->Form->input(sprintf('%d.VentaDetalleProducto.%d.cantidad', $ip, $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-producto')); ?></td>
+												<td><?= $this->Form->input(sprintf('%d.VentaDetalleProducto.%d.cantidad', $ip, $ipp), array('type' => 'text', 'min' => $pp['cant_minima_compra'], 'class' => 'form-control not-blank is-number js-cantidad-producto')); ?></td>
 												<? endif; ?>
 												<td><?= $this->Form->input(sprintf('%d.VentaDetalleProducto.%d.precio_unitario', $ip, $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-precio-producto', 'value' => $pp['precio_costo'], 'readonly' => 'readonly')); ?></td>
 												

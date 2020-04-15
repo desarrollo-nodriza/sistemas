@@ -68,6 +68,12 @@
 								<td><?= $this->Form->input('codigo_proveedor', array('class' => 'form-control not-blank', 'placeholder' => 'Ej: HTD32S')); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('cant_minima_compra', 'Cantidad mínima de compra'); ?></th>
+								<td><?= $this->Form->input('cant_minima_compra', array('type' => 'text', 'class' => 'form-control not-blank is-number', 'placeholder' => 'Por defecto es 1', 'min' => 1, 'max' => 1000)); ?>
+									<span class="help-block">Por defecto la cantidad mínima es 1.</span>
+								</td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('marca_id', 'Marca'); ?></th>
 								<td><?= $this->Form->input('marca_id', array('class' => 'form-control not-blank', 'empty' => 'Seleccione Marca', 'default' => $this->request->data['Marca']['id'])); ?></td>
 							</tr>

@@ -1189,28 +1189,12 @@ class Venta extends AppModel
 		$ventasStockout = ClassRegistry::init('OrdenComprasVenta')->find('all', array(
 			'joins' => array(
 				array(
-					'table' => 'rp_orden_compras',
-					'alias' => 'oc',
-					'type' => 'INNER',
-					'conditions' => array(
-						'oc.id = OrdenComprasVenta.orden_compra_id'
-					)
-				),
-				array(
-					'table' => 'rp_orden_compras',
-					'alias' => 'oc_2',
-					'type' => 'INNER',
-					'conditions' => array(
-						'oc_2.parent_id = oc.id'
-					)
-				),
-				array(
 					'table' => 'rp_orden_compras_venta_detalle_productos',
 					'alias' => 'oc_productos',
 					'type' => 'INNER',
 					'conditions' => array(
-						'oc_productos.orden_compra_id = oc_2.id',
-						'oc_productos.estado_proveedor != "accept"'
+						'oc_productos.orden_compra_id = OrdenComprasVenta.orden_compra_id',
+						'oc_productos.estado_proveedor' => array('stockout', 'price_error', 'modified')
 					)
 				),
 				array(

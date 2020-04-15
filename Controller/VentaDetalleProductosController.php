@@ -1724,6 +1724,7 @@ class VentaDetalleProductosController extends AppController
 				$respuesta[$key]['value']        	= $value['VentaDetalleProducto']['nombre'];
 				$respuesta[$key]['codigo']       	= $value['VentaDetalleProducto']['codigo_proveedor'];
 				$respuesta[$key]['precio_costo'] 	= $value['VentaDetalleProducto']['precio_costo'];
+				$respuesta[$key]['minimo_compra'] 	= $value['VentaDetalleProducto']['cant_minima_compra'];
 				$respuesta[$key]['descuento'] 	 	= round($value['VentaDetalleProducto']['total_descuento']);
 				$respuesta[$key]['tipo_descuento'] 	= (int)0;
 				$respuesta[$key]['nombre_descuento'] = $value['VentaDetalleProducto']['nombre_descuento'];

@@ -2859,7 +2859,9 @@ class OrdenComprasController extends AppController
 
 					$this->generar_pdf($oc, $pdfOc);
 
-					$this->request->data['OrdenCompra']['pdf'] = $pdfOc;
+					$this->OrdenCompra->id = $id;
+					$this->OrdenCompra->saveField('pdf', $pdfOc);
+					$this->OrdenCompra->saveField('estado', 'pago_finanzas');
 					
 					# Redirigimos al PDF
 					$redirect = sprintf('%ssocio/oc/pdf/%d/%d?access_token=%s',obtener_url_base(), $id, $oc['OrdenCompra']['proveedor_id'], $this->request->query['access_token']);

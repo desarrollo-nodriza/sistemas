@@ -126,7 +126,7 @@
 										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.codigo', $ipp), array('type' => 'text', 'class' => 'form-control not-blank js-codigo-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['codigo'] )); ?></td>
 										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.descripcion', $ipp), array('type' => 'text', 'class' => 'form-control not-blank js-descripcion-producto', 'value' => $pp['nombre'], 'style' =>'width: 200px;')); ?></td>
 										
-										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['cantidad'] )); ?></td>
+										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['cantidad'], 'min' => $pp['cant_minima_compra'] )); ?></td>
 										
 										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.precio_unitario', $ipp), array('readonly' => true, 'type' => 'text', 'class' => 'form-control not-blank is-number js-precio-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['precio_unitario'])); ?></td>
 										

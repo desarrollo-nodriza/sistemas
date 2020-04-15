@@ -3143,21 +3143,63 @@ class VentasController extends AppController {
 			'order' => array('Venta.fecha_venta' => 'DESC'),
 			'contain' => array(
 				'VentaDetalle' => array(
-					'VentaDetalleProducto'
+					'fields' => array(
+						'VentaDetalle.id',
+						'VentaDetalle.cantidad',
+						'VentaDetalle.cantidad_reservada',
+						'VentaDetalle.cantidad_en_espera',
+						'VentaDetalle.fecha_llegada_en_espera',
+					),
+					'VentaDetalleProducto' => array(
+						'fields' => array(
+							'VentaDetalleProducto.nombre'
+						)
+					)
 				),
 				'OrdenCompra' => array(
 					'ChildOrdenCompra' => array(
-						'VentaDetalleProducto'
+						'fields' => array(
+							'ChildOrdenCompra.id'
+						),
+						'VentaDetalleProducto' => array(
+							'fields' => array(
+								'VentaDetalleProducto.id'
+							)
+						)
 					)
 				),
 				'VentaEstado' => array(
-					'VentaEstadoCategoria'
+					'fields' => array(
+						'VentaEstado.nombre'
+					),
+					'VentaEstadoCategoria' => array(
+						'fields' => array(
+							'VentaEstadoCategoria.venta',
+							'VentaEstadoCategoria.final',
+							'VentaEstadoCategoria.estilo',
+							'VentaEstadoCategoria.nombre'
+						)
+					)
 				),
-				'Dte',
-				'MedioPago',
-				'Tienda',
-				'Marketplace',
-				'VentaCliente'
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.nombre'
+					)
+				),
+				'Marketplace' => array(
+					'fields' => array(
+						'Marketplace.nombre'
+					)
+				),
+				'VentaCliente' => array(
+					'fields' => array(
+						'VentaCliente.nombre',
+						'VentaCliente.apellido',
+						'VentaCliente.rut',
+						'VentaCliente.email',
+						'VentaCliente.telefono'
+					)
+				)
 			),
 			'conditions' => array(
 				'Venta.id' => $ids

@@ -117,6 +117,17 @@ $.extend({
 				    });
 				}
 
+				if ($ths.hasClass('js-cantidad-producto')) {
+					$ths.rules("add", {
+				        number: true,
+				        min: $ths.attr('min'),
+				        messages: {
+				        	number: 'Ingrese solo números',
+				        	min: 'La cantidad mínima de compra para este item es de ' + $ths.attr('min')
+				        }
+				    });
+				}
+
 				if ($ths.hasClass('js-tipo-descuento')) {
 						$ths.rules("add", {
 					        required: true,
@@ -249,7 +260,7 @@ $.extend({
 					}
 
 
-					if ($that.hasClass('js-cantidad-producto') || $that.hasClass('js-total-producto')) {
+					if ($that.hasClass('js-total-producto')) {
 						$that.rules("add", {
 					        required: true,
 					        number: true,
@@ -258,6 +269,17 @@ $.extend({
 					        	required: 'Campo requerido',
 					        	number: 'Ingrese solo números',
 					        	min: '1 es el mínimo'
+					        }
+					    });
+					}
+
+					if ($that.hasClass('js-cantidad-producto')) {
+						$ths.rules("add", {
+					        number: true,
+					        min: $ths.attr('min'),
+					        messages: {
+					        	number: 'Ingrese solo números',
+					        	min: 'La cantidad mínima de compra para este item es de ' + $ths.attr('min')
 					        }
 					    });
 					}
@@ -525,6 +547,13 @@ $.extend({
 				    	contexto.find('.js-descuento-producto').attr('readonly', true);
 				    	contexto.find('.js-total-producto').attr('readonly', true);
 				    	contexto.find('.js-tipo-descuento-producto').attr('readonly', true);
+
+				    	contexto.find('.js-cantidad-producto').rules("add", {
+					        min: ui.item.minimo_compra,
+					        messages: {
+					        	min: 'La cantidad mínima de compra para este item es de ' + ui.item.minimo_compra 
+					        }
+					    });
 
 				    	//contexto.find('.js-descuento-valor').tooltip();
 
