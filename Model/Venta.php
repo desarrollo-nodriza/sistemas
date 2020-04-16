@@ -580,7 +580,7 @@ class Venta extends AppModel
 		);
 
 		
-		$joins[] = array(
+		/*$joins[] = array(
 			'table' => 'rp_dtes',
 			'alias' => 'dtes',
 			'type' => 'INNER',
@@ -590,7 +590,7 @@ class Venta extends AppModel
 				"dtes.estado = 'dte_real_emitido'",
 				"dtes.invalidado = 0"
 			)
-		);
+		);*/
 
 		$conditions = array('Venta.picking_estado' => $estado);
 
