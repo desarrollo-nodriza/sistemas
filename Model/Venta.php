@@ -580,7 +580,7 @@ class Venta extends AppModel
 		);
 
 		
-		/*$joins[] = array(
+		$joins[] = array(
 			'table' => 'rp_dtes',
 			'alias' => 'dtes',
 			'type' => 'INNER',
@@ -590,7 +590,7 @@ class Venta extends AppModel
 				"dtes.estado = 'dte_real_emitido'",
 				"dtes.invalidado = 0"
 			)
-		);*/
+		);
 
 		$conditions = array('Venta.picking_estado' => $estado);
 
@@ -1148,7 +1148,7 @@ class Venta extends AppModel
 	public function obtener_ventas_productos_retraso_ids()
 	{	
 
-		$ventasRestrasos =  ClassRegistry::init('VentaDetalle')->find('all', array(
+		$ventasAgendamiento =  ClassRegistry::init('VentaDetalle')->find('all', array(
 			'joins' => array(
 				array(
 					'table' => 'rp_ventas',
@@ -1179,8 +1179,7 @@ class Venta extends AppModel
 				)
 			),
 			'conditions' => array(
-				'VentaDetalle.cantidad_en_espera >' => 0,
-				'VentaDetalle.cantidad_anulada' => 0
+				'VentaDetalle.cantidad_en_espera >' => 0
 			),
 			'fields' => array(
 				'VentaDetalle.venta_id'
@@ -1238,7 +1237,7 @@ class Venta extends AppModel
 			'fields' => array('OrdenComprasVenta.venta_id')
 		));
 
-		$ids_1 = Hash::extract($ventasRestrasos, '{n}.VentaDetalle.venta_id');
+		$ids_1 = Hash::extract($ventasAgendamiento, '{n}.VentaDetalle.venta_id');
 		$ids_2 = Hash::extract($ventasStockout, '{n}.OrdenComprasVenta.venta_id');
 		$ids   = array_unique(array_merge($ids_1, $ids_2));
 

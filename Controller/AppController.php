@@ -287,13 +287,7 @@ class AppController extends Controller
 	* @return  		array()
 	*/
 	private function obtenerAvatar(){
-		return ClassRegistry::init('Administrador')->find('first', array(
-			'fields' => array(
-				'google_imagen'), 
-			'conditions' => array(
-				'id' => $this->Auth->user('id') 
-			)
-		));
+		return $this->Auth->user('google_imagen');
 	}
 
 	/**
@@ -365,35 +359,45 @@ class AppController extends Controller
 			            )
 					)
 				),
+				'contain' => array(
+					'ChildModulo' => array(
+						'Rol' => array(
+							'conditions' => array(
+								'Rol.id' => $this->Auth->user('rol_id')
+							),
+							'fields' => array(
+								'Rol.id'
+							)
+						),
+						'fields' => array('ChildModulo.id', 'ChildModulo.parent_id', 'ChildModulo.nombre', 'ChildModulo.url', 'ChildModulo.icono')
+					)
+				),
 				'fields' => array('Modulo.id', 'Modulo.parent_id', 'Modulo.nombre', 'Modulo.url', 'Modulo.icono'),
 				'order' => array('Modulo.id' => 'ASC')));
+
 		$data = array();
-		foreach ($modulos as $padre) {
-			$data[] = array(
+
+		foreach ($modulos as $ip => $padre) {
+			$data[$ip] = array(
 				'nombre' => $padre['Modulo']['nombre'],
 				'icono'	 => $padre['Modulo']['icono'],
 				'url'	 => $padre['Modulo']['url'],
-				'hijos' => ClassRegistry::init('Modulo')->find(
-					'all', array(
-						'conditions' => array('Modulo.parent_id' => $padre['Modulo']['id'], 'Modulo.activo' => 1 ),
-						'contain' => array('Rol'),
-						'joins' => array(
-							array(
-								'table' => 'modulos_roles',
-					            'alias' => 'md',
-					            'type'  => 'INNER',
-					            'conditions' => array(
-					                'md.modulo_id = Modulo.id',
-					                'md.rol_id' => $this->Auth->user('rol_id')
-					            )
-							)
-						),
-						'fields' => array('Modulo.id', 'Modulo.parent_id', 'Modulo.nombre', 'Modulo.url', 'Modulo.icono'),
-						'order' => array('Modulo.id' => 'ASC')
-					)
-				)
+				'hijos'  => array()
 			);
+
+			foreach ($padre['ChildModulo'] as $ich => $ch) {
+				if (!empty($ch['Rol'])) {
+					$data[$ip]['hijos'][] = array(
+						'Modulo' => array(
+							'nombre' => $ch['nombre'],
+							'url' => $ch['url'],
+							'icono' => $ch['icono']
+						)
+					);
+				}
+			}
 		}
+
 		return $data;
 	}
 

@@ -41,14 +41,25 @@ class OrdenCompraFacturasController extends AppController
 				'OrdenCompraFactura.tipo_documento' => 33 // mostramos solo facturas
 			),
 			'contain' => array(
+				'Proveedor' => array(
+					'fields' => array(
+						'Proveedor.id', 'Proveedor.nombre'
+					)
+				),
 				'OrdenCompra' => array(
 					'Tienda' => array('fields' => array('Tienda.rut')),
 					'Proveedor' => array('fields' => array('Proveedor.rut_empresa')),
 					'Moneda' => array('fields' => array('Moneda.tipo')),
-					'Pago' => array('fields' => array('Pago.pagado'))
+					'Pago' => array('fields' => array('Pago.pagado')), 
+					'fields' => array(
+						'OrdenCompra.id', 'OrdenCompra.tienda_id', 'OrdenCompra.proveedor_id', 'OrdenCompra.moneda_id'
+					)
 				)
 			),
-			'order' => array('OrdenCompraFactura.id' => 'DESC')
+			'order' => array('OrdenCompraFactura.id' => 'DESC'),
+			'fields' => array(
+				'OrdenCompraFactura.id', 'OrdenCompraFactura.proveedor_id', 'OrdenCompraFactura.orden_compra_id', 'OrdenCompraFactura.folio', 'OrdenCompraFactura.monto_pagado', 'OrdenCompraFactura.tipo_documento', 'OrdenCompraFactura.pagada', 'OrdenCompraFactura.emisor', 'OrdenCompraFactura.receptor'
+			)
 		);
 
 		foreach ($this->request->params['named'] as $campo => $valor) {
@@ -147,18 +158,13 @@ class OrdenCompraFacturasController extends AppController
 		}
 
 		$proveedores = ClassRegistry::init('Proveedor')->find('list');
-		$ocs = array_unique(ClassRegistry::init('OrdenCompra')->find('list', array('conditions' => array(
-			'OR' => array(
-				array(
-					'OrdenCompra.parent_id !=' => '',
-					'OrdenCompra.oc_manual' => 0
-				),
-				array(
-					'OrdenCompra.parent_id' => '',
-					'OrdenCompra.oc_manual' => 1
-				)
+
+		$ocs = ClassRegistry::init('OrdenCompra')->find('list', array(
+			'conditions' => array(
+				'OrdenCompra.proveedor_id !=' => ''
 			)
-		))));
+		));
+
 		$folios = array_unique(ClassRegistry::init('OrdenCompraFactura')->find('list'));
 
 		$this->set(compact('facturas', 'folios', 'ocs', 'proveedores'));

@@ -128,7 +128,8 @@
 									<tr class="sort">
 										<th></th>
 										<th><?= $this->Paginator->sort('id', 'Identificador', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-										<th><?= $this->Paginator->sort('oc', 'OC', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+										<th><?= $this->Paginator->sort('orden_compra_id', 'OC', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+										<th><?= $this->Paginator->sort('proveedor_id', 'Proveedor', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('folio', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('total_items', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('neto', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -143,9 +144,10 @@
 								<tbody>
 									<?php foreach ( $facturas as $if => $factura ) : ?>
 									<tr>
-										<td><input type="checkbox" value="<?=$factura['OrdenCompraFactura']['id']; ?>" data-id="<?=$factura['OrdenCompraFactura']['id']; ?>" data-oc="<?=$factura['OrdenCompraFactura']['orden_compra_id']; ?>" class="js-factura-id" name="data[OrdenCompraFactura][<?=$if;?>][id]"></td>
+										<td><input type="checkbox" value="<?=$factura['OrdenCompraFactura']['id']; ?>" data-id="<?=$factura['OrdenCompraFactura']['id']; ?>" data-oc="<?=$factura['OrdenCompraFactura']['orden_compra_id']; ?>" data-proveedor="<?=$factura['OrdenCompraFactura']['proveedor_id']; ?>" class="js-factura-id" name="data[OrdenCompraFactura][<?=$if;?>][id]"></td>
 										<td><?= h($factura['OrdenCompraFactura']['id'])?></td>
 										<td>#<?= h($factura['OrdenCompraFactura']['orden_compra_id'])?></td>
+										<td><?= h($factura['Proveedor']['nombre'])?></td>
 										<td><?= h($factura['OrdenCompraFactura']['folio'])?></td>
 										<td><?= h($factura['OrdenCompraFactura']['total_items'])?></td>
 										<td><?= h(CakeNumber::currency($factura['OrdenCompraFactura']['neto'], 'CLP'))?></td>

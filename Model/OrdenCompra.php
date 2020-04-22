@@ -314,27 +314,11 @@ class OrdenCompra extends AppModel
 	}
 
 
-	public function beforeSave($options = array()) {
-		parent::beforeSave($options);
-
-		return true;
-	}
-
-
 	public function get_total($estado = '')
 	{	
 		$qry = array(
 			'conditions' => array(
-				'OR' => array(
-					array(
-						'OrdenCompra.parent_id !=' => '',
-						'OrdenCompra.oc_manual' => 0
-					),
-					array(
-						'OrdenCompra.parent_id' => '',
-						'OrdenCompra.oc_manual' => 1
-					)
-				)
+				'OrdenCompra.proveedor_id !=' => '',
 			)
 		);
 

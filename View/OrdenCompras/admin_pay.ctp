@@ -28,31 +28,6 @@
 		</div>
 
 	<? endif; ?>
-
-	<? 	if ( ! empty($ocs['OrdenCompra']['adjunto']) ) : ?>
-	<div class="row">
-		<div class="row">
-			<div class="col-xs-12">
-				<div class="panel panel-info">
-					<div class="panel-heading">
-						<h3 class="panel-title"><i class="fa fa-file"></i> Comprobante de pago</h3>
-					</div>
-					<div class="panel-body">
-						<?= $this->Html->link(
-						'<i class="fa fa-eye"></i> Ver',
-						sprintf('/img/%s', $ocs['OrdenCompra']['adjunto']['path']),
-						array(
-							'class' => 'btn btn-info btn-xs btn-block', 
-							'target' => '_blank', 
-							'fullbase' => true,
-							'escape' => false) 
-						); ?>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-	<? endif; ?>
 	
 	<div class="row">
 		<div class="col-xs-12">

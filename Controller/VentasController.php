@@ -3157,14 +3157,12 @@ class VentasController extends AppController {
 					)
 				),
 				'OrdenCompra' => array(
-					'ChildOrdenCompra' => array(
+					'fields' => array(
+						'OrdenCompra.id'
+					),
+					'VentaDetalleProducto' => array(
 						'fields' => array(
-							'ChildOrdenCompra.id'
-						),
-						'VentaDetalleProducto' => array(
-							'fields' => array(
-								'VentaDetalleProducto.id'
-							)
+							'VentaDetalleProducto.id'
 						)
 					)
 				),
@@ -3210,12 +3208,12 @@ class VentasController extends AppController {
 		$this->paginate = $qry;
 
 		$ventas = $this->paginate();
-			
+		
 		foreach ($ventas as $iv => $v) {
 			
 			$items = array(); 
 			foreach ($v['VentaDetalle'] as $ivd => $vd) :
-				$ventas[$iv]['OrdenCompraDetalle'] = Hash::extract($v['OrdenCompra'], '{n}.ChildOrdenCompra.{n}.VentaDetalleProducto.{n}[id='.$vd['venta_detalle_producto_id'].'].OrdenComprasVentaDetalleProducto[estado_proveedor!=accept]');	
+				$ventas[$iv]['OrdenCompraDetalle'] = Hash::extract($v['OrdenCompra'], '{n}.VentaDetalleProducto.{n}[id='.$vd['venta_detalle_producto_id'].'].OrdenComprasVentaDetalleProducto[estado_proveedor!=accept]');	
 			endforeach;
 
 		}

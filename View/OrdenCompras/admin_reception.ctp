@@ -31,38 +31,37 @@
 								<!--<th>Recibido</th>-->
 							</thead>
 							<tboby class="">
-							<? foreach ($this->request->data['VentaDetalleProducto'] as $ipp => $data) : ?>	
+							<? foreach ($this->request->data['VentaDetalleProducto'] as $ipp => $producto) : ?>	
 								
 								<tr>
 									<td>
-										<?=$this->Form->hidden(sprintf('%d.VentaDetalleProducto.id', $ipp), array('value' => $data['id']));?>
-										<?=$data['id'];?>
+										<?=$this->Form->hidden(sprintf('%d.VentaDetalleProducto.id', $ipp), array('value' => $producto['id']));?>
+										<?=$producto['id'];?>
 									</td>
-									<td><?=$data['OrdenComprasVentaDetalleProducto']['codigo'];?></td>
-									<td><?=$data['OrdenComprasVentaDetalleProducto']['descripcion'];?></td>
-									<td><?=CakeNumber::currency(($data['OrdenComprasVentaDetalleProducto']['total_neto'] / $data['OrdenComprasVentaDetalleProducto']['cantidad']), 'CLP');?></td>
-									<td><?=CakeNumber::currency($data['OrdenComprasVentaDetalleProducto']['total_neto'] , 'CLP');?></td>
-									<td><?=$data['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
-									<td><?=$data['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'];?></td>
-									<td><?=$data['OrdenComprasVentaDetalleProducto']['cantidad_recibida'];?></td>
+									<td><?=$producto['OrdenComprasVentaDetalleProducto']['codigo'];?></td>
+									<td><?=$producto['OrdenComprasVentaDetalleProducto']['descripcion'];?></td>
+									<td><?=CakeNumber::currency(($producto['OrdenComprasVentaDetalleProducto']['total_neto'] / $producto['OrdenComprasVentaDetalleProducto']['cantidad']), 'CLP');?></td>
+									<td><?=CakeNumber::currency($producto['OrdenComprasVentaDetalleProducto']['total_neto'] , 'CLP');?></td>
+									<td><?=$producto['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
+									<td><?=$producto['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'];?></td>
+									<td><?=$producto['OrdenComprasVentaDetalleProducto']['cantidad_recibida'];?></td>
 
-									<? if ($data['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] > $data['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] ) : ?>
+									<? if ($producto['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] > $producto['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] ) : ?>
 
-									<td><?=$this->Form->input(sprintf('%d.Bodega.0.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'max' => $data['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']));?></td>
+									<td><?=$this->Form->input(sprintf('%d.Bodega.0.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'max' => $producto['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']));?></td>
 									
 									<? else : ?>
 
-									<td><?=$this->Form->input(sprintf('%d.Bodega.0.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'readonly' => true, 'max' => $data['OrdenComprasVentaDetalleProducto']['cantidad'] , 'value' => 0));?></td>
+									<td><?=$this->Form->input(sprintf('%d.Bodega.0.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'readonly' => true, 'max' => $producto['OrdenComprasVentaDetalleProducto']['cantidad'] , 'value' => 0));?></td>
 									
 									<? endif; ?>
 									
-									<? if (!empty(Hash::extract($data, 'Bodega.{n}.BodegasVentaDetalleProducto.bodega_id'))) : ?>
+									<? if (!empty(Hash::extract($producto, 'Bodega.{n}.BodegasVentaDetalleProducto.bodega_id'))) : ?>
 									
-									<td><?=$this->Form->select(sprintf('%d.Bodega.0.bodega_id', $ipp), $bodegas, array('class' => 'form-control not-blank', 'default' => Hash::extract($data, 'Bodega.{n}.BodegasVentaDetalleProducto.bodega_id')[0], 'empty' => 'Seleccione'));?></td>
+									<td><?=$this->Form->select(sprintf('%d.Bodega.0.bodega_id', $ipp), $bodegas, array('class' => 'form-control not-blank', 'default' => Hash::extract($producto, 'Bodega.{n}.BodegasVentaDetalleProducto.bodega_id')[0], 'empty' => 'Seleccione'));?></td>
 									<? else : ?>
 									<td><?=$this->Form->select(sprintf('%d.Bodega.0.bodega_id', $ipp), $bodegas, array('class' => 'form-control not-blank', 'default' => 1, 'empty' => 'Seleccione'));?></td>
 									<? endif; ?>
-									<!--<td><?=$this->Form->checkbox(sprintf('%d.VentaDetalleProducto.recibido', $ipp), array('checked' => true, 'class' => 'icheckbox'));?></td>-->
 								</tr>
 								
 							<? endforeach; ?>
@@ -124,6 +123,7 @@
 							<tbody class="">
 								<tr class="hidden clone-tr">
 									<td>
+										<?=$this->Form->hidden('OrdenCompraFactura.999.proveedor_id', array('disabled' => true, 'value' => $this->request->data['OrdenCompra']['proveedor_id'])); ?>
 										<?= $this->Form->select('OrdenCompraFactura.999.tipo_documento', $tipo_documento , array( 'disabled' => true, 'class' => 'form-control not-blank js-tipo-documento-compras', 'empty' => 'Seleccione tipo documento')); ?>
 									</td>
 									<td>
@@ -145,6 +145,7 @@
 								<tr>
 									<td>
 										<?=$this->Form->hidden(sprintf('OrdenCompraFactura.%d.id', $ip), array('value' => $dte['id'])); ?>
+										<?=$this->Form->hidden(sprintf('OrdenCompraFactura.%d.proveedor_id', $ip), array('value' => $this->request->data['OrdenCompra']['proveedor_id'])); ?>
 										<?= $this->Form->select(sprintf('OrdenCompraFactura.%d.tipo_documento', $ip), $tipo_documento, array('class' => 'form-control not-blank', 'empty' => 'Seleccione tipo documento', 'default' => $dte['tipo_documento'], 'disabled' => ($dte['pagada']) ? true : false)); ?>
 									</td>
 									<td>

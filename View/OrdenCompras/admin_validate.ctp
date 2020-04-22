@@ -58,39 +58,14 @@
 	</div>
 <?= $this->Form->end(); ?>
 <? else : ?>
-	<?= $this->Form->create('OrdenesCompra', array('url' => array('controller' => 'ordenCompras', 'action' => 'validate', $this->request->data['OrdenCompra']['id']),  'class' => 'form-horizontal js-validate-oc', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+	<?= $this->Form->create('OrdenesCompra', array('class' => 'form-horizontal js-validate-oc', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 							
-	<!--<div class="page-content-wrap">
-		<div class="row">
-			<div class="col-xs-12">
-				<div class="panel panel-default">
-					<div class="panel-heading">
-						<h3 class="panel-title"><i class="fa fa-file"></i> Datos del documento</h3>
-					</div>
-					<div class="panel-body row">
-						<div class="form-group col-xs-12 col-md-4">
-							<?= $this->Form->label('fecha', 'Fecha'); ?>
-							<?= $this->Form->input('fecha', array('type' => 'text', 'class' => 'form-control datepicker', 'placeholder' => 'Ej: 2019-01-20', 'value' => date('Y-m-d') )); ?>
-						</div>
-						<div class="form-group col-xs-12 col-md-4">
-							<?= $this->Form->label('despacho', 'Despacho'); ?>
-							<?= $this->Form->input('despacho', array('class' => 'form-control', 'placeholder' => 'Ej: Despacho' )); ?>
-						</div>
-						<div class="form-group col-xs-12 col-md-4">
-							<?= $this->Form->label('moneda_id', 'Forma de pago'); ?>
-							<?= $this->Form->input('moneda_id', array('class' => 'form-control', 'empty' => 'Seleccione' )); ?>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>-->
 
 		<? if (!empty($proveedores) && !empty(Hash::extract($proveedores, '{n}.VentaDetalleProducto'))) : ?>
 		<? foreach ($proveedores as $ip => $p) : ?>
 			
 			<?= $this->Form->input(sprintf('%d.OrdenCompra.administrador_id', $ip), array('value' => $this->Session->read('Auth.Administrador.id'), 'type' => 'hidden')); ?>
 			<?= $this->Form->input(sprintf('%d.OrdenCompra.tienda_id', $ip), array('value' => $this->Session->read('Tienda.id'), 'type' => 'hidden')); ?>
-			<?= $this->Form->input(sprintf('%d.OrdenCompra.parent_id', $ip), array('value' => $this->request->data['OrdenCompra']['id'], 'type' => 'hidden')); ?>
 			<?= $this->Form->input(sprintf('%d.OrdenCompra.proveedor_id', $ip), array('value' => $p['Proveedor']['id'], 'type' => 'hidden')); ?>
 			<?= $this->Form->input(sprintf('%d.OrdenCompra.estado', $ip), array('value' => 'validacion_comercial', 'type' => 'hidden')); ?>
 
@@ -214,9 +189,9 @@
 										<? foreach ($p['VentaDetalleProducto'] as $ipp => $pp) : ?>	
 											<? if (count(Hash::extract($productosSolicitar, '{n}[id=' . $pp['id'] . '].id')) > 0) : ?>
 
-											<? foreach ($this->request->data['Venta'] as $iv => $venta) {
-												if (count(Hash::extract($venta['VentaDetalle'], '{n}[venta_detalle_producto_id='.$pp['id'].'].venta_detalle_producto_id'))) {
-													echo $this->Form->hidden(sprintf('%d.Venta.%d.venta_id', $ip, $iv), array('value' => $venta['id']));	
+											<? foreach ($venta_detalles as $iv => $venta) {
+												if (count(Hash::extract($venta, 'VentaDetalle[venta_detalle_producto_id='.$pp['id'].'].venta_detalle_producto_id'))) {
+													echo $this->Form->hidden(sprintf('%d.Venta.%d.venta_id', $ip, $iv), array('value' => $venta['VentaDetalle']['venta_id']));	
 												}
 											} ?>
 

@@ -10,21 +10,21 @@
 		</li>
 		<li class="xn-profile">
 			<a href="#" class="profile-mini">
-            <? if ( empty($avatar['Administrador']['google_imagen']) ) : ?>
+            <? if ( empty($avatar) ) : ?>
     			<?=$this->Html->image('logo_user.jpg', array('alt' => 'Perfil','class' => 'mCS_img_loaded')); ?>
     			
     		<? else : ?>
-    			<? $avatarSz =  str_replace('sz=50', 'sz=200', $avatar['Administrador']['google_imagen']);?>
+    			<? $avatarSz =  str_replace('sz=50', 'sz=200', $avatar);?>
 				<img class="mCS_img_loaded" src="<?=$avatarSz;?>" alt="Perfil">
     		<? endif; ?>
             </a>
             <div class="profile">
             	<div class="profile-image">
-            		<? if ( empty($avatar['Administrador']['google_imagen']) ) : ?>
+            		<? if ( empty($avatar) ) : ?>
             			<?=$this->Html->image('logo_user.jpg', array('alt' => 'Perfil','class' => 'mCS_img_loaded')); ?>
             			
             		<? else : ?>
-            			<? $avatarSz =  str_replace('sz=50', 'sz=200', $avatar['Administrador']['google_imagen']);?>
+            			<? $avatarSz =  str_replace('sz=50', 'sz=200', $avatar);?>
 						<img class="mCS_img_loaded" src="<?=$avatarSz;?>" alt="Perfil">
             		<? endif; ?>
                 </div>

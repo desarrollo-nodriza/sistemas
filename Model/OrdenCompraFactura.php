@@ -16,6 +16,15 @@ class OrdenCompraFactura extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
+		),
+		'Proveedor' => array(
+			'className'				=> 'Proveedor',
+			'foreignKey'			=> 'proveedor_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
 		)
 	);
 

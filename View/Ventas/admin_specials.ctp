@@ -181,6 +181,8 @@
 																</tr>
 																<? if (!empty($venta['OrdenCompraDetalle'])) : ?>
 																<? foreach ($venta['OrdenCompraDetalle'] as $ipp => $p) : ?>
+																<? if (empty($p['estado_proveedor']))
+																	continue; ?>
 																<tr>
 																	<td>#<?=$p['orden_compra_id'];?></td>
 																	<td><?=$p['descripcion'];?></td>

@@ -1141,13 +1141,156 @@ $.extend({
 			});
 			
 
-		},	
+		},
+		agregar_oc: function(){
+			var cargarOrdenes = true;
+	
+			obtener_ordenes();
+
+			$('.ctm-datatables').addClass('hide');
+
+			function obtener_ordenes($limit = 200, $offset = 0)
+			{	
+				$('.loader').css('display', 'block');
+
+				if (cargarOrdenes) {
+
+					data = {
+						'limit' : $limit,
+						'offset' : $offset
+					};
+
+					$.get( webroot + 'ordenCompras/obtener_ordenes_ajax/', data , function(respuesta){
+					
+						if (respuesta != '0') {
+							$('#wrapper-ordenes tbody').append(respuesta);
+							$offset = $offset + $limit;
+							obtener_ordenes($limit, $offset);
+						}else{
+							cargarOrdenes = false;
+
+							$('.loader').css('display', 'none');
+
+							$('.ctm-datatables').removeClass('hide');
+
+							$('.ctm-datatables').DataTable({
+								paging: false,
+						    	scrollY: 400,
+								ordering: true,
+							});
+
+						}
+
+					})
+					.fail(function(){
+
+						$('.loader').css('display', 'none');
+
+						noty({text: 'Ocurrió un error al obtener las ventas. Intente nuevamente.', layout: 'topRight', type: 'error'});
+
+						setTimeout(function(){
+							$.noty.closeAll();
+						}, 10000);
+					});
+				}
+
+			}
+
+
+			var $seleccionado = null;
+
+
+			$(".mb-control-close").on("click",function(){
+
+		       $(this).parents(".message-box").removeClass("open");
+		       
+		       $seleccionado.prop('checked', false);
+
+		       return false;
+		    });
+
+		    $('#confirmar_manifiesto').on('click', function(){
+		    	
+		    	crearInput();
+
+		    	$(this).parents(".message-box").removeClass("open");
+
+		    });
+
+
+			function crearInput()
+			{	
+				$("#OrdenCompraValidateForm").append('<input id="venta_' + $seleccionado.val() + '" type="hidden" name="Venta[][venta_id]"/ value="' + $seleccionado.val() + '">');
+			}
+
+
+			function levantarModal()
+			{
+				/* MESSAGE BOX */
+		        var box = $('#modal_alertas');
+
+		        	$('#mensajeModal').html('La venta id #' + $seleccionado.data('id') + ' Ya ha sido agregada a ' + $seleccionado.data('ordencompras') + ' OC');
+		        
+		            box.toggleClass("open");
+
+		            var sound = box.data("sound");
+
+		            if(sound === 'alert')
+		                playAudio('alert');
+
+		            if(sound === 'fail')
+		                playAudio('fail');
+		    
+		        return false;
+			
+			}
+
+
+			function evaluarModal()
+			{	
+				if ($seleccionado.data('ordencompras') > 0) {
+					levantarModal();
+				}else{
+					crearInput();
+				}
+			}
+
+			$('.create_input').each(function(){
+				if ( $(this).prop('checked') ) {
+					$(this).prop('checked', false);
+					
+					/*
+					
+					$seleccionado = $(this);
+
+					evaluarModal();
+					
+					*/
+				}else{
+
+				}
+			});
+
+			$(document).on('change', '.create_input', function(){
+				if ( $(this).prop('checked') ) {
+					$seleccionado = $(this);
+					evaluarModal();
+				}else{
+					$("#venta_" + $(this).val() ).remove();
+					$seleccionado = null;
+				}
+			});
+		},
 		init: function(){
 			if ( $('.js-validate-oc').length ) {
 				$.ordenCompra.validate();
 				$.ordenCompra.clonar();
 				$.ordenCompra.bind();
 				$.ordenCompra.calcularTotales();
+			}
+
+			if ( $('#OrdenCompraValidateForm').length ) {
+				$.ordenCompra.agregar_oc();
 			}
 
 			if ( $('.form-pay').length ) {
