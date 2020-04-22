@@ -517,7 +517,7 @@ class OrdenComprasController extends AppController
 				),
 				'OrdenCompraFactura' => array(
 					'fields' => array(
-						'OrdenCompraFactura.id', 'OrdenCompraFactura.tipo_documento', 'OrdenCompraFactura.folio', 'OrdenCompraFactura.pagada', 'OrdenCompraFactura.nota'
+						'OrdenCompraFactura.id', 'OrdenCompraFactura.tipo_documento', 'OrdenCompraFactura.folio', 'OrdenCompraFactura.pagada', 'OrdenCompraFactura.nota', 'OrdenCompraFactura.monto_facturado'
 					)
 				)
 			),
