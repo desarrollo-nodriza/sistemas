@@ -106,7 +106,10 @@
 	</tr>
 
 	<? foreach ($oc['VentaDetalleProducto'] as $ipp => $ocp) : ?>	
-		
+		<? 
+		if ($ocp['OrdenComprasVentaDetalleProducto']['estado_proveedor'] != 'accept')
+			continue; 
+		?>
 		<tr>
 			<td style="font-size: 10px !important;"><?=$ipp+1;?></td>
 			<td style="font-size: 10px !important;"><?=$ocp['OrdenComprasVentaDetalleProducto']['codigo'];?></td>

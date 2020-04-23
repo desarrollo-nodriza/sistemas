@@ -1009,6 +1009,8 @@ class OrdenComprasController extends AppController
 				if (!isset($d['VentaDetalleProducto'])) {
 					continue;
 				}
+
+				$d['Venta'] = @array_unique($d['Venta']);
 				
 				if ( ! $this->OrdenCompra->saveAll($d, array('deep' => true)) ) {
 					$this->Session->setFlash('Ocurrió un error al guardar la OC. Verifique la información.', null, array(), 'danger');
@@ -2725,8 +2727,6 @@ class OrdenComprasController extends AppController
 			# Continuan sólo los itemes aceptados
 			if (count($itemsAceptados) > 0) {
 
-				$this->request->data['VentaDetalleProducto'] = $itemsAceptados;
-
 				$total_neto      = 0;
 
 				# recalculamos los montos
@@ -2749,7 +2749,6 @@ class OrdenComprasController extends AppController
 				$this->request->data['OrdenCompra']['total']           = ($total_neto - $this->request->data['OrdenCompra']['descuento_monto']) + $this->request->data['OrdenCompra']['iva'];
 
 			}
-
 
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 

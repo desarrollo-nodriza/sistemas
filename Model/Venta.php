@@ -1203,6 +1203,7 @@ class Venta extends AppModel
 					'type' => 'INNER',
 					'conditions' => array(
 						'vd.venta_id = OrdenComprasVenta.venta_id',
+						'vd.venta_detalle_producto_id = oc_productos.venta_detalle_producto_id',
 						'vd.cantidad_anulada < vd.cantidad'
 					)
 				),

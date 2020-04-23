@@ -3211,13 +3211,21 @@ class VentasController extends AppController {
 		
 		foreach ($ventas as $iv => $v) {
 			
-			$items = array(); 
 			foreach ($v['VentaDetalle'] as $ivd => $vd) :
-				$ventas[$iv]['OrdenCompraDetalle'] = Hash::extract($v['OrdenCompra'], '{n}.VentaDetalleProducto.{n}[id='.$vd['venta_detalle_producto_id'].'].OrdenComprasVentaDetalleProducto[estado_proveedor!=accept]');	
+
+				$items = Hash::extract($v['OrdenCompra'], '{n}.VentaDetalleProducto.{n}[id='.$vd['venta_detalle_producto_id'].'].OrdenComprasVentaDetalleProducto[estado_proveedor!=accept]');
+
+				if (!empty($items)) {
+					foreach ($items as $i => $item) {
+						if (!empty($item['estado_proveedor'])) {
+							$ventas[$iv]['OrdenCompraDetalle'][] = $item;		
+						}
+					}		
+				}
 			endforeach;
 
 		}
-
+		
 		BreadcrumbComponent::add('Ventas', '/index');
 		BreadcrumbComponent::add('Ventas especiales');
 		$this->set(compact('ventas'));
