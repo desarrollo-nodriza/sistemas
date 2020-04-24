@@ -6428,7 +6428,7 @@ class VentasController extends AppController {
 				$NuevoDetalle['precio']                    = monto_neto(round($DetalleVenta['unit_price'], 2));
 				$NuevoDetalle['cantidad']                  = $DetalleVenta['quantity'];
 				$NuevoDetalle['precio_bruto']              = round($DetalleVenta['unit_price'], 2);				
-				$NuevoDetalle['total_neto']                = $NuevoDetalle['precio'];			
+				$NuevoDetalle['total_neto']                = $NuevoDetalle['precio'] * $DetalleVenta['quantity'];			
 				$NuevoDetalle['total_bruto']               = monto_bruto($NuevoDetalle['total_neto']);
 				$NuevaVenta['VentaDetalle'][]              = $NuevoDetalle;
 				
