@@ -1004,13 +1004,16 @@ class OrdenComprasController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
+
+			$this->request->data['OrdenesCompra'][0]['Venta'][] = array('venta_id' => 30214);
+			
 			foreach ($this->request->data['OrdenesCompra'] as $ic => $d) {
 				
 				if (!isset($d['VentaDetalleProducto'])) {
 					continue;
 				}
 
-				$d['Venta'] = @array_unique($d['Venta']);
+				$d['Venta'] = unique_multidim_array($d['Venta'], 'venta_id');
 				
 				if ( ! $this->OrdenCompra->saveAll($d, array('deep' => true)) ) {
 					$this->Session->setFlash('Ocurrió un error al guardar la OC. Verifique la información.', null, array(), 'danger');
