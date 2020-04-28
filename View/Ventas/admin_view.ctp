@@ -404,6 +404,48 @@
 								</div>
 							</div>
 							<?= $this->Form->end(); ?>
+							<? else : ?>
+							<div class="panel panel-info">
+								<div class="panel-heading">
+									<h5 class="panel-title"><i class="fa fa-truck" aria-hidden="true"></i> <?=__('Transportes');?></h5>
+								</div>
+								<div class="panel-body">
+
+									<div class="table-responsive">
+										<table class="table table-bordered">
+											
+											<thead>
+												<tr>
+													<th><?=__('Transportista');?></th>
+													<th><?=__('N° de seguimiento');?></th>
+													<th><?=__('Etiqueta');?></th>
+													<th><?=__('Plazo entrega aprox');?></th>
+													<th><?=__('Seguimiento');?></th>
+												</tr>
+											</thead>
+											<tbody class="">
+												<? if (!empty($venta['Transporte'])) : ?>
+													<? foreach ($venta['Transporte'] as $it => $transporte) : ?>
+														<tr>
+															<td><?=$transporte['nombre'];?></td>
+															<td><?=$transporte['TransportesVenta']['cod_seguimiento'];?></td>
+															<td>
+																<? if (!empty($transporte['TransportesVenta']['etiqueta'])) : ?>
+																<a href="<?=$transporte['TransportesVenta']['etiqueta']?>" class="btn btn-xs btn-primary" target="_blank"><i class="fa fa-file-pdf-o"></i> Ver</a>
+																<? else : ?>													
+																No aplica
+																<? endif; ?>
+															</td>
+															<td><span class="js-fecha-entrega"><?=$transporte['tiempo_entrega']; ?></span></td>
+															<td><span class="js-btn-seguimiento"><?=$transporte['url_seguimiento']; ?></td>
+														</tr>
+													<? endforeach; ?>
+												<? endif; ?>
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
 							<? endif; ?>
 							<!-- / TRANSPORTISTA -->
 
