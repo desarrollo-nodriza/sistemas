@@ -6686,7 +6686,7 @@ class VentasController extends AppController {
 
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->saveMany($log);
-		#prx($NuevaVenta);
+		
 		//se guarda la venta
 		$this->Venta->create();
 		if ( $this->Venta->saveAll($NuevaVenta) ) {
@@ -6757,7 +6757,8 @@ class VentasController extends AppController {
 				'Venta.id', 'Venta.venta_estado_id'
 			),
 			'contain' => array(
-				'VentaTransaccion'
+				'VentaTransaccion',
+				'VentaDetalle'
 			)
 		));
 
@@ -6887,6 +6888,46 @@ class VentasController extends AppController {
 			$ActualizarVenta['Venta']['fono_receptor']     =  $fono_receptor;
 		}
 
+		//se obtienen el detalle de la venta
+		$VentaDetalles = $this->Prestashop->prestashop_obtener_venta_detalles($nwVenta['id']);
+
+		if (isset($VentaDetalles['order_detail']) && !isset($VentaDetalles['order_detail'][0])) {
+			$VentaDetalles = array(
+				'order_detail' => array(
+					'0' => $VentaDetalles['order_detail']
+				)
+			);
+		}
+
+		// Existen ventas sin productos xD
+		if (isset($VentaDetalles['order_detail'])) {
+			//ciclo para recorrer el detalle de la venta
+			foreach ($VentaDetalles['order_detail'] as $DetalleVenta) {
+				if (!empty($DetalleVenta['product_id'])) {
+
+					if (!Hash::check($venta, 'VentaDetalle.{n}[venta_detalle_producto_id='.$DetalleVenta['product_id'].'].id')) {
+						
+						$NuevoDetalle = array();
+						$NuevoDetalle['venta_detalle_producto_id']  = $DetalleVenta['product_id'];
+						$NuevoDetalle['precio']                     = round($DetalleVenta['unit_price_tax_excl'], 2);
+						$NuevoDetalle['precio_bruto']               = round($DetalleVenta['unit_price_tax_incl'], 2);
+						$NuevoDetalle['cantidad']                   = $DetalleVenta['product_quantity'];
+						$NuevoDetalle['cantidad_pendiente_entrega'] = $DetalleVenta['product_quantity'];
+						$NuevoDetalle['cantidad_reservada'] 		= 0;
+						$NuevoDetalle['total_neto']              	= $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
+						$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
+
+						$ActualizarVenta['VentaDetalle'][] = $NuevoDetalle;
+
+						//se guarda el producto si no existe
+						$this->prestashop_guardar_producto($DetalleVenta);
+
+					}
+
+				}
+				
+			} //fin ciclo detalle de venta
+		}
 
 		$ActualizarVenta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
 		$ActualizarVenta['Venta']['venta_estado_id']          = $this->Prestashop->prestashop_obtener_venta_estado($nuevo_estado);
@@ -6913,7 +6954,7 @@ class VentasController extends AppController {
 				'modulo_accion' => json_encode($ActualizarVenta)
 			)
 		);
-
+		
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->saveMany($log);
 
