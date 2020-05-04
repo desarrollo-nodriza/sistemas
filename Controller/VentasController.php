@@ -6686,7 +6686,7 @@ class VentasController extends AppController {
 
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->saveMany($log);
-		
+		#prx($NuevaVenta);
 		//se guarda la venta
 		$this->Venta->create();
 		if ( $this->Venta->saveAll($NuevaVenta) ) {
@@ -6712,6 +6712,9 @@ class VentasController extends AppController {
 				$excluirPrestashop = array('Prestashop' => array($tienda_id));
 				$this->actualizar_canales_stock($this->Venta->id, $excluirPrestashop);
 			}
+
+			# Enviar email correspondiente
+			$this->notificar_cambio_estado($this->Venta->id);
 
 
 			return true;
