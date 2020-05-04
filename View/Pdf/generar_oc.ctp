@@ -107,7 +107,7 @@
 
 	<? foreach ($oc['VentaDetalleProducto'] as $ipp => $ocp) : ?>	
 		<? 
-		if ($ocp['OrdenComprasVentaDetalleProducto']['estado_proveedor'] != 'accept')
+		if ($ocp['OrdenComprasVentaDetalleProducto']['estado_proveedor'] == 'stockout')
 			continue; 
 		?>
 		<tr>
