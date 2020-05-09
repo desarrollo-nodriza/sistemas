@@ -109,7 +109,7 @@ Class Pago extends AppModel {
 
 
 
-	public function crear( $identificador, $id_oc, $id_adjunto = null, $fecha, $monto, $facturas = array() )
+	public function crear( $identificador, $id_oc = null, $id_adjunto = null, $fecha, $monto, $facturas = array(), $moneda_id = null )
 	{	
 		
 		$pago = array(
@@ -134,57 +134,47 @@ Class Pago extends AppModel {
 			));
 		}
 
+		if (!empty($moneda_id)) {
+			$pago = array_replace_recursive($pago, array(
+				'Pago' =>  array(
+					'moneda_id' => $moneda_id
+				)
+			));
+		}
+
 
 		$this->create();
-		return $this->saveAll($pago);
+
+		if ($this->saveAll($pago)) {
+			return $this->id;
+		}
+
+		return 0;
 
 	}
 
 
-	public function relacionar_pago_factura($id)
+	/**
+	 * Crea la relación entre un pago único y una factura única
+	 * @param  [type] $pago_id         [description]
+	 * @param  [type] $factura_id      [description]
+	 * @param  [type] $monto_facturado [description]
+	 * @param  [type] $monto_pagado    [description]
+	 * @return [type]                  [description]
+	 */
+	public function relacionar_pago_factura($pago_id, $factura_id, $monto_facturado, $monto_pagado)
 	{
-		$oc = ClassRegistry::init('OrdenCompra')->find('first', array(
-			'conditions' => array(
-				'OrdenCompra.id' => $id
-			),
-			'contain' => array(
-				'OrdenCompraFactura' => array(
-					'fields' => array(
-						'OrdenCompraFactura.id',
-						'OrdenCompraFactura.monto_facturado'
-					)
-				),
-				'Pago' => array(
-					'fields' => array(
-						'Pago.id',
-						'Pago.monto_pagado'
-					)
-				)
-			)
-		));
-
-		$total_f = count($oc['OrdenCompraFactura']);
-		$total_p = count($oc['Pago']);
-
-		if ($total_f =! 1 || $total_p != 1) {
-			return false;
-		}
-
+		
 		$pago = array(
-			'Pago' => array(
-				'id' => $oc['Pago'][0]['id']
-			),
-			'OrdenCompraFactura' => array(
-				0 => array(
-					'pagada'          => 1,
-					'factura_id'      => $oc['OrdenCompraFactura'][0]['id'],
-					'monto_facturado' => (float) $oc['OrdenCompraFactura'][0]['monto_facturado'],
-					'monto_pagado'    => (float) $oc['Pago'][0]['monto_pagado']
-				)
+			'FacturasPago' => array(
+				'factura_id'      => $factura_id,
+				'pago_id'         => $pago_id,
+				'monto_facturado' => $monto_facturado,
+				'monto_pagado'    => $monto_pagado
 			)
-		);
+		);	
 
-		return $this->saveAll($pago);
+		return ClassRegistry::init('FacturasPago')->save($pago);
 	}
 
 
@@ -220,102 +210,82 @@ Class Pago extends AppModel {
 					'fields' => array(
 						'Saldo.id'
 					)
-				)
+				),
+				'OrdenCompra' => array(
+					'fields' => array(
+						'OrdenCompra.proveedor_id'
+					)
+				),
+				'OrdenCompraFactura'
 			)
 		));
-
+		
 		if (empty($pago)) {
 			return;
 		}
-
+		
 		if (empty($pago['Saldo'])) {
-			$id_proveedor = ClassRegistry::init('OrdenCompra')->field('proveedor_id', array('id' => $pago['Pago']['orden_compra_id']));
+
+			if (!empty($pago['Pago']['orden_compra_id'])) {
+				$id_proveedor = $pago['OrdenCompra']['proveedor_id'];
+			}else{
+				$id_proveedor = Hash::extract($pago['OrdenCompraFactura'], '{n}.proveedor_id')[0];
+			}
 
 			# Creamos el saldo del pago
 			ClassRegistry::init('Saldo')->crear($id_proveedor, $pago['Pago']['orden_compra_id'], null, $id, $pago['Pago']['monto_pagado']);	
-		}
-
-		$oc = ClassRegistry::init('OrdenCompra')->find('first', array(
-			'conditions' => array(
-				'OrdenCompra.id' => $pago['Pago']['orden_compra_id']
-			),
-			'contain' => array(
-				'OrdenCompraFactura' => array(
-					'fields' => array(
-						'OrdenCompraFactura.*'
-					),
-					'conditions' => array(
-						'OrdenCompraFactura.pagada' => 0
-					)
-				),
-				'Pago' => array(
-					'fields' => array(
-						'Pago.id',
-						'Pago.monto_pagado',
-						'Pago.fecha_pago',
-						'Pago.identificador',
-						'Pago.adjunto',
-						'Pago.pagado'
-					),
-					'conditions' => array(
-						'Pago.pagado' => 1
-					)
-				)
-			)
-		));
-
-
-		if (empty($oc['OrdenCompraFactura'])) 
-			return;
-
-
-		$total_p = array_sum(Hash::extract($oc['Pago'], '{n}.monto_pagado'));
-		$total_f = array_sum(Hash::extract($oc['OrdenCompraFactura'], '{n}.monto_facturado'));
-
-
+		}		
+		
 		# Marcamos las facturas relacionadas como pagadas
 		$facturas = array();
 
+		$monto_pago   = 0;
+		$monto_pagado = 0;
 
-		if ( $total_p >= $total_f && $total_f > 0 ) {
+		# Validamos y relacionamos los pagos y las facturas
+		foreach ($pago['OrdenCompraFactura'] as $if => $f) {
 
-			foreach ($oc['OrdenCompraFactura'] as $if => $f) {
-				$facturas[$if]['OrdenCompraFactura']['id']           = $f['id'];
+			$pagosRelFactura = ClassRegistry::init('OrdenCompraFactura')->find('first', array(
+				'conditions' => array(
+					'OrdenCompraFactura.id' => $f['id']
+				),
+				'contain' => array(
+					'Pago' => array(
+						'conditions' => array(
+							'Pago.pagado' => 1
+						)
+					)
+				)
+			));
+			
+			$total_a_pagar = $f['monto_facturado'] - $f['monto_pagado'];
+			
+			if ($total_a_pagar < 0) {
+				$monto_pagado = $monto_pagado + $f['monto_pagado'];
+				continue;
+			}
+			
+			$monto_pago  = array_sum(Hash::extract($pagosRelFactura, 'Pago.{n}.monto_pagado')) - $f['monto_pagado'] - $monto_pagado;
+			
+			$facturas[$if]['OrdenCompraFactura']['id']           = $f['id'];
+			# Pagamos la factura y descontamos del monto pagado
+			if ( $total_a_pagar <= $monto_pago ) {
+
+				$facturas[$if]['OrdenCompraFactura']['pagada'] = 1;
 				$facturas[$if]['OrdenCompraFactura']['monto_pagado'] = $f['monto_facturado'];
-				$facturas[$if]['OrdenCompraFactura']['pagada']       = 1;
+				
+				$monto_pagado = $monto_pagado + $total_a_pagar + $f['monto_pagado'];
 
-				# Se relacionan las facturas con los pagos
-				foreach ($oc['Pago'] as $ip => $p) {
-					$res[$f['id']][$p['id']] = ClassRegistry::init('FacturasPago')->save(array(
-						'FacturasPago' => array(
-							'factura_id' => $f['id'],
-							'pago_id' => $p['id'],
-						)
-					));
-
-
-				}
+			}else{
+				$facturas[$if]['OrdenCompraFactura']['monto_pagado'] = $monto_pago + $f['monto_pagado'];
+				$monto_pagado = $monto_pagado + $monto_pago + $f['monto_pagado'];
 			}
-
-			ClassRegistry::init('OrdenCompraFactura')->saveMany($facturas);
-
-		}else{
-
-			foreach ($oc['OrdenCompraFactura'] as $if => $f) {
-
-				# Se relacionan las facturas con los pagos
-				foreach ($oc['Pago'] as $ip => $p) {
-					$res[$f['id']][$p['id']] = ClassRegistry::init('FacturasPago')->save(array(
-						'FacturasPago' => array(
-							'factura_id' => $f['id'],
-							'pago_id' => $p['id'],
-						)
-					));
-				}
-			}
-
 		}
-
+		
+		#guardamos las facturas
+		if (!empty($facturas)) {
+			ClassRegistry::init('OrdenCompraFactura')->saveMany($facturas);	
+		}
 
 		return;
 

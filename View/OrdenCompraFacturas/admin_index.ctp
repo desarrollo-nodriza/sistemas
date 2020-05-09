@@ -18,7 +18,7 @@
 					<h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
 				</div>
 				<div class="panel-body">
-					<div class="col-sm-2 col-xs-12">
+					<div class="col-sm-3 col-xs-12">
 						<div class="form-group">
 							<label>Orden de compra:</label>
 
@@ -29,11 +29,12 @@
 								'class' => 'form-control select',
 								'data-live-search' => true,
 								'default' => $oc,
-								'empty' => 'Seleccione OC'
+								'empty' => 'Seleccione OC',
+								'multiple' => true
 								));?>
 						</div>
 					</div>
-					<div class="col-sm-2 col-xs-12">
+					<div class="col-sm-3 col-xs-12">
 						<div class="form-group">
 							<label>Proveedor:</label>
 
@@ -129,6 +130,7 @@
 										<th></th>
 										<th><?= $this->Paginator->sort('id', 'Identificador', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('orden_compra_id', 'OC', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+										<th><?= $this->Paginator->sort('created', 'Fecha creación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('proveedor_id', 'Proveedor', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('folio', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('total_items', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -137,16 +139,17 @@
 										<th><?= $this->Paginator->sort('bruto', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('monto_pagado', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('anulado', 'Estado Sii', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-										<th><?= $this->Paginator->sort('pagada', 'Estado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+										<th><?= $this->Paginator->sort('', 'Sub estados', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th>Acciones</th>
 									</tr>
 								</thead>
 								<tbody>
 									<?php foreach ( $facturas as $if => $factura ) : ?>
 									<tr>
-										<td><input type="checkbox" value="<?=$factura['OrdenCompraFactura']['id']; ?>" data-id="<?=$factura['OrdenCompraFactura']['id']; ?>" data-oc="<?=$factura['OrdenCompraFactura']['orden_compra_id']; ?>" data-proveedor="<?=$factura['OrdenCompraFactura']['proveedor_id']; ?>" class="js-factura-id" name="data[OrdenCompraFactura][<?=$if;?>][id]"></td>
+										<td><input type="checkbox" value="<?=$factura['OrdenCompraFactura']['id']; ?>" data-id="<?=$factura['OrdenCompraFactura']['id']; ?>" data-oc="<?=$factura['OrdenCompraFactura']['orden_compra_id']; ?>" data-proveedor="<?=$factura['OrdenCompraFactura']['proveedor_id']; ?>" class="js-factura-id" name="data[OrdenCompraFactura][<?=$if;?>][id]" <? if ($factura['OrdenCompraFactura']['pagada'] || !empty($factura['Pago'] || empty($factura['Proveedor']))) : ?> disabled <? endif;?>></td>
 										<td><?= h($factura['OrdenCompraFactura']['id'])?></td>
 										<td>#<?= h($factura['OrdenCompraFactura']['orden_compra_id'])?></td>
+										<td><?= h($factura['OrdenCompraFactura']['created'])?></td>
 										<td><?= h($factura['Proveedor']['nombre'])?></td>
 										<td><?= h($factura['OrdenCompraFactura']['folio'])?></td>
 										<td><?= h($factura['OrdenCompraFactura']['total_items'])?></td>
@@ -156,34 +159,36 @@
 										<td><?= h(CakeNumber::currency($factura['OrdenCompraFactura']['monto_pagado'], 'CLP'))?></td>
 										<td><?= (!$factura['OrdenCompraFactura']['anulado']) ? '<label class="label label-success"><i class="fa fa-check"></i> Aceptado</label>' : '<label class="label label-danger"><i class="fa fa-close"></i> Anulado</label>' ;?></td>
 										<td>
-										<? if ($factura['OrdenCompraFactura']['pagada']) : ?>
-											<label class="label label-success"><i class="fa fa-check"></i> Pagada</label>
-										<? endif; ?>
+										<? foreach ($factura['OrdenCompraFactura']['estados'] as $estado) : ?>
+											<? 	switch ($estado) :
+													case 'pagado':
+														echo '<label class="label label-success"><i class="fa fa-check"></i> Pagada</label>';
+														break;
+													case 'sin_pago':
+														echo '<label class="label label-danger"><i class="fa fa-close"></i> No pagado</label>';
+														break;
+													case 'agendamineto_pendiente':
+														echo '<label class="label label-warning"><i class="fa fa-clock-o"></i> Pendiente de agendamiento</label>';
+														break;
+													case 'agendado':
+														echo '<label class="label label-info"><i class="fa fa-clock-o"></i> Pago agendado</label>';
+														break;
+													case 'pago_pendiente':
+														echo '<label class="label label-warning"><i class="fa fa-close"></i> Pendiente de pago</label>';
+														break;
+													default:
+														echo '<label class="label label-default"><i class="fa fa-eye-slash"></i> No aplica</label>';
+														break;
+											 	endswitch;?>
 
-										<? if ($factura['OrdenCompra']['Moneda']['tipo'] == 'agendar' && !$factura['OrdenCompraFactura']['pagada'] && count(Hash::extract($factura['OrdenCompra']['Pago'], '{n}[pagado=1].pagado')) == 0 ) : ?>
-											<label class="label label-warning"><i class="fa fa-clock"></i> Pendiente de agendamiento</label>
-										<? endif; ?>
-
-										<? if ($factura['OrdenCompra']['Moneda']['tipo'] == 'agendar' && !$factura['OrdenCompraFactura']['pagada'] && count(Hash::extract($factura['OrdenCompra']['Pago'], '{n}[pagado=1].pagado')) > 0 ) : ?>
-											<label class="label label-warning"><i class="fa fa-clock"></i> En proceso de pago</label>
-										<? endif; ?>
-
-										<? if ($factura['OrdenCompra']['Moneda']['tipo'] == 'esperar' && !$factura['OrdenCompraFactura']['pagada'] && count(Hash::extract($factura['OrdenCompra']['Pago'], '{n}[pagado=1].pagado')) == 0) : ?>
-											<label class="label label-info"><i class="fa fa-clock"></i> En espera de configuracion de pagos</label>
-										<? endif; ?>
-
-										<? if ($factura['OrdenCompra']['Moneda']['tipo'] == 'esperar' && !$factura['OrdenCompraFactura']['pagada'] && count(Hash::extract($factura['OrdenCompra']['Pago'], '{n}[pagado=1].pagado')) > 0) : ?>
-											<label class="label label-info"><i class="fa fa-clock"></i> En proceso de pago</label>
-										<? endif; ?>
-
-										<? if ($factura['OrdenCompra']['Moneda']['tipo'] == 'pagar' && !$factura['OrdenCompraFactura']['pagada']) : ?>
-											<label class="label label-danger"><i class="fa fa-close"></i> Pendiente de pago</label>
-										<? endif; ?>
+										<? endforeach; ?>
 										
 										<td>
 										<? if ($permisos['edit']) : ?>
 											<?= $this->Html->link('<i class="fa fa-list"></i> Ver detalles', array('action' => 'view', $factura['OrdenCompraFactura']['id']), array('class' => 'btn btn-xs btn-primary', 'rel' => 'tooltip', 'title' => 'Ir a este registro', 'escape' => false)); ?>
-											<?= $this->Html->link('<i class="fa fa-money"></i> Configurar pagos', array('controller' => 'pagos', 'action' => 'configuracion', $factura['OrdenCompraFactura']['orden_compra_id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ir a este registro', 'escape' => false)); ?>
+											<? if (!in_array('sin_moneda', $factura['OrdenCompraFactura']['estados']) && !empty($factura['Proveedor']) && !$factura['OrdenCompraFactura']['pagada']) : ?>
+											<?= $this->Html->link('<i class="fa fa-money"></i> Configurar pagos', array('controller' => 'pagos', 'action' => 'configuracion', $factura['OrdenCompraFactura']['id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ir a este registro', 'escape' => false)); ?>
+											<? endif; ?>
 										<? endif; ?>
 										</td>
 									</tr>
@@ -194,7 +199,7 @@
 					</div>
 					<div class="panel-footer">
 						<?= $this->Form->create('OrdenCompraFactura', array('url' => array('controller' => 'ordenCompraFacturas', 'action' => 'procesar'),'id' => "formulario-facturas-pago-masivo", 'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-							<input type="submit" class="btn btn-primary esperar-carga pull-right" autocomplete="off" data-loading-text="Espera un momento..." value="Asignar pagos">
+							<input type="submit" class="btn btn-primary esperar-carga pull-right" autocomplete="off" data-loading-text="Espera un momento..." value="Pagar facturas seleccionadas">
 						<?= $this->Form->end(); ?>
 					</div>
 				</div>

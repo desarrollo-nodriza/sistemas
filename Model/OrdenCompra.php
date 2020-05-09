@@ -379,6 +379,12 @@ class OrdenCompra extends AppModel
 	}
 
 
+	/**
+	 * Nos indica si una OC tiene un pago y una factura relacionada
+	 * Si tiene más de 1 pago y/o factura, retorna falso.
+	 * @param  [type] $id ID de la OC
+	 * @return bool
+	 */
 	public function es_pago_factura_unico($id)
 	{
 		$oc = $this->find('first', array(
@@ -407,7 +413,7 @@ class OrdenCompra extends AppModel
 		$return  = false;
 
 		if ($total_f == 1 && $total_p == 1) {
-			$return = true;
+			$return = $oc;
 		}
 
 		return $return;

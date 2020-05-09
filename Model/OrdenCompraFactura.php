@@ -80,6 +80,18 @@ class OrdenCompraFactura extends AppModel
 	);
 
 
+	public function crear($factura = array())
+	{	
+		if($this->save($factura)){
+			$id = $this->id;
+			$this->clear();
+			return $id;
+		}else{
+			return 0;
+		}
+	}
+
+
 	/**
 	 * 
 	 * @param  [type] $id_oc [description]
@@ -149,4 +161,22 @@ class OrdenCompraFactura extends AppModel
 		return false;
 	}
 
+
+	/**
+	 * Retorna el siguiente id al ultimo registrado
+	 * @return int
+	 */
+	public function obtener_siguiente_id()
+	{
+		$ultimo = $this->find('first', array(
+			'order' => array('created' => 'desc'),
+			'fields' => array('id')
+		));
+
+		if (empty($ultimo)) {
+			return 1;
+		}else{
+			return (int) $ultimo['OrdenCompraFactura']['id'] + 1;
+		}
+	}
 }

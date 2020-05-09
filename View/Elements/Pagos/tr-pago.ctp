@@ -4,11 +4,8 @@
 		<!-- Hidden inputs -->
 		<input type="hidden" name="data[<?=$index;?>][Pago][id]" value="<?=$pago['Pago']['id'];?>"/>
 		
-		<? if (empty($pago['Pago']['moneda_id'])) : ?>
-		<?=$this->Form->select(sprintf('%d.Pago.moneda_id', $index), $monedas ,array('default' => $pago['OrdenCompra']['moneda_id'], 'class' => 'form-control', 'empty' => 'Seleccione')); ?>
-		<? else : ?>
 		<?=$this->Form->select(sprintf('%d.Pago.moneda_id', $index), $monedas ,array('default' => $pago['Pago']['moneda_id'], 'class' => 'form-control', 'empty' => 'Seleccione')); ?>
-		<? endif; ?>
+		
 	</td>
 	<td>
 		<input type="text" class="form-control" value="<?=$pago['Pago']['identificador']; ?>">
@@ -54,21 +51,26 @@
 		      <div class="modal-body">
 		        <div class="table-responsive">
 					<table class="table table-bordered">
+						<caption>Factura/as relacionadas</caption>
+						<th>Folio</th>
+						<th>OC</th>
+						<th>Proveedor</th>
+						<th>Monto facturado</th>
+						<th>Monto pagado</th>
+						<th>Estado</th>
 						<tbody>
+						<? foreach ($pago['OrdenCompraFactura'] as $if => $f): ?>
 							<tr>
-								<td>Proveedor</td>
-								<td><?=$pago['OrdenCompra']['Proveedor']['nombre']; ?></td>
+								<td><?=$this->Html->link('#' . $f['id'], array('controller' => 'ordenCompraFacturas', 'action' => 'view', $f['id']), array('target' => '_blank')); ?></td>
+								<td><?=$this->Html->link('#' . $f['OrdenCompra']['id'], array('controller' => 'ordenCompras', 'action' => 'view', $f['OrdenCompra']['id']), array('target' => '_blank')); ?></td>
+								<td><?=$f['OrdenCompra']['Proveedor']['nombre']; ?><br><?=$f['OrdenCompra']['Proveedor']['rut_empresa']; ?></td>
+								<td><?=CakeNumber::currency($f['monto_facturado'], 'CLP');?></td>
+								<td><?=CakeNumber::currency($f['monto_pagado'], 'CLP');?></td>
+								<td><?= ($f['pagada']) ? '<i class="fa fa-check-circle text-success"></i>' : '<i class="fa fa-times-circle text-danger"></i>' ; ?></td>
 							</tr>
-							<tr>
-								<td>Rut proveedor</td>
-								<td><?=$pago['OrdenCompra']['Proveedor']['rut_empresa']; ?></td>
-							</tr>
-							<tr>
-								<td>OC relacionada</td>
-								<td><?=$this->Html->link('#' . $pago['OrdenCompra']['id'], array('controller' => 'ordenCompras', 'action' => 'view', $pago['OrdenCompra']['id']), array('target' => '_blank')); ?></td>
-							</tr>
+						<? endforeach; ?>
 						</tbody>
-					</table>
+					</table>					
 		        </div>
 		      </div>
 		      <div class="modal-footer">

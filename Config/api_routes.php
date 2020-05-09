@@ -392,6 +392,19 @@ Router::connect(
 
 
 /**
+ * Pagos de facturas proveedor
+ */
+Router::connect(
+    '/api/pagoproveedor/add', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Pagos', 
+        'action' => 'add',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+
+/**
  * Mensajes
  */
 Router::connect(
@@ -449,6 +462,32 @@ Router::connect(
         'action' => 'index',
         'api' => true,
         'prefix' => 'api')
+);
+
+
+/**
+ * Monedas
+ */
+Router::connect(
+    '/api/monedas', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Monedas', 
+        'action' => 'index',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+Router::connect(
+    '/api/monedas/view/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Monedas', 
+        'action' => 'view',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
 );
 
 Router::parseExtensions('json');

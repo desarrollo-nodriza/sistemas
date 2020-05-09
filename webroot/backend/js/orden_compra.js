@@ -120,7 +120,7 @@ $.extend({
 				if ($ths.hasClass('js-cantidad-producto')) {
 					$ths.rules("add", {
 				        number: true,
-				        min: $ths.attr('min'),
+				        min: parseInt($ths.attr('min')),
 				        messages: {
 				        	number: 'Ingrese solo números',
 				        	min: 'La cantidad mínima de compra para este item es de ' + $ths.attr('min')
@@ -274,14 +274,14 @@ $.extend({
 					}
 
 					if ($that.hasClass('js-cantidad-producto')) {
-						$that.rules("add", {
+						/*$that.rules("add", {
 					        number: true,
 					        min: $that.attr('min'),
 					        messages: {
 					        	number: 'Ingrese solo números',
 					        	min: 'La cantidad mínima de compra para este item es de ' + $that.attr('min')
 					        }
-					    });
+					    });*/
 					}
 
 					if ($that.hasClass('js-descuento-producto')) {

@@ -124,6 +124,7 @@
 								<tr class="hidden clone-tr">
 									<td>
 										<?=$this->Form->hidden('OrdenCompraFactura.999.proveedor_id', array('disabled' => true, 'value' => $this->request->data['OrdenCompra']['proveedor_id'])); ?>
+										<?=$this->Form->hidden('OrdenCompraFactura.999.moneda_id', array('disabled' => true, 'value' => $this->request->data['OrdenCompra']['moneda_id'])); ?>
 										<?= $this->Form->select('OrdenCompraFactura.999.tipo_documento', $tipo_documento , array( 'disabled' => true, 'class' => 'form-control not-blank js-tipo-documento-compras', 'empty' => 'Seleccione tipo documento')); ?>
 									</td>
 									<td>

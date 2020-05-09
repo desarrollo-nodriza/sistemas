@@ -40,15 +40,15 @@ $.extend({
 			$('.js-factura-id').on('click', function(){
 				var $ths = $(this),
 					id    = $ths.data('id'),
-					id_oc = $ths.data('oc');
+					id_proveedor = $ths.data('proveedor');
 
 				
 				if (oc_seleccionada == 0) {
-					oc_seleccionada = id_oc;
+					oc_seleccionada = id_proveedor;
 				}
 
-				if (oc_seleccionada != id_oc) {
-					noty({text: 'Debe seleccionar facturas de la OC #' + oc_seleccionada, layout: 'topRight', type: 'error'});
+				if (oc_seleccionada != id_proveedor) {
+					noty({text: 'Debe seleccionar del mismo proveedor', layout: 'topRight', type: 'error'});
 					$ths.prop('checked', false);
 					return;
 				}

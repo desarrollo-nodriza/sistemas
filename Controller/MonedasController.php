@@ -103,4 +103,137 @@ class MonedasController extends AppController
 
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}
+
+
+	/**
+	 * Lista las monedas
+	 * Endpoint :  /api/direcciones.json
+	 */
+    public function api_index() {
+
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+    	$qry = array(
+    		'order' => array('Moneda.id' => 'desc')
+    	);
+
+    	$paginacion = array(
+        	'limit' => 0,
+        	'offset' => 0,
+        	'total' => 0
+        );
+
+    	if (isset($this->request->query['id'])) {
+    		if (!empty($this->request->query['id'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array( 'Moneda.id' => $this->request->query['id'])));
+    		}
+    	}
+
+    	if (isset($this->request->query['limit'])) {
+    		if (!empty($this->request->query['limit'])) {
+    			$qry = array_replace_recursive($qry, array('limit' => $this->request->query['limit']));
+    			$paginacion['limit'] = $this->request->query['limit'];
+    		}
+    	}
+
+    	if (isset($this->request->query['offset'])) {
+    		if (!empty($this->request->query['offset'])) {
+    			$qry = array_replace_recursive($qry, array('offset' => $this->request->query['offset']));
+    			$paginacion['offset'] = $this->request->query['offset'];
+    		}
+    	}
+
+    	if (isset($this->request->query['nombre'])) {
+    		if (!empty($this->request->query['nombre'])) {
+    			$qry = array_replace_recursive($qry, array('conditions' => array( 'Moneda.nombre' => $this->request->query['nombre'])));
+    		}
+    	}
+   
+        $monedas = $this->Moneda->find('all', $qry);
+
+    	$paginacion['total'] = count($monedas);
+
+        $this->set(array(
+            'monedas' => $monedas,
+            'paginacion' => $paginacion,
+            '_serialize' => array('monedas', 'paginacion')
+        ));
+    }
+
+
+    /**
+     * Ver moneda
+     * @param  [type] $id [description]
+     * @return [type]     [description]
+     */
+    public function api_view($id) {
+    	
+    	$token = '';
+
+    	if (!$this->Moneda->exists($id)) {
+    		$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Moneda no existe'
+			);
+
+			throw new CakeException($response);
+    	}
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$moneda = $this->Moneda->find('first', array('conditions' => array('Moneda.id' => $id)));
+
+		$this->set(array(
+            'moneda' => $moneda,
+            '_serialize' => array('moneda')
+        ));
+			
+    }
 }

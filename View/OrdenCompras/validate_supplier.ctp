@@ -34,7 +34,7 @@
 					<div class="table-responsive">
 						<table class="table table-bordered">
 							<tr>
-								<td colspan="2" valign="center" style="vertical-align: middle; padding: 15px;"><?= $this->Html->image(sprintf('Tienda/%d/%s', $this->request->data['Tienda']['id'], $this->request->data['Tienda']['logo']), array('class' => 'img-responsive', 'style' => "max-width: 150px;"));?></td>
+								<td colspan="3" valign="center" style="vertical-align: middle; padding: 15px;"><?= $this->Html->image(sprintf('Tienda/%d/%s', $this->request->data['Tienda']['id'], $this->request->data['Tienda']['logo']), array('class' => 'img-responsive', 'style' => "max-width: 150px;"));?></td>
 							</tr>
 							<tr>
 								<td>
@@ -62,11 +62,6 @@
 										</tr>
 									</table>
 								</td>
-								<td valign="center" align="center" style="vertical-align: middle; padding: 15px;">
-									<h1 class="text-center"><b>OC #<?= (Configure::read('debug') > 0) ? 'NO APLICA' : $this->request->data['OrdenCompra']['id']; ?></b></h1>
-								</td>
-							</tr>
-							<tr>
 								<td>
 									<table class="table table-bordered">
 										<caption style="font-size: 14px; font-weight: 600;">Proveedor</caption>
@@ -109,6 +104,12 @@
 										</tr>
 									</table>
 								</td>
+								<!--<td valign="center" align="center" style="vertical-align: middle; padding: 15px;">
+									<h1 class="text-center"><b>OC #<?= (Configure::read('debug') > 0) ? 'NO APLICA' : $this->request->data['OrdenCompra']['id']; ?></b></h1>
+								</td>-->
+							</tr>
+							<tr>
+								
 							</tr>
 						</table>
 						<table class="table table-bordered">
@@ -118,7 +119,7 @@
 								<th>Descripción</th>
 								<th>Precio unitario</th>
 								<th>Cantidad solicitada</th>
-								<th>Cantidad a asignar</th>
+								<th>Cantidad aceptada</th>
 								<th>Aceptar/Rechazar</th>
 							</thead>
 							<tboby class="">

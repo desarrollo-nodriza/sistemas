@@ -22,9 +22,93 @@ class PagosController extends AppController
 	}
 
 
-	public function admin_configuracion($id_oc)
+	public function admin_configuracion($id_factura)
 	{	
 
+		if ($this->request->is('post') || $this->request->is('put')) {
+			
+			foreach ($this->request->data as $ip => $p) {
+				if (isset($p['Pago']['adjunto']) && $p['Pago']['adjunto']['error']) {
+					unset($this->request->data[$ip]['Pago']['adjunto']);
+				}
+			}
+
+			# Los pagos al día los finalizamos
+			foreach ($this->request->data as $ip => $pago) {
+				if (isset($pago['Pago']['fecha_pago']) && $pago['Pago']['fecha_pago'] <= date('Y-m-d') && $pago['Pago']['monto_pagado'] > 0 && $pago['Pago']['pagado'] == true) {
+					$this->request->data[$ip]['Pago']['pagado'] = 1;
+					$this->request->data[$ip]['OrdenCompraFactura'][]['factura_id'] = $id_factura;
+				}
+			}
+			
+			if ($this->Pago->saveMany($this->request->data)) {
+				$this->Session->setFlash('Pagos configurado con éxito', null, array(), 'success');
+				$this->redirect(array('controller' => 'ordenCompraFacturas', 'action' => 'index'));
+			}else{
+				$this->Session->setFlash('Se necesita configurar uno o varios pagos.', null, array(), 'success');
+			}
+
+		}
+
+		$factura = $this->Pago->OrdenCompraFactura->find('first', array(
+			'conditions' => array(
+				'OrdenCompraFactura.id' => $id_factura
+			),
+			'contain' => array(
+				'OrdenCompra' => array(
+					'fields' => array(
+						'OrdenCompra.id',
+						'OrdenCompra.total',
+						'OrdenCompra.moneda_id'
+					),
+					'Moneda' => array(
+						'fields' => array(
+							'Moneda.tipo',
+							'Moneda.nombre',
+							'Moneda.comprobante_requerido'
+						)
+					)
+					),
+				'Pago' => array(
+					'OrdenCompraAdjunto' => array(
+						'fields' => array(
+							'OrdenCompraAdjunto.identificador',
+							'OrdenCompraAdjunto.adjunto',
+						)
+					),
+					'Moneda' => array(
+						'fields' => array(
+							'Moneda.tipo',
+							'Moneda.nombre',
+							'Moneda.comprobante_requerido'
+						)
+					)
+				),
+				'Proveedor' => array(
+					'fields' => array(
+						'Proveedor.nombre',
+						'Proveedor.giro',
+						'Proveedor.email_contacto',
+						'Proveedor.fono_contacto',
+						'Proveedor.rut_empresa',
+						'Proveedor.direccion'
+					)
+				)
+			)
+		));
+		
+		BreadcrumbComponent::add('Pagos', '/ordenCompraFacturas/index');
+		BreadcrumbComponent::add('Configuración de pagos');
+
+		$cuenta_bancarias = ClassRegistry::init('CuentaBancaria')->find('list', array('conditions' => array('activo' => 1)));
+		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
+
+		$this->set(compact('factura', 'cuenta_bancarias', 'monedas'));
+	}
+
+
+	public function admin_configuracion_multiple()
+	{
 		if ($this->request->is('post')) {
 			
 			foreach ($this->request->data as $ip => $p) {
@@ -50,32 +134,31 @@ class PagosController extends AppController
 
 		}
 
-		$oc = $this->Pago->OrdenCompra->find('first', array(
+		$facturas = ClassRegistry::init('OrdenCompraFactura')->find('all', array(
 			'conditions' => array(
-				'OrdenCompra.id' => $id_oc
+				'OrdenCompraFactura.id' => $this->request->params['named']['id']
 			),
 			'contain' => array(
-				'Pago' => array(
-					'OrdenCompraAdjunto' => array(
-						'fields' => array(
-							'OrdenCompraAdjunto.identificador',
-							'OrdenCompraAdjunto.adjunto',
+				'OrdenCompra' => array(
+					'Pago' => array(
+						'OrdenCompraAdjunto' => array(
+							'fields' => array(
+								'OrdenCompraAdjunto.identificador',
+								'OrdenCompraAdjunto.adjunto',
+							)
 						)
-					)
-				),
-				'Moneda' => array(
-					'fields' => array(
-						'Moneda.tipo',
-						'Moneda.nombre',
-						'Moneda.comprobante_requerido'
-					)
-				),
-				'OrdenCompraFactura' => array(
-					'conditions' => array(
-						'OrdenCompraFactura.tipo_documento' => 33
+					),
+					'Moneda' => array(
+						'fields' => array(
+							'Moneda.tipo',
+							'Moneda.nombre',
+							'Moneda.comprobante_requerido'
+						)
 					),
 					'fields' => array(
-						'OrdenCompraFactura.monto_facturado', 'OrdenCompraFactura.folio'
+						'OrdenCompra.id',
+						'OrdenCompra.total',
+						'OrdenCompra.moneda_id'
 					)
 				),
 				'Proveedor' => array(
@@ -90,9 +173,7 @@ class PagosController extends AppController
 				)
 			),
 			'fields' => array(
-				'OrdenCompra.id',
-				'OrdenCompra.total',
-				'OrdenCompra.moneda_id'
+				'OrdenCompraFactura.monto_facturado', 'OrdenCompraFactura.folio'
 			)
 		));
 		
@@ -102,7 +183,7 @@ class PagosController extends AppController
 		$cuenta_bancarias = ClassRegistry::init('CuentaBancaria')->find('list', array('conditions' => array('activo' => 1)));
 		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
 
-		$this->set(compact('oc', 'cuenta_bancarias', 'monedas'));
+		$this->set(compact('facturas', 'cuenta_bancarias', 'monedas'));
 	}
 
 
@@ -114,31 +195,32 @@ class PagosController extends AppController
 	{
 		$pagos = $this->Pago->find('all', array(
 			'contain' => array(
-				'OrdenCompra' => array(
-					'fields' => array(
-						'OrdenCompra.total',
-						'OrdenCompra.total_pagado'
-					),
-					'Proveedor' => array(
+				'OrdenCompraFactura' => array(
+					'OrdenCompra' => array(
 						'fields' => array(
-							'Proveedor.nombre',
-							'Proveedor.rut_empresa'
+							'OrdenCompra.total',
+							'OrdenCompra.total_pagado'
+						),
+						'Proveedor' => array(
+							'fields' => array(
+								'Proveedor.nombre',
+								'Proveedor.rut_empresa'
+							)
+						),
+						'Moneda' => array(
+							'fields' => array(
+								'Moneda.nombre'
+							)
+						),
+						'OrdenCompraFactura' => array(
+							'fields' => array(
+								'OrdenCompraFactura.folio',
+								'OrdenCompraFactura.id',
+								'OrdenCompraFactura.monto_facturado'
+							)
 						)
 					),
-					'Moneda' => array(
-						'fields' => array(
-							'Moneda.nombre'
-						)
-					),
-					'OrdenCompraFactura' => array(
-						'fields' => array(
-							'OrdenCompraFactura.folio',
-							'OrdenCompraFactura.id',
-							'OrdenCompraFactura.monto_facturado'
-						)
-					)
 				),
-				'OrdenCompraFactura',
 				'CuentaBancaria' => array(
 					'fields' => array(
 						'CuentaBancaria.alias',
@@ -151,7 +233,7 @@ class PagosController extends AppController
 				'Pago.pagado' => 0
 			)
 		));
-
+		
 		$result = array();
 		
 		$index = 0;
@@ -189,13 +271,26 @@ class PagosController extends AppController
 
 		foreach ($pagos as $i => $pago) {
 
-			$folios = '<ul class="list-group border-bottom">';
+			$folios = '';
+			$ocs = '';
+			if (!empty($pago['OrdenCompraFactura'])) {
+				
+				$folios = '<ul class="list-group border-bottom">';
 
-			foreach ($pago['OrdenCompra']['OrdenCompraFactura'] as $f) {
-				$folios .= '<li class="list-group-item">Folio <a href="' . $baseUrl . 'ordenCompraFacturas/view/' . $f['id'] . '" target="_blank">#' . $f['folio'] . '</a> - ' . CakeNumber::currency($f['monto_facturado'], 'CLP') . '</li>';
+				foreach ($pago['OrdenCompraFactura'] as $f) {
+					
+					$folios .= '<li class="list-group-item">Folio <a href="' . $baseUrl . 'ordenCompraFacturas/view/' . $f['id'] . '" target="_blank">#' . $f['folio'] . '</a> - ' . CakeNumber::currency($f['monto_facturado'], 'CLP') . '</li>';
+					
+					# OC relacionada
+					$ocs .= '<ul class="list-group border-bottom">';
+					$ocs .= '<li class="list-group-item"><a href="' . $baseUrl . 'ordenCompras/view/'.$f['OrdenCompra']['id'].'" target="_blank">OC #' . $f['OrdenCompra']['id'] . '</a> - ' . CakeNumber::currency($f['OrdenCompra']['total'], 'CLP') . '</li>';
+					$ocs .= '</ul>';
+
+				}
+
+				$folios .= '</ul>';
+
 			}
-
-			$folios .= '</ul>';
 
 			$result[$index]['id']        = $pago['Pago']['id'];
 			$result[$index]['orden']     = $index;
@@ -203,7 +298,7 @@ class PagosController extends AppController
 			$result[$index]['start']     = $pago['Pago']['fecha_pago'];
 			$result[$index]['className'] = 'orange';
 			$result[$index]['trigger']   = 'click';
-			$result[$index]['description'] = '<p>OC relacionada: <b><a href="' . $baseUrl . 'ordenCompras/view/'.$pago['Pago']['orden_compra_id'].'" target="_blank">#' . $pago['Pago']['orden_compra_id'] . '</a></b></p> <p>Facturas relacionadas: </p>' . $folios . '<button class="btn btn-xs btn-danger btn-block close-pop"><i class="fa fa-times"></i> cerrar</button>';
+			$result[$index]['description'] = '<p>Facturas relacionadas: </p>' . $folios . '<br><p>OCs relacionadas: </p> ' . $ocs . '<button class="btn btn-xs btn-danger btn-block close-pop"><i class="fa fa-times"></i> cerrar</button>';
 
 			if ( strtotime($pago['Pago']['fecha_pago']) < strtotime(date('Y-m-d')) ) {
 				$result[$index]['className'] = 'red';
@@ -273,5 +368,127 @@ class PagosController extends AppController
 		}
 
 		return false;
+	}
+
+
+
+	public function api_add() {
+
+		# Solo método POST
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		if (empty($this->request->data['Pago']['identificador'])
+			|| empty($this->request->data['Pago']['fecha_pago'])
+			|| empty($this->request->data['Pago']['monto_pagado']))
+		{
+
+			$response = array(
+				'code' => 504,
+				'created' => false,
+				'message' => 'identificador, fecha_pago y monto_pagado son requeridos.'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		$resultado = array(
+			'code' => 201,
+			'created' => false,
+			'updated' => false
+		);
+
+		$log = array();
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Rest api',
+				'modulo' => 'Pagos',
+				'modulo_accion' => json_encode($this->request->data)
+			)
+		);
+		
+		if ($this->Pago->saveAll($this->request->data)){
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Rest api',
+					'modulo' => 'Pago',
+					'modulo_accion' => 'Creación: pago id ' . $this->Pago->id
+				)
+			);
+
+			$pago = $this->Pago->find('first', array(
+				'conditions' => array('Pago.id' => $this->Pago->id),
+				'contain' => array(
+					'CuentaBancaria' => array(
+						'fields' => array(
+							'CuentaBancaria.alias',
+							'CuentaBancaria.numero_cuenta'
+						)
+					),
+					'Moneda' => array(
+						'fields' => array(
+							'Moneda.nombre'
+						)
+					),
+					'OrdenCompraFactura'
+				))
+			);
+
+			$v             =  new View();
+			$v->autoRender = false;
+			$v->output     = '';
+			$v->layoutPath = '';
+			$v->layout     = '';
+			$v->set(compact('pago'));	
+
+			$pago['Pago']['block'] = $v->render('/Elements/Pagos/block-pago');
+
+			$resultado = array(
+				'code' => 200,
+				'created' => true,
+				'pago' => $pago
+			);
+		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
+
+		$this->set(array(
+			'response'   => $resultado,
+			'_serialize' => array('response')
+	    ));
 	}
 }

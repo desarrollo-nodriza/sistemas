@@ -54,7 +54,8 @@
 					<div class="row">
 						<div class="col-xs-12 form-group">
                             <?= $this->Form->label('moneda_id', 'Medio de pago (requerido)');?></p>
-                            <?= $this->Form->input('moneda_id', array('class' => 'form-control not-blank js-select-moneda', 'empty' => 'Seleccione', 'default' => $ocs['OrdenCompra']['moneda_id'], 'disabled' => true )); ?>
+                            <input value="<?=$ocs['Moneda']['nombre'];?>" class="form-control js-select-moneda" disabled/>
+                            <?= $this->Form->hidden('moneda_id', array('value' => $ocs['OrdenCompra']['moneda_id'])); ?>
 							<span class="help-block">El medio de pago usado, se heredará a las facturas recibidas para ésta OC</span>
 						</div>
 						<div class="col-xs-12 js-adjuntos">
@@ -63,7 +64,6 @@
 									<thead>
 										<th>N° identificador</th>
 										<th>Documento</th>
-										<th>Incluir en email</th>
 										<th><a href="#" class="copy_tr btn btn-rounded btn-primary"><span class="fa fa-plus"></span> agregar</a></th>
 									</thead>
 									<tbody>
@@ -73,9 +73,6 @@
 											</td>
 											<td>
 												<?= $this->Form->input('OrdenCompraAdjunto.999.adjunto', array('disabled' => true, 'type' => 'file', 'class' => 'not-blank')); ?>		
-											</td>
-											<td>
-												<?= $this->Form->input('OrdenCompraAdjunto.999.incluir_email', array('disabled' => true, 'type' => 'checkbox', 'class' => '', 'checked' => true)); ?>		
 											</td>
 											<td valign="center">
 												<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
@@ -91,30 +88,9 @@
 						</div>
 					</div>
 				</div>
-				
-			</div>
-
-			<div class="panel panel-info">
-				<div class="panel-heading">
-					<h3 class="panel-title"><i class="fa fa-users"></i> Destinatarios</h3>
-				</div>
-				<div class="panel-body">
-					<div class="form-group">
-						<?=$this->Form->label('email_contacto_empresa', 'Se enviará la OC a los siguientes destinatarios:');?>
-						<ul>
-							<? foreach ($ocs['Proveedor']['meta_emails'] as $i => $email) : ?>
-							<? if ($email['activo']) : ?>
-								<li><b><?=$email['email']; ?></b> (<?=$email['tipo']?>)</li>
-								<?=$this->Form->hidden(sprintf('email_contacto_empresa.%d.email', $i), array('value' => $email['email'])); ?>
-								<?=$this->Form->hidden(sprintf('email_contacto_empresa.%d.tipo', $i), array('value' => $email['tipo'])); ?>
-							<? endif; ?>
-							<? endforeach; ?>
-						</ul>
-					</div>
-				</div>
 				<div class="panel-footer">
-					<button type="submit" class="btn btn-success esperar-carga" autocomplete="off" data-loading-text="Espera un momento..."><i class="fa fa-check"></i> Pagar y enviar a Proveedor</button>
-				</div>
+					<button type="submit" class="btn btn-success esperar-carga" autocomplete="off" data-loading-text="Espera un momento..."><i class="fa fa-check"></i> Guardar cambios</button>
+				</div>			
 			</div>
 		</div>
 	</div>

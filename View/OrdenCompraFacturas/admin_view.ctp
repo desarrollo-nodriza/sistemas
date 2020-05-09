@@ -1,5 +1,5 @@
 <div class="page-title">
-	<h2><span class="fa fa-file"></span> <?=$this->Html->tipoDocumento[$this->request->data['OrdenCompraFactura']['tipo_documento']]; ?> <?= ($this->request->data['OrdenCompraFactura']['pagada']) ? '<label class="label label-success label-form">PAGADA</label>' : '' ; ?>: #<?=$this->request->data['OrdenCompraFactura']['folio']; ?> - Proveedor: <?=$this->request->data['OrdenCompra']['Proveedor']['nombre']; ?></h2>
+	<h2><span class="fa fa-file"></span> <?=$this->Html->tipoDocumento[$this->request->data['OrdenCompraFactura']['tipo_documento']]; ?> <?= ($this->request->data['OrdenCompraFactura']['pagada']) ? '<label class="label label-success label-form">PAGADA</label>' : '' ; ?>: #<?=$this->request->data['OrdenCompraFactura']['folio']; ?> - Proveedor: <?=$this->request->data['Proveedor']['nombre']; ?></h2>
 </div>
 
 <div class="page-content-wrap">
@@ -118,7 +118,11 @@
 					<div class="widget widget-primary">
                         <div class="widget-title">Total facturado</div>
                         <div class="widget-subtitle">bruto</div>
+                        <? if (!isset($this->request->data['LibreDte']['total'])) : ?>
+                        <div class="widget-int" id="total-facturado" data-facturado="<?=$this->request->data['OrdenCompraFactura']['monto_facturado']; ?>"><?=CakeNumber::currency($this->request->data['OrdenCompraFactura']['monto_facturado'], 'CLP');?></div>
+                        <? else : ?>
                         <div class="widget-int" id="total-facturado" data-facturado="<?=$this->request->data['LibreDte']['total']; ?>"><?=CakeNumber::currency($this->request->data['LibreDte']['total'], 'CLP');?></div>
+                    	<? endif; ?>
                     </div>
 				</div>
 				<div class="col-xs-12 col-md-6">
@@ -128,29 +132,43 @@
                         <div class="widget-subtitle">bruto</div>
                         <div class="widget-int" id="total-asignado" data-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>" data-original-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>"><?=CakeNumber::currency($this->request->data['OrdenCompraFactura']['monto_pagado'], 'CLP');?></div>
                     </div>
+                    <? elseif (isset($this->request->data['LibreDte']['total'])) : ?>
+						<? if ($this->request->data['OrdenCompraFactura']['monto_pagado'] > 0 && $this->request->data['OrdenCompraFactura']['monto_pagado'] < $this->request->data['LibreDte']['total']) : ?>
+						<div class="widget widget-warning">
+	                        <div class="widget-title">Total pagado</div>
+	                        <div class="widget-subtitle">bruto</div>
+	                        <div class="widget-int" id="total-asignado" data-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>" data-original-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>"><?=CakeNumber::currency($this->request->data['OrdenCompraFactura']['monto_pagado'], 'CLP');?></div>
+	                    </div>
+	                	<? endif; ?>
+
+	                	<? if ($this->request->data['OrdenCompraFactura']['monto_pagado'] >= $this->request->data['LibreDte']['total'] ) : ?>
+						<div class="widget widget-success">
+	                        <div class="widget-title">Total pagado</div>
+	                        <div class="widget-subtitle">bruto</div>
+	                        <div class="widget-int" id="total-asignado" data-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>" data-original-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>"><?=CakeNumber::currency($this->request->data['OrdenCompraFactura']['monto_pagado'], 'CLP');?></div>
+	                    </div>
+	                	<? endif; ?>
+                    <? else : ?>
+                    	<? if ($this->request->data['OrdenCompraFactura']['monto_pagado'] > 0 && $this->request->data['OrdenCompraFactura']['monto_pagado'] < $this->request->data['OrdenCompraFactura']['monto_facturado']) : ?>
+						<div class="widget widget-warning">
+	                        <div class="widget-title">Total pagado</div>
+	                        <div class="widget-subtitle">bruto</div>
+	                        <div class="widget-int" id="total-asignado" data-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>" data-original-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>"><?=CakeNumber::currency($this->request->data['OrdenCompraFactura']['monto_pagado'], 'CLP');?></div>
+	                    </div>
+	                	<? endif; ?>
+
+	                	<? if ($this->request->data['OrdenCompraFactura']['monto_pagado'] >= $this->request->data['OrdenCompraFactura']['monto_facturado'] ) : ?>
+						<div class="widget widget-success">
+	                        <div class="widget-title">Total pagado</div>
+	                        <div class="widget-subtitle">bruto</div>
+	                        <div class="widget-int" id="total-asignado" data-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>" data-original-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>"><?=CakeNumber::currency($this->request->data['OrdenCompraFactura']['monto_pagado'], 'CLP');?></div>
+	                    </div>
+	                	<? endif; ?>
                 	<? endif; ?>
 
-                	<? if ($this->request->data['OrdenCompraFactura']['monto_pagado'] > 0 && $this->request->data['OrdenCompraFactura']['monto_pagado'] < $this->request->data['LibreDte']['total']) : ?>
-					<div class="widget widget-warning">
-                        <div class="widget-title">Total pagado</div>
-                        <div class="widget-subtitle">bruto</div>
-                        <div class="widget-int" id="total-asignado" data-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>" data-original-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>"><?=CakeNumber::currency($this->request->data['OrdenCompraFactura']['monto_pagado'], 'CLP');?></div>
-                    </div>
-                	<? endif; ?>
-
-                	<? if ($this->request->data['OrdenCompraFactura']['monto_pagado'] >= $this->request->data['LibreDte']['total'] ) : ?>
-					<div class="widget widget-success">
-                        <div class="widget-title">Total pagado</div>
-                        <div class="widget-subtitle">bruto</div>
-                        <div class="widget-int" id="total-asignado" data-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>" data-original-pagado="<?=$this->request->data['OrdenCompraFactura']['monto_pagado']; ?>"><?=CakeNumber::currency($this->request->data['OrdenCompraFactura']['monto_pagado'], 'CLP');?></div>
-                    </div>
-                	<? endif; ?>
+                	
 				</div>
 			</div>
-			
-			<?= $this->Form->create('OrdenCompraFactura', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control', 'data-monto-asignado' => $this->request->data['OrdenCompraFactura']['monto_asignado']))); ?>
-			
-			<?= $this->Form->input('id'); ?>
 		
 			<div class="panel panel-primary">
 				<div class="panel-heading">
@@ -180,12 +198,14 @@
 									<td>
 										<?=CakeNumber::currency($pago['monto_pagado'], 'CLP'); ?>
 									</td>
-									<td><?=$this->request->data['OrdenCompra']['Moneda']['nombre']; ?></td>
+									<td><?=$pago['Moneda']['nombre']; ?></td>
 									<td><?=$pago['fecha_pago']; ?></td>
 									<td class="text-center"><?= ($pago['pagado']) ? '<i class="fa fa-check-circle text-success"></i>' : '<i class="fa fa-times-circle text-danger"></i>' ; ?></td>
 									<td>
 									<? if (!empty($pago['adjunto'])) : ?>
-										<a href="<?=sprintf('%simg/Pago/%d/%s', $this->webroot, $pago['id'], $pago['adjunto']); ?>" class="btn btn-xs btn-info"><i class="fa fa-eye"></i> ver</a>
+										<a href="<?=sprintf('%simg/Pago/%d/%s', $this->webroot, $pago['id'], $pago['adjunto']); ?>" class="btn btn-xs btn-info" target="_blank"><i class="fa fa-eye"></i> ver</a>
+									<? elseif (!empty($pago['OrdenCompraAdjunto'])) : ?>
+										<a href="<?=sprintf('%simg/OrdenCompraAdjunto/%d/%s', $this->webroot, $pago['OrdenCompraAdjunto']['id'], $pago['OrdenCompraAdjunto']['adjunto']); ?>" class="btn btn-xs btn-info" target="_blank"><i class="fa fa-eye"></i> ver</a>
 									<? else : ?>
 										--
 									<? endif; ?>
@@ -198,67 +218,10 @@
 				</div>
 				<div class="panel-footer">
 					<div class="pull-right">
-						<? if ($permisos['edit']) : ?>
-						<!-- <input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios"> -->
-						<? endif; ?>
 						<?= $this->Html->link('Volver', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>
-			<?= $this->Form->end(); ?>
-
-			
-			<? if (!empty($this->request->data['OrdenCompra']['Pago'])) : ?>
-			<div class="panel panel-primary">
-				<div class="panel-heading">
-					<h3 class="panel-title">Otros pagos relacionados</h3>
-				</div>
-				<div class="panel-body">
-					<div class="table-responsive">
-						<table class="table table-bordered">
-							<caption>Pagos aun no asignados y/o pagados</caption>
-							<th>Identificador</th>
-							<th>Cuenta</th>
-							<th>Monto del pago</th>
-							<th>Método de pago</th>
-							<th>Fecha pago</th>
-							<th>Pagado</th>
-							<th>Documento</th>
-							<tbody>
-								
-							<? foreach ($this->request->data['OrdenCompra']['Pago'] as $ip => $pago) : ?>
-
-								<? if (Hash::check($this->request->data['Pago'], '{n}[id='.$pago['id'].'].id')) : continue; endif; ?>
-								
-								<tr>
-									<td>
-										<?=$pago['identificador']; ?>
-									</td>
-									<td>
-										<?=@$pago['CuentaBancaria']['alias']; ?> - <?=@$pago['CuentaBancaria']['numero_cuenta']; ?>		
-									</td>
-									<td>
-										<?=CakeNumber::currency($pago['monto_pagado'], 'CLP'); ?></span>
-									</td>
-									<td><?=$this->request->data['OrdenCompra']['Moneda']['nombre']; ?></td>
-									<td><?=$pago['fecha_pago']; ?></td>
-									<td class="text-center"><?= ($pago['pagado']) ? '<i class="fa fa-check-circle text-success"></i>' : '<i class="fa fa-times-circle text-danger"></i>' ; ?></td>
-									<td>
-									<? if (!empty($pago['adjunto'])) : ?>
-										<a href="<?=sprintf('%simg/Pago/%d/%s', $this->webroot, $pago['id'], $pago['adjunto']); ?>" class="btn btn-xs btn-info"><i class="fa fa-eye"></i> ver</a>
-									<? else : ?>
-										--
-									<? endif; ?>
-									</td>
-								</tr>
-							<? endforeach; ?>
-							
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-			<? endif; ?>
 		</div>
 	</div> <!-- end row -->
 </div>

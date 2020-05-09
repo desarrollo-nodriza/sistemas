@@ -54,16 +54,29 @@ class OrdenCompraFacturasController extends AppController
 					'fields' => array(
 						'OrdenCompra.id', 'OrdenCompra.tienda_id', 'OrdenCompra.proveedor_id', 'OrdenCompra.moneda_id'
 					)
+				),
+				'Pago' => array(
+					'fields' => array(
+						'Pago.id', 'Pago.pagado', 'Pago.fecha_pago', 'Pago.moneda_id'
+					),
+					'Moneda' => array('fields' => array('Moneda.tipo'))
 				)
 			),
 			'order' => array('OrdenCompraFactura.id' => 'DESC'),
 			'fields' => array(
-				'OrdenCompraFactura.id', 'OrdenCompraFactura.proveedor_id', 'OrdenCompraFactura.orden_compra_id', 'OrdenCompraFactura.folio', 'OrdenCompraFactura.monto_pagado', 'OrdenCompraFactura.tipo_documento', 'OrdenCompraFactura.pagada', 'OrdenCompraFactura.emisor', 'OrdenCompraFactura.receptor'
+				'OrdenCompraFactura.id', 'OrdenCompraFactura.proveedor_id', 'OrdenCompraFactura.orden_compra_id', 'OrdenCompraFactura.folio', 'OrdenCompraFactura.monto_pagado', 'OrdenCompraFactura.tipo_documento', 'OrdenCompraFactura.pagada', 'OrdenCompraFactura.emisor', 'OrdenCompraFactura.receptor', 'OrdenCompraFactura.created', 'OrdenCompraFactura.monto_facturado'
 			)
 		);
 
 		foreach ($this->request->params['named'] as $campo => $valor) {
 			switch ($campo) {
+				case 'id':
+					$opt = array_replace_recursive($opt, array(
+						'conditions' => array(
+							'OrdenCompraFactura.id' => $valor
+						)
+					));
+					break;
 				case 'oc':
 					$opt = array_replace_recursive($opt, array(
 						'conditions' => array(
@@ -138,11 +151,52 @@ class OrdenCompraFacturasController extends AppController
 			$folio    = $factura['OrdenCompraFactura']['folio'];
 			$receptor = $factura['OrdenCompraFactura']['receptor'];
 
-			$facturas[$if]['OrdenCompraFactura']['neto']        = 0;
-			$facturas[$if]['OrdenCompraFactura']['iva']         = 0;
-			$facturas[$if]['OrdenCompraFactura']['bruto']       = 0;
+			$facturas[$if]['OrdenCompraFactura']['neto']        = monto_neto($factura['OrdenCompraFactura']['monto_facturado']);
+			$facturas[$if]['OrdenCompraFactura']['iva']         = obtener_iva($facturas[$if]['OrdenCompraFactura']['neto']);
+			$facturas[$if]['OrdenCompraFactura']['bruto']       = $factura['OrdenCompraFactura']['monto_facturado'];
 			$facturas[$if]['OrdenCompraFactura']['total_items'] = 0;
 			$facturas[$if]['OrdenCompraFactura']['anulado']     = 0;
+
+			// Estado de la factura
+			if ( $factura['OrdenCompraFactura']['pagada'] ) {
+				$facturas[$if]['OrdenCompraFactura']['estados'][] = 'pagado';
+			}
+			elseif ( empty($factura['Pago']) ){
+				$facturas[$if]['OrdenCompraFactura']['estados'][] = 'sin_pago';
+			}
+			else {
+			
+				foreach ($factura['Pago'] as $ip => $p) {
+
+					if (!isset($p['Moneda']['tipo'])) {
+						$facturas[$if]['OrdenCompraFactura']['estados'][] = 'sin_moneda';
+					}
+					elseif ($p['Moneda']['tipo'] == 'agendar' && $p['fecha_pago'] == '') {
+						$facturas[$if]['OrdenCompraFactura']['estados'][] = 'agendamineto_pendiente';
+					}
+					elseif ($p['Moneda']['tipo'] == 'agendar' && $p['fecha_pago'] != '' && $p['pagado'] == 0) {
+						$facturas[$if]['OrdenCompraFactura']['estados'][] = 'agendado';
+					}
+					elseif ($p['Moneda']['tipo'] == 'agendar' && $p['fecha_pago'] != '' && $p['pagado'] == 1) {
+						$facturas[$if]['OrdenCompraFactura']['estados'][] = 'pagado';
+					}
+					elseif ($p['Moneda']['tipo'] == 'esperar' && $p['fecha_pago'] != '' && $p['pagado'] == 0) {
+						$facturas[$if]['OrdenCompraFactura']['estados'][] = 'pago_pendiente';
+					}
+					elseif ($p['Moneda']['tipo'] == 'esperar' && $p['pagado'] == 1) {
+						$facturas[$if]['OrdenCompraFactura']['estados'][] = 'pagado';
+					}
+					elseif ($p['Moneda']['tipo'] == 'pagar' && $p['pagado'] == 0) {
+						$facturas[$if]['OrdenCompraFactura']['estados'][] = 'pago_pendiente';
+					}
+					elseif ($p['Moneda']['tipo'] == 'pagar' && $p['pagado'] == 1) {
+						$facturas[$if]['OrdenCompraFactura']['estados'][] = 'pagado';
+					}
+				}
+
+				$facturas[$if]['OrdenCompraFactura']['estados'] = array_unique($facturas[$if]['OrdenCompraFactura']['estados']);
+
+			}
 
 			$res = $libreDte->obtener_documento_recibido($emisor, $tipo_dte, $folio, $receptor);
 			
@@ -211,7 +265,6 @@ class OrdenCompraFacturasController extends AppController
 				'contain' => array(
 					'OrdenCompra' => array(
 						'Tienda' => array('fields' => array('Tienda.rut')),
-						'Proveedor' => array('fields' => array('Proveedor.rut_empresa', 'Proveedor.nombre')),
 						'OrdenCompraPago' => array(
 							'Moneda',
 							'fields' => array(
@@ -241,6 +294,7 @@ class OrdenCompraFacturasController extends AppController
 						'fields' => array(
 							'Pago.id',
 							'Pago.monto_pagado',
+							'Pago.orden_compra_adjunto_id',
 							'Pago.fecha_pago',
 							'Pago.identificador',
 							'Pago.adjunto',
@@ -251,36 +305,27 @@ class OrdenCompraFacturasController extends AppController
 								'CuentaBancaria.alias',
 								'CuentaBancaria.numero_cuenta'
 							)
-						)
-					)
+						),
+						'OrdenCompraAdjunto' => array(
+							'fields' => array(
+								'OrdenCompraAdjunto.id',
+								'OrdenCompraAdjunto.adjunto'
+							)
+						),
+						'Moneda'
+					),
+					'Proveedor' => array('fields' => array('Proveedor.rut_empresa', 'Proveedor.nombre')),
 				)
 			));
 		}
-
+		
 		$this->request->data['OrdenCompraFactura']['monto_asignado'] = array_sum(Hash::extract($this->request->data['Pago'], '{n}.FacturasPago.monto_pagado'));
-
-		/*$configurarPagos = true;
-
-		# Verificamos que los pagos esten correctamente configurados
-		if (!empty($this->request->data['OrdenCompra']['Pago'])) {
-			foreach ($this->request->data['OrdenCompra']['Pago'] as $ip => $p) {
-				if ($p['monto_pagado'] == 0 || empty($p['fecha_pago']) || empty($p['cuenta_bancaria_id']) ) {
-					$configurarPagos = false;
-				}
-			}
-		}
-
-		# si no estan todos los pagos agendados o configurados se redirecciona
-		if ($configurarPagos) {
-			$this->Session->setFlash('Se necesita configurar uno o varios pagos.', null, array(), 'success');
-			$this->redirect(array('controller' => 'pagos', 'action' => 'configuracion', $this->request->data['OrdenCompraFactura']['orden_compra_id']));
-		}*/
 
 		# Rescatamos los DTE de libre dte
 		$libreDte = $this->Components->load('LibreDte');
 		$libreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
 
-		$emisor   = $this->rutSinDv($this->request->data['OrdenCompra']['Proveedor']['rut_empresa']);
+		$emisor   = $this->rutSinDv($this->request->data['Proveedor']['rut_empresa']);
 		$tipo_dte = $this->request->data['OrdenCompraFactura']['tipo_documento']; // Facturas
 		$folio    = $this->request->data['OrdenCompraFactura']['folio'];
 		$receptor = $this->rutSinDv($this->request->data['OrdenCompra']['Tienda']['rut']);
@@ -288,7 +333,9 @@ class OrdenCompraFacturasController extends AppController
 		$res = $libreDte->obtener_documento_recibido($emisor, $tipo_dte, $folio, $receptor, 1);
 
 		$this->request->data['LibreDte'] = $res;
-		$this->request->data['LibreDte']['Emisor'] = $libreDte->obtenerContribuyente($res['emisor']);
+		if (!empty($res)) {
+			$this->request->data['LibreDte']['Emisor'] = $libreDte->obtenerContribuyente($res['emisor']);	
+		}
 		
 		BreadcrumbComponent::add('Facturas', '/ordenCompraFacturas');
 		BreadcrumbComponent::add('Detalles ');
@@ -306,8 +353,10 @@ class OrdenCompraFacturasController extends AppController
 			$this->redirect(array('action' => 'index'));
 		}
 
+		$id_facturas = Hash::extract($this->request->data, 'OrdenCompraFactura.{n}.id');
+
 		# no hay ids agregados
-		if ( count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}.id')) == 0 ) {
+		if ( count($id_facturas) == 0 ) {
 			$this->Session->setFlash('Debe seleccionar uno o más facturas.', null, array(), 'warning');
 			$this->redirect(array('action' => 'index'));
 		}
@@ -315,44 +364,15 @@ class OrdenCompraFacturasController extends AppController
 
 		$facturas = $this->OrdenCompraFactura->find('all', array(
 			'conditions' => array(
-				'OrdenCompraFactura.id' => Hash::extract($this->request->data, 'OrdenCompraFactura.{n}.id')
+				'OrdenCompraFactura.id' => $id_facturas
 			),
 			'fields' => array(
-				'OrdenCompraFactura.orden_compra_id'
-			),
-			'contain' => array(
-				'Pago'
-			)
-		));
-
-		$id_oc = array_unique(Hash::extract($facturas, '{n}.OrdenCompraFactura.orden_compra_id'));
-
-		if (!empty(Hash::extract($facturas, '{n}.Pago.{n}'))) {
-			$this->Session->setFlash('Ya existe la relación facturas-pagos.', null, array(), 'warning');
-			$this->redirect(array('action' => 'index', 'oc' => $id_oc));
-		}
-
-
-		# Obtenemos la OC
-		$oc = ClassRegistry::init('OrdenCompra')->find('first', array(
-			'conditions' => array(
-				'OrdenCompra.id' => $id_oc
+				'OrdenCompraFactura.monto_facturado', 'OrdenCompraFactura.monto_pagado', 'OrdenCompraFactura.orden_compra_id', 'OrdenCompraFactura.proveedor_id', 'OrdenCompraFactura.tipo_documento', 'OrdenCompraFactura.folio', 'OrdenCompraFactura.proveedor_id', 'OrdenCompraFactura.pagada'
 			),
 			'contain' => array(
 				'Proveedor' => array(
 					'fields' => array(
 						'Proveedor.nombre'
-					)
-				),
-				'Moneda' => array(
-					'fields' => array(
-						'Moneda.nombre',
-						'Moneda.tipo'
-					)
-				),
-				'OrdenCompraFactura' => array(
-					'fields' => array(
-						'OrdenCompraFactura.*'
 					)
 				),
 				'Pago' => array(
@@ -362,13 +382,54 @@ class OrdenCompraFacturasController extends AppController
 						'Pago.fecha_pago',
 						'Pago.identificador',
 						'Pago.adjunto',
-						'Pago.pagado'
+						'Pago.pagado',
+						'Pago.moneda_id'
 					),
 					'CuentaBancaria' => array(
 						'fields' => array(
 							'CuentaBancaria.alias',
 							'CuentaBancaria.numero_cuenta'
 						)
+					),
+					'Moneda' => array(
+						'fields' => array(
+							'Moneda.nombre',
+							'Moneda.id'
+						)
+					)
+				),
+				'OrdenCompra' => array(
+					'Moneda' => array(
+						'fields' => array(
+							'Moneda.nombre',
+							'Moneda.id'
+						)
+					),
+					'Pago' => array(
+						'fields' => array(
+							'Pago.id',
+							'Pago.monto_pagado',
+							'Pago.fecha_pago',
+							'Pago.identificador',
+							'Pago.adjunto',
+							'Pago.pagado',
+							'Pago.moneda_id'
+						),
+						'CuentaBancaria' => array(
+							'fields' => array(
+								'CuentaBancaria.alias',
+								'CuentaBancaria.numero_cuenta'
+							)
+						),
+						'Moneda' => array(
+							'fields' => array(
+								'Moneda.nombre',
+								'Moneda.id'
+							)
+						)
+					),
+					'fields' => array(
+						'OrdenCompra.*'
 					)
 				)
 			)
@@ -376,29 +437,47 @@ class OrdenCompraFacturasController extends AppController
 
 		$pagosConfigurados = true;
 
-		if (empty($oc['Pago'])) {
-			$pagosConfigurados = false;
+		$total_facturado = array_sum(Hash::extract($facturas, '{n}.OrdenCompraFactura.monto_facturado'));
+		$total_pagado    = array_sum(Hash::extract($facturas, '{n}.OrdenCompraFactura.monto_pagado'));
+		
+		# si las facturas ya estan pagadas no hay nada que configurar
+		if ($total_pagado >= $total_facturado) {
+			$this->Session->setFlash('Ya existe la relación facturas-pagos.', null, array(), 'warning');
+			$this->redirect(array('action' => 'index', 'id' => $id_facturas));
 		}
 
-
-		# Verificamos que los pagos esten correctamente configurados
-		foreach ($oc['Pago'] as $ip => $p) {
-			if ($p['monto_pagado'] == 0 || empty($p['fecha_pago']) || empty($p['cuenta_bancaria_id']) || empty($p['adjunto'])) {
-				$pagosConfigurados = false;
+		$pagos = array();
+		# Pagos relacionado a la oc de la factura
+		$pagosOc = Hash::extract($facturas, '{n}.OrdenCompra.Pago.{n}');
+		
+		# Pagos realcionado a la factura
+		$pagosFacturas = Hash::extract($facturas, '{n}.Pago.{n}');
+		
+		foreach ($pagosOc as $i => $p) {
+			if (!empty($p)) {
+				$pagos[$p['id']]['Pago'] = $p;
 			}
 		}
-	
+		
+		foreach ($pagosFacturas as $i => $p) {
+			if (!empty($p)) {
+				$pagos[$p['id']]['Pago'] = $p;
+			}
+		}
 
 		# si no estan todos los pagos agendados o configurados se redirecciona
-		if (!$pagosConfigurados) {
+		/*if (!$pagosConfigurados) {
 			$this->Session->setFlash('Se necesita configurar uno o varios pagos.', null, array(), 'success');
-			$this->redirect(array('controller' => 'pagos', 'action' => 'configuracion', $oc['OrdenCompra']['id']));
-		}
+			$this->redirect(array('controller' => 'pagos', 'action' => 'configuracion_multiple', 'id' => $id_facturas));
+		}*/
 		
 		BreadcrumbComponent::add('Facturas', '/ordenCompraFacturas');
 		BreadcrumbComponent::add('Asignar pagos ');
 
-		$this->set(compact('oc'));
+		$cuenta_bancarias = ClassRegistry::init('CuentaBancaria')->find('list', array('conditions' => array('activo' => 1)));
+		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1, 'tipo !=' => 'esperar')));
+
+		$this->set(compact('facturas', 'pagos', 'cuenta_bancarias', 'monedas'));
 
 	}
 
@@ -410,6 +489,9 @@ class OrdenCompraFacturasController extends AppController
 			$this->Session->setFlash('Acción no permitida.', null, array(), 'warning');
 			$this->redirect($this->referer('/', true));
 		}
+
+		$this->Session->setFlash('La relación Facturas - Pagos ha finalizado con éxito.', null, array(), 'success');
+		$this->redirect(array('action' => 'index'));
 
 		$facturas = array();
 		

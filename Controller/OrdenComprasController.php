@@ -299,6 +299,8 @@ class OrdenComprasController extends AppController
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 			
+			ini_set('max_execution_time', 0);
+			
 			# Variables usados directamente que deben ser quitadas del post una vez asigandas.
 			$rut_proveedor = $this->request->data['OrdenCompra']['rut_proveedor'];
 			$rut_tienda    = $this->request->data['OrdenCompra']['rut_tienda'];
@@ -429,8 +431,21 @@ class OrdenComprasController extends AppController
 
 				$res = $libreDte->obtener_documento_recibido($emisor, $tipo_dte, $folio, $receptor);
 				
+				if (empty($ocf['id'])) {
+					# Creamos el id antes de setear sus valores
+					$id_factura = ClassRegistry::init('OrdenCompraFactura')->crear(array(
+						'OrdenCompraFactura' => array(
+							'orden_compra_id' => $id,
+							'proveedor_id'    => $ocf['proveedor_id']
+						)
+					));	
+				}else{
+					$id_factura = $ocf['id'];
+				}
+
 				if (!empty($res)) {
 
+					$this->request->data['OrdenCompraFactura'][$iocf]['id']              = $id_factura; // seteamos el id de la factura para crear el saldo
 					$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $res['total'];
 					$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $res['emisor'];
 					$this->request->data['OrdenCompraFactura'][$iocf]['proveedor_id']    = $ocf['proveedor_id'];
@@ -439,7 +454,7 @@ class OrdenComprasController extends AppController
 				}else{
 
 					#$folios[] = $libreDte->tipoDocumento[$ocf['tipo_documento']] . ' folio #' . $ocf['folio'] . ' no fue encontrado. Verifique que la información del DTE sea correcta.';
-
+					$this->request->data['OrdenCompraFactura'][$iocf]['id']              = $id_factura; // seteamos el id de la factura para crear el saldo
 					$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $ocf['monto_facturado'];
 					$this->request->data['OrdenCompraFactura'][$iocf]['proveedor_id']    = $ocf['proveedor_id'];
 					$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $emisor;
@@ -448,38 +463,81 @@ class OrdenComprasController extends AppController
 
 				# Es factura
 				if ($tipo_dte == 33) {
-					# Obtenemos el saldo disponible para pagar para éste proveedor
-					$saldo_disponible_pago = ClassRegistry::init('Saldo')->obtener_saldo_total_proveedor($ocf['proveedor_id']);
-
-					if (count($this->request->data['OrdenCompraFactura']) == 1 && $saldo_disponible_pago >= $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']) {
-
-						# Se paga la factura
-						$this->request->data['OrdenCompraFactura'][$iocf]['monto_pagado'] = $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'];
-						$this->request->data['OrdenCompraFactura'][$iocf]['pagada']       = 1;
-					}
-
 					# Descontamos el saldo usado solo al crearla
 					if (!isset($ocf['id'])) 
-						ClassRegistry::init('Saldo')->descontar($ocf['proveedor_id'], $id, null, null, $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']);	
+						ClassRegistry::init('Saldo')->descontar($ocf['proveedor_id'], $id, $id_factura, null, $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']);	
 				}
 			}
+
+			$this->OrdenCompra->id = $id;
+			$total_oc = $this->OrdenCompra->field('total');
 
 			# OC queda en estado de espera de factura
 			if ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33]')) == 0 ) {
 				$ocSave['OrdenCompra']['estado'] = 'espera_dte';
-			}elseif ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33]')) > 0) {
-				$ocSave['OrdenCompra']['estado'] = 'recepcion_completa';
+			}elseif ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && array_sum(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33].monto_facturado')) < $total_oc ) {
+				$ocSave['OrdenCompra']['estado'] = 'espera_dte';
 			}
 
 			$ocSave = array_replace_recursive($ocSave, array(
 				'OrdenCompraFactura' => $this->request->data['OrdenCompraFactura']
 			));	
 			
-			$this->OrdenCompra->saveAll($ocSave);
+			# Al guardar relacionamos todas las facturas a los pagos que existan para ésta OC
+			if ($this->OrdenCompra->saveAll($ocSave)) {
 
-			if ( $this->OrdenCompra->es_pago_factura_unico($id) ) {
-				ClassRegistry::init('Pago')->relacionar_pago_factura($id);
+				# Pagos relacionados
+				$pagos = ClassRegistry::init('Pago')->find('all', array(
+					'conditions' => array(
+						'Pago.orden_compra_id' => $id,
+					),
+					'fields' => array(
+						'Pago.id', 'Pago.pagado'
+					)
+				));
+
+				# Facturas recien creadas
+				$facturas = ClassRegistry::init('OrdenCompraFactura')->find('all', array(
+					'conditions' => array(
+						'OrdenCompraFactura.orden_compra_id' => $id,
+						'OrdenCompraFactura.tipo_documento' => 33 // Fatura
+					),
+					'contain' => array(
+						'Pago' => array(
+							'fields' => array(
+								'Pago.id'
+							)
+						)
+					),
+					'fields' => array(
+						'OrdenCompraFactura.id'
+					), 
+				));
+
+				# Relacionamos pagos facturas
+				foreach ($pagos as $ip => $p) {
+					foreach ($facturas as $if => $f) {
+
+						# si tiene pago/s relaconados continua el ciclo
+						foreach ($f['Pago'] as $ifp => $fp) {
+							if ($fp['id'] == $p['Pago']['id']) {
+								continue;
+							}
+						}
+
+						$pagos[$ip]['OrdenCompraFactura'][$if] = array(
+							'factura_id' => $f['OrdenCompraFactura']['id']
+						);
+					}
+				}
+
+				# Guardamos para que valide los pagos y faturas
+				if (!empty($pagos)) {
+					ClassRegistry::init('Pago')->saveMany($pagos, array('deep' => true));
+				}
+
 			}
+			
 
 			if (!empty($folios)) {
 				$this->Session->setFlash($this->crearAlertaUl($folios, 'Errores'), null, array(), 'warning');
@@ -522,7 +580,7 @@ class OrdenComprasController extends AppController
 				)
 			),
 			'fields' => array(
-				'OrdenCompra.id', 'OrdenCompra.estado', 'OrdenCompra.tienda_id', 'OrdenCompra.proveedor_id', 'OrdenCompra.total_neto', 'OrdenCompra.iva', 'OrdenCompra.descuento_monto', 'OrdenCompra.total'
+				'OrdenCompra.id', 'OrdenCompra.estado', 'OrdenCompra.tienda_id', 'OrdenCompra.proveedor_id', 'OrdenCompra.total_neto', 'OrdenCompra.iva', 'OrdenCompra.descuento_monto', 'OrdenCompra.total', 'OrdenCompra.moneda_id'
 			)
 		));
 	
@@ -1209,6 +1267,11 @@ class OrdenComprasController extends AppController
 					'fields' => array(
 						'Proveedor.id', 'Proveedor.nombre', 'Proveedor.rut_empresa', 'Proveedor.meta_emails'
 					)
+				),
+				'Moneda' => array(
+					'fields' => array(
+						'Moneda.nombre', 'Moneda.tipo'
+					)
 				)
 			),
 			'fields' => array(
@@ -1227,7 +1290,7 @@ class OrdenComprasController extends AppController
 				'OrdenCompra' => array(
 					'id'                 => $id,
 					'estado'             => 'espera_recepcion',
-					//'moneda_id'          => $this->request->data['OrdenCompra']['moneda_id'],
+					'moneda_id'          => $this->request->data['OrdenCompra']['moneda_id'],
 					'nombre_pagado'      => $this->Session->read('Auth.Administrador.nombre'),
 					'email_finanza'      => $this->Session->read('Auth.Administrador.email'),
 					'comentario_finanza' => $this->request->data['OrdenCompra']['comentario_finanza'],
@@ -1236,14 +1299,24 @@ class OrdenComprasController extends AppController
 					'descuento'    	     => round($this->request->data['OrdenCompra']['descuento']),
 				),
 				'OrdenCompraAdjunto' 	 => (isset($this->request->data['OrdenCompraAdjunto'])) ? $this->request->data['OrdenCompraAdjunto'] : array(),
-				//'OrdenCompraPago' => $this->request->data['OrdenCompraPago']
 			);
+			
 
+			$moneda = ClassRegistry::init('Moneda')->find('first', array(
+				'conditions' => array(
+					'Moneda.id' => $this->request->data['OrdenCompra']['moneda_id']
+				)
+			));
+
+			if ($moneda['Moneda']['tipo'] == 'pagar' && empty($this->request->data['OrdenCompraAdjunto'])) {
+				$this->Session->setFlash('El método de pago utilizado requiere agregar un solo comprobante de pago.', null, array(), 'warning');
+				$this->redirect(array('action' => 'pay', $id));
+			}
 
 			if (isset($this->request->query['update'])) { 
 				unset($data['OrdenCompra']['estado']);
 			}
-			
+
 			if ($this->OrdenCompra->saveAll($data)) {
 
 				$ocs = $this->OrdenCompra->find('first', array(
@@ -1278,13 +1351,14 @@ class OrdenComprasController extends AppController
 						case 'pagar':
 
 							// Se crea un pago al dia 
-							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], date('Y-m-d'), $ocs['OrdenCompra']['total']);
+							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], date('Y-m-d'), $ocs['OrdenCompra']['total'], array(), $ocs['OrdenCompra']['moneda_id']);
+							
 							break;
 						
 						case 'agendar':
 
 							// Se crea un pago sin fecha ni monto (se debe configurar una vez recibida la/las factura/s) 
-							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], null, 0);
+							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], null, 0, array(), $ocs['OrdenCompra']['moneda_id']);
 							break;
 
 						case 'esperar':
