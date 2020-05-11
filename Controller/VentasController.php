@@ -6643,7 +6643,7 @@ class VentasController extends AppController {
 			'Log' => array(
 				'administrador' => 'Prestashop Crear Venta - Detalles',
 				'modulo' => 'Ventas',
-				'modulo_accion' => json_encode($ventaDetalles)
+				'modulo_accion' => json_encode($VentaDetalles)
 			)
 		);
 
