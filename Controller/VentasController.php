@@ -6489,6 +6489,8 @@ class VentasController extends AppController {
 			)
 		));
 
+		$log = array();
+
 		if (empty($tienda)) {
 			return false;
 		}
@@ -6500,6 +6502,14 @@ class VentasController extends AppController {
 		$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
 
 		$nwVenta = $this->Prestashop->prestashop_obtener_venta($id_externo); 
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop Crear Venta - Obtener venta',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($nwVenta)
+			)
+		);
 
 		if (empty($nwVenta)) {
 			return false;
@@ -6553,6 +6563,13 @@ class VentasController extends AppController {
 		# Direccion de entrega
 		$direccionEntrega = $this->Prestashop->prestashop_obtener_venta_direccion($nwVenta['id_address_delivery']);
 
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop Crear Venta - Direccion',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($direccionEntrega)
+			)
+		);
 
 		// Dirección de entrega
 		if (!isset($nwVenta['address'])) {
@@ -6622,6 +6639,14 @@ class VentasController extends AppController {
 		//se obtienen el detalle de la venta
 		$VentaDetalles = $this->Prestashop->prestashop_obtener_venta_detalles($nwVenta['id']);
 
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop Crear Venta - Detalles',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($ventaDetalles)
+			)
+		);
+
 		if (isset($VentaDetalles['order_detail']) && !isset($VentaDetalles['order_detail'][0])) {
 			$VentaDetalles = array(
 				'order_detail' => array(
@@ -6674,11 +6699,9 @@ class VentasController extends AppController {
 			} //fin ciclo detalle de venta
 		}
 
-		$log = array();
-
 		$log[] = array(
 			'Log' => array(
-				'administrador' => 'Prestashop Crear Venta',
+				'administrador' => 'Prestashop Crear Venta - Guardar venta',
 				'modulo' => 'Ventas',
 				'modulo_accion' => json_encode($NuevaVenta)
 			)
