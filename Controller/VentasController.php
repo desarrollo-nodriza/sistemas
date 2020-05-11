@@ -1464,7 +1464,7 @@ class VentasController extends AppController {
 			$producto['VentaDetalleProducto']['id']         			= $DetalleVenta['product_id'];
 			$producto['VentaDetalleProducto']['id_externo'] 			= $DetalleVenta['product_id'];
 			$producto['VentaDetalleProducto']['nombre']     			= $DetalleVenta['product_name'];
-			$producto['VentaDetalleProducto']['cantidad_virtual']     	= @$this->Prestashop->prestashop_obtener_stock_producto($DetalleVenta['product_id'])['stock_available']['quantity'];
+			$producto['VentaDetalleProducto']['cantidad_virtual']     	= 1;
 			$producto['VentaDetalleProducto']['ancho']					= round($item['width'], 2);
 			$producto['VentaDetalleProducto']['alto']					= round($item['height'], 2);
 			$producto['VentaDetalleProducto']['largo']					= round($item['depth'], 2);
