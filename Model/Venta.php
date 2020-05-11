@@ -796,7 +796,7 @@ class Venta extends AppModel
 		$cant_reservada_sum = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 		$cant_vendida_sum   = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));
 
-		if ( $cant_reservada_sum == $cant_vendida_sum ) {
+		if ( $cant_reservada_sum == $cant_vendida_sum && $cant_vendida_sum > 0) {
 
 			$picking_estado = $this->field('picking_estado');
 			
