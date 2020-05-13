@@ -400,10 +400,11 @@ $(function() {
 			}).fail(function(){
 				$("#tasks").sortable('cancel');
 				actualizado = false;
-				$('.loader').removeClass('show');
 				noty({text: 'Ocurrió un error al actualizar la venta. Intente actualizar la página.', layout: 'topRight', type: 'error'});
 
 			}).always(function(){
+				
+				$('.loader').removeClass('show');
 
 				setTimeout(function(){
 					$.noty.closeAll();

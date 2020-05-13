@@ -1060,14 +1060,63 @@ class VentasController extends AppController {
 			exit;
 		}
 
+		$venta = $this->Venta->obtener_venta_por_id_tiny($id);
+
+		# Verificamos que todos los productos de la venta se encuentren en la bodega principal
+		foreach ($venta['VentaDetalle'] as $ivd => $vd) {
+			
+			$bodega_principal = ClassRegistry::init('Bodega')->find('first', array('conditions' => array('Bodega.principal' => 1), 'limit' => 1, 'fields' => array('Bodega.id')))['Bodega']['id'];
+
+			# Obtenemos las unidades en la bodega principal
+			$cant_en_bodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($vd['venta_detalle_producto_id'], $bodega_principal, true);
+
+			# Si no hay suficiente stock en la bodega principal, se mueve el stock de las bodegas con stock hacia la principal
+			if ($cant_en_bodega < $vd['cantidad_reservada']) {
+				
+				$vd['cantidad_reservada'] = $vd['cantidad_reservada'] - $cant_en_bodega;
+
+				$bodegas = ClassRegistry::init('Bodega')->obtener_bodegas();
+
+				foreach ($bodegas as $bodega_id => $bodega) {
+					if ($bodega_id == $bodega_principal) 
+						continue;
+
+					# si ya esta completo se termina.
+					if ($vd['cantidad_reservada'] == 0) {
+						break;
+					}
+					
+					$cant_en_bodega2 = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($vd['venta_detalle_producto_id'], $bodega_id, true);
+
+					# Tenemos las unidades, las movemos a la bodega principal
+					if ($cant_en_bodega2 >= $vd['cantidad_reservada']) 
+					{
+						ClassRegistry::init('Bodega')->moverProductoBodega($vd['venta_detalle_producto_id'], $bodega_id, $bodega_principal, $vd['cantidad_reservada']);
+						$vd['cantidad_reservada'] = $vd['cantidad_reservada'] - $cant_en_bodega2;
+					}
+					else if ($cant_en_bodega2 < $vd['cantidad_reservada'] && $cant_en_bodega2 > 0){
+						ClassRegistry::init('Bodega')->moverProductoBodega($vd['venta_detalle_producto_id'], $bodega_id, $bodega_principal, $cant_en_bodega2);
+						$vd['cantidad_reservada'] = $vd['cantidad_reservada'] - $cant_en_bodega2;
+					}
+
+				}
+
+			}
+
+			if ($vd['cantidad_reservada'] > 0) {
+				$respuesta['code'] = 520;
+				$respuesta['message'] = 'El producto #' . $vd['venta_detalle_producto_id'] . ' no tiene stock suficiente en la bodega princiapl. Solicite un movimiento entre bodegas.';
+				echo json_encode($respuesta);
+				exit;
+			}
+		}
+
 		if ($this->Venta->saveField('picking_estado', $subestado)) {
 
 			if ($subestado == 'empaquetando') {
 
 				$this->Venta->saveField('picking_email', $this->Auth->user('email'));
 				$this->Venta->saveField('picking_fecha_inicio', date('Y-m-d H:i:s'));
-
-				$venta = $this->Venta->obtener_venta_por_id($id);
 
 				$this->cambiar_estado_preparada($venta);
 			}
@@ -6638,7 +6687,7 @@ class VentasController extends AppController {
 
 		//se obtienen el detalle de la venta
 		$VentaDetalles = $this->Prestashop->prestashop_obtener_venta_detalles($nwVenta['id']);
-
+		
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Prestashop Crear Venta - Detalles',
@@ -6770,6 +6819,8 @@ class VentasController extends AppController {
 			return false;
 		}
 
+		$log = array();
+
 		#Vemos si existe en la BD
 		$venta = $this->Venta->find('first', array(
 			'conditions' => array(
@@ -6793,6 +6844,14 @@ class VentasController extends AppController {
 
 		$nwVenta = $this->Prestashop->prestashop_obtener_venta($id_externo, $tienda); 
 		
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop Crear Venta - Obtener venta',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($nwVenta)
+			)
+		);
+
 		if (empty($nwVenta)) {
 			return false;
 		}
@@ -6846,6 +6905,13 @@ class VentasController extends AppController {
 		# Direccion de entrega
 		$direccionEntrega = $this->Prestashop->prestashop_obtener_venta_direccion($nwVenta['id_address_delivery']);
 
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop Crear Venta - Direccion',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($direccionEntrega)
+			)
+		);
 
 		// Dirección de entrega
 		if (!isset($nwVenta['address'])) {
@@ -6914,6 +6980,14 @@ class VentasController extends AppController {
 		//se obtienen el detalle de la venta
 		$VentaDetalles = $this->Prestashop->prestashop_obtener_venta_detalles($nwVenta['id']);
 
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop Crear Venta - Detalles',
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($VentaDetalles)
+			)
+		);
+
 		if (isset($VentaDetalles['order_detail']) && !isset($VentaDetalles['order_detail'][0])) {
 			$VentaDetalles = array(
 				'order_detail' => array(
@@ -6967,8 +7041,6 @@ class VentasController extends AppController {
 
 		# Evitamos que se vuelva actualizar el stock en prestashop
 		$excluirPrestashop = array('Prestashop' => array($tienda_id));
-
-		$log = array();
 
 		$log[] = array(
 			'Log' => array(

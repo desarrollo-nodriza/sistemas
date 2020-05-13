@@ -107,7 +107,7 @@ class Pmp extends AppModel
 		}
 
 		$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', $qry);
-			
+		
 		if (!empty($historico)) {
 			// Sumatoria de las cantidades
 			$inCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=IN].cantidad'));

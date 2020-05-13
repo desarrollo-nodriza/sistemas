@@ -324,6 +324,11 @@ class VentaDetalleProductosController extends AppController
 				if ($m['ajustar']=='') {
 					continue;
 				}
+
+				if (!ClassRegistry::init('Bodega')->permite_ajuste($id, $m['bodega'])) {
+					$errores[] = 'Item #' . $id . ' No puede ser ajustado en la bodega seleccionada, ya que la bodega no tiene registros de ingreso.';
+					continue;
+				}
 		
 				if (ClassRegistry::init('Bodega')->ajustarInventario($id, $m['bodega'], $m['ajustar'], $m['costo'], $m['glosa'])) {
 					$aceptados[] = $m['ajustar'] . ' items ajustados en bodega ' . $bodegas[$m['bodega']];
@@ -1371,7 +1376,7 @@ class VentaDetalleProductosController extends AppController
 		foreach ($bodegas as $ib => $b) {
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_id'] = $ib;
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_nombre'] = $b;
-			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib);
+			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib, true);
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['pmp'] = ClassRegistry::init('Bodega')->obtener_pmp_por_producto_bodega($id, $ib);
 		}
 

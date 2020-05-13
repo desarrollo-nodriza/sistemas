@@ -38,6 +38,9 @@
 				</div>
 				<div class="panel-footer">
 					<div class="col-xs-12">
+						<div class="pull-left">
+							<?= $this->Html->link('<i class="fa fa-shopping-bag"></i> Ir al producto', array('action' => 'edit', $this->request->data['VentaDetalleProducto']['id']), array('class' => 'btn btn-primary btn-buscar btn-block', 'rel' => 'tooltip', 'title' => 'Ir al producto', 'escape' => false)); ?>
+						</div>
 						<div class="pull-right">
 							<?= $this->Form->button('<i class="fa fa-send" aria-hidden="true"></i> Mover', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
 						</div>

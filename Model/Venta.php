@@ -579,7 +579,6 @@ class Venta extends AppModel
 			)
 		);
 
-		
 		$joins[] = array(
 			'table' => 'rp_dtes',
 			'alias' => 'dtes',
@@ -722,8 +721,10 @@ class Venta extends AppModel
 		$venta = $this->obtener_venta_por_id($id);
 		
 		foreach ($venta['VentaDetalle'] as $iv => $detalle) {
+
+			$bodega_id = ClassRegistry::init('Bodega')->find('first', array('conditions' => array('Bodega.principal' => 1), 'limit' => 1, 'fields' => array('Bodega.id')))['Bodega']['id'];
 			
-			$pmp = ClassRegistry::init('Bodega')->obtener_pmp_por_id($detalle['venta_detalle_producto_id']);
+			$pmp = ClassRegistry::init('Bodega')->obtener_pmp_por_producto_bodega($detalle['venta_detalle_producto_id'], $bodega_id);
 			$vDetalle = ClassRegistry::init('VentaDetalle');
 
 			$vDetalle->id = $detalle['id'];

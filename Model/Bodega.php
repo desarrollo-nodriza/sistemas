@@ -97,6 +97,17 @@ class Bodega extends AppModel
 	}
 
 
+	public function obtener_bodegas()
+	{
+		return $this->find('list', array('conditions' => array('Bodega.activo' => 1)));
+	}
+
+
+	/**
+	 * [obtener_pmp_por_id description]
+	 * @param  [type] $id_producto [description]
+	 * @return [type]              [description]
+	 */
 	public function obtener_pmp_por_id($id_producto = null)
 	{
 		$pmp = ClassRegistry::init('Pmp')->obtener_pmp($id_producto);
@@ -105,6 +116,12 @@ class Bodega extends AppModel
 	} 
 
 
+	/**
+	 * [obtener_pmp_por_producto_bodega description]
+	 * @param  [type] $id_producto [description]
+	 * @param  [type] $bodega_id   [description]
+	 * @return [type]              [description]
+	 */
 	public function obtener_pmp_por_producto_bodega($id_producto = null, $bodega_id = null)
 	{
 		$pmp = ClassRegistry::init('Pmp')->obtener_pmp($id_producto, $bodega_id);
@@ -114,7 +131,14 @@ class Bodega extends AppModel
 	} 
 
 
-	public function obtenerCantidadProductoBodega($id_producto, $id_bodega = null, $real = false)
+	/**
+	 * Obtiene el stock de una bodega en especifico
+	 * @param  int  $id_producto Id del producto
+	 * @param  int  $id_bodega   ID de bodega que se desea consultar
+	 * @param  boolean $sin_reserva True: Retorna el total sin descontaar las unidades reservadas, False: Retorna las unieades disponibles reales para vender
+	 * @return int 	
+	 */
+	public function obtenerCantidadProductoBodega($id_producto, $id_bodega = null, $sin_reserva = false)
 	{	
 		# Bodega principal
 		if (empty($id_bodega)) {
@@ -138,7 +162,7 @@ class Bodega extends AppModel
 			$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));	
 		}
 
-		if ($real)
+		if ($sin_reserva)
 			return $total;
 
 		# Obtenemos la cantidad reservada o vendida no empaquetada
@@ -154,7 +178,13 @@ class Bodega extends AppModel
 	}
 
 
-	public function obtenerCantidadProductoBodegas($id_producto, $real = false)
+	/**
+	 * Retorna la cantidad disponibles en las bodegas
+	 * @param  int  $id_producto Id del producto
+	 * @param  boolean $sin_reserva  True: Retorna el total sin descontaar las unidades reservadas, False: Retorna las unieades disponibles reales para vender
+	 * @return int
+	 */
+	public function obtenerCantidadProductoBodegas($id_producto, $sin_reserva = false)
 	{
 		$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
 			'conditions' => array(
@@ -172,7 +202,7 @@ class Bodega extends AppModel
 			$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));		
 		}
 
-		if ($real)
+		if ($sin_reserva)
 			return $total;
 
 		# Obtenemos la cantidad reservada o vendida no empaquetada
@@ -198,6 +228,30 @@ class Bodega extends AppModel
 
 		// Sumatoria de las cantidades
 		$inCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=IN].cantidad'));
+	}
+
+
+	/**
+	 * Verifica que un producto pueda hacer movimientos como ajustes en la bodega seleccionada
+	 * @param  [type] $id_producto [description]
+	 * @param  [type] $bodega_id   [description]
+	 * @return [type]              [description]
+	 */
+	public function permite_ajuste($id_producto, $bodega_id)
+	{
+		$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
+			'conditions' => array(
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto, 
+				'BodegasVentaDetalleProducto.bodega_id' => $bodega_id,
+				'BodegasVentaDetalleProducto.tipo' => array('II', 'MV', 'OC') 
+			)
+		));
+
+		if (empty($historico)) {
+			return false;
+		}
+
+		return true;
 	}
 
 
@@ -265,14 +319,14 @@ class Bodega extends AppModel
 		if ($cantidad <= 0) {
 			return false;
 		}
-		
-		if ($valor == 0) {
-			$valor = $this->obtener_pmp_por_id($id_producto);
-		}
 
 		# Bodega principal
 		if (empty($bodega_id)) {
 			$bodega_id = ClassRegistry::init('Bodega')->find('first', array('conditions' => array('Bodega.principal' => 1), 'limit' => 1, 'fields' => array('Bodega.id')))['Bodega']['id'];
+		}
+
+		if ($valor == 0) {
+			$valor = $this->obtener_pmp_por_producto_bodega($id_producto, $bodega_id);
 		}
 		
 		$data = array(
@@ -314,12 +368,12 @@ class Bodega extends AppModel
 	public function ajustarInventario($id_producto, $bodega_id, $cantidad, $precio_costo = null, $glosa = '')
 	{	
 
-		if (empty($precio_costo) || $precio_costo == 0) {
-			$precio_costo = $this->obtener_pmp_por_id($id_producto);			
-		}
-
 		$enBodega = $this->obtenerCantidadProductoBodega($id_producto, $bodega_id, true);
 
+		if (empty($precio_costo) || $precio_costo == 0) {
+			$precio_costo = $this->obtener_pmp_por_producto_bodega($id_producto, $bodega_id);			
+		}
+		
 		$result = false;
 
 		// Se crea una entrada con la diferencia
@@ -360,7 +414,7 @@ class Bodega extends AppModel
 		$result1 = $this->crearSalidaBodega($id_producto, $bodega_origen_id, $cantidad, 0, 'MV');
 
 		// Crear la entrada en la bodega nueva
-		$precio_costo = $this->obtener_pmp_por_id($id_producto);
+		$precio_costo = $this->obtener_pmp_por_producto_bodega($id_producto, $bodega_origen_id);
 		$result2 	  = $this->crearEntradaBodega($id_producto, $bodega_destino_id, $cantidad, $precio_costo, 'MV');
 
 		if ($result1 && $result2) {
@@ -457,6 +511,10 @@ class Bodega extends AppModel
 				continue;
 			}
 
+			if (!$this->permite_ajuste($value['id_producto'], $value['bodega_id'])) {
+				$result['errores'][] = 'Item #' . $value['id_producto'] . ' No puede ser ajustado en la bodega seleccionada, ya que la bodega no tiene registros de ingreso.';
+				continue;
+			}
 
 			$ii = $this->ajustarInventario($value['id_producto'], $value['bodega_id'], $value['cantidad'], $value['precio']);
 
