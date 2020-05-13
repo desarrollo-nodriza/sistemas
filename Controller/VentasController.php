@@ -1101,6 +1101,8 @@ class VentasController extends AppController {
 
 				}
 
+			}else{
+				$vd['cantidad_reservada'] = 0;
 			}
 
 			if ($vd['cantidad_reservada'] > 0) {
