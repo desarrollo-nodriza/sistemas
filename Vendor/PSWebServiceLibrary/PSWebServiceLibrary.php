@@ -109,6 +109,7 @@ class PrestaShopWebservice
 			CURLOPT_RETURNTRANSFER => TRUE,
 			CURLINFO_HEADER_OUT => TRUE,
 			CURLOPT_SSL_VERIFYHOST => false,
+			CURLOPT_SSL_VERIFYPEER => false,
 			CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
 			CURLOPT_USERPWD => $this->key.':',
 			CURLOPT_HTTPHEADER => array( 'Expect:' )
@@ -130,7 +131,7 @@ class PrestaShopWebservice
 
 		curl_setopt_array($session, $curl_options);
 		$response = curl_exec($session);
-
+		
 		$index = strpos($response, "\r\n\r\n");
 		if ($index === false && $curl_params[CURLOPT_CUSTOMREQUEST] != 'HEAD')
 			throw new PrestaShopWebserviceException('Bad HTTP response');
