@@ -1621,6 +1621,8 @@ class VentaDetalleProductosController extends AppController
 			$datos[$id]['VentaDetalleProducto']['stock_fisico_total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($p['VentaDetalleProducto']['id'], true);
 			$datos[$id]['VentaDetalleProducto']['stock_reservado']    = $this->VentaDetalleProducto->obtener_cantidad_reservada($p['VentaDetalleProducto']['id']);
 			$datos[$id]['VentaDetalleProducto']['ultimo_precio_compra'] = ClassRegistry::init('Bodega')->ultimo_precio_compra($p['VentaDetalleProducto']['id']);
+			$datos[$id]['VentaDetalleProducto']['precio_costo'] = ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($p['VentaDetalleProducto']['id']);
+			
 
 
 			# Vemos el detalle en los canales
