@@ -229,25 +229,22 @@ class Administrador extends AppModel
 			'fields' => array(
 				'Administrador.email',
 				'Administrador.notificaciones',
-				'Administrador.nombre'
+				'Administrador.nombre',
+				sprintf('Administrador.notificacion_%s', $tipo),
 			)
 		));
 
 		$emailsNotificar = array();
 
-		// Obtenemos a los administradores que tiene activa la notificación de oc revision
+		// Obtenemos a los administradores que tiene activa la notificación correspondiente
 		foreach ($admins as $ia => $admin) {
-			if (!empty($admin['Administrador']['notificaciones'])) {
 
-				$confNotificacion = json_decode($admin['Administrador']['notificaciones'], true);
-				
-				if ( array_key_exists($tipo, $confNotificacion) && $confNotificacion[$tipo] ) {
-					if ($incluir_nombre) {
-						$emailsNotificar[$ia]['email'] = $admin['Administrador']['email'];
-						$emailsNotificar[$ia]['name'] = $admin['Administrador']['nombre'];
-					}else{
-						$emailsNotificar[] = $admin['Administrador']['email'];
-					}
+			if ($admin['Administrador'][sprintf('notificacion_%s', $tipo)]) {
+				if ($incluir_nombre) {
+					$emailsNotificar[$ia]['email'] = $admin['Administrador']['email'];
+					$emailsNotificar[$ia]['name'] = $admin['Administrador']['nombre'];
+				}else{
+					$emailsNotificar[] = $admin['Administrador']['email'];
 				}
 			}
 		}
