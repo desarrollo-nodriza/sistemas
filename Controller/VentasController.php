@@ -2778,19 +2778,26 @@ class VentasController extends AppController {
 									$comuna_entrega  = '';
 									$nombre_receptor = '';
 									$fono_receptor   = '';
-									if (isset($VentaDetalles['shipping']['receiver_address']['address_line'])
-										&& isset($VentaDetalles['shipping']['receiver_address']['city']['name'])) {
-										$direccion_entrega = $VentaDetalles['shipping']['receiver_address']['address_line'] . ', ' . $VentaDetalles['shipping']['receiver_address']['city']['name'];
+
+									if (isset($VentaDetalles['shipping']['id'])) {
+
+										$envio = $this->MeliMarketplace->mercadolibre_obtener_envio($VentaDetalles['shipping']['id']);
+
+										if (isset($envio['receiver_address']['address_line'])
+											&& isset($envio['receiver_address']['city']['name'])) {
+											$direccion_entrega = $envio['receiver_address']['address_line'] . ', ' . $envio['receiver_address']['city']['name'];
+										}
+										if (isset($envio['receiver_address']['city']['name'])) {
+											$comuna_entrega = $envio['receiver_address']['city']['name'];
+										}
+										if (isset($envio['receiver_address']['receiver_name'])) {
+											$nombre_receptor = $envio['receiver_address']['receiver_name'];
+										}
+										if (isset($envio['receiver_address']['receiver_phone'])) {
+											$fono_receptor = $envio['receiver_address']['receiver_phone'];
+										}
 									}
-									if (isset($VentaDetalles['shipping']['receiver_address']['city']['name'])) {
-										$comuna_entrega = $VentaDetalles['shipping']['receiver_address']['city']['name'];
-									}
-									if (isset($VentaDetalles['shipping']['receiver_address']['receiver_name'])) {
-										$nombre_receptor = $VentaDetalles['shipping']['receiver_address']['receiver_name'];
-									}
-									if (isset($VentaDetalles['shipping']['receiver_address']['receiver_phone'])) {
-										$fono_receptor = $VentaDetalles['shipping']['receiver_address']['receiver_phone'];
-									}
+
 									// Direccion despacho
 									$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
 									$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
@@ -4231,11 +4238,18 @@ class VentasController extends AppController {
 		if ($venta['Marketplace']['marketplace_tipo_id'] == 2) {
 
 			$this->MeliMarketplace->crearCliente($venta['Marketplace']['api_user'], $venta['Marketplace']['api_key'], $venta['Marketplace']['access_token'], $venta['Marketplace']['refresh_token']);
+			
+			$this->MeliMarketplace->mercadolibre_conectar('', $venta['Marketplace']);
 
 			// Detalles de la venta externa
 			$venta['VentaExterna'] = $this->MeliMarketplace->mercadolibre_obtener_venta_detalles($venta['Marketplace']['access_token'], $venta['Venta']['id_externo'], true);
 
-			$this->MeliMarketplace->mercadolibre_obtener_etiqueta_envio($venta['VentaExterna']);
+			if (isset($venta['VentaExterna']['shipping']['id'])) {
+				
+				$envio = $this->MeliMarketplace->mercadolibre_obtener_envio($venta['VentaExterna']['shipping']['id']);
+				
+				$this->MeliMarketplace->mercadolibre_obtener_etiqueta_envio($envio);	
+			}
 			
 		}	
 
@@ -4423,49 +4437,51 @@ class VentasController extends AppController {
 
 			if (isset($venta['VentaExterna']['shipping']['id'])) {
 
+				$envio = $this->MeliMarketplace->mercadolibre_obtener_envio($venta['VentaExterna']['shipping']['id']);
+
 				// Detalles de envio
 				$direccion_envio = '';
 				$nombre_receptor = '';
 				$fono_receptor   = '';
 				$comentario      = '';
 
-				if (isset($venta['VentaExterna']['shipping']['receiver_address']['address_line'])
-					&& isset($venta['VentaExterna']['shipping']['receiver_address']['city']['name'])) {
-					$direccion_envio = sprintf('%s, %s', $venta['VentaExterna']['shipping']['receiver_address']['address_line'], $venta['VentaExterna']['shipping']['receiver_address']['city']['name']);
+				if (isset($envio['receiver_address']['address_line'])
+					&& isset($envio['receiver_address']['city']['name'])) {
+					$direccion_envio = sprintf('%s, %s', $envio['receiver_address']['address_line'], $envio['receiver_address']['city']['name']);
 				}
 
-				if (isset($venta['VentaExterna']['shipping']['receiver_address']['receiver_name'])) {
-					$nombre_receptor = $venta['VentaExterna']['shipping']['receiver_address']['receiver_name'];
+				if (isset($envio['receiver_address']['receiver_name'])) {
+					$nombre_receptor = $envio['receiver_address']['receiver_name'];
 				}
 
-				if (isset($venta['VentaExterna']['shipping']['receiver_address']['receiver_phone'])) {
-					$fono_receptor = $venta['VentaExterna']['shipping']['receiver_address']['receiver_phone'];
+				if (isset($envio['receiver_address']['receiver_phone'])) {
+					$fono_receptor = $envio['receiver_address']['receiver_phone'];
 				}
 
-				if (isset($venta['VentaExterna']['shipping']['receiver_address']['comment'])) {
-					$comentario = $venta['VentaExterna']['shipping']['receiver_address']['comment'];
+				if (isset($envio['receiver_address']['comment'])) {
+					$comentario = $envio['receiver_address']['comment'];
 				}
 
 				
 				$venta['Envio'][0] = array(
-					'id'                      => $venta['VentaExterna']['shipping']['id'],
-					'tipo'                    => $venta['VentaExterna']['shipping']['shipping_option']['name'],
-					'estado'                  => $venta['VentaExterna']['shipping']['status'],
+					'id'                      => $envio['id'],
+					'tipo'                    => $envio['shipping_option']['name'],
+					'estado'                  => $envio['status'],
 					'direccion_envio'         => $direccion_envio,
 					'nombre_receptor'         => $nombre_receptor,
 					'fono_receptor'           => $fono_receptor,
 					'producto'                => null,
 					'cantidad'                => 1,
-					'costo'                   => $venta['VentaExterna']['shipping']['shipping_option']['cost'],
-					'fecha_entrega_estimada'  => (isset($venta['VentaExterna']['shipping']['shipping_option']['estimated_delivery_time'])) ? CakeTime::format($venta['VentaExterna']['shipping']['shipping_option']['estimated_delivery_time']['date'], '%d-%m-%Y %H:%M:%S') : __('No especificado') ,
+					'costo'                   => $envio['shipping_option']['cost'],
+					'fecha_entrega_estimada'  => (isset($envio['shipping_option']['estimated_delivery_time'])) ? CakeTime::format($envio['shipping_option']['estimated_delivery_time']['date'], '%d-%m-%Y %H:%M:%S') : __('No especificado') ,
 					'comentario'              => $comentario,
-					'mostrar_etiqueta'        => ($venta['VentaExterna']['shipping']['status'] == 'ready_to_ship') ? true : false,
+					'mostrar_etiqueta'        => ($envio['status'] == 'ready_to_ship') ? true : false,
 					'paquete' 				  => false
 				);	
 				
 			}
 
-			$documentoEnvio = $this->MeliMarketplace->mercadolibre_obtener_etiqueta_envio($venta['VentaExterna'], 'Y');
+			$documentoEnvio = $this->MeliMarketplace->mercadolibre_obtener_etiqueta_envio($envio, 'Y');
 			
 			$rutaAbsoluta = APP . 'webroot' . DS. 'Venta' . DS . $id . DS;
 			$rutaPublica  =  Router::url('/', true) . 'Venta/' . $id . '/';
@@ -5437,43 +5453,44 @@ class VentasController extends AppController {
 
 				$venta['VentaExterna']['transportista'] = (!empty($venta['MetodoEnvio']['id'])) ? $venta['MetodoEnvio']['nombre'] : 'Sin especificar' ;
 
+				$envio = $this->MeliMarketplace->mercadolibre_obtener_envio($venta['VentaExterna']['shipping']['id']);
+
 				// Detalles de envio
 				$direccion_envio = '';
 				$nombre_receptor = '';
 				$fono_receptor   = '';
 				$comentario      = '';
 
-				if (isset($venta['VentaExterna']['shipping']['receiver_address']['address_line'])
-					&& isset($venta['VentaExterna']['shipping']['receiver_address']['city']['name'])) {
-					$direccion_envio = sprintf('%s, %s', $venta['VentaExterna']['shipping']['receiver_address']['address_line'], $venta['VentaExterna']['shipping']['receiver_address']['city']['name']);
+				if (isset($envio['receiver_address']['address_line'])
+					&& isset($envio['receiver_address']['city']['name'])) {
+					$direccion_envio = sprintf('%s, %s', $envio['receiver_address']['address_line'], $envio['receiver_address']['city']['name']);
 				}
 
-				if (isset($venta['VentaExterna']['shipping']['receiver_address']['receiver_name'])) {
-					$nombre_receptor = $venta['VentaExterna']['shipping']['receiver_address']['receiver_name'];
+				if (isset($envio['receiver_address']['receiver_name'])) {
+					$nombre_receptor = $envio['receiver_address']['receiver_name'];
 				}
 
-				if (isset($venta['VentaExterna']['shipping']['receiver_address']['receiver_phone'])) {
-					$fono_receptor = $venta['VentaExterna']['shipping']['receiver_address']['receiver_phone'];
+				if (isset($envio['receiver_address']['receiver_phone'])) {
+					$fono_receptor = $envio['receiver_address']['receiver_phone'];
 				}
 
-				if (isset($venta['VentaExterna']['shipping']['receiver_address']['comment'])) {
-					$comentario = $venta['VentaExterna']['shipping']['receiver_address']['comment'];
+				if (isset($envio['receiver_address']['comment'])) {
+					$comentario = $envio['receiver_address']['comment'];
 				}
-
 				
 				$venta['Envio'][0] = array(
-					'id'                      => $venta['VentaExterna']['shipping']['id'],
-					'tipo'                    => $venta['VentaExterna']['shipping']['shipping_option']['name'],
-					'estado'                  => $venta['VentaExterna']['shipping']['status'],
+					'id'                      => $envio['id'],
+					'tipo'                    => $envio['shipping_option']['name'],
+					'estado'                  => $envio['status'],
 					'direccion_envio'         => $direccion_envio,
 					'nombre_receptor'         => $nombre_receptor,
 					'fono_receptor'           => $fono_receptor,
 					'producto'                => null,
 					'cantidad'                => 1,
-					'costo'                   => $venta['VentaExterna']['shipping']['shipping_option']['cost'],
-					'fecha_entrega_estimada'  => (isset($venta['VentaExterna']['shipping']['shipping_option']['estimated_delivery_time'])) ? CakeTime::format($venta['VentaExterna']['shipping']['shipping_option']['estimated_delivery_time']['date'], '%d-%m-%Y %H:%M:%S') : __('No especificado') ,
+					'costo'                   => $envio['shipping_option']['cost'],
+					'fecha_entrega_estimada'  => (isset($envio['shipping_option']['estimated_delivery_time'])) ? CakeTime::format($envio['shipping_option']['estimated_delivery_time']['date'], '%d-%m-%Y %H:%M:%S') : __('No especificado') ,
 					'comentario'              => $comentario,
-					'mostrar_etiqueta'        => ($venta['VentaExterna']['shipping']['status'] == 'ready_to_ship') ? true : false,
+					'mostrar_etiqueta'        => ($envio['status'] == 'ready_to_ship') ? true : false,
 					'paquete' 				  => false
 				);	
 				
@@ -6392,21 +6409,26 @@ class VentasController extends AppController {
 		$nombre_receptor = 'No aplica';
 		$fono_receptor   = 'No aplica';
 
-		if (isset($ventaMeli['shipping']['receiver_address']['address_line'])
-			&& isset($ventaMeli['shipping']['receiver_address']['city']['name'])) {
-			$direccion_entrega = $ventaMeli['shipping']['receiver_address']['address_line'] . ', ' . $ventaMeli['shipping']['receiver_address']['city']['name'];
-		}
+		if (isset($ventaMeli['shipping']['id'])) {
 
-		if (isset($ventaMeli['shipping']['receiver_address']['city']['name'])) {
-			$comuna_entrega = $ventaMeli['shipping']['receiver_address']['city']['name'];
-		}
+			$envio = $this->MeliMarketplace->mercadolibre_obtener_envio($ventaMeli['shipping']['id']);
 
-		if (isset($ventaMeli['shipping']['receiver_address']['receiver_name'])) {
-			$nombre_receptor = $ventaMeli['shipping']['receiver_address']['receiver_name'];
-		}
+			if (isset($envio['receiver_address']['address_line'])
+				&& isset($envio['receiver_address']['city']['name'])) {
+				$direccion_entrega = $envio['receiver_address']['address_line'] . ', ' . $envio['receiver_address']['city']['name'];
+			}
 
-		if (isset($ventaMeli['shipping']['receiver_address']['receiver_phone'])) {
-			$fono_receptor = $ventaMeli['shipping']['receiver_address']['receiver_phone'];
+			if (isset($envio['receiver_address']['city']['name'])) {
+				$comuna_entrega = $envio['receiver_address']['city']['name'];
+			}
+
+			if (isset($envio['receiver_address']['receiver_name'])) {
+				$nombre_receptor = $envio['receiver_address']['receiver_name'];
+			}
+
+			if (isset($envio['receiver_address']['receiver_phone'])) {
+				$fono_receptor = $envio['receiver_address']['receiver_phone'];
+			}	
 		}
 
 		// Direccion despacho

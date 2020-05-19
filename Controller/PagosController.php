@@ -8,7 +8,15 @@ class PagosController extends AppController
 
 		# solo metodos post
 		if ($this->request->is('post')) {
+
 			if ($this->Pago->saveMany($this->request->data)) {
+
+				# guardarEmailPagoFactura
+				foreach ($this->request->data as $ip => $p) {
+					$this->guardarEmailPagoFactura($p['Pago']['id']);
+					break;
+				}
+
 				$this->Session->setFlash('Pagos actualizados con éxito.', null, array(), 'success');
 			}else{
 				$this->Session->setFlash('Ocurrió un error al finalizar éstos pagos. Intente nuevamente.', null, array(), 'warning');
@@ -32,16 +40,29 @@ class PagosController extends AppController
 					unset($this->request->data[$ip]['Pago']['adjunto']);
 				}
 			}
-
-			# Los pagos al día los finalizamos
-			foreach ($this->request->data as $ip => $pago) {
-				if (isset($pago['Pago']['fecha_pago']) && $pago['Pago']['fecha_pago'] <= date('Y-m-d') && $pago['Pago']['monto_pagado'] > 0 && $pago['Pago']['pagado'] == true) {
-					$this->request->data[$ip]['Pago']['pagado'] = 1;
-					$this->request->data[$ip]['OrdenCompraFactura'][]['factura_id'] = $id_factura;
-				}
-			}
 			
-			if ($this->Pago->saveMany($this->request->data)) {
+			if ($this->Pago->saveMany($this->request->data, array('deep' => true))) {
+
+				// guardarEmailPagoFactura
+				$factura = $this->Pago->OrdenCompraFactura->find('first', array(
+					'conditions' => array(
+						'OrdenCompraFactura.id' => $id_factura
+					),
+					'contain' => array(
+						'Pago' => array(
+							'fields' => array(
+								'Pago.id'
+							)
+						)
+					)
+				));
+
+				# Notificamos los pagos si corresponde
+				foreach ($factura['Pago'] as $ip => $p) {
+					$this->guardarEmailPagoFactura($p['id']);
+					break;
+				}
+
 				$this->Session->setFlash('Pagos configurado con éxito', null, array(), 'success');
 				$this->redirect(array('controller' => 'ordenCompraFacturas', 'action' => 'index'));
 			}else{
@@ -67,8 +88,20 @@ class PagosController extends AppController
 							'Moneda.nombre',
 							'Moneda.comprobante_requerido'
 						)
-					)
 					),
+					'OrdenCompraFactura' => array(
+						'Proveedor' => array(
+							'fields' => array(
+								'Proveedor.nombre',
+								'Proveedor.giro',
+								'Proveedor.email_contacto',
+								'Proveedor.fono_contacto',
+								'Proveedor.rut_empresa',
+								'Proveedor.direccion'
+							)
+						)
+					)
+				),
 				'Pago' => array(
 					'OrdenCompraAdjunto' => array(
 						'fields' => array(
@@ -96,7 +129,7 @@ class PagosController extends AppController
 				)
 			)
 		));
-		
+	
 		BreadcrumbComponent::add('Pagos', '/ordenCompraFacturas/index');
 		BreadcrumbComponent::add('Configuración de pagos');
 
@@ -371,6 +404,210 @@ class PagosController extends AppController
 	}
 
 
+	/**
+	 * [guardarEmailPagoFactura description]
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function guardarEmailPagoFactura($id)
+	{	
+		$pago = $this->Pago->find('first', array(
+			'conditions' => array(
+				'Pago.id' => $id,
+				'Pago.pagado' => 1
+			),
+			'contain' => array(
+				'OrdenCompraFactura' => array(
+					'conditions' => array(
+						'OrdenCompraFactura.pagada' => 1,
+					),
+					'fields' => array(
+						'OrdenCompraFactura.id',
+						'OrdenCompraFactura.proveedor_id'
+					) 
+				)
+			)
+		));
+		
+		# No hay facturas pagadas
+		if (empty($pago['OrdenCompraFactura'])) {
+			return;
+		}
+
+		# Obtenemos los proveedores que tengna facturas pagadas y pagos finalizados
+		$proveedores = ClassRegistry::init('Proveedor')->find('all', array(
+			'conditions' => array(
+				'Proveedor.id' => Hash::extract($pago['OrdenCompraFactura'], '{n}.proveedor_id')
+			),
+			'contain' => array(
+				'OrdenCompraFactura' => array(
+					'conditions' => array(
+						'OrdenCompraFactura.id' => Hash::extract($pago['OrdenCompraFactura'], '{n}.id')
+					),
+					'Pago' => array(
+						'conditions' => array(
+							'Pago.pagado' => 1
+						)
+					),
+					'OrdenCompra' => array(
+						'OrdenCompraAdjunto',
+						'fields' => array(
+							'OrdenCompra.id'
+						)
+					)
+				)
+			),
+			'fields' => array(
+				'Proveedor.id',
+				'Proveedor.nombre',
+				'Proveedor.meta_emails'
+			)
+		));
+		
+		if (empty($proveedores)) {
+			return;
+		}
+
+		# Enviamos emails
+		foreach ($proveedores as $ip => $proveedor) {
+				
+			$receptor_pago = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=pago].email');
+			$receptores    = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=destinatario].email');
+			$cc            = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=copia].email');
+			$bcc           = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=copia oculta].email');
+
+			$to = (!empty($receptor_pago)) ? $receptor_pago : $receptores;
+
+			$adjuntos = array();
+
+			$adjuntos_oc    = unique_multidim_array(Hash::extract($proveedor['OrdenCompraFactura'], '{n}.OrdenCompra.OrdenCompraAdjunto.{n}'), 'adjunto');
+			$adjuntos_pagos = unique_multidim_array(Hash::extract($proveedor['OrdenCompraFactura'], '{n}.Pago.{n}'), 'adjunto');
+
+			/* no usado por ahora
+			$url_base = APP . 'webroot' . DS . 'img' . DS;
+
+			# Adjuntamos los comprobantes de la oc
+			foreach ($adjuntos_oc as $iad => $adj) {
+
+				if (empty($adj['adjunto']))
+					continue;
+
+				$archivo = $url_base . 'OrdenCompraAdjunto' . DS . $adj['id'] . DS . $adj['adjunto'];
+
+				$mime      = mime_content_type($archivo);
+				$nombre    = pathinfo($archivo, PATHINFO_FILENAME);
+
+				if($mime == 'inode/x-empty' && pathinfo($archivo, PATHINFO_EXTENSION) == 'docx') {
+				    $mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+				}
+
+				$adjuntos[] = array(
+                	'type' => $mime,
+                	'name' => $nombre,
+                	'content' => chunk_split(base64_encode(file_get_contents($archivo)))
+            	);
+			}
+
+			# Adjuntamos los comprobantes del pago
+			foreach ($adjuntos_pagos as $iad => $adj) {
+
+				if (empty($adj['adjunto']))
+					continue;
+
+				$archivo = $url_base . 'Pago' . DS . $adj['id'] . DS . $adj['adjunto'];
+
+				$mime      = mime_content_type($archivo);
+				$nombre    = pathinfo($archivo, PATHINFO_FILENAME);
+
+				if($mime == 'inode/x-empty' && pathinfo($archivo, PATHINFO_EXTENSION) == 'docx') {
+				    $mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+				}
+
+				$adjuntos[] = array(
+                	'type' => $mime,
+                	'name' => $nombre,
+                	'content' => chunk_split(base64_encode(file_get_contents($archivo)))
+            	);
+			}*/
+
+			
+			$this->View					= new View();
+			$this->View->viewPath		= 'Pagos' . DS . 'html';
+			$this->View->layoutPath		= 'Correos' . DS . 'html';
+			
+			$url = obtener_url_base();
+			
+			$this->View->set(compact('proveedor', 'url', 'adjuntos'));
+			$html						= $this->View->render('notificar_pago_factura');
+			
+			$mandrill_apikey = SessionComponent::read('Tienda.mandrill_apikey');
+			
+			if (empty($mandrill_apikey)) {
+				return false;
+			}
+
+			$mandrill = $this->Components->load('Mandrill');
+
+			$mandrill->conectar($mandrill_apikey);
+
+			$asunto = sprintf('[NDRZ - %s] Se ha realizado el pago de facturas desde Nodriza Spa', date('Y-m-d H:i:s'));
+			
+			if (Configure::read('debug') > 0) {
+				$asunto = sprintf('[NDRZ-DEV - %s] Se ha realizado el pago de facturas desde Nodriza Spa', date('Y-m-d H:i:s'));
+			}
+			
+			$remitente = array(
+				'email' => 'oc@nodriza.cl',
+				'nombre' => 'Finanzas Nodriza'
+			);
+
+			$destinatarios = array();
+
+			foreach ($to as $id => $des) {
+				$destinatarios[] = array(
+					'email' => $des,
+					'type' => 'to'
+				);
+			}
+
+			foreach ($cc as $ic => $c) {
+				$destinatarios[] = array(
+					'email' => $c,
+					'type' => 'cc'
+				);
+			}
+
+			foreach ($bcc as $ibc => $bc) {
+				$destinatarios[] = array(
+					'email' => $bc,
+					'type' => 'bcc'
+				);
+			}
+
+			$emailsFinanzas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
+			$cabeceras      = array();
+		
+			if (!empty($emailsFinanzas)) {
+				$cabeceras = array(
+					'Reply-To' => implode(',', $emailsFinanzas)
+				);	
+			}
+			
+			$notificado = $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios, $cabeceras, $adjuntos);	
+	
+			# Guardamos el estado notificado para estas facturas
+			foreach ($proveedor['OrdenCompraFactura'] as $i => $f) {
+				ClassRegistry::init('OrdenCompraFactura')->id = $f['id'];
+				ClassRegistry::init('OrdenCompraFactura')->saveField('notificada', 1);
+			}
+
+		}
+
+		return;
+
+	}
+
+
 
 	public function api_add() {
 
@@ -466,6 +703,11 @@ class PagosController extends AppController
 					'OrdenCompraFactura'
 				))
 			);
+
+			# si el pago finalizó notificamos las facturas afectadas
+			if ($pago['Pago']['pagado']) {
+				$this->guardarEmailPagoFactura($this->Pago->id);
+			}
 
 			$v             =  new View();
 			$v->autoRender = false;

@@ -29,7 +29,7 @@ class MandrillComponent extends Component
 	 * @param  array  $imagenes      an array of embedded images to add to the message
 	 * @return mixed   
 	 */
-	public function enviar_email($html = '', $asunto = '', $remitente = array(), $destinatarios = array(), $cabeceras = '', $adjuntos = array(), $imagenes = array())
+	public function enviar_email($html = '', $asunto = '', $remitente = array(), $destinatarios = array(), $cabeceras = array(), $adjuntos = array(), $imagenes = array())
 	{
 		try {
 

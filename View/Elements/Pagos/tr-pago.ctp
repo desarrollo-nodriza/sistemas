@@ -8,7 +8,7 @@
 		
 	</td>
 	<td>
-		<input type="text" class="form-control" value="<?=$pago['Pago']['identificador']; ?>">
+		<?=$this->Form->input(sprintf('%d.Pago.identificador', $index), array('value' => $pago['Pago']['identificador'], 'class' => 'form-control not-blank', 'placeholder' => 'Ingrese ientificador del pago', 'type' => 'text', 'label' => false, 'div' => false)); ?>
 	</td>
 
 	<td>

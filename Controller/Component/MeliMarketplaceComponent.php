@@ -88,7 +88,7 @@ class MeliMarketplaceComponent extends Component
 
 					#$response['success'] = sprintf('%s sigue conectado a %s', $marketplace['nombre'], $marketplace['MarketplaceTipo']['nombre']);
 					
-					$response['success'] = true;
+					#$response['success'] = true;
 				}
 			}
 			
@@ -339,13 +339,12 @@ class MeliMarketplaceComponent extends Component
 		if (!empty($VentaCliente)) {
 			return $VentaCliente['VentaCliente']['id'];
 		}
-
+		
 		//si el cliente no existe, se crea
 		$data = array();
 		$data['VentaCliente']['nombre']   = $DataVenta['buyer']['first_name'];
 		$data['VentaCliente']['apellido'] = $DataVenta['buyer']['last_name'];
 		$data['VentaCliente']['email']    = $DataVenta['buyer']['email'];
-		$data['VentaCliente']['telefono'] = $DataVenta['buyer']['phone']['area_code'] . $DataVenta['buyer']['phone']['number'];
 		$data['VentaCliente']['rut']      = $rut;
 
 		ClassRegistry::init('VentaCliente')->create();
@@ -356,63 +355,81 @@ class MeliMarketplaceComponent extends Component
 	}
 
 
+	public function mercadolibre_obtener_envio($id)
+	{	
+
+		$params = array(
+			'access_token' => self::$accessToken
+		);
+
+		try {
+			$envio = self::$MeliConexion->get('/shipments/' . $id , $params);
+			$envio = to_array($envio);
+		} catch (Exception $e) {
+			//
+		}
+		
+		if ($envio['httpCode'] < 300 && !empty($envio['body'])) {
+			return $envio['body'];
+		}
+
+		return $envio;
+	}
+
+
 	/**
 	 * Obtiene los documentos adjuntos de una venta en mercadolibre
 	 * @param  string 	$access_token token de acceso a meli
-	 * @param  array 	$detallesVenta Arreglo con la información de la venta
+	 * @param  array 	$envio data del envio
 	 * @param  string 	$type 		  formato de retorno         	
 	 * @return OBJ
 	 */
-	public function mercadolibre_obtener_etiqueta_envio($detallesVenta, $type = 'zpl2')
+	public function mercadolibre_obtener_etiqueta_envio($envio, $type = 'zpl2')
 	{	
-		if (isset($detallesVenta['shipping']['id'])) {
-			
-			// No hay documentos
-			if ($detallesVenta['shipping']['status'] != 'ready_to_ship') {
-				return array();
-			}
-
-			$shipping_id = $detallesVenta['shipping']['id'];
-
-			$curl = curl_init();
-
-			if ($type == 'Y') {
-				$endpoint = "https://api.mercadolibre.com/shipment_labels?shipment_ids=".$shipping_id."&savePdf=".$type."&access_token=" . self::$accessToken;
-			}else{
-				$endpoint = "https://api.mercadolibre.com/shipment_labels?shipment_ids=".$shipping_id."&response_type=".$type."&access_token=" . self::$accessToken;
-			}
-
-			curl_setopt_array($curl, array(
-			  CURLOPT_URL => $endpoint,
-			  CURLOPT_RETURNTRANSFER => true,
-			  CURLOPT_ENCODING => "",
-			  CURLOPT_MAXREDIRS => 10,
-			  CURLOPT_TIMEOUT => 30,
-			  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-			  CURLOPT_CUSTOMREQUEST => "GET",
-			  CURLOPT_HTTPHEADER => array(
-			    "Cache-Control: no-cache",
-			  ),
-			));
-
-			$response = curl_exec($curl);
-			$err = curl_error($curl);
-
-			curl_close($curl);
-
-			if ($err) {
-			  	echo "cURL Error #:" . $err;
-			} else {
-
-				if ($type != 'Y') {
-					header('Content-type:application/zip');
-					header('Content-Disposition:attachment;filename="'.$shipping_id.'.zip"');
-					echo $response;
-				}
-
-				return $response;
-			}
+		// No hay documentos
+		if ($envio['status'] != 'ready_to_ship') {
+			return array();
 		}
+
+		$curl = curl_init();
+
+		if ($type == 'Y') {
+			$endpoint = "https://api.mercadolibre.com/shipment_labels?shipment_ids=".$envio['id']."&savePdf=".$type."&access_token=" . self::$accessToken;
+		}else{
+			$endpoint = "https://api.mercadolibre.com/shipment_labels?shipment_ids=".$envio['id']."&response_type=".$type."&access_token=" . self::$accessToken;
+		}
+
+		curl_setopt_array($curl, array(
+		  CURLOPT_URL => $endpoint,
+		  CURLOPT_RETURNTRANSFER => true,
+		  CURLOPT_ENCODING => "",
+		  CURLOPT_MAXREDIRS => 10,
+		  CURLOPT_TIMEOUT => 30,
+		  CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		  CURLOPT_CUSTOMREQUEST => "GET",
+		  CURLOPT_HTTPHEADER => array(
+		    "Cache-Control: no-cache",
+		  ),
+		));
+
+		$response = curl_exec($curl);
+		$err = curl_error($curl);
+
+		curl_close($curl);
+
+		if ($err) {
+		  	echo "cURL Error #:" . $err;
+		} else {
+
+			if ($type != 'Y') {
+				header('Content-type:application/zip');
+				header('Content-Disposition:attachment;filename="'.$envio['id'].'.zip"');
+				echo $response;
+			}
+
+			return $response;
+		}
+		
 
 		return;
 	}

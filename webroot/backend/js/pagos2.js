@@ -12,7 +12,10 @@ var pagos = function(){
 			$.ajax({
 				url: webroot + 'api/pagoproveedor/add.json?token=' + token,
 				type: 'POST',
-				data: data
+				data: data,
+				dataType: "JSON",
+				processData: false,
+        		contentType: false,
 			})
 			.done(function(res){
 				successCallback.call(this, res);
@@ -56,7 +59,10 @@ var pagos = function(){
 						return false;
 					}
 
-					pagos.add(token, form.serialize(),
+					// Con serialize no funciona
+					var dataForm = new FormData(this);
+	
+					pagos.add(token, dataForm,
 						function(res){
 
 							total_pagar = total_pagar - parseFloat(res.response.pago.Pago.monto_pagado);
@@ -75,7 +81,7 @@ var pagos = function(){
 
 							// Seteamos el nuevo monto a pagar
 							$('.total-a-pagar').unmask();
-							$('.total-a-pagar').text(total_pagar).mask('000.000.000.000.000', {reverse: true}).prepend('$');
+							$('.total-a-pagar').text(total_pagar).mask('000.000.000.000.000', {reverse: true});
 
 							// Seteamos el total pagado
 							$('#monto-pagado-text').unmask();

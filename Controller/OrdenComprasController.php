@@ -1,6 +1,8 @@
 <?php
 App::uses('AppController', 'Controller');
 App::uses('VentaDetalleProductosController', 'Controller');
+App::uses('PagosController', 'Controller');
+
 class OrdenComprasController extends AppController
 {	
 
@@ -534,6 +536,14 @@ class OrdenComprasController extends AppController
 				# Guardamos para que valide los pagos y faturas
 				if (!empty($pagos)) {
 					ClassRegistry::init('Pago')->saveMany($pagos, array('deep' => true));
+
+					# Notificamos los pagos si corresponde
+					$pagosController = new PagosController;
+
+					foreach ($pagos as $ip => $p) {
+						$pagosController->guardarEmailPagoFactura($p['Pago']['id']);
+					}
+
 				}
 
 			}

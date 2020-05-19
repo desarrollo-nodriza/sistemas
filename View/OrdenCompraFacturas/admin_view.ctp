@@ -217,9 +217,14 @@
 					</div>
 				</div>
 				<div class="panel-footer">
-					<div class="pull-right">
+					<div class="pull-left">
 						<?= $this->Html->link('Volver', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 					</div>
+					<? if ($this->request->data['OrdenCompraFactura']['monto_pagado'] > 0) : ?>
+					<div class="pull-right">
+						<?= $this->Html->link('Volver a notificar pagos al proveedor', array('action' => 'notificar_pagos', $this->request->data['OrdenCompraFactura']['id']), array('class' => 'btn btn-primary')); ?>
+					</div>
+					<? endif; ?>
 				</div>
 			</div>
 		</div>

@@ -61,12 +61,42 @@
 						</table>
 					</div>
 				</div>
+				
+				<? foreach ($factura['OrdenCompra']['OrdenCompraFactura'] as $if => $f) : ?>
+					<? 
+					if ($f['id'] == $factura['OrdenCompraFactura']['id']) 
+						continue; ?>
+					
+					<div class="panel-body">
+						<div class="table-responsive">
+							<table class="table table-bordered">
+								<caption>Factura relacionada</caption>
+								<thead>
+									<tr>
+										<th>Folio</th>
+										<th>Monto facturado</th>
+										<th>Monto pagado</th>
+									</tr>
+								</thead>
+								<tbody>
+								<tr>
+									<td><?=$f['folio']; ?></td>
+									<td><?=$this->Number->currency($f['monto_facturado'], 'CLP'); ?></td>
+									<td><?=$this->Number->currency($f['monto_pagado'], 'CLP'); ?></td>
+								</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+				<? endforeach; ?>				
+
 			</div>
 		</div>
 	</div>
 	<div class="row">
 		<div class="col-xs-12">
-			<?= $this->Form->create('Pago', array('data-oc' => $factura['OrdenCompra']['id'],'class' => 'form-horizontal js-validate-pago js-config-pago', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+			<?= $this->Form->create('Pago', array('data-oc' => $factura['OrdenCompra']['id'],'class' => 'form-horizontal js-validate-pago js-config-pago', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>	
 			
 			<div class="panel pane-primary">
 				<div class="panel-heading">
@@ -75,6 +105,14 @@
                         <li><a href="#" class="copy_tr js-dividir-montos"><span class="fa fa-plus"></span></a></li>
                     </ul>
 				</div>
+				<? if (count($factura['OrdenCompra']['OrdenCompraFactura']) > 1) : ?>
+				<div class="panel-body">
+					<div class="alert alert-warning">
+					  <a class="close" data-dismiss="alert">&times;</a>
+					  Los pagos a continuación tambien estan relacionado a otras facturas, eso quiere decir que esta configuración también afectará a las facturas relacionadas.
+					</div>
+				</div>
+				<? endif; ?>
 				<div class="panel-body">
 
 					<div class="table-responsive">
@@ -98,7 +136,12 @@
 										<?= $this->Form->select('999.Pago.moneda_id', $monedas, array('disabled' => true, 'class' => 'form-control js-select-medio-pago not-blank', 'empty' => 'Seleccione')); ?>
 									</td>
 									<td>
+										
 										<?= $this->Form->hidden('999.Pago.orden_compra_id', array('disabled' => true, 'value' => $factura['OrdenCompra']['id'])); ?>
+										<? foreach ($factura['OrdenCompra']['OrdenCompraFactura'] as $if => $f) : ?>
+										<?= $this->Form->hidden(sprintf('999.Pago.OrdenCompraFactura.%d.factura_id', $if), array('disabled' => true, 'value' => $f['id'])); ?>
+										<? endforeach; ?>	
+
 										<?= $this->Form->input('999.Pago.identificador', array('type' => 'text', 'disabled' => true, 'class' => 'form-control js-identificador-pago', 'placeholder' => 'N° transacción/cheque')); ?>
 									</td>
 									<td>
@@ -126,11 +169,16 @@
 							<? foreach ($factura['Pago'] as $ip => $pago) : ?>
 							<tr>
 								<td>
+
 									<?= $this->Form->select(sprintf('%d.Pago.moneda_id', $ip), $monedas, array('default' => (!empty($pago['moneda_id'])) ? $pago['moneda_id'] : $factura['OrdenCompra']['moneda_id'], 'class' => 'form-control js-select-medio-pago', 'empty' => 'Seleccione', 'disabled' => ($pago['pagado']) ? true : false  )); ?>
 								</td>
 								<td>
 									<!-- Hidden inputs-->
 									<?= $this->Form->hidden(sprintf('%d.Pago.id', $ip), array('value' => $pago['id'])); ?>
+									<?= $this->Form->hidden(sprintf('%d.Pago.orden_compra_id', $ip), array('value' => $factura['OrdenCompra']['id'])); ?>
+									<? foreach ($factura['OrdenCompra']['OrdenCompraFactura'] as $if => $f) : ?>
+									<?= $this->Form->hidden(sprintf('%d.Pago.OrdenCompraFactura.%d.factura_id', $ip, $if), array('value' => $f['id'])); ?>
+									<? endforeach; ?>
 
 									<?= $this->Form->input(sprintf('%d.Pago.identificador', $ip), array('type' => 'text','value' => $pago['identificador'], 'class' => 'form-control js-identificador-pago', 'disabled' => ($pago['pagado']) ? true : false )); ?>
 								</td>

@@ -95,10 +95,12 @@ class ProveedoresController extends AppController
 	
 		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
 
+		$tipo_email = $this->Proveedor->obtener_tipo_email();
+
 		BreadcrumbComponent::add('Proveedores ', '/roles');
 		BreadcrumbComponent::add('Editar ');
 
-		$this->set(compact('monedas'));
+		$this->set(compact('monedas', 'tipo_email'));
 
 	}
 

@@ -142,6 +142,14 @@ class Proveedor extends AppModel
 	);
 
 
+	private static $tipo_email = array(
+		'validador'    => 'Valida la oc', 
+		'destinatario' => 'Envio simple', 
+		'copia'        => 'Enviar copia', 
+		'copia oculta' => 'Enviar copia oculta',
+		'pago'		   => 'Notificar pago de factura'
+	);
+
 	public function afterFind($results, $primary = false) {
 
 
@@ -153,5 +161,15 @@ class Proveedor extends AppModel
 	        }
 	    }
 	    return $results;
+	}
+
+
+	public function obtener_tipo_email($tipo = '')
+	{
+		if (!empty($tipo)) {
+			return self::$tipo_email[$tipo];
+		}else{
+			return self::$tipo_email;
+		}
 	}
 }

@@ -1,5 +1,7 @@
 <?php
 App::uses('AppController', 'Controller');
+App::uses('PagosController', 'Controller');
+
 class OrdenCompraFacturasController extends AppController
 {	
 
@@ -592,6 +594,33 @@ class OrdenCompraFacturasController extends AppController
 		$modelo			= $this->OrdenCompraFactura->alias;
 
 		$this->set(compact('datos', 'campos', 'modelo'));
+	}
+
+	public function admin_notificar_pagos($id)
+	{
+		$factura = $this->OrdenCompraFactura->find('first', array(
+			'conditions' => array(
+				'OrdenCompraFactura.id' => $id
+			),
+			'contain' => array(
+				'Pago' => array(
+					'fields' => array(
+						'Pago.id'
+					)
+				)
+			)
+		));
+
+		$pagosController = new PagosController;
+
+		# Notificamos los pagos si corresponde
+		foreach ($factura['Pago'] as $ip => $p) {
+			$pagosController->guardarEmailPagoFactura($p['id']);
+			break;
+		}
+
+		$this->Session->setFlash('Si corresponde, la notificación fue enviada con éxito.', null, array(), 'success');
+		$this->redirect($this->referer('/', true));
 	}
 
 
