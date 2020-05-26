@@ -164,6 +164,32 @@ Router::connect(
     )
 );
 
+
+Router::connect(
+    '/cliente/mis-cotizaciones', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'cotizaciones', 
+        'action'     => 'index',
+        'cliente'    => true,
+        'prefix'     => 'cliente'
+    ),
+    array(
+        'pass' => array('id'),
+        'id'   => '[0-9]+'
+    )
+);
+
+
+Router::connect(
+    '/cliente/quick_message', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'ventaClientes', 
+        'action' => 'quick_message',
+        'cliente' => true,
+        'prefix' => 'cliente'
+    )
+);
+
 Router::connect(
     '/cliente/:controller/:action/', // E.g. /blog/3-CakePHP_Rocks
     array(

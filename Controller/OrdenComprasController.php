@@ -1072,8 +1072,6 @@ class OrdenComprasController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-
-			$this->request->data['OrdenesCompra'][0]['Venta'][] = array('venta_id' => 30214);
 			
 			foreach ($this->request->data['OrdenesCompra'] as $ic => $d) {
 				
@@ -1852,6 +1850,20 @@ class OrdenComprasController extends AppController
 					if (!empty($emailsVentas)) {
 						$enviado = $this->guardarEmailStockout($id, $ventasNotificar, $itemes['stockout'], $emailsVentas);
 					}
+
+					# notificamos a clientes
+					App::uses('HttpSocket', 'Network/Http');
+					$socket			= new HttpSocket();
+
+					# Notificamos stockout a clientes
+					foreach ($ventasNotificar as $iv => $v) {
+						
+						$request		= $socket->get(
+							Router::url('/api/ventas/stockout/' . $v['Venta']['id'] . '.json?token=' . $this->Session->read('Auth.Administrador.token.token'), true)
+						);
+						
+					}
+					
 				}
 
 				$this->Session->setFlash('OC actualizada con éxito.', null, array(), 'success');
@@ -2846,7 +2858,6 @@ class OrdenComprasController extends AppController
 					$ventasNotificar = $this->OrdenCompra->obtener_ventas_por_productos($oc['OrdenCompra']['id'], Hash::extract($itemes['stockout'], '{n}.venta_detalle_producto_id'));
 				}
 
-
 				# notificar stockout a ventas
 				if (!empty($ventasNotificar)) {
 
@@ -2855,6 +2866,20 @@ class OrdenComprasController extends AppController
 					if (!empty($emailsVentas)) {
 						$enviado = $this->guardarEmailStockout($id, $ventasNotificar, $itemes['stockout'], $emailsVentas);
 					}
+
+
+					App::uses('HttpSocket', 'Network/Http');
+					$socket			= new HttpSocket();
+
+					# Notificamos stockout a clientes
+					foreach ($ventasNotificar as $iv => $v) {
+						
+						$request		= $socket->get(
+							Router::url('/api/ventas/stockout/' . $v['Venta']['id'] . '.json?token=' . $this->request->query['access_token'], true)
+						);
+
+					}
+
 				}
 
 				# crear la nueva OC

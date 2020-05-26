@@ -45,6 +45,8 @@
 		</div>	
 
 		<?= $this->Html->script(array(
+			'/public/vendor/jqueryvalidate/dist/jquery.validate.min',
+			'/public/vendor/jqueryvalidate/dist/localization/methods_es_CL.min',
 			'https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js',
 			'/public/vendor/bootstrapv4/js/bootstrap.min',
 			//'/public/vendor/bootstrap-table/bootstrap-table.min',

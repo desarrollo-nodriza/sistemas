@@ -4245,7 +4245,7 @@ class VentasController extends AppController {
 			$venta['VentaExterna'] = $this->MeliMarketplace->mercadolibre_obtener_venta_detalles($venta['Marketplace']['access_token'], $venta['Venta']['id_externo'], true);
 
 			if (isset($venta['VentaExterna']['shipping']['id'])) {
-				
+
 				$envio = $this->MeliMarketplace->mercadolibre_obtener_envio($venta['VentaExterna']['shipping']['id']);
 				
 				$this->MeliMarketplace->mercadolibre_obtener_etiqueta_envio($envio);	
@@ -8665,5 +8665,280 @@ class VentasController extends AppController {
 			'_serialize' => array('response')
         ));
 
+	}
+
+
+
+	public function api_notificar_stockout($id)
+	{
+		# Sólo método Get
+		if (!$this->request->is('get')) {
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Only GET request allow'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# No existe venta
+		if (!$this->Venta->exists($id)) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$qry = array(
+			'conditions' => array(
+				'Venta.id' => $id
+			),
+			'contain' => array(
+				'OrdenCompra' => array(
+					'VentaDetalleProducto' => array(
+						'fields' => array(
+							'VentaDetalleProducto.id'
+						)
+					),
+					'fields' => array(
+						'OrdenCompra.id'
+					)
+				),
+				'VentaCliente' => array(
+					'fields' => array(
+						'VentaCliente.id',
+						'VentaCliente.nombre',
+						'VentaCliente.apellido',
+						'VentaCliente.email'
+					)
+				),
+				'VentaEstado' => array(
+					'VentaEstadoCategoria' => array(
+						'fields' => array(
+							'VentaEstadoCategoria.id',
+							'VentaEstadoCategoria.venta',
+							'VentaEstadoCategoria.envio',
+							'VentaEstadoCategoria.rechazo',
+							'VentaEstadoCategoria.cancelado',
+							'VentaEstadoCategoria.final'
+						)
+					),
+					'fields' => array(
+						'VentaEstado.id',
+						'VentaEstado.venta_estado_categoria_id',
+					)
+				),
+				'VentaDetalle' => array(
+					'VentaDetalleProducto' => array(
+						'fields' => array(
+							'VentaDetalleProducto.id', 
+							'VentaDetalleProducto.nombre',
+							'VentaDetalleProducto.codigo_proveedor'
+						)
+					),
+					'fields' => array(
+						'VentaDetalle.id',
+						'VentaDetalle.venta_detalle_producto_id',
+						'VentaDetalle.notificado_stockout',
+						'VentaDetalle.cantidad'
+					)
+				),
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.id',
+						'Tienda.nombre',
+						'Tienda.logo',
+						'Tienda.mandrill_apikey',
+						'Tienda.url',
+						'Tienda.direccion'
+					)
+				)
+			),
+			'joins' => array(
+				array(
+					'table' => 'rp_venta_detalles',
+					'alias' => 'vd',
+					'type' => 'INNER',
+					'conditions' => array(
+						'vd.venta_id = Venta.id',
+						'vd.cantidad_anulada < vd.cantidad'
+					)
+				),
+				array(
+					'table' => 'rp_orden_compras_venta_detalle_productos',
+					'alias' => 'oc_productos',
+					'type' => 'INNER',
+					'conditions' => array(
+						'oc_productos.venta_detalle_producto_id = vd.venta_detalle_producto_id',
+						'oc_productos.estado_proveedor' => array('stockout')
+					)
+				),
+				array(
+					'table' => 'rp_ventas',
+					'alias' => 'ventas',
+					'type' => 'INNER',
+					'conditions' => array(
+						'ventas.id = vd.venta_id'
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.venta_cliente_id',
+				'Venta.venta_estado_id',
+				'Venta.tienda_id',
+				'Venta.id_externo'
+			)
+		);
+
+		$venta = $this->Venta->find('first', $qry);
+		
+		if (empty($venta)) {
+			$response = array(
+				'code'    => 521, 
+				'name' => 'error',
+				'message' => 'No corresponde notificación'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Debe ser un pago aceptado
+		if (!$venta['VentaEstado']['VentaEstadoCategoria']['venta'] || $venta['VentaEstado']['VentaEstadoCategoria']['envio'] || $venta['VentaEstado']['VentaEstadoCategoria']['final']) {
+			$response = array(
+				'code'    => 522, 
+				'name' => 'error',
+				'message' => 'No permite notificación'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		foreach ($venta['VentaDetalle'] as $iv => $vd) {
+
+			$estado_producto = array_unique(Hash::extract($venta['OrdenCompra'], '{n}.VentaDetalleProducto.{n}.OrdenComprasVentaDetalleProducto[venta_detalle_producto_id='.$vd['venta_detalle_producto_id'].'].estado_proveedor'));
+			$estado_nota     = array_unique(Hash::extract($venta['OrdenCompra'], '{n}.VentaDetalleProducto.{n}.OrdenComprasVentaDetalleProducto[venta_detalle_producto_id='.$vd['venta_detalle_producto_id'].'].nota_proveedor'));
+
+			# Si no se fuerza la notificación se quitan los proudctos ya notificados
+			if (!isset($this->request->query['force'])
+				&& $vd['notificado_stockout']) {
+				unset($venta['VentaDetalle'][$iv]);
+				continue;
+			}
+
+			# si no hay un estado de productos tambien se quitan
+			if (empty($estado_producto)) {
+				unset($venta['VentaDetalle'][$iv]);
+				continue;
+			}
+
+			# solo notificamos stockout
+			if ($estado_producto[0] != 'stockout') {
+				unset($venta['VentaDetalle'][$iv]);
+				continue;
+			}
+
+			$venta['VentaDetalle'][$iv] = array_replace_recursive($venta['VentaDetalle'][$iv], array(
+				'estado_proveedor' => $estado_producto[0],
+				'estado_nota' => $estado_nota[0] 
+			));
+		}	
+
+		if (empty($venta['VentaDetalle'])) {
+			$response = array(
+				'code'    => 522, 
+				'name' => 'error',
+				'message' => 'No permite notificación'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		# Creamos el token del cliente de 4 dias para responder el email
+		$token = ClassRegistry::init('Token')->crear_token_cliente($venta['Venta']['venta_cliente_id'], $venta['Venta']['tienda_id'], 96);
+
+		/**
+		 * Clases requeridas
+		 */
+		$this->View           = new View();
+		$this->View->viewPath = 'Ventas' . DS . 'emails';
+		$this->View->layout   = 'backend' . DS . 'emails';
+		
+		$url = obtener_url_base();
+
+		/**
+		 * Correo a ventas
+		 */
+		$this->View->set(compact('venta', 'token', 'url'));
+		$html = $this->View->render('notificar_stockout_cliente');
+		
+		$mandrill_apikey = $venta['Tienda']['mandrill_apikey'];
+		
+		if (empty($mandrill_apikey)) {
+			$response = array(
+				'code'    => 523, 
+				'name' => 'error',
+				'message' => 'Mandrill apikey not found'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$mandrill = $this->Components->load('Mandrill');
+		
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = '['.$venta['Tienda']['nombre'].'] Venta #' . $venta['Venta']['id'] . ' - Hay productos sin stock';
+		
+		if (Configure::read('debug') > 1) {
+			$asunto = '['.$venta['Tienda']['nombre'].'-DEV] Venta #' . $venta['Venta']['id'] . ' - Hay productos sin stock';
+		}
+
+		$remitente = array(
+			'email' => 'no-reply@nodriza.cl',
+			'nombre' => 'Ventas ' . $venta['Tienda']['nombre']
+		);
+
+		$destinatarios = array(
+			array(
+				'email' => trim($venta['VentaCliente']['email']),
+				'name' => $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido']
+			)
+		);
+
+		$enviado = $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
+		$this->set(array(
+            'notificado' => $enviado,
+            '_serialize' => array('notificado')
+        ));
 	}
 }

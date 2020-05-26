@@ -225,7 +225,7 @@ class MensajesController extends AppController
 			$saveData['Mensaje'][$indice] = $val;
 		}
 
-		if (empty($saveData['Mensaje'])) {
+		if (empty($saveData['Mensaje']) || empty($saveData['Mensaje']['mensaje'])) {
 			$response = array(
 				'code'    => 510, 
 				'name' => 'error',
@@ -258,6 +258,7 @@ class MensajesController extends AppController
 	    ));
 
     }
+
 
     /**
      * [api_view description]
@@ -546,17 +547,6 @@ class MensajesController extends AppController
     public function admin_notificar($id)
     {	
     	prx($this->notificar($id));
-    }
-
-
-    public function cliente_hilo($venta_id)
-    {	
-
-    	$venta = ClassRegistry::init('Venta')->obtener_venta_por_id($venta_id);
-    	
-    	$mensaje_id = $this->request->query['message'];
-
-    	prx($venta);
     }
 
     public function cliente_guardar_mensaje()

@@ -1028,11 +1028,11 @@ class Venta extends AppModel
 
 		switch ($picking_estado) {
 			case 'no_definido':
-				$save = array_replace_recursive($save, array('Venta' => array('picking_email' => '', 'picking_fecha_inicio' => '', 'picking_fecha_temrino' => '')));
+				$save = array_replace_recursive($save, array('Venta' => array('picking_email' => '', 'picking_fecha_embalar' => '', 'picking_fecha_inicio' => '', 'picking_fecha_temrino' => '')));
 				break;
 			
 			case 'empaquetar':
-				$save = array_replace_recursive($save, array('Venta' => array('picking_email' => '', 'picking_fecha_inicio' => '', 'picking_fecha_temrino' => '')));
+				$save = array_replace_recursive($save, array('Venta' => array('picking_email' => '', 'picking_fecha_embalar' => date('Y-m-d H:i:s'), 'picking_fecha_inicio' => '', 'picking_fecha_temrino' => '')));
 				break;
 
 			case 'empaquetando':

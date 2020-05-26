@@ -71,6 +71,21 @@ $.extend({
 			});
 		},
 		init: function(){
+
+			if($(".tagsinput").length > 0){
+
+                $(".tagsinput").each(function(){
+
+                    if($(this).attr("placeholder") != ''){
+                        var dt = $(this).attr("placeholder");
+                    }else
+                        var dt = 'Agregar';
+
+                    $(this).tagsInput({width: '100%',height:'auto',defaultText: dt});
+                });
+
+            }
+
 			if ($('#OrdenCompraFacturaAdminViewForm').length) {
 				$.ordenCompraFacturas.bind();
 			}

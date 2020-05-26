@@ -474,6 +474,21 @@
 									</li>
 									<?
 									endforeach;
+								elseif ($venta['Mensaje']) : 
+									foreach ($venta['Mensaje'] as $mensaje) : ?>
+									<li class="list-group-item">
+										<span class="message-subject">
+											Sin asunto
+										</span>
+										<span class="message-message">
+											<?= $mensaje['mensaje']; ?>
+										</span>
+										<span class="message-date">
+											<?= $mensaje['created']; ?>
+										</span>
+									</li>
+									<?
+									endforeach;
 								else : ?>
 									
 									<li class="list-group-item text-mutted">

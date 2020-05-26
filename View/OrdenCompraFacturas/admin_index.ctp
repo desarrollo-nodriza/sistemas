@@ -21,16 +21,12 @@
 					<div class="col-sm-3 col-xs-12">
 						<div class="form-group">
 							<label>Orden de compra:</label>
-
-							<?=$this->Form->select('oc', 
-								$ocs,
+							<?=$this->Form->input('oc',
 								array(
-								'type' => 'text',
-								'class' => 'form-control select',
-								'data-live-search' => true,
-								'default' => $oc,
-								'empty' => 'Seleccione OC',
-								'multiple' => true
+									'type' => 'text',
+									'class' => 'tagsinput',
+									'value' => $oc,
+									'placeholder' => 'Id de oc'
 								));?>
 						</div>
 					</div>
@@ -52,15 +48,12 @@
 					<div class="col-sm-2 col-xs-12">
 						<div class="form-group">
 							<label>Folio:</label>
-
-							<?=$this->Form->select('folio', 
-								$folios,
+							<?=$this->Form->input('folio',
 								array(
-								'type' => 'text',
-								'class' => 'form-control select',
-								'data-live-search' => true,
-								'default' => $folio,
-								'empty' => 'Seleccione folio'
+									'type' => 'text',
+									'class' => 'tagsinput',
+									'value' => $folio,
+									'placeholder' => 'Folio'
 								));?>
 						</div>
 					</div>
@@ -69,8 +62,8 @@
 						<div class="form-group">
 							<label>Estado del DTE</label>
 							<?=$this->Form->select('sta', array(
-								'n' => 'Pendiente de pago',
-								'y' => 'Pagada'
+									'n' => 'No pagado',
+									'y' => 'Pagado'
 								),
 								array(
 								'class' => 'form-control select',

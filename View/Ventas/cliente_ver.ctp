@@ -303,7 +303,7 @@
 			  		
 					<div class="card p-3 rounded-0 border-top-0 border-right-0 border-left-0 border-primary">
 						<!-- Enviar mensaje -->
-						<?= $this->Form->create('Mensaje', array('url' => array('controller' => 'mensajes', 'action' => 'guardar_mensaje'), 'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control js-formulario', 'autocomplete' => false))); ?>					
+						<?= $this->Form->create('Mensaje', array('url' => array('controller' => 'mensajes', 'action' => 'guardar_mensaje'), 'class' => 'form-horizontal js-formulario', 'novalidate' => true, 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control js-formulario', 'autocomplete' => false))); ?>					
 						<?= $this->Form->hidden('access_token', array('value' => $this->Session->read('Auth.Cliente.token'))); ?>
 						<?= $this->Form->hidden('venta_cliente_id', array('value' => $this->Session->read('Auth.Cliente.id'))); ?>
 						<?= $this->Form->hidden('autor', array('value' => $this->Session->read('Auth.Cliente.nombre') . ' ' . $this->Session->read('Auth.Cliente.apellido'))); ?>
@@ -337,7 +337,7 @@
 						<? if (empty($mensaje['RespuestaMensaje']) && $mensaje['origen'] == 'empleado') : ?>
 						<div class="card p-3 mb-4">
 							<!-- Enviar mensaje -->
-							<?= $this->Form->create('Mensaje', array('url' => array('controller' => 'mensajes', 'action' => 'guardar_mensaje'), 'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control js-formulario', 'autocomplete' => false))); ?>					
+							<?= $this->Form->create('Mensaje', array('url' => array('controller' => 'mensajes', 'action' => 'guardar_mensaje'), 'class' => 'form-horizontal js-formulario', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control js-formulario', 'autocomplete' => false))); ?>					
 							<?= $this->Form->hidden('access_token', array('value' => $this->Session->read('Auth.Cliente.token'))); ?>
 							<?= $this->Form->hidden('venta_cliente_id', array('value' => $this->Session->read('Auth.Cliente.id'))); ?>
 							<?= $this->Form->hidden('autor', array('value' => $this->Session->read('Auth.Cliente.nombre') . ' ' . $this->Session->read('Auth.Cliente.apellido'))); ?>
@@ -356,7 +356,7 @@
 					</div>
 					<? endforeach; ?>
 					<? else : ?>
-						<p>No registra mensajes</p>
+						<h3 class="my-3 text-center">No registra mensajes</h3>
 					<? endif; ?>
 			  </div>
 			</div>

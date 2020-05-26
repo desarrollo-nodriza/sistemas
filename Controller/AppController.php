@@ -168,7 +168,7 @@ class AppController extends Controller
 			$this->Auth->authenticate['Form']['fields']['username'] = 'email';
 			$this->Auth->authenticate['Form']['fields']['password'] = 'clave';
 
-			$this->Auth->allow('cliente_sended', 'cliente_sendFailed', 'cliente_authorization');
+			$this->Auth->allow('cliente_sended', 'cliente_sendFailed', 'cliente_authorization', 'cliente_quick_message');
 			
 		}	
 

@@ -613,4 +613,38 @@ class CotizacionesController extends AppController
 		}
 
 	}
+
+
+
+	public function cliente_index()
+	{
+		$paginate = array(
+			'recursive' => 0,
+			'conditions' => array(
+				'Cotizacion.venta_cliente_id' => $this->Auth->user('id'),
+				'Cotizacion.generado' => 1
+			),
+			'fields' => array('Cotizacion.id', 'Cotizacion.fecha_cotizacion', 'Cotizacion.total_bruto', 'Cotizacion.archivo'),
+			'order' => array('Venta.fecha_venta' => 'DESC'),
+			'limit' => 20
+		);
+
+		//----------------------------------------------------------------------------------------------------
+		$this->paginate = $paginate;
+
+		$cotizaciones = $this->paginate();
+
+		foreach ($cotizaciones as $key => $coti) {
+			if (@file_get_contents($coti['Cotizacion']['archivo']) === false) {
+				$cotizaciones[$key]['Cotizacion']['archivo'] = '';
+			}
+		}
+
+		$this->layout = 'private';
+
+		BreadcrumbComponent::add('Dashboard', '/cliente');
+		BreadcrumbComponent::add('Mis cotizaciones', '/cliente/mis-cotizaciones');
+		$PageTitle = 'Mis cotizaciones';
+		$this->set(compact('PageTitle', 'cotizaciones'));
+	}
 }

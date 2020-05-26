@@ -82,7 +82,7 @@ class OrdenCompraFacturasController extends AppController
 				case 'oc':
 					$opt = array_replace_recursive($opt, array(
 						'conditions' => array(
-							'OrdenCompraFactura.orden_compra_id' => $valor
+							'OrdenCompraFactura.orden_compra_id' => explode(',', $valor)
 						)
 					));
 					break;
@@ -105,7 +105,7 @@ class OrdenCompraFacturasController extends AppController
 				case 'folio':
 					$opt = array_replace_recursive($opt, array(
 						'conditions' => array(
-							'OrdenCompraFactura.folio' => $valor
+							'OrdenCompraFactura.folio' => explode(',', $valor)
 						)
 					));
 					break;
@@ -214,12 +214,6 @@ class OrdenCompraFacturasController extends AppController
 		}
 
 		$proveedores = ClassRegistry::init('Proveedor')->find('list');
-
-		$ocs = ClassRegistry::init('OrdenCompra')->find('list', array(
-			'conditions' => array(
-				'OrdenCompra.proveedor_id !=' => ''
-			)
-		));
 
 		$folios = array_unique(ClassRegistry::init('OrdenCompraFactura')->find('list'));
 

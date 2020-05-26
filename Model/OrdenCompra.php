@@ -507,7 +507,8 @@ class OrdenCompra extends AppModel
 			            'v.orden_compra_id' => $id_oc
 			        )
 			    )
-			)
+			),
+			'group' => array('Venta.id')
 		));
 
 		return $ventas;

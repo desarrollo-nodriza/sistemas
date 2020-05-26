@@ -17,8 +17,8 @@
 			<li class="nav-item <?= ($this->Html->menuActivo(array('controller' => 'ventas', 'action' => 'compras')) ? 'active' : ''); ?>">
 		        <?=$this->Html->link('<i class="fa fa-shopping-bag mr-3"></i> Mis compras', array('controller' => 'ventas', 'action' => 'compras'), array('class' => 'nav-link px-3 py-2 text-light', 'escape' => false));?>
 		    </li>
-		    <li class="nav-item <?= ($this->Html->menuActivo(array('controller' => 'prospectos', 'action' => 'cotizaciones')) ? 'active' : ''); ?>">
-		        <?=$this->Html->link('<i class="fa fa-file-alt mr-3"></i> Mis cotizaciones', array('controller' => 'prospectos', 'action' => 'cotizaciones'), array('class' => 'nav-link px-3 py-2 text-light', 'escape' => false));?>
+		    <li class="nav-item <?= ($this->Html->menuActivo(array('controller' => 'cotizaciones', 'action' => 'index')) ? 'active' : ''); ?>">
+		        <?=$this->Html->link('<i class="fa fa-file-alt mr-3"></i> Mis cotizaciones', array('controller' => 'cotizaciones', 'action' => 'index'), array('class' => 'nav-link px-3 py-2 text-light', 'escape' => false));?>
 		    </li>
 		</ul>
 	</div>

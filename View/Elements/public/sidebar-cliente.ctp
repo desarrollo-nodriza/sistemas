@@ -16,8 +16,8 @@
     <li class="<?= ($this->Html->menuActivo(array('controller' => 'ventas', 'action' => 'compras')) ? 'active' : ''); ?>">
         <?=$this->Html->link('<i class="fa fa-shopping-bag mr-2"></i> Mis compras', array('controller' => 'ventas', 'action' => 'compras'), array('class' => '', 'escape' => false));?>
     </li>
-    <li class="<?= ($this->Html->menuActivo(array('controller' => 'prospectos', 'action' => 'cotizaciones')) ? 'active' : ''); ?>">
-        <?=$this->Html->link('<i class="fa fa-file-alt mr-2"></i> Mis cotizaciones', array('controller' => 'prospectos', 'action' => 'cotizaciones'), array('class' => '', 'escape' => false));?>
+    <li class="<?= ($this->Html->menuActivo(array('controller' => 'cotizaciones', 'action' => 'index')) ? 'active' : ''); ?>">
+        <?=$this->Html->link('<i class="fa fa-file-alt mr-2"></i> Mis cotizaciones', array('controller' => 'cotizaciones', 'action' => 'index'), array('class' => '', 'escape' => false));?>
     </li>
 </ul>
 

@@ -850,4 +850,93 @@ class VentaClientesController extends AppController
 		
 	}
 
+
+	public function cliente_quick_message()
+	{	
+		$error = '';
+			
+		$PageTitle = 'Auto atención';
+
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+	    	'Tienda.id', 'Tienda.nombre', 'Tienda.logo', 'Tienda.url'
+	    ));
+
+		if (!isset($this->request->query['access_token'])
+			|| !isset($this->request->query['tipo'])
+			|| !isset($this->request->query['venta_id'])) {
+			$error = 'No tienes permitido acceder a esta sección. Por favor ponte en contacto con nuestro equipo.';
+			$this->set(compact('PageTitle', 'error', 'tienda'));
+			return;
+		}
+
+		$token = $this->request->query['access_token'];
+		$token_valido = false;
+
+		# Validamos el token
+		try {
+			$token_valido = ClassRegistry::init('Token')->validar_token($token);
+		} catch (Exception $e) {
+			$error = 'La llave de acceso no es correcta. Por favor ponte en contacto con nuestro equipo.';
+		}
+		
+		if (!$token_valido) {
+			$error = 'El requerimiento ya fue enviado o se venció el plazo de 4 días para notificarlo. Por favor ponte en contacto con nuestro equipo.';
+			$this->set(compact('PageTitle', 'error', 'tienda'));
+			return;
+		}
+
+		# El token es válido, obtenemos al cliente por su token y lo logeamos.
+		$cliente = ClassRegistry::init('Token')->find('first', array(
+			'conditions' => array(
+				'Token.token' => $token
+			),
+			'contain' => array(
+				'VentaCliente'
+			)
+		));
+
+		$mensaje = array(
+			'venta_id' => $this->request->query['venta_id'],
+			'venta_cliente_id' => $cliente['VentaCliente']['id'],
+			'origen' => 'cliente'
+		);
+
+		switch ($this->request->query['tipo']) {
+			case 'cancelar':
+				$mensaje = array_replace_recursive($mensaje, array(
+					'mensaje' => '(auto-atención) Cliente solicita cancelar la venta.'
+				));
+				break;
+			case 'procesar':
+				$mensaje = array_replace_recursive($mensaje, array(
+					'mensaje' => '(auto-atención) Cliente solicita devolución del dinero del/los productos con stockout y que se le envien el/los productos con existencias.'
+				));
+				break;
+			case 'cambio':
+				$mensaje = array_replace_recursive($mensaje, array(
+					'mensaje' => '(auto-atención) Cliente solicita cambio del/los productos con stockout, llamarlo y ofrecerle una alternativa.'
+				));
+				break;
+		}
+
+		App::uses('HttpSocket', 'Network/Http');
+		$socket			= new HttpSocket();
+		$request		= $socket->post(
+			Router::url('/api/mensajes/add.json?token='.$token, true),
+			$mensaje
+		);
+
+		$respuesta = json_decode($request->body(), true);
+
+		if ($respuesta['response']['code'] != 200) {
+			$error = 'Ocurrió un error al crear el mensaje. Por favor ponte en contacto con nuetro equipo.';
+		}
+
+		# Actualizamos el token indicando que esta caduco
+		ClassRegistry::init('Token')->id = $cliente['Token']['id'];
+		ClassRegistry::init('Token')->saveField('expires', date('Y-m-d H:i:s'));
+
+		$this->set(compact('PageTitle', 'error', 'tienda', 'cliente'));
+	}
+
 }	
