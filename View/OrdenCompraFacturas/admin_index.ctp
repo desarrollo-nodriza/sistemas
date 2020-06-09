@@ -110,17 +110,23 @@
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<h3 class="panel-title">Listado de Facturas</h3>
-						<div class="btn-group pull-right">
-							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', array('action' => 'exportar'), array('class' => 'btn btn-primary', 'escape' => false)); ?>
+						<div class="btn-group pull-right">							
+                            
+                            <?=$this->element('items_por_pagina'); ?>
+
+                            <?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', array('action' => 'exportar'), array('class' => 'btn btn-primary', 'escape' => false)); ?>
 						</div>
 					</div>
 					<div class="panel-body">
+
+						<?= $this->element('contador_resultados', array('col' => false)); ?>
+
 						<div class="table-responsive">
 							<table class="table">
 								<caption>Los dtes se marcarán como pagados cuando los pagos asignados hayan sido "pagados"</caption>
 								<thead>
 									<tr class="sort">
-										<th></th>
+										<th><label><input type="checkbox" id="seleccionar-todo"></label></th>
 										<th><?= $this->Paginator->sort('id', 'Identificador', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('orden_compra_id', 'OC', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('created', 'Fecha creación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>

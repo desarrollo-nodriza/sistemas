@@ -133,6 +133,13 @@ class OrdenCompraFacturasController extends AppController
 						)
 					));
 					break;
+				case 'per_page':
+					$opt = array_replace_recursive($opt, array(
+						'limit' => $valor,
+						'maxLimit' => $valor
+						)
+					);
+					break;
 			}
 		}
 

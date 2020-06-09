@@ -35,6 +35,8 @@ class StarkenComponent extends Component
 		$pesoTotal     = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.VentaDetalleProducto.peso')) * array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 		$pesoMaximo    = $venta['MetodoEnvio']['peso_maximo'];
 		
+		$log = array();
+
 		# Limite de peso para usar starken
 		if ($pesoTotal >= $pesoMaximo) {
 			return false;
@@ -141,8 +143,27 @@ class StarkenComponent extends Component
 				$data['rutDestinatario']   = substr($venta['VentaCliente']['rut'], 0, strlen($venta['VentaCliente']['rut']) - 1);
 				$data['dvRutDestinatario'] = substr($venta['VentaCliente']['rut'], strlen($venta['VentaCliente']['rut']) - 1, strlen($venta['Venta']['rut_receptor']));
 			}
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Straken',
+					'modulo' => 'Ventas',
+					'modulo_accion' => 'Request: ' . json_encode($data)
+				)
+			);
 			
 			$response = json_decode($this->StarkenConexion->generarOrden(json_encode($data)), true);
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Straken',
+					'modulo' => 'Ventas',
+					'modulo_accion' => 'Response: ' . json_encode($response)
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
 			
 			if ($response['code'] != 'success') {
 				return false;

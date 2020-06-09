@@ -246,4 +246,49 @@ class AppHelper extends Helper
 	{
 		return ClassRegistry::init('OrdenCompra')->get_total($estado);
 	}
+
+
+
+	public function items_per_page()
+	{	
+		$inicial = array(
+			20 => array(
+				'action' => 'index',
+				'per_page' => 20
+			),
+			50 => array(
+				'action' => 'index',
+				'per_page' => 50
+			),
+			70 => array(
+				'action' => 'index',
+				'per_page' => 70
+			),
+			100 => array(
+				'action' => 'index',
+				'per_page' => 100
+			),
+			150 => array(
+				'action' => 'index',
+				'per_page' => 150
+			),
+			200 => array(
+				'action' => 'index',
+				'per_page' => 200
+			)
+		);
+
+		if (isset($this->request->params['named'])) {
+
+			if (isset($this->request->params['named']['per_page'])) {
+				unset($this->request->params['named']['per_page']);
+			}
+
+			foreach ($inicial as $cant => $arr) {
+				$inicial[$cant] = array_replace_recursive($inicial[$cant], $this->request->params['named']);
+			}
+		}
+
+		return $inicial;
+	}
 }

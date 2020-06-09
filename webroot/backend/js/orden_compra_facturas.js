@@ -36,6 +36,17 @@ $.extend({
 
 		},
 		indice: function(){
+
+			$(document).on('click', '#seleccionar-todo', function(){
+
+				if ($(this).is(':checked')) {
+					$(this).parents('table').eq(0).find('.js-factura-id:not(disabled)').click();
+				}else{
+					$(this).parents('table').eq(0).find('.js-factura-id:not(disabled)').click();
+				}
+
+			});
+
 			// Seleccionar facturas
 			$('.js-factura-id').on('click', function(){
 				var $ths = $(this),

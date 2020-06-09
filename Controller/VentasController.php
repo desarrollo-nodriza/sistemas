@@ -6661,7 +6661,7 @@ class VentasController extends AppController {
 		//se obtienen las transacciones de una venta
 		//si la venta tiene transacciones asociadas
 		if ($VentaTransacciones = $this->Prestashop->prestashop_obtener_venta_transacciones($nwVenta['reference'])) {
-
+			
 			if (!isset($VentaTransacciones['order_payment'][0])) {
 				$VentaTransacciones = array(
 					'order_payment' => array(
@@ -6688,7 +6688,7 @@ class VentasController extends AppController {
 			}
 
 		}
-
+		
 		# Direccion de entrega
 		$direccionEntrega = $this->Prestashop->prestashop_obtener_venta_direccion($nwVenta['id_address_delivery']);
 		
