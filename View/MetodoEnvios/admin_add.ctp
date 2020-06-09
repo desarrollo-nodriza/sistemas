@@ -25,6 +25,10 @@
 								<td><?= $this->Form->input('retiro_local', array('class' => 'icheckbox')); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('dependencia', 'Dependencia o Plugin'); ?></th>
+								<td><?= $this->Form->select('dependencia', $dependencias, array('class' => 'form-control', 'empty' => 'Sin dependencia')); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>

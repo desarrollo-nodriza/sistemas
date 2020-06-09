@@ -7,6 +7,12 @@ class MetodoEnvio extends AppModel
 	 */
 	public $displayField	= 'nombre';
 
+
+	private static $dependencia = array(
+		'starken' => 'Starken/Turbus'
+	);
+
+
 	/**
 	 * ASOCIACIONES
 	 */
@@ -27,6 +33,26 @@ class MetodoEnvio extends AppModel
 	);
 
 
+	/**
+	 * Indica si nececita usar algun currier externo
+	 * @param  string $dependencia [description]
+	 * @return [type]              [description]
+	 */
+	public function dependencias($dependencia = '')
+	{
+		if (!empty($dependencia)) {
+			return (isset(self::$dependencia[$dependencia])) ? self::$dependencia[$dependencia] : null;
+		}else{
+			return self::$dependencia;
+		}
+	}
+
+
+	/**
+	 * [obtener_metodo_envio_por_nombre description]
+	 * @param  string $nombre [description]
+	 * @return [type]         [description]
+	 */
 	public function obtener_metodo_envio_por_nombre($nombre = '')
 	{
 		return $this->find('first', array(
@@ -38,7 +64,11 @@ class MetodoEnvio extends AppModel
 	}
 
 
-	
+	/**
+	 * [es_despacho description]
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
 	public function es_despacho($id)
 	{	
 		$this->id = $id;

@@ -151,7 +151,7 @@ class TiendasController extends AppController
 
 		$this->set(array(
             'response' => $tiendas,
-            '_serialize' => array('response', 'httpCode')
+            '_serialize' => array('response')
         ));
 
 	}

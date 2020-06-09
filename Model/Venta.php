@@ -378,7 +378,7 @@ class Venta extends AppModel
 					),
 					'MetodoEnvio' => array(
 						'fields' => array(
-							'MetodoEnvio.id', 'MetodoEnvio.nombre', 'MetodoEnvio.retiro_local'
+							'MetodoEnvio.id', 'MetodoEnvio.nombre', 'MetodoEnvio.retiro_local', 'MetodoEnvio.dependencia', 'MetodoEnvio.rut_api_rest', 'MetodoEnvio.clave_api_rest', 'MetodoEnvio.rut_empresa_emisor', 'MetodoEnvio.rut_usuario_emisor', 'MetodoEnvio.clave_usuario_emisor', 'MetodoEnvio.tipo_entrega', 'MetodoEnvio.tipo_pago', 'MetodoEnvio.numero_cuenta_corriente', 'MetodoEnvio.dv_numero_cuenta_corriente', 'MetodoEnvio.centro_costo_cuenta_corriente', 'MetodoEnvio.tipo_servicio', 'MetodoEnvio.generar_ot', 'MetodoEnvio.peso_maximo', 'MetodoEnvio.ciudad_origen'
 						)
 					),
 					'Mensaje' => array(
@@ -438,8 +438,8 @@ class Venta extends AppModel
 				),
 				'fields' => array(
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
-					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.metodo_envio_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.comuna_entrega', 'Venta.nombre_receptor',
-					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito', 'Venta.etiqueta_envio_externa', 'Venta.venta_manual', 'Venta.administrador_id', 'Venta.nota_interna'
+					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.metodo_envio_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.numero_entrega', 'Venta.otro_entrega', 'Venta.comuna_entrega', 'Venta.ciudad_entrega', 'Venta.nombre_receptor', 'Venta.rut_receptor',
+					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito', 'Venta.etiqueta_envio_externa', 'Venta.venta_manual', 'Venta.administrador_id', 'Venta.nota_interna', 'Venta.paquete_generado'
 				)
 			)
 		);
@@ -516,6 +516,61 @@ class Venta extends AppModel
 					'MetodoEnvio' => array(
 						'fields' => array(
 							'MetodoEnvio.nombre'
+						)
+					),
+					'VentaCliente' => array(
+						'fields' => array(
+							'VentaCliente.nombre', 'VentaCliente.apellido', 'VentaCliente.rut', 'VentaCliente.telefono', 'VentaCliente.email'
+						)
+					),
+					'VentaDetalle' => array(
+						'VentaDetalleProducto' => array(
+							'fields' => array(
+								'VentaDetalleProducto.nombre'
+							)
+						),
+						'fields' => array(
+							'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_anulada', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.confirmado_app', 'VentaDetalle.cantidad_en_espera'
+						)
+					),
+					'Marketplace' => array(
+						'fields' => array(
+							'Marketplace.nombre', 'Marketplace.marketplace_tipo_id'
+						)
+					),
+					'Transporte' => array(
+						'fields' => array(
+							'Transporte.nombre'
+						)
+					),
+					'Tienda' => array(
+						'fields' => array(
+							'Tienda.nombre'
+						)
+					)
+				)
+			)
+		);
+	}
+
+
+	public function obtener_venta_ot($id)
+	{
+		return $this->find(
+			'first',
+			array(
+				'conditions' => array(
+					'Venta.id' => $id
+				),
+				'contain' => array(
+					'Tienda' => array(
+						'fields' => array(
+							'Tienda.id', 'Tienda.nombre', 'Tienda.rut'
+						)
+					),
+					'MetodoEnvio' => array(
+						'fields' => array(
+							'MetodoEnvio.nombre', 'MetodoEnvio.dependencia', 'MetodoEnvio.rut_api_rest', 'MetodoEnvio.clave_api_rest', 'MetodoEnvio.rut_empresa_emisor', 'MetodoEnvio.rut_usuario_emisor', 'MetodoEnvio.clave_usuario_emisor', 'MetodoEnvio.tipo_entrega', 'MetodoEnvio.tipo_pago', 'MetodoEnvio.numero_cuenta_corriente', 'MetodoEnvio.dv_numero_cuenta_corriente', 'MetodoEnvio.centro_costo_cuenta_corriente', 'MetodoEnvio.tipo_servicio', 'MetodoEnvio.generar_ot'
 						)
 					),
 					'VentaCliente' => array(
@@ -842,6 +897,11 @@ class Venta extends AppModel
 
 					$detalles[$ip]['VentaDetalle']['cantidad_reservada']         = 0;
 					$detalles[$ip]['VentaDetalle']['cantidad_entregada']         = $producto['cantidad_reservada'];
+					if ($producto['cantidad_en_espera'] >= $producto['cantidad_reservada']) {
+						$detalles[$ip]['VentaDetalle']['cantidad_en_espera']         = $producto['cantidad_en_espera'] - $producto['cantidad_reservada'];
+					}else{
+						$detalles[$ip]['VentaDetalle']['cantidad_en_espera'] = 0;
+					}
 					$detalles[$ip]['VentaDetalle']['cantidad_pendiente_entrega'] = ($producto['cantidad'] - $producto['cantidad_anulada']) - $producto['cantidad_reservada'];
 
 					ClassRegistry::init('Bodega')->crearSalidaBodega($producto['venta_detalle_producto_id'], null, $producto['cantidad_reservada'], null, 'VT', null, $id);
@@ -974,7 +1034,7 @@ class Venta extends AppModel
 			else if ($cant_en_espera > $reservado && $reservado != $cant_cant){
 				$save['VentaDetalle']['cantidad_en_espera'] = $cant_en_espera - $reservado;
 			}
-			else if ($reservado == $cant_cant && $reservado == $cant_cant) {
+			else if ($reservado == $cant_cant) {
 				$save['VentaDetalle']['cantidad_en_espera'] = 0;
 			}
 
@@ -1032,7 +1092,7 @@ class Venta extends AppModel
 				break;
 			
 			case 'empaquetar':
-				$save = array_replace_recursive($save, array('Venta' => array('picking_email' => '', 'picking_fecha_embalar' => date('Y-m-d H:i:s'), 'picking_fecha_inicio' => '', 'picking_fecha_temrino' => '')));
+				$save = array_replace_recursive($save, array('Venta' => array('picking_email' => '', 'picking_fecha_embalar' => date('Y-m-d H:i:s'), 'picking_fecha_inicio' => '', 'picking_fecha_temrino' => '', 'paquete_generado' => 0)));
 				break;
 
 			case 'empaquetando':

@@ -95,16 +95,32 @@
 												<?= $this->Form->input('metodo_envio_id', array('class' => 'form-control not-blank js-metodo-envios-ajax', 'empty' => 'Seleccione')); ?>
 											</div>
 											<div class="form-group hidden">
-												<label><?=__('Dirección despacho');?></label>
-												<?= $this->Form->input('direccion_entrega', array('type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ingrese dirección')); ?>
+												<label><?=__('Rut receptor');?></label>
+												<?= $this->Form->input('rut_receptor', array('type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ingrese rut sin puntos ni guión')); ?>
+											</div>
+											<div class="form-group hidden">
+												<label><?=__('Telefono receptor');?></label>
+												<?= $this->Form->input('fono_receptor', array('class' => 'form-control in-number', 'placeholder' => '9 9999 9999')); ?>
+											</div>
+											<div class="form-group hidden">
+												<label><?=__('Avenida/Calle/Pasaje despacho');?></label>
+												<?= $this->Form->input('direccion_entrega', array('type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ej: Vicuña MAckenna')); ?>
+											</div>
+											<div class="form-group hidden">
+												<label><?=__('N° de casa/edificio/block despacho');?></label>
+												<?= $this->Form->input('numero_entrega', array('type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ej: 1255')); ?>
+											</div>
+											<div class="form-group hidden">
+												<label><?=__('Depto/oficina despacho');?></label>
+												<?= $this->Form->input('otro_entrega', array('type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ejs: A, 123, 2203')); ?>
 											</div>
 											<div class="form-group hidden">
 												<label><?=__('Comuna despacho');?></label>
 												<?=$this->Form->select('comuna_entrega', $comunas, array('empty' => 'Seleccione', 'class' => 'form-control select', 'data-live-search' => true, 'default' => $this->request->data['Venta']['comuna_entrega'])); ?>
 											</div>
 											<div class="form-group hidden">
-												<label><?=__('Telefono despacho');?></label>
-												<?= $this->Form->input('fono_receptor', array('class' => 'form-control in-number', 'placeholder' => '9 9999 9999')); ?>
+												<label><?=__('Ciudad despacho');?></label>
+												<?= $this->Form->input('ciudad_entrega', array('type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ejs: Santiago Centro, Talca, Valparaiso')); ?>
 											</div>
 											<div class="form-group hidden">
 												<label><?=__('Costo despacho');?></label>

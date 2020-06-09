@@ -571,21 +571,55 @@ $(function() {
 				if ($metodo_envio.MetodoEnvio.retiro_local) {
 					$('#VentaDireccionEntrega').parents('div').eq(0).addClass('hidden');
 					$('#VentaComunaEntrega').parents('div').eq(0).addClass('hidden');
+					$('#VentaNumeroEntrega').parents('div').eq(0).addClass('hidden');
+					$('#VentaOtroEntrega').parents('div').eq(0).addClass('hidden');
+					$('#VentaCiudadEntrega').parents('div').eq(0).addClass('hidden');
+					$('#VentaRutReceptorEntrega').parents('div').eq(0).addClass('hidden');
 					$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
 					$('#VentaCostoEnvio').parents('div').eq(0).addClass('hidden');
 
 					$('#VentaDireccionEntrega').rules("remove", "required");
+					$('#VentaNumeroEntrega').rules("remove", "required");
+					
+					$('#VentaCiudadEntrega').rules("remove", "required");
+					$('#VentaRutReceptor').rules("remove", "required");
 				    $('#VentaComunaEntrega').rules("remove", "required");
 				    $('#VentaCostoEnvio').rules("remove", "required");
 
 				}else{
 					$('#VentaDireccionEntrega').parents('div').eq(0).removeClass('hidden');
 					$('#VentaComunaEntrega').parents('div').eq(0).removeClass('hidden');
+					$('#VentaNumeroEntrega').parents('div').eq(0).removeClass('hidden');
+					$('#VentaOtroEntrega').parents('div').eq(0).removeClass('hidden');
+					$('#VentaCiudadEntrega').parents('div').eq(0).removeClass('hidden');
+					$('#VentaRutReceptor').parents('div').eq(0).removeClass('hidden');
 					$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
 					$('#VentaCostoEnvio').parents('div').eq(0).removeClass('hidden');
 
 					$('#VentaDireccionEntrega').rules("add", {
 				        required: true,
+				        messages: {
+				        	required: 'Campo requerido'
+				        }
+				    });
+
+				    $('#VentaNumeroEntrega').rules("add", {
+				        required: true,
+				        messages: {
+				        	required: 'Campo requerido'
+				        }
+				    });
+
+				    $('#VentaCiudadEntrega').rules("add", {
+				        required: true,
+				        messages: {
+				        	required: 'Campo requerido'
+				        }
+				    });
+
+				    $('#VentaRutReceptor').rules("add", {
+				        required: true,
+				        rut: true,
 				        messages: {
 				        	required: 'Campo requerido'
 				        }
@@ -1306,6 +1340,35 @@ $(function() {
 						$('.js-direccion-entrega').val( $('.js-direccion-entrega').data('value') );
 					}else{
 						$('#VentaDireccionEntrega').removeAttr('readonly');
+					}
+
+				});
+
+				$('.toggle-numero-entrega').on('click', function(e){
+					
+					$(this).find('.fa').toggle();
+					$(this).parents('td').eq(0).find('.numero-entrega-select').toggleClass('hide');
+
+					if ($(this).parents('td').eq(0).find('.numero-entrega-select').hasClass('hide')) {
+						$('#VentaNumeroEntrega').attr('readonly', 'readonly');
+						$('.js-numero-entrega').val( $('.js-numero-entrega').data('value') );
+					}else{
+						$('#VentaNumeroEntrega').removeAttr('readonly');
+					}
+
+				});
+
+
+				$('.toggle-otro-entrega').on('click', function(e){
+					
+					$(this).find('.fa').toggle();
+					$(this).parents('td').eq(0).find('.otro-entrega-select').toggleClass('hide');
+
+					if ($(this).parents('td').eq(0).find('.otro-entrega-select').hasClass('hide')) {
+						$('#VentaOtroEntrega').attr('readonly', 'readonly');
+						$('.js-otro-entrega').val( $('.js-otro-entrega').data('value') );
+					}else{
+						$('#VentaOtroEntrega').removeAttr('readonly');
 					}
 
 				});

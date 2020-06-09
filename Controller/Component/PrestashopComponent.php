@@ -161,7 +161,7 @@ class PrestashopComponent extends Component
 	{
 		$opt = array();
 		$opt['resource'] = 'addresses';
-		$opt['display'] = '[id,firstname,lastname,address1,address2,city,other,phone,phone_mobile,deleted,id_state]';
+		$opt['display'] = '[id,firstname,lastname,address1,address2,city,other,dni,phone,phone_mobile,deleted,id_state]';
 		$opt['filter[id]'] = '[' .$id. ']';
 		$xml = $this->ConexionPrestashop->get($opt);
 

@@ -1,0 +1,53 @@
+{
+    "rutEmpresaEmisora": "76211240",
+    "rutUsuarioEmisor": "1",
+    "claveUsuarioEmisor": "1234",
+    "rutDestinatario": "11111111",
+    "dvRutDestinatario": "1",
+    "nombreRazonSocialDestinatario": "prueba",
+    "apellidoPaternoDestinatario": "starken",
+    "apellidoMaternoDestinatario": "integracion",
+    "direccionDestinatario": "calle",
+    "numeracionDireccionDestinatario": "1234",
+    "departamentoDireccionDestinatario": "depto. 1",
+    "comunaDestino": "concepcion",
+    "telefonoDestinatario": "1234",
+    "emailDestinatario": "prueba@starken.cl",
+    "nombreContactoDestinatario": "contacto",
+    "tipoEntrega": "2",
+    "tipoPago": "2",
+    "numeroCtaCte": "19154",
+    "dvNumeroCtaCte": "k",
+    "centroCostoCtaCte": "0",
+    "valorDeclarado": "20000",
+    "contenido": "solo prueba",
+    "kilosTotal": "5",
+    "alto": "10",
+    "ancho": "10",
+    "largo": "10",
+    "tipoServicio": "0",
+    "documentos": [
+        {
+            "tipoDocumento": "26",
+            "numeroDocumento": "123",
+            "generaEtiquetaDocumento": "N"
+		},
+		{
+            "tipoDocumento": "27",
+            "numeroDocumento": "124",
+            "generaEtiquetaDocumento": "S"
+        }
+    ],
+    "encargos": [
+        {
+            "tipoEncargo": "29",
+            "cantidadEncargo": "1"
+		},
+		{
+            "tipoEncargo": "29",
+            "cantidadEncargo": "10"
+		}
+    ],
+    "ciudadOrigenNom": "arica",
+    "observacion": "Esto es campo de texto"
+}

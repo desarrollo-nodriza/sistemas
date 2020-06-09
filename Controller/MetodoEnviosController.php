@@ -1,7 +1,10 @@
 <?php
 App::uses('AppController', 'Controller');
 class MetodoEnviosController extends AppController
-{
+{	
+	public $components = array(
+		'Starken'
+	);
 
 	public function admin_index () {
 
@@ -35,9 +38,13 @@ class MetodoEnviosController extends AppController
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
 		}		
+
+		$dependencias = $this->MetodoEnvio->dependencias();
 		
 		BreadcrumbComponent::add('Métodos de envio');
 		BreadcrumbComponent::add('Editar Método de envio');
+
+		$this->set(compact('dependencias'));
 
 	}
 
@@ -75,8 +82,22 @@ class MetodoEnviosController extends AppController
 			);
 		}
 		
+		$dependencias  = $this->MetodoEnvio->dependencias();
+		$tipoEntregas  = $this->Starken->getTipoEntregas();
+		$tipoPagos     = $this->Starken->getTipoPagos();
+		$tipoServicios = $this->Starken->getTipoServicios();
+
+		$ciudadesOrigen = $this->Starken->listarCiudadesOrigen();
+		$ciudadesStarken = array();
+		
+		foreach ($ciudadesOrigen['body'] as $ic => $c) {
+			$ciudadesStarken[$c['nombreCiudad']] = $c['nombreCiudad'];
+		}
+
 		BreadcrumbComponent::add('Métodos de envio');
 		BreadcrumbComponent::add('Editar Método de envio');
+
+		$this->set(compact('dependencias', 'tipoEntregas', 'tipoPagos', 'tipoServicios', 'ciudadesStarken'));
 
 	}
 

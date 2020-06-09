@@ -193,29 +193,32 @@ class EnviameComponent extends Component
 				continue;
 			}
 			
-			$alto  = $d['VentaDetalleProducto']['alto'];
-			$ancho = $d['VentaDetalleProducto']['ancho'];
-			$largo = $d['VentaDetalleProducto']['largo'];
-			$peso  = $d['VentaDetalleProducto']['peso'];
+			for ($i=0; $i < $d['cantidad_reservada']; $i++) {
 
-			$volumen = $this->calcular_volumen($alto, $ancho, $largo);
+				$alto  = $d['VentaDetalleProducto']['alto'];
+				$ancho = $d['VentaDetalleProducto']['ancho'];
+				$largo = $d['VentaDetalleProducto']['largo'];
+				$peso  = $d['VentaDetalleProducto']['peso'];
 
-			$caja = array(
-				'id'     => $d['VentaDetalleProducto']['id'],
-				'width'  => $ancho,
-				'height' => $alto,
-				'length' => $largo,
-				'weight' => $peso
-			);
+				$volumen = $this->calcular_volumen($alto, $ancho, $largo);
+				
+				$caja = array(
+					'id'     => $d['VentaDetalleProducto']['id'],
+					'width'  => $ancho,
+					'height' => $alto,
+					'length' => $largo,
+					'weight' => $peso
+				);
 
-			$unico = rand(1000, 100000);
-			
-			if ($volumen > $volumenMaximo) {
-				$bultos[$d['venta_id'] . $unico]['cajas'][] = $caja;
-				$bultos[$d['venta_id'] . $unico]['total_items'] = 1;
-			}else{
-				$bultos[$d['venta_id']]['cajas'][] = $caja;
-				$bultos[$d['venta_id']]['total_items'] = (isset($bultos[$d['venta_detalle_producto_id']]['total_items'])) ? $bultos[$d['venta_detalle_producto_id']]['total_items'] + 1 : 1;
+				$unico = rand(1000, 100000);
+				
+				if ($volumen > $volumenMaximo) {
+					$bultos[$d['venta_id'] . $unico]['venta_id']    = $d['venta_id'];
+					$bultos[$d['venta_id'] . $unico]['cajas'][]     = $caja;
+				}else{
+					$bultos[$d['venta_id']]['venta_id']    = $d['venta_id'];
+					$bultos[$d['venta_id']]['cajas'][]     = $caja;
+				}	
 			}
 
 		}

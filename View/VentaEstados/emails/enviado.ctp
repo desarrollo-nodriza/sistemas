@@ -160,7 +160,7 @@
                                               <tr style="border-bottom: 1px solid #e9ecef;">
                                                 <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 12px; line-height: 14px; margin: 0; padding: 15px 5px;" valign="center" align="left"><?=$t['nombre']; ?></td>
                                                 <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 12px; line-height: 14px; margin: 0; padding: 15px 5px;" valign="center" align="left"><?=$t['TransportesVenta']['cod_seguimiento']; ?></td>
-                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 12px; line-height: 14px; margin: 0; padding: 15px 5px;" valign="center" align="left"><?=$t['tiempo_entrega']; ?></td>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 12px; line-height: 14px; margin: 0; padding: 15px 5px;" valign="center" align="left"><?=(!empty($t['TransportesVenta']['entrega_aprox'])) ? $t['TransportesVenta']['entrega_aprox'] : $t['tiempo_entrega']; ?></td>
                                                 <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 12px; line-height: 14px; margin: 0; padding: 15px 5px;" valign="center" align="left"><a href="<?=$t['url_seguimiento']; ?>">Ir a la página</a></td>
                                               </tr>
                                             <? endforeach; ?>

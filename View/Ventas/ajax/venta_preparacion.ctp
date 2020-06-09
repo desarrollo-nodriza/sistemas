@@ -150,6 +150,10 @@
 				
 				<!-- DTE y ETIQUETA --> 
 				<?= $this->Html->link('<i class="fa fa-file"></i>DTE y Etiqueta', array('controller' => 'ventas', 'action' => 'generar_dte_etiqueta', $venta['Venta']['id'], 1), array('class' => 'btn btn-xs btn-primary js-generar-etiqueta-venta-dte', 'rel' => 'tooltip', 'title' => 'Generar Documentos', 'escape' => false)); ?>
+				
+				<? if (!empty($venta['Venta']['etiqueta_envio_externa'])) : ?>
+				<a href="<?=$venta['Venta']['etiqueta_envio_externa']; ?>" target="_blank" class="btn btn-info btn-xs" rel="tooltip" title="Descargar etiqueta/s externas"><i class="fa fa-truck"></i> Etiqueta/s externa</a>
+	           	<? endif; ?>
 
 	            <!-- DESCARGAR ETIQUETA -->
 	            <?= $this->Html->link('<i class="fa fa-cube"></i> Etiqueta interna', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'btn btn-warning btn-xs js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => ' Generar Etiqueta interna', 'escape' => false)); ?>
@@ -204,17 +208,6 @@
 					<?	
 					endif; ?>
 					</ul>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-xs-12">
-					<table class="table table-bordered">
-						<tr>
-							<td>Método envio seleccionado</td>
-							<td><?=$venta['MetodoEnvio']['nombre'];?></td>
-							<td>¿Usar Envíame? <?=$this->Form->input('envio_externo', array('class' => 'icheckbox', 'type' => 'checkbox', 'checked' => false)); ?></td>
-						</tr>
-					</table>
 				</div>
 			</div>
 			<div class="row">
@@ -291,6 +284,8 @@
 	            <? if (!empty($venta['Venta']['etiqueta_envio_externa'])) : ?>
 				<a href="<?=$venta['Venta']['etiqueta_envio_externa']; ?>" target="_blank" class="btn btn-info btn-xs" rel="tooltip" title="Descargar etiqueta/s externas"><i class="fa fa-truck"></i> Etiqueta/s externa</a>
 	           	<? endif; ?>
+
+	           	<? if (!empty($venta['Venta']['etiqueta'])) ?>
 
 	            <!-- DESCARGAR ETIQUETA -->
 	            <?= $this->Html->link('<i class="fa fa-cube"></i> Etiqueta', array('controller' => 'ventas', 'action' => 'generar_etiqueta', $venta['Venta']['id'], 1), array('class' => 'btn btn-warning btn-xs js-generar-etiqueta-venta', 'rel' => 'tooltip', 'title' => ' Generar Etiqueta', 'escape' => false)); ?>

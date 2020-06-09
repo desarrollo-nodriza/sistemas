@@ -25,6 +25,7 @@ class VentasController extends AppController {
 		'Mercadopago',
 		'Toolmania',
 		'LibreDte',
+		'Starken',
 	);
 	
 
@@ -872,8 +873,22 @@ class VentasController extends AppController {
 			}else{
 				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
 			}
+
+		}elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot'] && !$venta['Venta']['paquete_generado']) {
+			# Es una venta para starken
+			
+			# Creamos cliente starken
+			$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
+
+			# Creamos la OT
+			if($this->Starken->generar_ot($venta)){
+				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
+			}else{
+				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
+			}
+
 		}else{
-			$this->Session->setFlash('La venta no aplica a la regla de Envíame.', null, array(), 'danger');
+			$this->Session->setFlash('La venta no aplica para usar un currier externo.', null, array(), 'danger');
 		}
 
 		$this->redirect($this->referer('/', true));
@@ -941,45 +956,6 @@ class VentasController extends AppController {
 		if ($cambiar_estado) {
 
 			if ($subestado == 'empaquetado') {
-
-				# Usar envio externo
-				if ($this->request->data['Venta']['envio_externo']) {
-					
-					$venta = $this->Venta->obtener_venta_por_id($id);
-
-					$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
-
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'Cambiar estado venta: Enviame',
-							'modulo' => 'Ventas',
-							'modulo_accion' => json_encode($metodo_envio_enviame)
-						)
-					);
-
-					# Creamos pedido en enviame si corresponde
-					if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) {
-						
-						$Enviame = $this->Components->load('Enviame');
-
-						# conectamos con enviame
-						$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
-
-						$resultadoEnviame = $Enviame->crearEnvio($venta);
-
-						$log[] = array(
-							'Log' => array(
-								'administrador' => 'Cambiar estado venta: Ingresa Enviame',
-								'modulo' => 'Ventas',
-								'modulo_accion' => 'creado: ' . $resultadoEnviame
-							)
-						);
-
-					}
-
-					ClassRegistry::init('Log')->create();
-					ClassRegistry::init('Log')->saveMany($log);	
-				}
 
 				foreach ($detalles as $idd => $d) {
 
@@ -1116,11 +1092,38 @@ class VentasController extends AppController {
 		if ($this->Venta->saveField('picking_estado', $subestado)) {
 
 			if ($subestado == 'empaquetando') {
+				
+				$log = array();
 
 				$this->Venta->saveField('picking_email', $this->Auth->user('email'));
 				$this->Venta->saveField('picking_fecha_inicio', date('Y-m-d H:i:s'));
 
 				$this->cambiar_estado_preparada($venta);
+
+				$venta2 = $this->Venta->obtener_venta_por_id($id);
+
+				if ($venta2['MetodoEnvio']['dependencia'] == 'starken' && $venta2['MetodoEnvio']['generar_ot'] && !$venta['Venta']['paquete_generado']) {
+					# Es una venta para starken
+					
+					# Creamos cliente starken
+					$this->Starken->crearCliente($venta2['MetodoEnvio']['rut_api_rest'], $venta2['MetodoEnvio']['clave_api_rest'], $venta2['MetodoEnvio']['rut_empresa_emisor'], $venta2['MetodoEnvio']['rut_usuario_emisor'], $venta2['MetodoEnvio']['clave_usuario_emisor']);
+
+					# Creamos la OT
+					if($this->Starken->generar_ot($venta2)){
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Cambiar estado venta: Ingresa Starken',
+								'modulo' => 'Ventas',
+								'modulo_accion' => 'creado: OT generada'
+							)
+						);
+					}
+
+				}
+
+				ClassRegistry::init('Log')->create();
+				ClassRegistry::init('Log')->saveMany($log);
+
 			}
 
 			if ($subestado == 'empaquetado') {				
@@ -1162,6 +1165,7 @@ class VentasController extends AppController {
 
 				$this->Venta->saveField('picking_fecha_termino', date('Y-m-d H:i:s'));
 				$this->Venta->saveField('prioritario', 0);
+				$this->Venta->saveField('paquete_generado', 1);
 
 				# Sub estados OC de la venta
 				if (array_sum(Hash::extract($detalles, '{n}VentaDetalle.cantidad_pendiente_entrega')) > 0 ) {
@@ -3184,6 +3188,43 @@ class VentasController extends AppController {
 
 		$enviame_info = $Enviame->obtener_envio($id);
 
+		$starken_info = array(); 
+		# Starken
+		if ($venta['MetodoEnvio']['dependencia'] == 'starken') {
+			
+			# Creamos cliente starken
+			$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
+			
+			$seguimientos = array();
+
+			if (!empty($venta['Transporte'])) {
+				# creamos una lista con los n° de seguimiento
+				foreach ($venta['Transporte'] as $iv => $t) {
+					
+					if (empty($t['TransportesVenta']['cod_seguimiento']))
+						continue;
+
+					$seguimientos['listaSeguimientos'][]['numeroOrdenFlete'] = $t['TransportesVenta']['cod_seguimiento'];
+
+				}
+
+				if (!empty($seguimientos)) {
+					# Consultamos por los envios
+					$res = $this->Starken->seguimiento($seguimientos);
+					#prx($res);
+				}
+			}
+			
+			# Seteamos las comunas
+			$comunas_starken = $this->Starken->listarCiudadesDestino();
+			$comunas         = array();
+
+			foreach ($comunas_starken['body'] as $ic => $comuna) {
+				$comunas[$comuna['nombreCiudad']] = $comuna['nombreCiudad'];
+			}
+			
+		}
+		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
@@ -3432,7 +3473,12 @@ class VentasController extends AppController {
 		
 		$transportes  = ClassRegistry::init('Transporte')->find('list', array('conditions' => array('activo' => 1)));
 		
-		$comunas      = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
+		$comunas_starken = $this->Starken->listarCiudadesDestino();
+		$comunas         = array();
+
+		foreach ($comunas_starken['body'] as $ic => $comuna) {
+			$comunas[$comuna['nombreCiudad']] = $comuna['nombreCiudad'];
+		}
 		
 		$marketplaces = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1)));
 		
@@ -5782,6 +5828,7 @@ class VentasController extends AppController {
 				if (!empty($plantillaEmail) && $notificar) {
 					$this->notificar_cambio_estado($venta['Venta']['id'], $plantillaEmail, $estado_nuevo);
 				}
+
 			}
 		}
 		
@@ -6405,17 +6452,25 @@ class VentasController extends AppController {
 		
 		// Detalles de envio
 		$direccion_entrega = 'No aplica';
-		$comuna_entrega  = 'No aplica';
-		$nombre_receptor = 'No aplica';
-		$fono_receptor   = 'No aplica';
+		$numero_entrega    = 'No aplica';
+		$comuna_entrega    = 'No aplica';
+		$nombre_receptor   = 'No aplica';
+		$fono_receptor     = 'No aplica';
 
 		if (isset($ventaMeli['shipping']['id'])) {
 
 			$envio = $this->MeliMarketplace->mercadolibre_obtener_envio($ventaMeli['shipping']['id']);
 
-			if (isset($envio['receiver_address']['address_line'])
-				&& isset($envio['receiver_address']['city']['name'])) {
-				$direccion_entrega = $envio['receiver_address']['address_line'] . ', ' . $envio['receiver_address']['city']['name'];
+			if (isset($envio['receiver_address']['address_line'])) {
+				$direccion_entrega = $envio['receiver_address']['address_line'];
+			}
+
+			if (isset($envio['receiver_address']['street_number'])) {
+				$numero_entrega = $envio['receiver_address']['street_number'];
+			}
+
+			if (isset($envio['receiver_address']['city']['name'])) {
+				$comuna_entrega = $envio['receiver_address']['city']['name'];
 			}
 
 			if (isset($envio['receiver_address']['city']['name'])) {
@@ -6433,6 +6488,7 @@ class VentasController extends AppController {
 
 		// Direccion despacho
 		$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
+		$NuevaVenta['Venta']['numero_entrega']    =  $numero_entrega;
 		$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
 		$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 		$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
@@ -6635,7 +6691,7 @@ class VentasController extends AppController {
 
 		# Direccion de entrega
 		$direccionEntrega = $this->Prestashop->prestashop_obtener_venta_direccion($nwVenta['id_address_delivery']);
-
+		
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Prestashop Crear Venta - Direccion',
@@ -6648,62 +6704,71 @@ class VentasController extends AppController {
 		if (!isset($nwVenta['address'])) {
 			
 			$direccion_entrega = '';
+			$numero_entrega    = '';
+			$otro_entrega      = '';
 			$comuna_entrega    = '';
+			$ciudad_entrega    = '';
 			$nombre_receptor   = '';
+			$rut_receptor      = '';
 			$fono_receptor     = '';
 
+			# Calle/pasaje
 			if (!empty($direccionEntrega['address']['address1'])) {
 
 				if (is_array($direccionEntrega['address']['address1'])) {
 					$direccionEntrega['address']['address1'] = implode(', ', $direccionEntrega['address']['address1']);
 				}
 
-				$direccion_entrega .= $direccionEntrega['address']['address1'];
+				$direccion_entrega = $direccionEntrega['address']['address1'];
 			}
 
+			# Numero de casa/edificio
 			if (!empty($direccionEntrega['address']['address2'])) {
 
 				if (is_array($direccionEntrega['address']['address2'])) {
 					$direccionEntrega['address']['address2'] = implode(', ', $direccionEntrega['address']['address2']);
 				}
 
-				$direccion_entrega .= ', ' . $direccionEntrega['address']['address2'];
+				$numero_entrega = $direccionEntrega['address']['address2'];
 			}
 
+			# Dpto/ofi/block
 			if (!empty($direccionEntrega['address']['other'])) {
 				if (is_array($direccionEntrega['address']['other'])) {
 					$direccionEntrega['address']['other'] = implode(', ', $direccionEntrega['address']['other']);
 				}
-				$direccion_entrega .= ', ' . $direccionEntrega['address']['other'];
+				$otro_entrega = $direccionEntrega['address']['other'];
 			}
 
+			# Ciudad declarada
 			if (!empty($direccionEntrega['address']['city'])) {
-				$comuna_entrega .= $direccionEntrega['address']['city'];
+				$ciudad_entrega = $direccionEntrega['address']['city'];
 			}
 
+			# Nombre del receptor
 			if (!empty($direccionEntrega['address']['firstname'])) {
 				$nombre_receptor .= $direccionEntrega['address']['firstname'] . ' ' . $direccionEntrega['address']['lastname'];
 			}
 
-			if (!empty($direccionEntrega['address']['phone'])) {
-
-				if (is_array($direccionEntrega['address']['phone'])) {
-					$direccionEntrega['address']['phone'] = implode(' - ', $direccionEntrega['address']['phone']);
-				}
-
-				$fono_receptor .= trim($direccionEntrega['address']['phone']);
+			# Rut del receptor
+			if (!empty($direccionEntrega['address']['dni'])) {
+				$rut_receptor =  str_replace('-', '', str_replace('.', '', $direccionEntrega['address']['dni']));
 			}
 
+			# Fono
 			if (!empty($direccionEntrega['address']['phone_mobile'])) {
-				$fono_receptor .=  ' - ' . trim($direccionEntrega['address']['phone_mobile']);
+				$fono_receptor = trim($direccionEntrega['address']['phone_mobile']);
 			}
 
+			# Comuna seleccionada
 			if (isset($direccionEntrega['address']['id_state'])) {
 				$comuna_entrega = $this->Prestashop->prestashop_obtener_comuna_por_id($direccionEntrega['address']['id_state'])['state']['name'];
 			}
 
-
 			$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
+			$NuevaVenta['Venta']['numero_entrega']    =  $numero_entrega;
+			$NuevaVenta['Venta']['otro_entrega']      =  $otro_entrega;
+			$NuevaVenta['Venta']['rut_receptor']      =  $rut_receptor;
 			$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
 			$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 			$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
@@ -6802,8 +6867,9 @@ class VentasController extends AppController {
 
 			# si es un estado pagado se reserva el stock disponible
 			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
+				# Flujo de venta pagda
 				$this->Venta->pagar_venta($this->Venta->id);
-				
+
 				# Evitamos que se vuelva actualizar el stock en prestashop
 				$excluirPrestashop = array('Prestashop' => array($tienda_id));
 				$this->actualizar_canales_stock($this->Venta->id, $excluirPrestashop);
@@ -6941,61 +7007,71 @@ class VentasController extends AppController {
 		if (!isset($nwVenta['address'])) {
 			
 			$direccion_entrega = '';
+			$numero_entrega    = '';
+			$otro_entrega      = '';
 			$comuna_entrega    = '';
+			$ciudad_entrega    = '';
 			$nombre_receptor   = '';
+			$rut_receptor      = '';
 			$fono_receptor     = '';
 
+			# Calle/pasaje
 			if (!empty($direccionEntrega['address']['address1'])) {
 
 				if (is_array($direccionEntrega['address']['address1'])) {
 					$direccionEntrega['address']['address1'] = implode(', ', $direccionEntrega['address']['address1']);
 				}
 
-				$direccion_entrega .= $direccionEntrega['address']['address1'];
+				$direccion_entrega = $direccionEntrega['address']['address1'];
 			}
 
+			# Numero de casa/edificio
 			if (!empty($direccionEntrega['address']['address2'])) {
 
 				if (is_array($direccionEntrega['address']['address2'])) {
 					$direccionEntrega['address']['address2'] = implode(', ', $direccionEntrega['address']['address2']);
 				}
 
-				$direccion_entrega .= ', ' . $direccionEntrega['address']['address2'];
+				$numero_entrega = $direccionEntrega['address']['address2'];
 			}
 
+			# Dpto/ofi/block
 			if (!empty($direccionEntrega['address']['other'])) {
 				if (is_array($direccionEntrega['address']['other'])) {
 					$direccionEntrega['address']['other'] = implode(', ', $direccionEntrega['address']['other']);
 				}
-				$direccion_entrega .= ', ' . $direccionEntrega['address']['other'];
+				$otro_entrega = $direccionEntrega['address']['other'];
 			}
 
+			# Ciudad declarada
 			if (!empty($direccionEntrega['address']['city'])) {
-				$comuna_entrega .= $direccionEntrega['address']['city'];
+				$ciudad_entrega = $direccionEntrega['address']['city'];
 			}
 
+			# Nombre del receptor
 			if (!empty($direccionEntrega['address']['firstname'])) {
 				$nombre_receptor .= $direccionEntrega['address']['firstname'] . ' ' . $direccionEntrega['address']['lastname'];
 			}
 
-			if (!empty($direccionEntrega['address']['phone'])) {
-
-				if (is_array($direccionEntrega['address']['phone'])) {
-					$direccionEntrega['address']['phone'] = implode(' - ', $direccionEntrega['address']['phone']);
-				}
-
-				$fono_receptor .= trim($direccionEntrega['address']['phone']);
+			# Rut del receptor
+			if (!empty($direccionEntrega['address']['dni'])) {
+				$rut_receptor =  str_replace('-', '', str_replace('.', '', $direccionEntrega['address']['dni']));
 			}
 
+			# Fono
 			if (!empty($direccionEntrega['address']['phone_mobile'])) {
-				$fono_receptor .=  ' - ' . trim($direccionEntrega['address']['phone_mobile']);
+				$fono_receptor = trim($direccionEntrega['address']['phone_mobile']);
 			}
 
+			# Comuna seleccionada
 			if (isset($direccionEntrega['address']['id_state'])) {
 				$comuna_entrega = $this->Prestashop->prestashop_obtener_comuna_por_id($direccionEntrega['address']['id_state'])['state']['name'];
 			}
 
 			$ActualizarVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
+			$ActualizarVenta['Venta']['numero_entrega']    =  $numero_entrega;
+			$ActualizarVenta['Venta']['otro_entrega']      =  $otro_entrega;
+			$ActualizarVenta['Venta']['rut_receptor']      =  $rut_receptor;
 			$ActualizarVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
 			$ActualizarVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 			$ActualizarVenta['Venta']['fono_receptor']     =  $fono_receptor;
