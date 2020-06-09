@@ -26,7 +26,7 @@
 						<td style="font-size: 11px;">Rut: <?=$this->Html->rut($venta['VentaCliente']['rut']); ?></td>
 					</tr>
 					<tr>
-						<td style="font-size: 11px;">Dirección: <?=$venta['Venta']['direccion_entrega']; ?> - <?=$venta['Venta']['comuna_entrega']; ?></td>
+						<td style="font-size: 11px;">Dirección: <?=$venta['Venta']['direccion_entrega']; ?> <?=$venta['Venta']['numero_entrega']; ?> <?=$venta['Venta']['otro_entrega']; ?> - <?=$venta['Venta']['comuna_entrega']; ?></td>
 					</tr>
 					<tr>
 						<td style="font-size: 11px;">Fono: <?= (empty($venta['Venta']['fono_receptor'])) ? $venta['VentaCliente']['telefono'] : $venta['Venta']['fono_receptor'] ; ?></td>

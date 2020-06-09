@@ -32,7 +32,7 @@
 		</tr>
 		<tr>
 			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px;">Dirección:</td>
-			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px;"><?=$venta['Venta']['direccion_entrega']; ?> - <?=$venta['Venta']['comuna_entrega']; ?></td>
+			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-top: 5px; padding-bottom: 5px;"><?=$venta['Venta']['direccion_entrega']; ?> <?=$venta['Venta']['numero_entrega']; ?> <?=$venta['Venta']['otro_entrega']; ?> - <?=$venta['Venta']['comuna_entrega']; ?></td>
 		</tr>
 		<tr>
 			<td style="font-size: 12px; padding-left: 5px; padding-right: 5px; padding-bottom: 5px;">Fono:</td>
