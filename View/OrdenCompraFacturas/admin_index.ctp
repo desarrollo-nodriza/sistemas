@@ -10,6 +10,7 @@
 				$prov  = (isset($this->request->params['named']['prov'])) ? $this->request->params['named']['prov'] : '' ;
 				$folio = (isset($this->request->params['named']['folio'])) ? $this->request->params['named']['folio'] : '' ;
 				$sta   = (isset($this->request->params['named']['sta'])) ? $this->request->params['named']['sta'] : '' ;
+				$sub_sta   = (isset($this->request->params['named']['sub_sta'])) ? $this->request->params['named']['sub_sta'] : '' ;
 				$dtf   = (isset($this->request->params['named']['dtf'])) ? $this->request->params['named']['dtf'] : '' ;
 				$dtt   = (isset($this->request->params['named']['dtt'])) ? $this->request->params['named']['dtt'] : '' ;
 			?>
@@ -18,7 +19,7 @@
 					<h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
 				</div>
 				<div class="panel-body">
-					<div class="col-sm-3 col-xs-12">
+					<div class="col-sm-4 col-xs-12">
 						<div class="form-group">
 							<label>Orden de compra:</label>
 							<?=$this->Form->input('oc',
@@ -30,7 +31,7 @@
 								));?>
 						</div>
 					</div>
-					<div class="col-sm-3 col-xs-12">
+					<div class="col-sm-4 col-xs-12">
 						<div class="form-group">
 							<label>Proveedor:</label>
 
@@ -45,7 +46,7 @@
 								));?>
 						</div>
 					</div>
-					<div class="col-sm-2 col-xs-12">
+					<div class="col-sm-4 col-xs-12">
 						<div class="form-group">
 							<label>Folio:</label>
 							<?=$this->Form->input('folio',
@@ -58,8 +59,9 @@
 						</div>
 					</div>
 					
-					<div class="col-sm-2 col-xs-12">
+					<div class="col-sm-4 col-xs-12">
 						<div class="form-group">
+							<br>
 							<label>Estado del DTE</label>
 							<?=$this->Form->select('sta', array(
 									'n' => 'No pagado',
@@ -73,7 +75,23 @@
 							);?>
 						</div>
 					</div>
-					<div class="col-sm-2 col-xs-12">
+					
+					<div class="col-sm-4 col-xs-12">
+						<div class="form-group">
+							<br>
+							<label>Sub Estado del DTE</label>
+							<?=$this->Form->select('sub_sta', $estados_pagos,
+								array(
+								'class' => 'form-control select',
+								'empty' => 'Seleccione Sub estado',
+								'value' => $sub_sta
+								)
+							);?>
+						</div>
+					</div>
+
+					<div class="col-sm-4 col-xs-12">
+						<br>
 						<label>Creados entre</label>
 						<div class="input-group">
 							<?=$this->Form->input('dtf', array(
@@ -114,7 +132,15 @@
                             
                             <?=$this->element('items_por_pagina'); ?>
 
-                            <?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', array('action' => 'exportar'), array('class' => 'btn btn-primary', 'escape' => false)); ?>
+                            <? $export = array(
+							'action' => 'exportar'
+							);
+
+							if (isset($this->request->params['named'])) {
+								$export = array_replace_recursive($export, $this->request->params['named']);
+							}?>
+							
+							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>
 						</div>
 					</div>
 					<div class="panel-body">

@@ -89,15 +89,8 @@ class OrdenCompraFacturasController extends AppController
 
 				case 'prov':
 					$opt = array_replace_recursive($opt, array(
-						'joins' => array(
-							array('table' => 'orden_compras',
-						        'alias' => 'orden_compra',
-						        'type' => 'INNER',
-						        'conditions' => array(
-						            'orden_compra.id = OrdenCompraFactura.orden_compra_id',
-						            'orden_compra.proveedor_id' => $valor
-						        )
-						    )
+						'conditions' => array(
+							'OrdenCompraFactura.proveedor_id' => explode(',', $valor)
 						)
 					));
 					break;
@@ -116,6 +109,117 @@ class OrdenCompraFacturasController extends AppController
 							'OrdenCompraFactura.pagada' => ($valor == 'y') ? 1 : 0
 						)
 					));
+					break;
+
+				case 'sub_sta':
+					
+					if ($valor == 'pagado') {
+						$opt = array_replace_recursive($opt, array(
+							'joins' => array(
+								array('table' => 'facturas_pagos',
+							        'alias' => 'facturas_pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'facturas_pagos.factura_id = OrdenCompraFactura.id',
+							        )
+							    ),
+							    array('table' => 'pagos',
+							        'alias' => 'pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'pagos.id = facturas_pagos.pago_id',
+							            'pagos.pagado = 1'
+							        )
+							    )
+							)
+						));
+
+						$opt = array_replace_recursive($opt, array(
+							'conditions' => array(
+								'OrdenCompraFactura.pagada' => 1
+							)
+						));
+					}
+
+					if ($valor == 'agendado') {
+						$opt = array_replace_recursive($opt, array(
+							'joins' => array(
+								array('table' => 'facturas_pagos',
+							        'alias' => 'facturas_pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'facturas_pagos.factura_id = OrdenCompraFactura.id',
+							        )
+							    ),
+							    array('table' => 'pagos',
+							        'alias' => 'pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'pagos.id = facturas_pagos.pago_id',
+							            'pagos.pagado' => 0,
+							            'pagos.fecha_pago !=' => ''
+							        )
+							    )
+							)
+						));
+
+						$opt = array_replace_recursive($opt, array(
+							'conditions' => array(
+								'OrdenCompraFactura.pagada' => 0
+							)
+						));
+					}
+
+					if ($valor == 'agendamineto_pendiente') {
+						$opt = array_replace_recursive($opt, array(
+							'joins' => array(
+								array('table' => 'facturas_pagos',
+							        'alias' => 'facturas_pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'facturas_pagos.factura_id = OrdenCompraFactura.id',
+							        )
+							    ),
+							    array('table' => 'pagos',
+							        'alias' => 'pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'pagos.id = facturas_pagos.pago_id',
+							            'pagos.pagado' => 0,
+							            'pagos.fecha_pago' => ''
+							        )
+							    )
+							)
+						));
+
+						$opt = array_replace_recursive($opt, array(
+							'conditions' => array(
+								'OrdenCompraFactura.pagada' => 0
+							)
+						));
+					}
+
+					if ($valor == 'pago_pendiente') {
+						$opt = array_replace_recursive($opt, array(
+							'joins' => array(
+								array('table' => 'facturas_pagos',
+							        'alias' => 'facturas_pagos',
+							        'type' => 'LEFT',
+							        'conditions' => array(
+							            'facturas_pagos.factura_id = OrdenCompraFactura.id',
+							            'facturas_pagos.id' => null
+							        )
+							    )
+							)
+						));
+
+						$opt = array_replace_recursive($opt, array(
+							'conditions' => array(
+								'OrdenCompraFactura.pagada' => 0
+							)
+						));
+					}
+					
 					break;
 
 				case 'dtf':
@@ -224,7 +328,9 @@ class OrdenCompraFacturasController extends AppController
 
 		$folios = array_unique(ClassRegistry::init('OrdenCompraFactura')->find('list'));
 
-		$this->set(compact('facturas', 'folios', 'ocs', 'proveedores'));
+		$estados_pagos =  array('pagado' => 'Pagado', 'agendado' => 'Pago agendado', 'agendamineto_pendiente' => 'Agendamiento pendiente',  'pago_pendiente' => 'Pago pendiente');
+
+		$this->set(compact('facturas', 'folios', 'ocs', 'proveedores', 'estados_pagos'));
 	}
 
 
@@ -587,10 +693,230 @@ class OrdenCompraFacturasController extends AppController
 	}
 
 	public function admin_exportar()
-	{
-		$datos			= $this->OrdenCompraFactura->find('all', array(
-			'recursive'				=> -1
-		));
+	{	
+
+		set_time_limit(0);
+
+		ini_set('memory_limit', '-1');
+
+		// Filtrado de oc por formulario
+		if ( $this->request->is('post') ) {
+			$this->filtrar('ordenCompraFacturas', 'exportar');
+		}
+
+		$opt		= array(
+			'recursive'			=> 0,
+			'conditions' => array(
+				'OrdenCompraFactura.tipo_documento' => 33 // mostramos solo facturas
+			),
+			'contain' => array(
+				'Proveedor' => array(
+					'fields' => array(
+						'Proveedor.id', 'Proveedor.nombre'
+					)
+				),
+				'OrdenCompra' => array(
+					'Tienda' => array('fields' => array('Tienda.rut')),
+					'Proveedor' => array('fields' => array('Proveedor.rut_empresa')),
+					'Moneda' => array('fields' => array('Moneda.tipo')),
+					'Pago' => array('fields' => array('Pago.pagado')), 
+					'fields' => array(
+						'OrdenCompra.id', 'OrdenCompra.tienda_id', 'OrdenCompra.proveedor_id', 'OrdenCompra.moneda_id'
+					)
+				),
+				'Pago' => array(
+					'fields' => array(
+						'Pago.id', 'Pago.pagado', 'Pago.fecha_pago', 'Pago.moneda_id'
+					),
+					'Moneda' => array('fields' => array('Moneda.tipo'))
+				)
+			),
+			'order' => array('OrdenCompraFactura.id' => 'DESC')
+		);
+
+		foreach ($this->request->params['named'] as $campo => $valor) {
+			switch ($campo) {
+				case 'id':
+					$opt = array_replace_recursive($opt, array(
+						'conditions' => array(
+							'OrdenCompraFactura.id' => $valor
+						)
+					));
+					break;
+				case 'oc':
+					$opt = array_replace_recursive($opt, array(
+						'conditions' => array(
+							'OrdenCompraFactura.orden_compra_id' => explode(',', $valor)
+						)
+					));
+					break;
+
+				case 'prov':
+					$opt = array_replace_recursive($opt, array(
+						'conditions' => array(
+							'OrdenCompraFactura.proveedor_id' => explode(',', $valor)
+						)
+					));
+					break;
+
+				case 'folio':
+					$opt = array_replace_recursive($opt, array(
+						'conditions' => array(
+							'OrdenCompraFactura.folio' => explode(',', $valor)
+						)
+					));
+					break;
+
+				case 'sta':
+					$opt = array_replace_recursive($opt, array(
+						'conditions' => array(
+							'OrdenCompraFactura.pagada' => ($valor == 'y') ? 1 : 0
+						)
+					));
+					break;
+
+				case 'sub_sta':
+					
+					if ($valor == 'pagado') {
+						$opt = array_replace_recursive($opt, array(
+							'joins' => array(
+								array('table' => 'facturas_pagos',
+							        'alias' => 'facturas_pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'facturas_pagos.factura_id = OrdenCompraFactura.id',
+							        )
+							    ),
+							    array('table' => 'pagos',
+							        'alias' => 'pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'pagos.id = facturas_pagos.pago_id',
+							            'pagos.pagado = 1'
+							        )
+							    )
+							)
+						));
+
+						$opt = array_replace_recursive($opt, array(
+							'conditions' => array(
+								'OrdenCompraFactura.pagada' => 1
+							)
+						));
+					}
+
+					if ($valor == 'agendado') {
+						$opt = array_replace_recursive($opt, array(
+							'joins' => array(
+								array('table' => 'facturas_pagos',
+							        'alias' => 'facturas_pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'facturas_pagos.factura_id = OrdenCompraFactura.id',
+							        )
+							    ),
+							    array('table' => 'pagos',
+							        'alias' => 'pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'pagos.id = facturas_pagos.pago_id',
+							            'pagos.pagado' => 0,
+							            'pagos.fecha_pago !=' => ''
+							        )
+							    )
+							)
+						));
+
+						$opt = array_replace_recursive($opt, array(
+							'conditions' => array(
+								'OrdenCompraFactura.pagada' => 0
+							)
+						));
+					}
+
+					if ($valor == 'agendamineto_pendiente') {
+						$opt = array_replace_recursive($opt, array(
+							'joins' => array(
+								array('table' => 'facturas_pagos',
+							        'alias' => 'facturas_pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'facturas_pagos.factura_id = OrdenCompraFactura.id',
+							        )
+							    ),
+							    array('table' => 'pagos',
+							        'alias' => 'pagos',
+							        'type' => 'INNER',
+							        'conditions' => array(
+							            'pagos.id = facturas_pagos.pago_id',
+							            'pagos.pagado' => 0,
+							            'pagos.fecha_pago' => ''
+							        )
+							    )
+							)
+						));
+
+						$opt = array_replace_recursive($opt, array(
+							'conditions' => array(
+								'OrdenCompraFactura.pagada' => 0
+							)
+						));
+					}
+
+					if ($valor == 'pago_pendiente') {
+						$opt = array_replace_recursive($opt, array(
+							'joins' => array(
+								array('table' => 'facturas_pagos',
+							        'alias' => 'facturas_pagos',
+							        'type' => 'LEFT',
+							        'conditions' => array(
+							            'facturas_pagos.factura_id = OrdenCompraFactura.id',
+							            'facturas_pagos.id' => null
+							        )
+							    )
+							)
+						));
+
+						$opt = array_replace_recursive($opt, array(
+							'conditions' => array(
+								'OrdenCompraFactura.pagada' => 0
+							)
+						));
+					}
+					
+					break;
+
+				case 'dtf':
+					$opt = array_replace_recursive($opt, array(
+						'conditions' => array(
+							'OrdenCompraFactura.created >=' => $valor 
+						)
+					));
+					break;
+
+				case 'dtf':
+					$opt = array_replace_recursive($opt, array(
+						'conditions' => array(
+							'OrdenCompraFactura.created <=' => $valor 
+						)
+					));
+					break;
+				case 'per_page':
+					$opt = array_replace_recursive($opt, array(
+						'limit' => $valor,
+						'maxLimit' => $valor
+						)
+					);
+					break;
+			}
+		}
+
+		BreadcrumbComponent::add('Pagos ');
+
+		$facturas	= $this->paginate();
+
+
+		$datos			= $this->OrdenCompraFactura->find('all', $opt);
 		$campos			= array_keys($this->OrdenCompraFactura->_schema);
 		$modelo			= $this->OrdenCompraFactura->alias;
 

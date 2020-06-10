@@ -640,6 +640,25 @@
 											</tbody>
 										</table>
 									</div>
+									<? if (isset($venta['VentaExterna']['transacciones'])) : ?>
+									<div class="table-responsive">
+										<table class="table table-bordered">
+											<caption><?= __('Transacciones obtenidas desde prestashop');?></caption>
+											<thead>
+												<th><?=__('Id transacción');?></th>
+												<th><?=__('Monto');?></th>
+											</thead>
+											<tbody>
+												<? foreach ($venta['VentaExterna']['transacciones']['order_payment'] as $transaccion) : ?>
+													<tr>
+														<td><?= (is_array($transaccion['transaction_id'])) ? 'Sin registro' : $transaccion['transaction_id'];?></td>
+														<td><?= CakeNumber::currency($transaccion['amount'], 'CLP'); ?></td>
+													</tr>
+												<? endforeach; ?>
+											</tbody>
+										</table>
+									</div>
+									<? endif; ?>
 								</div>
 							</div>
 
