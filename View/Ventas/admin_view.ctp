@@ -66,8 +66,7 @@
 											</tr>
 											<tr>
 												<th>Avenida/Calle/pasaje despacho</th>
-
-												<? if (!empty($venta['Venta']['paquete_generado'])): ?>
+												<? if (!$venta['Venta']['paquete_generado']): ?>
 													<td>
 														<div class="input-group">
 		                                                    <?=$this->Form->input('direccion_entrega', array('value' => $venta['Venta']['direccion_entrega'], 'type' => 'text', 'class' => 'form-control js-direccion-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['direccion_entrega']));?>
@@ -89,7 +88,7 @@
 											<tr>
 												<th>Número de casa/block/edificio despacho</th>
 
-												<? if (!empty($venta['Venta']['paquete_generado'])): ?>
+												<? if (!$venta['Venta']['paquete_generado']): ?>
 													<td>
 														<div class="input-group">
 		                                                    <?=$this->Form->input('numero_entrega', array('value' => $venta['Venta']['numero_entrega'], 'type' => 'text', 'class' => 'form-control js-numero-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['numero_entrega']));?>
@@ -111,7 +110,7 @@
 											<tr>
 												<th>Dpto/oficina despacho</th>
 
-												<? if (!empty($venta['Venta']['paquete_generado'])): ?>
+												<? if (!$venta['Venta']['paquete_generado']): ?>
 													<td>
 														<div class="input-group">
 		                                                    <?=$this->Form->input('otro_entrega', array('value' => $venta['Venta']['otro_entrega'], 'type' => 'text', 'class' => 'form-control js-otro-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['otro_entrega']));?>
@@ -133,7 +132,7 @@
 											<tr>
 												<th>Comuna despacho</th>
 
-												<? if (!empty($venta['Venta']['paquete_generado'])): ?>
+												<? if (!$venta['Venta']['paquete_generado']): ?>
 												<td>
 													<div class="input-group">
 	                                                    <?=$this->Form->input('comuna_entrega', array('value' => $venta['Venta']['comuna_entrega'], 'class' => 'form-control js-comuna-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['comuna_entrega']));?>
