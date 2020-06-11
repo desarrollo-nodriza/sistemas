@@ -787,7 +787,7 @@ class LibreDteComponent extends Component
 						),
 						'joins' => array(
 							array(
-								'table' => 'rp_dte_referencias',
+								'table' => 'dte_referencias',
 								'alias' => 'dte_referencia',
 								'type' => 'INNER',
 								'conditions' => array(
@@ -795,12 +795,16 @@ class LibreDteComponent extends Component
 									'dte_referencia.folio' => $ref['folio']
 								)
 							)
+						),
+						'fields' => array(
+							'Dte.total'
 						)
 					));
-
+					
 					# Sumamos la cantidad ya anulada
 					$yaAnulado = array_sum(Hash::extract($ndcRelacionadas, '{n}.Dte.total'));
-					$totalAnulado = monto_bruto(array_sum(Hash::extract($data['DteDetalle'], '{n}.PrcItem')) * array_sum(Hash::extract($data['DteDetalle'], '{n}.QtyItem')), 19, 0) + $yaAnulado;
+					$total_dte = array_sum(Hash::extract($data['DteDetalle'], '{n}.PrcItem')) * array_sum(Hash::extract($data['DteDetalle'], '{n}.QtyItem'));
+					$totalAnulado = monto_bruto($total_dte, 19, 0) + $yaAnulado;
 					
 					if (!empty($dteReferenciado) && $totalAnulado >= $dteReferenciado['Dte']['total']) {
 						ClassRegistry::init('Dte')->id = $dteReferenciado['Dte']['id'];
@@ -814,7 +818,7 @@ class LibreDteComponent extends Component
 
 			$dte['Referencia'] = $DteReferencia;
 		}
-
+		
 		return $dte;
 	}
 

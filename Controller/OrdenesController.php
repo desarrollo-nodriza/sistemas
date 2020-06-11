@@ -547,7 +547,12 @@ class OrdenesController extends AppController
 						$subtotal_neto  = (float) array_sum(Hash::extract($venta['VentaDetalle'], '{n}.total_neto')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.monto_anulado'));
 						$subtotal_bruto = (float) monto_bruto($subtotal_neto);
 						$descuento      = (float) ($porcentaje_descuento > 0) ? round($subtotal_bruto * $porcentaje_descuento, 2) : 0;
-					
+						
+						# si se anulan todos los items el despacho se deja en 0
+						if ($subtotal_bruto == 0) {
+							$venta['Venta']['costo_envio'] = (float) 0;
+						}
+
 						$venta['Venta']['descuento'] = $descuento;
 						
 						# Guardamos los cambios
@@ -643,6 +648,11 @@ class OrdenesController extends AppController
 						$descuento      = (float) ($porcentaje_descuento > 0) ? round($subtotal_bruto * $porcentaje_descuento, 2) : 0;
 					
 						$venta['Venta']['descuento'] = $descuento;
+						
+						# si se anulan todos los items el despacho se deja en 0
+						if ($subtotal_bruto == 0) {
+							$venta['Venta']['costo_envio'] = (float) 0;
+						}
 						
 						# Guardamos los cambios
 						ClassRegistry::init('Venta')->saveAll($venta);

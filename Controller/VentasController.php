@@ -5556,7 +5556,15 @@ class VentasController extends AppController {
 			// Obtener detall venta externo
 			$venta['VentaExterna'] = $this->Prestashop->prestashop_obtener_venta($venta['Venta']['id_externo']);		
 
-			$venta['VentaExterna']['transacciones'] = $this->Prestashop->prestashop_obtener_venta_transacciones($venta['Venta']['referencia']); 
+			$transacciones = $this->Prestashop->prestashop_obtener_venta_transacciones($venta['Venta']['referencia']); 
+
+			if (isset($transacciones['order_payment']['transaction_id'])) {
+				$venta['VentaExterna']['transacciones']['order_payment'] = array(
+					0 => $transacciones['order_payment']
+				);
+			}else{
+				$venta['VentaExterna']['transacciones'] = $transacciones;
+			}
 
 			$venta['VentaExterna']['transportista'] = (!empty($venta['MetodoEnvio']['id'])) ? $venta['MetodoEnvio']['nombre'] : 'Sin especificar' ;
 
