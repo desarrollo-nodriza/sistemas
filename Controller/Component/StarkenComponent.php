@@ -130,7 +130,7 @@ class StarkenComponent extends Component
 				'largo'                             => $largoTotal,
 				'tipoServicio'                      => (empty($venta['MetodoEnvio']['tipo_servicio'])) ? '0' : $venta['MetodoEnvio']['tipo_servicio'],
 				'ciudadOrigenNom'                   => trim($venta['MetodoEnvio']['ciudad_origen']),
-				'observacion'                       => 'OT generada automáticamente por ' . $venta['Tienda']['nombre'],
+				'observacion'                       => 'OT generada automáticamente por ' . $venta['Tienda']['nombre'] . ' - Venta Ref: ' . $venta['Venta']['referencia'],
 				'encargos' => array(
 					0 => array(
 						'tipoEncargo' => 29, // bultos,
@@ -138,12 +138,40 @@ class StarkenComponent extends Component
 					)
 				)
 			);
-			
-			if (!empty($venta['Venta']['rut_receptor'])) {
-				$data['rutDestinatario']   = substr($venta['VentaCliente']['rut'], 0, strlen($venta['VentaCliente']['rut']) - 1);
-				$data['dvRutDestinatario'] = substr($venta['VentaCliente']['rut'], strlen($venta['VentaCliente']['rut']) - 1, strlen($venta['Venta']['rut_receptor']));
-			}
 
+
+			# Se agregan documentos de referencia
+			if (!empty($venta['Dte'])) {
+				foreach ($venta['Dte'] as $id => $dte) {
+
+					# Factura
+					if ($dte['tipo_documento'] == 33 && !$dte['invalidado']) {
+						$data = array_replace_recursive($data, array(
+							'documentos' => array(
+								$id => array(
+									'tipoDocumento' => 26,
+									'numeroDocumento' => $dte['folio'],
+									'generaEtiquetaDocumento' => 'N'
+								)
+							)
+						));
+					}
+
+					# Boleta
+					if ($dte['tipo_documento'] == 39 && !$dte['invalidado']) {
+						$data = array_replace_recursive($data, array(
+							'documentos' => array(
+								$id => array(
+									'tipoDocumento' => 28,
+									'numeroDocumento' => $dte['folio'],
+									'generaEtiquetaDocumento' => 'N'
+								)
+							)
+						));
+					}
+				}
+			}
+			
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Straken',
@@ -174,12 +202,8 @@ class StarkenComponent extends Component
 			}
 
 			#Generamos la etiqueta
-			if (!empty($venta['MetodoEnvio']['tipo_servicio'])) {
-				$etiquetaZpl = $this->getEtiquetaEmision($response, $venta['Tienda'], $this->tipoServicio[$venta['MetodoEnvio']['tipo_servicio']], $this->tipoEntrega[$venta['MetodoEnvio']['tipo_entrega']]);	
-			}else{
-				$etiquetaZpl = $this->getEtiquetaEmision($response, $venta['Tienda'], null, $this->tipoEntrega[$venta['MetodoEnvio']['tipo_entrega']]);
-			}
-			
+			$etiquetaZpl = $this->getEtiquetaEmision($response, $venta);	
+		
 			$etiquetaPdf = '';
 
 			$pathEtiquetas  = APP . 'webroot' . DS . 'img' . DS . 'ModuloStarken' . DS . $venta['Venta']['id'] . DS;
@@ -449,7 +473,7 @@ class StarkenComponent extends Component
 		return json_decode($this->StarkenConexion->listarCiudadesOrigen(false, false), true);
 	}
 
-	public function getEtiquetaEmision($response, $tienda, $tipo_servicio = 'NORMAL', $tipo_entrega) {
+	public function getEtiquetaEmision($response, $venta) {
         	
 		$etiqueta              = "";
 		$remitenteNombre       = "";
@@ -483,7 +507,10 @@ class StarkenComponent extends Component
         if (($response['body']['ciudadDestino'] != null) && (!empty($response['body']['ciudadDestino']))) {
             $direccionDestinatario = $direccionDestinatario . ' - ' . $response['body']['ciudadDestino'];
         }
-        
+
+        $tipo_servicio = (isset($this->tipoServicio[$venta['MetodoEnvio']['tipo_servicio']])) ? $this->tipoServicio[$venta['MetodoEnvio']['tipo_servicio']] : 'NORMAL';
+        $tipo_entrega = $this->tipoEntrega[$venta['MetodoEnvio']['tipo_entrega']];	
+
         $etiqueta .= "\020CT~~CD,~CC^~CT~";
         $etiqueta .= "^XA~TA000~JSN^LT0^MNW^MTT^PON^PMN^LH0,0^JMA^PR5,5~SD30^JUS^LRN^CI0^XZ";
         $etiqueta .= "~DG000.GRF,02688,028,";
@@ -616,7 +643,7 @@ class StarkenComponent extends Component
         $etiqueta .= " "; //Observacion linea 2
         $etiqueta .= "^FS";
         $etiqueta .= "^FT157,554^A0N,20,19^FH\\^FD";
-        $etiqueta .= ""; //etiquetaEncargoVO.getObservacion());
+        $etiqueta .= 'OT generada para la venta Ref: ' . $venta['Venta']['referencia']; //etiquetaEncargoVO.getObservacion());
         $etiqueta .= "^FS";
         $etiqueta .= "^FT35,554^A0N,20,19^FH\\^FDOBSERVACI\\E3N:^FS";
         $etiqueta .= "^FT36,755^A0N,14,14^FH\\^FDAGENCIA^FS";
@@ -648,7 +675,7 @@ class StarkenComponent extends Component
         $etiqueta .= "^FS";
         $etiqueta .= "^FT745,335^A0B,34,33^FH\\^FD^FS";
         $etiqueta .= "^FT75,369^A0B,34,33^FH\\^FD";
-        $etiqueta .= $tipo_servicio = 'Normal';
+        $etiqueta .= $tipo_servicio;
         $etiqueta .= "^FS";
         $etiqueta .= "^FT56,645^A0B,20,19^FH\\^FDO.F.^FS";
         $etiqueta .= "^FT119,131^A0N,14,16^FH\\^FD";

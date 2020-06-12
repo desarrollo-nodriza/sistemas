@@ -874,7 +874,7 @@ class VentasController extends AppController {
 				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
 			}
 
-		}elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot'] && !$venta['Venta']['paquete_generado']) {
+		}elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
 			# Es una venta para starken
 			
 			# Creamos cliente starken
