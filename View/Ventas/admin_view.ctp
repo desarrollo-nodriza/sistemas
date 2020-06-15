@@ -1070,6 +1070,12 @@
 								<?= $this->Html->link('Crear Envio externo', array('action' => 'generar_envio_externo_manual', $venta['Venta']['id']), array('class' => 'btn btn-lg btn-success btn-block')); ?>
 							</div>
 						</div>
+						<? else : ?>
+						<div class="row mt-5">
+							<div class="col-xs-12">
+								<h4><? _e('El método de envio seleccionado no permite generar un OT externa.');?></h4>
+							</div>
+						</div>
 						<? endif; ?>
 					</div>
 			    </div>

@@ -378,7 +378,7 @@ class Venta extends AppModel
 					),
 					'MetodoEnvio' => array(
 						'fields' => array(
-							'MetodoEnvio.id', 'MetodoEnvio.nombre', 'MetodoEnvio.retiro_local', 'MetodoEnvio.dependencia', 'MetodoEnvio.rut_api_rest', 'MetodoEnvio.clave_api_rest', 'MetodoEnvio.rut_empresa_emisor', 'MetodoEnvio.rut_usuario_emisor', 'MetodoEnvio.clave_usuario_emisor', 'MetodoEnvio.tipo_entrega', 'MetodoEnvio.tipo_pago', 'MetodoEnvio.numero_cuenta_corriente', 'MetodoEnvio.dv_numero_cuenta_corriente', 'MetodoEnvio.centro_costo_cuenta_corriente', 'MetodoEnvio.tipo_servicio', 'MetodoEnvio.generar_ot', 'MetodoEnvio.peso_maximo', 'MetodoEnvio.ciudad_origen'
+							'MetodoEnvio.id', 'MetodoEnvio.nombre', 'MetodoEnvio.retiro_local', 'MetodoEnvio.dependencia', 'MetodoEnvio.rut_api_rest', 'MetodoEnvio.clave_api_rest', 'MetodoEnvio.rut_empresa_emisor', 'MetodoEnvio.rut_usuario_emisor', 'MetodoEnvio.clave_usuario_emisor', 'MetodoEnvio.tipo_entrega', 'MetodoEnvio.tipo_pago', 'MetodoEnvio.numero_cuenta_corriente', 'MetodoEnvio.dv_numero_cuenta_corriente', 'MetodoEnvio.centro_costo_cuenta_corriente', 'MetodoEnvio.tipo_servicio', 'MetodoEnvio.generar_ot', 'MetodoEnvio.peso_maximo', 'MetodoEnvio.ciudad_origen', 'MetodoEnvio.largo_default', 'MetodoEnvio.ancho_default', 'MetodoEnvio.alto_default'
 						)
 					),
 					'Mensaje' => array(

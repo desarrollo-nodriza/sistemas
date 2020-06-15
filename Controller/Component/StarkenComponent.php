@@ -53,22 +53,21 @@ class StarkenComponent extends Component
 			return;
 		}
 
-		# No se permite generar una OT con items sin dimensiones
-		$paquetes_configurados = true;
+		# Si los paquetes no tienen dimensiones se setean con el valor default
 		foreach ($paquetes as $ip => $paquete) {
 			
 			if($paquete['paquete']['length'] == 0 ||
 				$paquete['paquete']['width'] == 0 ||
 				$paquete['paquete']['height'] == 0) {
-				$paquetes_configurados = false;
-				break;
+					
+				$paquetes[$ip]['paquete']['length'] = $venta['MetodoEnvio']['largo_default'];
+				$paquetes[$ip]['paquete']['width']  = $venta['MetodoEnvio']['ancho_default'];
+				$paquetes[$ip]['paquete']['height'] = $venta['MetodoEnvio']['alto_default'];
+
 			}
 
 		}
 
-		if (!$paquetes_configurados) {
-			return false;
-		}
 
 		$transportes = array();
 
@@ -179,7 +178,7 @@ class StarkenComponent extends Component
 					'modulo_accion' => 'Request: ' . json_encode($data)
 				)
 			);
-			
+	
 			$response = json_decode($this->StarkenConexion->generarOrden(json_encode($data)), true);
 
 			$log[] = array(

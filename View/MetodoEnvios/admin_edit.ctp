@@ -108,6 +108,18 @@
 								<th><?= $this->Form->label('peso_maximo', 'Peso máximo para la generación de OT'); ?></th>
 								<td><?= $this->Form->input('peso_maximo', array('class' => 'form-control')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('alto_default', 'Alto por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('alto_default', array('class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('ancho_default', 'Ancho por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('ancho_default', array('class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('largo_default', 'Largo por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('largo_default', array('class' => 'form-control')); ?></td>
+							</tr>
 						</table>
 					</div>
 				</div>
