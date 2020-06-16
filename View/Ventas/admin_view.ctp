@@ -1073,7 +1073,7 @@
 						<? else : ?>
 						<div class="row mt-5">
 							<div class="col-xs-12">
-								<h4><? _e('El método de envio seleccionado no permite generar un OT externa.');?></h4>
+								<h4><?= __('El método de envio seleccionado no permite generar un OT externa.');?></h4>
 							</div>
 						</div>
 						<? endif; ?>

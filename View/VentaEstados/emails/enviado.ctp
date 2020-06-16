@@ -203,7 +203,7 @@
                                                   Dirección
                                                 </td>
                                                 <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" class="text-right" valign="top" align="right">
-                                                  <?=$venta['Venta']['direccion_entrega'];?>
+                                                  <?=$venta['Venta']['direccion_entrega'];?> <?=$venta['Venta']['numero_entrega'];?> <?=$venta['Venta']['otro_entrega'];?>
                                                 </td>
                                               </tr>
                                               <tr>
