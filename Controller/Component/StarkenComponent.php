@@ -123,7 +123,7 @@ class StarkenComponent extends Component
 				'centroCostoCtaCte'                 => $venta['MetodoEnvio']['centro_costo_cuenta_corriente'],
 				'valorDeclarado'                    => round($venta['Venta']['total']),
 				'contenido'                         => implode(' | ', Hash::extract($venta['VentaDetalle'], '{n}[venta_id='.$paquete['paquete']['venta_id'].'].VentaDetalleProducto.nombre')),
-				'kilosTotal'                        => $pesoTotal,
+				'kilosTotal'                        => round($pesoTotal, 0),
 				'alto'                              => $altoTotal,
 				'ancho'                             => $anchoTotal,
 				'largo'                             => $largoTotal,
