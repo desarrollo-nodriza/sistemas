@@ -122,7 +122,7 @@ class StarkenComponent extends Component
 				'dvNumeroCtaCte'                    => $venta['MetodoEnvio']['dv_numero_cuenta_corriente'],
 				'centroCostoCtaCte'                 => $venta['MetodoEnvio']['centro_costo_cuenta_corriente'],
 				'valorDeclarado'                    => round($venta['Venta']['total']),
-				'contenido'                         => implode(' | ', Hash::extract($venta['VentaDetalle'], '{n}[venta_id='.$paquete['paquete']['venta_id'].'].VentaDetalleProducto.nombre')),
+				'contenido'                         => substr(implode(' | ', Hash::extract($venta['VentaDetalle'], '{n}[venta_id='.$paquete['paquete']['venta_id'].'].VentaDetalleProducto.id')), 0, 40 ),
 				'kilosTotal'                        => round($pesoTotal, 0),
 				'alto'                              => $altoTotal,
 				'ancho'                             => $anchoTotal,
