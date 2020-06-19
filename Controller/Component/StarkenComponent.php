@@ -144,7 +144,7 @@ class StarkenComponent extends Component
 				foreach ($venta['Dte'] as $id => $dte) {
 
 					# Factura
-					if ($dte['tipo_documento'] == 33 && !$dte['invalidado']) {
+					if ($dte['tipo_documento'] == 33 && $dte['estado'] == 'dte_real_emitido' && !$dte['invalidado']) {
 						$data = array_replace_recursive($data, array(
 							'documentos' => array(
 								$id => array(
@@ -157,7 +157,7 @@ class StarkenComponent extends Component
 					}
 
 					# Boleta
-					if ($dte['tipo_documento'] == 39 && !$dte['invalidado']) {
+					if ($dte['tipo_documento'] == 39 && $dte['estado'] == 'dte_real_emitido' && !$dte['invalidado']) {
 						$data = array_replace_recursive($data, array(
 							'documentos' => array(
 								$id => array(
