@@ -32,40 +32,44 @@ class StarkenComponent extends Component
 	public function generar_ot($venta)
 	{	
 		$volumenMaximo = (float) 60;
-		$pesoTotal     = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.VentaDetalleProducto.peso')) * array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
-		$pesoMaximo    = $venta['MetodoEnvio']['peso_maximo'];
 		
-		$log = array();
-
-		# Limite de peso para usar starken
-		if ($pesoTotal >= $pesoMaximo) {
-			return false;
-		}	
-
-		# No se permite ot con productos sin peso
-		if ($pesoTotal == 0) {
-			return false;
-		}	
-		
+		# Algoritmo LAFF para ordenamiento de productos
 		$paquetes = $this->obtener_bultos_venta($venta, $volumenMaximo);
-		
+
+		$log = array();		
+
+		# si no hay paquetes se retorna false
 		if (empty($paquetes)) {
-			return;
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Straken',
+					'modulo' => 'Ventas',
+					'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
+			return false;
 		}
 
 		# Si los paquetes no tienen dimensiones se setean con el valor default
 		foreach ($paquetes as $ip => $paquete) {
 			
-			if($paquete['paquete']['length'] == 0 ||
-				$paquete['paquete']['width'] == 0 ||
-				$paquete['paquete']['height'] == 0) {
-					
+			if($paquete['paquete']['length'] == 0)
 				$paquetes[$ip]['paquete']['length'] = $venta['MetodoEnvio']['largo_default'];
+
+			if($paquete['paquete']['width'] == 0)
 				$paquetes[$ip]['paquete']['width']  = $venta['MetodoEnvio']['ancho_default'];
+
+			if($paquete['paquete']['height'] == 0)
 				$paquetes[$ip]['paquete']['height'] = $venta['MetodoEnvio']['alto_default'];
 
-			}
-
+			# peso seteado al minimo para asegurar cobro por balanza
+			if($paquete['paquete']['weight'] == 0)
+				$paquetes[$ip]['paquete']['weight'] = $venta['MetodoEnvio']['peso_maximo'];
 		}
 
 
@@ -90,7 +94,7 @@ class StarkenComponent extends Component
 			$largoTotal = $paquete['paquete']['length'];
 			$anchoTotal = $paquete['paquete']['width'];
 			$altoTotal  = $paquete['paquete']['height'];
-			
+			$pesoTotal  = $paquete['paquete']['weight'];
 			# Normalizamos el rut
 			$venta['Venta']['rut_receptor'] = str_replace('-', '', $venta['Venta']['rut_receptor']);
 			$venta['Venta']['rut_receptor'] = trim(str_replace('.', '', $venta['Venta']['rut_receptor']));
@@ -123,7 +127,7 @@ class StarkenComponent extends Component
 				'centroCostoCtaCte'                 => $venta['MetodoEnvio']['centro_costo_cuenta_corriente'],
 				'valorDeclarado'                    => round($venta['Venta']['total']),
 				'contenido'                         => substr(implode(' | ', Hash::extract($venta['VentaDetalle'], '{n}[venta_id='.$paquete['paquete']['venta_id'].'].VentaDetalleProducto.id')), 0, 50 ),
-				'kilosTotal'                        => round($pesoTotal, 0),
+				'kilosTotal'                        => round($pesoTotal, 2),
 				'alto'                              => $altoTotal,
 				'ancho'                             => $anchoTotal,
 				'largo'                             => $largoTotal,
@@ -137,7 +141,6 @@ class StarkenComponent extends Component
 					)
 				)
 			);
-
 
 			# Se agregan documentos de referencia
 			if (!empty($venta['Dte'])) {
@@ -178,7 +181,7 @@ class StarkenComponent extends Component
 					'modulo_accion' => 'Request: ' . json_encode($data)
 				)
 			);
-	
+			
 			$response = json_decode($this->StarkenConexion->generarOrden(json_encode($data)), true);
 
 			$log[] = array(
@@ -642,7 +645,7 @@ class StarkenComponent extends Component
         $etiqueta .= " "; //Observacion linea 2
         $etiqueta .= "^FS";
         $etiqueta .= "^FT157,554^A0N,20,19^FH\\^FD";
-        $etiqueta .= 'OT generada para la venta Ref: ' . $venta['Venta']['referencia']; //etiquetaEncargoVO.getObservacion());
+        $etiqueta .= 'OT generada para la venta Id: ' . $venta['Venta']['id']; //etiquetaEncargoVO.getObservacion());
         $etiqueta .= "^FS";
         $etiqueta .= "^FT35,554^A0N,20,19^FH\\^FDOBSERVACI\\E3N:^FS";
         $etiqueta .= "^FT36,755^A0N,14,14^FH\\^FDAGENCIA^FS";
