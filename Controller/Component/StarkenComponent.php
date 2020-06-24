@@ -43,7 +43,7 @@ class StarkenComponent extends Component
 
 			$log[] = array(
 				'Log' => array(
-					'administrador' => 'Straken',
+					'administrador' => 'Straken vid:' . $venta['Venta']['id'],
 					'modulo' => 'Ventas',
 					'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
 				)
@@ -69,9 +69,26 @@ class StarkenComponent extends Component
 
 			# peso seteado al minimo para asegurar cobro por balanza
 			if($paquete['paquete']['weight'] == 0)
-				$paquetes[$ip]['paquete']['weight'] = $venta['MetodoEnvio']['peso_maximo'];
+				$paquetes[$ip]['paquete']['weight'] = $venta['MetodoEnvio']['peso_default'];
 		}
 
+		$peso_total            = array_sum(Hash::extract($paquetes, '{n}.paquete.weight'));
+		$peso_maximo_permitido = $venta['MetodoEnvio']['peso_maximo'];
+
+		if ($peso_total > $peso_maximo_permitido) {
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Straken vid:' . $venta['Venta']['id'],
+					'modulo' => 'Ventas',
+					'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
+			return false;
+		}
 
 		$transportes = array();
 
@@ -95,6 +112,8 @@ class StarkenComponent extends Component
 			$anchoTotal = $paquete['paquete']['width'];
 			$altoTotal  = $paquete['paquete']['height'];
 			$pesoTotal  = $paquete['paquete']['weight'];
+
+
 			# Normalizamos el rut
 			$venta['Venta']['rut_receptor'] = str_replace('-', '', $venta['Venta']['rut_receptor']);
 			$venta['Venta']['rut_receptor'] = trim(str_replace('.', '', $venta['Venta']['rut_receptor']));
@@ -176,7 +195,7 @@ class StarkenComponent extends Component
 			
 			$log[] = array(
 				'Log' => array(
-					'administrador' => 'Straken',
+					'administrador' => 'Straken vid:' . $venta['Venta']['id'],
 					'modulo' => 'Ventas',
 					'modulo_accion' => 'Request: ' . json_encode($data)
 				)
@@ -186,7 +205,7 @@ class StarkenComponent extends Component
 
 			$log[] = array(
 				'Log' => array(
-					'administrador' => 'Straken',
+					'administrador' => 'Straken vid:' . $venta['Venta']['id'],
 					'modulo' => 'Ventas',
 					'modulo_accion' => 'Response: ' . json_encode($response)
 				)

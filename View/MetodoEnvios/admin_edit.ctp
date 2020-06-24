@@ -105,8 +105,12 @@
 								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('peso_maximo', 'Peso por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<th><?= $this->Form->label('peso_maximo', 'Peso máximo del bulto'); ?></th>
 								<td><?= $this->Form->input('peso_maximo', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('peso_default', 'Peso por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('peso_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('alto_default', 'Alto por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
