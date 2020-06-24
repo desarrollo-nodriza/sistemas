@@ -686,7 +686,7 @@
 
 									<li class="list-group-item"><span class="fa fa-envelope"></span> <?= (!empty($venta['VentaCliente']['email'])) ? $venta['VentaCliente']['email'] : 'xxxxx@xxxx.xx'; ?></li>
 
-									<li class="list-group-item"><span class="fa fa-truck"></span> <?= (!empty($venta['Venta']['direccion_entrega'])) ? $venta['Venta']['direccion_entrega'] : 'No especificado'; ?></li>
+									<li class="list-group-item"><span class="fa fa-truck"></span> <?=$venta['Venta']['direccion_entrega'];?> <?=$venta['Venta']['numero_entrega'];?> <?=$venta['Venta']['otro_entrega'];?>, <?=$venta['Venta']['ciudad_entrega'];?></li>
 
 									<li class="list-group-item"><span class="fa fa-map-marker"></span> <?= (!empty($venta['Venta']['comuna_entrega'])) ? $venta['Venta']['comuna_entrega'] : 'No especificado'; ?></li>
 

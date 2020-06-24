@@ -575,14 +575,15 @@ $(function() {
 					$('#VentaOtroEntrega').parents('div').eq(0).addClass('hidden');
 					$('#VentaCiudadEntrega').parents('div').eq(0).addClass('hidden');
 					$('#VentaRutReceptorEntrega').parents('div').eq(0).addClass('hidden');
+					$('#VentaNombreReceptor').parents('div').eq(0).addClass('hidden');
 					$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
 					$('#VentaCostoEnvio').parents('div').eq(0).addClass('hidden');
 
 					$('#VentaDireccionEntrega').rules("remove", "required");
 					$('#VentaNumeroEntrega').rules("remove", "required");
-					
 					$('#VentaCiudadEntrega').rules("remove", "required");
 					$('#VentaRutReceptor').rules("remove", "required");
+					$('#VentaNombreReceptor').rules("remove", "required");
 				    $('#VentaComunaEntrega').rules("remove", "required");
 				    $('#VentaCostoEnvio').rules("remove", "required");
 
@@ -593,6 +594,7 @@ $(function() {
 					$('#VentaOtroEntrega').parents('div').eq(0).removeClass('hidden');
 					$('#VentaCiudadEntrega').parents('div').eq(0).removeClass('hidden');
 					$('#VentaRutReceptor').parents('div').eq(0).removeClass('hidden');
+					$('#VentaNombreReceptor').parents('div').eq(0).removeClass('hidden');
 					$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
 					$('#VentaCostoEnvio').parents('div').eq(0).removeClass('hidden');
 
@@ -620,6 +622,13 @@ $(function() {
 				    $('#VentaRutReceptor').rules("add", {
 				        required: true,
 				        rut: true,
+				        messages: {
+				        	required: 'Campo requerido'
+				        }
+				    });
+
+				    $('#VentaNombreReceptor').rules("add", {
+				        required: true,
 				        messages: {
 				        	required: 'Campo requerido'
 				        }
@@ -972,6 +981,8 @@ $(function() {
 
 					$('#VentaVentaClienteId').val(res.response.cliente.id);
 					$('#obtener_cliente').val(res.response.cliente.email);
+					$('#VentaRutReceptor').val(res.response.cliente.rut);
+				    $('#VentaNombreReceptor').val(res.response.cliente.nombre + ' ' + res.response.cliente.apellido);
 
 				}, 1500);				
 				
@@ -994,6 +1005,7 @@ $(function() {
 				          	for (var i = 0; i < data.clientes.length; i++) {
 
 				          		$result[i] = {
+				          			todo : data.clientes[i].VentaCliente,
 				          			label :  data.clientes[i].VentaCliente.nombre + ' ' + data.clientes[i].VentaCliente.apellido + ' <' + data.clientes[i].VentaCliente.email + '>',
 				          			value :  data.clientes[i].VentaCliente.email,
 				          			id :  data.clientes[i].VentaCliente.id
@@ -1007,6 +1019,9 @@ $(function() {
 				      select: function( event, ui ) {
 
 				      	$('#VentaVentaClienteId').val(ui.item.id);
+
+				      	$('#VentaRutReceptor').val(ui.item.todo.rut);
+				      	$('#VentaNombreReceptor').val(ui.item.todo.nombre + ' ' + ui.item.todo.apellido);
 
 				      }
 				    } );

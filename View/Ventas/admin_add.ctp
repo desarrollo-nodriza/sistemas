@@ -99,6 +99,10 @@
 												<?= $this->Form->input('rut_receptor', array('type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ingrese rut sin puntos ni guión')); ?>
 											</div>
 											<div class="form-group hidden">
+												<label><?=__('Nombre receptor');?></label>
+												<?= $this->Form->input('nombre_receptor', array('class' => 'form-control', 'placeholder' => 'Ingrese nombre del receptor')); ?>
+											</div>
+											<div class="form-group hidden">
 												<label><?=__('Telefono receptor');?></label>
 												<?= $this->Form->input('fono_receptor', array('class' => 'form-control in-number', 'placeholder' => '9 9999 9999')); ?>
 											</div>

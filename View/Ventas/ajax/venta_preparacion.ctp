@@ -65,7 +65,7 @@
 	      	<table class="table table-bordered">
 	      		<tr>
 	      			<td>Dirección</td>
-	      			<td><?=$venta['Venta']['direccion_entrega'];?>, <?=$venta['Venta']['comuna_entrega'];?></td>
+	      			<td><?=$venta['Venta']['direccion_entrega'];?> <?=$venta['Venta']['numero_entrega'];?> <?=$venta['Venta']['otro_entrega'];?>, <?=$venta['Venta']['ciudad_entrega'];?> - <?=$venta['Venta']['comuna_entrega'];?></td>
 	      		</tr>
 	      		<tr>
 	      			<td>Receptor informado</td>
@@ -77,7 +77,7 @@
 	      		</tr>
 	      	</table>
 	      	<hr>
-	      	<h4>><i class="fa fa-bell"></i> Nota interna</h4>
+	      	<h4><i class="fa fa-bell"></i> Nota interna</h4>
 	      	<table class="table table-bordered">
 	      		<tr class="<?= (!empty($venta['Venta']['nota_interna'])) ? 'success' : '' ; ?>">
 	      			<td><?=$venta['Venta']['nota_interna'];?></td>
@@ -375,7 +375,7 @@
 			      	<table class="table table-bordered">
 			      		<tr>
 			      			<td>Dirección</td>
-			      			<td><?=$venta['Venta']['direccion_entrega'];?>, <?=$venta['Venta']['comuna_entrega'];?></td>
+			      			<td><?=$venta['Venta']['direccion_entrega'];?> <?=$venta['Venta']['numero_entrega'];?> <?=$venta['Venta']['otro_entrega'];?>, <?=$venta['Venta']['ciudad_entrega'];?> - <?=$venta['Venta']['comuna_entrega'];?></td>
 			      		</tr>
 			      		<tr>
 			      			<td>Receptor informado</td>

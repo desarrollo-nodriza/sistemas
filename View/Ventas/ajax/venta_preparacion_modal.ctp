@@ -94,7 +94,7 @@
 		      	<table class="table table-bordered">
 		      		<tr>
 		      			<td>Dirección</td>
-		      			<td><?=$venta['Venta']['direccion_entrega'];?>, <?=$venta['Venta']['comuna_entrega'];?></td>
+		      			<td><?=$venta['Venta']['direccion_entrega'];?> <?=$venta['Venta']['numero_entrega'];?> <?=$venta['Venta']['otro_entrega'];?>, <?=$venta['Venta']['ciudad_entrega'];?> - <?=$venta['Venta']['comuna_entrega'];?></td>
 		      		</tr>
 		      		<tr>
 		      			<td>Receptor informado</td>
