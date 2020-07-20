@@ -925,7 +925,7 @@ class PrestashopComponent extends Component
 		ini_set('max_execution_time', 0);
 
 		$opt             = array();
-		$opt['display'] = '[id,name,price,active,quantity,supplier_reference,id_manufacturer,id_default_image,link_rewrite,width,height,depth,weight]';
+		$opt['display'] = '[id,name,price,active,quantity,supplier_reference,id_manufacturer,id_supplier,id_default_image,link_rewrite,width,height,depth,weight]';
 		
 		$opt['resource'] = 'products';
 

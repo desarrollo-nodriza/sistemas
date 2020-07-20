@@ -2009,7 +2009,7 @@ class VentaDetalleProductosController extends AppController
 						continue;
 					}
 
-					if (Configure::read('debug') > 0) {
+					if (Configure::read('ambiente') == 'dev') {
 			        	$actualizar = true;
 			      	}else{
 			      		$actualizar = true;  //$this->Prestashop->prestashop_actualizar_stock($c['item']['associations']['stock_availables']['stock_available']['id'], $nuevo_stock);
@@ -2044,7 +2044,7 @@ class VentaDetalleProductosController extends AppController
 						continue;
 					}
 
-					if (Configure::read('debug') > 0) {
+					if (Configure::read('ambiente') == 'dev') {
 						$actualizar = array('code' => 200);
 					}else{
 						$actualizar = array('code' => 200); //$this->Linio->actualizar_stock_producto(array(), $id_externo, $nuevo_stock);
@@ -2081,7 +2081,7 @@ class VentaDetalleProductosController extends AppController
 						continue;
 					}
 					
-					if (Configure::read('debug') > 0) {
+					if (Configure::read('ambiente') == 'dev') {
 						$actualizar = array('httpCode' => 200);
 					}else{
 						$actualizar = array('httpCode' => 200); //$this->MeliMarketplace->mercadolibre_actualizar_stock($c['item']['id'], $nuevo_stock);
@@ -2170,6 +2170,12 @@ class VentaDetalleProductosController extends AppController
 					continue;
 				}
 
+				if (!empty($p['id_supplier'])) {
+					$productosLocales[$ip]['Proveedor'] = array(
+						'Proveedor' => $p['id_supplier']
+					);
+				}
+
 				$productosLocales[$ip]['VentaDetalleProducto']['id_externo']       = $p['id'];
 				$productosLocales[$ip]['VentaDetalleProducto']['codigo_proveedor'] = $p['supplier_reference'];
 				$productosLocales[$ip]['VentaDetalleProducto']['marca_id'] 		   = $p['id_manufacturer'];
@@ -2178,15 +2184,13 @@ class VentaDetalleProductosController extends AppController
 				$productosLocales[$ip]['VentaDetalleProducto']['alto']			   = round($p['height'], 2);
 				$productosLocales[$ip]['VentaDetalleProducto']['largo']			   = round($p['depth'], 2);
 				$productosLocales[$ip]['VentaDetalleProducto']['peso']			   = round($p['weight'], 2);
-					
-
 			}
 
 		}
 
 		if (!empty($productosLocales)) {
 				
-			if ($this->VentaDetalleProducto->saveMany($productosLocales))
+			if ($this->VentaDetalleProducto->saveMany($productosLocales, array('deep' => true)))
 			{
 				$arrMessage = array( sprintf('Se han creado/modificado %d productos', count($productosLocales)) );
 			}
