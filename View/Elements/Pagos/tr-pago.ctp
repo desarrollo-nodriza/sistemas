@@ -61,7 +61,7 @@
 						<tbody>
 						<? foreach ($pago['OrdenCompraFactura'] as $if => $f): ?>
 							<tr>
-								<td><?=$this->Html->link('#' . $f['id'], array('controller' => 'ordenCompraFacturas', 'action' => 'view', $f['id']), array('target' => '_blank')); ?></td>
+								<td><?=$this->Html->link('#' . $f['folio'], array('controller' => 'ordenCompraFacturas', 'action' => 'view', $f['id']), array('target' => '_blank')); ?></td>
 								<td><?=$this->Html->link('#' . $f['OrdenCompra']['id'], array('controller' => 'ordenCompras', 'action' => 'view', $f['OrdenCompra']['id']), array('target' => '_blank')); ?></td>
 								<td><?=$f['OrdenCompra']['Proveedor']['nombre']; ?><br><?=$f['OrdenCompra']['Proveedor']['rut_empresa']; ?></td>
 								<td><?=CakeNumber::currency($f['monto_facturado'], 'CLP');?></td>
