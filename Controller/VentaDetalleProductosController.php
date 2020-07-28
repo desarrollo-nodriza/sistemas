@@ -2012,7 +2012,7 @@ class VentaDetalleProductosController extends AppController
 					if (Configure::read('ambiente') == 'dev') {
 			        	$actualizar = true;
 			      	}else{
-			      		$this->Prestashop->prestashop_actualizar_stock($c['item']['associations']['stock_availables']['stock_available']['id'], $nuevo_stock);
+			      		$actualizar = $this->Prestashop->prestashop_actualizar_stock($c['item']['associations']['stock_availables']['stock_available']['id'], $nuevo_stock);
 			      	}
 
 					if ($actualizar && $c['existe']) {
