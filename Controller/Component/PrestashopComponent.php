@@ -849,7 +849,7 @@ class PrestashopComponent extends Component
 	public function prestashop_actualizar_stock($stock_id, $NuevoStock)
 	{	
 
-		return false;
+		#return false;
 
 		try {
 
