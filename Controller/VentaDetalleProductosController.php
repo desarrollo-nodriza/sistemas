@@ -2047,7 +2047,7 @@ class VentaDetalleProductosController extends AppController
 					if (Configure::read('ambiente') == 'dev') {
 						$actualizar = array('code' => 200);
 					}else{
-						$this->Linio->actualizar_stock_producto(array(), $id_externo, $nuevo_stock);
+						$actualizar = $this->Linio->actualizar_stock_producto(array(), $id_externo, $nuevo_stock);
 					}
 					
 					
@@ -2084,7 +2084,7 @@ class VentaDetalleProductosController extends AppController
 					if (Configure::read('ambiente') == 'dev') {
 						$actualizar = array('httpCode' => 200);
 					}else{
-						$this->MeliMarketplace->mercadolibre_actualizar_stock($c['item']['id'], $nuevo_stock);
+						$actualizar = $this->MeliMarketplace->mercadolibre_actualizar_stock($c['item']['id'], $nuevo_stock);
 					}
 
 					if ($actualizar['httpCode'] == 200) {
