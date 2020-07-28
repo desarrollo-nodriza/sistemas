@@ -27,7 +27,7 @@
 				</tr>
 			</table>
 		</td>
-		<td align="center" style="vertical-align: middle; font-size: 30px; font-weight: bold; text-align: center; line-height: 30px;">OC #<?= (Configure::read('debug') > 0) ? 'NO APLICA' : $oc['OrdenCompra']['id'];?></td>
+		<td align="center" style="vertical-align: middle; font-size: 30px; font-weight: bold; text-align: center; line-height: 30px;">OC #<?= (Configure::read('ambiente') == 'dev') ? 'NO APLICA' : $oc['OrdenCompra']['id'];?></td>
 	</tr>
 	<tr>
 		<td>

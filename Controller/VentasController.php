@@ -3394,7 +3394,7 @@ class VentasController extends AppController {
 				$this->request->data['VentaDetalle'][$iv]['precio']                     = monto_neto($d['precio_bruto']);
 				$this->request->data['VentaDetalle'][$iv]['cantidad_pendiente_entrega'] = $d['cantidad'];
 				$this->request->data['VentaDetalle'][$iv]['cantidad_reservada']         = 0;
-				$this->request->data['VentaDetalle'][$iv]['total_neto']              = $this->request->data['VentaDetalle'][$iv]['precio'] * $d['cantidad'];			
+				$this->request->data['VentaDetalle'][$iv]['total_neto']                 = $this->request->data['VentaDetalle'][$iv]['precio'] * $d['cantidad'];			
 				$this->request->data['VentaDetalle'][$iv]['total_bruto']				= monto_bruto($this->request->data['VentaDetalle'][$iv]['total_neto']);
 			}
 
@@ -3706,7 +3706,7 @@ class VentasController extends AppController {
 				throw new Exception("Error al cambiar el estado. No fue posible obtener el estado de Prestashop", 505);
 			}
 
-			if (Configure::read('debug') > 0) {
+			if (Configure::read('ambiente') == 'dev') {
 				$resCambio = true;
 			}else{
 				$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
@@ -3904,7 +3904,7 @@ class VentasController extends AppController {
 			# Descontar stock virtual y refrescar canales
 			$productosController = new VentaDetalleProductosController();
 
-			if (Configure::read('debug') > 0) {
+			if (Configure::read('ambiente') == 'dev') {
 				$res = true;
 			}else{
 				$res = $productosController->actualizar_canales_stock($producto['VentaDetalleProducto']['id_externo'], $producto['VentaDetalleProducto']['cantidad_virtual'], $excluir);
@@ -4042,7 +4042,7 @@ class VentasController extends AppController {
 
 		$asunto = '[Nodriza Spa-'.rand(100,10000).'] Recordatorio de llegada de productos';
 		
-		if (Configure::read('debug') > 1) {
+		if (Configure::read('ambiente') == 'dev') {
 			$asunto = '[Nodriza Spa-'.rand(100,10000).'-DEV] Recordatorio de llegada de productos';
 		}
 
@@ -5132,7 +5132,7 @@ class VentasController extends AppController {
 	 */
 	public function notificar_cambio_estado($id_venta = null, $plantillaEmail = null, $nombre_estado_nuevo = '')
 	{	
-		if (Configure::read('debug') > 1) {
+		if (Configure::read('ambiente') == 'dev') {
             return true;
       	}
 
@@ -5188,7 +5188,7 @@ class VentasController extends AppController {
 
 		$asunto = '['.$venta['Tienda']['nombre'].'] Venta #' . $id_venta . ' - ' . $nombre_estado_nuevo;
 		
-		if (Configure::read('debug') > 1) {
+		if (Configure::read('ambiente') == 'dev') {
 			$asunto = '['.$venta['Tienda']['nombre'].'-DEV] Venta #' . $id_venta . ' - ' . $nombre_estado_nuevo;
 		}
 
@@ -5819,7 +5819,7 @@ class VentasController extends AppController {
 				return false;
 			}
 			
-			if (Configure::read('debug') > 0) {
+			if (Configure::read('ambiente') == 'dev') {
 				$resCambio = true;
 			}else{
 				$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
@@ -9004,7 +9004,7 @@ class VentasController extends AppController {
 
 		$asunto = '['.$venta['Tienda']['nombre'].'] Venta #' . $venta['Venta']['id'] . ' - Hay productos sin stock';
 		
-		if (Configure::read('debug') > 1) {
+		if (Configure::read('ambiente') == 'dev') {
 			$asunto = '['.$venta['Tienda']['nombre'].'-DEV] Venta #' . $venta['Venta']['id'] . ' - Hay productos sin stock';
 		}
 

@@ -193,7 +193,6 @@ class OrdenComprasController extends AppController
 
 	public function admin_index()
 	{	
-
 		$paginate = $this->paginacion_index();
 
 		$titulo_index = '<i class="fa fa-list"></i> Todas las Órdenes de Compra';
@@ -2161,7 +2160,7 @@ class OrdenComprasController extends AppController
 
 		$asunto = '[NDRZ] OC para '. strtolower($ocs['OrdenCompra']['razon_social_empresa']).' lista para revisión.';
 
-		if (Configure::read('debug') > 0) {
+		if (Configure::read('ambiente') == 'dev') {
 			$asunto = '[NDRZ-DEV] OC para '. strtolower($ocs['OrdenCompra']['razon_social_empresa']).' lista para revisión.';
 		}
 		
@@ -2223,7 +2222,7 @@ class OrdenComprasController extends AppController
 
 		$asunto = sprintf('[NDRZ] OC #%d rechazada', $id);
 		
-		if (Configure::read('debug') > 0) {
+		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[NDRZ-DEV] OC #%d rechazada', $id);
 		}
 
@@ -2284,7 +2283,7 @@ class OrdenComprasController extends AppController
 
 		$asunto = sprintf('[NDRZ] OC #%d rechazada por proveedor', $id);
 		
-		if (Configure::read('debug') > 0) {
+		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[NDRZ-DEV] OC #%d rechazada por proveedor', $id);
 		}
 
@@ -2343,7 +2342,7 @@ class OrdenComprasController extends AppController
 
 		$mandrill->conectar($mandrill_apikey);
 
-		if (Configure::read('debug') > 0) {
+		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[NDRZ-DEV] Hay %d ventas con productos en stockout.', count($ventas));
 		}else{
 			$asunto = sprintf('[NDRZ] Hay %d ventas con productos en stockout.', count($ventas));
@@ -2459,7 +2458,7 @@ class OrdenComprasController extends AppController
 		}
 		
 		
-		if (Configure::read('debug') > 0) {
+		if (Configure::read('ambiente') == 'dev') {
 			if ($recordatorio) {
 				$asunto = sprintf('[OC-DEV-RECORDATORIO] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
 			}else{
@@ -2538,7 +2537,7 @@ class OrdenComprasController extends AppController
 
 		$asunto = sprintf('[NDRZ] Asignar pago para OC #%d ', $id);
 		
-		if (Configure::read('debug') > 0) {
+		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[NDRZ-DEV] Asignar pago para OC #%d ', $id);
 		}
 
@@ -2591,7 +2590,7 @@ class OrdenComprasController extends AppController
 
 		$asunto = sprintf('[NDRZ] OC #%d lista para pagar', $id);
 		
-		if (Configure::read('debug') > 0) {
+		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[NDRZ-DEV] OC #%d lista para pagar', $id);
 		}
 

@@ -559,7 +559,7 @@ class VentaClientesController extends AppController
 
 		$asunto = sprintf('[%s] Hemos enviado tu link mágico', rand(10, 1000));		
 		
-		if (Configure::read('debug') > 0) {
+		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[DEV-%s] Hemos enviado tu link mágico', rand(10, 1000));
 		}
 		

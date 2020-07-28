@@ -273,13 +273,8 @@ class PagosController extends AppController
 
 		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
 		$cuentaBancarias = ClassRegistry::init('CuentaBancaria')->find('list', array('conditions' => array('activo' => 1)));
-
-
-		if (Configure::read('debug') == 0) {
-			$baseUrl = FULL_BASE_URL;
-		}else{
-			$baseUrl = FULL_BASE_URL_DEV;
-		}
+		
+		$baseUrl = obtener_url_base();
 
 		# Pagos totales por día
 		$dias = getDatesFromRange($this->request->query['start'], $this->request->query['end']);
@@ -365,12 +360,8 @@ class PagosController extends AppController
 		$this->View->viewPath		= 'Pagos' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
 		$this->Correo				= ClassRegistry::init('Correo');
-		
-		if (Configure::read('debug') == 0) {
-			$url = FULL_BASE_URL;
-		}else{
-			$url = FULL_BASE_URL_DEV;
-		}		
+				
+		$url = obtener_url_base();		
 
 		$this->View->set(compact('pago', 'url'));
 		$html						= $this->View->render('notificar_pago_agendado');
@@ -552,7 +543,7 @@ class PagosController extends AppController
 
 			$asunto = sprintf('[NDRZ - %s] Se ha realizado el pago de facturas desde Nodriza Spa', date('Y-m-d H:i:s'));
 			
-			if (Configure::read('debug') > 0) {
+			if (Configure::read('ambiente') == 'dev') {
 				$asunto = sprintf('[NDRZ-DEV - %s] Se ha realizado el pago de facturas desde Nodriza Spa', date('Y-m-d H:i:s'));
 			}
 			

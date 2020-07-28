@@ -2012,7 +2012,7 @@ class VentaDetalleProductosController extends AppController
 					if (Configure::read('ambiente') == 'dev') {
 			        	$actualizar = true;
 			      	}else{
-			      		$actualizar = true;  //$this->Prestashop->prestashop_actualizar_stock($c['item']['associations']['stock_availables']['stock_available']['id'], $nuevo_stock);
+			      		$this->Prestashop->prestashop_actualizar_stock($c['item']['associations']['stock_availables']['stock_available']['id'], $nuevo_stock);
 			      	}
 
 					if ($actualizar && $c['existe']) {
@@ -2047,7 +2047,7 @@ class VentaDetalleProductosController extends AppController
 					if (Configure::read('ambiente') == 'dev') {
 						$actualizar = array('code' => 200);
 					}else{
-						$actualizar = array('code' => 200); //$this->Linio->actualizar_stock_producto(array(), $id_externo, $nuevo_stock);
+						$this->Linio->actualizar_stock_producto(array(), $id_externo, $nuevo_stock);
 					}
 					
 					
@@ -2084,7 +2084,7 @@ class VentaDetalleProductosController extends AppController
 					if (Configure::read('ambiente') == 'dev') {
 						$actualizar = array('httpCode' => 200);
 					}else{
-						$actualizar = array('httpCode' => 200); //$this->MeliMarketplace->mercadolibre_actualizar_stock($c['item']['id'], $nuevo_stock);
+						$this->MeliMarketplace->mercadolibre_actualizar_stock($c['item']['id'], $nuevo_stock);
 					}
 
 					if ($actualizar['httpCode'] == 200) {

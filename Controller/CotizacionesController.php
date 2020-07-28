@@ -353,7 +353,7 @@ class CotizacionesController extends AppController
 
 			$mandrill->conectar($mandrill_apikey);
 
-			if(Configure::read('debug') > 1) {
+			if(Configure::read('ambiente') == 'dev') {
 				$asunto = '[COT-DEV] Se ha creado una cotización en ' . $tienda['Tienda']['url'];
 			}else{
 				$asunto = '[COT] Se ha creado una cotización en ' . $tienda['Tienda']['url'];
