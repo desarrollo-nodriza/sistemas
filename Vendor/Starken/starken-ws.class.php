@@ -218,7 +218,8 @@ class StarkenWebServices {
 
 		//Si el request se realiza en producción, se usan los datos de autenticación.
 		if (!$testing && $auth) {
-			$headers[] = 'Authorization: Basic '. base64_encode($this->rutApiRest. ':' .$this->claveApiRest);
+			$headers[] = 'Rut: ' . $this->rutApiRest;
+			$headers[] = 'Clave: ' . $this->claveApiRest;
 			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		}
 
