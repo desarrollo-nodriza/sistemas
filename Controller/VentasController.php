@@ -1245,6 +1245,44 @@ class VentasController extends AppController {
 
 
 	/**
+	 * Elimnar venta
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function admin_eliminar($id = null) {
+
+		if ( ! $this->Venta->exists($id) ) {
+			$this->Session->setFlash('El registro no es válido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'id' => $id
+			),
+			'contain' => array(
+				'VentaDetalle'
+			)
+		));
+
+		if (!empty($venta['VentaDetalle'])) {
+			$this->Session->setFlash( sprintf('No es posible eliminar la venta #%d con productos asociados. Sólo se permite cancelarla', $id), null, array(), 'danger');
+		}
+
+		# Eliminamos todos los registros
+		if ( $this->Venta->deleteAll(array('Venta.id' => $id), true) ) {
+			$this->Session->setFlash( sprintf('Venta #%d eliminada correctamente', $id), null, array(), 'success');
+		}
+		else {
+			$this->Session->setFlash( sprintf('Error al eliminar la venta #%d', $id), null, array(), 'danger');
+		}
+		
+		$this->redirect($this->referer('/', true));
+
+	}
+
+
+	/**
 	 * Activar venta
 	 * @param  [type] $id [description]
 	 * @return [type]     [description]
@@ -3216,12 +3254,12 @@ class VentasController extends AppController {
 			}
 			
 			# Seteamos las comunas
-			$comunas_starken = $this->Starken->listarCiudadesDestino();
+			/*$comunas_starken = $this->Starken->listarCiudadesDestino();
 			$comunas         = array();
 
 			foreach ($comunas_starken['body'] as $ic => $comuna) {
 				$comunas[$comuna['nombreCiudad']] = $comuna['nombreCiudad'];
-			}
+			}*/
 			
 		}
 		
@@ -3473,12 +3511,14 @@ class VentasController extends AppController {
 		
 		$transportes  = ClassRegistry::init('Transporte')->find('list', array('conditions' => array('activo' => 1)));
 		
-		$comunas_starken = $this->Starken->listarCiudadesDestino();
+		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
+
+		/*$comunas_starken = $this->Starken->listarCiudadesDestino();
 		$comunas         = array();
 
 		foreach ($comunas_starken['body'] as $ic => $comuna) {
 			$comunas[$comuna['nombreCiudad']] = $comuna['nombreCiudad'];
-		}
+		}*/
 		
 		$marketplaces = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1)));
 		
