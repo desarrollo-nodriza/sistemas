@@ -483,15 +483,15 @@ class StarkenComponent extends Component
 
 	public function listarCiudadesDestino()
 	{	
-		$this->StarkenConexion = new StarkenWebServices();
-		return json_decode($this->StarkenConexion->listarCiudadesDestino(false, false), true);
+		$StarkenConexion = new StarkenWebServices('763811425', 'nodriza2020', '', '', '');
+		return json_decode($StarkenConexion->listarCiudadesDestino(false, true), true);
 	}
 
 
 	public function listarCiudadesOrigen()
 	{	
-		$this->StarkenConexion = new StarkenWebServices();
-		return json_decode($this->StarkenConexion->listarCiudadesOrigen(false, false), true);
+		$StarkenConexion = new StarkenWebServices('763811425', 'nodriza2020', '', '', '');
+		return json_decode($StarkenConexion->listarCiudadesOrigen(false, true), true);
 	}
 
 	public function getEtiquetaEmision($response, $venta) {
