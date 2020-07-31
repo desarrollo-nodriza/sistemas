@@ -85,6 +85,29 @@ class VentaCliente extends AppModel
 		)
 	);
 
+	/**
+	 * Callback
+	 * @param  array  $options [description]
+	 * @return [type]          [description]
+	 */
+	public function beforeSave($options = array())
+	{	
+		# Si el viene con rut, lo formateamos
+		if (isset($this->data['VentaCliente']['rut'])) {
+
+			$nw_rut = str_replace('.', '', $this->data['VentaCliente']['rut']);
+			$nw_rut = str_replace('-', '', $this->data['VentaCliente']['rut']);
+
+			$dv = substr($nw_rut, -1);
+			$rut = substr($nw_rut, 0, -1);
+
+			$this->data['VentaCliente']['rut'] = $rut . '-' . $dv;
+
+		}
+
+		return true;
+	}
+
 
 	function obtener_tipo_cliente()
 	{

@@ -196,10 +196,17 @@ class VentaClientesController extends AppController
 	}
 
 	public function admin_exportar()
-	{
-		$datos			= $this->VentaCliente->find('all');
-		$campos			= array_keys($this->VentaCliente->_schema);
-		$modelo			= $this->VentaCliente->alias;
+	{	
+		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
+        set_time_limit(600);
+        ini_set('memory_limit', -1);
+
+		 $datos          = $this->VentaCliente->find('all', array(
+            'recursive'             => -1
+        ));
+
+        $campos         = array_keys($this->VentaCliente->_schema);
+        $modelo         = $this->VentaCliente->alias;
 		
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}

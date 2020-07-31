@@ -33,7 +33,7 @@
 							</tr>
 							<tr>
 								<th><?= __('Fono'); ?></th>
-								<td><?= $this->Form->input('telefono', array('class' => 'form-control not-blank is-number', 'placeholder' => 'Ingrese fono del cliente')); ?></td>
+								<td><?= $this->Form->input('telefono', array('class' => 'form-control is-number', 'placeholder' => 'Ingrese fono del cliente')); ?></td>
 							</tr>
 							<tr>
 								<th><?= __('Tipo de cliente'); ?></th>
