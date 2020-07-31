@@ -194,6 +194,14 @@ class DireccionesController extends AppController
 			$v->set(compact('direccion'));	
 
 			$direccion['Direccion']['block'] = $v->render('/Elements/direcciones/address-block');
+			
+			$v2             =  new View();
+			$v2->autoRender = false;
+			$v2->output     = '';
+			$v2->layoutPath = '';
+			$v2->layout     = '';
+			$v2->set(compact('direccion'));
+			$direccion['Direccion']['tr']    = $v2->render('/Elements/direcciones/address-tr');
 
 			$resultado = array(
 				'code' => 200,
@@ -294,6 +302,15 @@ class DireccionesController extends AppController
 			$v->set(compact('direccion'));	
 
 			$direccion['Direccion']['block'] = $v->render('/Elements/direcciones/address-block');
+
+
+			$v2             =  new View();
+			$v2->autoRender = false;
+			$v2->output     = '';
+			$v2->layoutPath = '';
+			$v2->layout     = '';
+			$v2->set(compact('direccion'));
+			$direccion['Direccion']['tr']    = $v2->render('/Elements/direcciones/address-tr');
 
 			$resultado = array(
 				'code' => 200,

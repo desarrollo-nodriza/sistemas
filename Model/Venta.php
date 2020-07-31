@@ -263,6 +263,21 @@ class Venta extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'VentaEstado2' => array(
+			'className'				=> 'VentaEstado',
+			'joinTable'				=> 'estados_ventas',
+			'foreignKey'			=> 'venta_id',
+			'associationForeignKey'	=> 'venta_estado_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 
@@ -418,6 +433,17 @@ class Venta extends AppModel
 							'Transporte.id', 'Transporte.nombre', 'Transporte.url_seguimiento', 'Transporte.tiempo_entrega'
 						)
 					),
+					'VentaEstado2' => array(
+						'VentaEstadoCategoria' => array(
+							'fields' => array(
+								'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.plantilla'
+							)
+						),
+						'fields' => array(
+							'VentaEstado2.id', 'VentaEstado2.venta_estado_categoria_id', 'VentaEstado2.nombre'
+						),
+						'order' => array('EstadosVenta.fecha' => 'DESC')
+					),
 					'Dte' => array(
 						'Administrador' => array(
 							'fields' => array(
@@ -428,7 +454,7 @@ class Venta extends AppModel
 							'Dte.id', 'Dte.folio', 'Dte.tipo_documento', 'Dte.rut_receptor', 'Dte.razon_social_receptor', 'Dte.giro_receptor', 'Dte.neto', 'Dte.iva',
 							'Dte.total', 'Dte.fecha', 'Dte.estado', 'Dte.venta_id', 'Dte.pdf', 'Dte.invalidado', 'Dte.administrador_id'
 						),
-						'order' => 'Dte.fecha DESC'
+						'order' => array('Dte.fecha' => 'DESC')
 					),
 					'Administrador' => array(
 						'fields' => array(

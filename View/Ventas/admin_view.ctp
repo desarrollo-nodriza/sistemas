@@ -17,6 +17,8 @@
 			    	<?php endif; ?>
 					
 					<li><a href="#tab-transporte" data-toggle="tab"><i class="fa fa-truck"></i> Transporte Externo</a></li>
+
+					<li><a href="#tab-estados" data-toggle="tab"><i class="fa fa-list"></i> Historial de estados</a></li>
 			    	
 			    </ul>
 
@@ -1077,6 +1079,36 @@
 							</div>
 						</div>
 						<? endif; ?>
+					</div>
+
+					<div class="tab-pane panel-body active" id="tab-estados">
+						
+						<div class="table-responsive">
+							<table class="table table-bordered">
+								<caption>Estados por lo cuales a pasado la venta.</caption>
+								<th>Estado</th>
+								<th>Responsable</th>
+								<th>Fecha del cambio</th>
+								
+								<tbody>
+								<? if (empty($venta['VentaEstado2'])) : ?>
+									<tr>
+										<td colspan="3"><?= __('Sin información'); ?></td>
+									</tr>
+								<? else : ?>
+									<? foreach ($venta['VentaEstado2'] as $ie => $estado) : ?>
+										<tr>
+											<td><span data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$estado['nombre'];?>" class="btn btn-xs btn-<?= $estado['VentaEstadoCategoria']['estilo']; ?>"><?= $estado['VentaEstadoCategoria']['nombre']; ?></span></td>
+											<td><?=$estado['EstadosVenta']['responsable'];?></td>
+											<td><?=$estado['EstadosVenta']['fecha'];?></td>
+										</tr>
+									<? endforeach; ?>
+								<? endif; ?>
+								</tbody>
+
+							</table>
+						</div>
+						
 					</div>
 			    </div>
 

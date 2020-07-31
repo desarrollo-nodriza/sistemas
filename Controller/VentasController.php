@@ -3262,7 +3262,7 @@ class VentasController extends AppController {
 			}*/
 			
 		}
-		
+	
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
@@ -3859,7 +3859,22 @@ class VentasController extends AppController {
 			throw new Exception('Error al cambiar el estado. Intente nuevamente.', 303);
 		}
 
-		if ($this->Venta->save($this->request->data)) {
+
+	
+		# Guardamos el estado anterior en la tabla pivot
+		$this->request->data['VentaEstado2'] = array(
+			array(
+				'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+				'fecha'           => date('Y-m-d H:i:s'),
+				'responsable'     => $this->request->data['Venta']['venta_estado_responsable']
+			)
+		);
+
+		foreach ($venta['VentaEstado2'] as $ive => $ve) {
+			$this->request->data['VentaEstado2'][] = $ve['EstadosVenta'];
+		}
+
+		if ($this->Venta->saveAll($this->request->data)) {
 			return true;
 		}else{
 			

@@ -2,7 +2,7 @@
 <div class="modal fade" id="modalCrearDireccion" tabindex="-1" role="dialog" aria-labelledby="modalCrearDireccionLabel">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <?= $this->Form->create('Direccion', array('class' => 'form-horizontal js-formulario js-ajax-form', 'data-id' => '', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control', 'autocomplete' => false))); ?>
+      <?= $this->Form->create('Direccion', array('id' => 'DireccionAdminAddForm', 'class' => 'form-horizontal js-formulario js-ajax-form', 'data-id' => '', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control', 'autocomplete' => false))); ?>
       
 		<?=$this->Form->hidden('access_token', array('value' => $token)); ?>
 		<?=$this->Form->hidden('venta_cliente_id'); ?>

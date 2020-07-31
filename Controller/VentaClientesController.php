@@ -3,6 +3,8 @@ App::uses('AppController', 'Controller');
 App::uses('VentasController', 'Controller');
 class VentaClientesController extends AppController
 {
+	
+
 	public function admin_index()
 	{	
 		$paginate = array(); 
@@ -115,12 +117,63 @@ class VentaClientesController extends AppController
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
 		}
-		else
-		{
-			$this->request->data	= $this->VentaCliente->find('first', array(
-				'conditions'	=> array('VentaCliente.id' => $id)
-			));
+
+		$this->request->data = $this->VentaCliente->find('first', array(
+			'conditions' => array(
+				'VentaCliente.id' => $id
+			),
+			'contain' => array(
+				'Direccion' => array(
+					'Comuna'
+				),
+				'Prospecto' => array(
+					'fields' => array(
+						'Prospecto.id', 'Prospecto.estado_prospecto_id'
+					),
+					'Cotizacion' => array(
+						'fields' => array(
+							'Cotizacion.id', 'Cotizacion.nombre', 'Cotizacion.created', 'Cotizacion.total_bruto'
+						)
+					)
+				),
+				'Venta' => array(
+					'order' => array('Venta.fecha_venta' => 'DESC'),
+					'fields' => array(
+						'Venta.id', 'Venta.fecha_venta', 'Venta.total', 'Venta.venta_estado_id', 'Venta.picking_estado'
+					),
+					'VentaEstado' => array(
+						'fields' => array(
+							'VentaEstado.nombre', 'VentaEstado.venta_estado_categoria_id'
+						),
+						'VentaEstadoCategoria' => array(
+							'fields' => array(
+								'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.venta', 'VentaEstadoCategoria.final'
+							)
+						)
+					)
+				)
+			)
+		));
+
+		$this->request->data['Metricas'] = array(
+			'total_comprado' => 0,
+			'total_cotizado' => array_sum(Hash::extract($this->request->data['Prospecto'], '{n}[estado_prospecto_id=cotizacion].Cotizacion.{n}.total_bruto')),
+			'cantidad_prospectos' => count($this->request->data['Prospecto'])
+		);
+
+		# Total comprado
+		foreach ($this->request->data['Venta'] as $iv => $v) {
+			if ($v['VentaEstado']['VentaEstadoCategoria']['venta']) {
+				$this->request->data['Metricas']['total_comprado'] = $this->request->data['Metricas']['total_comprado'] + $v['total'];
+			}
 		}
+
+		BreadcrumbComponent::add('Clientes', '/ventaClientes');
+		BreadcrumbComponent::add('Editar cliente');
+
+		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.id', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
+
+		$this->set(compact('cliente', 'comunas'));
 	}
 
 	public function admin_delete($id = null)
