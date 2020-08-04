@@ -3859,14 +3859,15 @@ class VentasController extends AppController {
 			throw new Exception('Error al cambiar el estado. Intente nuevamente.', 303);
 		}
 
-
+		# se setea el id de la venta
+		$this->request->data['Venta']['id'] = $venta['Venta']['id'];
 	
 		# Guardamos el estado anterior en la tabla pivot
 		$this->request->data['VentaEstado2'] = array(
 			array(
 				'venta_estado_id' => $venta['Venta']['venta_estado_id'],
 				'fecha'           => date('Y-m-d H:i:s'),
-				'responsable'     => $this->request->data['Venta']['venta_estado_responsable']
+				'responsable'     => ($this->Session->check('Auth.Administrador.id')) ? $this->Session->read('Auth.Administrador.nombre') : $venta['Venta']['venta_estado_responsable']
 			)
 		);
 
