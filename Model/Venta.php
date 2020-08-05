@@ -1016,76 +1016,105 @@ class Venta extends AppModel
 	 */
 	public function reservar_stock_producto($id)
 	{
-		ClassRegistry::init('VentaDetalle')->id = $id;
-		if (!ClassRegistry::init('VentaDetalle')->exists()) {
-			return 0;
-		}
-
-		$cant_reservada = ClassRegistry::init('VentaDetalle')->field('cantidad_reservada');
-		$cant_cant      = ClassRegistry::init('VentaDetalle')->field('cantidad') - ClassRegistry::init('VentaDetalle')->field('cantidad_anulada');
-		$cant_entregada = ClassRegistry::init('VentaDetalle')->field('cantidad_entregada');
-		$cant_en_espera = ClassRegistry::init('VentaDetalle')->field('cantidad_en_espera');
-		$fecha_llegada  = ClassRegistry::init('VentaDetalle')->field('fecha_llegada_en_espera');
-
-		if ($cant_cant == $cant_entregada) {
-			return 0;
-		}
-
-		$reservar = $cant_cant - $cant_reservada - $cant_entregada;
 		
-		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock(ClassRegistry::init('VentaDetalle')->field('venta_detalle_producto_id'), $reservar);
+		$ventaDetalle     = ClassRegistry::init('VentaDetalle')->find('first', array(
+			'conditions' => array(
+				'VentaDetalle.id' => $id
+			),
+			'fields' => array(
+				'VentaDetalle.id',
+				'VentaDetalle.venta_id',
+				'VentaDetalle.venta_detalle_producto_id',
+				'VentaDetalle.cantidad_reservada',
+				'VentaDetalle.cantidad',
+				'VentaDetalle.cantidad_anulada',
+				'VentaDetalle.cantidad_entregada',
+				'VentaDetalle.cantidad_en_espera',
+				'VentaDetalle.fecha_llegada_en_espera'
+			)
+		));
+		
+		if (empty($ventaDetalle)) {
+			return 0;
+		}
+
+		$cant_reservada = $ventaDetalle['VentaDetalle']['cantidad_reservada'];
+		$cant_vendida   = $ventaDetalle['VentaDetalle']['cantidad'] - $ventaDetalle['VentaDetalle']['cantidad_anulada'];
+		$cant_entregada = $ventaDetalle['VentaDetalle']['cantidad_entregada'];
+		$cant_en_espera = $ventaDetalle['VentaDetalle']['cantidad_en_espera'];
+		$fecha_llegada  = $ventaDetalle['VentaDetalle']['fecha_llegada_en_espera'];
+
+		if ($cant_vendida == $cant_entregada) {
+			return 0;
+		}
+
+		$reservar = $cant_vendida - $cant_reservada - $cant_entregada;
+		
+		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], $reservar);
 		$reservado  = $cant_reservada + $disponible;
 
 		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente
-		if ($cant_reservada != $cant_cant ) {
+		if ($cant_reservada != $cant_vendida ) {
 			
-			$cant_cant = $cant_cant - $cant_entregada;
+			$cant_vendida = $cant_vendida - $cant_entregada;
 
-			$save = array(
-				'VentaDetalle' => array(
-					'id' => $id,
-					'cantidad_reservada' => $reservado
-				)
-			);
+			$ventaDetalle['VentaDetalle']['cantidad_reservada'] = $reservado;
 
-			if ($cant_en_espera == $reservado && $reservado != $cant_cant) {
-				$save['VentaDetalle']['cantidad_en_espera'] = $cant_cant - $reservado;
+			if ($cant_en_espera == $reservado && $reservado != $cant_vendida) {
+				$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = $cant_vendida - $reservado;
 			}
 			else if ($reservado == 0) {
-				$save['VentaDetalle']['cantidad_en_espera'] = $cant_en_espera;	
+				$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = $cant_en_espera;	
 			}
-			else if ($cant_en_espera < $reservado && $reservado != $cant_cant){
-				$save['VentaDetalle']['cantidad_en_espera'] = $cant_cant - $reservado;
+			else if ($cant_en_espera < $reservado && $reservado != $cant_vendida){
+				$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = $cant_vendida - $reservado;
 			}
-			else if ($cant_en_espera > $reservado && $reservado != $cant_cant){
-				$save['VentaDetalle']['cantidad_en_espera'] = $cant_en_espera - $reservado;
+			else if ($cant_en_espera > $reservado && $reservado != $cant_vendida){
+				$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = $cant_en_espera - $reservado;
 			}
-			else if ($reservado == $cant_cant) {
-				$save['VentaDetalle']['cantidad_en_espera'] = 0;
+			else if ($reservado == $cant_vendida) {
+				$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = 0;
 			}
 
 			if (empty($fecha_llegada)) {
-				unset($save['VentaDetalle']['cantidad_en_espera']);
+				unset($ventaDetalle['VentaDetalle']['cantidad_en_espera']);
 			}
 			
-			if(!ClassRegistry::init('VentaDetalle')->save($save))
+			if(!ClassRegistry::init('VentaDetalle')->save($ventaDetalle))
 				return 0;
 		}
-
-		$venta = $this->obtener_venta_por_id(ClassRegistry::init('VentaDetalle')->field('venta_id'));
+		
+		$venta = $this->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $ventaDetalle['VentaDetalle']['venta_id']
+			),
+			'contain' => array(
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.cantidad',
+						'VentaDetalle.cantidad_anulada',
+						'VentaDetalle.cantidad_entregada',
+						'VentaDetalle.cantidad_en_espera',
+						'VentaDetalle.cantidad_reservada'
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.picking_estado'
+			)
+		));
 		
 		$total_cantidad = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
 		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 
 		if ( $total_reservado == $total_cantidad && $total_reservado > 0) {
-			$this->id = $venta['Venta']['id'];
-
-			$picking_estado = $this->field('picking_estado');
-
-			if (empty($picking_estado) || $picking_estado == 'no_definido' || $picking_estado == 'empaquetado' ) {
-				$this->saveField('picking_estado', 'empaquetar');
+			if (empty($venta['Venta']['picking_estado']) || $venta['Venta']['picking_estado'] == 'no_definido' || $venta['Venta']['picking_estado'] == 'empaquetado' ) {
+				
+				# Pasa a picking
+				$this->cambiar_estado_picking($venta['Venta']['id'], 'empaquetar');
+			
 			}
-			$this->saveField('subestado_oc', 'no_entregado');
 		}
 
 		return $reservado;
@@ -1334,7 +1363,10 @@ class Venta extends AppModel
 	}
 
 
-
+	/**
+	 * Obtiene las ventas desde hace un mes que no esten con la opción de picking activa
+	 * @return arr
+	 */
 	public function obtener_ventas_sin_reserva()
 	{
 		$filter = array(
@@ -1344,7 +1376,7 @@ class Venta extends AppModel
 					'alias' => 'estado',
 					'type' => 'INNER',
 					'conditions' => array(
-						'estado.id = Venta.venta_estado_id'
+						'estado.id = Venta.venta_estado_id',
 					)
 				),
 				array(
@@ -1366,7 +1398,8 @@ class Venta extends AppModel
 				)
 			),
 			'conditions' => array(
-				'Venta.fecha_venta >=' => date("Y-m-d H:i:s",strtotime(date('Y-m-d')."-1 month"))
+				'Venta.fecha_venta >=' => date("Y-m-d H:i:s",strtotime(date('Y-m-d')."-1 month")),
+				'Venta.picking_estado' => 'no_definido'
 			),
 			'order' => array('Venta.fecha_venta' => 'ASC'),
 			'fields' => array(

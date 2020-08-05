@@ -948,6 +948,13 @@ $(function() {
 			      minLength: 3,
 			      select: function( event, ui ) {
 			      	
+			      	// Si el producto no tiene stock inmediato, se avisa
+			      	if (ui.item.todo.stock_fisico_total == 0) {
+			      		noty({text: 'El item ' + ui.item.label + ' no está disponible para entrega inmediata.', layout: 'topRight', type: 'error'});
+			      	}else{
+			      		noty({text: '¡El item ' + ui.item.label + ' está disponible para entrega inmediata!', layout: 'topRight', type: 'success'});
+			      	}
+
 			      	$('#obtener_producto').val('');
 
 			      	$('.js-productos-wrapper').append(ui.item.tr);

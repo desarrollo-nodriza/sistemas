@@ -301,79 +301,63 @@ class OrdenComprasController extends AppController
 		if ($this->request->is('post') || $this->request->is('put')) {
 			
 			ini_set('max_execution_time', 0);
+
+			# Se debe inngresar un Documeto para hacer la recepcón
+			if (!isset($this->request->data['OrdenCompraFactura']) || empty($this->request->data['OrdenCompraFactura'])) {
+				$this->Session->setFlash('No ha asignado pagos a esta OC.', null, array(), 'danger');
+				$this->redirect(array('action' => 'reception', $id));
+			}
 			
-			# Variables usados directamente que deben ser quitadas del post una vez asigandas.
-			$rut_proveedor = $this->request->data['OrdenCompra']['rut_proveedor'];
-			$rut_tienda    = $this->request->data['OrdenCompra']['rut_tienda'];
+			foreach ($this->request->data['VentaDetalleProducto'] as $key => $producto) {
 
-			unset($this->request->data['OrdenCompra']['rut_proveedor']);
-			unset($this->request->data['OrdenCompra']['rut_tienda']);
-			
-			foreach ($this->request->data['OrdenCompra'] as $key => $oc) {
-
-				# Se debe inngresar un Documeto para hacer la recepcón
-				if (!isset($this->request->data['OrdenCompraFactura']) || empty($this->request->data['OrdenCompraFactura'])) {
-					$this->Session->setFlash('No ha asignado pagos a esta OC.', null, array(), 'danger');
-					$this->redirect(array('action' => 'reception', $id));
-				}
-
-				# Se obtiene los datos de la OC enviada a proveedor
-				$pedido = ClassRegistry::init('OrdenComprasVentaDetalleProducto')->find('first', array(
-					'conditions' => array(
-						'orden_compra_id'           => $id,
-						'venta_detalle_producto_id' => $oc['VentaDetalleProducto']['id']
-					)
-				));
-				
 				# Calcula la cantidad  de productos que faltan por recibir.
-				$cantidadFaltante = $pedido['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] - $pedido['OrdenComprasVentaDetalleProducto']['cantidad_recibida'];
-				$cantidadRecibida = $oc['Bodega'][0]['cantidad'];
-				$bodegaDestino    = $oc['Bodega'][0]['bodega_id'];
+				$cantidadFaltante      = $producto['cantidad_validada_proveedor'] - $producto['cantidad_recibida'];
+				$cantidadRecibidaAhora = $producto['cantidad_recibida_ahora'];
+				$bodegaDestino         = $producto['bodega_id'];
 
 				if ($cantidadFaltante == 0) {
 					continue;
 				}
 
-				if ( $cantidadFaltante == $cantidadRecibida ) {
-					$res['completos'][] = sprintf('#%s - %s (agregados: %d)', $oc['VentaDetalleProducto']['id'], $pedido['OrdenComprasVentaDetalleProducto']['descripcion'], $cantidadRecibida);
+				if ( $cantidadFaltante == $cantidadRecibidaAhora ) {
+					$res['completos'][] = sprintf('#%s - %s (agregados: %d)', $producto['id'], $producto['descripcion'], $cantidadRecibidaAhora);
 				}
 
-				if ( $cantidadFaltante > $oc['Bodega'][0]['cantidad'] ) {
-					$res['incompletos'][] = sprintf('#%s - %s (agregados: %d - faltantes: %d)', $oc['VentaDetalleProducto']['id'], $pedido['OrdenComprasVentaDetalleProducto']['descripcion'], $cantidadRecibida, ($cantidadFaltante - $cantidadRecibida) );
+				if ( $cantidadFaltante > $cantidadRecibidaAhora ) {
+					$res['incompletos'][] = sprintf('#%s - %s (agregados: %d - faltantes: %d)', $producto['id'], $producto['descripcion'], $cantidadRecibidaAhora, ($cantidadFaltante - $cantidadRecibidaAhora) );
 				}
 
-				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->id = $pedido['OrdenComprasVentaDetalleProducto']['id'];
-				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->saveField('cantidad_recibida', $cantidadRecibida); # Actualiamos la cantidad recibida
+				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->id = $producto['id_ocp'];
+				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->saveField('cantidad_recibida', ($cantidadRecibidaAhora + $producto['cantidad_recibida']) ); # Actualiamos la cantidad recibida
 				
 				# Se crea la entrada de productos
-				$precioCompra = round($pedido['OrdenComprasVentaDetalleProducto']['total_neto'] / $pedido['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'], 2);
+				$precioCompra = round($producto['total_neto'] / $producto['cantidad_validada_proveedor'], 2);
 				
-				if (ClassRegistry::init('Bodega')->crearEntradaBodega($oc['VentaDetalleProducto']['id'], $bodegaDestino, $cantidadRecibida, $precioCompra, 'OC', $id)) {
-					
-					$productosActualizado[] = $oc['VentaDetalleProducto']['id'];
-
-					$this->OrdenCompra->id = $id;
-
-					$oc_manual = $this->OrdenCompra->field('oc_manual');
-
-					# Reservamos los productos de las ventas relacionadas a la OC padre
-					if (!$oc_manual) {
-						ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
-					}else{
-						# Reservamos las ventas mas antiguas
-						$ventasSinReserva = ClassRegistry::init('Venta')->obtener_ventas_sin_reserva();
-
-						foreach ($ventasSinReserva as $venta) {
-							foreach ($venta['VentaDetalle'] as $detalle) {
-								ClassRegistry::init('Venta')->reservar_stock_producto($detalle['id']);
-							}	
-						}
-					}
-
+				if (ClassRegistry::init('Bodega')->crearEntradaBodega($producto['id'], $bodegaDestino, $cantidadRecibidaAhora, $precioCompra, 'OC', $id)) {
+					$productosActualizado[] = $producto['id'];
 				}else{
-					$productosNoActualizado[] = $oc['VentaDetalleProducto']['id'];
+					$productosNoActualizado[] = $producto['id'];
 				}
 
+			}
+
+
+			$this->OrdenCompra->id = $id;
+			$oc_manual             = $this->OrdenCompra->field('oc_manual');
+			
+			# Reservamos los productos de las ventas relacionadas a la OC padre
+			if (!$oc_manual) {
+				ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
+			}else{
+				
+				# Reservamos las ventas mas antiguas
+				$ventasSinReserva = ClassRegistry::init('Venta')->obtener_ventas_sin_reserva();
+
+				foreach ($ventasSinReserva as $venta) {
+					foreach ($venta['VentaDetalle'] as $detalle) {
+						ClassRegistry::init('Venta')->reservar_stock_producto($detalle['id']);
+					}	
+				}
 			}
 			
 			if (!empty($res['completos'])) {
@@ -421,14 +405,20 @@ class OrdenComprasController extends AppController
 
 			foreach ($this->request->data['OrdenCompraFactura'] as $iocf => $ocf) {
 
+				# si no viene con folio no se procesa
 				if (empty($ocf['folio']))
 					continue;
+
+				# si ya es una factura creada, no se procesa
+				if (isset($ocf['id']))
+					continue;
+				
 				
 				# Se obtiene el dTE desde el sii y se verifican los datos
-				$emisor   = $this->rutSinDv($rut_proveedor);
+				$emisor   = $this->rutSinDv($this->request->data['OrdenCompra']['rut_proveedor']);
 				$tipo_dte = $ocf['tipo_documento']; // Facturas
 				$folio    = $ocf['folio'];
-				$receptor = $this->rutSinDv($rut_tienda);
+				$receptor = $this->rutSinDv($this->request->data['OrdenCompra']['rut_tienda']);
 
 				$res = $libreDte->obtener_documento_recibido($emisor, $tipo_dte, $folio, $receptor);
 				
@@ -470,7 +460,6 @@ class OrdenComprasController extends AppController
 				}
 			}
 
-			$this->OrdenCompra->id = $id;
 			$total_oc = $this->OrdenCompra->field('total');
 
 			# OC queda en estado de espera de factura

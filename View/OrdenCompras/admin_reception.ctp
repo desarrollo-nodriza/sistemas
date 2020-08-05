@@ -35,7 +35,13 @@
 								
 								<tr>
 									<td>
-										<?=$this->Form->hidden(sprintf('%d.VentaDetalleProducto.id', $ipp), array('value' => $producto['id']));?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.id', $ipp), array('value' => $producto['id']));?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.id_ocp', $ipp), array('value' => $producto['OrdenComprasVentaDetalleProducto']['id']));?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.total_neto', $ipp), array('value' => $producto['OrdenComprasVentaDetalleProducto']['total_neto']));?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.cantidad_validada_proveedor', $ipp), array('value' => $producto['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']));?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.cantidad_recibida', $ipp), array('value' => $producto['OrdenComprasVentaDetalleProducto']['cantidad_recibida']));?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.descripcion', $ipp), array('value' => $producto['OrdenComprasVentaDetalleProducto']['descripcion']));?>
+
 										<?=$producto['id'];?>
 									</td>
 									<td><?=$producto['OrdenComprasVentaDetalleProducto']['codigo'];?></td>
@@ -48,19 +54,19 @@
 
 									<? if ($producto['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] > $producto['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] ) : ?>
 
-									<td><?=$this->Form->input(sprintf('%d.Bodega.0.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'max' => $producto['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']));?></td>
+									<td><?=$this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad_recibida_ahora', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'max' => $producto['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] - $producto['OrdenComprasVentaDetalleProducto']['cantidad_recibida']));?></td>
 									
 									<? else : ?>
 
-									<td><?=$this->Form->input(sprintf('%d.Bodega.0.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'readonly' => true, 'max' => $producto['OrdenComprasVentaDetalleProducto']['cantidad'] , 'value' => 0));?></td>
+									<td><?=$this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad_recibida_ahora', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-recibida', 'readonly' => true, 'max' => $producto['OrdenComprasVentaDetalleProducto']['cantidad'] , 'value' => 0));?></td>
 									
 									<? endif; ?>
 									
 									<? if (!empty(Hash::extract($producto, 'Bodega.{n}.BodegasVentaDetalleProducto.bodega_id'))) : ?>
 									
-									<td><?=$this->Form->select(sprintf('%d.Bodega.0.bodega_id', $ipp), $bodegas, array('class' => 'form-control not-blank', 'default' => Hash::extract($producto, 'Bodega.{n}.BodegasVentaDetalleProducto.bodega_id')[0], 'empty' => 'Seleccione'));?></td>
+									<td><?=$this->Form->select(sprintf('VentaDetalleProducto.%d.bodega_id', $ipp), $bodegas, array('class' => 'form-control not-blank', 'default' => Hash::extract($producto, 'Bodega.{n}.BodegasVentaDetalleProducto.bodega_id')[0], 'empty' => 'Seleccione'));?></td>
 									<? else : ?>
-									<td><?=$this->Form->select(sprintf('%d.Bodega.0.bodega_id', $ipp), $bodegas, array('class' => 'form-control not-blank', 'default' => 1, 'empty' => 'Seleccione'));?></td>
+									<td><?=$this->Form->select(sprintf('VentaDetalleProducto.%d.bodega_id', $ipp), $bodegas, array('class' => 'form-control not-blank', 'default' => 1, 'empty' => 'Seleccione'));?></td>
 									<? endif; ?>
 								</tr>
 								
@@ -147,16 +153,16 @@
 									<td>
 										<?=$this->Form->hidden(sprintf('OrdenCompraFactura.%d.id', $ip), array('value' => $dte['id'])); ?>
 										<?=$this->Form->hidden(sprintf('OrdenCompraFactura.%d.proveedor_id', $ip), array('value' => $this->request->data['OrdenCompra']['proveedor_id'])); ?>
-										<?= $this->Form->select(sprintf('OrdenCompraFactura.%d.tipo_documento', $ip), $tipo_documento, array('class' => 'form-control not-blank', 'empty' => 'Seleccione tipo documento', 'default' => $dte['tipo_documento'], 'disabled' => ($dte['pagada']) ? true : false)); ?>
+										<?= $this->Form->select(sprintf('OrdenCompraFactura.%d.tipo_documento', $ip), $tipo_documento, array('class' => 'form-control not-blank', 'empty' => 'Seleccione tipo documento', 'default' => $dte['tipo_documento'], 'readonly' => ($dte['pagada']) ? true : false)); ?>
 									</td>
 									<td>
-										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.folio', $ip), array('type' => 'text', 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej:  4433', 'value' => $dte['folio'], 'disabled' => ($dte['pagada']) ? true : false )); ?>
+										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.folio', $ip), array('type' => 'text', 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej:  4433', 'value' => $dte['folio'], 'readonly' => ($dte['pagada']) ? true : false )); ?>
 									</td>
 									<td>
-										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.monto_facturado', $ip), array('type' => 'text', 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej:  4433', 'value' => $dte['monto_facturado'], 'disabled' => ($dte['pagada']) ? true : false)); ?>
+										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.monto_facturado', $ip), array('type' => 'text', 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ej:  4433', 'value' => $dte['monto_facturado'], 'readonly' => ($dte['pagada']) ? true : false)); ?>
 									</td>
 									<td>
-										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.nota', $ip), array('type' => 'textarea', 'class' => 'form-control', 'placeholder' => 'Agregue un nota (opcional)', 'value' => $dte['nota'], 'disabled' => ($dte['pagada']) ? true : false)); ?>
+										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.nota', $ip), array('type' => 'textarea', 'class' => 'form-control', 'placeholder' => 'Agregue un nota (opcional)', 'value' => $dte['nota'], 'readonly' => ($dte['pagada']) ? true : false)); ?>
 									</td>
 									<td valign="center">
 										<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>

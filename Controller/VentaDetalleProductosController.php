@@ -2504,6 +2504,7 @@ class VentaDetalleProductosController extends AppController
 
         $paginacion['total'] = count($productos);
 
+        # Si existe el campo external, se consulta el precio del producto en prestashop
     	if (isset($this->request->query['external'])) {
     		
     		# Iniciamos prestashop
@@ -2531,6 +2532,7 @@ class VentaDetalleProductosController extends AppController
 
 		$html_tr = '';
 
+		# Si existe el campo tr, devolvemos las vistas html disponibles
         if (isset($this->request->query['tr'])) {
     		if ($this->request->query['tr'] == 1) {
     			foreach ($productos as $ip => $producto) {
@@ -2555,6 +2557,11 @@ class VentaDetalleProductosController extends AppController
 
     			}
     		}
+    	}
+
+    	# Verificamos la existencia del item en bodegas
+    	foreach ($productos as $ip => $producto) {
+    		$productos[$ip]['VentaDetalleProducto']['stock_fisico_total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
     	}
 
         $this->set(array(
