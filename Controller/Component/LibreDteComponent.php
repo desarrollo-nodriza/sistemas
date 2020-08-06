@@ -824,7 +824,7 @@ class LibreDteComponent extends Component
 
 			$dte['Referencia'] = $DteReferencia;
 		}
-		exit;
+		
 		return $dte;
 	}
 
