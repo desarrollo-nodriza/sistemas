@@ -803,7 +803,13 @@ class LibreDteComponent extends Component
 					
 					# Sumamos la cantidad ya anulada
 					$yaAnulado = array_sum(Hash::extract($ndcRelacionadas, '{n}.Dte.total'));
-					$total_dte = array_sum(Hash::extract($data['DteDetalle'], '{n}.PrcItem')) * array_sum(Hash::extract($data['DteDetalle'], '{n}.QtyItem'));
+					
+					$total_dte = 0;
+					# Sumamos el total de items anulados
+					foreach ($data['DteDetalle'] as $detalle) {
+						$total_dte = $total_dte + ($detalle['PrcItem'] * $detalle['QtyItem']);
+					}
+
 					$totalAnulado = monto_bruto($total_dte, 19, 0) + $yaAnulado;
 					
 					if (!empty($dteReferenciado) && $totalAnulado >= $dteReferenciado['Dte']['total']) {
@@ -818,7 +824,7 @@ class LibreDteComponent extends Component
 
 			$dte['Referencia'] = $DteReferencia;
 		}
-		
+		exit;
 		return $dte;
 	}
 

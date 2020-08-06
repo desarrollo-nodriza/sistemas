@@ -876,9 +876,15 @@
 																<?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('controller' => 'ordenes', 'action' => 'editar', $dte['id'], $this->request->data['Venta']['id']), array('class' => 'btn btn-info btn-xs', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
 
 		                                                        <? if($permisos['delete']) : ?>
-		                                                        <!--<li>
-																	<?= $this->Html->link('<i class="fa fa-undo"></i> Invalidar', array('controller' => 'ordenes','action' => 'invalidar', $dte['id'], $this->request->data['Venta']['id']), array('class' => '', 'rel' => 'tooltip', 'title' => 'Invalidar este registro', 'escape' => false)); ?>
-																</li>-->
+		                                                        	
+		                                                        	<? if (!$dte['invalidado']) : ?>
+																		<?= $this->Html->link('<i class="fa fa-close"></i> Invalidar', array('controller' => 'dtes', 'action' => 'marcar_invalido', $dte['id']), array('class' => 'btn btn-danger btn-xs', 'rel' => 'tooltip', 'title' => 'Invalidar dte', 'escape' => false)); ?>
+																	<? endif; ?>
+
+																	<? if ($dte['invalidado']) : ?>
+																		<?= $this->Html->link('<i class="fa fa-check"></i> Re-validar', array('controller' => 'dtes', 'action' => 'marcar_valido', $dte['id']), array('class' => 'btn btn-primary btn-xs', 'rel' => 'tooltip', 'title' => 'Re-validar dte', 'escape' => false)); ?>
+																	<? endif; ?>
+
 																	<? if ($dte['estado'] != 'dte_real_emitido') : ?>
 																		<?= $this->Html->link('<i class="fa fa-trash"></i> Eliminar', array('controller' => 'ordenes','action' => 'delete_dte', $dte['id'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-xs', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
 																	<? endif; ?>
@@ -886,7 +892,9 @@
 
 																<? if ($dte['tipo_documento'] == 33 || $dte['tipo_documento'] == 39 && $dte['invalidado'] == 0) : ?>
 																	<?= $this->Html->link('<i class="fa fa-file"></i> Generar NDC', array('controller' => 'ordenes', 'action' => 'generar', $venta['Venta']['id'], '?' => array('tipo' => 'nota-de-credito', 'dte' => $dte['id'])), array('class' => 'btn btn-warning btn-xs', 'rel' => 'tooltip', 'title' => 'Generar NDC', 'escape' => false)); ?>
-																<? endif; ?>                                                  
+																<? endif; ?>
+
+
 				                                                    </ul>
 				                                                </div>
 															</td>

@@ -251,6 +251,56 @@ class DtesController extends AppController
 
 	}
 
+
+	/**
+	 * Marca un dte como valido
+	 * @param  [type] $id_dte [description]
+	 * @return [type]         [description]
+	 */
+	public function admin_marcar_valido($id_dte)
+	{
+		if ( ! $this->Dte->exists($id_dte) )
+		{
+			$this->Session->setFlash('Dte no existe.' , null, array(), 'warning');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$this->Dte->id = $id_dte;
+
+		if ($this->Dte->saveField('invalidado', 0)) {
+			$this->Session->setFlash('Dte marcado como válido.' , null, array(), 'success');
+		}else{
+			$this->Session->setFlash('No fue posible actualizar el dte. Intente nuevamente' , null, array(), 'warning');
+		}
+		
+		$this->redirect($this->referer('/', true));
+	}
+
+
+	/**
+	 * Marca un dte como no valido
+	 * @param  [type] $id_dte [description]
+	 * @return [type]         [description]
+	 */
+	public function admin_marcar_invalido($id_dte)
+	{
+		if ( ! $this->Dte->exists($id_dte) )
+		{
+			$this->Session->setFlash('Dte no existe.' , null, array(), 'warning');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$this->Dte->id = $id_dte;
+
+		if ($this->Dte->saveField('invalidado', 1)) {
+			$this->Session->setFlash('Dte marcado como no válido.' , null, array(), 'success');
+		}else{
+			$this->Session->setFlash('No fue posible actualizar el dte. Intente nuevamente' , null, array(), 'warning');
+		}
+		
+		$this->redirect($this->referer('/', true));
+	}
+
 	
 	/**
 	 * Método encargado de ajustar los datos al excel.
