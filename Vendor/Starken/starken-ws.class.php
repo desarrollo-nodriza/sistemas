@@ -1002,10 +1002,13 @@ class StarkenWebServices {
 			}
 		}
 		
+		// Cod agencia origen
+		$dataRequest['codAgenciaOrigen'] = '';
+		
 		try {
 
 			//echo "<pre>"; print_r($dataRequest); echo "</pre>"; exit;
-
+			
 			$options = array(
 				'uri' =>'http://schemas.xmlsoap.org/soap/envelope/',
 				'style' => SOAP_RPC,
@@ -1017,6 +1020,19 @@ class StarkenWebServices {
 				'encoding' => 'UTF-8',
 				'exceptions' => true
 			);
+
+			$log = array();
+			
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Straken request:',
+					'modulo' => 'Ventas',
+					'modulo_accion' => json_encode($dataRequest)
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
 
 			$client  = new SoapClient($this->urlApiSoap);
 			$result = $client->Execute(array('Param_inco_item' => $dataRequest));
