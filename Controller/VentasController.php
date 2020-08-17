@@ -731,7 +731,7 @@ class VentasController extends AppController {
 
 		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', 20, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
 		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
-		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', 15, 0, $estados_ids);
+		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', -1, 0, $estados_ids);
 		$ventas_empaquetando_total = $this->Venta->obtener_ventas_preparar('empaquetando', -1, 0, $estados_ids);
 		$ventas_empaquetado        = $this->Venta->obtener_ventas_preparadas('empaquetado', 20, 0, $estados_preparados_ids);
 		$ventas_empaquetado_total  = $this->Venta->obtener_ventas_preparadas('empaquetado', -1, 0, $estados_preparados_ids);
@@ -775,7 +775,7 @@ class VentasController extends AppController {
 			$venta  = $this->Venta->obtener_venta_por_id_tiny($ve['Venta']['id']);
 
 			$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
-			$tamano = '500x500';
+			$tamano = '120x120';
 			
 			$this->set(compact('venta', 'url', 'tamano', 'venta_estados'));
 
