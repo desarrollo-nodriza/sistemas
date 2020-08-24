@@ -348,6 +348,23 @@ class Bodega extends AppModel
 			)
 		);
 
+		# Validamos que no exista el movimiento creado
+		$creado = ClassRegistry::init('BodegasVentaDetalleProducto')->find('first', array(
+			'conditions' => array(
+				'BodegasVentaDetalleProducto.venta_id'                  => $id_venta,
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto,
+				'BodegasVentaDetalleProducto.cantidad'                  => -$cantidad,
+				'BodegasVentaDetalleProducto.tipo'                      => $tipo,
+				'BodegasVentaDetalleProducto.io'                        => 'ED',
+				'BodegasVentaDetalleProducto.bodega_id'                 => $bodega_id
+			)
+		));
+
+		# Si existe, es pr que ya se quitó el item desde el inventario para la venta indicada
+		if (!empty($creado)) {
+			return true;
+		}
+
 		ClassRegistry::init('BodegasVentaDetalleProducto')->create();
 		if (ClassRegistry::init('BodegasVentaDetalleProducto')->save($data)) {
 			ClassRegistry::init('Pmp')->registrar_pmp($id_producto, $bodega_id);

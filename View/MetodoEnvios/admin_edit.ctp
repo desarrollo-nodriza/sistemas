@@ -74,11 +74,11 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('tipo_entrega', 'Tipo de entrega'); ?></th>
-								<td><?= $this->Form->select('tipo_entrega', $tipoEntregas, array('class' => 'form-control', 'empty' => false)); ?></td>
+								<td><?= $this->Form->select('tipo_entrega', $dependenciasVars['starken']['tipo_entregas'], array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('tipo_pago', 'Tipo de pago'); ?></th>
-								<td><?= $this->Form->select('tipo_pago', $tipoPagos, array('class' => 'form-control', 'empty' => false)); ?></td>
+								<td><?= $this->Form->select('tipo_pago', $dependenciasVars['starken']['tipo_pagos'], array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('numero_cuenta_corriente', 'Número de cta corriente'); ?></th>
@@ -94,11 +94,97 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('tipo_servicio', 'Tipo de servicio'); ?></th>
-								<td><?= $this->Form->select('tipo_servicio', $tipoServicios, array('class' => 'form-control', 'empty' => 'Normal')); ?></td>
+								<td><?= $this->Form->select('tipo_servicio', $dependenciasVars['starken']['tipo_servicios'], array('class' => 'form-control', 'empty' => 'Normal')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('ciudad_origen', 'Ciudad de origen de la encomienda'); ?></th>
-								<td><?= $this->Form->select('ciudad_origen', $ciudadesStarken, array('empty' => 'Seleccione ciudad', 'class' => 'form-control select', 'data-live-search' => true)); ?></td>
+								<td><?= $this->Form->select('ciudad_origen', $dependenciasVars['starken']['comunas'], array('empty' => 'Seleccione ciudad', 'class' => 'form-control select', 'data-live-search' => true)); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
+								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('peso_maximo', 'Peso máximo del bulto'); ?></th>
+								<td><?= $this->Form->input('peso_maximo', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('peso_default', 'Peso por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('peso_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('alto_default', 'Alto por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('alto_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('ancho_default', 'Ancho por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('ancho_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('largo_default', 'Largo por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('largo_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default js-panel-conexxion <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'conexxion') ? '' : 'hidden' ;?>">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-truck"></i> Configuración de conexxion</h3>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('api_key', 'Key conexxion'); ?></th>
+								<td><?= $this->Form->input('api_key', array('placeholder' => 'Ingrese api key')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('sender_full_name', 'Nombre emisor'); ?></th>
+								<td><?= $this->Form->input('sender_full_name', array('placeholder' => 'Ingrese nombre del emisor')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('sender_rut', 'Rut empresa emisor'); ?></th>
+								<td><?= $this->Form->input('sender_rut', array('placeholder' => 'Ingrese rut del emisor sin puntos ni dv (opcional)')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('sender_email', 'Email de emisor'); ?></th>
+								<td><?= $this->Form->input('sender_email', array('placeholder' => 'Ingrese email del emisor')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('sender_address', 'Dirección del emisor'); ?></th>
+								<td><?= $this->Form->input('sender_address', array('placeholder' => 'Ingrese dirección del emisor (opcional)')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('ciudad_origen', 'Ciudad de origen de la encomienda'); ?></th>
+								<td><?= $this->Form->select('ciudad_origen', $dependenciasVars['conexxion']['comunas'], array('empty' => 'Seleccione ciudad', 'class' => 'form-control select', 'data-live-search' => true)); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('sender_address_number', 'Numero Dpto/ oficina emisor (opcional)'); ?></th>
+								<td><?= $this->Form->input('sender_address_number', array('placeholder' => 'Ej: 1234, of 44')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('has_return', 'Tipo de entrega'); ?></th>
+								<td><?= $this->Form->select('has_return', $dependenciasVars['conexxion']['tipo_retornos'], array('class' => 'form-control', 'empty' => false)); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('product', 'Tipo de producto'); ?></th>
+								<td><?= $this->Form->select('product', $dependenciasVars['conexxion']['tipo_productos'], array('class' => 'form-control', 'empty' => false)); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('service', 'Número de cta corriente'); ?></th>
+								<td><?= $this->Form->select('service', $dependenciasVars['conexxion']['tipo_servicios'], array('class' => 'form-control', 'empty' => false)); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('notification_type', 'Tipo de notificación'); ?></th>
+								<td><?= $this->Form->select('notification_type', $dependenciasVars['conexxion']['tipo_notificaciones'], array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>

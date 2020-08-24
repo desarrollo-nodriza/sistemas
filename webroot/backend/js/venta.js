@@ -329,9 +329,10 @@ $(function() {
 			var $id_venta 			= $('#filtro-venta-id').val() == '' ? 0 : $('#filtro-venta-id').val() ,
 				$id_metodo_envio 	= $('#filtro-venta-envio').val() == '' ? 0 : $('#filtro-venta-envio').val() ,
 				$id_marketplace 	= $('#filtro-venta-marketplace').val() == '' ? 0 : $('#filtro-venta-marketplace').val(),
+				$comuna 	        = $('#filtro-venta-comuna').val() == '' ? 0 : $('#filtro-venta-comuna').val(),
 				$id_tienda 			= $('#filtro-venta-tienda').val() == '' ? 0 : $('#filtro-venta-tienda').val();
 
-			$.get(webroot + 'ventas/obtener_ventas_preparacion/' + limiteEmpaquetar + '/' + offsetEmpaquetar + '/' + limiteEmpaquetando + '/' + offsetEmpaquetando + '/' + $id_venta + '/' + $id_metodo_envio + '/' + $id_marketplace + '/' + $id_tienda, function(data) {
+			$.get(webroot + 'ventas/obtener_ventas_preparacion/' + limiteEmpaquetar + '/' + offsetEmpaquetar + '/' + limiteEmpaquetando + '/' + offsetEmpaquetando + '/' + $id_venta + '/' + $id_metodo_envio + '/' + $id_marketplace + '/' + $id_tienda + '/' + $comuna, function(data) {
 				
 				var res = $.parseJSON(data);
 

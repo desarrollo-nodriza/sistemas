@@ -19,10 +19,14 @@ Class Orden extends AppModel {
 	);
 
 
+	/**
+	 * [$tipo_ndc description]
+	 * @var array
+	 */
 	private static $tipo_ndc = array(
-		'devolucion' => 'Devolución', 
-		'cambio_dte' => 'Cambio de DTE', 
-		'garantia' => 'Garantía'
+		'devolucion' => 'Anular producto/s (Devuelve items a bodega si corresponde)', 
+		'cambio_dte' => 'Cambio de DTE (No tiene efecto en items)', 
+		'garantia'   => 'Garantía (No devuelve items a bodega, solo los anula de la venta)'
 	);
 
 	public $belongsTo = array(

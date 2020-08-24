@@ -38,4 +38,26 @@ class Comuna extends AppModel
 			'counterQuery'			=> ''
 		)
 	);
+
+
+	public function obtener_id_comuna_por_nombre($nombre)
+	{
+		$comuna = $this->find('first', array(
+			'conditions' => array(
+				'Comuna.nombre' => $nombre
+			)
+		));
+
+		if (empty($comuna)) {
+			$nwComuna = array(
+				'nombre' => $nombre
+			);
+
+			$this->save($nwComuna);
+
+			return $this->id;
+		}
+
+		return $comuna['Comuna']['id'];
+	}
 }

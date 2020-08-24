@@ -474,7 +474,11 @@ class OrdenesController extends AppController
 				if (!empty($id_dte)) {
 					
 					# Si es NDC se anulan los items en la venta, se recalculan los montos de la venta y se devuelven a bodega los itmes cancelados si corresponde.
-					if (!empty($this->request->data['DteDetalle']) && $this->request->data['Dte']['tipo_documento'] == 61 && $id_dte['Dte']['estado'] == 'dte_real_emitido' && $this->request->data['Dte']['tipo_ntc'] == 'devolucion') {
+					if (!empty($this->request->data['DteDetalle']) 
+						&& $this->request->data['Dte']['tipo_documento'] == 61 
+						&& $id_dte['Dte']['estado'] == 'dte_real_emitido' 
+						&& $this->request->data['Dte']['tipo_ntc'] == 'devolucion'
+					) {
 						
 						$venta = ClassRegistry::init('Venta')->find('first', array(
 							'conditions' => array(
@@ -483,12 +487,24 @@ class OrdenesController extends AppController
 							'contain' => array(
 								'VentaDetalle' => array(
 									'fields' => array(
-										'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.cantidad', 'VentaDetalle.precio', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.total_neto', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_anulada'
+										'VentaDetalle.id', 
+										'VentaDetalle.venta_detalle_producto_id', 
+										'VentaDetalle.cantidad', 
+										'VentaDetalle.precio', 
+										'VentaDetalle.cantidad_entregada', 
+										'VentaDetalle.total_neto', 
+										'VentaDetalle.cantidad_pendiente_entrega', 
+										'VentaDetalle.cantidad_reservada', 
+										'VentaDetalle.cantidad_anulada',
+										'VentaDetalle.reservado_virtual'
 									)
 								)
 							),
 							'fields' => array(
-								'Venta.id', 'Venta.descuento', 'Venta.total', 'Venta.costo_envio'
+								'Venta.id', 
+								'Venta.descuento', 
+								'Venta.total', 
+								'Venta.costo_envio'
 							)
 						));
 
@@ -521,6 +537,15 @@ class OrdenesController extends AppController
 									# si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
 									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem']) {
 										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
+									}
+
+									# Stock virtual
+									if ($d['reservado_virtual'] > 0){
+									
+										# Nuevo stock virtual
+										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['VentaDetalle']['venta_detalle_producto_id'], $detalle['QtyItem'], 'aumentar');
+										$venta['VentaDetalle'][$ip]['reservado_virtual'] = $d['reservado_virtual'] - $detalle['QtyItem'];
+										
 									}
 
 									if ($d['cantidad'] == $detalle['QtyItem']) {
@@ -574,7 +599,11 @@ class OrdenesController extends AppController
 					}
 
 					# Si es nota de credito por garantia no se devuelve el stock a bodega pero se anula el item de la venta
-					if (!empty($this->request->data['DteDetalle']) && $this->request->data['Dte']['tipo_documento'] == 61 && $id_dte['Dte']['estado'] == 'dte_real_emitido' && $this->request->data['Dte']['tipo_ntc'] == 'garantia') {
+					if (!empty($this->request->data['DteDetalle']) 
+						&& $this->request->data['Dte']['tipo_documento'] == 61 
+						&& $id_dte['Dte']['estado'] == 'dte_real_emitido' 
+						&& $this->request->data['Dte']['tipo_ntc'] == 'garantia'
+					) {
 						
 						$venta = ClassRegistry::init('Venta')->find('first', array(
 							'conditions' => array(
@@ -583,12 +612,24 @@ class OrdenesController extends AppController
 							'contain' => array(
 								'VentaDetalle' => array(
 									'fields' => array(
-										'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.cantidad', 'VentaDetalle.precio', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.total_neto', 'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.cantidad_anulada'
+										'VentaDetalle.id', 
+										'VentaDetalle.venta_detalle_producto_id', 
+										'VentaDetalle.cantidad', 
+										'VentaDetalle.precio', 
+										'VentaDetalle.cantidad_entregada', 
+										'VentaDetalle.total_neto', 
+										'VentaDetalle.cantidad_pendiente_entrega', 
+										'VentaDetalle.cantidad_reservada', 
+										'VentaDetalle.cantidad_anulada',
+										'VentaDetalle.reservado_virtual'
 									)
 								)
 							),
 							'fields' => array(
-								'Venta.id', 'Venta.descuento', 'Venta.total', 'Venta.costo_envio'
+								'Venta.id', 
+								'Venta.descuento', 
+								'Venta.total', 
+								'Venta.costo_envio'
 							)
 						));
 
@@ -621,6 +662,11 @@ class OrdenesController extends AppController
 									# si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
 									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem']) {
 										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
+									}
+
+									# Stock virtual
+									if ($d['reservado_virtual'] > 0){
+										$venta['VentaDetalle'][$ip]['reservado_virtual'] = $d['reservado_virtual'] - $detalle['QtyItem'];
 									}
 
 									if ($d['cantidad'] == $detalle['QtyItem']) {

@@ -26,6 +26,7 @@ class VentasController extends AppController {
 		'Toolmania',
 		'LibreDte',
 		'Starken',
+		'Conexxion'
 	);
 	
 
@@ -60,12 +61,27 @@ class VentasController extends AppController {
 	public function admin_index () {
 
 		$condiciones = array();
-		$joins = array();
-		$fields = array(
-			'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo',
-			'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.prioritario', 'Venta.picking_estado', 'Venta.venta_manual'
+		$joins       = array();
+		$group       = array();
+		$fields      = array(
+			'Venta.id', 
+			'Venta.id_externo', 
+			'Venta.referencia', 
+			'Venta.fecha_venta', 
+			'Venta.total', 
+			'Venta.atendida', 
+			'Venta.activo',
+			'Venta.venta_estado_id', 
+			'Venta.tienda_id', 
+			'Venta.marketplace_id', 
+			'Venta.medio_pago_id', 
+			'Venta.venta_cliente_id', 
+			'Venta.prioritario', 
+			'Venta.picking_estado', 
+			'Venta.venta_manual'
 		);
-		$group = array();
+
+		
 
 		$FiltroVenta                = '';
 		$FiltroCliente              = '';
@@ -78,16 +94,6 @@ class VentasController extends AppController {
 		$FiltroFechaDesde           = '';
 		$FiltroFechaHasta           = '';
 		$FiltroDte           	    = '';
-
-		$backurl = array(
-            'action' => 'index'
-        );
-
-		if (is_array($this->request->params['action'])) {
-			$backurl = array_replace_recursive($backurl, $this->request->params['action']);	
-		}
-        
-        $this->Session->write($this->request->params['controller'], $backurl);
 
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
@@ -642,16 +648,28 @@ class VentasController extends AppController {
      */
 	public function admin_index_bodega () {
 
-
 		$metodo_envios = ClassRegistry::init('MetodoEnvio')->find('list');
 
 		$tiendas = ClassRegistry::init('Tienda')->find('list'); 
 
 		$canales = ClassRegistry::init('Marketplace')->find('list');
 
+		$comunas = array_unique($this->Venta->find('list', array(
+			'fields' => array(
+				'Venta.comuna_entrega', 
+				'Venta.comuna_entrega'
+			), 
+			'order' => array(
+				'Venta.comuna_entrega' => 'ASC'
+			),
+			'conditions' => array(
+				'Venta.fecha_venta >=' => date("Y-m-d H:i:s",strtotime(date('Y-m-d')."-2 month"))
+			)
+		)));
+
 		BreadcrumbComponent::add('Ventas', '/ventas/index_bodega');
 
-		$this->set(compact('metodo_envios', 'tiendas', 'canales'));
+		$this->set(compact('metodo_envios', 'tiendas', 'canales', 'comunas'));
 
 	}
 
@@ -720,7 +738,7 @@ class VentasController extends AppController {
 	 * @param  integer $offset2 [description]
 	 * @return [type]           [description]
 	 */
-	public function admin_obtener_ventas_preparacion($limit1 = 10, $offset1 = 0, $limit2 = 10, $offset2 = 0, $id_venta = 0, $id_metodo_envio = 0, $id_marketplace = 0, $id_tienda = 0)
+	public function admin_obtener_ventas_preparacion($limit1 = 10, $offset1 = 0, $limit2 = 10, $offset2 = 0, $id_venta = 0, $id_metodo_envio = 0, $id_marketplace = 0, $id_tienda = 0, $comuna = '')
 	{	
 		ini_set('memory_limit', '-1');
 		set_time_limit(0);
@@ -729,8 +747,8 @@ class VentasController extends AppController {
 
 		$estados_preparados_ids = Hash::extract(ClassRegistry::init('VentaEstadoCategoria')->find('all', array('conditions' => array('venta' => 1, 'final' => 0), 'fields' => array('id'))), '{n}.VentaEstadoCategoria.id');
 
-		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', 20, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
-		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda);
+		$ventas_empaquetar         = $this->Venta->obtener_ventas_preparar('empaquetar', 20, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda, $comuna);
+		$ventas_empaquetar_total   = $this->Venta->obtener_ventas_preparar('empaquetar', -1, 0, $estados_ids, $id_venta, $id_metodo_envio, $id_marketplace, $id_tienda, $comuna);
 		$ventas_empaquetando       = $this->Venta->obtener_ventas_preparar('empaquetando', -1, 0, $estados_ids);
 		$ventas_empaquetando_total = $this->Venta->obtener_ventas_preparar('empaquetando', -1, 0, $estados_ids);
 		$ventas_empaquetado        = $this->Venta->obtener_ventas_preparadas('empaquetado', 20, 0, $estados_preparados_ids);
@@ -887,6 +905,19 @@ class VentasController extends AppController {
 				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
 			}
 
+		}elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot']) {
+			# Es una venta para conexxion
+			
+			# Creamos cliente conexxion
+			$this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
+
+			# Creamos la OT
+			if($this->Conexxion->generar_ot($venta)){
+				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
+			}else{
+				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
+			}
+
 		}else{
 			$this->Session->setFlash('La venta no aplica para usar un currier externo.', null, array(), 'danger');
 		}
@@ -1036,7 +1067,7 @@ class VentasController extends AppController {
 			exit;
 		}
 
-		$venta = $this->Venta->obtener_venta_por_id_tiny($id);
+		$venta = $this->Venta->obtener_venta_por_id($id);
 
 		# Verificamos que todos los productos de la venta se encuentren en la bodega principal
 		foreach ($venta['VentaDetalle'] as $ivd => $vd) {
@@ -1098,21 +1129,47 @@ class VentasController extends AppController {
 				$this->Venta->saveField('picking_email', $this->Auth->user('email'));
 				$this->Venta->saveField('picking_fecha_inicio', date('Y-m-d H:i:s'));
 
-				$this->cambiar_estado_preparada($venta);
+				#$this->cambiar_estado_preparada($venta);
 
-				$venta2 = $this->Venta->obtener_venta_por_id($id);
+				# Obtenemos estado de en prepracion
+				$preparacion      = ClassRegistry::init('VentaEstado')->obtener_estado_preparacion();
 
-				if ($venta2['MetodoEnvio']['dependencia'] == 'starken' && $venta2['MetodoEnvio']['generar_ot'] && !$venta['Venta']['paquete_generado']) {
+				if (!empty($preparacion)) {
+					try {
+						$this->cambiarEstado($id, $venta['Venta']['id_externo'], $preparacion['VentaEstado']['id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id']);
+					} catch (Exception $e) {
+						// Nothing
+					}	
+				}
+
+				if ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot'] && !$venta['Venta']['paquete_generado']) {
 					# Es una venta para starken
 					
 					# Creamos cliente starken
-					$this->Starken->crearCliente($venta2['MetodoEnvio']['rut_api_rest'], $venta2['MetodoEnvio']['clave_api_rest'], $venta2['MetodoEnvio']['rut_empresa_emisor'], $venta2['MetodoEnvio']['rut_usuario_emisor'], $venta2['MetodoEnvio']['clave_usuario_emisor']);
+					$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
 
 					# Creamos la OT
-					if($this->Starken->generar_ot($venta2)){
+					if($this->Starken->generar_ot($venta)){
 						$log[] = array(
 							'Log' => array(
 								'administrador' => 'Cambiar estado venta: Ingresa Starken',
+								'modulo' => 'Ventas',
+								'modulo_accion' => 'creado: OT generada'
+							)
+						);
+					}
+
+				}elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot'] && !$venta['Venta']['paquete_generado']) {
+					# Es una venta para conexxion
+					
+					# Creamos cliente conexxion
+					$this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
+
+					# Creamos la OT
+					if($this->Conexxion->generar_ot($venta)){
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Cambiar estado venta: Ingresa Conexxion',
 								'modulo' => 'Ventas',
 								'modulo_accion' => 'creado: OT generada'
 							)
@@ -2545,6 +2602,7 @@ class VentasController extends AppController {
 							
 							$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
 							$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
+							$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
 							$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 							$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
 						}
@@ -2683,6 +2741,7 @@ class VentasController extends AppController {
 										// Direccion despacho
 										$NuevaVenta['Venta']['direccion_entrega'] =  $DataVenta['AddressShipping']['Address1'] . ', ' . $DataVenta['AddressShipping']['Address2'];
 										$NuevaVenta['Venta']['comuna_entrega']    =  $DataVenta['AddressShipping']['City'];
+										$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($DataVenta['AddressShipping']['City']);
 										$NuevaVenta['Venta']['nombre_receptor']   =  $DataVenta['AddressShipping']['FirstName'] . ' ' . $DataVenta['AddressShipping']['LastName'];
 										$NuevaVenta['Venta']['fono_receptor']     =  trim($DataVenta['AddressShipping']['Phone']) . '-' .  trim($DataVenta['AddressShipping']['Phone2']) ;
 										
@@ -2843,6 +2902,7 @@ class VentasController extends AppController {
 									// Direccion despacho
 									$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
 									$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
+									$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
 									$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 									$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
 									
@@ -3459,6 +3519,11 @@ class VentasController extends AppController {
 				$this->request->data['Venta']['venta_estado_id'] = $estado_nuevo_arr['VentaEstado']['id'];
 
 			}
+
+			# Viene comuna
+			if (!empty($this->request->data['Venta']['comuna_entrega'])) {
+				$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega']);
+			}
 			
 			if ($this->Venta->saveAll($this->request->data) ) {
 
@@ -3541,6 +3606,12 @@ class VentasController extends AppController {
 		}
 
 		if ($this->request->is('post') || $this->request->is('put')) {
+
+			# Viene comuna
+			if (!empty($this->request->data['Venta']['comuna_entrega'])) {
+				$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega']);
+			}
+			
 			if ($this->Venta->save($this->request->data)) {
 				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
 			}else{
@@ -3860,22 +3931,24 @@ class VentasController extends AppController {
 		}
 
 		# se setea el id de la venta
-		$this->request->data['Venta']['id'] = $venta['Venta']['id'];
+		$saveVenta['Venta']['id']                       = $venta['Venta']['id'];
+		$saveVenta['Venta']['venta_estado_id']          = $estado_nuevo_id;
+		$saveVenta['Venta']['venta_estado_responsable'] = ($this->Session->check('Auth.Administrador.id')) ? $this->Session->read('Auth.Administrador.nombre') : $venta['Venta']['venta_estado_responsable'];
 	
 		# Guardamos el estado anterior en la tabla pivot
-		$this->request->data['VentaEstado2'] = array(
+		$saveVenta['VentaEstado2'] = array(
 			array(
-				'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+				'venta_estado_id' => $estado_nuevo_id,
 				'fecha'           => date('Y-m-d H:i:s'),
-				'responsable'     => ($this->Session->check('Auth.Administrador.id')) ? $this->Session->read('Auth.Administrador.nombre') : $venta['Venta']['venta_estado_responsable']
+				'responsable'     => $saveVenta['Venta']['venta_estado_responsable']
 			)
 		);
 
 		foreach ($venta['VentaEstado2'] as $ive => $ve) {
-			$this->request->data['VentaEstado2'][] = $ve['EstadosVenta'];
+			$saveVenta['VentaEstado2'][] = $ve['EstadosVenta'];
 		}
 
-		if ($this->Venta->saveAll($this->request->data)) {
+		if ($this->Venta->saveAll($saveVenta)) {
 			return true;
 		}else{
 			
@@ -3964,12 +4037,7 @@ class VentasController extends AppController {
 				$res = true;
 			}else{
 				$res = $productosController->actualizar_canales_stock($producto['VentaDetalleProducto']['id_externo'], $producto['VentaDetalleProducto']['cantidad_virtual'], $excluir);
-			}
-			
-			if (empty($res['errors'])) {
-				return true;
-			}
-			
+			}		
 
 		}
 
@@ -6106,6 +6174,7 @@ class VentasController extends AppController {
 		// Direccion despacho
 		$NuevaVenta['Venta']['direccion_entrega'] =  implode(', ', $direcciones);
 		$NuevaVenta['Venta']['comuna_entrega']    =  $detalle_venta['AddressShipping']['City'];
+		$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($detalle_venta['AddressShipping']['City']);
 		$NuevaVenta['Venta']['nombre_receptor']   =  $detalle_venta['AddressShipping']['FirstName'] . ' ' . $detalle_venta['AddressShipping']['LastName'];
 		$NuevaVenta['Venta']['fono_receptor']     =  trim($detalle_venta['AddressShipping']['Phone']) . '-' .  trim($detalle_venta['AddressShipping']['Phone2']) ;
 		
@@ -6556,6 +6625,7 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
 		$NuevaVenta['Venta']['numero_entrega']    =  $numero_entrega;
 		$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
+		$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
 		$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 		$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
 		
@@ -6836,6 +6906,7 @@ class VentasController extends AppController {
 			$NuevaVenta['Venta']['otro_entrega']      =  $otro_entrega;
 			$NuevaVenta['Venta']['rut_receptor']      =  $rut_receptor;
 			$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
+			$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
 			$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 			$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
 		}
@@ -7603,7 +7674,6 @@ class VentasController extends AppController {
 		# Detalles de la venta
 		$venta = $this->preparar_venta($id);
 
-
 		$respuesta =  array(
 			'cliente' => array(
 				'rut'      => $venta['VentaCliente']['rut'],
@@ -7626,8 +7696,8 @@ class VentasController extends AppController {
 				'canal_venta' => (!empty($venta['Marketplace']['id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'], 
 			),
 			'entrega' => array(
-				'metodo'                 => $venta['VentaExterna']['transportista'],
-				'fecha_entrega_estimada' => $venta['Envio'][0]['fecha_entrega_estimada'],
+				'metodo'                 => $venta['MetodoEnvio']['nombre'],
+				'fecha_entrega_estimada' => 'No definido',
 			),
 			'itemes' => array(),
 			'confirm_url' => array(
@@ -7642,6 +7712,7 @@ class VentasController extends AppController {
 
 
 		foreach ($venta['VentaDetalle'] as $i => $item) {
+
 			$respuesta['itemes'][$i] = array(
 				'id'               => $item['id'],
 				'nombre'           => $item['VentaDetalleProducto']['nombre'],

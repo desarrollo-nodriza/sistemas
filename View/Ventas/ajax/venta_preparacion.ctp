@@ -110,7 +110,10 @@
 	<div class="task-item task-warning <?=($this->Session->read('Auth.Administrador.email') != $venta['Venta']['picking_email']) ? 'no-move' : '' ; ?>" data-id="<?=$venta['Venta']['id']; ?>" >                                    
 	    <div class="task-text">
 	    	
-	    	<h3 class="pull-left">Venta #<?=$venta['Venta']['id']; ?> - <?=(empty($venta['Venta']['marketplace_id'])) ? $venta['Tienda']['nombre'] : $venta['Marketplace']['nombre'] ; ?></h3> <?=($venta['Venta']['prioritario']) ? '<label class="label label-danger pull-right label-form">Prioritario</label></b>' : '';?>
+	    	<img src="https://chart.googleapis.com/chart?chs=<?=$tamano;?>&cht=qr&chl=<?=$url;?>&choe=UTF-8" title="QR" class="img-responsive qr-code"/>
+
+	    	<h3 class="pull-left">
+	    		Venta #<?=$venta['Venta']['id']; ?> - <?=(empty($venta['Venta']['marketplace_id'])) ? $venta['Tienda']['nombre'] : $venta['Marketplace']['nombre'] ; ?></h3> <?=($venta['Venta']['prioritario']) ? '<label class="label label-danger pull-right label-form">Prioritario</label></b>' : '';?>
 			
 	    	<table class="table table-bordered table-sm">
 				<tr>

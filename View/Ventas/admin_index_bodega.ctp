@@ -25,9 +25,15 @@
 				</div>
 				<div class="panel-body">
 					<div class="row">
-						<div class="form-group col-xs-12 col-md-3">
+						<div class="form-group col-xs-12 col-md-2">
 							<label for="filtro-venta-id">Id de la venta</label>
 							<input type="text" class="form-control" id="filtro-venta-id" placeholder="ID de la venta">
+						</div>
+						<div class="form-group col-xs-12 col-md-3">
+							<label for="filtro-venta-id">Comunas</label>
+							<select class="form-control select" data-live-search="true" id="filtro-venta-comuna">
+								<?=$this->Html->crear_opciones_por_arraglo($comunas); ?>
+							</select>
 						</div>
 						<div class="form-group col-xs-12 col-md-3">
 							<label for="filtro-venta-id">Metodo de envio</label>
@@ -35,13 +41,13 @@
 								<?=$this->Html->crear_opciones_por_arraglo($metodo_envios); ?>
 							</select>
 						</div>
-						<div class="form-group col-xs-12 col-md-3">
+						<div class="form-group col-xs-12 col-md-2">
 							<label for="filtro-venta-id">Marketplace</label>
 							<select class="form-control" id="filtro-venta-marketplace">
 								<?=$this->Html->crear_opciones_por_arraglo($canales); ?>
 							</select>
 						</div>
-						<div class="form-group col-xs-12 col-md-3">
+						<div class="form-group col-xs-12 col-md-2">
 							<label for="filtro-venta-id">Tienda</label>
 							<select class="form-control" id="filtro-venta-tienda">
 								<?=$this->Html->crear_opciones_por_arraglo($tiendas); ?>

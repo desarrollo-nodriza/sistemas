@@ -393,7 +393,7 @@ class Venta extends AppModel
 					),
 					'MetodoEnvio' => array(
 						'fields' => array(
-							'MetodoEnvio.id', 'MetodoEnvio.nombre', 'MetodoEnvio.retiro_local', 'MetodoEnvio.dependencia', 'MetodoEnvio.rut_api_rest', 'MetodoEnvio.clave_api_rest', 'MetodoEnvio.rut_empresa_emisor', 'MetodoEnvio.rut_usuario_emisor', 'MetodoEnvio.clave_usuario_emisor', 'MetodoEnvio.tipo_entrega', 'MetodoEnvio.tipo_pago', 'MetodoEnvio.numero_cuenta_corriente', 'MetodoEnvio.dv_numero_cuenta_corriente', 'MetodoEnvio.centro_costo_cuenta_corriente', 'MetodoEnvio.tipo_servicio', 'MetodoEnvio.generar_ot', 'MetodoEnvio.peso_maximo', 'MetodoEnvio.ciudad_origen', 'MetodoEnvio.largo_default', 'MetodoEnvio.ancho_default', 'MetodoEnvio.alto_default', 'MetodoEnvio.peso_default'
+							'MetodoEnvio.*'
 						)
 					),
 					'Mensaje' => array(
@@ -638,7 +638,7 @@ class Venta extends AppModel
 	 * @param  array   $estados_ids [description]
 	 * @return [type]               [description]
 	 */
-	public function obtener_ventas_preparar($estado = '', $limit = -1, $offset = 0, $estados_ids = array(), $id_venta = 0, $id_metodo_envio = 0, $id_marketplace = 0, $id_tienda = 0)
+	public function obtener_ventas_preparar($estado = '', $limit = -1, $offset = 0, $estados_ids = array(), $id_venta = 0, $id_metodo_envio = 0, $id_marketplace = 0, $id_tienda = 0, $comuna = '')
 	{	
 		$joins[] = array(
 			'table' => 'rp_venta_estados',
@@ -695,6 +695,12 @@ class Venta extends AppModel
 		if ($id_tienda) {
 			$conditions = array_replace_recursive($conditions, array(
 				'Venta.tienda_id' => $id_tienda
+			));
+		}
+
+		if ($comuna) {
+			$conditions = array_replace_recursive($conditions, array(
+				'Venta.comuna_entrega' => $comuna
 			));
 		}
 		
@@ -852,28 +858,26 @@ class Venta extends AppModel
 
 		$venta = $this->obtener_venta_por_id($id);	
 
-		# solo se procesa si el estado de la venta ha cambiado
-		#if ($venta['Venta']['venta_estado_id'] != $venta['Venta']['estado_anterior'] ) {
-			foreach ($venta['VentaDetalle'] as $ip => $producto) {
-				
-				ClassRegistry::init('VentaDetalle')->id = $producto['id'];
-				if ($producto['cantidad_reservada'] == 0 && $producto['cantidad_entregada'] < $producto['cantidad'] ) {
-					$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], ($producto['cantidad'] - $producto['cantidad_anulada'] - $producto['cantidad_en_espera'] - $producto['cantidad_entregada']) );
-					ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $reservado);
-					ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $producto['cantidad']);
+		foreach ($venta['VentaDetalle'] as $ip => $producto) {
+			
+			ClassRegistry::init('VentaDetalle')->id = $producto['id'];
 
-					$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $reservado;
-				}				
+			if ($producto['cantidad_reservada'] == 0 && $producto['cantidad_entregada'] < $producto['cantidad'] ) {
+				$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], ($producto['cantidad'] - $producto['cantidad_anulada'] - $producto['cantidad_en_espera'] - $producto['cantidad_entregada']) );
+				ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $reservado);
+				ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $producto['cantidad']);
 
-				# Nuevo stock virtual
-				if (!$producto['reservado_virtual']) { 
-					$cant = $producto['cantidad'] - $producto['cantidad_anulada'];
-					ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($producto['venta_detalle_producto_id'], $cant);
-					ClassRegistry::init('VentaDetalle')->saveField('reservado_virtual', 1);
-				}
+				$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $reservado;
+			}				
 
+			# Nuevo stock virtual
+			if (!$producto['reservado_virtual']) { 
+				$cant = $producto['cantidad'] - $producto['cantidad_anulada'];
+				ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($producto['venta_detalle_producto_id'], $cant);
+				ClassRegistry::init('VentaDetalle')->saveField('reservado_virtual', $cant);
 			}
-		#}
+
+		}
 		
 		$cant_reservada_sum = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 		$cant_vendida_sum   = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));

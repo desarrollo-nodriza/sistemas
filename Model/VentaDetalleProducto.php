@@ -479,6 +479,10 @@ class VentaDetalleProducto extends AppModel
 			return false;
 		}
 
+		if ($nwStock < 0) {
+			$nwStock = 0;
+		}
+
 		return $this->saveField('cantidad_virtual', $nwStock);
 	}
 

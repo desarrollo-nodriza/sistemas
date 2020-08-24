@@ -3,7 +3,8 @@ App::uses('AppController', 'Controller');
 class MetodoEnviosController extends AppController
 {	
 	public $components = array(
-		'Starken'
+		'Starken',
+		'Conexxion'
 	);
 
 	public function admin_index () {
@@ -59,7 +60,7 @@ class MetodoEnviosController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{
-
+			
 			if ( $this->MetodoEnvio->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
@@ -82,22 +83,31 @@ class MetodoEnviosController extends AppController
 			);
 		}
 		
+
+		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
+
 		$dependencias  = $this->MetodoEnvio->dependencias();
-		$tipoEntregas  = $this->Starken->getTipoEntregas();
-		$tipoPagos     = $this->Starken->getTipoPagos();
-		$tipoServicios = $this->Starken->getTipoServicios();
 
-		$ciudadesOrigen = $this->Starken->listarCiudadesOrigen();
-		$ciudadesStarken = array();
+		$dependenciasVars = array();
+
+		# Starken
+		$dependenciasVars['starken']['tipo_entregas']  = $this->Starken->getTipoEntregas();
+		$dependenciasVars['starken']['tipo_pagos']     = $this->Starken->getTipoPagos();
+		$dependenciasVars['starken']['tipo_servicios'] = $this->Starken->getTipoServicios();
+		$dependenciasVars['starken']['comunas']        = $comunas;
 		
-		foreach ($ciudadesOrigen['body'] as $ic => $c) {
-			$ciudadesStarken[$c['nombreCiudad']] = $c['nombreCiudad'];
-		}
 
+		# Conexxion
+		$dependenciasVars['conexxion']['tipo_retornos']       = $this->Conexxion->obtener_tipo_retornos();
+		$dependenciasVars['conexxion']['tipo_productos']      = $this->Conexxion->obtener_tipo_productos();
+		$dependenciasVars['conexxion']['tipo_servicios']      = $this->Conexxion->obtener_tipo_servicios();
+		$dependenciasVars['conexxion']['tipo_notificaciones'] = $this->Conexxion->obtener_tipo_notificaciones();
+		$dependenciasVars['conexxion']['comunas']             = $comunas;
+			
 		BreadcrumbComponent::add('Métodos de envio');
 		BreadcrumbComponent::add('Editar Método de envio');
 
-		$this->set(compact('dependencias', 'tipoEntregas', 'tipoPagos', 'tipoServicios', 'ciudadesStarken'));
+		$this->set(compact('dependencias', 'dependenciasVars'));
 
 	}
 
