@@ -11,7 +11,7 @@ class ManifiestosController extends AppController {
 
 	public function guardar_manifiesto($created = true)
 	{	
-		$ids =  Hash::extract($this->request->data['Venta'], '{n}.venta_id');
+		$ids =  Hash::extract($this->request->data, 'Venta.{n}.venta_id');
 
 		$ventas          = $this->Manifiesto->Venta->find('all', array(
 			'conditions' => array(
@@ -21,7 +21,8 @@ class ManifiestosController extends AppController {
 				'Dte' => array(
 					'fields' => array('Dte.id', 'Dte.tipo_documento', 'Dte.folio'),
 					'conditions' => array(
-						'Dte.estado' => 'dte_real_emitido',
+						'Dte.estado'         => 'dte_real_emitido',
+						'Dte.invalidado'     => 0,
 						'Dte.tipo_documento' => array(33, 39)
 					)
 				), 
@@ -32,7 +33,12 @@ class ManifiestosController extends AppController {
 					'fields' => array('VentaCliente.nombre', 'VentaCliente.email', 'VentaCliente.apellido')
 				), 
 				'VentaDetalle' => array(
-					'fields' => array('VentaDetalle.id', 'VentaDetalle.cantidad')
+					'VentaDetalleProducto' => array(
+						'fields' => array(
+							'VentaDetalleProducto.peso'
+						)
+					),
+					'fields' => array('VentaDetalle.id', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_anulada', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.cantidad_en_espera')
 				), 
 				'VentaEstado' => array(
 					'VentaEstadoCategoria' => array(
@@ -63,49 +69,10 @@ class ManifiestosController extends AppController {
 			'order' => array('fecha_venta' => 'DESC')
 		));
 
-
-
-
-		/*$this->cambiarConfigDB($this->tiendaConf($this->Session->read('Tienda.id')));
-
-		$ids =  Hash::extract($this->request->data['Orden'], '{n}.venta_id');
-
-		$ordenes = $this->Manifiesto->Orden->find('all', array(
-			'conditions' => array(
-				'Orden.id_order' => $ids
-			),
-			'fields' => array(
-				'Orden.id_order', 'Orden.reference', 'Orden.date_add', 'Orden.id_address_delivery'
-			),
-			'contain' => array(
-				'Dte' => array(
-					'conditions' => array('Dte.estado' => 'dte_real_emitido'),
-					'fields' => array('Dte.id', 'Dte.tipo_documento', 'Dte.folio')
-				), 
-				'Cliente' => array(
-					'fields' => array('Cliente.firstname', 'Cliente.email', 'Cliente.lastname')
-				), 
-				'OrdenDetalle' => array(
-					'fields' => array('OrdenDetalle.id_order_detail', 'OrdenDetalle.product_quantity')
-				), 
-				'OrdenEstado' => array(
-					'Lang' => array(
-						'fields' => array(
-							'Lang.name'
-						)
-					),
-					'fields' => array(
-						'OrdenEstado.id_order_state', 'OrdenEstado.color'
-					)
-				),
-				'Manifiesto' => array(
-					'fields' => array(
-						'Manifiesto.id'
-					)
-				)
-			),	
-			'order' => array('date_add' => 'DESC')
-		));*/
+		if (empty($ventas)) {
+			$this->Session->setFlash('Error al guardar el manifiesto. Por favor seleccione ventas.', null, array(), 'danger');
+			$this->redirect(array('action' => $this->request->params['action']));
+		}
 
 		$dataToSave['Manifiesto'] 	= $this->request->data['Manifiesto'];
 		
@@ -127,15 +94,17 @@ class ManifiestosController extends AppController {
 
 			
 			$dataToSave['Venta'][$io]['venta_id']          = $venta['Venta']['id'];
-			$dataToSave['Venta'][$io]['items']             = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad'));
+			$dataToSave['Venta'][$io]['items']             = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));
 			$dataToSave['Venta'][$io]['referencia_pedido'] = $venta['Venta']['referencia'];
-			$dataToSave['Venta'][$io]['id']          		= $venta['Venta']['id'];
+			$dataToSave['Venta'][$io]['peso_bulto']        = round(array_sum(Hash::extract($venta['VentaDetalle'], '{n}.VentaDetalleProducto.peso')), 1);
+			$dataToSave['Venta'][$io]['id']                = $venta['Venta']['id'];
 			$dataToSave['Venta'][$io]['folio_dte']         = 0;
 			$dataToSave['Venta'][$io]['tipo_dte']          = 'Vacio';
-			$dataToSave['Venta'][$io]['nombre_receptor']   = 'Vacio';
-			$dataToSave['Venta'][$io]['fono_receptor']     = 'Vacio';
-			$dataToSave['Venta'][$io]['direcion_envio']    = 'Vacio';
-			$dataToSave['Venta'][$io]['comuna']            = 'Vacio';
+			$dataToSave['Venta'][$io]['nombre_receptor'] = $venta['Venta']['nombre_receptor'];
+			$dataToSave['Venta'][$io]['fono_receptor']   = $venta['Venta']['fono_receptor'];
+			$dataToSave['Venta'][$io]['email_receptor']  = $venta['VentaCliente']['email'];
+			$dataToSave['Venta'][$io]['direcion_envio']  = $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega'] . ' ' . $venta['Venta']['otro_entrega'];
+			$dataToSave['Venta'][$io]['comuna']          = $venta['Venta']['comuna_entrega'];
 
 			if (!empty($venta['Dte'])) {
 
@@ -145,17 +114,12 @@ class ManifiestosController extends AppController {
 				$dataToSave['Venta'][$io]['tipo_dte'] = $dte->tipoDocumento[$venta['Dte'][0]['tipo_documento']];
 			}
 			
-			$dataToSave['Venta'][$io]['nombre_receptor'] = $venta['Venta']['nombre_receptor'];
-			$dataToSave['Venta'][$io]['fono_receptor']   = $venta['Venta']['fono_receptor'];
-			$dataToSave['Venta'][$io]['direcion_envio']  = $venta['Venta']['direccion_entrega'];
-			$dataToSave['Venta'][$io]['comuna']          = $venta['Venta']['comuna_entrega'];
-			
 			if (!empty($venta['VentaMensaje'])) {
 				$dataToSave['Venta'][$io]['observacion'] = $this->crearAlertaUl(Hash::extract($venta['VentaMensaje'], '{n}.mensaje'), '');
 			}
 
 		}		
-			
+		
 		if ($created) {
 			$this->Manifiesto->create();	
 		}
@@ -285,14 +249,16 @@ class ManifiestosController extends AppController {
 		$administradores = $this->Manifiesto->Administrador->find('list');
 		$tiendas         = $this->Manifiesto->Tienda->find('list');
 		$ventas          = $this->Manifiesto->Venta->find('list');
-		//$ordenes         = $this->Manifiesto->Orden->find('list');
+		$comunas         = ClassRegistry::init('Comuna')->find('list', array('order' => array('Comuna.nombre' => 'ASC')));
+		
+		$tipo_productos   = $this->Manifiesto->tipo_productos;
+		$tamano_productos = $this->Manifiesto->tamano_productos;
+		$tipo_retornos    = $this->Manifiesto->tipo_retornos;
 
-		
-		
 		BreadcrumbComponent::add('Manifiestos ', '/manifiestos');
 		BreadcrumbComponent::add('Nuevo Manifiesto ');
-		//prx($ventas);
-		$this->set(compact('transportes', 'administradores', 'tiendas', 'ventas'));
+
+		$this->set(compact('transportes', 'administradores', 'tiendas', 'ventas', 'comunas', 'tipo_productos', 'tamano_productos', 'tipo_retornos'));
 	}
 
 
@@ -324,12 +290,16 @@ class ManifiestosController extends AppController {
 		$administradores = $this->Manifiesto->Administrador->find('list');
 		$tiendas         = $this->Manifiesto->Tienda->find('list');
 		$ventas          = $this->Manifiesto->Venta->find('list');
-		//$ordenes         = $this->Manifiesto->Orden->find('list');
+		$comunas         = ClassRegistry::init('Comuna')->find('list', array('order' => array('Comuna.nombre' => 'ASC')));
+		
+		$tipo_productos   = $this->Manifiesto->tipo_productos;
+		$tamano_productos = $this->Manifiesto->tamano_productos;
+		$tipo_retornos    = $this->Manifiesto->tipo_retornos;
 
 		BreadcrumbComponent::add('Manifiestos ', '/manifiestos');
 		BreadcrumbComponent::add('Editar Manifiesto ');
 
-		$this->set(compact('transportes', 'administradores', 'tiendas', 'ventas'));
+		$this->set(compact('transportes', 'administradores', 'tiendas', 'ventas', 'comunas', 'tipo_productos', 'tamano_productos', 'tipo_retornos'));
 	}
 
 
@@ -411,7 +381,7 @@ class ManifiestosController extends AppController {
 			'Dpto',
 			'Comuna',
 			'Recepticón física',
-			'Observacion'
+			'Observacion',
 		);
 
 		$modelo = $this->Manifiesto->alias;
@@ -446,6 +416,96 @@ class ManifiestosController extends AppController {
 		}*/
 		
 		
+
+		$this->set(compact('datos', 'campos', 'modelo'));
+
+	}
+
+
+
+	public function admin_view_conexxion($id = null) 
+	{
+		$this->Manifiesto->id = $id;
+		if (!$this->Manifiesto->exists()) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$this->Manifiesto->saveField('impreso', 1);
+
+		$manifiesto = $this->Manifiesto->find('first', array(
+			'conditions' => array(
+				'Manifiesto.id' => $id
+			),
+			'contain' => array(
+				'Comuna' => array(
+					'fields' => array(
+						'Comuna.nombre'
+					)
+				),
+				'Transporte',
+				'Venta' => array(
+					'order' => array(
+						'Venta.fecha_venta' => 'DESC'
+					),
+					'fields' => array(
+						'Venta.id'
+					)
+				)
+			)
+		));
+		
+		$campos = array(
+			'Solicitante',
+			'Direccion Solicitante',
+			'Comuna',
+			'Teléfono Solicitante',
+			'E-mail Solicitante',
+			'Producto',
+			'Tamaño',
+			'Tramo',
+			'Retorno',
+			'Contacto Destino',
+			'Direccion Destino',
+			'Comuna',
+			'Teléfono Destino',
+			'Factura',
+			'E-mail',
+			'Observacion'
+		);
+
+		$modelo = $this->Manifiesto->alias;
+
+		$datos = array();
+		
+		# Preparamos los datos
+		foreach ($manifiesto['Venta'] as $io => $detalle) {
+			
+			$datos[$io]['Manifiesto']['solicitante']           = $manifiesto['Manifiesto']['nombre_solicitante'];
+			$datos[$io]['Manifiesto']['direccion_solicitante'] = $manifiesto['Manifiesto']['direccion_solicitante'];
+			$datos[$io]['Manifiesto']['comuna_solicitante']    = (!empty($manifiesto['Comuna'])) ? $manifiesto['Comuna']['nombre'] : '';
+			$datos[$io]['Manifiesto']['fono_solicitante']      = $manifiesto['Manifiesto']['fono_solicitante'];
+			$datos[$io]['Manifiesto']['email_solicitante']     = $manifiesto['Manifiesto']['email_solicitante'];
+			$datos[$io]['Manifiesto']['tipo_producto']         = $manifiesto['Manifiesto']['tipo_producto'];
+			$datos[$io]['Manifiesto']['tamano_producto']       = $manifiesto['Manifiesto']['tamano_producto'];
+
+			if (!empty($detalle['ManifiestosVenta'])) {
+				$datos[$io]['Manifiesto']['tramo'] = $this->Manifiesto->obtener_tramo_por_peso( $detalle['ManifiestosVenta']['peso_bulto'] );
+			}
+
+			$datos[$io]['Manifiesto']['tipo_retorno'] = $manifiesto['Manifiesto']['tipo_retorno'];
+
+			if (!empty($detalle['ManifiestosVenta'])) {
+				$datos[$io]['Manifiesto']['contacto_destino']  = $detalle['ManifiestosVenta']['nombre_receptor'];
+				$datos[$io]['Manifiesto']['direccion_destino'] = $detalle['ManifiestosVenta']['direcion_envio'];
+				$datos[$io]['Manifiesto']['comuna_destino']    = $detalle['ManifiestosVenta']['comuna'];
+				$datos[$io]['Manifiesto']['fono_destino']      = $detalle['ManifiestosVenta']['fono_receptor'];
+				$datos[$io]['Manifiesto']['factura']           = $detalle['ManifiestosVenta']['folio_dte'];
+				$datos[$io]['Manifiesto']['email_destino']     = $detalle['ManifiestosVenta']['email_receptor'];
+				$datos[$io]['Manifiesto']['observacion']       = $detalle['ManifiestosVenta']['observacion'];
+			}
+
+		}
 
 		$this->set(compact('datos', 'campos', 'modelo'));
 

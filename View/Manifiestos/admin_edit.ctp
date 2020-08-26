@@ -18,13 +18,67 @@
 					<div class="panel-body row">
 						<div class="form-group col-xs-12 col-md-6">
 							<?= $this->Form->input('transporte_id', array(
-								'class' => 'form-control',
+								'class' => 'form-control js-select-transporte',
 								'empty'	=> 'Seleccione',
 								'required' => true
 								)); ?>
 						</div>
 						<div class="form-group col-xs-12 col-md-6">
 							<?= $this->Form->input('ot_manual', array('class' => 'form-control', 'placeholder' => 'Ingrese la OT del transporte (opcional)' )); ?>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="manifiesto-conexxion" class="row hidden">
+			<div class="col-xs-12">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<h3 class="panel-title"><i class="fa fa-truck"></i> Manifiesto conexxion</h3>
+					</div>
+					<div class="panel-body">
+						<div class="row">
+							<div class="form-group col-xs-12 col-md-4">
+								<label>Nombre del solicitante</label>
+								<?=$this->Form->input('nombre_solicitante', array('class' => 'form-control', 'placeholder' => 'Ej: Nodriza Spa')); ?>
+							</div>
+							<div class="form-group col-xs-12 col-md-4">
+								<label>Fono del solicitante</label>
+								<?=$this->Form->input('fono_solicitante', array('class' => 'form-control', 'placeholder' => 'Ej: 99999999')); ?>
+							</div>
+							<div class="form-group col-xs-12 col-md-4">
+								<label>Email del solicitante</label>
+								<?=$this->Form->input('email_solicitante', array('class' => 'form-control', 'placeholder' => 'Ej: envios@empresa.cl')); ?>
+							</div>
+						</div>
+						<div class="row">
+							<div class="form-group col-xs-12 col-md-6">
+								<label>Dirección del solicitante</label>
+								<?=$this->Form->input('direccion_solicitante', array('class' => 'form-control', 'placeholder' => 'Ej: Diagonal Oriente 1355')); ?>
+							</div>
+							<div class="form-group col-xs-12 col-md-6">
+								<label>Comuna solicitante</label>
+								<?= $this->Form->input('comuna_id', array(
+									'class'            => 'form-control select',
+									'empty'            => 'Seleccione comuna solicitante',
+									'data-live-search' => true
+									)); ?>
+							</div>
+						</div>
+						<div class="row">
+							<div class="form-group col-xs-12 col-md-4">
+								<label>Tipo de produto</label>
+								<?=$this->Form->select('tipo_producto', $tipo_productos, array('class' => 'form-control', 'empty' => 'Seleccione')); ?>
+							</div>
+							<div class="form-group col-xs-12 col-md-4">
+								<label>Tamaño producto</label>
+								<?=$this->Form->select('tamano_producto', $tamano_productos, array('class' => 'form-control', 'empty' => 'Seleccione')); ?>
+							</div>
+							<div class="form-group col-xs-12 col-md-4">
+								<label>Tipo de retorno</label>
+								<?=$this->Form->select('tipo_retorno', $tipo_retornos, array('class' => 'form-control', 'empty' => 'Seleccione')); ?>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -228,7 +282,22 @@
 		}
 	});
 
+	if ($('.js-select-transporte').find('option:selected').text() == 'Conexxion') {
+		$('#manifiesto-conexxion').removeClass('hidden');
+		$('#manifiesto-conexxion').find('input, select').removeAttr('disabled');
+	}else{
+		$('#manifiesto-conexxion').addClass('hidden');
+		$('#manifiesto-conexxion').find('input, select').attr('disabled', 'disabled');
+	}
+
+	$(document).on('change', '.js-select-transporte', function(){
+		if ($(this).find('option:selected').text() == 'Conexxion') {
+			$('#manifiesto-conexxion').removeClass('hidden');
+			$('#manifiesto-conexxion').find('input, select').removeAttr('disabled');
+		}else{
+			$('#manifiesto-conexxion').addClass('hidden');
+			$('#manifiesto-conexxion').find('input, select').attr('disabled', 'disabled');
+		}
+	});
+
 </script>
-
-
-<div class="loader"><i class="fa fa-refresh fa-spin fa-3x fa-fw"></i></div>
