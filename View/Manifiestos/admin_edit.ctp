@@ -287,7 +287,7 @@
 		$('#manifiesto-conexxion').find('input, select').removeAttr('disabled');
 	}else{
 		$('#manifiesto-conexxion').addClass('hidden');
-		$('#manifiesto-conexxion').find('input, select').attr('disabled', 'disabled');
+		//$('#manifiesto-conexxion').find('input, select').attr('disabled', 'disabled');
 	}
 
 	$(document).on('change', '.js-select-transporte', function(){
@@ -296,7 +296,7 @@
 			$('#manifiesto-conexxion').find('input, select').removeAttr('disabled');
 		}else{
 			$('#manifiesto-conexxion').addClass('hidden');
-			$('#manifiesto-conexxion').find('input, select').attr('disabled', 'disabled');
+			//$('#manifiesto-conexxion').find('input, select').attr('disabled', 'disabled');
 		}
 	});
 
