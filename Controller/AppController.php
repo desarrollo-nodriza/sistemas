@@ -708,7 +708,9 @@ class AppController extends Controller
 				'sii_rut',
 				'sii_clave',
 				'libredte_token',
-				'sincronizar_compras'
+				'sincronizar_compras',
+				'starken_rut',
+				'starken_clave'
 			); 
 
 			# Verificar que la tienda esté configurada
