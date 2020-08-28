@@ -14,6 +14,22 @@ var metodo_envios = function(){
 		},
 		bind: function(){
 
+			if ($('.js-select-dependencia').val() == 'starken') {
+				// Desactivamos las otras dependencias
+				metodo_envios.desactivarDependencia($('.js-panel-conexxion'));
+
+				// Activamos la dependencia
+				metodo_envios.activarDependencia($('.js-panel-starken'));
+			}
+
+			if ($('.js-select-dependencia').val() == 'conexxion') {
+				// Desactivamos las otras dependencias
+				metodo_envios.desactivarDependencia($('.js-panel-starken'));
+
+				// Activamos la dependencia
+				metodo_envios.activarDependencia($('.js-panel-conexxion'));
+			}
+
 			$(document).on('change', '.js-select-dependencia', function(){
 				if ($(this).val() == 'starken') {
 					// Desactivamos las otras dependencias

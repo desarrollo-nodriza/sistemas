@@ -30,6 +30,7 @@
 									<th><?= $this->Paginator->sort('fecha_entregado', __('Fecha entregado'), array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('impreso', __('Impreso'), array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('modified', __('Modificado'), array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><a href=""><?= __('Ventas')?></a></th>
 									<th>Acciones</th>
 								</tr>
 							</thead>
@@ -44,6 +45,7 @@
 										<td><?= h($manifiesto['Manifiesto']['fecha_entregado']); ?>&nbsp;</td>
 										<td><?= ($manifiesto['Manifiesto']['impreso'] ? '<i class="fa fa-check text-success"></i>' : '<i class="fa fa-remove text-danger"></i>'); ?>&nbsp;</td>
 										<td><?= h($manifiesto['Manifiesto']['modified']); ?>&nbsp;</td>
+										<td><?= count($manifiesto['Venta']); ?>&nbsp;</td>
 										<td class="actions">
 											<? if ($permisos['edit']) : ?>
 												

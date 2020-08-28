@@ -371,7 +371,7 @@ class Venta extends AppModel
 					'VentaTransaccion',
 					'Tienda' => array(
 						'fields' => array(
-							'Tienda.id', 'Tienda.nombre', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.logo', 'Tienda.direccion', 'Tienda.facturacion_apikey', 'Tienda.emails_bcc', 'Tienda.url', 'Tienda.direccion', 'Tienda.stock_automatico', 'activo_enviame', 'apihost_enviame', 'apikey_enviame', 'company_enviame', 'bodega_enviame', 'meta_ids_enviame', 'peso_enviame', 'volumen_enviame', 'mandrill_apikey'
+							'Tienda.id', 'Tienda.nombre', 'Tienda.apiurl_prestashop', 'Tienda.apikey_prestashop', 'Tienda.logo', 'Tienda.direccion', 'Tienda.facturacion_apikey', 'Tienda.emails_bcc', 'Tienda.url', 'Tienda.direccion', 'Tienda.stock_automatico', 'Tienda.activo_enviame', 'Tienda.apihost_enviame', 'Tienda.apikey_enviame', 'Tienda.company_enviame', 'Tienda.bodega_enviame', 'Tienda.meta_ids_enviame', 'Tienda.peso_enviame', 'Tienda.volumen_enviame', 'Tienda.mandrill_apikey', 'Tienda.starken_rut', 'Tienda.starken_clave'
 						)
 					),
 					'Marketplace' => array(

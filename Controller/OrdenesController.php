@@ -496,7 +496,9 @@ class OrdenesController extends AppController
 										'VentaDetalle.cantidad_pendiente_entrega', 
 										'VentaDetalle.cantidad_reservada', 
 										'VentaDetalle.cantidad_anulada',
-										'VentaDetalle.reservado_virtual'
+										'VentaDetalle.reservado_virtual',
+										'VentaDetalle.cantidad_en_espera',
+										'VentaDetalle.fecha_llegada_en_espera'
 									)
 								)
 							),
@@ -528,6 +530,17 @@ class OrdenesController extends AppController
 									$venta['VentaDetalle'][$ip]['monto_anulado']              = $venta['VentaDetalle'][$ip]['cantidad_anulada'] * $detalle['PrcItem'];
 									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
 									$venta['VentaDetalle'][$ip]['dte']                        = $id_dte['Dte']['id'];
+
+									# Quitamos las unidades en espera de llegada
+									if ($d['cantidad_en_espera'] > 0 && $d['cantidad_en_espera'] <= $venta['VentaDetalle'][$ip]['cantidad_anulada']) {
+										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = 0;
+										$venta['VentaDetalle'][$ip]['fecha_llegada_en_espera'] = null;
+									}
+
+									# Quitamos las unidades en espera de llegada
+									if ($d['cantidad_en_espera'] > 0 && $d['cantidad_en_espera'] > $venta['VentaDetalle'][$ip]['cantidad_anulada']) {
+										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = $d['cantidad_en_espera'] - $detalle['QtyItem'];
+									}
 
 									# si la cantidad reservada es menor a la cantidad anulada, la reserva se lleva a 0
 									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) {
@@ -621,7 +634,9 @@ class OrdenesController extends AppController
 										'VentaDetalle.cantidad_pendiente_entrega', 
 										'VentaDetalle.cantidad_reservada', 
 										'VentaDetalle.cantidad_anulada',
-										'VentaDetalle.reservado_virtual'
+										'VentaDetalle.reservado_virtual',
+										'VentaDetalle.cantidad_en_espera',
+										'VentaDetalle.fecha_llegada_en_espera'
 									)
 								)
 							),
@@ -653,6 +668,17 @@ class OrdenesController extends AppController
 									$venta['VentaDetalle'][$ip]['monto_anulado']              = $venta['VentaDetalle'][$ip]['cantidad_anulada'] * $detalle['PrcItem'];
 									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
 									$venta['VentaDetalle'][$ip]['dte']                        = $id_dte['Dte']['id'];
+
+									# Quitamos las unidades en espera de llegada
+									if ($d['cantidad_en_espera'] > 0 && $d['cantidad_en_espera'] <= $venta['VentaDetalle'][$ip]['cantidad_anulada']) {
+										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = 0;
+										$venta['VentaDetalle'][$ip]['fecha_llegada_en_espera'] = null;
+									}
+
+									# Quitamos las unidades en espera de llegada
+									if ($d['cantidad_en_espera'] > 0 && $d['cantidad_en_espera'] > $venta['VentaDetalle'][$ip]['cantidad_anulada']) {
+										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = $d['cantidad_en_espera'] - $detalle['QtyItem'];
+									}
 
 									# si la cantidad reservada es menor a la cantidad anulada, la reserva se lleva a 0
 									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) {

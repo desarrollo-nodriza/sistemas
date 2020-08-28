@@ -6,7 +6,8 @@ App::import('Controller', 'Dtes');
 class ManifiestosController extends AppController {
 
 	public $components = array(
-		'Prestashop'
+		'Prestashop',
+		'Conexxion'
 	);
 
 	public function guardar_manifiesto($created = true)
@@ -136,11 +137,44 @@ class ManifiestosController extends AppController {
 	public function admin_index() {
 
 		$this->paginate		= array(
-			'recursive'	=> 0,
-			'order' => array('Manifiesto.created' => 'DESC')
+			'recursive'	=> -1,
+			'contain' => array(
+				'Transporte' => array(
+					'fields' => array(
+						'Transporte.nombre'
+					)
+				),
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.nombre'
+					)
+				),
+				'Administrador' => array(
+					'fields' => array(
+						'Administrador.nombre'
+					)
+				),
+				'Venta' => array(
+					'fields' => array(
+						'id'
+					)
+				)
+			),
+			'order' => array('Manifiesto.created' => 'DESC'),
+			'fields' => array(
+				'Manifiesto.id',
+				'Manifiesto.tienda_id',
+				'Manifiesto.administrador_id',
+				'Manifiesto.transporte_id',
+				'Manifiesto.entregado',
+				'Manifiesto.impreso',
+				'Manifiesto.fecha_entregado',
+				'Manifiesto.modified'
+			)
 		);
-		$manifiestos = $this->paginate();
 		
+		$manifiestos = $this->paginate();
+	
 		BreadcrumbComponent::add('Manifiestos ');
 		$this->set(compact('manifiestos'));
 	
@@ -251,9 +285,9 @@ class ManifiestosController extends AppController {
 		$ventas          = $this->Manifiesto->Venta->find('list');
 		$comunas         = ClassRegistry::init('Comuna')->find('list', array('order' => array('Comuna.nombre' => 'ASC')));
 		
-		$tipo_productos   = $this->Manifiesto->tipo_productos;
-		$tamano_productos = $this->Manifiesto->tamano_productos;
-		$tipo_retornos    = $this->Manifiesto->tipo_retornos;
+		$tipo_productos   = $this->Conexxion->obtener_tipo_productos_excel();
+		$tamano_productos = $this->Conexxion->obtener_tamanos_excel();
+		$tipo_retornos    = $this->Conexxion->obtener_tipo_retornos_excel();
 
 		BreadcrumbComponent::add('Manifiestos ', '/manifiestos');
 		BreadcrumbComponent::add('Nuevo Manifiesto ');
@@ -292,9 +326,9 @@ class ManifiestosController extends AppController {
 		$ventas          = $this->Manifiesto->Venta->find('list');
 		$comunas         = ClassRegistry::init('Comuna')->find('list', array('order' => array('Comuna.nombre' => 'ASC')));
 		
-		$tipo_productos   = $this->Manifiesto->tipo_productos;
-		$tamano_productos = $this->Manifiesto->tamano_productos;
-		$tipo_retornos    = $this->Manifiesto->tipo_retornos;
+		$tipo_productos   = $this->Conexxion->obtener_tipo_productos_excel();
+		$tamano_productos = $this->Conexxion->obtener_tamanos_excel();
+		$tipo_retornos    = $this->Conexxion->obtener_tipo_retornos_excel();
 
 		BreadcrumbComponent::add('Manifiestos ', '/manifiestos');
 		BreadcrumbComponent::add('Editar Manifiesto ');
@@ -490,7 +524,7 @@ class ManifiestosController extends AppController {
 			$datos[$io]['Manifiesto']['tamano_producto']       = $manifiesto['Manifiesto']['tamano_producto'];
 
 			if (!empty($detalle['ManifiestosVenta'])) {
-				$datos[$io]['Manifiesto']['tramo'] = $this->Manifiesto->obtener_tramo_por_peso( $detalle['ManifiestosVenta']['peso_bulto'] );
+				$datos[$io]['Manifiesto']['tramo'] = $this->Conexxion->obtener_tramo_por_peso( $detalle['ManifiestosVenta']['peso_bulto'], $manifiesto['Manifiesto']['tamano_producto']);
 			}
 
 			$datos[$io]['Manifiesto']['tipo_retorno'] = $manifiesto['Manifiesto']['tipo_retorno'];

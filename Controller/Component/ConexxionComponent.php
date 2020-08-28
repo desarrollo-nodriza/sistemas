@@ -14,6 +14,45 @@ class ConexxionComponent extends Component
     private $ConexxionCliente;
 
 
+    private $tipo_productos = array(
+		'Dia habil siguiente' => 'Dia habil siguiente'
+	);
+
+	private $tamano_productos = array(
+		'Paqueteria Moto'      => 'Paqueteria Moto',
+		'Paqueteria Camioneta' => 'Paqueteria Camioneta'
+	);
+
+	private $tipo_retornos = array(
+		'Sin retorno' => 'Sin retorno',
+		'Con retorno' => 'Con retorno'
+	);
+
+
+	/**
+	 * Tramos de Conexxion
+	 * @var array
+	 */
+	private $tramos = array(
+		'Tramo 1 3.1kg - 10kg' => array(
+			'min' => 0,
+			'max' => 10
+		),
+		'Tramo 2 10.1kg - 15kg' => array(
+			'min' => 10.1,
+			'max' => 15
+		),
+		'Tramo 3 15.1kg - 25kg' => array(
+			'min' => 15.1,
+			'max' => 25
+		),
+		'Tramo 4 + 25kg' => array(
+			'min' => 25,
+			'max' => 1000
+		)
+	);
+
+
     /**
      * [crearCliente description]
      * @param  string $apikey [description]
@@ -434,6 +473,45 @@ class ConexxionComponent extends Component
  		return Conexxion::$NOTIFICATION_TYPE;
  	}
 
+
+ 	/**
+ 	 * Calcula según el peso y tamaño del vehículo que tramo usar
+ 	 * @param  integer $peso   peso del paquete
+ 	 * @param  string  $tamano tamaño del vehículo (Moto/Camioneta)
+ 	 * @return string
+ 	 */
+ 	public function obtener_tramo_por_peso($peso = 0, $tamano = 'Paqueteria Moto')
+	{	
+
+		# Al seleccionar moto solo se usa el tramo 0
+		if ($tamano == 'Paqueteria Moto') {
+			return 'Tramo 0 (moto)';
+		}
+
+		# Al ser camioneta
+		foreach ($this->tramos as $tramo => $valores) {
+			if ($peso >= $valores['min'] && $peso <= $valores['max']) {
+				return $tramo;
+			}
+		}
+	}
+
+
+	public function obtener_tipo_productos_excel()
+	{
+		return $this->tipo_productos;
+	}
+
+
+	public function obtener_tipo_retornos_excel()
+	{
+		return $this->tipo_retornos;
+	}
+
+	public function obtener_tamanos_excel()
+	{
+		return $this->tamano_productos;
+	}
 
  	public function getEtiquetaEmision($response, $venta) {
         	

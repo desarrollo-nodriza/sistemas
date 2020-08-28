@@ -8,44 +8,6 @@ class Manifiesto extends AppModel
 	public $displayField	= 'created';
 
 
-	public $tipo_productos = array(
-		'Dia habil siguiente' => 'Dia habil siguiente'
-	);
-
-	public $tamano_productos = array(
-		'Paqueteria Moto'      => 'Paqueteria Moto',
-		'Paqueteria Camioneta' => 'Paqueteria Camioneta'
-	);
-
-	public $tipo_retornos = array(
-		'Sin retorno' => 'Sin retorno',
-		'Con retorno' => 'Con retorno'
-	);
-
-
-	public $tramos = array(
-		'Tramo 0 (moto)' => array(
-			'min' => 0,
-			'max' => 3
-		),
-		'Tramo 1 3.1kg - 10kg' => array(
-			'min' => 3.1,
-			'max' => 10
-		),
-		'Tramo 2 10.1kg - 15kg' => array(
-			'min' => 10.1,
-			'max' => 15
-		),
-		'Tramo 3 15.1kg - 25kg' => array(
-			'min' => 15.1,
-			'max' => 25
-		),
-		'Tramo 4 + 25kg' => array(
-			'min' => 25,
-			'max' => 1000
-		)
-	);
-
 	/**
 	 * BEHAVIORS
 	 */
@@ -128,7 +90,7 @@ class Manifiesto extends AppModel
 		),
 		'Comuna' => array(
 			'className'				=> 'Comuna',
-			'foreignKey'			=> 'tienda_id',
+			'foreignKey'			=> 'comuna_id',
 			'conditions'			=> '',
 			'fields'				=> '',
 			'order'					=> '',
@@ -172,15 +134,4 @@ class Manifiesto extends AppModel
 		)*/
 
 	);
-
-
-
-	public function obtener_tramo_por_peso($peso = 0)
-	{
-		foreach ($this->tramos as $tramo => $valores) {
-			if ($peso >= $valores['min'] && $peso <= $valores['max']) {
-				return $tramo;
-			}
-		}
-	}
 }

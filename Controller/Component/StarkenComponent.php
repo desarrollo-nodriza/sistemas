@@ -1,13 +1,16 @@
 <?php 
 App::uses('Component', 'Controller');
 App::import('Vendor', 'Starken', array('file' => 'Starken/starken-ws.class.php'));
-App::import('Vendor', 'LAFFPack', array('file' => 'Starken/LAFFPack.php'));
+#App::import('Vendor', 'LAFFPack', array('file' => 'Starken/LAFFPack.php'));
 App::import('Vendor', 'PDFMerger', array('file' => 'PDFMerger/PDFMerger.php'));
 
 class StarkenComponent extends Component
 {
 	
 	private $StarkenConexion;
+
+	// Usamos laffpack para armar los bultos
+    public $components = array('LAFFPack');
 
 	private $tipoEntrega = array(
 		1 => 'AGENCIA',
@@ -464,11 +467,10 @@ class StarkenComponent extends Component
 	 */
 	public function obtenerDimensionesPaquete($cajas = array())
 	{	
-		$laftpack = new LAFFPack();
-		$laftpack->pack($cajas);
+		$this->LAFFPack->pack($cajas);
         
         # Se obtienen las dimensiones del paquete
-        $paquete = $laftpack->get_container_dimensions();
+        $paquete = $this->LAFFPack->get_container_dimensions();
 
         return $paquete;
         
@@ -481,17 +483,31 @@ class StarkenComponent extends Component
 	}
 
 
+	public function obtener_costo_envio($codOrigen, $codDestino, $alto, $ancho, $largo, $kilos)
+	{	
+
+		$data = array(
+			'codigoCiudadOrigen'  => $codOrigen,
+			'codigoCiudadDestino' => $codDestino,
+			'alto'                => $alto,
+			'ancho'               => $ancho,
+			'largo'               => $largo,
+			'kilos'               => ($kilos < 0.3) ? 0.3 : $kilos
+		);
+
+		return json_decode($this->StarkenConexion->consultarCobertura($data), true);
+	}
+
+
 	public function listarCiudadesDestino()
 	{	
-		$StarkenConexion = new StarkenWebServices('763811425', 'nodriza2020', '', '', '');
-		return json_decode($StarkenConexion->listarCiudadesDestino(false, true), true);
+		return json_decode($this->StarkenConexion->listarCiudadesDestino(false, true), true);
 	}
 
 
 	public function listarCiudadesOrigen()
 	{	
-		$StarkenConexion = new StarkenWebServices('763811425', 'nodriza2020', '', '', '');
-		return json_decode($StarkenConexion->listarCiudadesOrigen(false, true), true);
+		return json_decode($this->StarkenConexion->listarCiudadesOrigen(false, true), true);
 	}
 
 	public function getEtiquetaEmision($response, $venta) {

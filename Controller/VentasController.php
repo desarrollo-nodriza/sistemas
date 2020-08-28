@@ -3291,7 +3291,7 @@ class VentasController extends AppController {
 		if ($venta['MetodoEnvio']['dependencia'] == 'starken') {
 			
 			# Creamos cliente starken
-			$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
+			$this->Starken->crearCliente($venta['Tienda']['starken_rut'], $venta['Tienda']['starken_clave'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
 			
 			$seguimientos = array();
 
