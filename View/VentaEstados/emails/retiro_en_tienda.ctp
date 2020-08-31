@@ -119,7 +119,7 @@
                                           <!-- /Venta ID -->
 
                                           <!-- Parrafo -->
-                                          <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 0px; text-align: center; vertical-align: baseline;">Tu compra está disponible para ser retirada en nuestra tienda ubicada en Diagonal Oriente #1355, Ñuñoa. Santiago.</p>
+                                          <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 0px; text-align: center; vertical-align: baseline;">Tu compra está disponible para ser retirada en nuestra tienda ubicada en <?=$venta['Tienda']['direccion'];?>.</p>
                                           <!-- /Parrafo -->
 
                                            <!-- Parrafo -->
