@@ -264,7 +264,7 @@
                                                                                     
                           </td>
                           <td class="text-right" style="border-bottom: 0; border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; width: 70%" align="right">
-                            <a href="https://www.google.cl/maps/place/ToolMania/@-33.4466135,-70.6142545,17z/data=!4m12!1m6!3m5!1s0x9662cf845db35c19:0xb602780387d2a780!2sToolMania!8m2!3d-33.4467433!4d-70.613246!3m4!1s0x9662cf845db35c19:0xb602780387d2a780!8m2!3d-33.4467433!4d-70.613246">
+                            <a href="https://www.google.cl/maps/@-33.4481791,-70.8488174,17z">
                               <img src="https://sistemasdev.nodriza.cl/img/toolmania/toolmania-maps.png" style="max-width: 100%;" width="300">
                             </a>
                           </td>

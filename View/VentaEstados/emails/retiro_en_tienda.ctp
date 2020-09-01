@@ -163,18 +163,18 @@
                                                 <tbody>
                                                   <tr>
                                                     <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 30px; margin: 0; padding: 0; width: 50%;" valign="top">
-                                                      <a href="https://www.waze.com/ul?ll=-33.44651047%2C-70.61268210&navigate=yes&zoom=17" style="width: 100%;text-align: center;float: left;">
+                                                      <a href="https://www.waze.com/ul?ll=-33.4482614%2C-70.8491983&navigate=yes&zoom=17" style="width: 100%;text-align: center;float: left;">
                                                         <img src="https://sistemasdev.nodriza.cl/img/toolmania/iconos/waze.png" style="max-width: 100%; margin-top: 40px;" width="40">
                                                       </a>
-                                                      <a href="https://www.waze.com/ul?ll=-33.44651047%2C-70.61268210&navigate=yes&zoom=17" style="width: 100%;text-align: center;float: left; color: #636c72; font-size: 16px;">
+                                                      <a href="https://www.waze.com/ul?ll=-33.4482614%2C-70.8491983&navigate=yes&zoom=17" style="width: 100%;text-align: center;float: left; color: #636c72; font-size: 16px;">
                                                         Ir con Waze
                                                       </a>
                                                     </td>
                                                     <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 30px; margin: 0; padding: 0; width: 50%;" valign="top">
-                                                      <a href="https://goo.gl/maps/YWa2aHAUeQT2" style="width: 100%;text-align: center;float: left;">
+                                                      <a href="https://goo.gl/maps/jTZP6XTYESPrwhsu6" style="width: 100%;text-align: center;float: left;">
                                                         <img src="https://sistemasdev.nodriza.cl/img/toolmania/iconos/google.png" style="max-width: 100%; margin-top: 40px;" width="40">
                                                       </a>
-                                                      <a href="https://goo.gl/maps/YWa2aHAUeQT2" style="width: 100%;text-align: center;float: left; color: #636c72; font-size: 16px;">
+                                                      <a href="https://goo.gl/maps/jTZP6XTYESPrwhsu6" style="width: 100%;text-align: center;float: left; color: #636c72; font-size: 16px;">
                                                         Ir con Maps
                                                       </a>
                                                     </td>
@@ -305,7 +305,7 @@
                                                                                     
                           </td>
                           <td class="text-right" style="border-bottom: 0; border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; width: 70%" align="right">
-                            <a href="https://www.google.cl/maps/place/ToolMania/@-33.4466135,-70.6142545,17z/data=!4m12!1m6!3m5!1s0x9662cf845db35c19:0xb602780387d2a780!2sToolMania!8m2!3d-33.4467433!4d-70.613246!3m4!1s0x9662cf845db35c19:0xb602780387d2a780!8m2!3d-33.4467433!4d-70.613246">
+                            <a href="https://www.google.cl/maps/@-33.4481791,-70.8488174,17z">
                               <img src="https://sistemasdev.nodriza.cl/img/toolmania/toolmania-maps.png" style="max-width: 100%;" width="300">
                             </a>
                           </td>
