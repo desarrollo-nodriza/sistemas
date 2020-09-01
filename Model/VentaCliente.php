@@ -96,11 +96,11 @@ class VentaCliente extends AppModel
 		if (isset($this->data['VentaCliente']['rut'])) {
 
 			$nw_rut = str_replace('.', '', $this->data['VentaCliente']['rut']);
-			$nw_rut = str_replace('-', '', $this->data['VentaCliente']['rut']);
-
+			$nw_rut = str_replace('-', '', $nw_rut);
+			
 			$dv = substr($nw_rut, -1);
 			$rut = substr($nw_rut, 0, -1);
-
+		
 			$this->data['VentaCliente']['rut'] = $rut . '-' . $dv;
 
 		}
