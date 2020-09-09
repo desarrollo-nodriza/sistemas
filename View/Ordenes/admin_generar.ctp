@@ -397,10 +397,10 @@
 												</td>
 												<td class="permitido_modificar" valign="center">
 													
-													<input type="text" class="form-control editable required editNmbItem" name="editNmbItem[<?=$indice;?>]" value="<?=$detalle['VentaDetalleProducto']['nombre'];?>" data-original="<?=$detalle['VentaDetalleProducto']['nombre'];?>">
+													<input type="text" class="form-control editable required editNmbItem" name="editNmbItem[<?=$indice;?>]" value="<?=h($detalle['VentaDetalleProducto']['nombre']);?>" data-original="<?=h($detalle['VentaDetalleProducto']['nombre']);?>">
 												
-													<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
-													<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
+													<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => h($detalle['VentaDetalleProducto']['nombre'])));?>
+													<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => h($detalle['VentaDetalleProducto']['nombre'])));?>
 
 												</td>
 												<td class="permitido_modificar" valign="center">

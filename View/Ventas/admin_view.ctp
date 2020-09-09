@@ -276,11 +276,11 @@
 																<?=$this->Html->calcular_llegada($detalle['fecha_llegada_en_espera']); ?>
 															<? endif;?>
 														</td>
-														<td data-toggle="tooltip" title="<?=$detalle['VentaDetalleProducto']['nombre'];?>" class="td-producto">
+														<td data-toggle="tooltip" title="<?=h($detalle['VentaDetalleProducto']['nombre']);?>" class="td-producto">
 															<? if (!empty($detalle['VentaDetalleProducto']['imagenes'])) : ?>
 															<img src="<?=Hash::extract($detalle['VentaDetalleProducto']['imagenes'], '{n}[principal=1].url')[0]; ?>" class="img-responsive producto-td-imagen">
 															<? endif; ?>
-															<?= $this->Text->truncate($detalle['VentaDetalleProducto']['nombre'], 40); ?>
+															<?= $this->Text->truncate( h($detalle['VentaDetalleProducto']['nombre']), 40); ?>
 														</td>
 														<td>
 															<?= CakeNumber::currency($detalle['precio'], 'CLP'); ?>
@@ -319,7 +319,7 @@
 																		<?= $this->Form->create('Venta', array('url' => array('action' => 'en_espera', $venta['Venta']['id']), 'class' => 'form-horizontal js-formulario', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 																		<div class="modal-header">
 																			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																			<h4 class="modal-title" id="modal-en-espera-producto-<?=$detalle['id'];?>-label"><i class="fa fa-clock-o"></i> <?= ($detalle['cantidad_en_espera'] == 0) ? 'Agendar' : 'Re-agendar'; ?> llegada <?= $this->Text->truncate($detalle['VentaDetalleProducto']['nombre'], 40); ?></h4>
+																			<h4 class="modal-title" id="modal-en-espera-producto-<?=$detalle['id'];?>-label"><i class="fa fa-clock-o"></i> <?= ($detalle['cantidad_en_espera'] == 0) ? 'Agendar' : 'Re-agendar'; ?> llegada <?= $this->Text->truncate(h($detalle['VentaDetalleProducto']['nombre']), 40); ?></h4>
 																		</div>
 																		<div class="modal-body">
 																			<? if ($detalle['cantidad_en_espera'] > 0) : ?>
@@ -746,9 +746,9 @@
 																		<?= $this->Form->input(sprintf('Detalle.%d.VlrCodigo', $indice), array('type' => 'hidden', 'value' => sprintf('COD-%s', $detalle['VentaDetalleProducto']['id']))) ;?>
 																	</td>
 																	<td>
-																		<?= $detalle['VentaDetalleProducto']['nombre']; ?>
-																		<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
-																		<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => $detalle['VentaDetalleProducto']['nombre']));?>
+																		<?= h($detalle['VentaDetalleProducto']['nombre']); ?>
+																		<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => h($detalle['VentaDetalleProducto']['nombre'])));?>
+																		<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'value' => h($detalle['VentaDetalleProducto']['nombre'])));?>
 																	</td>
 																	<td>
 																		<?= CakeNumber::currency($detalle['precio'], 'CLP'); ?>
