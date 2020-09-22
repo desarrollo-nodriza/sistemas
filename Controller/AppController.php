@@ -1003,7 +1003,7 @@ class AppController extends Controller
 	 * @param $peso  float  peso permitido en mb
 	 * @return $errores 	array 	Arreglo con la información del error si es que existe
 	 */
-	public function validarTamanoTipoImagenes($imagenes = array(), $tiposPermitidos = array('image/jpeg', 'image/jpg'), $peso = 0.3)
+	public function validarTamanoTipoImagenes($imagenes = array(), $tiposPermitidos = array('image/jpeg', 'image/jpg'), $peso = 20)
 	{	
 		$errores = array();
 		# Procesamos imágenes
