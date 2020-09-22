@@ -3645,6 +3645,45 @@ class VentasController extends AppController {
 	}
 
 
+	/**
+	 * Permite limpiar los campos de agendamiento de una línea
+	 * de producto en una venta dada
+	 * @param int $id Id de la venta
+	 * @param int $id_detalle Id del detalle del producto
+	 * @return redirect
+	 */
+	public function admin_quitar_en_espera($id, $id_detalle)
+	{	
+		if ( ! $this->Venta->exists($id) ||
+			! $this->Venta->VentaDetalle->exists($id_detalle) ) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$ventaDetalle = array(
+			'VentaDetalle' => array(
+				'id'                      => $id_detalle,
+				'cantidad_en_espera'      => 0,
+				'fecha_llegada_en_espera' => null
+			)
+		);
+
+		if ($this->Venta->VentaDetalle->save($ventaDetalle)){
+			$this->Session->setFlash('Línea actualizada correctamente.', null, array(), 'success');
+			
+			$this->shell = true;
+			$this->admin_reservar_stock_venta($id);
+			$this->shell = false;
+
+		}else{
+			$this->Session->setFlash('No fue posible limpiar el agendamiento.', null, array(), 'danger');
+		}
+
+		$this->redirect($this->referer('/', true));
+	
+	}
+
+
 	public function admin_crear_mensaje_venta($id)
 	{
 		$venta = $this->Venta->obtener_venta_por_id($id);
@@ -7621,9 +7660,9 @@ class VentasController extends AppController {
 
 
 	/**
-	 * [api_obtener_venta description]
-	 * @param  [type] $id [description]
-	 * @return [type]     [description]
+	 * Enpoint /api/ventas/:id.json
+	 * @param  [type] $id Identificador de la venta
+	 * @return mixed
 	 */
 	public function api_obtener_venta($id)
 	{	
@@ -7713,10 +7752,16 @@ class VentasController extends AppController {
 
 		foreach ($venta['VentaDetalle'] as $i => $item) {
 
+			$total_items = $item['cantidad'] - $item['cantidad_anulada'] - $item['cantidad_en_espera'] - $item['cantidad_entregada'];
+
+			# si la cantidad de items es 0 se quita la línea
+			if ($total_items == 0)
+				continue;
+
 			$respuesta['itemes'][$i] = array(
 				'id'               => $item['id'],
 				'nombre'           => $item['VentaDetalleProducto']['nombre'],
-				'cantidad'         => $item['cantidad'] - $item['cantidad_anulada'] - $item['cantidad_en_espera'] - $item['cantidad_entregada'],
+				'cantidad'         => $total_items,
 				'precio_neto'      => $item['precio'],
 				'precio_bruto'     => $this->precio_bruto($item['precio']),
 				'precio_bruto_clp' => CakeNumber::currency($this->precio_bruto($item['precio']), 'CLP'),
@@ -7729,7 +7774,17 @@ class VentasController extends AppController {
 				));
 			}
 		}
+		
+		# si la venta no tiene items se retorna un error
+		if (empty($respuesta['itemes'])){
+			$response = array(
+				'code'    => 506, 
+				'name' => 'error',
+				'message' => 'Venta no aplica para picking'
+			);
 
+			throw new CakeException($response);
+		}
 
 		$this->set(array(
             'response' => $respuesta,

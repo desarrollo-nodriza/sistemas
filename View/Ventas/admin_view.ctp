@@ -309,6 +309,10 @@
 															<?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('action' => 'liberar_stock_reservado', $venta['Venta']['id'], $detalle['id'], $detalle['cantidad_reservada']), array('class' => 'btn btn-warning btn-block btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?>
 														<? endif; ?>
 
+														<? if ($permisos['storage'] && $detalle['cantidad_en_espera'] > 0 ) : ?>
+															<?=$this->Html->link('<i class="fa fa-ban"></i> Quitar agendamiento', array('action' => 'quitar_en_espera', $venta['Venta']['id'], $detalle['id']), array('class' => 'btn btn-default btn-block btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Eliminar el agendamiento del producto'))?>
+														<? endif; ?>
+
 														<? if ($permisos['storage'] && ($detalle['cantidad_reservada'] + $detalle['cantidad_entregada']) < ($detalle['cantidad'] - $detalle['cantidad_anulada'])) : ?>
 															<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-en-espera-producto-<?=$detalle['id'];?>"><i class="fa fa-clock-o"></i> <?= ($detalle['cantidad_en_espera'] == 0) ? 'Agendar' : 'Re-agendar'; ?></button>
 
@@ -334,7 +338,7 @@
 																			</div>
 																			<div class="form-group">
 																				<?=$this->Form->label(sprintf('%d.VentaDetalle.fecha_llegada_en_espera', $detalle['id']), 'Ingrese una fecha de llegada'); ?>
-																				<?=$this->Form->input(sprintf('%d.VentaDetalle.fecha_llegada_en_espera', $detalle['id']), array('type' => 'text', 'class' => 'form-control not-blank datepicker', 'placeholder' => date('Y-m-d'), 'value' => $detalle['fecha_llegada_en_espera'])); ?>
+																				<?=$this->Form->input(sprintf('%d.VentaDetalle.fecha_llegada_en_espera', $detalle['id']), array('type' => 'text', 'class' => 'form-control not-blank datepicker-start-today', 'placeholder' => date('Y-m-d'), 'value' => $detalle['fecha_llegada_en_espera'])); ?>
 																			</div>
 																		</div>
 																		<div class="modal-footer">

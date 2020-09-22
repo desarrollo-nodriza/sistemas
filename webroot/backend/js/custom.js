@@ -247,7 +247,7 @@ jQuery(document).ready(function($)
 	/**
 	 * Idioma español datepicker
 	 */
-	if ( $('.datepicker').length > 0 ) {
+	if ( $('.datepicker').length > 0 || $('.datepicker-start-today').length > 0) {
 		!function(a)
 		{
 			a.fn.datepicker.dates.es = {
@@ -272,6 +272,21 @@ jQuery(document).ready(function($)
 		$('.datepicker').datepicker({
 			language	: 'es',
 			format		: 'yyyy-mm-dd'
+		});
+	}
+
+	/**
+	 * Datepickier with stardate
+	 */
+	if ($('.datepicker-start-today').length > 0) {
+
+		var nowDate = new Date();
+		var today = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate(), 0, 0, 0, 0);
+
+		$('.datepicker-start-today').datepicker({
+			language	: 'es',
+			format		: 'yyyy-mm-dd',
+			startDate   : today
 		});
 	}
 
