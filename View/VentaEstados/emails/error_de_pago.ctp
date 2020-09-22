@@ -137,7 +137,7 @@
                                           </ul>
 
                                           <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 25px; text-align: center; vertical-align: baseline;">
-                                          Sí el pago aparece reflejado en su cuenta bancaria, se le devolverá el dinero en un plazo máximo de <strong>10 días hábiles</strong> a contar desde la fecha de recepción de este email.
+                                          Si el pago aparece reflejado en su cuenta bancaria, se le devolverá el dinero en un plazo máximo de <strong>10 días hábiles</strong> a contar desde la fecha de recepción de este email.
                                           </p>
 
                                           <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 25px; text-align: center; vertical-align: baseline;">Sí tienes alguna duda escríbenos a <a href="mailto:ventas@toolmania.cl" style="color: #636c72; font-size: 16px; font-weight: 600; line-height: 22px; margin-bottom: 10px; margin-top: 15px;">ventas@toolmania.cl</a> o llámanos al <br><a style="color: #636c72; font-size: 16px; font-weight: 600; line-height: 22px; margin-bottom: 10px; margin-top: 15px;" href="tel:+56 2 2379 2188">(2) 2379 2188</a></p>

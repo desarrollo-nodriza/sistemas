@@ -7716,7 +7716,7 @@ class VentasController extends AppController {
 			$respuesta['itemes'][$i] = array(
 				'id'               => $item['id'],
 				'nombre'           => $item['VentaDetalleProducto']['nombre'],
-				'cantidad'         => $item['cantidad'],
+				'cantidad'         => $item['cantidad'] - $item['cantidad_anulada'] - $item['cantidad_en_espera'] - $item['cantidad_entregada'],
 				'precio_neto'      => $item['precio'],
 				'precio_bruto'     => $this->precio_bruto($item['precio']),
 				'precio_bruto_clp' => CakeNumber::currency($this->precio_bruto($item['precio']), 'CLP'),
@@ -8881,7 +8881,9 @@ class VentasController extends AppController {
 	}
 
 
-
+	/**
+	 * 
+	 */
 	public function api_notificar_stockout($id)
 	{
 		# Sólo método Get
