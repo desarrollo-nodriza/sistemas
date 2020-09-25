@@ -7755,7 +7755,7 @@ class VentasController extends AppController {
 			$total_items = $item['cantidad'];
 
 			# si la cantidad de items es 0 se quita la línea
-			if ($total_items == 0)
+			#if ($total_items == 0)
 				#continue;
 
 			$respuesta['itemes'][$i] = array(
