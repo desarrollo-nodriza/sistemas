@@ -7752,11 +7752,11 @@ class VentasController extends AppController {
 
 		foreach ($venta['VentaDetalle'] as $i => $item) {
 
-			$total_items = $item['cantidad'] - $item['cantidad_anulada'] - $item['cantidad_en_espera'] - $item['cantidad_entregada'];
+			$total_items = $item['cantidad'];
 
 			# si la cantidad de items es 0 se quita la línea
 			if ($total_items == 0)
-				continue;
+				#continue;
 
 			$respuesta['itemes'][$i] = array(
 				'id'               => $item['id'],
