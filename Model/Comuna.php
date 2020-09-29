@@ -57,7 +57,10 @@ class Comuna extends AppModel
 	{
 		$comuna = $this->find('first', array(
 			'conditions' => array(
-				'Comuna.nombre' => $nombre
+				'OR' => array(
+					'Comuna.nombre' => $nombre,
+					'Comuna.alias LIKE' => '%' . $nombre . '%'
+				)
 			)
 		));
 

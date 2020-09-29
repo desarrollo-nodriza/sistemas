@@ -267,6 +267,23 @@ Router::connect(
 );
 
 
+Router::connect(
+    '/api/tienda/calcular_costo_envio/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Tiendas', 
+        'action' => 'calcular_costo_envio',
+        'api' => true,
+        'prefix' => 'api'
+    ),
+    array(
+        'pass' => array('id'),
+        'id'   => '[0-9]+' // id de la tienda
+    )
+);
+
+Router::parseExtensions('json');
+
+
 
 /**
  * Linio webhook
@@ -504,4 +521,21 @@ Router::connect(
     )
 );
 
-Router::parseExtensions('json');
+
+/**
+ * Métodos de envios
+ */
+
+
+ /**
+  * Comunas
+  */
+Router::connect(
+    '/api/comuna', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Comunas', 
+        'action' => 'obtener_comunas',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);

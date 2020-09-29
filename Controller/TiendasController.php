@@ -1,7 +1,12 @@
 <?php
 App::uses('AppController', 'Controller');
 class TiendasController extends AppController
-{
+{	
+
+	public $components = array(
+		'Starken'
+	);
+
 	public function admin_index()
 	{
 		$this->paginate		= array(
@@ -151,6 +156,162 @@ class TiendasController extends AppController
 
 		$this->set(array(
             'response' => $tiendas,
+            '_serialize' => array('response')
+        ));
+
+	}
+
+
+	/**
+	 * Calcula el costo de envio de un bulto según
+	 * sus dimensiones.
+	 * @param int $id Id de la tienda
+	 */
+	public function api_calcular_costo_envio($id)
+	{
+		# Sólo método post
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Only POST request allow'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos la tienda
+		if( !$this->Tienda->exists($id)){
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Store selected doesn´t exist'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$tienda = $this->Tienda->find('first', array(
+			'conditions' => array(
+				'Tienda.id' => $id
+			),
+			'fields' => array(
+				'Tienda.id',
+				'Tienda.starken_rut',
+				'Tienda.starken_clave'
+			)
+		));
+
+		$costos = array(
+			'starken' => (float) 0.00
+		);
+
+		# Creamos cliente starken
+		$this->Starken->crearCliente($tienda['Tienda']['starken_rut'], $tienda['Tienda']['starken_clave'], null, null, null);
+		
+		$ciudadOrigen  = $this->request->data['ciudadOrigen'];
+		$ciudadDestino = $this->request->data['ciudadDestino'];
+		$altoBulto     = (float) $this->request->data['altoBulto'];
+		$anchoBulto    = (float) $this->request->data['anchoBulto'];
+		$largoBulto    = (float) $this->request->data['largoBulto'];
+		$kilosBulto    = (float) $this->request->data['kilosBulto'];
+
+
+		# Validamos que todos los campos tengan valor
+		if( empty($ciudadOrigen) ||
+			empty($ciudadDestino) ||
+			empty($altoBulto) ||
+			empty($anchoBulto) ||
+			empty($largoBulto) ||
+			empty($kilosBulto)){
+			
+			$response = array(
+				'code'    => 508, 
+				'message' => 'Todos los parámetros son requeridos'
+			);
+
+			throw new CakeException($response);
+
+		}
+
+
+		$comunaOrigen  =  ClassRegistry::init('Comuna')->find('first', array(
+			'conditions' => array(
+				'OR' => array(
+					'Comuna.nombre' => $ciudadOrigen,
+					'Comuna.cod_starken' => $ciudadOrigen,
+					'Comuna.alias LIKE' => '%'.$ciudadOrigen.'%'
+				)
+			),
+			'fields' => array(
+				'Comuna.cod_starken'
+			)
+		));
+
+		# No se encontró comuna
+		if (empty($comunaOrigen)){
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Comuna de origen no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$comunaDestino  =  ClassRegistry::init('Comuna')->find('first', array(
+			'conditions' => array(
+				'OR' => array(
+					'Comuna.nombre' => $ciudadDestino,
+					'Comuna.cod_starken' => $ciudadDestino,
+					'Comuna.alias LIKE' => '%'.$ciudadDestino.'%'
+				)
+			),
+			'fields' => array(
+				'Comuna.cod_starken'
+			)
+		));
+
+		# No se encontró comuna
+		if (empty($comunaDestino)){
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Comuna de destino no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+		
+		$starken = $this->Starken->obtener_costo_envio($comunaOrigen['Comuna']['cod_starken'], $comunaDestino['Comuna']['cod_starken'], $altoBulto, $anchoBulto, $largoBulto, $kilosBulto);
+
+		$respuesta = array(
+			'code' => 200,
+			'message' => 'Respuesta obtenida',
+			'transportes' => array(
+				'starken' => (isset($starken['code'])) ? $starken['body'] : array()
+			)
+		);
+		
+		$this->set(array(
+            'response' => $respuesta,
             '_serialize' => array('response')
         ));
 

@@ -656,7 +656,6 @@ class VentasController extends AppController {
 
 		$comunas = array_unique($this->Venta->find('list', array(
 			'fields' => array(
-				'Venta.comuna_entrega', 
 				'Venta.comuna_entrega'
 			), 
 			'order' => array(
@@ -2599,10 +2598,11 @@ class VentasController extends AppController {
 								$comuna_entrega = $this->Prestashop->prestashop_obtener_comuna_por_id($direccionEntrega['address']['id_state'])['state']['name'];
 							}
 
-							
+							$comuna_id = ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
+
 							$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
-							$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
-							$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
+							$NuevaVenta['Venta']['comuna_entrega']    =  ClassRegistry::init('Comuna')->field('nombre', array('id' => $comuna_id));
+							$NuevaVenta['Venta']['comuna_id']         =  $comuna_id;
 							$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 							$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
 						}
@@ -2737,11 +2737,13 @@ class VentasController extends AppController {
 												'0' => $VentaDetalles
 											);
 										}
+
+										$comuna_id = ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($DataVenta['AddressShipping']['City']);
 										
 										// Direccion despacho
 										$NuevaVenta['Venta']['direccion_entrega'] =  $DataVenta['AddressShipping']['Address1'] . ', ' . $DataVenta['AddressShipping']['Address2'];
-										$NuevaVenta['Venta']['comuna_entrega']    =  $DataVenta['AddressShipping']['City'];
-										$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($DataVenta['AddressShipping']['City']);
+										$NuevaVenta['Venta']['comuna_entrega']    =  ClassRegistry::init('Comuna')->field('nombre', array('id' => $comuna_id));
+										$NuevaVenta['Venta']['comuna_id']         =  $comuna_id;
 										$NuevaVenta['Venta']['nombre_receptor']   =  $DataVenta['AddressShipping']['FirstName'] . ' ' . $DataVenta['AddressShipping']['LastName'];
 										$NuevaVenta['Venta']['fono_receptor']     =  trim($DataVenta['AddressShipping']['Phone']) . '-' .  trim($DataVenta['AddressShipping']['Phone2']) ;
 										
@@ -2899,10 +2901,12 @@ class VentasController extends AppController {
 										}
 									}
 
+									$comuna_id = ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
+
 									// Direccion despacho
 									$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
-									$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
-									$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
+									$NuevaVenta['Venta']['comuna_entrega']    =  ClassRegistry::init('Comuna')->field('nombre', array('id' => $comuna_id));
+									$NuevaVenta['Venta']['comuna_id']         =  $comuna_id;
 									$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 									$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
 									
@@ -3265,7 +3269,7 @@ class VentasController extends AppController {
 		}
 
 		$venta = $this->request->data = $this->preparar_venta($id);
-
+		
 		# Estados disponibles para esta venta
 		$ventaEstados = ClassRegistry::init('VentaEstado')->find('list', array(
 			'conditions' => array(
@@ -6209,11 +6213,12 @@ class VentasController extends AppController {
 			$detalle_venta['AddressShipping']['Address5']
 		);
 
+		$comuna_id = ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($detalle_venta['AddressShipping']['City']);
 
 		// Direccion despacho
 		$NuevaVenta['Venta']['direccion_entrega'] =  implode(', ', $direcciones);
-		$NuevaVenta['Venta']['comuna_entrega']    =  $detalle_venta['AddressShipping']['City'];
-		$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($detalle_venta['AddressShipping']['City']);
+		$NuevaVenta['Venta']['comuna_entrega']    =  ClassRegistry::init('Comuna')->field('nombre', array('id' => $comuna_id));
+		$NuevaVenta['Venta']['comuna_id']         =  $comuna_id;
 		$NuevaVenta['Venta']['nombre_receptor']   =  $detalle_venta['AddressShipping']['FirstName'] . ' ' . $detalle_venta['AddressShipping']['LastName'];
 		$NuevaVenta['Venta']['fono_receptor']     =  trim($detalle_venta['AddressShipping']['Phone']) . '-' .  trim($detalle_venta['AddressShipping']['Phone2']) ;
 		
@@ -6660,11 +6665,13 @@ class VentasController extends AppController {
 			}	
 		}
 
+		$comuna_id = ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
+
 		// Direccion despacho
 		$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
 		$NuevaVenta['Venta']['numero_entrega']    =  $numero_entrega;
-		$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
-		$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
+		$NuevaVenta['Venta']['comuna_entrega']    =  ClassRegistry::init('Comuna')->field('nombre', array('id' => $comuna_id));
+		$NuevaVenta['Venta']['comuna_id']         =  $comuna_id;
 		$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 		$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
 		
@@ -6940,12 +6947,14 @@ class VentasController extends AppController {
 				$comuna_entrega = $this->Prestashop->prestashop_obtener_comuna_por_id($direccionEntrega['address']['id_state'])['state']['name'];
 			}
 
+			$comuna_id = ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
+
 			$NuevaVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
 			$NuevaVenta['Venta']['numero_entrega']    =  $numero_entrega;
 			$NuevaVenta['Venta']['otro_entrega']      =  $otro_entrega;
 			$NuevaVenta['Venta']['rut_receptor']      =  $rut_receptor;
-			$NuevaVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
-			$NuevaVenta['Venta']['comuna_id']         =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
+			$NuevaVenta['Venta']['comuna_entrega']    =  ClassRegistry::init('Comuna')->field('nombre', array('id' => $comuna_id));
+			$NuevaVenta['Venta']['comuna_id']         =  $comuna_id;
 			$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 			$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
 		}
@@ -7244,11 +7253,14 @@ class VentasController extends AppController {
 				$comuna_entrega = $this->Prestashop->prestashop_obtener_comuna_por_id($direccionEntrega['address']['id_state'])['state']['name'];
 			}
 
+			$comuna_id = ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($comuna_entrega);
+
 			$ActualizarVenta['Venta']['direccion_entrega'] =  $direccion_entrega;
 			$ActualizarVenta['Venta']['numero_entrega']    =  $numero_entrega;
 			$ActualizarVenta['Venta']['otro_entrega']      =  $otro_entrega;
 			$ActualizarVenta['Venta']['rut_receptor']      =  $rut_receptor;
-			$ActualizarVenta['Venta']['comuna_entrega']    =  $comuna_entrega;
+			$ActualizarVenta['Venta']['comuna_entrega']    =  ClassRegistry::init('Comuna')->field('nombre', array('id' => $comuna_id));
+			$ActualizarVenta['Venta']['comuna_id']    =  $comuna_id;
 			$ActualizarVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 			$ActualizarVenta['Venta']['fono_receptor']     =  $fono_receptor;
 		}

@@ -29,6 +29,7 @@ class StarkenComponent extends Component
 	public function crearCliente($rutApiRest, $claveApiRest, $rutEmpresaEmisora, $rutUsuarioEmisor, $claveUsuarioEmisor, $numeroCtaCte = null, $dvNumeroCtaCte = null, $centroCostoCtaCte = null)
 	{	
 		$this->StarkenConexion = new StarkenWebServices($rutApiRest, $claveApiRest, $rutEmpresaEmisora, $rutUsuarioEmisor, $claveUsuarioEmisor, $numeroCtaCte, $dvNumeroCtaCte, $centroCostoCtaCte);
+	
 	}
 
 
@@ -482,22 +483,22 @@ class StarkenComponent extends Component
 		return json_decode($this->StarkenConexion->getSeguimiento(json_encode($data)), true);
 	}
 
-
+	/**
+	 * Retorna los servicios disponibles y sus costos
+	 */
 	public function obtener_costo_envio($codOrigen, $codDestino, $alto, $ancho, $largo, $kilos)
 	{	
-
-		$data = array(
+		$data = json_encode(array(
 			'codigoCiudadOrigen'  => $codOrigen,
 			'codigoCiudadDestino' => $codDestino,
 			'alto'                => $alto,
 			'ancho'               => $ancho,
 			'largo'               => $largo,
 			'kilos'               => ($kilos < 0.3) ? 0.3 : $kilos
-		);
-
+		));
+	
 		return json_decode($this->StarkenConexion->consultarCobertura($data), true);
 	}
-
 
 	public function listarCiudadesDestino()
 	{	
@@ -510,7 +511,9 @@ class StarkenComponent extends Component
 		return json_decode($this->StarkenConexion->listarCiudadesOrigen(false, true), true);
 	}
 
-	public function getEtiquetaEmision($response, $venta) {
+	
+	public function getEtiquetaEmision($response, $venta) 
+	{
         	
 		$etiqueta              = "";
 		$remitenteNombre       = "";
