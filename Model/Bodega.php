@@ -285,8 +285,8 @@ class Bodega extends AppModel
 				'cantidad'                  => $cantidad,
 				'io'                        => 'IN',
 				'tipo' 						=> $tipo,
-				'valor'                     => $precio_costo,
-				'total'                     => $precio_costo * $cantidad,
+				'valor'                     => round($precio_costo, 2),
+				'total'                     => round($precio_costo * $cantidad, 2),
 				'fecha'                     => date('Y-m-d H:i:s'),
 				'responsable'               => CakeSession::read('Auth.Administrador.email'),
 				'glosa'						=> (empty($glosa)) ? $this->tipoMovimientos[$tipo]['IN'] : $glosa,
@@ -338,8 +338,8 @@ class Bodega extends AppModel
 				'cantidad'                  => -$cantidad,
 				'io'                        => 'ED',
 				'tipo'						=> $tipo,
-				'valor'                     => -$valor,
-				'total'                     => $valor * -$cantidad,
+				'valor'                     => round(-$valor, 2),
+				'total'                     => round($valor * -$cantidad, 2),
 				'fecha'                     => date('Y-m-d H:i:s'),
 				'responsable'               => CakeSession::read('Auth.Administrador.email'),
 				'glosa'						=> (empty($glosa)) ? $this->tipoMovimientos[$tipo]['ED'] : $glosa,
@@ -352,11 +352,13 @@ class Bodega extends AppModel
 		$creado = ClassRegistry::init('BodegasVentaDetalleProducto')->find('first', array(
 			'conditions' => array(
 				'BodegasVentaDetalleProducto.venta_id'                  => $id_venta,
+				'BodegasVentaDetalleProducto.venta_id !='               => '',
 				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto,
 				'BodegasVentaDetalleProducto.cantidad'                  => -$cantidad,
 				'BodegasVentaDetalleProducto.tipo'                      => $tipo,
 				'BodegasVentaDetalleProducto.io'                        => 'ED',
-				'BodegasVentaDetalleProducto.bodega_id'                 => $bodega_id
+				'BodegasVentaDetalleProducto.bodega_id'                 => $bodega_id,
+				'BodegasVentaDetalleProducto.total'                     => $data['BodegasVentaDetalleProducto']['total'],
 			)
 		));
 
@@ -386,11 +388,14 @@ class Bodega extends AppModel
 	{	
 
 		$enBodega = $this->obtenerCantidadProductoBodega($id_producto, $bodega_id, true);
-
+		
 		if (empty($precio_costo) || $precio_costo == 0) {
 			$precio_costo = $this->obtener_pmp_por_producto_bodega($id_producto, $bodega_id);			
 		}
-		
+
+		if($precio_costo <= 0)
+			return false;
+
 		$result = false;
 
 		// Se crea una entrada con la diferencia
