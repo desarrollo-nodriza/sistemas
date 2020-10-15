@@ -665,3 +665,7 @@ tr.expanded-div {
     }
 
 }
+
+.table-middle>tbody>tr>td, .table-middle>tbody>tr>th, .table-middle>tfoot>tr>td, .table-middle>tfoot>tr>th, .table-middle>thead>tr>td, .table-middle>thead>tr>th {
+    vertical-align: middle !important;
+}

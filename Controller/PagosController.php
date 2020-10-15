@@ -2,7 +2,622 @@
 App::uses('AppController', 'Controller');
 
 class PagosController extends AppController
-{
+{	
+
+	/**
+     * Crea un redirect y agrega a la URL los parámetros del filtro
+     * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
+     * @param 		$accion 		String 		Nombre del método receptor de la petición
+     * @return 		void
+     */
+    public function filtrar($controlador = '', $accion = '')
+    {
+    	$redirect = array(
+    		'controller' => $controlador,
+    		'action' => $accion
+    		);
+
+		foreach ($this->request->data['Filtro'] as $campo => $valor) {
+			if ($valor != '') {
+				$redirect[$campo] = str_replace('/', '-', $valor);
+			}
+		}
+		
+    	$this->redirect($redirect);
+
+    }
+
+	public function admin_index()
+	{
+		$condiciones = array();
+		$joins       = array();
+		$group       = array();
+		$fields      = array(
+			'Pago.id', 
+			'Pago.orden_compra_id', 
+			'Pago.orden_compra_adjunto_id', 
+			'Pago.cuenta_bancaria_id', 
+			'Pago.moneda_id', 
+			'Pago.identificador', 
+			'Pago.fecha_pago',
+			'Pago.monto_pagado', 
+			'Pago.pagado', 
+			'Pago.created',
+			'Pago.modified'
+		);
+
+		// Filtrado de ordenes por formulario
+		if ( $this->request->is('post') ) {
+			$this->filtrar('pagos', 'index');
+		}
+
+		# Filtrar
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'proveedor_id':
+						
+						$joins[] = array(
+							'table' => 'rp_orden_compras',
+							'alias' => 'oc',
+							'type' => 'INNER',
+							'conditions' => array(
+								'oc.proveedor_id' => $valor
+							)
+						);
+
+						$joins[] = array(
+							'table' => 'rp_facturas_pagos',
+							'alias' => 'fp',
+							'type' => 'INNER',
+							'conditions' => array(
+								'fp.pago_id = Pago.id'
+							)
+						);
+
+						$joins[] = array(
+							'table' => 'rp_orden_compra_facturas',
+							'alias' => 'ocfp',
+							'type' => 'INNER',
+							'conditions' => array(
+								'ocfp.id = fp.factura_id',
+								'ocfp.proveedor_id' => $valor
+							)
+						);
+
+					break;
+
+					case 'identificador':
+
+						$iden = trim($valor);
+
+						$condiciones['Pago.identificador'] = $iden;
+
+					break;
+
+					case 'monto_pagado':
+
+						$monto = trim($valor);
+
+						$condiciones['Pago.monto_pagado'] = $monto;
+
+					break;
+
+					case 'pagado':
+
+						$condiciones['Pago.pagado'] = ($valor == 'si') ? 1 : 0;
+
+					break;
+
+					case 'moneda_id':
+
+						$condiciones['Pago.moneda_id'] = $valor;
+
+					break;
+
+					case 'fecha_desde' :
+						$condiciones["Pago.fecha_pago >="] = $valor;
+					break;
+
+					case 'fecha_hasta' :
+						$condiciones["Pago.fecha_pago <="] = $valor;
+					break;
+				}
+			}
+		}
+
+		$paginate = array(
+			'recursive' => 0,
+			'contain' => array(
+				'Moneda' => array(
+					'fields' => array(
+						'Moneda.id',
+						'Moneda.nombre'
+					)
+				),
+				'OrdenCompraFactura' => array(
+					'fields' => array(
+						'OrdenCompraFactura.id',
+						'OrdenCompraFactura.folio',
+						'OrdenCompraFactura.monto_facturado',
+						'OrdenCompraFactura.monto_pagado',
+						'OrdenCompraFactura.pagada'
+					)
+				),
+				'OrdenCompra' => array(
+					'fields' => array(
+						'OrdenCompra.id',
+						'OrdenCompra.proveedor_id',
+					),
+					'Proveedor' => array(
+						'fields' => array(
+							'Proveedor.id',
+							'Proveedor.nombre'
+						)
+					)
+				)
+			),
+			'conditions' => $condiciones,
+			'joins' => $joins,
+			'fields' => $fields,
+			'group' => $group,
+			'order' => array('Pago.fecha_pago' => 'DESC'),
+			'limit' => 20
+		);
+
+		$this->paginate = $paginate;
+		$pagos          = $this->paginate();
+		
+		$proveedores = ClassRegistry::init('Proveedor')->find('list');
+		$monedas = $this->Pago->Moneda->find('list');
+
+		BreadcrumbComponent::add('Pagos', '/pagos');
+
+		$this->set(compact('pagos', 'proveedores', 'monedas'));
+	}
+
+
+	public function admin_view($id)
+	{
+		if ( ! $this->Pago->exists($id) ) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$pago = $this->Pago->find('first', array(
+			'recursive' => 0,
+			'contain' => array(
+				'CuentaBancaria' => array(
+					'fields' => array(
+						'CuentaBancaria.alias'
+					)
+				),
+				'Moneda' => array(
+					'fields' => array(
+						'Moneda.id',
+						'Moneda.nombre'
+					)
+				),
+				'OrdenCompraAdjunto',
+				'OrdenCompraFactura' => array(
+					'conditions' => array(
+						'OrdenCompraFactura.tipo_documento' => 33 // Sólo facturas
+					),
+					'fields' => array(
+						'OrdenCompraFactura.id',
+						'OrdenCompraFactura.folio',
+						'OrdenCompraFactura.monto_facturado',
+						'OrdenCompraFactura.monto_pagado',
+						'OrdenCompraFactura.pagada',
+						'OrdenCompraFactura.orden_compra_id',
+						'OrdenCompraFactura.proveedor_id',
+						'OrdenCompraFactura.created'
+					),
+					'Proveedor' => array(
+						'fields' => array(
+							'Proveedor.nombre',
+							'Proveedor.rut_empresa'
+						)
+					),
+					'Pago'
+				)
+			),
+			'conditions' => array(
+				'Pago.id' => $id
+			),
+			'fields' => array(
+				'Pago.id',
+				'Pago.moneda_id',
+				'Pago.cuenta_bancaria_id',
+				'Pago.pagado',
+				'Pago.identificador',
+				'Pago.monto_pagado',
+				'Pago.fecha_pago',
+				'Pago.orden_compra_adjunto_id',
+				'Pago.orden_compra_id'
+			)
+		));
+
+		BreadcrumbComponent::add('Pagos', '/pagos');
+		BreadcrumbComponent::add('Pago #' . $id, '/pagos/view/' . $id);
+
+		$this->set(compact('pago'));
+
+	}
+
+
+	public function admin_edit($id)
+	{
+		if ( ! $this->Pago->exists($id) ) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+	
+		# solo metodos put
+		if ($this->request->is('put')) {
+			if ($this->Pago->save($this->request->data)) {
+
+				# guardarEmailPagoFactura
+				$this->guardarEmailPagoFactura($id);
+				
+				$this->Session->setFlash('Pago actualizado con éxito.', null, array(), 'success');
+			}else{
+				$this->Session->setFlash('Ocurrió un error al finalizar el pago. Intente nuevamente.', null, array(), 'warning');
+			}
+
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$this->request->data = $this->Pago->find('first', array(
+			'recursive' => 0,
+			'contain' => array(
+				'CuentaBancaria' => array(
+					'fields' => array(
+						'CuentaBancaria.alias'
+					)
+				),
+				'Moneda' => array(
+					'fields' => array(
+						'Moneda.id',
+						'Moneda.nombre'
+					)
+				),
+				'OrdenCompraAdjunto',
+				'OrdenCompraFactura' => array(
+					'conditions' => array(
+						'OrdenCompraFactura.tipo_documento' => 33 // Sólo facturas
+					),
+					'fields' => array(
+						'OrdenCompraFactura.id',
+						'OrdenCompraFactura.folio',
+						'OrdenCompraFactura.monto_facturado',
+						'OrdenCompraFactura.monto_pagado',
+						'OrdenCompraFactura.pagada',
+						'OrdenCompraFactura.orden_compra_id',
+						'OrdenCompraFactura.proveedor_id',
+						'OrdenCompraFactura.created'
+					),
+					'Proveedor' => array(
+						'fields' => array(
+							'Proveedor.nombre',
+							'Proveedor.rut_empresa'
+						)
+					),
+					'Pago'
+				)
+			),
+			'conditions' => array(
+				'Pago.id' => $id
+			),
+			'fields' => array(
+				'Pago.id',
+				'Pago.moneda_id',
+				'Pago.cuenta_bancaria_id',
+				'Pago.pagado',
+				'Pago.identificador',
+				'Pago.monto_pagado',
+				'Pago.fecha_pago',
+				'Pago.orden_compra_adjunto_id',
+				'Pago.orden_compra_id'
+			)
+		));
+		
+		$cuenta_bancarias = ClassRegistry::init('CuentaBancaria')->find('list', array('conditions' => array('activo' => 1)));
+		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
+
+		BreadcrumbComponent::add('Pagos', '/pagos');
+		BreadcrumbComponent::add('Pago #' . $id, '/pagos/edit/' . $id);
+
+		$this->set(compact('cuenta_bancarias', 'monedas'));
+
+	}
+
+
+	public function admin_exportar()
+	{	
+		
+		set_time_limit(0);
+		ini_set('memory_limit', '-1');
+
+		$condiciones = array();
+		$joins       = array();
+		$group       = array();
+		$fields      = array(
+			'Pago.id', 
+			'Pago.orden_compra_id', 
+			'Pago.orden_compra_adjunto_id', 
+			'Pago.cuenta_bancaria_id', 
+			'Pago.moneda_id', 
+			'Pago.identificador', 
+			'Pago.fecha_pago',
+			'Pago.monto_pagado', 
+			'Pago.pagado', 
+			'Pago.created',
+			'Pago.modified'
+		);
+
+		# filtro por ids
+		if (!empty($this->request->query))
+		{
+			$ids = Hash::extract($this->request->query, 'Pago.{n}.id');
+			$this->request->params['named'] = array_replace_recursive($this->request->params['named'], array('id' => $ids));
+		}
+
+		# Filtrar
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'proveedor_id':
+						
+						$joins[] = array(
+							'table' => 'rp_orden_compras',
+							'alias' => 'oc',
+							'type' => 'INNER',
+							'conditions' => array(
+								'oc.proveedor_id' => $valor
+							)
+						);
+
+						$joins[] = array(
+							'table' => 'rp_facturas_pagos',
+							'alias' => 'fp',
+							'type' => 'INNER',
+							'conditions' => array(
+								'fp.pago_id = Pago.id'
+							)
+						);
+
+						$joins[] = array(
+							'table' => 'rp_orden_compra_facturas',
+							'alias' => 'ocfp',
+							'type' => 'INNER',
+							'conditions' => array(
+								'ocfp.id = fp.factura_id',
+								'ocfp.proveedor_id' => $valor
+							)
+						);
+
+					break;
+
+					case 'id':
+
+						$condiciones['Pago.id'] = $valor;
+
+					break;
+
+					case 'identificador':
+
+						$iden = trim($valor);
+
+						$condiciones['Pago.identificador'] = $iden;
+
+					break;
+
+					case 'monto_pagado':
+
+						$monto = trim($valor);
+
+						$condiciones['Pago.monto_pagado'] = $monto;
+
+					break;
+
+					case 'pagado':
+
+						$condiciones['Pago.pagado'] = ($valor == 'si') ? 1 : 0;
+
+					break;
+
+					case 'moneda_id':
+
+						$condiciones['Pago.moneda_id'] = $valor;
+
+					break;
+
+					case 'fecha_desde' :
+						$condiciones["Pago.fecha_pago >="] = $valor;
+					break;
+
+					case 'fecha_hasta' :
+						$condiciones["Pago.fecha_pago <="] = $valor;
+					break;
+				}
+			}
+		}
+
+		$pagos = $this->Pago->find('all', array(
+			'recursive' => 0,
+			'contain' => array(
+				'CuentaBancaria' => array(
+					'fields' => array(
+						'CuentaBancaria.alias',
+						'CuentaBancaria.numero_cuenta'
+					)
+				),
+				'Moneda' => array(
+					'fields' => array(
+						'Moneda.id',
+						'Moneda.nombre'
+					)
+				),
+				'OrdenCompraFactura' => array(
+					'fields' => array(
+						'OrdenCompraFactura.id',
+						'OrdenCompraFactura.folio',
+						'OrdenCompraFactura.monto_facturado',
+						'OrdenCompraFactura.monto_pagado',
+						'OrdenCompraFactura.pagada',
+						'OrdenCompraFactura.orden_compra_id',
+						'OrdenCompraFactura.proveedor_id'
+					),
+					'Proveedor' => array(
+						'fields' => array(
+							'Proveedor.id',
+							'Proveedor.nombre',
+							'Proveedor.cuenta_bancaria',
+							'Proveedor.codigo_banco',
+							'Proveedor.rut_empresa',
+							'Proveedor.email_contacto'
+						)
+					) 
+				),
+				'OrdenCompra' => array(
+					'fields' => array(
+						'OrdenCompra.id',
+						'OrdenCompra.proveedor_id',
+					),
+					'Proveedor' => array(
+						'fields' => array(
+							'Proveedor.id',
+							'Proveedor.nombre',
+							'Proveedor.cuenta_bancaria',
+							'Proveedor.codigo_banco',
+							'Proveedor.rut_empresa',
+							'Proveedor.email_contacto'
+						)
+					)
+				)
+			),
+			'conditions' => $condiciones,
+			'joins' => $joins,
+			'fields' => $fields,
+			'group' => $group,
+			'order' => array('Pago.fecha_pago' => 'DESC'),
+			'limit' => -1
+		));
+		
+		$cabeceras = array(
+			'ID-PAGO',
+			'CUENTA-BANCARIA',
+			'METODO-PAGO',
+			'IDENTIFICADOR',
+			'FECHA-PAGO',
+			'MONTO-PAGO',
+			'ESTADO',
+			'CREADO',
+			'MODIFICADO',
+			'FACTURAS',
+			'OCS-RELACIONADAS',
+			'PROVEEDORES'
+		);
+
+		$formato = 'normal';
+
+		# formato banco
+		if (isset($this->request->params['named']['formato']) && $this->request->params['named']['formato'] == 'pago')
+		{
+			$cabeceras = array(
+				'Cuenta origen
+				(obligatorio)',
+				'Moneda origen
+				(obligatorio)',
+				'Cuenta destino
+				(obligatorio)',
+				'Moneda destino
+				(obligatorio)',
+				'Código banco destino
+				(obligatorio solo si banco destino no es Santander)',
+				'RUT beneficiario
+				(obligatorio solo si banco destino no es Santander)',
+				'Nombre beneficiario
+				(obligatorio solo si banco destino no es Santander)',
+				'Monto transferencia
+				(obligatorio)',
+				'Glosa personalizada transferencia
+				(opcional)',
+				'Correo beneficiario
+				(opcional)',
+				'Mensaje correo beneficiario
+				(opcional)',
+				'Glosa cartola originador
+				(opcional)',
+				'Glosa cartola beneficiario
+				(opcional, solo aplica si cuenta destino es Santander)'
+			);
+
+			$formato = 'pago';
+		}
+	
+		$this->set(compact('pagos', 'cabeceras', 'formato'));
+
+	}
+
+
+	public function admin_exportar_facturas($id)
+	{	
+		if ( ! $this->Pago->exists($id) ) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$pago = $this->Pago->find('first', array(
+			'recursive' => 0,
+			'contain' => array(
+				'OrdenCompraFactura' => array(
+					'conditions' => array(
+						'OrdenCompraFactura.tipo_documento' => 33 // Sólo facturas
+					),
+					'fields' => array(
+						'OrdenCompraFactura.id',
+						'OrdenCompraFactura.folio',
+						'OrdenCompraFactura.monto_facturado',
+						'OrdenCompraFactura.monto_pagado',
+						'OrdenCompraFactura.pagada',
+						'OrdenCompraFactura.orden_compra_id',
+						'OrdenCompraFactura.proveedor_id'
+					),
+					'Proveedor' => array(
+						'fields' => array(
+							'Proveedor.nombre',
+							'Proveedor.rut_empresa'
+						)
+					) 
+				)
+			),
+			'conditions' => array(
+				'Pago.id' => $id
+			),
+			'fields' => array(
+				'Pago.id'
+			)
+		));
+
+		if (empty($pago['OrdenCompraFactura']))
+		{
+			$this->Session->setFlash('El pago id #' . $id . ' no tiene facturas relacionadas.', null, array(), 'warning');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$cabeceras = array(
+			'RUT',
+			'Nombre',
+			'Monto',
+			'Número/Folio (opcional)'
+		);
+
+		$this->set(compact('pago', 'cabeceras'));
+
+	}
+
 	public function admin_calendario()
 	{	
 
@@ -25,8 +640,8 @@ class PagosController extends AppController
 			$this->redirect(array('action' => 'calendario'));
 		}		
 
-		BreadcrumbComponent::add('Pagos', '/pagos/calendario');
-		BreadcrumbComponent::add('Calendario ');
+		BreadcrumbComponent::add('Pagos', '/pagos');
+		BreadcrumbComponent::add('Calendario', '/pagos/calendario');
 	}
 
 

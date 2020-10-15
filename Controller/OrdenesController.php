@@ -1397,11 +1397,11 @@ class OrdenesController extends AppController
 			&& !empty($this->request->data['Orden']['asunto'])
 			&& !empty($this->request->data['Orden']['mensaje'])
 			&& !empty($this->request->data['Orden']['emails'])) {
-			
-			// Clay email
-			#$this->request->data['Orden']['emails'][] = 'dte@clay.cl';
 
 			$emails = explode(',', trim($this->request->data['Orden']['emails']));
+
+			// Clay email
+			$emails[] = 'dte@clay.cl';
 
 			$this->LibreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
 			

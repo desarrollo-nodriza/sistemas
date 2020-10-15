@@ -39,6 +39,14 @@
 								<td><?= $this->Form->input('rut_empresa'); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('cuenta_bancaria', 'Cta bancaria'); ?></th>
+								<td><?= $this->Form->input('cuenta_bancaria'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('codigo_banco', 'Código banco'); ?></th>
+								<td><?= $this->Form->input('codigo_banco'); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('nombre_encargado', 'Nombre de encargado'); ?></th>
 								<td><?= $this->Form->input('nombre_encargado'); ?></td>
 							</tr>

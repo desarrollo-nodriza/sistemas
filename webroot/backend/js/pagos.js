@@ -324,9 +324,16 @@ $.extend({
 				    eventLimit: 2,
 				    eventSources : {
 				    	url : webroot + 'pagos/obtener_pagos',
-				    	method : 'GET',
+						method : 'GET',
+						cache: true,
+						beforeSend: function(){
+							$.app.loader.mostrar();
+						},
+						complete: function(){
+							$.app.loader.ocultar();
+						},
 				    	failure: function(){
-				    		noty({text: 'Ocurrió un error al obtener los pagos. Regresque la página.', layout: 'topRight', type: 'error'});
+				    		noty({text: 'Ocurrió un error al obtener los pagos. Refresque la página.', layout: 'topRight', type: 'error'});
 				    	} 
 				    },
 			    	header : {
@@ -475,6 +482,47 @@ $.extend({
 				});
 			}
 		},
+		exportar: {
+			boton: function(){
+				if ($('.js-form-export input').length > 0){
+					$('#exportar_seleccion').removeAttr('disabled');
+				}else{
+					$('#exportar_seleccion').attr('disabled', 'disabled');
+				}
+			},
+			init: function(){
+
+				$(document).on('click', '.js-select-all', function(){
+
+					if ($(this).is(':checked')) {
+						$(this).parents('table').eq(0).find('.agregar_export').click();
+					}else{
+						$(this).parents('table').eq(0).find('.agregar_export').click();
+					}
+	
+				});
+	
+				// Seleccionar facturas
+				$('.agregar_export').on('click', function(){
+					var $ths = $(this),
+						id    = $ths.data('id');
+	
+					if ($ths.is(':checked')) {
+	
+						var nwinput = $ths.clone();
+
+						nwinput.addClass('hidden');
+						$('.js-form-export').append(nwinput);
+					}else{
+						$('.js-form-export').find('input[data-id="' + id + '"]').remove();
+					}
+
+					$.pagos.exportar.boton();
+
+				});
+
+			}
+		},
 		init: function(){
 			if ($('#calendario_pagos').length) {
 				$.pagos.calendario.init();
@@ -482,6 +530,14 @@ $.extend({
 
 			if ($('.js-config-pago').length) {
 				$.pagos.configurar_pagos.init();
+			}
+
+			if ($('.js-validate-pago').length){
+				$.pagos.procesar_pagos_masivo.validar();
+			}
+
+			if ($('.js-form-export').length){
+				$.pagos.exportar.init();
 			}
 		}
 	}
