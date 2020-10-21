@@ -4,76 +4,152 @@ class CotizacionesController extends AppController
 {	
 	public $components = array('RequestHandler');
 
+
+	/**
+     * Crea un redirect y agrega a la URL los parámetros del filtro
+     * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
+     * @param 		$accion 		String 		Nombre del método receptor de la petición
+     * @return 		void
+     */
+    public function filtrar($controlador = '', $accion = '')
+    {
+    	$redirect = array(
+    		'controller' => $controlador,
+    		'action' => $accion
+    		);
+
+		foreach ($this->request->data['Filtro'] as $campo => $valor) {
+			if ($valor != '') {
+				$redirect[$campo] = str_replace('/', '-', $valor);
+			}
+		}
+		
+    	$this->redirect($redirect);
+
+    }
+
+	/**
+	 * 
+	 */
 	public function admin_index()
 	{
-		$paginate = array(); 
-    	$conditions = array();
-    	$total = 0;
-    	$totalMostrados = 0;
-    	$categorias = array();
 
-    	$textoBuscar = null;
+    	$conditions = array(
+			'Cotizacion.tienda_id' => $this->Session->read('Tienda.id')
+		);
+		
+		// Filtrado de ordenes por formulario
+		if ( $this->request->is('post') ) { 
+			$this->filtrar('cotizaciones', 'index');
+		}
 
-		// Filtrado  por formulario
-		if ( $this->request->is('post') ) {
+		# Filtrar
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'id_email':
+						
+						$id_email = trim($valor);
 
-			if ( ! empty($this->request->data['Filtro']['findby']) && empty($this->request->data['Filtro']['nombre_buscar']) ) {
-				$this->Session->setFlash('Ingrese Identificación o email' , null, array(), 'danger');
-				$this->redirect(array('action' => 'index'));
-			}
+						if ($id_email != "") {
 
-			if ( ! empty($this->request->data['Filtro']['findby']) && ! empty($this->request->data['Filtro']['nombre_buscar']) ) {
-				$this->redirect(array('controller' => 'cotizaciones', 'action' => 'index', 'findby' => $this->request->data['Filtro']['findby'], 'nombre_buscar' => $this->request->data['Filtro']['nombre_buscar']));
+							$conditions["OR"] = array(
+								"Cotizacion.id LIKE '%" .$id_email. "%'",
+								"Cotizacion.nombre_cliente LIKE '%" .$id_email. "%'",
+								"Cotizacion.email_cliente LIKE '%" .$id_email. "%'"
+							);
+							
+						}
+						break;
+					case 'estado_cotizacion_id':
+
+						$conditions['Cotizacion.estado_cotizacion_id'] = $valor;
+
+						break;
+					case 'validez_fecha_id':
+
+						$conditions['Cotizacion.validez_fecha_id'] = $valor;
+
+						break;
+					case 'email_vendedor':
+						$conditions['Cotizacion.email_vendedor'] = $valor;
+
+						break;
+					case 'fecha_desde':
+						
+						$fecha_desde = trim($valor);
+
+						if ($fecha_desde != "") {
+
+							$ArrayFecha = explode("-", $fecha_desde);
+
+							$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
+
+							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 00:00:00"));
+
+							$conditions["Cotizacion.created >="] = $Fecha;
+
+						}
+						break;
+					case 'fecha_hasta':
+
+						$fecha_hasta = trim($valor);
+
+						if ($fecha_hasta != "") {
+
+							$ArrayFecha = explode("-", $fecha_hasta);
+
+							$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
+
+							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 23:59:59"));
+
+							$conditions["Cotizacion.created <="] = $Fecha;
+
+						} 
+						break;
+				}
 			}
 		}
 
 		// Opciones de paginación
 		$paginate = array_replace_recursive(array(
-			'limit' => 10,
-			'fields' => array(),
-			'joins' => array(),
-			'contain' => array('Prospecto', 'ValidezFecha', 'EstadoCotizacion'),
-			'conditions' => array(
-				'Cotizacion.tienda_id' => $this->Session->read('Tienda.id')
+			'limit'      => 10,
+			'fields'     => array(),
+			'joins'      => array(),
+			'contain'    => array(
+				'Prospecto', 
+				'ValidezFecha', 
+				'EstadoCotizacion'
 			),
-			'recursive'	=> 0,
-			'order' => 'Cotizacion.id DESC'
+			'conditions' => $conditions,
+			'recursive' => 0,
+			'order'     => 'Cotizacion.id DESC'
 		));
-
-		/**
-		* Buscar por
-		*/
-		if ( !empty($this->request->params['named']['findby']) && !empty($this->request->params['named']['nombre_buscar']) ) {
-			
-			$paginate		= array_replace_recursive($paginate, array(
-				'conditions'	=> array(
-					sprintf('Cotizacion.%s', $this->request->params['named']['findby']) => trim($this->request->params['named']['nombre_buscar'])
-				)
-			));
-					
-			// Texto ingresado en el campo buscar
-			$textoBuscar = $this->request->params['named']['nombre_buscar'];
-			
-		}else if ( ! empty($this->request->params['named']['findby'])) {
-			$this->Session->setFlash('No se aceptan campos vacios.' ,  null, array(), 'danger');
-		}
-
-		// Total de registros
-		$total 		= $this->Cotizacion->find('count', array(
-			'joins' => array(),
-			'conditions' => array()
-		));
-
-
+		
 		$this->paginate = $paginate;
 
-
 		$cotizaciones	= $this->paginate();
+		$estadoCotizaciones	= $this->Cotizacion->EstadoCotizacion->find('list');
+		$validezFechas	= $this->Cotizacion->ValidezFecha->find('list');
+		$administradores = ClassRegistry::init('Administrador')->find('list', array(
+			'conditions' => array(
+				'Administrador.activo' => 1
+			),
+			'fields' => array(
+				'Administrador.email',
+				'Administrador.nombre'
+				)
+			)
+		);
 
 		BreadcrumbComponent::add('Cotizaciones ');
-		$this->set(compact('cotizaciones'));
+
+		$this->set(compact('cotizaciones', 'estadoCotizaciones', 'validezFechas', 'administradores'));
 	}
 
+	/**
+	 * 
+	 */
 	public function admin_add( $id_prospecto = '' ) 
 	{	
 
@@ -176,6 +252,9 @@ class CotizacionesController extends AppController
 		$this->set(compact('monedas', 'estadoCotizaciones', 'validezFechas', 'prospecto' ,'productos', 'cliente', 'tienda'));
 	}
 
+	/**
+	 * 
+	 */
 	public function admin_edit($id = null)
 	{
 		if ( ! $this->Cotizacion->exists($id) )
@@ -211,6 +290,9 @@ class CotizacionesController extends AppController
 		$this->set(compact('monedas', 'estadoCotizaciones', 'prospectos', 'validezFechas'));
 	}
 
+	/**
+	 * 
+	 */
 	public function admin_view($id = null)
 	{
 		if ( ! $this->Cotizacion->exists($id) )
@@ -244,6 +326,9 @@ class CotizacionesController extends AppController
 		$this->set(compact('monedas', 'estadoCotizaciones', 'prospectos', 'validezFechas', 'tienda', 'productos'));
 	}
 
+	/**
+	 * 
+	 */
 	public function admin_delete($id = null)
 	{
 		$this->Cotizacion->id = $id;
@@ -263,17 +348,130 @@ class CotizacionesController extends AppController
 		$this->redirect(array('action' => 'index'));
 	}
 
+	/**
+	 * 
+	 */
 	public function admin_exportar()
-	{
-		$datos			= $this->Cotizacion->find('all', array(
-			'recursive'				=> -1
-		));
-		$campos			= array_keys($this->Cotizacion->_schema);
-		$modelo			= $this->Cotizacion->alias;
+	{	
+		set_time_limit(0);
+		ini_set('memory_limit', '-1');
 
-		$this->set(compact('datos', 'campos', 'modelo'));
+		$conditions = array(
+			'Cotizacion.tienda_id' => $this->Session->read('Tienda.id')
+		);
+		
+		// Filtrado de ordenes por formulario
+		if ( $this->request->is('post') ) { 
+			$this->filtrar('cotizaciones', 'index');
+		}
+
+		# Filtrar
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'id_email':
+						
+						$id_email = trim($valor);
+
+						if ($id_email != "") {
+
+							$conditions["OR"] = array(
+								"Cotizacion.id LIKE '%" .$id_email. "%'",
+								"Cotizacion.nombre_cliente LIKE '%" .$id_email. "%'",
+								"Cotizacion.email_cliente LIKE '%" .$id_email. "%'"
+							);
+							
+						}
+						break;
+					case 'estado_cotizacion_id':
+
+						$conditions['Cotizacion.estado_cotizacion_id'] = $valor;
+
+						break;
+					case 'email_vendedor':
+
+						$conditions['Cotizacion.email_vendedor'] = $valor;
+
+						break;
+					case 'validez_fecha_id':
+
+						$conditions['Cotizacion.validez_fecha_id'] = $valor;
+
+						break;
+					case 'fecha_desde':
+						
+						$fecha_desde = trim($valor);
+
+						if ($fecha_desde != "") {
+
+							$ArrayFecha = explode("-", $fecha_desde);
+
+							$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
+
+							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 00:00:00"));
+
+							$conditions["Cotizacion.created >="] = $Fecha;
+
+						}
+						break;
+					case 'fecha_hasta':
+
+						$fecha_hasta = trim($valor);
+
+						if ($fecha_hasta != "") {
+
+							$ArrayFecha = explode("-", $fecha_hasta);
+
+							$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
+
+							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 23:59:59"));
+
+							$conditions["Cotizacion.created <="] = $Fecha;
+
+						} 
+						break;
+				}
+			}
+		}
+
+		// Opciones de paginación
+		$datos = $this->Cotizacion->find('all', array(
+			'fields'     => array(
+				'Cotizacion.id',
+				'Cotizacion.vendedor',
+				'Cotizacion.email_cliente',
+				'Cotizacion.nombre_cliente',
+				'Cotizacion.total_neto',
+				'Cotizacion.descuento',
+				'Cotizacion.iva',
+				'Cotizacion.total_bruto',
+				'Cotizacion.created'
+			),
+			'conditions' => $conditions,
+			'recursive' => 0,
+			'order'     => 'Cotizacion.id DESC'
+		));
+
+		$cabeceras = array(
+			'Número',
+			'Responsable',
+			'Email cliente',
+			'Nombre cliente',
+			'Monto neto',
+			'Iva',
+			'Descuento',
+			'Monto bruto',
+			'Fecha creación'
+		);
+		
+		$modelo			= $this->Cotizacion->alias;
+	
+		$this->set(compact('datos', 'modelo', 'cabeceras'));
 	}
 
+	/**
+	 * 
+	 */
 	public function generar_pdf($id) {
 		
 		if ( !$this->Cotizacion->exists($id) ) {
@@ -402,6 +600,9 @@ class CotizacionesController extends AppController
 
 	}
 
+	/**
+	 * 
+	 */
 	public function admin_generar($id = '') {
 		if (empty($id)) {
 			$this->Session->setFlash('Error al generar el registro.', null, array(), 'danger');
@@ -506,6 +707,9 @@ class CotizacionesController extends AppController
 		$this->set(compact('tienda', 'productos', 'archivo'));
 	}
 
+	/**
+	 * 
+	 */
 	public function admin_reenviar($id = '') {
 		
 		$this->Cotizacion->id = $id;
@@ -615,7 +819,9 @@ class CotizacionesController extends AppController
 	}
 
 
-
+	/**
+	 * 
+	 */
 	public function cliente_index()
 	{
 		$paginate = array(

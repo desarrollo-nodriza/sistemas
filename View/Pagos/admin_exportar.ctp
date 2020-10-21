@@ -30,18 +30,17 @@ foreach ($pagos as $pago) {
     $ocs = array_replace_recursive($ocs, Hash::extract($pago, 'OrdenCompraFactura.orden_compra_id'));
     $ocs = implode(',', array_unique($ocs));
 
-    # Ordenamos al proveedor
-    if (!empty($pago['OrdenCompra']['Proveedor'])){
-        $proveedores[] = $pago['OrdenCompra']['Proveedor']['nombre'];
+    if (!empty($pago['Proveedor']))
+    {
+        $proveedor = $pago['Proveedor'];
+    } 
+    else if (!empty($pago['OrdenCompra']['Proveedor']))
+    {
         $proveedor = $pago['OrdenCompra']['Proveedor'];
     }
-
-    $proveedores = array_replace_recursive($proveedores, Hash::extract($pago, 'OrdenCompraFactura.Proveedor.nombre'));
-    $proveedores = implode(',', array_unique($proveedores));
-
-    if(!empty(Hash::extract($pago, 'OrdenCompraFactura.Proveedor')))
+    else if (!empty($pago['OrdenCompraFactura']))
     {
-        $proveedor = Hash::extract($pago, 'OrdenCompraFactura.Proveedor')[0];
+        $proveedor = Hash::extract($pago, 'OrdenCompraFactura.{n}.Proveedor')[0];
     }
     
     switch($formato)
@@ -77,12 +76,12 @@ foreach ($pagos as $pago) {
                     $pago['Pago']['modified'],
                     $facturas,
                     $ocs,
-                    $proveedores
+                    $proveedor['nombre']
                 )
             );
         break;
     }
-	
+
 }
 
 /**

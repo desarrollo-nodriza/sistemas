@@ -3242,7 +3242,6 @@ class VentasController extends AppController {
 	 */
 	public function admin_view ($id = null) 
 	{
-
 		if ( ! $this->Venta->exists($id) ) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
@@ -3337,12 +3336,167 @@ class VentasController extends AppController {
 
 	public function admin_specials()
 	{	
+		
 		$ids = $this->Venta->obtener_ventas_productos_retraso_ids();
+
+		$condiciones = array(
+			'Venta.id' => $ids
+		);
+
+		$joins = array();
+
+		// Filtrado de ordenes por formulario
+		if ( $this->request->is('post') ) {
+			$this->filtrar('ventas', 'specials');
+		}
+
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'ide':
+
+						$id = trim($valor);
+
+						if ($id != "" && in_array($id, $ids)) {
+
+							$condiciones = array();
+
+							$condiciones["OR"] = array(
+								"Venta.id LIKE '%" .$id. "%'",
+								"Venta.referencia LIKE '%" .$id. "%'"
+							);
+							
+						}
+
+						break;
+					case 'picking':
+
+							$estado = trim($valor);
+	
+							$condiciones['Venta.picking_estado'] = $estado;
+	
+							break;
+					case 'cliente_email':
+
+						$email = trim($valor);
+
+						$joins[] = array(
+							'table' => 'rp_venta_clientes',
+							'alias' => 'vc',
+							'type' => 'INNER',
+							'conditions' => array(
+								'vc.id = Venta.venta_cliente_id',
+								'vc.email' => $email
+							)
+						);
+
+						break;
+					case 'mensaje':
+						
+						if ($valor == 'cancelar')
+						{
+							$joins[] = array(
+								'table' => 'rp_mensajes',
+								'alias' => 'mj',
+								'type' => 'INNER',
+								'conditions' => array(
+									'mj.venta_id = Venta.id',
+									'mj.origen' => 'cliente',
+									'mj.mensaje' => '(auto-atención) Cliente solicita cancelar la venta.' 
+								)
+							);
+						}
+
+						if ($valor == 'procesar')
+						{
+							$joins[] = array(
+								'table' => 'rp_mensajes',
+								'alias' => 'mj',
+								'type' => 'INNER',
+								'conditions' => array(
+									'mj.venta_id = Venta.id',
+									'mj.origen' => 'cliente',
+									'mj.mensaje' => '(auto-atención) Cliente solicita devolución del dinero del/los productos con stockout y que se le envien el/los productos con existencias.' 
+								)
+							);
+						}
+
+						if ($valor == 'cambio')
+						{
+							$joins[] = array(
+								'table' => 'rp_mensajes',
+								'alias' => 'mj',
+								'type' => 'INNER',
+								'conditions' => array(
+									'mj.venta_id = Venta.id',
+									'mj.origen' => 'cliente',
+									'mj.mensaje' => '(auto-atención) Cliente solicita cambio del/los productos con stockout, llamarlo y ofrecerle una alternativa.' 
+								)
+							);
+						}
+
+						if ($valor == 'no-auto')
+						{
+							$joins[] = array(
+								'table' => 'rp_mensajes',
+								'alias' => 'mj',
+								'type' => 'LEFT',
+								'conditions' => array(
+									'mj.venta_id = Venta.id',
+									'mj.origen' => 'cliente',
+								)
+							);
+
+							$condiciones['mj.id'] = null;
+						}
+
+						break;
+					case 'fecha_desde':
+						$FiltroFechaDesde = trim($valor);
+
+						if ($FiltroFechaDesde != "") {
+
+							$ArrayFecha = explode("-", $FiltroFechaDesde);
+
+							$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
+
+							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 00:00:00"));
+
+							$condiciones["Venta.fecha_venta >="] = $Fecha;
+
+						}
+						break;
+					case 'fecha_hasta':
+						$FiltroFechaHasta = trim($valor);
+
+						if ($FiltroFechaHasta != "") {
+
+							$ArrayFecha = explode("-", $FiltroFechaHasta);
+
+							$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
+
+							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 23:59:59"));
+
+							$condiciones["Venta.fecha_venta <="] = $Fecha;
+
+						} 
+						break;
+				}
+			}
+		}
 
 		$qry = array(
 			'recursive' => -1,
 			'order' => array('Venta.fecha_venta' => 'DESC'),
 			'contain' => array(
+				'Mensaje' => array(
+					'fields' => array(
+						'Mensaje.mensaje'
+					),
+					'conditions' => array(
+						'Mensaje.mensaje LIKE' => '(auto%'
+					)
+				),
 				'VentaDetalle' => array(
 					'fields' => array(
 						'VentaDetalle.id',
@@ -3400,12 +3554,12 @@ class VentasController extends AppController {
 					)
 				)
 			),
-			'conditions' => array(
-				'Venta.id' => $ids
-			),
+			'conditions' => $condiciones,
+			'joins' => $joins,
+			'group' => 'Venta.id',
 			'limit' => 10
 		);
-
+	
 		$this->paginate = $qry;
 
 		$ventas = $this->paginate();
@@ -3429,7 +3583,10 @@ class VentasController extends AppController {
 		
 		BreadcrumbComponent::add('Ventas', '/index');
 		BreadcrumbComponent::add('Ventas especiales');
-		$this->set(compact('ventas'));
+
+		$picking = ClassRegistry::init('Venta')->picking_estados_lista;
+
+		$this->set(compact('ventas', 'picking'));
 
 	}
 
@@ -5287,6 +5444,137 @@ class VentasController extends AppController {
 
 		return array('public' => $archivo, 'path' => $rutaAbsoluta);
 
+	}
+
+	
+	/**
+	 * Obtiene las ventas retrasadas y las notifica en caso de que corresponda
+	 */
+	public function notificar_retraso_ventas()
+	{	
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+			'notificacion_retraso_venta_dias', 'notificacion_retraso_venta_limite', 'notificacion_retraso_venta', 'notificacion_retraso_venta_repetir'
+		));
+
+		if (!$tienda['Tienda']['notificacion_retraso_venta'])
+			return false;
+
+		$ventas = $this->Venta->obtener_ventas_retrasadas($tienda['Tienda']['notificacion_retraso_venta_dias'], $tienda['Tienda']['notificacion_retraso_venta_limite']);
+
+		
+		$ventas_notificadas = array();
+
+		foreach ($ventas as $venta)
+		{	
+			# Tenemos hasta 5 notificaciones
+			if ($venta['Venta']['notificado_retraso_cliente'] == 5)
+			{	
+				continue;
+			}
+			
+			$fechaVenta = new DateTime($venta['Venta']['fecha_venta']);
+			$hoy = new DateTime(date('Y-m-d H:i:s'));
+			
+			# Verificamos retraso de la venta
+			$retraso = $fechaVenta->diff($hoy);
+			
+			$template = '';
+			
+			# Primera notificación
+			if ($retraso->days == $tienda['Tienda']['notificacion_retraso_venta_dias']) {
+				$template = 'notificar_retraso_venta_cliente_0';
+			}
+			
+			# Repeticion de notificación
+			else if ($retraso->days % $tienda['Tienda']['notificacion_retraso_venta_repetir'] == 0)
+			{
+				$template = sprintf('notificar_retraso_venta_cliente_%d', $venta['Venta']['notificado_retraso_cliente']);
+			}
+			
+			# Notificamos al cliente
+			$notificar = $this->notificar_retraso_venta($venta, $template);
+			
+			$notificaciones = '';
+
+			if ($notificar)
+			{
+				$notificaciones = $venta['Venta']['notificado_retraso_cliente'] + 1;
+			}
+			else
+			{
+				continue;
+			}
+
+			# Almacenamos resultado de la notificación de la venta
+			$ventas_notificadas[] = array(
+				'Venta' => array(
+					'id' => $venta['Venta']['id'],
+					'notificado_retraso_cliente' => $notificaciones,
+					'notificado_retraso_cliente_fecha' => date('Y-m-d')
+				)
+			);
+		}
+
+		# Guardamos las ventas notificadas
+		if (!empty($ventas_notificadas))
+		{
+			$this->Venta->saveMany($ventas_notificadas);
+		}
+
+		return $ventas_notificadas;
+	}
+
+	/**
+	 * Permite notificar vía email el retraso de una venta
+	 * @param $id int ID de la venta
+	 * @return Bool
+	 */
+	public function notificar_retraso_venta($venta, $template = 'notificar_retraso_venta_cliente_1')
+	{	
+		$url = obtener_url_base();
+		
+		/**
+		 * Clases requeridas
+		 */
+		$this->View           = new View();
+		$this->View->viewPath = 'Ventas' . DS . 'emails';
+		$this->View->layout   = 'backend' . DS . 'emails';
+
+		/**
+		 * Correo a cliente
+		 */
+		$this->View->set(compact('venta', 'url'));
+		$html = $this->View->render($template);
+	
+		$mandrill_apikey = $venta['Tienda']['mandrill_apikey'];
+
+		if (empty($mandrill_apikey)) {
+			return false;
+		}
+
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = '['.$venta['Tienda']['nombre'].'] Venta #' . $venta['Venta']['id'] . ' - Información importante';
+		
+		if (Configure::read('ambiente') == 'dev') {
+			$asunto = '['.$venta['Tienda']['nombre'].'-DEV] Venta #' . $venta['Venta']['id'] . ' - Información importante';
+		}
+
+		$remitente = array(
+			'email' => 'no-reply@nodriza.cl',
+			'nombre' => 'Ventas ' . $venta['Tienda']['nombre']
+		);
+
+		$destinatarios = array(
+			array(
+				'email' => trim($venta['VentaCliente']['email']),
+				'name' => $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido']
+			)
+		);
+		
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 	}
 
 

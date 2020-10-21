@@ -460,6 +460,17 @@ class Venta extends AppModel
 						'fields' => array(
 							'Administrador.email', 'Administrador.nombre'
 						)
+					),
+					'OrdenCompra' => array(
+						'VentaDetalleProducto' => array(
+							'fields' => array(
+								'VentaDetalleProducto.id'
+							)
+						),
+						'fields' => array(
+							'OrdenCompra.id',
+							'OrdenCompra.estado'
+						)
 					)
 				),
 				'fields' => array(
@@ -493,7 +504,8 @@ class Venta extends AppModel
 					),
 					'fields' => array(
 						'Venta.id'
-					)
+					),
+					'order' => array('Venta.fecha_venta' => 'ASC')
 				)
 			),
 			'fields' => array(
@@ -1414,5 +1426,157 @@ class Venta extends AppModel
 
 		return $this->find('all', $filter);
 
+	}
+
+
+	/**
+	 * Ventas pagadas retrasadas no notificadas
+	 * @return array
+	 */
+	public function obtener_ventas_retrasadas_no_notificadas($dias_retraso = 3, $dias_limite = 50)
+	{	
+		$fecha_actual  = date('Y-m-d');
+		$fecha_retraso = date('Y-m-d 23:59:59', strtotime(sprintf('%s - %d days', $fecha_actual, $dias_retraso)));
+		$fecha_limite  = date('Y-m-d 00:00:00', strtotime(sprintf('%s - %d days', $fecha_actual, $dias_limite)));
+		
+		$qry = array(
+			'conditions' => array(
+				'Venta.fecha_venta BETWEEN ? AND ?' => array($fecha_limite, $fecha_retraso),
+				'Venta.picking_estado' => array('no_definido', 'empaquetar'),
+				'Venta.marketplace_id' => null,
+				'OR' => array(
+					array('Venta.notificado_retraso_cliente' => 0),
+					array('Venta.notificado_retraso_cliente' => ''),
+					array('Venta.notificado_retraso_cliente' => null)
+				)
+			),
+			'joins' => array(
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'venta_estados',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_estados.id = Venta.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'venta_estados_cat',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
+						'venta_estados_cat.venta = 1',
+						'venta_estados_cat.envio = 0',
+						'venta_estados_cat.final = 0'
+					)
+				)
+			),
+			'contain' => array(
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.id',
+						'Tienda.nombre',
+						'Tienda.url',
+						'Tienda.direccion',
+						'Tienda.mandrill_apikey'
+					)
+				),
+				'VentaCliente' => array(
+					'fields' => array(
+						'VentaCliente.nombre',
+						'VentaCliente.apellido',
+						'VentaCliente.email'
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.id_externo',
+				'Venta.referencia',
+				'Venta.picking_estado',
+				'Venta.notificado_retraso_cliente',
+				'Venta.tienda_id',
+				'Venta.venta_estado_id'
+			),
+			'order' => array('Venta.fecha_venta' => 'ASC')
+		);
+	
+		return $this->find('all', $qry);
+	}
+
+
+	/**
+	 * Ventas pagadas retrasadas notificadas
+	 * @return array
+	 */
+	public function obtener_ventas_retrasadas($dias_retraso = 3, $dias_limite = 50)
+	{	
+		$fecha_actual  = date('Y-m-d');
+		$fecha_retraso = date('Y-m-d 23:59:59', strtotime(sprintf('%s - %d days', $fecha_actual, $dias_retraso)));
+		$fecha_limite  = date('Y-m-d 00:00:00', strtotime(sprintf('%s - %d days', $fecha_actual, $dias_limite)));
+		
+		$qry = array(
+			'conditions' => array(
+				'Venta.fecha_venta BETWEEN ? AND ?' => array($fecha_limite, $fecha_retraso),
+				'Venta.picking_estado' => array('no_definido')
+			),
+			'joins' => array(
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'venta_estados',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_estados.id = Venta.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'venta_estados_cat',
+					'type' => 'INNER',
+					'conditions' => array(
+						'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
+						'venta_estados_cat.venta = 1',
+						'venta_estados_cat.envio = 0',
+						'venta_estados_cat.final = 0'
+					)
+				)
+			),
+			'contain' => array(
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.id',
+						'Tienda.nombre',
+						'Tienda.url',
+						'Tienda.direccion',
+						'Tienda.mandrill_apikey'
+					)
+				),
+				'VentaCliente' => array(
+					'fields' => array(
+						'VentaCliente.nombre',
+						'VentaCliente.apellido',
+						'VentaCliente.email'
+					)
+				),
+				'Marketplace' => array(
+					'fields' => array(
+						'Marketplace.nombre'
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.id_externo',
+				'Venta.referencia',
+				'Venta.picking_estado',
+				'Venta.notificado_retraso_cliente',
+				'Venta.tienda_id',
+				'Venta.venta_estado_id',
+				'Venta.fecha_venta'
+			),
+			'order' => array('Venta.fecha_venta' => 'ASC')
+		);
+	
+		return $this->find('all', $qry);
 	}
 }

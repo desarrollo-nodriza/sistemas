@@ -11,7 +11,10 @@ if (!empty($this->request->data['Pago']['orden_compra_id'])) {
     $id_oc = Hash::extract($this->request->data['OrdenCompraFactura'], '{n}.orden_compra_id')[0];
 }
 ?>
+
 <?= $this->Form->hidden('orden_compra_id', array('value' => $id_oc)); ?>
+<?= $this->Form->hidden('proveedor_id'); ?>
+
 <div class="page-content-wrap">
 	<div class="row">
 		<div class="col-xs-12 col-md-6">
@@ -108,7 +111,7 @@ if (!empty($this->request->data['Pago']['orden_compra_id'])) {
         </div>
         <div class="col-xs-12 col-md-6">
 			<div class="panel panel-primary">
-            <div class="panel-heading">
+                <div class="panel-heading">
                     <h3 class="panel-title"><i class="fa fa-file-pdf-o" aria-hidden="true"></i> 
                 facturas relacionadas</h3>
 				</div>
@@ -147,8 +150,50 @@ if (!empty($this->request->data['Pago']['orden_compra_id'])) {
                 </div>
                 <div class="panel-footer">
                     <? if (!empty($this->request->data['OrdenCompraFactura'])) : ?>
-                        <?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar facturas', array('action' => 'exportar_facturas', $this->request->data['Pago']['id']), array('class' => 'btn btn-xs btn-primary btn-block', 'rel' => 'tooltip', 'title' => 'Exportar facturas', 'escape' => false)); ?>
+                        <?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar facturas', array('action' => 'exportar_facturas', $this->request->data['Pago']['id']), array('class' => 'btn btn-primary btn-block', 'rel' => 'tooltip', 'title' => 'Exportar facturas', 'escape' => false)); ?>
                     <? endif; ?>
+                </div>
+            </div>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-file-pdf-o" aria-hidden="true"></i> 
+                    Otros pagos relacionados</h3>
+				</div>
+                <div class="panel-body">
+                    <div class="table-reponsive">
+                        <table class="table table-bordered table-middle">
+                            <th>Id</th>
+                            <th>Método de pago</th>
+                            <th>Identificador</th>
+                            <th>Cta bancaria</th>
+                            <th>Fecha pago</th>
+                            <th>Monto</th>
+                            <th>Estado</th>
+                            <tbody>
+                            <? if (!empty($pagosRelacionados)) : ?>
+                            <? foreach ($pagosRelacionados as $pagoRel) : ?>
+                                <tr>
+                                    <td><?=$this->Html->link('#'.$pagoRel['Pago']['id'], array('controller' => 'pagos', 'action' => 'view', $pagoRel['Pago']['id']), array('target' => '_blank')); ?></td>
+                                    <td><?= h($pagoRel['Moneda']['nombre']);?></td>
+                                    <td><?= h($pagoRel['Pago']['identificador']);?></td>
+                                    <td><?= h($pagoRel['CuentaBancaria']['alias']);?></td>
+                                    <td><?= h($pagoRel['Pago']['fecha_pago']); ?></td>
+                                    <td><?= CakeNumber::currency(h($pagoRel['Pago']['monto_pagado']), 'CLP'); ?></td>
+                                    <td><?= ($pagoRel['Pago']['pagado'] ? '<label class="label label-success"><i class="fa fa-check"></i> Pagado</label>' : '<label class="label label-danger"><i class="fa fa-close"></i> No pagado</label>'); ?>&nbsp;</td>
+                                </tr>
+                            <? endforeach; ?>
+                            <? else : ?>
+                                <tr>
+                                    <td colspan="6">No registra otros pagos asociados</td>
+                                </tr>
+                            <? endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                <?= $this->Html->link('<i class="fa fa-undo"></i> Volver', array('action' => 'index'), array('class' => 'btn btn-danger', 'escape' => false)); ?>
                 </div>
             </div>
         </div>

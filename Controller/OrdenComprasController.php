@@ -1347,14 +1347,14 @@ class OrdenComprasController extends AppController
 						case 'pagar':
 
 							// Se crea un pago al dia 
-							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], date('Y-m-d'), $ocs['OrdenCompra']['total'], array(), $ocs['OrdenCompra']['moneda_id']);
+							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], date('Y-m-d'), $ocs['OrdenCompra']['total'], array(), $ocs['OrdenCompra']['moneda_id'], $ocs['OrdenCompra']['proveedor_id']);
 							
 							break;
 						
 						case 'agendar':
 
 							// Se crea un pago sin fecha ni monto (se debe configurar una vez recibida la/las factura/s) 
-							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], null, 0, array(), $ocs['OrdenCompra']['moneda_id']);
+							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], null, 0, array(), $ocs['OrdenCompra']['moneda_id'], $ocs['OrdenCompra']['proveedor_id']);
 							break;
 
 						case 'esperar':

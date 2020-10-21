@@ -35,6 +35,15 @@ Class Pago extends AppModel {
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
 		),
+		'Proveedor' => array(
+			'className'				=> 'Proveedor',
+			'foreignKey'			=> 'proveedor_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		),
 		'OrdenCompraAdjunto' => array(
 			'className'				=> 'OrdenCompraAdjunto',
 			'foreignKey'			=> 'orden_compra_adjunto_id',
@@ -109,7 +118,7 @@ Class Pago extends AppModel {
 
 
 
-	public function crear( $identificador, $id_oc = null, $id_adjunto = null, $fecha, $monto, $facturas = array(), $moneda_id = null )
+	public function crear( $identificador, $id_oc = null, $id_adjunto = null, $fecha, $monto, $facturas = array(), $moneda_id = null, $proveedor_id = null )
 	{	
 		
 		$pago = array(
@@ -138,6 +147,14 @@ Class Pago extends AppModel {
 			$pago = array_replace_recursive($pago, array(
 				'Pago' =>  array(
 					'moneda_id' => $moneda_id
+				)
+			));
+		}
+
+		if (!empty($proveedor_id)) {
+			$pago = array_replace_recursive($pago, array(
+				'Pago' =>  array(
+					'proveedor_id' => $proveedor_id
 				)
 			));
 		}

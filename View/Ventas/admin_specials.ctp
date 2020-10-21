@@ -3,6 +3,107 @@
 </div>
 
 <div class="page-content-wrap">
+
+<div class="row">
+		<div class="col-xs-12">
+
+			<?= $this->Form->create('Venta', array('url' => array('controller' => 'ventas', 'action' => 'specials'), 'inputDefaults' => array('div' => false, 'label' => false), 'class' => 'js-validate')); ?>
+			<? 
+				$id          = (isset($this->request->params['named']['ide'])) ? $this->request->params['named']['ide'] : '' ;
+				$cliente_email     = (isset($this->request->params['named']['cliente_email'])) ? $this->request->params['named']['cliente_email'] : '' ;
+				$mensaje     = (isset($this->request->params['named']['mensaje'])) ? $this->request->params['named']['mensaje'] : '' ;
+				$picking_estado     = (isset($this->request->params['named']['picking'])) ? $this->request->params['named']['picking'] : '' ;
+				$fecha_desde = (isset($this->request->params['named']['fecha_desde'])) ? $this->request->params['named']['fecha_desde'] : '' ;
+				$fecha_hasta = (isset($this->request->params['named']['fecha_hasta'])) ? $this->request->params['named']['fecha_hasta'] : '' ;
+			?>
+			<div class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
+				</div>
+				<div class="panel-body">
+					<div class="form-group col-sm-4 col-xs-12">
+                        <label>ID o Referencia</label>
+                        <?=$this->Form->input('ide',
+                            array(
+                                'class' => 'form-control',
+                                'placeholder' => 'Ingrese id o referencia',
+                                'value' => $id
+                            )
+                        );?>
+					</div>
+					
+					<div class="form-group col-sm-4 col-xs-12">
+                        <label>Cliente</label>
+                        <?=$this->Form->input('cliente_email',
+                            array(
+								'class' => 'form-control',
+                                'placeholder' => 'Ingrese email del cliente',
+                                'value' => $cliente_email
+                            )
+                        );?>
+					</div>
+
+					<div class="form-group col-sm-4 col-xs-12">
+                        <label>Auto atención</label>
+                        <?=$this->Form->select('mensaje',
+                            array(
+								'no-auto' => 'Sin auto atención',
+								'cancelar' => 'Solicita cancelar',
+								'procesar' => 'Solicita devolución parcial',
+								'cambio' => 'Solicita cambio'
+							),
+                            array(
+                                'class' => 'form-control',
+                                'empty' => 'Seleccione',
+                                'value' => $mensaje
+                            )
+                        );?>
+					</div>
+					
+					<div class="form-group col-sm-4 col-xs-12">
+                        <label>Estado picking</label>
+                        <?=$this->Form->select('picking',
+                            $picking,
+                            array(
+                                'class' => 'form-control',
+                                'empty' => 'Seleccione',
+                                'value' => $picking_estado
+                            )
+                        );?>
+                    </div>
+					
+					<div class="form-group col-sm-4 col-xs-12">
+						<label>Rango de fecha</label>
+						<div class="input-group">
+							<?=$this->Form->input('fecha_desde', array(
+								'class' => 'form-control datepicker',
+								'type' => 'text',
+								'value' => $fecha_desde
+								))?>
+                            <span class="input-group-addon add-on"> - </span>
+                            <?=$this->Form->input('fecha_hasta', array(
+								'class' => 'form-control datepicker',
+								'type' => 'text',
+								'value' => $fecha_hasta
+								))?>
+                        </div>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="col-xs-12">
+						<div class="pull-right">
+							<?= $this->Form->button('<i class="fa fa-search" aria-hidden="true"></i> Filtrar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
+						</div>
+						<div class="pull-left">
+							<?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtro', array('action' => 'specials'), array('class' => 'btn btn-buscar btn-primary btn-block', 'escape' => false)); ?>
+						</div>
+					</div>
+				</div>
+			</div>
+			<?= $this->Form->end(); ?>
+		</div>
+	</div>
+
 	<div class="row">
 
 		<div class="col-xs-12">
@@ -201,6 +302,26 @@
 														</div>
 													</div>
 												</div>
+
+												<? if (!empty($venta['Mensaje'])) : ?>
+												<div class="col-xs-12">
+													<h5><i class="fa fa-envelope-o"></i> Mensajes de auto atención</h5>
+												</div>
+												<div class="col-xs-12">
+													<div class="table-responsive">
+														<table class="table table-bordered">
+															<tr>
+																<th>Mensaje</th>
+															</tr>
+															<? foreach ($venta['Mensaje'] as $mensaje) : ?>
+															<tr>
+																<td><?=h($mensaje['mensaje']); ?></td>
+															</tr>
+															<? endforeach; ?>
+														</table>
+													</div>
+												</div>
+												<? endif; ?>
 											</div>
 										</td>
 									</tr>

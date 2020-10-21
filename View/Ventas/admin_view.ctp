@@ -259,6 +259,7 @@
 												<th>Stock<br/> reservado</th>
 												<th>Cant<br/> anulada</th>
 												<th>Subtotal</th>
+												<th>Ocs<br> relacionadas</th>
 												<th>Opciones</th>
 											</thead>
 											<tbody>
@@ -276,11 +277,31 @@
 																<?=$this->Html->calcular_llegada($detalle['fecha_llegada_en_espera']); ?>
 															<? endif;?>
 														</td>
-														<td data-toggle="tooltip" title="<?=h($detalle['VentaDetalleProducto']['nombre']);?>" class="td-producto">
+														<td>
+															<p><?= h($detalle['VentaDetalleProducto']['nombre']); ?></p>
+															
 															<? if (!empty($detalle['VentaDetalleProducto']['imagenes'])) : ?>
-															<img src="<?=Hash::extract($detalle['VentaDetalleProducto']['imagenes'], '{n}[principal=1].url')[0]; ?>" class="img-responsive producto-td-imagen">
+															<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-foto-producto-<?=$detalle['id'];?>"><i class="fa fa-eye"></i> Ver imagen</button>
+
+															<!-- Modal -->
+															<div class="modal fade" id="modal-foto-producto-<?=$detalle['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-foto-producto-<?=$detalle['id'];?>-label">
+																<div class="modal-dialog" role="document">
+																	<div class="modal-content">
+
+																		<div class="modal-header">
+																			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+																			<h4 class="modal-title" id="modal-foto-producto-<?=$detalle['id'];?>-label"> Producto <?=h($detalle['VentaDetalleProducto']['nombre']); ?> </h4>
+																		</div>
+																		<div class="modal-body">
+																		<img src="<?=Hash::extract($detalle['VentaDetalleProducto']['imagenes'], '{n}[principal=1].url')[0]; ?>" class="img-responsive">
+																		</div>
+																		<div class="modal-footer">
+																			<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+																		</div>
+																	</div>
+																</div>
+															</div>
 															<? endif; ?>
-															<?= $this->Text->truncate( h($detalle['VentaDetalleProducto']['nombre']), 40); ?>
 														</td>
 														<td>
 															<?= CakeNumber::currency($detalle['precio'], 'CLP'); ?>
@@ -301,85 +322,131 @@
 															<?= CakeNumber::currency($detalle['total_neto'], 'CLP'); ?>
 														</td>
 														<td>
-														<? if ($detalle['cantidad_anulada'] > 0 && !empty($detalle['dte'])) : ?>
-															<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Ver NTC', array('controller' => 'ordenes', 'action' => 'editar', $detalle['dte'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-block btn-xs', 'data-toggle' => 'tooltip', 'title' => 'Ver nota de crédito', 'escape' => false, 'target' => '_blank')); ?>
-														<? endif; ?>
+															<? foreach($venta['OrdenCompra'] as $idoc => $oc) : ?>
 
-														<? if ($permisos['storage'] && $detalle['cantidad_reservada'] > 0 ) : ?>
-															<?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('action' => 'liberar_stock_reservado', $venta['Venta']['id'], $detalle['id'], $detalle['cantidad_reservada']), array('class' => 'btn btn-warning btn-block btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?>
-														<? endif; ?>
+																<? 
+																$estadoOc = $this->Html->estadoOcOpt($oc['estado']);
+																$estadoNombre = $this->Html->estadosOc($oc['estado']);
+																?>
 
-														<? if ($permisos['storage'] && $detalle['cantidad_en_espera'] > 0 ) : ?>
-															<?=$this->Html->link('<i class="fa fa-ban"></i> Quitar agendamiento', array('action' => 'quitar_en_espera', $venta['Venta']['id'], $detalle['id']), array('class' => 'btn btn-default btn-block btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Eliminar el agendamiento del producto'))?>
-														<? endif; ?>
+																<label data-toggle="modal" data-target="#modal-oc-<?=$oc['id'];?>" class="label" style="cursor: pointer; background-color: <?=$estadoOc['bgr'];?>; color:" <?=$estadoOc['txt'];?>>#<?=$oc['id'];?> - <?=$estadoNombre; ?></label>
+																
+																<!-- Modal -->
+																<div class="modal fade" id="modal-oc-<?=$oc['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-oc-<?=$oc['id'];?>-label">
+																	<div class="modal-dialog" role="document">
+																		<div class="modal-content">
 
-														<? if ($permisos['storage'] && ($detalle['cantidad_reservada'] + $detalle['cantidad_entregada']) < ($detalle['cantidad'] - $detalle['cantidad_anulada'])) : ?>
-															<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-en-espera-producto-<?=$detalle['id'];?>"><i class="fa fa-clock-o"></i> <?= ($detalle['cantidad_en_espera'] == 0) ? 'Agendar' : 'Re-agendar'; ?></button>
-
-															<!-- Modal -->
-															<div class="modal fade" id="modal-en-espera-producto-<?=$detalle['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-en-espera-producto-<?=$detalle['id'];?>-label">
-																<div class="modal-dialog" role="document">
-																	<div class="modal-content">
-																		<?= $this->Form->create('Venta', array('url' => array('action' => 'en_espera', $venta['Venta']['id']), 'class' => 'form-horizontal js-formulario', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-																		<div class="modal-header">
-																			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																			<h4 class="modal-title" id="modal-en-espera-producto-<?=$detalle['id'];?>-label"><i class="fa fa-clock-o"></i> <?= ($detalle['cantidad_en_espera'] == 0) ? 'Agendar' : 'Re-agendar'; ?> llegada <?= $this->Text->truncate(h($detalle['VentaDetalleProducto']['nombre']), 40); ?></h4>
-																		</div>
-																		<div class="modal-body">
-																			<? if ($detalle['cantidad_en_espera'] > 0) : ?>
-																			<label class="label label-info label-form">Ya se ha agendado una fecha de llegada del/los productos.</label>
-																			<? endif; ?>
-																		</div>
-																		<div class="modal-body">
-																			<?=$this->Form->hidden(sprintf('%d.VentaDetalle.id', $detalle['id']), array('value' => $detalle['id'])); ?>
-																			<div class="form-group">
-																				<?=$this->Form->label(sprintf('%d.VentaDetalle.cantidad_en_espera', $detalle['id']), 'Cantidad a esperar'); ?>
-																				<?=$this->Form->input(sprintf('%d.VentaDetalle.cantidad_en_espera', $detalle['id']), array('type' => 'text', 'class' => 'form-control not-blank is-number', 'min' => 0, 'max' => ($detalle['cantidad'] - $detalle['cantidad_anulada'] - $detalle['cantidad_reservada']), 'placeholder' => 'Ingrese la cantidad a la espera', 'value' => $detalle['cantidad_en_espera'])); ?>
+																			<div class="modal-header">
+																				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+																				<h4 class="modal-title" id="modal-oc-<?=$oc['id'];?>-label"> Detalle OC #<?=$oc['id']; ?> </h4>
 																			</div>
-																			<div class="form-group">
-																				<?=$this->Form->label(sprintf('%d.VentaDetalle.fecha_llegada_en_espera', $detalle['id']), 'Ingrese una fecha de llegada'); ?>
-																				<?=$this->Form->input(sprintf('%d.VentaDetalle.fecha_llegada_en_espera', $detalle['id']), array('type' => 'text', 'class' => 'form-control not-blank datepicker-start-today', 'placeholder' => date('Y-m-d'), 'value' => $detalle['fecha_llegada_en_espera'])); ?>
+																			<div class="modal-body">
+																				<div class="table-responsive">
+																					<table class="table table-bordered">
+																						<th>Estado proveedor</th>
+																						<th>Cantidad en proveedor</th>
+																						<th>Mensaje del proveedor</th>
+																						<? foreach ($oc['VentaDetalleProducto'] as $ocp) : ?>
+																							<? if ($ocp['id'] == $detalle['venta_detalle_producto_id']) : ?>
+																							<tr>
+																								<td><?=$ocp['OrdenComprasVentaDetalleProducto']['estado_proveedor']; ?></td>
+																								<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']; ?></td>
+																								<td><?= (!empty($ocp['OrdenComprasVentaDetalleProducto']['nota_proveedor'])) ? $ocp['OrdenComprasVentaDetalleProducto']['nota_proveedor'] : 'Sin información del proveedor'; ?></td>
+																							</tr>
+																							<? endif; ?>
+																						<? endforeach; ?>
+																					</table>
+																				</div>
+																			</div>
+																			<div class="modal-footer">
+																				<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
 																			</div>
 																		</div>
-																		<div class="modal-footer">
-																			<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-																			<button type="submit" class="btn btn-primary">Agendar llegada</button>
-																		</div>
-																		<?= $this->Form->end(); ?>
 																	</div>
 																</div>
-															</div>
 
-														<? endif ?>
+															<? endforeach; ?>
+														</td>
+														<td>
+															<? if ($detalle['cantidad_anulada'] > 0 && !empty($detalle['dte'])) : ?>
+																<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Ver NTC', array('controller' => 'ordenes', 'action' => 'editar', $detalle['dte'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-block btn-xs', 'data-toggle' => 'tooltip', 'title' => 'Ver nota de crédito', 'escape' => false, 'target' => '_blank')); ?>
+															<? endif; ?>
+
+															<? if ($permisos['storage'] && $detalle['cantidad_reservada'] > 0 ) : ?>
+																<?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('action' => 'liberar_stock_reservado', $venta['Venta']['id'], $detalle['id'], $detalle['cantidad_reservada']), array('class' => 'btn btn-warning btn-block btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?>
+															<? endif; ?>
+
+															<? if ($permisos['storage'] && $detalle['cantidad_en_espera'] > 0 ) : ?>
+																<?=$this->Html->link('<i class="fa fa-ban"></i> Quitar agendamiento', array('action' => 'quitar_en_espera', $venta['Venta']['id'], $detalle['id']), array('class' => 'btn btn-default btn-block btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Eliminar el agendamiento del producto'))?>
+															<? endif; ?>
+
+															<? if ($permisos['storage'] && ($detalle['cantidad_reservada'] + $detalle['cantidad_entregada']) < ($detalle['cantidad'] - $detalle['cantidad_anulada'])) : ?>
+																<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-en-espera-producto-<?=$detalle['id'];?>"><i class="fa fa-clock-o"></i> <?= ($detalle['cantidad_en_espera'] == 0) ? 'Agendar' : 'Re-agendar'; ?></button>
+
+																<!-- Modal -->
+																<div class="modal fade" id="modal-en-espera-producto-<?=$detalle['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-en-espera-producto-<?=$detalle['id'];?>-label">
+																	<div class="modal-dialog" role="document">
+																		<div class="modal-content">
+																			<?= $this->Form->create('Venta', array('url' => array('action' => 'en_espera', $venta['Venta']['id']), 'class' => 'form-horizontal js-formulario', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+																			<div class="modal-header">
+																				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+																				<h4 class="modal-title" id="modal-en-espera-producto-<?=$detalle['id'];?>-label"><i class="fa fa-clock-o"></i> <?= ($detalle['cantidad_en_espera'] == 0) ? 'Agendar' : 'Re-agendar'; ?> llegada <?= $this->Text->truncate(h($detalle['VentaDetalleProducto']['nombre']), 40); ?></h4>
+																			</div>
+																			<div class="modal-body">
+																				<? if ($detalle['cantidad_en_espera'] > 0) : ?>
+																				<label class="label label-info label-form">Ya se ha agendado una fecha de llegada del/los productos.</label>
+																				<? endif; ?>
+																			</div>
+																			<div class="modal-body">
+																				<?=$this->Form->hidden(sprintf('%d.VentaDetalle.id', $detalle['id']), array('value' => $detalle['id'])); ?>
+																				<div class="form-group">
+																					<?=$this->Form->label(sprintf('%d.VentaDetalle.cantidad_en_espera', $detalle['id']), 'Cantidad a esperar'); ?>
+																					<?=$this->Form->input(sprintf('%d.VentaDetalle.cantidad_en_espera', $detalle['id']), array('type' => 'text', 'class' => 'form-control not-blank is-number', 'min' => 0, 'max' => ($detalle['cantidad'] - $detalle['cantidad_anulada'] - $detalle['cantidad_reservada']), 'placeholder' => 'Ingrese la cantidad a la espera', 'value' => $detalle['cantidad_en_espera'])); ?>
+																				</div>
+																				<div class="form-group">
+																					<?=$this->Form->label(sprintf('%d.VentaDetalle.fecha_llegada_en_espera', $detalle['id']), 'Ingrese una fecha de llegada'); ?>
+																					<?=$this->Form->input(sprintf('%d.VentaDetalle.fecha_llegada_en_espera', $detalle['id']), array('type' => 'text', 'class' => 'form-control not-blank datepicker-start-today', 'placeholder' => date('Y-m-d'), 'value' => $detalle['fecha_llegada_en_espera'])); ?>
+																				</div>
+																			</div>
+																			<div class="modal-footer">
+																				<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+																				<button type="submit" class="btn btn-primary">Agendar llegada</button>
+																			</div>
+																			<?= $this->Form->end(); ?>
+																		</div>
+																	</div>
+																</div>
+
+															<? endif ?>
 														</td>
 													</tr>
 												<? endforeach; ?>
 											</tbody>
 											<tfoot>
 												<tr>
-													<th colspan="7" class="text-right">Total Productos</th>
+													<th colspan="9" class="text-right">Total Productos</th>
 													<td><?=CakeNumber::currency($TotalProductos, 'CLP');?></td>
 												</tr>
 												<tr>
-													<th colspan="7" class="text-right">IVA <small>(19%)</small></th>
+													<th colspan="9" class="text-right">IVA <small>(19%)</small></th>
 													<td><?=CakeNumber::currency(round($TotalProductos * 0.19), 'CLP');?></td>
 												</tr>
 												<tr>
-													<th colspan="7" class="text-right">Descuento</th>
+													<th colspan="9" class="text-right">Descuento</th>
 													<td>
 														<?php if (!empty($venta['Venta']['descuento'])) {echo CakeNumber::currency($venta['Venta']['descuento'], 'CLP');} ?>
 														<?= $this->Form->input('DscRcgGlobal.ValorDR', array('type' => 'hidden', 'value' => round($this->request->data['Venta']['descuento']))); ?>
 													</td>
 												</tr>
 												<tr>
-													<th colspan="7" class="text-right">Transporte</th>
+													<th colspan="9" class="text-right">Transporte</th>
 													<td>
 														<?=$this->Form->hidden('Dte.Transporte', array('value' => $venta['Venta']['costo_envio'] ));?>
 														<?php if (!empty($venta['Venta']['costo_envio'])) {echo CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP');} ?>
 													</td>
 												</tr>
 												<tr class="success">
-													<th colspan="7" class="text-right" style="font-size: 22px;">Total</th>
+													<th colspan="9" class="text-right" style="font-size: 22px;">Total</th>
 													<td style="font-size: 22px;"><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></td>
 												</tr>
 											</tfoot>

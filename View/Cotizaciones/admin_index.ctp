@@ -6,43 +6,66 @@
 	<div class="row">
 		<div class="col-xs-12">
 			<?= $this->Form->create('Filtro', array('url' => array('controller' => 'cotizaciones', 'action' => 'index'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
+			
+			<? 
+				$id_email             = (isset($this->request->params['named']['id_email'])) ? $this->request->params['named']['id_email'] : '' ;
+				$estado_cotizacion_id = (isset($this->request->params['named']['estado_cotizacion_id'])) ? $this->request->params['named']['estado_cotizacion_id'] : '' ;
+				$validez_fecha_id     = (isset($this->request->params['named']['validez_fecha_id'])) ? $this->request->params['named']['validez_fecha_id'] : '' ;
+				$email_vendedor       = (isset($this->request->params['named']['email_vendedor'])) ? $this->request->params['named']['email_vendedor'] : '' ;
+				$fecha_desde          = (isset($this->request->params['named']['fecha_desde'])) ? $this->request->params['named']['fecha_desde'] : '' ;
+				$fecha_hasta          = (isset($this->request->params['named']['fecha_hasta'])) ? $this->request->params['named']['fecha_hasta'] : '' ;
+			?>
+			
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
 				</div>
 				<div class="panel-body">
-					<div class="col-sm-4 col-xs-12">
-						<div class="form-group">
-							<label>Buscar por</label>
-							<?=$this->Form->select('findby', array(
-								'id' => 'Identificador', 
-								'email_cliente' => 'Email del cliente'),
-								array(
-								'class' => 'form-control',
-								'empty' => false
-								)
-							);?>
-						</div>
+					<div class="form-group col-sm-4 col-xs-12">
+							<label>Identificador, nombre o email cliente</label>
+							<?= $this->Form->input('id_email', array('class' => 'form-control input-buscar', 'placeholder' => 'Ingrese email o nombre del cliente', 'value' => $id_email)); ?>
 					</div>
-					<div class="col-sm-4 col-xs-12">
-						<div class="form-group">
-							<label>Ingrese valor</label>
-							<?= $this->Form->input('nombre_buscar', array('class' => 'form-control input-buscar', 'placeholder' => 'Ingrese email o nombre del cliente')); ?>
-						</div>
+					<div class="form-group col-sm-4 col-xs-12">
+							<label>Responsable</label>
+							<?= $this->Form->select('email_vendedor', $administradores, array('class' => 'form-control', 'empty' => 'Seleccione', 'default' => $email_vendedor)); ?>
 					</div>
-					<div class="col-sm-2 col-xs-12">
-						<div class="form-group">
-							<?= $this->Form->button('<i class="fa fa-search" aria-hidden="true"></i> Buscar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
-						</div>
+					<div class="form-group col-sm-4 col-xs-12">
+							<label>Estado</label>
+							<?= $this->Form->select('estado_cotizacion_id', $estadoCotizaciones, array('class' => 'form-control', 'empty' => 'Seleccione', 'default' => $estado_cotizacion_id)); ?>
 					</div>
-					<?= $this->Form->end(); ?>
-					<div class="col-sm-2 col-xs-12">
-						<div class="form-group">
+					<div class="form-group col-sm-3 col-xs-12">
+							<label>Validez</label>
+							<?= $this->Form->select('validez_fecha_id', $validezFechas, array('class' => 'form-control', 'empty' => 'Seleccione', 'default' => $validez_fecha_id)); ?>
+					</div>
+					<div class="form-group col-sm-3 col-xs-12">
+						<label>Rango de fecha</label>
+						<div class="input-group">
+							<?=$this->Form->input('fecha_desde', array(
+								'class' => 'form-control datepicker',
+								'type' => 'text',
+								'value' => $fecha_desde
+								))?>
+                            <span class="input-group-addon add-on"> - </span>
+                            <?=$this->Form->input('fecha_hasta', array(
+								'class' => 'form-control datepicker',
+								'type' => 'text',
+								'value' => $fecha_hasta
+								))?>
+                        </div>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="col-xs-12">
+						<div class="pull-right">
+							<?= $this->Form->button('<i class="fa fa-search" aria-hidden="true"></i> Filtrar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
+						</div>
+						<div class="pull-left">
 							<?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtro', array('action' => 'index'), array('class' => 'btn btn-buscar btn-primary btn-block', 'escape' => false)); ?>
 						</div>
 					</div>
 				</div>
 			</div>
+			<?= $this->Form->end(); ?>
 		</div>
 	</div>
 	<div class="row">
@@ -64,6 +87,7 @@
 								<tr class="sort">
 									<th><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('email_vendedor', 'Responsable', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('email_cliente', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('estado_cotizacion_id', 'Estado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('created', 'Creado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -76,6 +100,7 @@
 								<tr>
 									<td><?= h($cotizacion['Cotizacion']['id']); ?>&nbsp;</td>
 									<td><?= h($cotizacion['Cotizacion']['nombre']); ?>&nbsp;</td>
+									<td><?= h($cotizacion['Cotizacion']['vendedor']); ?>&nbsp;</td>
 									<td><?= h($cotizacion['Cotizacion']['email_cliente']); ?>&nbsp;</td>
 									<td><?= h($cotizacion['EstadoCotizacion']['nombre']); ?>&nbsp;</td>
 									<td><?= h($cotizacion['Cotizacion']['created']); ?>&nbsp;</td>

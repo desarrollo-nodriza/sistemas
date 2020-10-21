@@ -87,6 +87,29 @@ class PagosController extends AppController
 
 					break;
 
+					case 'folio':
+
+						$joins[] = array(
+							'table' => 'rp_facturas_pagos',
+							'alias' => 'fpp',
+							'type' => 'INNER',
+							'conditions' => array(
+								'fpp.pago_id = Pago.id'
+							)
+						);
+
+						$joins[] = array(
+							'table' => 'rp_orden_compra_facturas',
+							'alias' => 'ocfpp',
+							'type' => 'INNER',
+							'conditions' => array(
+								'ocfpp.id = fpp.factura_id',
+								'ocfpp.folio' => trim($valor)
+							)
+						);
+
+					break;
+
 					case 'identificador':
 
 						$iden = trim($valor);
@@ -155,12 +178,18 @@ class PagosController extends AppController
 							'Proveedor.nombre'
 						)
 					)
+				),
+				'Proveedor' => array(
+					'fields' => array(
+						'Proveedor.id',
+						'Proveedor.nombre'
+					)
 				)
 			),
 			'conditions' => $condiciones,
 			'joins' => $joins,
 			'fields' => $fields,
-			'group' => $group,
+			'group' => 'Pago.id',
 			'order' => array('Pago.fecha_pago' => 'DESC'),
 			'limit' => 20
 		);
@@ -198,7 +227,13 @@ class PagosController extends AppController
 						'Moneda.nombre'
 					)
 				),
-				'OrdenCompraAdjunto',
+				'OrdenCompraAdjunto' => array(
+					'fields' => array(
+						'OrdenCompraAdjunto.id',
+						'OrdenCompraAdjunto.identificador',
+						'OrdenCompraAdjunto.adjunto'
+					)
+				),
 				'OrdenCompraFactura' => array(
 					'conditions' => array(
 						'OrdenCompraFactura.tipo_documento' => 33 // Sólo facturas
@@ -218,8 +253,7 @@ class PagosController extends AppController
 							'Proveedor.nombre',
 							'Proveedor.rut_empresa'
 						)
-					),
-					'Pago'
+					)
 				)
 			),
 			'conditions' => array(
@@ -238,10 +272,59 @@ class PagosController extends AppController
 			)
 		));
 
+		$pagosRelacionados = $this->Pago->find('all', array(
+			'joins' => array(
+				array(
+					'table' => 'rp_facturas_pagos',
+					'alias' => 'fp',
+					'type' => 'INNER',
+					'conditions' => array(
+						'fp.pago_id = Pago.id',
+						'fp.factura_id' => Hash::extract($pago, 'OrdenCompraFactura.{n}.id')
+					)
+				)
+			),
+			'contain' => array(
+				'CuentaBancaria' => array(
+					'fields' => array(
+						'CuentaBancaria.alias'
+					)
+				),
+				'Moneda' => array(
+					'fields' => array(
+						'Moneda.id',
+						'Moneda.nombre'
+					)
+				),
+				'OrdenCompraAdjunto' => array(
+					'fields' => array(
+						'OrdenCompraAdjunto.id',
+						'OrdenCompraAdjunto.identificador',
+						'OrdenCompraAdjunto.adjunto'
+					)
+				)
+			),
+			'fields' => array(
+				'Pago.id',
+				'Pago.moneda_id',
+				'Pago.cuenta_bancaria_id',
+				'Pago.pagado',
+				'Pago.identificador',
+				'Pago.monto_pagado',
+				'Pago.fecha_pago',
+				'Pago.orden_compra_adjunto_id',
+				'Pago.orden_compra_id'
+			),
+			'conditions' => array(
+				'Pago.id !=' => $id
+			),
+			'group' => 'Pago.id'
+		));
+
 		BreadcrumbComponent::add('Pagos', '/pagos');
 		BreadcrumbComponent::add('Pago #' . $id, '/pagos/view/' . $id);
 
-		$this->set(compact('pago'));
+		$this->set(compact('pago', 'pagosRelacionados'));
 
 	}
 
@@ -282,7 +365,19 @@ class PagosController extends AppController
 						'Moneda.nombre'
 					)
 				),
-				'OrdenCompraAdjunto',
+				'OrdenCompraAdjunto' => array(
+					'fields' => array(
+						'OrdenCompraAdjunto.id',
+						'OrdenCompraAdjunto.identificador',
+						'OrdenCompraAdjunto.adjunto'
+					)
+				),
+				'OrdenCompra' => array(
+					'fields' => array(
+						'OrdenCompra.id',
+						'OrdenCompra.proveedor_id'
+					)
+				),
 				'OrdenCompraFactura' => array(
 					'conditions' => array(
 						'OrdenCompraFactura.tipo_documento' => 33 // Sólo facturas
@@ -318,8 +413,72 @@ class PagosController extends AppController
 				'Pago.monto_pagado',
 				'Pago.fecha_pago',
 				'Pago.orden_compra_adjunto_id',
-				'Pago.orden_compra_id'
+				'Pago.orden_compra_id',
+				'Pago.proveedor_id'
 			)
+		));
+
+		# Se asigna proveedor
+		if (empty($this->request->data['Pago']['proveedor_id']))
+		{	
+			if (isset($this->request->data['OrdenCompra']['proveedor_id']))
+			{
+				$this->request->data['Pago']['proveedor_id'] = $this->request->data['OrdenCompra']['proveedor_id'];
+			}
+			elseif (!empty($this->request->data['OrdenCompraFactura']))
+			{
+				$this->request->data['Pago']['proveedor_id'] = Hash::extract($this->request->data['OrdenCompraFactura'], '{n}.proveedor_id')[0];
+			}
+		}
+
+		$pagosRelacionados = $this->Pago->find('all', array(
+			'joins' => array(
+				array(
+					'table' => 'rp_facturas_pagos',
+					'alias' => 'fp',
+					'type' => 'INNER',
+					'conditions' => array(
+						'fp.pago_id = Pago.id',
+						'fp.factura_id' => Hash::extract($this->request->data, 'OrdenCompraFactura.{n}.id')
+					)
+				)
+			),
+			'contain' => array(
+				'CuentaBancaria' => array(
+					'fields' => array(
+						'CuentaBancaria.alias'
+					)
+				),
+				'Moneda' => array(
+					'fields' => array(
+						'Moneda.id',
+						'Moneda.nombre'
+					)
+				),
+				'OrdenCompraAdjunto' => array(
+					'fields' => array(
+						'OrdenCompraAdjunto.id',
+						'OrdenCompraAdjunto.identificador',
+						'OrdenCompraAdjunto.adjunto'
+					)
+				)
+			),
+			'fields' => array(
+				'Pago.id',
+				'Pago.moneda_id',
+				'Pago.cuenta_bancaria_id',
+				'Pago.pagado',
+				'Pago.identificador',
+				'Pago.monto_pagado',
+				'Pago.fecha_pago',
+				'Pago.orden_compra_adjunto_id',
+				'Pago.orden_compra_id',
+				'Pago.proveedor_id'
+			),
+			'conditions' => array(
+				'Pago.id !=' => $id
+			),
+			'group' => 'Pago.id'
 		));
 		
 		$cuenta_bancarias = ClassRegistry::init('CuentaBancaria')->find('list', array('conditions' => array('activo' => 1)));
@@ -328,7 +487,7 @@ class PagosController extends AppController
 		BreadcrumbComponent::add('Pagos', '/pagos');
 		BreadcrumbComponent::add('Pago #' . $id, '/pagos/edit/' . $id);
 
-		$this->set(compact('cuenta_bancarias', 'monedas'));
+		$this->set(compact('cuenta_bancarias', 'monedas', 'pagosRelacionados'));
 
 	}
 
@@ -347,6 +506,7 @@ class PagosController extends AppController
 			'Pago.orden_compra_id', 
 			'Pago.orden_compra_adjunto_id', 
 			'Pago.cuenta_bancaria_id', 
+			'Pago.proveedor_id', 
 			'Pago.moneda_id', 
 			'Pago.identificador', 
 			'Pago.fecha_pago',
@@ -394,6 +554,29 @@ class PagosController extends AppController
 							'conditions' => array(
 								'ocfp.id = fp.factura_id',
 								'ocfp.proveedor_id' => $valor
+							)
+						);
+
+					break;
+
+					case 'folio':
+
+						$joins[] = array(
+							'table' => 'rp_facturas_pagos',
+							'alias' => 'fpp',
+							'type' => 'INNER',
+							'conditions' => array(
+								'fpp.pago_id = Pago.id'
+							)
+						);
+
+						$joins[] = array(
+							'table' => 'rp_orden_compra_facturas',
+							'alias' => 'ocfpp',
+							'type' => 'INNER',
+							'conditions' => array(
+								'ocfpp.id = fpp.factura_id',
+								'ocfpp.folio' => trim($valor)
 							)
 						);
 
@@ -495,12 +678,22 @@ class PagosController extends AppController
 							'Proveedor.email_contacto'
 						)
 					)
-				)
+				),
+				'Proveedor' => array(
+					'fields' => array(
+						'Proveedor.id',
+						'Proveedor.nombre',
+						'Proveedor.cuenta_bancaria',
+						'Proveedor.codigo_banco',
+						'Proveedor.rut_empresa',
+						'Proveedor.email_contacto'
+					)
+				) 
 			),
 			'conditions' => $condiciones,
 			'joins' => $joins,
 			'fields' => $fields,
-			'group' => $group,
+			'group' => 'Pago.id',
 			'order' => array('Pago.fecha_pago' => 'DESC'),
 			'limit' => -1
 		));
@@ -517,7 +710,7 @@ class PagosController extends AppController
 			'MODIFICADO',
 			'FACTURAS',
 			'OCS-RELACIONADAS',
-			'PROVEEDORES'
+			'PROVEEDOR'
 		);
 
 		$formato = 'normal';
@@ -744,7 +937,7 @@ class PagosController extends AppController
 				)
 			)
 		));
-	
+		
 		BreadcrumbComponent::add('Pagos', '/ordenCompraFacturas/index');
 		BreadcrumbComponent::add('Configuración de pagos');
 
@@ -832,6 +1025,16 @@ class PagosController extends AppController
 		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
 
 		$this->set(compact('facturas', 'cuenta_bancarias', 'monedas'));
+	}
+
+
+	public function admin_notificar_pago($id)
+	{
+		$this->guardarEmailPagoFactura($id);
+
+		$this->Session->setFlash('Proceso de notificación pago #' . $id . '  finalizado.', null, array(), 'success');
+
+		$this->redirect($this->referer('/', true));
 	}
 
 

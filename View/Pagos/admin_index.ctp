@@ -5,7 +5,7 @@
 
 <div class="page-content-wrap">
 
-<div class="row">
+	<div class="row">
 		<div class="col-xs-12">
 
 			<?= $this->Form->create('Filtro', array('url' => array('controller' => 'pagos', 'action' => 'index'), 'inputDefaults' => array('div' => false, 'label' => false), 'class' => 'js-validate')); ?>
@@ -15,6 +15,7 @@
 				$monto_pagado = (isset($this->request->params['named']['monto_pagado'])) ? $this->request->params['named']['monto_pagado'] : '' ;
 				$pagado       = (isset($this->request->params['named']['pagado'])) ? $this->request->params['named']['pagado'] : '' ;
 				$moneda_id    = (isset($this->request->params['named']['moneda_id'])) ? $this->request->params['named']['moneda_id'] : '' ;
+				$folio    = (isset($this->request->params['named']['folio'])) ? $this->request->params['named']['folio'] : '' ;
 				$fecha_desde          = (isset($this->request->params['named']['fecha_desde'])) ? $this->request->params['named']['fecha_desde'] : '' ;
 				$fecha_hasta          = (isset($this->request->params['named']['fecha_hasta'])) ? $this->request->params['named']['fecha_hasta'] : '' ;
 			?>
@@ -60,7 +61,7 @@
 							);?>
 					</div>
                     
-                    <div class="form-group col-sm-4 col-xs-12">
+                    <div class="form-group col-sm-3 col-xs-12">
                         <label>Estado</label>
                         <?=$this->Form->select('pagado',
                             array(
@@ -75,7 +76,7 @@
                         );?>
                     </div>
                     
-                    <div class="form-group col-sm-4 col-xs-12">
+                    <div class="form-group col-sm-3 col-xs-12">
                         <label>Monto</label>
                         <?=$this->Form->input('monto_pagado',
                             array(
@@ -85,8 +86,19 @@
                             )
                         );?>
 					</div>
+
+					<div class="form-group col-sm-3 col-xs-12">
+                        <label>Folio de factura</label>
+                        <?=$this->Form->input('folio',
+                            array(
+                                'class' => 'form-control is-number',
+                                'placeholder' => 'Ingrese folio',
+                                'value' => $folio
+                            )
+                        );?>
+					</div>
 					
-					<div class="form-group col-sm-4 col-xs-12">
+					<div class="form-group col-sm-3 col-xs-12">
 						<label>Rango de fecha</label>
 						<div class="input-group">
 							<?=$this->Form->input('fecha_desde', array(
@@ -147,6 +159,7 @@
 								<tr class="sort">
 									<th><input type="checkbox" class="js-select-all"></th>
 									<th><?= $this->Paginator->sort('identificador', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('proveedor_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('moneda_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('fecha_pago', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
                                     <th><?= $this->Paginator->sort('monto_pagado', 'Monto', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -161,7 +174,8 @@
 								<tr data-toggle="tooltip" data-placement="top" title="<?= (empty($pago['Pago']['orden_compra_id']) && empty($pago['OrdenCompraFactura']) ) ? 'Este pago no tiene relación con ninguna OC ni factura' : '' ; ?>">
 									<td><input name="Pago[<?=$pago['Pago']['id'];?>][id]" type="checkbox" class="agregar_export" value="<?=$pago['Pago']['id'];?>" data-id="<?=$pago['Pago']['id'];?>"></td>
 									<td><?= h($pago['Pago']['identificador']); ?>&nbsp;</td>
-                                    <td><?= h($pago['Moneda']['nombre']); ?>&nbsp;</td>
+									<td><?= h($pago['Proveedor']['nombre']); ?>&nbsp;</td>
+									<td><?= h($pago['Moneda']['nombre']); ?>&nbsp;</td>
                                     <td><?= h($pago['Pago']['fecha_pago']); ?>&nbsp;</td>
 									<td><?= CakeNumber::currency(h($pago['Pago']['monto_pagado']), 'CLP'); ?>&nbsp;</td>
 									<td><?= ($pago['Pago']['pagado'] ? '<label class="label label-success"><i class="fa fa-check"></i> Pagado</label>' : '<label class="label label-danger"><i class="fa fa-close"></i> No pagado</label>'); ?>&nbsp;</td>
@@ -173,6 +187,9 @@
 									<? endif; ?>
 									<? if ($permisos['view']) : ?>
 										<?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('action' => 'view', $pago['Pago']['id']), array('class' => 'btn btn-xs btn-info btn-block', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+										<? if ($pago['Pago']['pagado']) : ?>
+										<?= $this->Html->link('<i class="fa fa-envelope"></i> Notificar pago', array('action' => 'notificar_pago', $pago['Pago']['id']), array('class' => 'btn btn-xs btn-danger btn-block', 'rel' => 'tooltip', 'title' => 'Notificar este registro', 'escape' => false)); ?>
+										<? endif;?>
 									<? endif; ?>
 									<? if ($permisos['edit'] && !$pago['Pago']['pagado'] && !empty($pago['OrdenCompraFactura']) ) : ?>
 										<?= $this->Html->link('<i class="fa fa-pencil"></i> Editar', array('action' => 'edit', $pago['Pago']['id']), array('class' => 'btn btn-xs btn-warning btn-block', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>

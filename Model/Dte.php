@@ -140,4 +140,36 @@ class Dte extends AppModel
 
 		return $dteValido;
 	}
+
+	public function obtener_dtes_mal_emitidos()
+	{
+		return $this->find('all', array(
+			'conditions' => array(
+				'Dte.estado' => array(
+					'no_generado',
+					'dte_temporal_no_emitido',
+					'dte_real_no_emitido',
+					'dte_no_emitido',
+					''
+				)
+			),
+			'contain' => array(
+				'DteDetalle',
+				'DteReferencia'
+			)
+		));
+	}
+
+	public function limpiar_dte()
+	{
+		return $this->deleteAll(array(
+			'Dte.estado' => array(
+				'no_generado',
+				'dte_temporal_no_emitido',
+				'dte_real_no_emitido',
+				'dte_no_emitido',
+				''
+			)
+		), false);
+	}
 }

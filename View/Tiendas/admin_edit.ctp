@@ -132,6 +132,59 @@
 			
 			<div class="panel panel-default panel-toggled">
 				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-bell"></i> Notificar retraso a cliente</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					
+					<p>Activa la notificación de ventas retrasadas para los cliente de la tienda (excluye Marketplaces).</p>
+
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('notificacion_retraso_venta', 'Activar notificación'); ?></th>
+								<td><?= $this->Form->input('notificacion_retraso_venta', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('notificacion_retraso_venta_dias', 'Comenzar a notificar al día'); ?></td>
+								<td>
+									<div class="input-group">
+										<?= $this->Form->input('notificacion_retraso_venta_dias'); ?>
+										<span class="input-group-addon add-on">de retraso</span>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('notificacion_retraso_venta_limite', 'Limite inferior de ventas'); ?></td>
+								<td>
+									<div class="input-group">
+										<?= $this->Form->input('notificacion_retraso_venta_limite'); ?>
+										<span class="input-group-addon add-on">días</span>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('notificacion_retraso_venta_repetir', 'Repetir notificación cada'); ?></td>
+								<td>
+									<div class="input-group">
+										<?= $this->Form->input('notificacion_retraso_venta_repetir'); ?>
+										<span class="input-group-addon add-on">días</span>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default panel-toggled">
+				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-refresh"></i> Stock sincronizado</h3>
 					<ul class="panel-controls">
                         <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>

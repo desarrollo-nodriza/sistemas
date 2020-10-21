@@ -2,9 +2,8 @@
 
 App::uses('CakeEmail', 'Network/Email');
 App::uses('View', 'View');
-App::uses('Controller', 'Controller');
-App::uses('AppController', 'Controller');
 
+# /var/www/html/sistemav2/ && ~/cakephp/lib/Cake/Console/cake verificar_retraso_ventas >/dev/null 2>&1
 class VerificarRetrasoVentasShell extends AppShell {
 	
 	public function main() {
@@ -21,59 +20,21 @@ class VerificarRetrasoVentasShell extends AppShell {
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->save($log);
 		
-		# Ventas no procesadas
-		$ventas = ClassRegistry::init('Venta')->find('all', array(
-			'conditions' => array(
-				'Venta.atendida' => 0,
-				'Venta.notificar_retraso' => 1
-			),
-			'contain' => array(
-				'Tienda' => array(
-					'fields' => array(
-						'Tienda.dias_retraso',
-						'Tienda.nombre'
-					)
-				),
-				'Marketplace' => array(
-					'fields' => array(
-						'Marketplace.nombre'
-					)
-				)
-			),
-			'fields' => array(
-				'Venta.fecha_venta', 
-				'Venta.id_externo',
-				'Venta.referencia',
-				'Venta.fecha_venta',
-				'Venta.tienda_id'
-			)
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+			'notificacion_retraso_venta_dias', 'notificacion_retraso_venta_limite', 'notificacion_retraso_venta'
 		));
+
+		if (!$tienda['Tienda']['notificacion_retraso_venta'])
+			return;
+
+		# Ventas no procesadas
+		$ventas = ClassRegistry::init('Venta')->obtener_ventas_retrasadas($tienda['Tienda']['notificacion_retraso_venta_dias'], $tienda['Tienda']['notificacion_retraso_venta_limite']);
 		
-		$ventasNotificar = array();
 		$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('ventas');
-
-		$controller = new AppController();
-
-		// Se agrupan las ventas retrasadas
-		foreach ($ventas as $iv => $venta) {
-			
-			# Configuración de días a notificar de la tienda de la venta
-			$tienda = $controller->tiendaInfo($venta['Venta']['tienda_id']);
-
-			$diasRetrasoNotificar = (!empty($tienda['Tienda']['dias_retraso'])) ? $tienda['Tienda']['dias_retraso'] : 1;
-
-			$diasRetraso = $this->calcular_retraso_dias($venta['Venta']['fecha_venta'], $diasRetrasoNotificar);
-
-			if ($diasRetraso) {
-				$venta['Venta']['dias_retraso'] = $diasRetraso;
-				$ventasNotificar[] = $venta; 
-			}
-
-		}
 	
 		// Guardamos el email
-		if (!empty($ventasNotificar) && !empty($emailsNotificar)) {
-			if ($this->guardarEmail($ventasNotificar, $emailsNotificar)) {
+		if (!empty($ventas) && !empty($emailsNotificar)) {
+			if ($this->guardarEmail($ventas, $emailsNotificar)) {
 				$this->out('Emails registrados con éxito');
 				exit;
 			}else{
@@ -146,7 +107,7 @@ class VerificarRetrasoVentasShell extends AppShell {
 
 
 
-    public function guardarEmail($retrasos = array(), $emails = array()) 
+    public function guardarEmail($ventas = array(), $emails = array()) 
     {
 
 		/**
@@ -160,7 +121,7 @@ class VerificarRetrasoVentasShell extends AppShell {
 		/**
 		 * Correo a ventas
 		 */
-		$this->View->set(compact('retrasos'));
+		$this->View->set(compact('ventas'));
 		$html						= $this->View->render('notificar_venta_retraso');
 
 		/**

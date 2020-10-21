@@ -138,6 +138,8 @@
 									<td>
 										
 										<?= $this->Form->hidden('999.Pago.orden_compra_id', array('disabled' => true, 'value' => $factura['OrdenCompra']['id'])); ?>
+										<?= $this->Form->hidden('999.Pago.proveedor_id', array('disabled' => true, 'value' => $factura['OrdenCompraFactura']['proveedor_id'])); ?>
+										
 										<? foreach ($factura['OrdenCompra']['OrdenCompraFactura'] as $if => $f) : ?>
 										<?= $this->Form->hidden(sprintf('999.Pago.OrdenCompraFactura.%d.factura_id', $if), array('disabled' => true, 'value' => $f['id'])); ?>
 										<? endforeach; ?>	
@@ -175,6 +177,7 @@
 								<td>
 									<!-- Hidden inputs-->
 									<?= $this->Form->hidden(sprintf('%d.Pago.id', $ip), array('value' => $pago['id'])); ?>
+									<?= $this->Form->hidden(sprintf('%d.Pago.proveedor_id', $ip), array('value' => $factura['OrdenCompraFactura']['proveedor_id'])); ?>
 									<?= $this->Form->hidden(sprintf('%d.Pago.orden_compra_id', $ip), array('value' => $factura['OrdenCompra']['id'])); ?>
 									<? foreach ($factura['OrdenCompra']['OrdenCompraFactura'] as $if => $f) : ?>
 									<?= $this->Form->hidden(sprintf('%d.Pago.OrdenCompraFactura.%d.factura_id', $ip, $if), array('value' => $f['id'])); ?>

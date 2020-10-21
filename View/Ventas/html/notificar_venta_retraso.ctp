@@ -38,25 +38,25 @@
                   </P>
                   <P style="FONT-SIZE: 12px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>
                   <BR>
-                  <BR>Estimada/o, al día de hoy <?=date('d');?> de <?=date('F');?> del <?=date('Y');?>, registra una total de <?=count($retrasos);?> ventas restrasadas. A continuacón se listan en detalle:
+                  <BR>Estimada/o, al día de hoy <?=date('d');?> de <?=date('F');?> del <?=date('Y');?>, registra una total de <?=count($ventas);?> ventas restrasadas. A continuacón se listan en detalle:
                   <BR>
                   <TABLE class=rtable style="WIDTH: 100%; FONT-SIZE: 12px; MARGIN-TOP:30PX;MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly; border: 1px solid #a7a7a7;" cellSpacing=0 cellPadding=0 align=left>
                     <TR>
                       <TH>ID Venta</TH>
+                      <TH>ID Externo</TH>
                       <TH>Referencia</TH>
                       <TH>Tienda</TH>
                       <TH>Marketplace</TH>
                       <TH>Fecha venta</TH>
-                      <TH>Días retraso</TH>
                     </TR>
-                    <? foreach($retrasos as $ir => $retraso) : ?>
+                    <? foreach($ventas as $ir => $venta) : ?>
                     <TR style="border: 1px solid #a7a7a7;">                      
-                      <TD><?=$retraso['Venta']['id_externo'];?></TD>
-                      <TD><?=$retraso['Venta']['referencia'];?></TD>
-                      <TD><?=$retraso['Tienda']['nombre'];?></TD>
-                      <TD><? if (!empty($retraso['Marketplace'])) { echo $retraso['Marketplace']['nombre']; } ?></TD>
-                      <TD><?=$retraso['Venta']['fecha_venta'];?></TD>
-                      <TD><?=$retraso['Venta']['dias_retraso'];?></TD>
+                      <TD><?=$this->Html->link($venta['Venta']['id'], array('controller' => 'ventas', 'action' => 'view', $venta['Venta']['id']));?></TD>
+                      <TD><?=$venta['Venta']['id_externo'];?></TD>
+                      <TD><?=$venta['Venta']['referencia'];?></TD>
+                      <TD><?=$venta['Tienda']['nombre'];?></TD>
+                      <TD><? if (!empty($venta['Marketplace'])) { echo $venta['Marketplace']['nombre']; } ?></TD>
+                      <TD><?=$venta['Venta']['fecha_venta'];?></TD>
                     </TR>
                     <? endforeach; ?>
                   </TABLE>

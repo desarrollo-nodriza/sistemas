@@ -6,6 +6,8 @@
       
 		<?=$this->Form->hidden('access_token', array('value' => $token)); ?>
 		<?=$this->Form->hidden('total_pagar', array('value' => $total_facturado - $total_pagado)); ?>
+
+		<?=$this->Form->hidden('proveedor_id', array('value' => Hash::extract($facturas, '{n}.OrdenCompraFactura.proveedor_id')[0])); ?>
 		
 		<? foreach ($facturas as $if => $f) : ?>	
 		<?=$this->Form->hidden(sprintf('OrdenCompraFactura.%d.factura_id', $if), array('value' => $f['OrdenCompraFactura']['id'])); ?>
