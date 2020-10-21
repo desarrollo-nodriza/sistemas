@@ -77,7 +77,15 @@
 					<? if ($permisos['add']) : ?>
 						<?= $this->Html->link('<i class="fa fa-plus"></i> Nueva Cotización', array('action' => 'add'), array('class' => 'btn btn-success', 'escape' => false)); ?>
 					<? endif; ?>
-						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', array('action' => 'exportar'), array('class' => 'btn btn-primary', 'escape' => false)); ?>
+
+						<? $export = array(
+							'action' => 'exportar'
+							);
+
+						if (isset($this->request->params['named'])) {
+							$export = array_replace_recursive($export, $this->request->params['named']);
+						}?>
+						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>
 					</div>
 				</div>
 				<div class="panel-body">
