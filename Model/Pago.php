@@ -127,7 +127,7 @@ Class Pago extends AppModel {
 				'orden_compra_id'         => $id_oc,
 				'orden_compra_adjunto_id' => $id_adjunto,
 				'fecha_pago'              => $fecha,
-				'monto_pagado'            => (float) $monto
+				'monto_pagado'            => $monto
 			)
 
 		);
