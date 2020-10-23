@@ -43,7 +43,8 @@ class PagosController extends AppController
 			'Pago.monto_pagado', 
 			'Pago.pagado', 
 			'Pago.created',
-			'Pago.modified'
+			'Pago.modified',
+			'Pago.proveedor_id'
 		);
 
 		// Filtrado de ordenes por formulario
@@ -165,6 +166,12 @@ class PagosController extends AppController
 						'OrdenCompraFactura.monto_facturado',
 						'OrdenCompraFactura.monto_pagado',
 						'OrdenCompraFactura.pagada'
+					),
+					'Proveedor' => array(
+						'fields' => array(
+							'Proveedor.id',
+							'Proveedor.nombre'
+						)
 					)
 				),
 				'OrdenCompra' => array(
@@ -196,6 +203,18 @@ class PagosController extends AppController
 
 		$this->paginate = $paginate;
 		$pagos          = $this->paginate();
+		
+		foreach($pagos as $ip => $p)
+		{
+			if (empty($p['Pago']['proveedor_id']) && !empty($p['OrdenCompra']['Proveedor']))
+			{	
+				$pagos[$ip]['Proveedor'] = $p['OrdenCompra']['Proveedor'];
+			}
+			else if (empty($p['Pago']['proveedor_id']) && !empty(Hash::extract($p['OrdenCompraFactura'], '{n}.Proveedor')))
+			{	
+				$pagos[$ip]['Proveedor'] = unique_multidim_array(Hash::extract($p['OrdenCompraFactura'], '{n}.Proveedor'), 'id');
+			}
+		}
 		
 		$proveedores = ClassRegistry::init('Proveedor')->find('list');
 		$monedas = $this->Pago->Moneda->find('list');
@@ -697,6 +716,18 @@ class PagosController extends AppController
 			'order' => array('Pago.fecha_pago' => 'DESC'),
 			'limit' => -1
 		));
+
+		foreach($pagos as $ip => $p)
+		{
+			if (empty($p['Pago']['proveedor_id']) && !empty($p['OrdenCompra']['Proveedor']))
+			{	
+				$pagos[$ip]['Proveedor'] = $p['OrdenCompra']['Proveedor'];
+			}
+			else if (empty($p['Pago']['proveedor_id']) && !empty(Hash::extract($p['OrdenCompraFactura'], '{n}.Proveedor')))
+			{	
+				$pagos[$ip]['Proveedor'] = unique_multidim_array(Hash::extract($p['OrdenCompraFactura'], '{n}.Proveedor'), 'id');
+			}
+		}
 		
 		$cabeceras = array(
 			'ID-PAGO',
@@ -1237,11 +1268,57 @@ class PagosController extends AppController
 				)
 			)
 		));
-		
+
 		# No hay facturas pagadas
 		if (empty($pago['OrdenCompraFactura'])) {
 			return;
 		}
+
+		$pagosRelacionados = $this->Pago->find('all', array(
+			'joins' => array(
+				array(
+					'table' => 'rp_facturas_pagos',
+					'alias' => 'fp',
+					'type' => 'INNER',
+					'conditions' => array(
+						'fp.pago_id = Pago.id',
+						'fp.factura_id' => Hash::extract($pago, 'OrdenCompraFactura.{n}.id')
+					)
+				)
+			),
+			'contain' => array(
+				'CuentaBancaria' => array(
+					'fields' => array(
+						'CuentaBancaria.alias'
+					)
+				),
+				'Moneda' => array(
+					'fields' => array(
+						'Moneda.id',
+						'Moneda.nombre'
+					)
+				),
+				'OrdenCompraAdjunto' => array(
+					'fields' => array(
+						'OrdenCompraAdjunto.id',
+						'OrdenCompraAdjunto.identificador',
+						'OrdenCompraAdjunto.adjunto'
+					)
+				)
+			),
+			'fields' => array(
+				'Pago.id',
+				'Pago.moneda_id',
+				'Pago.cuenta_bancaria_id',
+				'Pago.pagado',
+				'Pago.identificador',
+				'Pago.monto_pagado',
+				'Pago.fecha_pago',
+				'Pago.orden_compra_adjunto_id',
+				'Pago.orden_compra_id'
+			),
+			'group' => 'Pago.id'
+		));
 
 		# Obtenemos los proveedores que tengna facturas pagadas y pagos finalizados
 		$proveedores = ClassRegistry::init('Proveedor')->find('all', array(
@@ -1272,7 +1349,7 @@ class PagosController extends AppController
 				'Proveedor.meta_emails'
 			)
 		));
-		
+
 		if (empty($proveedores)) {
 			return;
 		}
@@ -1346,7 +1423,7 @@ class PagosController extends AppController
 			
 			$url = obtener_url_base();
 			
-			$this->View->set(compact('proveedor', 'url', 'adjuntos'));
+			$this->View->set(compact('proveedor', 'url', 'adjuntos', 'pagosRelacionados'));
 			$html						= $this->View->render('notificar_pago_factura');
 			
 			$mandrill_apikey = SessionComponent::read('Tienda.mandrill_apikey');
