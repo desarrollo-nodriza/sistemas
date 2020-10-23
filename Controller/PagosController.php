@@ -212,7 +212,7 @@ class PagosController extends AppController
 			}
 			else if (empty($p['Pago']['proveedor_id']) && !empty(Hash::extract($p['OrdenCompraFactura'], '{n}.Proveedor')))
 			{	
-				$pagos[$ip]['Proveedor'] = unique_multidim_array(Hash::extract($p['OrdenCompraFactura'], '{n}.Proveedor'), 'id');
+				$pagos[$ip]['Proveedor'] = Hash::extract($p['OrdenCompraFactura'], '{n}.Proveedor')[0];
 			}
 		}
 		
@@ -725,7 +725,7 @@ class PagosController extends AppController
 			}
 			else if (empty($p['Pago']['proveedor_id']) && !empty(Hash::extract($p['OrdenCompraFactura'], '{n}.Proveedor')))
 			{	
-				$pagos[$ip]['Proveedor'] = unique_multidim_array(Hash::extract($p['OrdenCompraFactura'], '{n}.Proveedor'), 'id');
+				$pagos[$ip]['Proveedor'] = Hash::extract($p['OrdenCompraFactura'], '{n}.Proveedor')[0];
 			}
 		}
 		
