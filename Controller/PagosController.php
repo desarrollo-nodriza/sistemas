@@ -1258,12 +1258,12 @@ class PagosController extends AppController
 			),
 			'contain' => array(
 				'OrdenCompraFactura' => array(
-					'conditions' => array(
-						'OrdenCompraFactura.pagada' => 1,
-					),
 					'fields' => array(
 						'OrdenCompraFactura.id',
-						'OrdenCompraFactura.proveedor_id'
+						'OrdenCompraFactura.proveedor_id',
+						'OrdenCompraFactura.folio',
+						'OrdenCompraFactura.monto_facturado',
+						'OrdenCompraFactura.monto_pagado'
 					) 
 				)
 			)
@@ -1320,28 +1320,15 @@ class PagosController extends AppController
 			'group' => 'Pago.id'
 		));
 
+		if (empty($pago['Pago']['proveedor_id']) && !empty(Hash::extract($pago['OrdenCompraFactura'], '{n}.proveedor_id')))
+		{	
+			$pago['Pago']['proveedor_id'] = Hash::extract($pago['OrdenCompraFactura'], '{n}.proveedor_id')[0];
+		}
+
 		# Obtenemos los proveedores que tengna facturas pagadas y pagos finalizados
-		$proveedores = ClassRegistry::init('Proveedor')->find('all', array(
+		$proveedor = ClassRegistry::init('Proveedor')->find('first', array(
 			'conditions' => array(
-				'Proveedor.id' => Hash::extract($pago['OrdenCompraFactura'], '{n}.proveedor_id')
-			),
-			'contain' => array(
-				'OrdenCompraFactura' => array(
-					'conditions' => array(
-						'OrdenCompraFactura.id' => Hash::extract($pago['OrdenCompraFactura'], '{n}.id')
-					),
-					'Pago' => array(
-						'conditions' => array(
-							'Pago.pagado' => 1
-						)
-					),
-					'OrdenCompra' => array(
-						'OrdenCompraAdjunto',
-						'fields' => array(
-							'OrdenCompra.id'
-						)
-					)
-				)
+				'Proveedor.id' => $pago['Pago']['proveedor_id']
 			),
 			'fields' => array(
 				'Proveedor.id',
@@ -1350,143 +1337,87 @@ class PagosController extends AppController
 			)
 		));
 
-		if (empty($proveedores)) {
+		if (empty($proveedor)) {
 			return;
 		}
 
 		# Enviamos emails
-		foreach ($proveedores as $ip => $proveedor) {
-				
-			$receptor_pago = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=pago].email');
-			$receptores    = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=destinatario].email');
-			$cc            = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=copia].email');
-			$bcc           = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=copia oculta].email');
-
-			$to = (!empty($receptor_pago)) ? $receptor_pago : $receptores;
-
-			$adjuntos = array();
-
-			$adjuntos_oc    = unique_multidim_array(Hash::extract($proveedor['OrdenCompraFactura'], '{n}.OrdenCompra.OrdenCompraAdjunto.{n}'), 'adjunto');
-			$adjuntos_pagos = unique_multidim_array(Hash::extract($proveedor['OrdenCompraFactura'], '{n}.Pago.{n}'), 'adjunto');
-
-			/* no usado por ahora
-			$url_base = APP . 'webroot' . DS . 'img' . DS;
-
-			# Adjuntamos los comprobantes de la oc
-			foreach ($adjuntos_oc as $iad => $adj) {
-
-				if (empty($adj['adjunto']))
-					continue;
-
-				$archivo = $url_base . 'OrdenCompraAdjunto' . DS . $adj['id'] . DS . $adj['adjunto'];
-
-				$mime      = mime_content_type($archivo);
-				$nombre    = pathinfo($archivo, PATHINFO_FILENAME);
-
-				if($mime == 'inode/x-empty' && pathinfo($archivo, PATHINFO_EXTENSION) == 'docx') {
-				    $mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-				}
-
-				$adjuntos[] = array(
-                	'type' => $mime,
-                	'name' => $nombre,
-                	'content' => chunk_split(base64_encode(file_get_contents($archivo)))
-            	);
-			}
-
-			# Adjuntamos los comprobantes del pago
-			foreach ($adjuntos_pagos as $iad => $adj) {
-
-				if (empty($adj['adjunto']))
-					continue;
-
-				$archivo = $url_base . 'Pago' . DS . $adj['id'] . DS . $adj['adjunto'];
-
-				$mime      = mime_content_type($archivo);
-				$nombre    = pathinfo($archivo, PATHINFO_FILENAME);
-
-				if($mime == 'inode/x-empty' && pathinfo($archivo, PATHINFO_EXTENSION) == 'docx') {
-				    $mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-				}
-
-				$adjuntos[] = array(
-                	'type' => $mime,
-                	'name' => $nombre,
-                	'content' => chunk_split(base64_encode(file_get_contents($archivo)))
-            	);
-			}*/
-
-			
-			$this->View					= new View();
-			$this->View->viewPath		= 'Pagos' . DS . 'html';
-			$this->View->layoutPath		= 'Correos' . DS . 'html';
-			
-			$url = obtener_url_base();
-			
-			$this->View->set(compact('proveedor', 'url', 'adjuntos', 'pagosRelacionados'));
-			$html						= $this->View->render('notificar_pago_factura');
-			
-			$mandrill_apikey = SessionComponent::read('Tienda.mandrill_apikey');
-			
-			if (empty($mandrill_apikey)) {
-				return false;
-			}
-
-			$mandrill = $this->Components->load('Mandrill');
-
-			$mandrill->conectar($mandrill_apikey);
-
-			$asunto = sprintf('[NDRZ - %s] Se ha realizado el pago de facturas desde Nodriza Spa', date('Y-m-d H:i:s'));
-			
-			if (Configure::read('ambiente') == 'dev') {
-				$asunto = sprintf('[NDRZ-DEV - %s] Se ha realizado el pago de facturas desde Nodriza Spa', date('Y-m-d H:i:s'));
-			}
-			
-			$remitente = array(
-				'email' => 'oc@nodriza.cl',
-				'nombre' => 'Finanzas Nodriza'
-			);
-
-			$destinatarios = array();
-
-			foreach ($to as $id => $des) {
-				$destinatarios[] = array(
-					'email' => $des,
-					'type' => 'to'
-				);
-			}
-
-			foreach ($cc as $ic => $c) {
-				$destinatarios[] = array(
-					'email' => $c,
-					'type' => 'cc'
-				);
-			}
-
-			foreach ($bcc as $ibc => $bc) {
-				$destinatarios[] = array(
-					'email' => $bc,
-					'type' => 'bcc'
-				);
-			}
-
-			$emailsFinanzas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
-			$cabeceras      = array();
-		
-			if (!empty($emailsFinanzas)) {
-				$cabeceras = array(
-					'Reply-To' => implode(',', $emailsFinanzas)
-				);	
-			}
-			
-			$notificado = $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios, $cabeceras, $adjuntos);	
 	
-			# Guardamos el estado notificado para estas facturas
-			foreach ($proveedor['OrdenCompraFactura'] as $i => $f) {
-				ClassRegistry::init('OrdenCompraFactura')->id = $f['id'];
-				ClassRegistry::init('OrdenCompraFactura')->saveField('notificada', 1);
-			}
+		$receptor_pago = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=pago].email');
+		$receptores    = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=destinatario].email');
+		$cc            = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=copia].email');
+		$bcc           = Hash::extract($proveedor['Proveedor'], 'meta_emails.{n}[tipo=copia oculta].email');
 
+		$to = (!empty($receptor_pago)) ? $receptor_pago : $receptores;
+	
+		$this->View					= new View();
+		$this->View->viewPath		= 'Pagos' . DS . 'html';
+		$this->View->layoutPath		= 'Correos' . DS . 'html';
+		
+		$url = obtener_url_base();
+		
+		$this->View->set(compact('pago', 'proveedor', 'url', 'pagosRelacionados'));
+		$html						= $this->View->render('notificar_pago_factura');
+		
+		$mandrill_apikey = SessionComponent::read('Tienda.mandrill_apikey');
+		
+		if (empty($mandrill_apikey)) {
+			return false;
+		}
+
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = sprintf('[NDRZ - %s] Se ha realizado el pago desde Nodriza Spa', date('Y-m-d H:i:s'));
+		
+		if (Configure::read('ambiente') == 'dev') {
+			$asunto = sprintf('[NDRZ-DEV - %s] Se ha realizado un pago desde Nodriza Spa', date('Y-m-d H:i:s'));
+		}
+		
+		$remitente = array(
+			'email' => 'oc@nodriza.cl',
+			'nombre' => 'Finanzas Nodriza'
+		);
+
+		$destinatarios = array();
+
+		foreach ($to as $id => $des) {
+			$destinatarios[] = array(
+				'email' => $des,
+				'type' => 'to'
+			);
+		}
+
+		foreach ($cc as $ic => $c) {
+			$destinatarios[] = array(
+				'email' => $c,
+				'type' => 'cc'
+			);
+		}
+
+		foreach ($bcc as $ibc => $bc) {
+			$destinatarios[] = array(
+				'email' => $bc,
+				'type' => 'bcc'
+			);
+		}
+
+		$emailsFinanzas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
+		$cabeceras      = array();
+	
+		if (!empty($emailsFinanzas)) {
+			$cabeceras = array(
+				'Reply-To' => implode(',', $emailsFinanzas)
+			);	
+		}
+		
+		$notificado = $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios, $cabeceras);	
+
+		# Guardamos el estado notificado para estas facturas
+		foreach ($pago['OrdenCompraFactura'] as $i => $f) {
+			ClassRegistry::init('OrdenCompraFactura')->id = $f['id'];
+			ClassRegistry::init('OrdenCompraFactura')->saveField('notificada', 1);
 		}
 
 		return;

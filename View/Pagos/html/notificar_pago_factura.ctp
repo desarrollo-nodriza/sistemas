@@ -34,15 +34,15 @@
               <TR style="HEIGHT: 20px">
                 <TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; WIDTH: 100%; VERTICAL-ALIGN: top; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; TEXT-ALIGN: center; PADDING-TOP: 35px; PADDING-LEFT: 15px; BORDER-LEFT: medium none; PADDING-RIGHT: 15px; BACKGROUND-COLOR: #feffff">
                   <P style="FONT-SIZE: 16px; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a8a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly; text-align: center;" align=center>
-                    Estimados/as <?=$proveedor['Proveedor']['nombre'];?>, una o varias facturas han sido pagadas por Toolmania.
+                    Estimados/as <?=$proveedor['Proveedor']['nombre'];?>, se ha creado un pago desde Toolmania Spa.
                   </P>
-                  <h3 style="text-align: center; font-size: 30px; font-weight: bold; COLOR: #a8a7a7; FONT-FAMILY: Arial, Helvetica, sans-serif;">Total pagado <?=CakeNumber::currency(array_sum(Hash::extract($proveedor['OrdenCompraFactura'], '{n}.monto_pagado')), 'CLP')?></h3>
-                  <P style="FONT-SIZE: 16px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;" align=center>Notificamos gratamente los pagos de los siguientes folios:</P>
+                  <h3 style="text-align: center; font-size: 30px; font-weight: bold; COLOR: #a8a7a7; FONT-FAMILY: Arial, Helvetica, sans-serif;">Total pagado <?=CakeNumber::currency($pago['Pago']['monto_pagado'], 'CLP')?> <br> N° del pago #<?=$pago['Pago']['id']; ?></h3>
+                  <P style="FONT-SIZE: 16px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;" align=center>A continuación pude ver el detalle de las facturas relacionadas:</P>
                   <TABLE class=rtable style="WIDTH: 100%;border: 1px solid #a8a7a7;margin-bottom: 30px;" cellSpacing=0 cellPadding=0 align=left>
                     <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">Folio factura</TH>
                     <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">Monto facturado</TH>
-                    <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">Monto pagado</TH>
-                  <? foreach ($proveedor['OrdenCompraFactura'] as $if => $f) : ?>
+                    <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">Monto pagado a la fecha</TH>
+                  <? foreach ($pago['OrdenCompraFactura'] as $if => $f) : ?>
                     <TR>
                       <TD style="FONT-SIZE: 16px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;border: 1px solid;padding: 5px;">
                         <?= $f['folio'];?>
@@ -57,10 +57,30 @@
                   <? endforeach; ?>
                   </TABLE>
                   <BR>
-                  <? if (!empty($adjuntos)) : ?>
-                  <P style="FONT-SIZE: 16px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>
-                  Además, encontrará el o los comprobantes de pago adjuntos a este email.
-                  </P>
+                  <? if (!empty($pagosRelacionados)) : ?>
+                  <P style="FONT-SIZE: 16px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;" align=center>Aquí puede ver el detalle del/los pagos configurados en nuestro sistema:</P>
+                  <TABLE class=rtable style="WIDTH: 100%;border: 1px solid #a8a7a7;margin-bottom: 30px;" cellSpacing=0 cellPadding=0 align=left>
+                    <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">N° del pago</TH>
+                    <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">Monto del pago</TH>
+                    <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">Promesa de pago</TH>
+                    <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">Estado</TH>
+                  <? foreach ($pagosRelacionados as $if => $p) : ?>
+                    <TR>
+                      <TD style="FONT-SIZE: 16px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;border: 1px solid;padding: 5px;">
+                        <?= $p['Pago']['id'];?>
+                      </TD>
+                      <TD style="FONT-SIZE: 16px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;border: 1px solid;padding: 5px;">
+                        <?= CakeNumber::currency($p['Pago']['monto_pagado'], 'CLP');?>
+                      </TD>
+                      <TD style="FONT-SIZE: 16px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;border: 1px solid;padding: 5px;">
+                        <?= $p['Pago']['fecha_pago']; ?>
+                      </TD>
+                      <TD style="FONT-SIZE: 16px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;border: 1px solid;padding: 5px;">
+                        <?= ($p['Pago']['pagado']) ? 'Pagado' : 'No pagado' ; ?>
+                      </TD>
+                    </TR>
+                  <? endforeach; ?>
+                  </TABLE>
                   <? endif; ?>
                   <BR/>
                   <P style="FONT-SIZE: 14px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>Atte Equipo de Nodriza Spa.</P>
