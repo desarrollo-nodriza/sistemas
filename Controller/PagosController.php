@@ -1265,10 +1265,15 @@ class PagosController extends AppController
 						'OrdenCompraFactura.monto_facturado',
 						'OrdenCompraFactura.monto_pagado'
 					) 
+				),
+				'Moneda' => array(
+					'fields' => array(
+						'Moneda.nombre'
+					)
 				)
 			)
 		));
-
+		
 		# No hay facturas pagadas
 		if (empty($pago['OrdenCompraFactura'])) {
 			return;

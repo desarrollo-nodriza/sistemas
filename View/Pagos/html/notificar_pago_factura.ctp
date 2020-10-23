@@ -61,6 +61,7 @@
                   <P style="FONT-SIZE: 16px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;" align=center>Aquí puede ver el detalle del/los pagos configurados en nuestro sistema:</P>
                   <TABLE class=rtable style="WIDTH: 100%;border: 1px solid #a8a7a7;margin-bottom: 30px;" cellSpacing=0 cellPadding=0 align=left>
                     <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">N° del pago</TH>
+                    <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">M de pago</TH>
                     <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">Monto del pago</TH>
                     <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">Promesa de pago</TH>
                     <TH style="FONT-SIZE: 15px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;border: 1px solid;">Estado</TH>
@@ -68,6 +69,9 @@
                     <TR>
                       <TD style="FONT-SIZE: 16px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;border: 1px solid;padding: 5px;">
                         <?= $p['Pago']['id'];?>
+                      </TD>
+                      <TD style="FONT-SIZE: 16px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;border: 1px solid;padding: 5px;">
+                        <?= $p['Moneda']['nombre'];?>
                       </TD>
                       <TD style="FONT-SIZE: 16px; MARGIN-BOTTOM: 0.5em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly;text-align: center;border: 1px solid;padding: 5px;">
                         <?= CakeNumber::currency($p['Pago']['monto_pagado'], 'CLP');?>
