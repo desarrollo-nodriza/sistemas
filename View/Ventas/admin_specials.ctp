@@ -22,7 +22,7 @@
 				</div>
 				<div class="panel-body">
 					<div class="form-group col-sm-4 col-xs-12">
-                        <label>ID o Referencia</label>
+                        <label>ID, ID externo o Referencia</label>
                         <?=$this->Form->input('ide',
                             array(
                                 'class' => 'form-control',
@@ -37,7 +37,7 @@
                         <?=$this->Form->input('cliente_email',
                             array(
 								'class' => 'form-control',
-                                'placeholder' => 'Ingrese email del cliente',
+                                'placeholder' => 'Ingrese email, nombre, apellido, rut, fono',
                                 'value' => $cliente_email
                             )
                         );?>

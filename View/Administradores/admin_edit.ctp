@@ -86,6 +86,10 @@
 							<th><?= $this->Form->label('notificacion_bodegas', 'Bodegas'); ?></th>
 							<td><?= $this->Form->input('notificacion_bodegas', array('class' => 'icheckbox')); ?></td>
 						</tr>
+						<tr>
+							<th><?= $this->Form->label('notificacion_contactos', 'Contactos'); ?></th>
+							<td><?= $this->Form->input('notificacion_contactos', array('class' => 'icheckbox')); ?></td>
+						</tr>
 					</table>
 				</div>
 				<div class="panel-footer">

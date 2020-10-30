@@ -3357,13 +3357,14 @@ class VentasController extends AppController {
 
 						$id = trim($valor);
 
-						if ($id != "" && in_array($id, $ids)) {
+						if ($id != "") {
 
 							$condiciones = array();
 
 							$condiciones["OR"] = array(
-								"Venta.id LIKE '%" .$id. "%'",
-								"Venta.referencia LIKE '%" .$id. "%'"
+								"Venta.id"         => $id,
+								"Venta.id_externo"         => $id,
+								"Venta.referencia" => $id
 							);
 							
 						}
@@ -3386,7 +3387,13 @@ class VentasController extends AppController {
 							'type' => 'INNER',
 							'conditions' => array(
 								'vc.id = Venta.venta_cliente_id',
-								'vc.email' => $email
+								'OR' => array(
+									"vc.nombre LIKE '%" .$email. "%'",
+									"vc.apellido LIKE '%" .$email. "%'",
+									"vc.rut LIKE '%" .$email. "%'",
+									"vc.email LIKE '%" .$email. "%'",
+									"vc.telefono LIKE '%" .$email. "%'"
+								)
 							)
 						);
 
@@ -7890,6 +7897,144 @@ class VentasController extends AppController {
             'paginacion' => $paginacion,
             '_serialize' => array('ventas', 'paginacion')
         ));
+	}
+
+
+	/**
+	 * Obtener venta por referencia
+	 * @param string $referencia Referencia de la venta
+	 * @return mixed
+	 */
+	public function api_ver_por_referencia()
+	{
+		# Sólo método Get
+		if (!$this->request->is('get')) {
+			$response = array(
+				'response' => array(
+					'code'    => 401, 
+					'message' => 'Only GET request allow'
+				)
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!isset($this->request->query['referencia'])) {
+			
+			$response = array(
+				'response' => array(
+					'code'    => 401, 
+					'name' => 'error',
+					'message' => 'referencia es requerido'
+				)
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'response' => array(
+					'code'    => 401, 
+					'name' => 'error',
+					'message' => 'Token requerido'
+				)
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'response' => array(
+					'code'    => 401, 
+					'name' => 'error',
+					'message' => 'Token de sesión expirado o invalido'
+				)
+			);			
+
+			throw new CakeException($response);
+		}
+		
+
+		# Buscamos la venta
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.referencia' => $this->request->query['referencia']
+			),
+			'contain' => array(
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.id',
+						'Tienda.nombre'
+					)
+				),
+				'Marketplace' => array(
+					'fields' => array(
+						'Marketplace.id',
+						'Marketplace.nombre'
+					)
+				),
+				'VentaEstado' => array(
+					'fields' => array(
+						'VentaEstado.id',
+						'VentaEstado.nombre',
+						'VentaEstado.venta_estado_categoria_id'
+					),
+					'VentaEstadoCategoria' => array(
+						'fields' => array(
+							'VentaEstadoCategoria.id',
+							'VentaEstadoCategoria.nombre',
+							'VentaEstadoCategoria.estilo',
+							'VentaEstadoCategoria.venta',
+							'VentaEstadoCategoria.envio',
+							'VentaEstadoCategoria.rechazo',
+							'VentaEstadoCategoria.final'
+						)
+					)
+				),
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.id',
+						'VentaDetalle.venta_detalle_producto_id',
+						'VentaDetalle.precio',
+						'VentaDetalle.cantidad'
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.id_externo',
+				'Venta.referencia',
+				'Venta.venta_estado_id',
+				'Venta.picking_estado',
+				'Venta.tienda_id',
+				'Venta.marketplace_id'
+			)
+		));
+
+		$respuesta = array(
+			'code'    => 404, 
+			'name' => 'error',
+			'message' => 'Venta no encontrada'
+		);
+
+		# Existe
+		if (!empty($venta)) {
+			$respuesta = array(
+				'code'    => 200,
+				'name'    => 'success',
+				'message' => 'Venta encontrada',
+				'data'    => $venta
+			);
+		}
+
+		$this->set(array(
+			'response' => $respuesta,
+			'_serialize' => array('response')
+		));
 	}
 
 

@@ -259,7 +259,7 @@
 												<th>Stock<br/> reservado</th>
 												<th>Cant<br/> anulada</th>
 												<th>Subtotal</th>
-												<th>Ocs<br> relacionadas</th>
+												<th>Detalle <br> oc</th>
 												<th>Opciones</th>
 											</thead>
 											<tbody>
@@ -323,48 +323,40 @@
 														</td>
 														<td>
 															<? foreach($venta['OrdenCompra'] as $idoc => $oc) : ?>
+																<? foreach ($oc['VentaDetalleProducto'] as $ocp) : ?>
+																	<? if ($ocp['id'] == $detalle['venta_detalle_producto_id']) : ?>
+																		
+																		<button type="button" class="btn btn-primary btn-xs btn-block" data-toggle="modal" data-target="#modal-ocp-<?=$ocp['id'];?>"><i class="fa fa-eye"></i> <?=$ocp['OrdenComprasVentaDetalleProducto']['estado_proveedor'];?></button>
 
-																<? 
-																$estadoOc = $this->Html->estadoOcOpt($oc['estado']);
-																$estadoNombre = $this->Html->estadosOc($oc['estado']);
-																?>
+																		<!-- Modal -->
+																		<div class="modal fade" id="modal-ocp-<?=$ocp['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-ocp-<?=$ocp['id'];?>-label">
+																			<div class="modal-dialog" role="document">
+																				<div class="modal-content">
 
-																<label data-toggle="modal" data-target="#modal-oc-<?=$oc['id'];?>" class="label" style="cursor: pointer; background-color: <?=$estadoOc['bgr'];?>; color:" <?=$estadoOc['txt'];?>>#<?=$oc['id'];?> - <?=$estadoNombre; ?></label>
-																
-																<!-- Modal -->
-																<div class="modal fade" id="modal-oc-<?=$oc['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-oc-<?=$oc['id'];?>-label">
-																	<div class="modal-dialog" role="document">
-																		<div class="modal-content">
-
-																			<div class="modal-header">
-																				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																				<h4 class="modal-title" id="modal-oc-<?=$oc['id'];?>-label"> Detalle OC #<?=$oc['id']; ?> </h4>
-																			</div>
-																			<div class="modal-body">
-																				<div class="table-responsive">
-																					<table class="table table-bordered">
-																						<th>Estado proveedor</th>
-																						<th>Cantidad en proveedor</th>
-																						<th>Mensaje del proveedor</th>
-																						<? foreach ($oc['VentaDetalleProducto'] as $ocp) : ?>
-																							<? if ($ocp['id'] == $detalle['venta_detalle_producto_id']) : ?>
-																							<tr>
-																								<td><?=$ocp['OrdenComprasVentaDetalleProducto']['estado_proveedor']; ?></td>
-																								<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']; ?></td>
-																								<td><?= (!empty($ocp['OrdenComprasVentaDetalleProducto']['nota_proveedor'])) ? $ocp['OrdenComprasVentaDetalleProducto']['nota_proveedor'] : 'Sin información del proveedor'; ?></td>
-																							</tr>
-																							<? endif; ?>
-																						<? endforeach; ?>
-																					</table>
+																					<div class="modal-header">
+																						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+																						<h4 class="modal-title" id="modal-ocp-<?=$ocp['id'];?>-label"> <?=h($detalle['VentaDetalleProducto']['nombre']); ?> </h4>
+																					</div>
+																					<div class="modal-body">
+																						<div class="table-responsive">
+																							<table class="table table-bordered">
+																								<th>Cantidad validada en proveedor</th>
+																								<th>Comentario del proveedor</th>
+																								<tr>
+																									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']; ?></td>
+																									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['nota_proveedor']; ?></td>
+																								</tr>
+																							</table>
+																						</div>
+																					</div>
+																					<div class="modal-footer">
+																						<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+																					</div>
 																				</div>
 																			</div>
-																			<div class="modal-footer">
-																				<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
-																			</div>
 																		</div>
-																	</div>
-																</div>
-
+																	<? endif; ?>
+																<? endforeach; ?>
 															<? endforeach; ?>
 														</td>
 														<td>

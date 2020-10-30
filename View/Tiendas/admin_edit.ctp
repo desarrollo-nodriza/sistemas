@@ -102,6 +102,10 @@
 								<th><?= $this->Form->label('fono', 'Teléfono'); ?></th>
 								<td><?= $this->Form->input('fono', array('class' => 'form-control js-fono')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('whatsapp_numero', 'Número whatsapp'); ?></th>
+								<td><?= $this->Form->input('whatsapp_numero', array('class' => 'form-control js-fono')); ?></td>
+							</tr>
 							<? if ( !empty($this->request->data['Tienda']['logo']) ) : ?>
 								<tr>
 									<th><?= $this->Form->label('', 'Logo actual'); ?></th>

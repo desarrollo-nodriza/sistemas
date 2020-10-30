@@ -168,7 +168,7 @@ class AppController extends Controller
 			$this->Auth->authenticate['Form']['fields']['username'] = 'email';
 			$this->Auth->authenticate['Form']['fields']['password'] = 'clave';
 
-			$this->Auth->allow('cliente_sended', 'cliente_sendFailed', 'cliente_authorization', 'cliente_quick_message');
+			$this->Auth->allow('cliente_sended', 'cliente_sendFailed', 'cliente_authorization', 'cliente_quick_message', 'cliente_confirmar');
 			
 		}	
 
@@ -1029,6 +1029,30 @@ class AppController extends Controller
 		
 		return $errores;
 	}
+
+
+	/**
+     * Crea un redirect y agrega a la URL los parámetros del filtro
+     * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
+     * @param 		$accion 		String 		Nombre del método receptor de la petición
+     * @return 		void
+     */
+    public function filtro($controlador = '', $accion = '', $modelo = '')
+    {
+    	$redirect = array(
+    		'controller' => $controlador,
+    		'action' => $accion
+    		);
+
+		foreach ($this->request->data[$modelo] as $campo => $valor) {
+			if (!empty($valor)) {
+				$redirect[$campo] = $valor;
+			}
+		}
+
+    	$this->redirect($redirect);
+
+    }
 
 
 

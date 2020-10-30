@@ -212,7 +212,7 @@ class Administrador extends AppModel
 	 * ventas: Notifica las ventas retrasadas
 	 * bodegas: Notifica segun la fecha de llegada de un producto de bodega.
 	 * 
-	 * @param  	string $tipo (pagar_oc, revision_oc, ventas, bodegas)
+	 * @param  	string $tipo (pagar_oc, revision_oc, ventas, bodegas, contactos)
 	 * @param   bool   $incluir_nombre
 	 * @return 	array    Lista de emails
 	 */
@@ -250,5 +250,40 @@ class Administrador extends AppModel
 		}
 
 		return $emailsNotificar;
+	}
+
+
+	public function obtener_siguiente_admin_contacto($id)
+	{	
+		$admin_id = null;
+
+		$admin_primero = $this->find('first', array(
+			'conditions' => array(
+				'Administrador.notificacion_contactos' => 1
+			),
+			'fields' => array('Administrador.id')
+		));
+
+		$admin_siguiente = $this->find('neighbors', array(
+			'field' => 'id',
+			'value' => $id,
+			'conditions' => array(
+				'Administrador.notificacion_contactos' => 1
+			),
+			'fields' => array(
+				'Administrador.id'
+			)
+		));
+
+		if (empty($admin_siguiente['next']) && !empty($admin_primero))
+		{
+			$admin_id = $admin_primero['Administrador']['id'];
+		}
+		elseif (!empty($admin_siguiente['next']))
+		{
+			$admin_id = $admin_siguiente['next']['Administrador']['id'];
+		}
+		
+		return $admin_id;
 	}
 }

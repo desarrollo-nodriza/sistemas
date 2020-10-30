@@ -150,6 +150,16 @@ Router::connect(
 );
 
 Router::connect(
+    '/api/ventas/ver/referencia', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'ver_por_referencia',
+        'api' => true,
+        'prefix' => 'api'
+        )
+);
+
+Router::connect(
     '/api/ventas/exists/externo/:id_externo', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'Ventas', 
@@ -535,6 +545,30 @@ Router::connect(
     array(
         'controller' => 'Comunas', 
         'action' => 'obtener_comunas',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
+
+
+ /**
+  * Contactos
+  */
+Router::connect(
+    '/api/contactos/add', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Contactos', 
+        'action' => 'add',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
+
+Router::connect(
+    '/api/contactos/attend', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Contactos', 
+        'action' => 'atender',
         'api' => true,
         'prefix' => 'api'
     )
