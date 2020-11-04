@@ -7711,19 +7711,38 @@ class VentasController extends AppController {
 			)
 		);
 
+		$textos = array(
+			'pago_en_espera'    => 'Aún no hemos recibido su pago.',
+			'pago_aceptado'    => 'Su pago ha sido aceptado.',
+			'pago_rechazado'   => 'Su pago a sido rechazado o cancelado.',
+			'en_preparacion'   => 'Su pedido esta siendo preparado en nuestra bodega.',
+			'retiro_en_tienda' => 'Su pedido esta listo para retiro.',
+			'listo_para_envio' => 'Su pedido esta listo para despacho.',
+			'enviado'          => 'Su pedido fue enviado por la empresa de transporte seleccionada.',
+			'entregado'        => 'Su pedido fue entregado correctamente.',
+			'procesado'        => 'Su pedido fue enviado o retirado desde nuestra bodega.',
+		);
+
 		# Inicial
 		if ($venta['VentaEstado']['VentaEstadoCategoria']['venta'])
 		{
-			$estados['SubEstados']['inicial']['descripcion'] = 'Hemos recibido tu pago conformemente.';
+			$estados['SubEstados']['inicial']['descripcion'] = $textos['pago_aceptado'];
 			$estados['SubEstados']['inicial']['check'] = true;
 		}
 		
 		if ($venta['VentaEstado']['VentaEstadoCategoria']['rechazo'])
 		{	
 			$estados['SubEstados']['inicial']['alias'] = 'Pago rechazado';
-			$estados['SubEstados']['inicial']['descripcion'] = 'Tu pago a sido rechazado o cancelado por nuestro sistema o tu banco.';
+			$estados['SubEstados']['inicial']['descripcion'] = $textos['pago_rechazado'];
 		}
 
+		if (!$venta['VentaEstado']['VentaEstadoCategoria']['venta']
+			&& !$venta['VentaEstado']['VentaEstadoCategoria']['rechazo'])
+		{	
+			$estados['SubEstados']['inicial']['alias'] = 'Pago en espera';
+			$estados['SubEstados']['inicial']['descripcion'] = $textos['pago_en_espera'];
+		}
+		
 		# Preparación
 		if (in_array($venta['Venta']['picking_estado'], array('empaquetar', 'empaquetando'))
 			&& $venta['VentaEstado']['VentaEstadoCategoria']['venta'])
@@ -7733,7 +7752,7 @@ class VentasController extends AppController {
 			$estados['SubEstados']['inicial']['check'] = true;
 
 			$estados['SubEstados']['preparacion']['actual'] = true;
-			$estados['SubEstados']['preparacion']['descripcion'] = 'Nuestro equipo está preparando tu pedido a toda máquina.';
+			$estados['SubEstados']['preparacion']['descripcion'] = $textos['en_preparacion'];
 			$estados['SubEstados']['preparacion']['check'] = true;
 			
 		}
@@ -7741,19 +7760,40 @@ class VentasController extends AppController {
 		# Preparado retiro en tienda
 		if ($venta['Venta']['picking_estado'] == 'empaquetado'
 			&& $venta['VentaEstado']['VentaEstadoCategoria']['venta']
-			&& !$venta['VentaEstado']['VentaEstadoCategoria']['envio'])
+			&& $venta['VentaEstado']['VentaEstadoCategoria']['retiro_en_tienda'])
 		{	
 
 			$estados['SubEstados']['inicial']['actual'] = false;
 			$estados['SubEstados']['inicial']['check'] = true;
 
 			$estados['SubEstados']['preparacion']['actual'] = false;
-			$estados['SubEstados']['preparacion']['descripcion'] = 'Nuestro equipo está preparando tu pedido a toda máquina.';
+			$estados['SubEstados']['preparacion']['descripcion'] = $textos['en_preparacion'];
 			$estados['SubEstados']['preparacion']['check'] = true;
 
 			$estados['SubEstados']['preparado']['actual'] = true;
 			$estados['SubEstados']['preparado']['alias'] = $venta['VentaEstado']['VentaEstadoCategoria']['nombre'];
-			$estados['SubEstados']['preparado']['descripcion'] = 'Tu pedido ya se encuentra procesado.';
+			$estados['SubEstados']['preparado']['descripcion'] = $textos['retiro_en_tienda'];
+			$estados['SubEstados']['preparado']['check'] = true;
+
+		}
+
+
+		# Preparado listo para envio
+		if ($venta['Venta']['picking_estado'] == 'empaquetado'
+			&& $venta['VentaEstado']['VentaEstadoCategoria']['venta']
+			&& $venta['VentaEstado']['VentaEstadoCategoria']['listo_para_envio'])
+		{	
+
+			$estados['SubEstados']['inicial']['actual'] = false;
+			$estados['SubEstados']['inicial']['check'] = true;
+
+			$estados['SubEstados']['preparacion']['actual'] = false;
+			$estados['SubEstados']['preparacion']['descripcion'] = $textos['en_preparacion'];
+			$estados['SubEstados']['preparacion']['check'] = true;
+
+			$estados['SubEstados']['preparado']['actual'] = true;
+			$estados['SubEstados']['preparado']['alias'] = $venta['VentaEstado']['VentaEstadoCategoria']['nombre'];
+			$estados['SubEstados']['preparado']['descripcion'] = $textos['listo_para_envio'];
 			$estados['SubEstados']['preparado']['check'] = true;
 
 		}
@@ -7768,12 +7808,12 @@ class VentasController extends AppController {
 			$estados['SubEstados']['inicial']['check'] = true;
 
 			$estados['SubEstados']['preparacion']['actual'] = false;
-			$estados['SubEstados']['preparacion']['descripcion'] = 'Nuestro equipo está preparando tu pedido a toda máquina.';
+			$estados['SubEstados']['preparacion']['descripcion'] = $textos['en_preparacion'];
 			$estados['SubEstados']['preparacion']['check'] = true;
 			
 			$estados['SubEstados']['preparado']['actual'] = true;
 			$estados['SubEstados']['preparado']['alias'] = $venta['VentaEstado']['VentaEstadoCategoria']['nombre'];
-			$estados['SubEstados']['preparado']['descripcion'] = 'Tu pedido ya fue enviado.';
+			$estados['SubEstados']['preparado']['descripcion'] = $textos['enviado'];
 			$estados['SubEstados']['preparado']['check'] = true;
 
 		}
@@ -7789,15 +7829,15 @@ class VentasController extends AppController {
 			$estados['SubEstados']['inicial']['check'] = true;
 
 			$estados['SubEstados']['preparacion']['actual'] = false;
-			$estados['SubEstados']['preparacion']['descripcion'] = 'Nuestro equipo está preparando tu pedido a toda máquina.';
+			$estados['SubEstados']['preparacion']['descripcion'] = $textos['en_preparacion'];
 			$estados['SubEstados']['preparacion']['check'] = true;
 
 			$estados['SubEstados']['preparado']['actual'] = false;
-			$estados['SubEstados']['preparado']['descripcion'] = 'Tu pedido ya fue procesado.';
+			$estados['SubEstados']['preparado']['descripcion'] = $textos['procesado'];
 			$estados['SubEstados']['preparado']['check'] = true;
 
 			$estados['SubEstados']['entregado']['actual'] = true;
-			$estados['SubEstados']['entregado']['descripcion'] = 'Tu pedido ya fue entregado.';
+			$estados['SubEstados']['entregado']['descripcion'] = $textos['entregado'];
 			$estados['SubEstados']['entregado']['check'] = true;
 
 		}
@@ -8083,13 +8123,11 @@ class VentasController extends AppController {
 
 			throw new CakeException($response);
 		}
-		
 
-		# Buscamos la venta
-		$venta = $this->Venta->find('first', array(
+		$qry = array(
 			'conditions' => array(
 				'OR' => array(
-					array('Venta.id' => trim($this->request->query['referencia'])),
+					array('Venta.id LIKE' => trim($this->request->query['referencia'])),
 					array('Venta.referencia' => trim($this->request->query['referencia']))
 				)
 			),
@@ -8120,7 +8158,9 @@ class VentasController extends AppController {
 							'VentaEstadoCategoria.venta',
 							'VentaEstadoCategoria.envio',
 							'VentaEstadoCategoria.rechazo',
-							'VentaEstadoCategoria.final'
+							'VentaEstadoCategoria.final',
+							'VentaEstadoCategoria.listo_para_envio',
+							'VentaEstadoCategoria.retiro_en_tienda'
 						)
 					)
 				),
@@ -8142,7 +8182,10 @@ class VentasController extends AppController {
 				'Venta.tienda_id',
 				'Venta.marketplace_id'
 			)
-		));
+		);
+
+		# Buscamos la venta
+		$venta = $this->Venta->find('first', $qry);
 
 		$respuesta = array(
 			'code'    => 404, 

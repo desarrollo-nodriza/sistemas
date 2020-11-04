@@ -210,9 +210,9 @@
 										
 										<td>
 										<? if ($permisos['edit']) : ?>
-											<?= $this->Html->link('<i class="fa fa-list"></i> Ver detalles', array('action' => 'view', $factura['OrdenCompraFactura']['id']), array('class' => 'btn btn-xs btn-primary', 'rel' => 'tooltip', 'title' => 'Ir a este registro', 'escape' => false)); ?>
+											<?= $this->Html->link('<i class="fa fa-list"></i> Ver detalles', array('action' => 'view', $factura['OrdenCompraFactura']['id']), array('target' => '_blank', 'class' => 'btn btn-xs btn-primary', 'rel' => 'tooltip', 'title' => 'Ir a este registro', 'escape' => false)); ?>
 											<? if (!in_array('sin_moneda', $factura['OrdenCompraFactura']['estados']) && !empty($factura['Proveedor']) && !$factura['OrdenCompraFactura']['pagada']) : ?>
-											<?= $this->Html->link('<i class="fa fa-money"></i> Configurar pagos', array('controller' => 'pagos', 'action' => 'configuracion', $factura['OrdenCompraFactura']['id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ir a este registro', 'escape' => false)); ?>
+											<?= $this->Html->link('<i class="fa fa-money"></i> Configurar pagos', array('controller' => 'pagos', 'action' => 'configuracion', $factura['OrdenCompraFactura']['id']), array('target' => '_blank', 'class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Ir a este registro', 'escape' => false)); ?>
 											<? endif; ?>
 										<? endif; ?>
 										</td>

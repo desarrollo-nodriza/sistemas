@@ -186,13 +186,13 @@
                                         <?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar facturas', array('action' => 'exportar_facturas', $pago['Pago']['id']), array('class' => 'btn btn-xs btn-primary btn-block', 'rel' => 'tooltip', 'title' => 'Exportar facturas', 'escape' => false)); ?>
 									<? endif; ?>
 									<? if ($permisos['view']) : ?>
-										<?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('action' => 'view', $pago['Pago']['id']), array('class' => 'btn btn-xs btn-info btn-block', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
+										<?= $this->Html->link('<i class="fa fa-eye"></i> Ver detalle', array('action' => 'view', $pago['Pago']['id']), array('target' => '_blank', 'class' => 'btn btn-xs btn-info btn-block', 'rel' => 'tooltip', 'title' => 'Ver este registro', 'escape' => false)); ?>
 										<? if ($pago['Pago']['pagado']) : ?>
 										<?= $this->Html->link('<i class="fa fa-envelope"></i> Notificar pago', array('action' => 'notificar_pago', $pago['Pago']['id']), array('class' => 'btn btn-xs btn-danger btn-block', 'rel' => 'tooltip', 'title' => 'Notificar este registro', 'escape' => false)); ?>
 										<? endif;?>
 									<? endif; ?>
 									<? if ($permisos['edit'] && !$pago['Pago']['pagado'] && !empty($pago['OrdenCompraFactura']) ) : ?>
-										<?= $this->Html->link('<i class="fa fa-pencil"></i> Editar', array('action' => 'edit', $pago['Pago']['id']), array('class' => 'btn btn-xs btn-warning btn-block', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
+										<?= $this->Html->link('<i class="fa fa-pencil"></i> Editar', array('action' => 'edit', $pago['Pago']['id']), array('target' => '_blank', 'class' => 'btn btn-xs btn-warning btn-block', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
 									<? endif; ?>
 									</td>
 								</tr>
