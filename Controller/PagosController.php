@@ -929,6 +929,9 @@ class PagosController extends AppController
 						)
 					),
 					'OrdenCompraFactura' => array(
+						'conditions' => array(
+							'OrdenCompraFactura.tipo_documento' => 33
+						),
 						'Proveedor' => array(
 							'fields' => array(
 								'Proveedor.nombre',
