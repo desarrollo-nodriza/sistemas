@@ -590,7 +590,7 @@ class LibreDteComponent extends Component
 
 			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
 				'Receptor' => array(
-					'RUTRecep' => $data['Dte']['rut_receptor']
+					'RUTRecep' => formato_rut($data['Dte']['rut_receptor'])
 					)
 			));
 		}else{

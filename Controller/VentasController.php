@@ -59,7 +59,7 @@ class VentasController extends AppController {
      * @return [type] [description]
      */
 	public function admin_index () {
-
+		
 		$condiciones = array();
 		$joins       = array();
 		$group       = array();

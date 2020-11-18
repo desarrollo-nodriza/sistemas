@@ -377,7 +377,7 @@ class OrdenesController extends AppController
 
 			# Administrador
 			$this->request->data['Dte']['administrador_id'] = $this->Session->read('Auth.Administrador.id');
-
+			
 			# Rut sin puntos
 			if (!empty($this->request->data['Dte']['rut_receptor'])) {
 				$this->request->data['Dte']['rut_receptor'] = formato_rut($this->request->data['Dte']['rut_receptor']);
@@ -1376,7 +1376,7 @@ class OrdenesController extends AppController
 	public function generarDte($id_dte = '')
 	{	
 		$dte = $this->LibreDte->prepararDte($this->request->data);
-		
+
 		if (!empty($id_dte)) {
 			# Obtener DTE interno por id
 			$dteInterno = $this->Orden->Dte->find('first', array('conditions' => array('id' => $id_dte)));
