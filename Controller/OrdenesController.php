@@ -380,17 +380,17 @@ class OrdenesController extends AppController
 
 			# Rut sin puntos
 			if (!empty($this->request->data['Dte']['rut_receptor'])) {
-				$this->request->data['Dte']['rut_receptor'] = str_replace('.', '', $this->request->data['Dte']['rut_receptor']);
+				$this->request->data['Dte']['rut_receptor'] = formato_rut($this->request->data['Dte']['rut_receptor']);
 			}
 
 			# Rut Transportista sin puntos
 			if (isset($this->request->data['Dte']['rut_transportista']) && !empty($this->request->data['Dte']['rut_transportista'])) {
-				$this->request->data['Dte']['rut_transportista'] = str_replace('.', '', $this->request->data['Dte']['rut_transportista']);
+				$this->request->data['Dte']['rut_transportista'] = formato_rut($this->request->data['Dte']['rut_transportista']);
 			}
 
 			# Rut chofer sin puntos
 			if (isset($this->request->data['Dte']['rut_chofer']) && !empty($this->request->data['Dte']['rut_chofer'])) {
-				$this->request->data['Dte']['rut_chofer'] = str_replace('.', '', $this->request->data['Dte']['rut_chofer']);
+				$this->request->data['Dte']['rut_chofer'] = formato_rut($this->request->data['Dte']['rut_chofer']);
 			}
 		
 			# Si existe costo de transporte se agrega como ITEM
@@ -413,7 +413,10 @@ class OrdenesController extends AppController
 			if ($this->request->data['Dte']['tipo_documento'] == 39) {
 
 				# Se agrega un rut por defecto
-				$this->request->data['Dte']['rut_receptor'] = '66666666-6';
+				if (empty($this->request->data['Dte']['rut_receptor'])) 
+				{
+					$this->request->data['Dte']['rut_receptor'] = '66666666-6';
+				}
 
 				foreach ($this->request->data['DteDetalle'] as $k => $item) {
 
@@ -521,6 +524,9 @@ class OrdenesController extends AppController
 
 						# Aunlamos los items correspondientes
 						foreach ($venta['VentaDetalle'] as $ip => $d) {
+
+							$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = 0;
+
 							foreach ($this->request->data['DteDetalle'] as $ide => $detalle) {
 
 								$id_item = str_replace('COD-', '', $detalle['VlrCodigo']);
@@ -569,9 +575,21 @@ class OrdenesController extends AppController
 
 									# Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
 									if ($d['cantidad_entregada'] > 0) {
-
 										# Quitadmos de entregado los prductos devueltos
 										$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $d['cantidad_entregada'] - $detalle['QtyItem']; 
+									}
+
+									# Cantidad entregada es la misma que se anula
+									if ($d['cantidad_entregada'] == $detalle['QtyItem'])
+									{	
+										$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = $d['cantidad_entregada'];
+										$itemsDevuletos[] = $venta['VentaDetalle'][$ip];
+									}
+
+									# Cantidad entregada es menor a la anulada
+									if ($d['cantidad_entregada'] > $detalle['QtyItem'])
+									{	
+										$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = $detalle['QtyItem'];
 										$itemsDevuletos[] = $venta['VentaDetalle'][$ip];
 									}
 								}
@@ -600,7 +618,7 @@ class OrdenesController extends AppController
 						if (!empty($itemsDevuletos)) {
 							foreach ($itemsDevuletos as $i => $d) {
 								$pmp = ClassRegistry::init('Bodega')->obtener_pmp_por_id($d['venta_detalle_producto_id']);
-								ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_anulada'], $pmp, 'VT', null, $d['venta_id']);
+								ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'VT', null, $d['venta_id']);
 							}
 						}
 
@@ -710,7 +728,7 @@ class OrdenesController extends AppController
 								}
 
 								# Total bruto se calcula siempre
-								$venta['VentaDetalle'][$ip]['total_bruto']      = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
+								$venta['VentaDetalle'][$ip]['total_bruto'] = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
 							}
 						}
 						
@@ -894,7 +912,7 @@ class OrdenesController extends AppController
 			if (!empty($documentos['content'])) {
 				$this->request->data['Dte'] = array(
 					'tipo_documento'        => ($documentos['content'][0]['boleta']) ? 39 : 33,
-					'rut_receptor'          => $documentos['content'][0]['rut'],
+					'rut_receptor'          => formato_rut($documentos['content'][0]['rut']),
 					'razon_social_receptor' => $documentos['content'][0]['empresa'],
 					'giro_receptor'         => $documentos['content'][0]['giro'],
 					'direccion_receptor'    => $documentos['content'][0]['calle']
@@ -1034,7 +1052,7 @@ class OrdenesController extends AppController
 		}
 
 		$tipos_ndc = $this->Orden->get_tipos_ndc();
-		
+
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');

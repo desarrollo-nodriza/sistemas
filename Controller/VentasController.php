@@ -5678,7 +5678,6 @@ class VentasController extends AppController {
 	 */
 	public function crearDteAutomatico($venta)
 	{	
-
 		$respuesta =  array(
 			'success', 'errors'
 		);
@@ -5733,7 +5732,7 @@ class VentasController extends AppController {
 
 		# Rut sin puntos
 		if (!empty($venta['VentaExterna']['facturacion']['rut_receptor'])) {
-			$dte['Dte']['rut_receptor'] = str_replace('.', '', $venta['VentaExterna']['facturacion']['rut_receptor']);
+			$dte['Dte']['rut_receptor'] = formato_rut($venta['VentaExterna']['facturacion']['rut_receptor']);
 		}else{
 			$dte['Dte']['rut_receptor'] = '66666666-6';
 		}
@@ -5754,7 +5753,6 @@ class VentasController extends AppController {
 			$dte['DteDetalle'][$cantidadItem]['QtyItem'] = 1;
 		}
 
-
 		foreach ($venta['VentaDetalle'] as $k => $item) {
 
 			if ($item['precio'] <= 0) {
@@ -5765,23 +5763,32 @@ class VentasController extends AppController {
 			$dte['DteDetalle'][$k]['NmbItem'] = $item['VentaDetalleProducto']['nombre'];
 			$dte['DteDetalle'][$k]['QtyItem'] = $item['cantidad'] - $item['cantidad_anulada'];
 
-			if ($tipo_documento == 39) { # Boleta valores brutos o con iva
+			# Boleta valores brutos o con iva
+			if ($tipo_documento == 39) 
+			{ 
 				$dte['DteDetalle'][$k]['PrcItem'] = $this->precio_bruto($item['precio']);	
-			}else{
+			}
+			else
+			{
 				$dte['DteDetalle'][$k]['PrcItem'] = $item['precio'];
 			}
 
 		}
 
 		// Descuento Bruto en boletas
-		if ($venta['Venta']['descuento'] > 0) {
-			if ($tipo_documento == 39) { # Boleta valores brutos o con iva
+		if ($venta['Venta']['descuento'] > 0) 
+		{	
+			# Boleta valores brutos o con iva
+			if ($tipo_documento == 39) 
+			{ 
 				$dte['DscRcgGlobal']['ValorDR'] = $venta['Venta']['descuento'];
-			}else{
+			}
+			else
+			{
 				$dte['DscRcgGlobal']['ValorDR'] = monto_neto($venta['Venta']['descuento']);
 			}
 		}
-
+		
 		$DteModel = ClassRegistry::init('Dte');
 
 		# Guardar información del DTE en base de datos local
@@ -7229,7 +7236,7 @@ class VentasController extends AppController {
 
 			# Rut del receptor
 			if (!empty($direccionEntrega['address']['dni'])) {
-				$rut_receptor =  str_replace('-', '', str_replace('.', '', $direccionEntrega['address']['dni']));
+				$rut_receptor =  formato_rut($direccionEntrega['address']['dni']);
 			}
 
 			# Fono
@@ -7535,7 +7542,7 @@ class VentasController extends AppController {
 
 			# Rut del receptor
 			if (!empty($direccionEntrega['address']['dni'])) {
-				$rut_receptor =  str_replace('-', '', str_replace('.', '', $direccionEntrega['address']['dni']));
+				$rut_receptor =  formato_rut($direccionEntrega['address']['dni']);
 			}
 
 			# Fono

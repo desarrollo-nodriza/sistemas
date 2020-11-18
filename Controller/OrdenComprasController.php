@@ -978,7 +978,7 @@ class OrdenComprasController extends AppController
 		$this->set(compact('ocs', 'estados_proveedor'));
 	}
 
-
+	
 	public function admin_notificar_proveedor($id)
 	{
 
@@ -2389,13 +2389,20 @@ class OrdenComprasController extends AppController
 		
 		$mensaje = sprintf('Estimados %s, la OC #%d emitida por "%s" se encuentra disponible para ser validada.', $oc['Proveedor']['nombre'], $oc['OrdenCompra']['id'], $oc['Tienda']['nombre']);
 
-				
+		# Quitamos los emails inactivos
+		$oc['Proveedor']['meta_emails'] = Hash::remove($oc['Proveedor']['meta_emails'], '{n}[activo=0]');
+		
+		# Asignamos los emails respectivos
 		$validadores = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=validador].email');
 		$receptores  = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=destinatario].email');
 		$cc          = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=copia].email');
 		$bcc         = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=copia oculta].email');
 
 		$to = (!empty($validadores)) ? $validadores : $receptores;
+		
+		# Sin emails retornamos
+		if (empty($to))
+			return false;
 
 		# Obtenemos token y lo validamos
 		$gettoken = ClassRegistry::init('Token')->find('first', array(
@@ -2547,7 +2554,7 @@ class OrdenComprasController extends AppController
 
 
 	/**
-	 * [guardarEmailValidado description]
+	 * Notifica a finanzas una vez validada la OC por el proveedor
 	 * @param  [type] $id     [description]
 	 * @param  array  $emails [description]
 	 * @return [type]         [description]

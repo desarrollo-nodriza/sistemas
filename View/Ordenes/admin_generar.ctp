@@ -101,7 +101,11 @@
 							<div class="form-group">
 								<br>
 								<label><?=__('Rut Receptor');?></label>
-								<?=$this->Form->input('rut_receptor', array('type' => 'text', 'class' => 'rut-contribuyente form-control', 'placeholder' => 'Ingrese rut del receptor'));?>
+								<? if (isset($documentos['content'][0])) : ?>
+								<?=$this->Form->input('rut_receptor', array('type' => 'text', 'class' => 'rut-contribuyente form-control', 'placeholder' => 'Ingrese rut del receptor', 'value' => $documentos['content'][0]['rut']));?>
+								<? else: ?>
+									<?=$this->Form->input('rut_receptor', array('type' => 'text', 'class' => 'rut-contribuyente form-control', 'placeholder' => 'Ingrese rut del receptor'));?>
+								<? endif; ?>
 							</div>
 						</div>
 						<div class="col-xs-12 col-md-6 js-no-boleta">
