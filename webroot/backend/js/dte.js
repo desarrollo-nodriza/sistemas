@@ -177,7 +177,7 @@ $.extend({
 				  		'data[Dte][razon_social_receptor]' : {
 				  			required: {
 				  				depends : function(element) {
-					  				if ( $('#DteTipoDocumento').val() == 33 ) {
+					  				if ( $('#DteTipoDocumento').val() == 33 || $('#DteTipoDocumento').val() == 39) {
 					  					return true;
 					  				}else{
 					  					return false;
@@ -845,7 +845,7 @@ $(document).ready(function(){
 		});
 
 	});
-
+	
 	OSREC.CurrencyFormatter.formatAll(
 	{
 		selector: '.money',

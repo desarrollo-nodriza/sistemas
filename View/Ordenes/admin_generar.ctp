@@ -97,18 +97,14 @@
 								<?=$this->Form->select('tipo_documento', $tipoDocumento, array('class' => 'form-control js-dte-tipo', 'escape' => false, 'empty' => 'Seleccione tipo documento'));?>
 							</div>
 						</div>
-						<div class="col-xs-12 col-md-6 js-no-boleta">
+						<div class="col-xs-12 col-md-6">
 							<div class="form-group">
 								<br>
 								<label><?=__('Rut Receptor');?></label>
-								<? if (isset($documentos['content'][0])) : ?>
-								<?=$this->Form->input('rut_receptor', array('type' => 'text', 'class' => 'rut-contribuyente form-control', 'placeholder' => 'Ingrese rut del receptor', 'value' => $documentos['content'][0]['rut']));?>
-								<? else: ?>
-									<?=$this->Form->input('rut_receptor', array('type' => 'text', 'class' => 'rut-contribuyente form-control', 'placeholder' => 'Ingrese rut del receptor'));?>
-								<? endif; ?>
+								<?=$this->Form->input('rut_receptor', array('type' => 'text', 'class' => 'rut-contribuyente form-control', 'placeholder' => 'Ingrese rut del receptor'));?>
 							</div>
 						</div>
-						<div class="col-xs-12 col-md-6 js-no-boleta">
+						<div class="col-xs-12 col-md-6">
 							<div class="form-group">
 								<br>
 								<label><?=__('Razón Social Receptor');?></label>

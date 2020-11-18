@@ -369,7 +369,6 @@ class OrdenesController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-
 			if ( ($this->request->data['Dte']['tipo_documento'] == 33 || $this->request->data['Dte']['tipo_documento'] == 39) && !DtesController::unicoDteValido($id_orden)) {
 				$this->Session->setFlash('¡ERROR! No puedes generar 2 documentos válidos de venta. Debes solicitar una Nota de crédito.' , null, array(), 'danger');
 				$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
@@ -918,7 +917,8 @@ class OrdenesController extends AppController
 					'direccion_receptor'    => $documentos['content'][0]['calle']
 				);
 
-				if ($this->request->data['Dte']['tipo_documento'] == 33) {
+				if ($this->request->data['Dte']['tipo_documento'] == 33
+					|| $this->request->data['Dte']['tipo_documento'] == 39) {
 					// Obtenemos la información del contribuyente desde el SII
 					$info = $this->admin_getContribuyenteInfo($this->rutSinDv($documentos['content'][0]['rut']));
 					
@@ -1052,11 +1052,11 @@ class OrdenesController extends AppController
 		}
 
 		$tipos_ndc = $this->Orden->get_tipos_ndc();
-
+		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');
-		
+
 		$this->set(compact('venta', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc'));
 
 	}
