@@ -148,7 +148,7 @@ class LibreDteComponent extends Component
 	 */
 	public function crearDteTemporal($dataDte, &$dteInterno = array())
 	{	
-
+		
 		CakeLog::write('debug', 'Dte temporal request: ' . json_encode($dataDte));
 
 		// crear DTE temporal
@@ -588,11 +588,9 @@ class LibreDteComponent extends Component
 		# Incluye Receptor
 		if (!empty($data['Dte']['rut_receptor']) && $data['Dte']['rut_receptor'] != '66666666-6' ) {
 
-			$rut = @number_format( substr ( $data['Dte']['rut_receptor'], 0 , -1 ) , 0, "", "") . '-' . substr ( $data['Dte']['rut_receptor'], strlen($data['Dte']['rut_receptor']) -1 , 1 );
-			
 			$dte['Encabezado'] = array_replace_recursive($dte['Encabezado'], array(
 				'Receptor' => array(
-					'RUTRecep' => $rut
+					'RUTRecep' => $data['Dte']['rut_receptor']
 					)
 			));
 		}else{
