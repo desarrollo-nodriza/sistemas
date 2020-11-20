@@ -92,7 +92,6 @@ class ManifiestosController extends AppController {
 				$ventas[$io]['VentaMensaje'] = array();
 
 			}
-
 			
 			$dataToSave['Venta'][$io]['venta_id']          = $venta['Venta']['id'];
 			$dataToSave['Venta'][$io]['items']             = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));
@@ -101,10 +100,12 @@ class ManifiestosController extends AppController {
 			$dataToSave['Venta'][$io]['id']                = $venta['Venta']['id'];
 			$dataToSave['Venta'][$io]['folio_dte']         = 0;
 			$dataToSave['Venta'][$io]['tipo_dte']          = 'Vacio';
-			$dataToSave['Venta'][$io]['nombre_receptor'] = $venta['Venta']['nombre_receptor'];
+			$dataToSave['Venta'][$io]['nombre_receptor']   = $venta['Venta']['nombre_receptor'];
+			$dataToSave['Venta'][$io]['rut_receptor']      = formato_rut($venta['Venta']['rut_receptor']);
 			$dataToSave['Venta'][$io]['fono_receptor']   = $venta['Venta']['fono_receptor'];
 			$dataToSave['Venta'][$io]['email_receptor']  = $venta['VentaCliente']['email'];
-			$dataToSave['Venta'][$io]['direcion_envio']  = $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega'] . ' ' . $venta['Venta']['otro_entrega'];
+			$dataToSave['Venta'][$io]['direcion_envio']  = $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega'];
+			$dataToSave['Venta'][$io]['dpto_receptor']   = $venta['Venta']['otro_entrega'];
 			$dataToSave['Venta'][$io]['comuna']          = $venta['Venta']['comuna_entrega'];
 
 			if (!empty($venta['Dte'])) {
@@ -478,6 +479,11 @@ class ManifiestosController extends AppController {
 					)
 				),
 				'Transporte',
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.rut'
+					)
+				),
 				'Venta' => array(
 					'order' => array(
 						'Venta.fecha_venta' => 'DESC'
@@ -488,24 +494,28 @@ class ManifiestosController extends AppController {
 				)
 			)
 		));
-		
+
 		$campos = array(
-			'Solicitante',
-			'Direccion Solicitante',
-			'Comuna',
-			'Teléfono Solicitante',
-			'E-mail Solicitante',
-			'Producto',
-			'Tamaño',
-			'Tramo',
+			'Remitente',
+			'Email remitente',
+			'RUT remitente',
+			'Teléfono remitente',
+			'Dirección remitente',
+			'Dpto/Oficina remitente',
+			'Comuna remitente',
+			'Destinatario',
+			'Email destinatario',
+			'RUT destinatario',
+			'Teléfono destinatario',
+			'Dirección destinatario',
+			'Dpto/Oficina destinatario',
+			'Comuna destinatario',
+			'Comentario',
 			'Retorno',
-			'Contacto Destino',
-			'Direccion Destino',
-			'Comuna',
-			'Teléfono Destino',
-			'Factura',
-			'E-mail',
-			'Observacion'
+			'Producto',
+			'Servicio',
+			'Tramo',
+			'Descripción de Producto'
 		);
 
 		$modelo = $this->Manifiesto->alias;
@@ -516,28 +526,33 @@ class ManifiestosController extends AppController {
 		foreach ($manifiesto['Venta'] as $io => $detalle) {
 			
 			$datos[$io]['Manifiesto']['solicitante']           = $manifiesto['Manifiesto']['nombre_solicitante'];
-			$datos[$io]['Manifiesto']['direccion_solicitante'] = $manifiesto['Manifiesto']['direccion_solicitante'];
-			$datos[$io]['Manifiesto']['comuna_solicitante']    = (!empty($manifiesto['Comuna'])) ? $manifiesto['Comuna']['nombre'] : '';
-			$datos[$io]['Manifiesto']['fono_solicitante']      = $manifiesto['Manifiesto']['fono_solicitante'];
 			$datos[$io]['Manifiesto']['email_solicitante']     = $manifiesto['Manifiesto']['email_solicitante'];
-			$datos[$io]['Manifiesto']['tipo_producto']         = $manifiesto['Manifiesto']['tipo_producto'];
-			$datos[$io]['Manifiesto']['tamano_producto']       = $manifiesto['Manifiesto']['tamano_producto'];
+			$datos[$io]['Manifiesto']['rut_solicitante']       = formato_rut($manifiesto['Tienda']['rut']);
+			$datos[$io]['Manifiesto']['fono_solicitante']      = $manifiesto['Manifiesto']['fono_solicitante'];
+			$datos[$io]['Manifiesto']['direccion_solicitante'] = $manifiesto['Manifiesto']['direccion_solicitante'];
+			$datos[$io]['Manifiesto']['dpto_solicitante']      = '';
+			$datos[$io]['Manifiesto']['comuna_solicitante']    = (!empty($manifiesto['Comuna'])) ? $manifiesto['Comuna']['nombre'] : '';
+			
+			if (!empty($detalle['ManifiestosVenta'])) {
+				$datos[$io]['Manifiesto']['contacto_destino']  = $detalle['ManifiestosVenta']['nombre_receptor'];
+				$datos[$io]['Manifiesto']['email_destino']     = $detalle['ManifiestosVenta']['email_receptor'];
+				$datos[$io]['Manifiesto']['rut_destino']       = formato_rut($detalle['ManifiestosVenta']['rut_receptor']);
+				$datos[$io]['Manifiesto']['fono_destino']      = $detalle['ManifiestosVenta']['fono_receptor'];
+				$datos[$io]['Manifiesto']['direccion_destino'] = $detalle['ManifiestosVenta']['direcion_envio'];
+				$datos[$io]['Manifiesto']['dpto_destino']      = $detalle['ManifiestosVenta']['dpto_receptor'];
+				$datos[$io]['Manifiesto']['comuna_destino']    = $detalle['ManifiestosVenta']['comuna'];
+				$datos[$io]['Manifiesto']['comentario']        = $detalle['ManifiestosVenta']['observacion'];				
+			}
 
+			$datos[$io]['Manifiesto']['tipo_retorno']    = $manifiesto['Manifiesto']['tipo_retorno'];
+			$datos[$io]['Manifiesto']['tamano_producto'] = $manifiesto['Manifiesto']['tamano_producto'];
+			$datos[$io]['Manifiesto']['tipo_producto']   = $manifiesto['Manifiesto']['tipo_producto'];
+			
 			if (!empty($detalle['ManifiestosVenta'])) {
 				$datos[$io]['Manifiesto']['tramo'] = $this->Conexxion->obtener_tramo_por_peso( $detalle['ManifiestosVenta']['peso_bulto'], $manifiesto['Manifiesto']['tamano_producto']);
 			}
 
-			$datos[$io]['Manifiesto']['tipo_retorno'] = $manifiesto['Manifiesto']['tipo_retorno'];
-
-			if (!empty($detalle['ManifiestosVenta'])) {
-				$datos[$io]['Manifiesto']['contacto_destino']  = $detalle['ManifiestosVenta']['nombre_receptor'];
-				$datos[$io]['Manifiesto']['direccion_destino'] = $detalle['ManifiestosVenta']['direcion_envio'];
-				$datos[$io]['Manifiesto']['comuna_destino']    = $detalle['ManifiestosVenta']['comuna'];
-				$datos[$io]['Manifiesto']['fono_destino']      = $detalle['ManifiestosVenta']['fono_receptor'];
-				$datos[$io]['Manifiesto']['factura']           = $detalle['ManifiestosVenta']['folio_dte'];
-				$datos[$io]['Manifiesto']['email_destino']     = $detalle['ManifiestosVenta']['email_receptor'];
-				$datos[$io]['Manifiesto']['observacion']       = $detalle['ManifiestosVenta']['observacion'];
-			}
+			$datos[$io]['Manifiesto']['descripcion'] = $detalle['ManifiestosVenta']['folio_dte'];
 
 		}
 

@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 App::uses('Component', 'Controller');
 App::import('Vendor', 'Conexxion', array('file' => 'Conexxion/Conexxion.php'));
 App::import('Vendor', 'PDFMerger', array('file' => 'PDFMerger/PDFMerger.php'));
@@ -15,12 +16,12 @@ class ConexxionComponent extends Component
 
 
     private $tipo_productos = array(
-		'Dia habil siguiente' => 'Dia habil siguiente'
+		'Entrega 48 Horas' => 'Entrega 48 Horas'
 	);
 
 	private $tamano_productos = array(
-		'Paqueteria Moto'      => 'Paqueteria Moto',
-		'Paqueteria Camioneta' => 'Paqueteria Camioneta'
+		'Documentos' => 'Documentos',
+		'Paquetería' => 'Paquetería'
 	);
 
 	private $tipo_retornos = array(
@@ -34,20 +35,20 @@ class ConexxionComponent extends Component
 	 * @var array
 	 */
 	private $tramos = array(
-		'Tramo 1 3.1kg - 10kg' => array(
+		'Tramo 1' => array(
 			'min' => 0,
 			'max' => 10
 		),
-		'Tramo 2 10.1kg - 15kg' => array(
+		'Tramo 2' => array(
 			'min' => 10.1,
 			'max' => 15
 		),
-		'Tramo 3 15.1kg - 25kg' => array(
+		'Tramo 3' => array(
 			'min' => 15.1,
 			'max' => 25
 		),
-		'Tramo 4 + 25kg' => array(
-			'min' => 25,
+		'Tramo 4' => array(
+			'min' => 25.1,
 			'max' => 1000
 		)
 	);
@@ -214,7 +215,7 @@ class ConexxionComponent extends Component
 			$ruta_pdfs = array();
 
 			#Generamos la etiqueta
-			/*$etiquetaZpl = $this->getEtiquetaEmision($response, $venta);	
+			$etiquetaZpl = $this->getEtiquetaEmision($response, $venta);	
 			
 			$etiquetaPdf = '';
 
@@ -224,7 +225,7 @@ class ConexxionComponent extends Component
 
 			$curl = curl_init();
 			// adjust print density (8dpmm), label width (4 inches), label height (6 inches), and label index (0) as necessary
-			curl_setopt($curl, CURLOPT_URL, "http://api.labelary.com/v1/printers/8dpmm/labels/4x4/0/");
+			curl_setopt($curl, CURLOPT_URL, "http://api.labelary.com/v1/printers/8dpmm/labels/6x4/0/");
 			curl_setopt($curl, CURLOPT_POST, TRUE);
 			curl_setopt($curl, CURLOPT_POSTFIELDS, $etiquetaZpl);
 			curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
@@ -248,14 +249,14 @@ class ConexxionComponent extends Component
 			}
 
 			curl_close($curl);
-			*/
+			
 			
 			# Guardamos el transportista y el/los numeros de seguimiento
 			$carrier_name = 'CONEXXION';
 			$carrier_opt = array(
 				'Transporte' => array(
 					'codigo' => 'CONEXXION-WS',
-					'url_seguimiento' => 'https://courier.conexxion.cl/' // Url de seguimiento starken
+					'url_seguimiento' => 'https://courier.conexxion.cl/' // Url de seguimiento conexión
 				)
 			);
 
@@ -485,7 +486,7 @@ class ConexxionComponent extends Component
 
 		# Al seleccionar moto solo se usa el tramo 0
 		if ($tamano == 'Paqueteria Moto') {
-			return 'Tramo 0 (moto)';
+			return 'Tramo 0';
 		}
 
 		# Al ser camioneta
@@ -516,13 +517,95 @@ class ConexxionComponent extends Component
  	public function getEtiquetaEmision($response, $venta) {
         	
 		$etiqueta              = "";
-		$remitenteNombre       = $response['body']['sender_full_name'];
-		$direccionRemitente    = $response['body']['sender_address'] . ', ' . $response['body']['sender_comune'];
-		$direccionDestinatario = $response['body']['receiver_address'] . ' ' . $response['body']['receiver_address_number'] . ', ' . $response['body']['receiver_comune'];
+				
+		$canal_venta = '';
 
+		if ($venta['Venta']['venta_manual'])
+		{
+			$canal_venta = 'POS de venta';
+		}
+		else if ($venta['Venta']['marketplace_id'])
+		{
+			$canal_venta = $venta['Marketplace']['nombre'];
+		}
+		else
+		{
+			$canal_venta = $venta['Tienda']['nombre'];
+		}
 
-        $tipo_servicio = $response['body']['service_name'];
-        $tipo_entrega = 'DOMICILIO';
+		$etiqueta = "^XA
+		^FX LOGO.
+		^FO45,45^GFA,1197,1197,19,K07JFE003FFK03FFI0FFC,K0KFE01IFCJ0IFE00FFC,K0LF03JFI03JF00FFE,K0LF0KFC007JFC0FFE,K0LF0KFE00KFC0FFE,K0LF1LF03KFE0FFE,K0LF7LF03LF8FFE,K0LF7LF87LF8FFE,:K0SFCMFEFFE,L07FFC1IF8IFCIFC7FFEFFE,L03FF80IF03LF03FFEFFE,L03FF81FFE01KFE01KFE,:L03FF81FFC01KFE00KFE,::L03FF81FFE01KFE01KFE,L03FF81IF03FF03FF03KFE,L03FF80IF87FF03FF87FFEFFE,L03FF80LFC00LFEIF,L03FF807JFE0FC1KF8KF8,L03FF807JFC3FF0KF8KF8,L03FF807JF87FF87JF8KF8,L03FF803IFE3JF1JF0KF8,L03FF801IFE3EFDF1IFE0KF8,L03FF800IFE78FC79IFC0KF8,L03FF8007FFE78FC79IF00KF8,L03FF8001FFE78FC79FFE00KF8,L03FF8I07FE783879FF800KF8,V0780078,::Q01FFC07E01F8O03FFC,IF003FF8003IF07F03F83FF3FFC003FFE,IF007FF8007IF07F03F87FF3FFC007IF,IF807FF8007IF07F03F87FF3FFC007IF,IFC0IF8007IF87F03F87FF3FFC00JF8,IFC0IF8007IF83F03F07FF3FFC00JF8,IFE3IF800JFC0703807FF3FFC01JF8,:JFBIF801JFE01I0E7FF3FFC01JFC,NF803JFEJ07JF3FFC03JFE,NF803JFEJ0KF3FFC03JFE,NF803JFEI03KF3FFC03JFE,NF803KF00MF3FFC07KF,NF807KF00MF3FFC0LF,NF807KF80MF3FFC0LF,NF80IF3FFC0MF3FFC0IF7FF8,NF80FFE3FFC0MF3FFC0FFE7FF8,NF81FFE3FFC0MF3FFC1FFE3FF8,FFEKF81FFE3FFC0MF3FFC1FFE7FFC,FFEFFBFF81LFE0MF3FFC3LFE,FFE7F9FF81LFE0MF3FFC3LFE,FFE3F1FF83MF0IF7IF3FFC7LFE,FFE3E3FF83MF0IF7IF3FFC7LFE,FFE1C3FF87MF8IF3IF3FFC7MF,IF003FF8NF8IF1IF3FFCNF,IF003FF8NF8IF1IF3FFCNF8IF003FF8NF8IF0IF3FFCNF8IF003FF8IF007FFCIF07FF3FFDFFE007FFCIF003FF8IF003FFEIF03FF3FFDFFE003FFCIF003LF003FFEIF03FF3KFE003FFC^FS^
+		^FX Recuadros.
+		
+		^FO225,10^GB1,130,2^FS
+		^FO800,10^GB1,780,2^FS
+		^FO10,140^GB1180,1,2,B,0^FS
+		^FO225,45^GB965,1,2,B,0^FS
+		^FO10,10^GB1180,780,2^FS
+		^FO800,175^GB390,1,2,B,0^FS
+		^FO800,325^GB390,1,2,B,0^FS
+		^FO10,560^GB1180,1,2,B,0^FS
+		^FO10,270^GB790,1,2,B,0^FS
+		
+		^FX Información superior
+		^CF0,80
+		^FO815,65^FD#" . $venta['Venta']['id'] . "^FS
+		
+		^CF0,20
+		^FO240,20^FDTransporte:^FS
+		
+		^CF0,20
+		^FO815,20^FDVID:^FS
+		
+		^CF0,80
+		^FO240,65^FD" . strtoupper(Inflector::slug($venta['MetodoEnvio']['nombre'], ' ')) . "^FS
+		
+		
+		^FX Remitente
+		^CF0,25
+		^FO20,155^FDREMITENTE : " . Inflector::slug($response['body']['sender_full_name'], ' ') . "^FS
+		^FO400,155^FDRUT : " . Inflector::slug($response['body']['sender_rut'], ' ') . "^FS
+		^FO20,195^FDFONO : " . Inflector::slug($response['body']['sender_phone'], ' ') . "^FS
+		^FO400,195^FDEMAIL : " . Inflector::slug($response['body']['sender_email'], ' ') . "^FS
+		^FO20,234^FDDIRECCION : " . Inflector::slug($response['body']['sender_address'] . $response['body']['sender_comune'] . $response['body']['sender_region'], ' ') . "^FS
+		
+		^FX detalle compra
+		^CF0,20
+		^FO815,152^FDDETALLE DE LA VENTA^FS
+		
+		^CF0,20
+		^FO815,190^FDCANAL DE VENTA: " . Inflector::slug($canal_venta, ' ') . "^FS
+		^FO815,225^FDMEDIO DE PAGO: " . Inflector::slug($venta['MedioPago']['nombre'], ' ') . "^FS
+		^FO815,260^FDMETODO ENVIO: " . Inflector::slug($venta['MetodoEnvio']['nombre'], ' ') . "^FS
+		^FO815,295^FDFECHA VENTA: " . Inflector::slug($venta['Venta']['fecha_venta'], ' ') . "^FS
+		
+		^FX Barra
+		^BY5,3,177^FT117,490^BCN,,Y,N^FD" . $response['body']['barcode'] . "^FS
+		
+		^FX QR
+		^FO890,165^BQN,2,5^FD" . obtener_url_base() . "api/ventas/" . $venta['Venta']['id'] . ".json^FS
+		
+		^FX Destinatario
+		^CF0,25
+		^FO20,580^FDDESTINATARIO : " . Inflector::slug($response['body']['receiver_full_name'], ' ') . "^FS
+		^FO20,615^FDRUT : " . Inflector::slug($response['body']['receiver_rut'], ' ') . "^FS
+		^FO20,650^FDFONO : " . Inflector::slug($response['body']['receiver_phone'], ' ') . "^FS
+		^FO400,650^FDEMAIL : " . Inflector::slug($response['body']['receiver_email'], ' ') . "^FS
+		^FO20,685^FDDIRECCION : " . Inflector::slug($response['body']['receiver_address'], ' ') . "^FS
+		^FO20,720^FDCOMUNA : " . Inflector::slug($response['body']['receiver_comune'], ' ') . "^FS
+		^FO20,755^FDREGION : " . Inflector::slug($response['body']['receiver_region'], ' ') . "^FS
+		
+		^FX Bultos
+		^CF0,25
+		^FO810,580^FDPESO TOTAL: " . $response['body']['weight'] . " KG^FS
+		^FO810,615^FDBULTOS: " . $response['body']['qty'] . "^FS
+		^FO810,650^FDPRODUCTO: " . Inflector::slug($response['body']['product_name'], ' ') . "^FS
+		^FO810,685^FDTIPO SERVICIO: " . Inflector::slug($response['body']['service_name'], ' ') . "^FS
+		
+		^XZ";
+
+		return $etiqueta;
 
         $etiqueta .= "\020CT~~CD,~CC^~CT~";
         $etiqueta .= "^XA~TA000~JSN^LT0^MNW^MTT^PON^PMN^LH0,0^JMA^PR5,5~SD30^JUS^LRN^CI0^XZ";
@@ -565,7 +648,7 @@ class ConexxionComponent extends Component
         $etiqueta .= "";
         $etiqueta .= "^FS";
         $etiqueta .= "^FT304,53^A0N,35,45^FH\\^FD";
-        $etiqueta .= $response['body']['receiver_region'];
+        $etiqueta .= 'CONEXXION';
         $etiqueta .= "^FS";
         $etiqueta .= "^FT457,664^A0N,18,21^FH\\^FD$";
         $etiqueta .= ''; //$response['body']['body']['totalOF'];
@@ -598,7 +681,7 @@ class ConexxionComponent extends Component
         $etiqueta .= "^FS";
         $etiqueta .= "^FT599,522^A0N,31,36^FH\\^FD";
         $etiqueta .= " ";
-        $etiqueta .= $response['body']['product_name'];
+        $etiqueta .= Inflector::slug($response['body']['product_name'], ' ');
         $etiqueta .= "^FS";
         $etiqueta .= "^FT599,483^A0N,37,52^FH\\^FD";
         $etiqueta .= 1;
@@ -631,7 +714,7 @@ class ConexxionComponent extends Component
         $etiqueta .= "^FT677,705^A0N,28,28^FH\\^FDRAMPA^FS";
         $etiqueta .= "^FT168,477^A0N,20,19^FH\\^FD";
         if (strlen($direccionDestinatario) > 40) {
-            $etiqueta .=  substr($direccionDestinatario, 41, 80);
+            $etiqueta .=  Inflector::slug(substr($direccionDestinatario, 41, 80), ' ');
         } else {
             $etiqueta .= " ";
         }
@@ -639,9 +722,9 @@ class ConexxionComponent extends Component
         $etiqueta .= "^FT36,451^A0N,20,19^FH\\^FDDIRECCI\\E3N      :^FS";
         $etiqueta .= "^FT169,451^A0N,20,19^FH\\^FD";
         if (strlen($direccionDestinatario) > 40) {
-            $etiqueta .=  substr($direccionDestinatario, 41, 80);
+            $etiqueta .=  Inflector::slug(substr($direccionDestinatario, 41, 80), ' ');
         } else {
-            $etiqueta .= $direccionDestinatario;
+            $etiqueta .= Inflector::slug($direccionDestinatario, ' ');
         }
         $etiqueta .= "^FS";
         $etiqueta .= "^FT35,527^A0N,20,19^FH\\^FDR.U.T.^FS";
@@ -664,7 +747,7 @@ class ConexxionComponent extends Component
         $etiqueta .= "^FT36,704^A0N,14,14^FH\\^FDREGI\\E3N Y^FS";
         $etiqueta .= "^FT36,721^A0N,14,14^FH\\^FDCOMUNA^FS";
         $etiqueta .= "^FT169,503^A0N,20,19^FH\\^FD";
-        $etiqueta .= $response['body']['sender_full_name'];
+        $etiqueta .= Inflector::slug($response['body']['sender_full_name']);
         $etiqueta .= "^FS";
         $etiqueta .= "^FT35,503^A0N,20,19^FH\\^FDDESTINATARIO :^FS";
         $etiqueta .= "^FT599,441^A0N,14,14^FH\\^FDBULTO N\\F8^FS";
@@ -684,21 +767,21 @@ class ConexxionComponent extends Component
         $etiqueta .= "^FT589,177^A0N,14,16^FH\\^FDR.U.T.^FS";
         $etiqueta .= "^FT589,153^A0N,14,16^FH\\^FDCTA. CTE.^FS";
         $etiqueta .= "^FT119,155^A0N,14,14^FH\\^FD";
-        $etiqueta .= $direccionRemitente;
+        $etiqueta .= Inflector::slug($direccionRemitente, ' ');
         $etiqueta .= "^FS";
         $etiqueta .= "^FT745,335^A0B,34,33^FH\\^FD^FS";
         $etiqueta .= "^FT75,369^A0B,34,33^FH\\^FD";
-        $etiqueta .= $tipo_servicio;
+        $etiqueta .= Inflector::slug($tipo_servicio, ' ');
         $etiqueta .= "^FS";
         $etiqueta .= "^FT56,645^A0B,20,19^FH\\^FDO.F.^FS";
         $etiqueta .= "^FT119,131^A0N,14,16^FH\\^FD";
-        $etiqueta .= $remitenteNombre;
+        $etiqueta .= Inflector::slug($remitenteNombre, ' ');
         $etiqueta .= "^FS";
         $etiqueta .= "^FT700,768^A0N,46,45^FH\\^FD";
         $etiqueta .= ''; //etiquetaEncargoVO.getCeroGrandeAbajo());
         $etiqueta .= "^FS";
         $etiqueta .= "^FT100,721^A0N,36,35^FH\\^FD";
-        $etiqueta .= $response['body']['receiver_region'] . ' ' . $response['body']['receiver_comune'] . ' - ' . $tipo_entrega; //etiquetaEncargoVO.getRegionAndComunaDestino());
+        $etiqueta .= Inflector::slug($response['body']['receiver_region'] . ' ' . $response['body']['receiver_comune'] . ' - ' . $tipo_entrega, ' '); //etiquetaEncargoVO.getRegionAndComunaDestino());
         $etiqueta .= "^FS";
         $etiqueta .= "^FT100,774^A0N,36,35^FH\\^FD";
         $etiqueta .= ''; // etiquetaEncargoVO.getCodigoAndNombreAgenciaDestino());
