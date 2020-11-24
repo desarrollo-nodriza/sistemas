@@ -181,8 +181,8 @@ class ConexxionComponent extends Component
 				'width'                   => $anchoTotal,
 				'depth'                   => $largoTotal,
 				'weight'                  => round($pesoTotal, 2),
-				'product'                 => $venta['MetodoEnvio']['product'],
-				'service'                 => $venta['MetodoEnvio']['service'],
+				'product'                 => (int) $venta['MetodoEnvio']['product'],
+				'service'                 => (int) $venta['MetodoEnvio']['service'],
 				'notification_type'       => $venta['MetodoEnvio']['notification_type']
 			);
 			

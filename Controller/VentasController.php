@@ -886,9 +886,9 @@ class VentasController extends AppController {
 			$resultadoEnviame = $Enviame->crearEnvio($venta);
 
 			if ($resultadoEnviame) {
-				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
+				$this->Session->setFlash('Envío creado con éxito en Starken.', null, array(), 'success');
 			}else{
-				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
+				$this->Session->setFlash('No fue posible crear el envío Starken.', null, array(), 'danger');
 			}
 
 		}elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
@@ -912,9 +912,9 @@ class VentasController extends AppController {
 
 			# Creamos la OT
 			if($this->Conexxion->generar_ot($venta)){
-				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
+				$this->Session->setFlash('Envío creado con éxito en Conexxion.', null, array(), 'success');
 			}else{
-				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
+				$this->Session->setFlash('No fue posible crear el envío Conexxion.', null, array(), 'danger');
 			}
 
 		}else{
