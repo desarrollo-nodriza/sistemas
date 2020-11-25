@@ -15,7 +15,7 @@ class ConexxionComponent extends Component
     private $ConexxionCliente;
 
 
-    private $tipo_productos = array(
+    private $a = array(
 		'Entrega 48 Horas' => 'Entrega 48 Horas'
 	);
 
@@ -457,7 +457,7 @@ class ConexxionComponent extends Component
  	}
 
 
- 	public function obtener_tipo_productos()
+ 	public function obtener_a()
  	{
  		return Conexxion::$PRODUCT;
  	}
@@ -498,9 +498,9 @@ class ConexxionComponent extends Component
 	}
 
 
-	public function obtener_tipo_productos_excel()
+	public function obtener_a_excel()
 	{
-		return $this->tipo_productos;
+		return $this->a;
 	}
 
 
@@ -539,24 +539,22 @@ class ConexxionComponent extends Component
 		^FX Recuadros.
 		
 		^FO225,10^GB1,130,2^FS
-		^FO800,10^GB1,780,2^FS
+		^FO800,140^GB1,650,2^FS
 		^FO10,140^GB1180,1,2,B,0^FS
 		^FO225,45^GB965,1,2,B,0^FS
 		^FO10,10^GB1180,780,2^FS
 		^FO800,175^GB390,1,2,B,0^FS
 		^FO800,325^GB390,1,2,B,0^FS
-		^FO10,560^GB1180,1,2,B,0^FS
+		^FO10,560^GB790,1,2,B,0^FS
 		^FO10,270^GB790,1,2,B,0^FS
+		^FO800,625^GB390,1,2,B,0^FS
 		
 		^FX Información superior
-		^CF0,80
-		^FO815,65^FD#" . $venta['Venta']['id'] . "^FS
+		^CF0,20
+		^FO240,20^FDTransporte: CONEXXION^FS
 		
 		^CF0,20
-		^FO240,20^FDTransporte:^FS
-		
-		^CF0,20
-		^FO815,20^FDVID:^FS
+		^FO815,20^FDVID:#" . $venta['Venta']['id'] . "^FS
 		
 		^CF0,80
 		^FO240,65^FD" . strtoupper(Inflector::slug($venta['MetodoEnvio']['nombre'], ' ')) . "^FS
@@ -584,8 +582,10 @@ class ConexxionComponent extends Component
 		^BY5,3,177^FT117,490^BCN,,Y,N^FD" . $response['body']['barcode'] . "^FS
 		
 		^FX QR
-		^FO890,165^BQN,2,5^FD" . obtener_url_base() . "api/ventas/" . $venta['Venta']['id'] . ".json^FS
-		
+		^FO920,165^BQN,2,4^FD" . obtener_url_base() . "api/ventas/" . $venta['Venta']['id'] . ".json^FS
+		^CF0,70
+		^FO810,540^FDVID: #" . $venta['Venta']['id'] . "^FS
+
 		^FX Destinatario
 		^CF0,25
 		^FO20,580^FDDESTINATARIO : " . Inflector::slug($response['body']['receiver_full_name'], ' ') . "^FS
@@ -598,10 +598,10 @@ class ConexxionComponent extends Component
 		
 		^FX Bultos
 		^CF0,25
-		^FO810,580^FDPESO TOTAL: " . $response['body']['weight'] . " KG^FS
-		^FO810,615^FDBULTOS: " . $response['body']['qty'] . "^FS
-		^FO810,650^FDPRODUCTO: " . Inflector::slug($response['body']['product_name'], ' ') . "^FS
-		^FO810,685^FDTIPO SERVICIO: " . Inflector::slug($response['body']['service_name'], ' ') . "^FS
+		^FO810,640^FDPESO TOTAL: " . $response['body']['weight'] . " KG^FS
+		^FO810,675^FDBULTOS: " . $response['body']['qty'] . "^FS
+		^FO810,710^FDPRODUCTO: " . Inflector::slug($response['body']['product_name'], ' ') . "^FS
+		^FO810,745^FDTIPO SERVICIO: " . Inflector::slug($response['body']['service_name'], ' ') . "^FS
 		
 		^XZ";
 
