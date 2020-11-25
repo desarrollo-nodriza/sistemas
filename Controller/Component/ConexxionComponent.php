@@ -566,7 +566,7 @@ class ConexxionComponent extends Component
 		^FO400,155^FDRUT : " . Inflector::slug($response['body']['sender_rut'], ' ') . "^FS
 		^FO20,195^FDFONO : " . Inflector::slug($response['body']['sender_phone'], ' ') . "^FS
 		^FO400,195^FDEMAIL : " . Inflector::slug($response['body']['sender_email'], ' ') . "^FS
-		^FO20,234^FDDIRECCION : " . Inflector::slug($response['body']['sender_address'] . $response['body']['sender_comune'] . $response['body']['sender_region'], ' ') . "^FS
+		^FO20,234^FDDIRECCION : " . Inflector::slug($response['body']['sender_address'] . ', '. $response['body']['sender_comune'] . ', ' . $response['body']['sender_region'], ' ') . "^FS
 		
 		^FX detalle compra
 		^CF0,20
