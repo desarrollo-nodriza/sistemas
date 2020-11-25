@@ -15,7 +15,7 @@ class ConexxionComponent extends Component
     private $ConexxionCliente;
 
 
-    private $a = array(
+    private $tipo_servicio = array(
 		'Entrega 48 Horas' => 'Entrega 48 Horas'
 	);
 
@@ -498,9 +498,9 @@ class ConexxionComponent extends Component
 	}
 
 
-	public function obtener_a_excel()
+	public function obtener_tipo_productos_excel()
 	{
-		return $this->a;
+		return $this->tipo_servicio;
 	}
 
 
