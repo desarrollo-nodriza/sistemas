@@ -10,7 +10,7 @@ Class Conexxion {
     /**
      * @var $API_ROOT_URL is a main URL to access the Conexxion API's.
      */
-	protected static $API_ROOT_URL = "https://api.ecommerce.conexxion.cl/wo/";
+	protected static $API_ROOT_URL = "https://api.ecommerce.conexxion.cl";
 
 	/**
 	 * @var AUTH_TYPE is mandatory
