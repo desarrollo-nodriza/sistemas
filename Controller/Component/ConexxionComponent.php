@@ -169,7 +169,7 @@ class ConexxionComponent extends Component
 				'sender_email'            => $venta['MetodoEnvio']['sender_email'],
 				'sender_address'          => $venta['MetodoEnvio']['sender_address'] . ', ' . $venta['MetodoEnvio']['ciudad_origen'],
 				'sender_address_number'   => $venta['MetodoEnvio']['sender_address_number'],
-				'receiver_full_name'      => trim($venta['VentaCliente']['nombre']) . ' ' . trim($venta['VentaCliente']['apellido']),
+				'receiver_full_name'      => (empty($venta['Venta']['nombre_receptor'])) ? $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'] : $venta['Venta']['nombre_receptor'],
 				'receiver_rut'            => $rut_destinatario,
 				'receiver_email'          => $venta['VentaCliente']['email'],
 				'receiver_phone'          => $venta['Venta']['fono_receptor'],
