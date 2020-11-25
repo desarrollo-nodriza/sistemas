@@ -48,7 +48,7 @@ Class Conexxion {
      * @var array
      */
     public static $SERVICE = array(
-    	1 => 'AM/PM',
+    	1 => 'Entrega 48 Horas',
     	2 => 'Dia Habil Siguiente',
     	3 => 'Max. 4 Horas' 
     );
