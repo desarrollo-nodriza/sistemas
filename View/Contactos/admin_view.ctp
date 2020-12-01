@@ -84,7 +84,7 @@
                             </tr>
                             <tr>
                                 <th>Teléfono del cliente</th>
-                                <td><?=$contacto['Contacto']['asunto']; ?></td>
+                                <td><?=$contacto['Contacto']['fono_contacto']; ?></td>
                             </tr>
                         </table>
                     </div>

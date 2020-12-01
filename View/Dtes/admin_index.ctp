@@ -152,6 +152,9 @@
 					<? endif; ?>
 				</div>
 				<div class="panel-body">
+					
+					<?= $this->element('contador_resultados', array('col' => false)); ?>
+
 					<div class="table-responsive">
 						<table class="table">
 							<thead>

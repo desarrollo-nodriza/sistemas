@@ -239,4 +239,67 @@ class Token extends AppModel
 
 	}
 
+
+	public function obtener_propietario_token($token)
+	{
+		$token = $this->find('first', array(
+			'conditions' => array(
+				'Token.token' => trim($token)
+			),
+			'contain' => array(
+				'Administrador' => array(
+					'fields' => array(
+						'Administrador.id',
+						'Administrador.nombre',
+						'Administrador.email'
+					)
+				),
+				'Proveedor' => array(
+					'fields' => array(
+						'Proveedor.id',
+						'Proveedor.nombre'
+					)
+				),
+				'VentaCliente' => array(
+					'fields' => array(
+						'VentaCliente.id',
+						'VentaCliente.nombre',
+						'VentaCliente.email'
+					)
+				)
+			),
+			'fields' => array(
+				'Token.administrador_id',
+				'Token.proveedor_id',
+				'Token.venta_cliente_id'
+			)
+		));
+
+		if (empty($token))
+		{
+			return 'No definido';
+		}
+
+		# Token admin
+		if (!empty($token['Token']['administrador_id']))
+		{
+			return $token['Administrador']['nombre'] . ' <' . $token['Administrador']['email'] . '>';
+		}
+
+		# Token proveedor
+		if (!empty($token['Token']['proveedor_id']))
+		{
+			return $token['Proveedor']['nombre'];
+		}
+
+		# Token cliente
+		if (!empty($token['Token']['venta_cliente_id']))
+		{
+			return $token['Ventacliente']['nombre'] . ' <' . $token['Ventacliente']['email'] . '>';
+		}
+
+		return 'No definido';
+
+	}
+
 }

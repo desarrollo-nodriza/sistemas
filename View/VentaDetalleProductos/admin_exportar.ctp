@@ -45,4 +45,4 @@ foreach ( $datos as $dato )
  * Cierra la tabla y crea el archivo
  */
 $this->PhpSpreadsheet->addTableFooter();
-$this->PhpSpreadsheet->output(sprintf('Listado_%s_%s.xlsx', $modelo, date('Y_m_d-H_i_s')));
+$this->PhpSpreadsheet->output(sprintf('Listado_%s_%s.csv', $modelo, date('Y_m_d-H_i_s')), 'Csv');

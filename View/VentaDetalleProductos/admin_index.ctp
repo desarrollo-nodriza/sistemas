@@ -11,6 +11,7 @@
 				$id     = (isset($this->request->params['named']['id'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['id'])) : '' ;
 				$nombre = (isset($this->request->params['named']['nombre'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['nombre'])) : '' ;
 				$marca = (isset($this->request->params['named']['marca'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['marca'])) : '' ;
+				$existencia = (isset($this->request->params['named']['existencia'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['existencia'])) : '' ;
 			?>
 			<div class="panel panel-default">
 				<div class="panel-heading">
@@ -50,6 +51,19 @@
 								))?>
 						</div>
 					</div>
+					<!--<div class="col-sm-3 col-xs-12">
+						<div class="form-group">
+							<label>En existencia</label>
+							<?/*=$this->Form->select('existencia', array(
+									'en_existencia' => 'En existencia',
+									'sin_existencia' => 'Sin exitencia'
+								), array(
+								'class' => 'form-control',
+								'empty' => 'Seleccione',
+								'default' => $existencia
+								))*/?>
+						</div>
+					</div>-->
 				</div>
 				<div class="panel-footer">
 					<div class="col-xs-12">
@@ -80,21 +94,35 @@
 						<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Producto', array('action' => 'add'), array('class' => 'btn btn-success', 'escape' => false)); ?>
 					<? endif; ?>
 						
-						<? $export = array(
-							'action' => 'exportar'
+						<?  $export = array(
+								'action' => 'exportar',
+								'false'
+							);
+
+							$export2 = array(
+								'action' => 'exportar',
+								'true'
 							);
 
 						if (isset($this->request->params['named'])) {
 							$export = array_replace_recursive($export, $this->request->params['named']);
+							$export2 = array_replace_recursive($export2, $this->request->params['named']);
 						}?>
-						
-						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>
+					
+						<a href="#" data-toggle="dropdown" class="btn btn-primary dropdown-toggle" aria-expanded="true"><i class="fa fa-file-excel-o"></i> Exportar <span class="caret"></span></a>
+						<ul class="dropdown-menu" role="menu">
+							<li><?= $this->Html->link( $this->Paginator->counter('<i class="fa fa-file-excel-o"></i> Exportar simple ({:count} registros).'), $export, array('class' => '', 'escape' => false)); ?></li>
+							<li><?= $this->Html->link( $this->Paginator->counter('<i class="fa fa-file-excel-o"></i> Exportar con stock ({:count} registros).'), $export2, array('class' => '', 'escape' => false)); ?></li>                                             
+						</ul>
+
 					</div>					
 				</div>
 				<div class="panel-body">
+					
+					<?= $this->element('contador_resultados', array('col' => false)); ?>
+
 					<div class="table-responsive">
 						<table class="table">
-							<caption><?=$this->Paginator->counter('Página {:page} de {:pages}, mostrando {:current} registros de {:count}.');?></caption>
 							<thead>
 								<tr class="sort">
 									<th style="width: 120px;"><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>

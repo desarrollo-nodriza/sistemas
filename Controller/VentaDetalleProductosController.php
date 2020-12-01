@@ -58,7 +58,25 @@ class VentaDetalleProductosController extends AppController
 		$paginate = array_replace_recursive($paginate, array(
 			'limit' => 20,
 			'order' => array('VentaDetalleProducto.id_externo' => 'DESC'),
-			'contain' => array('Marca')
+			'contain' => array(
+				'Marca' => array(
+					'fields' => array(
+						'Marca.id', 'Marca.nombre'
+					)
+				),
+
+			),
+			'fields' => array(
+				'VentaDetalleProducto.id', 
+				'VentaDetalleProducto.id_externo',
+				'VentaDetalleProducto.nombre', 
+				'VentaDetalleProducto.marca_id', 
+				'VentaDetalleProducto.cantidad_virtual', 
+				'VentaDetalleProducto.codigo_proveedor', 
+				'VentaDetalleProducto.precio_costo', 
+				'VentaDetalleProducto.cantidad_virtual', 
+				'VentaDetalleProducto.activo'
+				)
 			));
 
 
@@ -78,13 +96,60 @@ class VentaDetalleProductosController extends AppController
 						$paginate = array_replace_recursive($paginate, array(
 							'conditions' => array('VentaDetalleProducto.marca_id' => $valor)));
 						break;
+					case 'existencia':
+						
+						$db = $this->VentaDetalleProducto->getDataSource();
+						$subQuery = $db->buildStatement(
+							array(
+								'fields'     => array('SUM(Bodega.cantidad)'),
+								'table'      => 'rp_bodegas_venta_detalle_productos',
+								'alias'      => 'Bodega',
+								'limit'      => null,
+								'offset'     => null,
+								'joins'      => array(),
+								'conditions' => array('Bodega.venta_detalle_producto_id = VentaDetalleProducto.id'),
+								'order'      => null,
+								'group'      => array('Bodega.venta_detalle_producto_id')
+							),
+							$this->VentaDetalleProducto
+						);
+						$subQuery = '(' . $subQuery . ') as stock_fisico';
+						$subQueryExpression = $db->expression($subQuery);
+					
+						$paginate['fields'][] = $subQueryExpression->value;
+						
+						if ($valor == 'en_existencia')
+						{
+							$paginate = array_replace_recursive($paginate, array(
+								'having' => array(
+									'stock_fisico >' => 0
+								)
+							));
+						}
+						else
+						{
+							$paginate = array_replace_recursive($paginate, array(
+								'having' => array(
+									'SUM(BP.cantidad)' => 0
+								)
+							));
+						}
+
+						
+						break;
 				}
 			}
 		}
-
+	
 
 		$this->paginate		= $paginate;
 		$ventadetalleproductos	= $this->paginate();
+
+		$log = $this->VentaDetalleProducto->getDataSource()->getLog(false, false);
+		
+		#debug($log);
+		
+		#prx($ventadetalleproductos);
 
 
 		foreach ($ventadetalleproductos as $iv => $producto) {
@@ -1565,18 +1630,67 @@ class VentaDetalleProductosController extends AppController
 		$this->redirect(array('action' => 'index'));
 	}
 
-	public function admin_exportar($canales = false, $limite = 100000, $offset = 0)
-	{	
+	public function admin_exportar($canales = 'false', $limite = 100000, $offset = 0)
+	{		
 		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
 		set_time_limit(-1);
 		ini_set('memory_limit', -1);
-
+		
 		$qry = array(
 			'recursive'	=> -1,
 			'limit' => $limite,
-			'offset' => $offset
+			'offset' => $offset,
+			'contain' => array(
+				'Bodega' => array(
+					'fields' => array(
+						'Bodega.id',
+						'BodegasVentaDetalleProducto.cantidad'
+					)
+				),
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.cantidad_reservada'
+					)
+				),
+				'PrecioEspecificoProducto' => array(
+					'conditions' => array(
+						'PrecioEspecificoProducto.activo' => 1,
+						'OR' => array(
+							'PrecioEspecificoProducto.descuento_infinito' => 1,
+							'AND' => array(
+								array('PrecioEspecificoProducto.fecha_inicio <=' => date('Y-m-d')),
+								array('PrecioEspecificoProducto.fecha_termino >=' => date('Y-m-d')),
+							)
+						)
+					),
+					'order' => array(
+						'PrecioEspecificoProducto.id' => 'DESC'
+					)
+				),
+				'Marca' => array(
+					'PrecioEspecificoMarca' => array(
+						'conditions' => array(
+							'PrecioEspecificoMarca.activo' => 1,
+							'OR' => array(
+								'PrecioEspecificoMarca.descuento_infinito' => 1,
+								'AND' => array(
+									array('PrecioEspecificoMarca.fecha_inicio <=' => date('Y-m-d')),
+									array('PrecioEspecificoMarca.fecha_termino >=' => date('Y-m-d')),
+								)
+							)
+						),
+						'order' => array(
+							'PrecioEspecificoMarca.id' => 'DESC'
+						)
+					),
+					'fields' => array(
+						'Marca.id',
+						'Marca.descuento_base'
+					)
+				)
+			)
 		);
-
+		
 		# Filtrar
 		if ( isset($this->request->params['named']) ) {
 			foreach ($this->request->params['named'] as $campo => $valor) {
@@ -1598,7 +1712,7 @@ class VentaDetalleProductosController extends AppController
 		}
 		
 		$datos			= $this->VentaDetalleProducto->find('all', $qry);
-
+		
 		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('Bodega.activo' => 1)));
 			
 		$meliConexion = array();
@@ -1612,58 +1726,66 @@ class VentaDetalleProductosController extends AppController
 			)
 		));
 
-		foreach ($datos as $id => $p) {
-			
-			foreach ($bodegas as $ib => $b) {
-				$datos[$id]['VentaDetalleProducto']['stock_fisico_' . strtolower(Inflector::slug($b))] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($p['VentaDetalleProducto']['id'], $ib, true);		
-			}
+		if ($canales == 'true') {
+			foreach ($datos as $id => $p) {
+				
+				foreach ($bodegas as $ib => $b) {
+					$datos[$id]['VentaDetalleProducto']['stock_fisico_' . strtolower(Inflector::slug($b))] = array_sum(Hash::extract($p['Bodega'], '{n}[id='.$ib.'].BodegasVentaDetalleProducto.cantidad'));		
+				}
 
-			$datos[$id]['VentaDetalleProducto']['stock_fisico_total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($p['VentaDetalleProducto']['id'], true);
-			$datos[$id]['VentaDetalleProducto']['stock_reservado']    = $this->VentaDetalleProducto->obtener_cantidad_reservada($p['VentaDetalleProducto']['id']);
-			$datos[$id]['VentaDetalleProducto']['ultimo_precio_compra'] = ClassRegistry::init('Bodega')->ultimo_precio_compra($p['VentaDetalleProducto']['id']);
-			$datos[$id]['VentaDetalleProducto']['precio_costo'] = ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($p['VentaDetalleProducto']['id']);
-			
+				$descuento_producto = $this->VentaDetalleProducto->obtener_descuento_por_producto($p, true);
+
+				$precio_costo = $p['VentaDetalleProducto']['precio_costo'] - $descuento_producto['total_descuento'];
+				
+				$datos[$id]['VentaDetalleProducto']['stock_fisico_total'] = array_sum(Hash::extract($p['Bodega'], '{n}.BodegasVentaDetalleProducto.cantidad'));
+				$datos[$id]['VentaDetalleProducto']['stock_reservado']    = array_sum(Hash::extract($p['VentaDetalle'], '{n}.cantidad_reservada'));
+				$datos[$id]['VentaDetalleProducto']['ultimo_precio_compra'] = ClassRegistry::init('Bodega')->ultimo_precio_compra($p['VentaDetalleProducto']['id']);
+				$datos[$id]['VentaDetalleProducto']['precio_costo'] = $precio_costo;
+				
 
 
-			# Vemos el detalle en los canales
-			if ($canales) {
+				# Vemos el detalle en los canales
+				/*if ($canales) {
 
-				foreach ($marketplaces as $im => $m) {
-					
-					if ($m['Marketplace']['marketplace_tipo_id'] == 1)
-						continue;
-
-					if (!isset($meliConexion[$m['Marketplace']['id']])) {
-						# Para la consola se carga el componente on the fly!
-						$meliConexion[$m['Marketplace']['id']] = $this->Components->load('MeliMarketplace');
-
-						# cliente Meli
-						$meliConexion[$m['Marketplace']['id']]->crearCliente( $m['Marketplace']['api_user'], $m['Marketplace']['api_key'], $m['Marketplace']['access_token'], $m['Marketplace']['refresh_token'] );
-					}
-					
-					$result = $meliConexion[$m['Marketplace']['id']]->mercadolibre_conectar('', $m['Marketplace']);									
-
-					if ($result['success']) {
+					foreach ($marketplaces as $im => $m) {
 						
-						$meli           = $meliConexion[$m['Marketplace']['id']]->mercadolibre_producto_existe($p['VentaDetalleProducto']['id_externo'], $m['Marketplace']['seller_id']);
-						
-						if (!$meli['existe']) {
+						if ($m['Marketplace']['marketplace_tipo_id'] == 1)
 							continue;
+
+						if (!isset($meliConexion[$m['Marketplace']['id']])) {
+							# Para la consola se carga el componente on the fly!
+							$meliConexion[$m['Marketplace']['id']] = $this->Components->load('MeliMarketplace');
+
+							# cliente Meli
+							$meliConexion[$m['Marketplace']['id']]->crearCliente( $m['Marketplace']['api_user'], $m['Marketplace']['api_key'], $m['Marketplace']['access_token'], $m['Marketplace']['refresh_token'] );
 						}
 						
-						$datos[$id]['VentaDetalleProducto']['precio_' . strtolower(Inflector::slug($m['Marketplace']['nombre']))] = $meli['item']['precio'];
-						
-						$datos[$id]['VentaDetalleProducto']['envio_'  . strtolower(Inflector::slug($m['Marketplace']['nombre']))] = $meliConexion[$m['Marketplace']['id']]->mercadolibre_obtener_costo_envio($meli['item']['id']);
+						$result = $meliConexion[$m['Marketplace']['id']]->mercadolibre_conectar('', $m['Marketplace']);									
+
+						if ($result['success']) {
+							
+							$meli           = $meliConexion[$m['Marketplace']['id']]->mercadolibre_producto_existe($p['VentaDetalleProducto']['id_externo'], $m['Marketplace']['seller_id']);
+							
+							if (!$meli['existe']) {
+								continue;
+							}
+							
+							$datos[$id]['VentaDetalleProducto']['precio_' . strtolower(Inflector::slug($m['Marketplace']['nombre']))] = $meli['item']['precio'];
+							
+							$datos[$id]['VentaDetalleProducto']['envio_'  . strtolower(Inflector::slug($m['Marketplace']['nombre']))] = $meliConexion[$m['Marketplace']['id']]->mercadolibre_obtener_costo_envio($meli['item']['id']);
+
+						}
 
 					}
+					
+				}*/
 
-				}
-				
 			}
 
 		}
-		
+
 		$this->set(compact('datos', 'campos', 'modelo', 'bodegas', 'marketplaces'));
+
 	}
 
 

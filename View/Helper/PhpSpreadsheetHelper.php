@@ -162,7 +162,7 @@ class PhpSpreadsheetHelper extends AppHelper {
 	/**
 	 * Output file to browser
 	 */
-	public function output($filename = 'export.xlsx') {
+	public function output($filename = 'export.xlsx', $type = 'Xlsx') {
 		// set layout
 		$this->_View->layout = '';
 		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -170,7 +170,15 @@ class PhpSpreadsheetHelper extends AppHelper {
 		header('Cache-Control: max-age=0');
 
 		// writer
-		$writer = IOFactory::createWriter($this->xls, 'Xlsx');
+		$writer = IOFactory::createWriter($this->xls, $type);
+
+		if ($type == 'Csv')
+		{
+			$writer->setUseBOM(true);
+			$writer->setDelimiter(';');
+			$writer->setEnclosure('"');
+		}
+
 		$writer->save('php://output');
 		exit;
 	}
