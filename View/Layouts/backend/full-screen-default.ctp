@@ -22,6 +22,7 @@
 		<?= $this->fetch('css'); ?>
 		<?= $this->Html->scriptBlock("var webroot = '{$this->webroot}';"); ?>
 		<?= $this->Html->scriptBlock("var fullwebroot = '{$this->Html->url('', true)}';"); ?>
+		<?= $this->Html->scriptBlock("var loggeduser = " . json_encode($this->Session->read('Auth.Administrador')) . ";"); ?>
 		<?= $this->Html->script(array(
 			'/backend/js/plugins/jquery/jquery.min',
 			'/backend/js/plugins/jquery/jquery-ui.min',

@@ -971,7 +971,7 @@ class VentasController extends AppController {
 		}
 		
 		try {
-			$cambiar_estado = $this->cambiarEstado($id, $this->request->data['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id']);
+			$cambiar_estado = $this->cambiarEstado($id, $this->request->data['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id'], '', '', $this->Session->read('Auth.Administrador.nombre'));
 		} catch (Exception $e) {
 			$respuesta['code'] = 506;
 			$respuesta['message'] = $e->getMessage();
@@ -1135,7 +1135,7 @@ class VentasController extends AppController {
 
 				if (!empty($preparacion)) {
 					try {
-						$this->cambiarEstado($id, $venta['Venta']['id_externo'], $preparacion['VentaEstado']['id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id']);
+						$this->cambiarEstado($id, $venta['Venta']['id_externo'], $preparacion['VentaEstado']['id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $this->Session->read('Auth.Administrador.nombre'));
 					} catch (Exception $e) {
 						// Nothing
 					}	
@@ -3254,7 +3254,7 @@ class VentasController extends AppController {
 			}
 
 			try {
-				$cambiar_estado = $this->cambiarEstado($id, $this->request->data['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id']);
+				$cambiar_estado = $this->cambiarEstado($id, $this->request->data['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id'], '', '', $this->Session->read('Auth.Administrador.nombre'));
 			} catch (Exception $e) {
 				$this->Session->setFlash($e->getMessage(), null, array(), 'danger');
 				$this->redirect(array('action' => 'view', $id));
@@ -3958,7 +3958,7 @@ class VentasController extends AppController {
 	 * @param  string $detalleCancelado [description]
 	 * @return [type]                   [description]
 	 */
-	public function cambiarEstado($id_venta, $id_externo, $estado_nuevo_id, $tienda_id, $marketplace_id = null, $razonCancelado = '', $detalleCancelado = '')
+	public function cambiarEstado($id_venta, $id_externo, $estado_nuevo_id, $tienda_id, $marketplace_id = null, $razonCancelado = '', $detalleCancelado = '', $responsable = '')
 	{
 		ClassRegistry::init('VentaEstado')->id = $estado_nuevo_id;
 		ClassRegistry::init('Tienda')->id      = $tienda_id;
@@ -4140,7 +4140,7 @@ class VentasController extends AppController {
 		# se setea el id de la venta
 		$saveVenta['Venta']['id']                       = $venta['Venta']['id'];
 		$saveVenta['Venta']['venta_estado_id']          = $estado_nuevo_id;
-		$saveVenta['Venta']['venta_estado_responsable'] = ($this->Session->check('Auth.Administrador.id')) ? $this->Session->read('Auth.Administrador.nombre') : $venta['Venta']['venta_estado_responsable'];
+		$saveVenta['Venta']['venta_estado_responsable'] = (!empty($responsable)) ? $responsable : $this->Session->read('Auth.Administrador.nombre');
 	
 		# Guardamos el estado anterior en la tabla pivot
 		$saveVenta['VentaEstado2'] = array(
@@ -8911,9 +8911,11 @@ class VentasController extends AppController {
 		$this->request->data['Venta']['estado_anterior'] = $estado_actual;
 		$this->request->data['Venta']['venta_estado_id'] = $venta['Venta']['venta_estado_id'];
 		
+		$responsable = ClassRegistry::init('Token')->obtener_propietario_token($token);
+
 		try {
 			
-			$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $venta['Venta']['venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id']);
+			$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $venta['Venta']['venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $responsable);
 		
 		} catch (Exception $e) {
 

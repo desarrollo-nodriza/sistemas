@@ -23,6 +23,7 @@
 		<?= $this->fetch('css'); ?>
 		<?= $this->Html->scriptBlock("var webroot = '{$this->webroot}';"); ?>
 		<?= $this->Html->scriptBlock("var fullwebroot = '{$this->Html->url('', true)}';"); ?>
+		<?= $this->Html->scriptBlock("var loggeduser = " . json_encode($this->Session->read('Auth.Administrador')) . ";"); ?>
 		<?= $this->Html->script(array(
 			'https://www.gstatic.com/firebasejs/7.2.2/firebase-app.js',
 			'https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js',

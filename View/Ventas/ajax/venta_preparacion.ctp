@@ -107,7 +107,7 @@
 	<? endif; ?>
 
 	<? if ($venta['Venta']['picking_estado'] == 'empaquetando') : ?>
-	<div class="task-item task-warning <?=($this->Session->read('Auth.Administrador.email') != $venta['Venta']['picking_email']) ? 'no-move' : '' ; ?>" data-id="<?=$venta['Venta']['id']; ?>" >                                    
+	<div class="task-item task-warning <?=($this->Session->read('Auth.Administrador.email') != $venta['Venta']['picking_email']) ? 'no-move' : '' ; ?>" data-id="<?=$venta['Venta']['id']; ?>" data-responsable="<?=$venta['Venta']['picking_email'];?>" >                                    
 	    <div class="task-text">
 	    	
 	    	<img src="https://chart.googleapis.com/chart?chs=<?=$tamano;?>&cht=qr&chl=<?=$url;?>&choe=UTF-8" title="QR" class="img-responsive qr-code"/>

@@ -385,6 +385,21 @@ $(function() {
 			$('.loader').addClass('show');
 			$('#refrescar_manualmente').addClass('fa-spin');
 
+			// Verificamos que existe solo una venta en preparación
+			if ($estado === 'empaquetando')
+			{
+				var tareasProcesadas = $('#tasks_progreess').find("[data-responsable='" + loggeduser.email + "']").length; 
+
+				if (tareasProcesadas > 0)
+				{
+					noty({text: 'No se permite preparar más de una venta a la vez.', layout: 'topRight', type: 'error'});
+					$("#tasks").sortable('cancel');
+					$('.loader').removeClass('show');
+					
+					return;
+				}
+			}
+
 			$.post(webroot + 'ventas/cambiar_subestado/' + id_venta, {'subestado':$estado}, function(res){
 
 				var respuesta = $.parseJSON(res);
@@ -398,7 +413,8 @@ $(function() {
 					noty({text: respuesta.message, layout: 'topRight', type: 'error'});
 				}				
 
-			}).fail(function(){
+			})
+			.fail(function(){
 				$("#tasks").sortable('cancel');
 				actualizado = false;
 				noty({text: 'Ocurrió un error al actualizar la venta. Intente actualizar la página.', layout: 'topRight', type: 'error'});
@@ -1254,7 +1270,7 @@ $(function() {
 			            handle: ".task-text",     
 			            receive: function(event, ui) {
 			                if(this.id == "tasks_progreess"){
-			                	cambiar_venta_estado_preparacion(ui.item, 'empaquetando');
+								cambiar_venta_estado_preparacion(ui.item, 'empaquetando');
 			                }
 			                if(this.id == "tasks"){
 			                	cambiar_venta_estado_preparacion(ui.item, 'empaquetar');
