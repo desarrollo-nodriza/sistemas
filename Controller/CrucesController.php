@@ -119,8 +119,9 @@ Class CrucesController extends AppController {
 					// Se agregas las nuevas cabeceras
 					$spreadsheet->setActiveSheetIndex(0)
 					->setCellValueByColumnAndRow($ultimaColumna, 1, 'Folio')
-					->setCellValueByColumnAndRow($ultimaColumna+1, 1, 'Tipo documento')
-					->setCellValueByColumnAndRow($ultimaColumna+2, 1, 'Total documento');
+					->setCellValueByColumnAndRow($ultimaColumna+1, 1, 'Rut receptor')
+					->setCellValueByColumnAndRow($ultimaColumna+2, 1, 'Tipo documento')
+					->setCellValueByColumnAndRow($ultimaColumna+3, 1, 'Total documento');
 
 					foreach ($this->Session->read('Cruxe.options') as $i => $nombre) {
 
