@@ -150,7 +150,7 @@ Class CrucesController extends AppController {
 							// Sólo boletas y facturas
 							if ($d['tipo_documento'] == 33 || $d['tipo_documento'] == 39) {
 								$folio           = $d['folio'];
-								$rut_receptor    = $d['rut_receptor'];
+								$rut_receptor    = formato_rut($d['rut_receptor']);
 								$tipo_documento  = $DtesController->tipoDocumento[$d['tipo_documento']];
 								$monto_documento = CakeNumber::currency($d['total'], 'CLP');
 							}
