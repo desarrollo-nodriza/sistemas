@@ -74,7 +74,7 @@ Class CrucesController extends AppController {
 								'Dte.estado' => 'dte_real_emitido'
 							),
 							'fields' => array(
-								'Dte.folio', 'Dte.estado', 'Dte.tipo_documento', 'Dte.total'
+								'Dte.folio', 'Dte.estado', 'Dte.tipo_documento', 'Dte.total', 'Dte.rut_receptor'
 							)
 						),
 						'fields' => array(
@@ -142,12 +142,14 @@ Class CrucesController extends AppController {
 						$DtesController = new DtesController(new CakeRequest(), new CakeResponse());
 
 						$folio = '';
+						$rut_receptor = '';
 						$tipo_documento = '';
 						$monto_documento = '';
 						foreach ($dtes as $ia => $d) {
 							// Sólo boletas y facturas
 							if ($d['tipo_documento'] == 33 || $d['tipo_documento'] == 39) {
 								$folio           = $d['folio'];
+								$rut_receptor    = $d['rut_receptor'];
 								$tipo_documento  = $DtesController->tipoDocumento[$d['tipo_documento']];
 								$monto_documento = CakeNumber::currency($d['total'], 'CLP');
 							}
@@ -156,8 +158,9 @@ Class CrucesController extends AppController {
 						// Agreamos los valores a la columna y fila correspondiente
 						$spreadsheet->setActiveSheetIndex(0)
 						->setCellValueByColumnAndRow( $ultimaColumna, $indice, $folio )
-						->setCellValueByColumnAndRow( $ultimaColumna+1, $indice, $tipo_documento )
-						->setCellValueByColumnAndRow( $ultimaColumna+2, $indice, $monto_documento );
+						->setCellValueByColumnAndRow( $ultimaColumna+1, $indice, $rut_receptor )
+						->setCellValueByColumnAndRow( $ultimaColumna+2, $indice, $tipo_documento )
+						->setCellValueByColumnAndRow( $ultimaColumna+3, $indice, $monto_documento );
 					}
 				}
 				
