@@ -74,7 +74,7 @@ Class CrucesController extends AppController {
 								'Dte.estado' => 'dte_real_emitido'
 							),
 							'fields' => array(
-								'Dte.folio', 'Dte.estado', 'Dte.tipo_documento', 'Dte.total', 'Dte.rut_receptor'
+								'Dte.folio', 'Dte.estado', 'Dte.tipo_documento', 'Dte.total', 'Dte.rut_receptor', 'Dte.razon_social_receptor'
 							)
 						),
 						'fields' => array(
@@ -120,8 +120,9 @@ Class CrucesController extends AppController {
 					$spreadsheet->setActiveSheetIndex(0)
 					->setCellValueByColumnAndRow($ultimaColumna, 1, 'Folio')
 					->setCellValueByColumnAndRow($ultimaColumna+1, 1, 'Rut receptor')
-					->setCellValueByColumnAndRow($ultimaColumna+2, 1, 'Tipo documento')
-					->setCellValueByColumnAndRow($ultimaColumna+3, 1, 'Total documento');
+					->setCellValueByColumnAndRow($ultimaColumna+2, 1, 'Razon social receptor')
+					->setCellValueByColumnAndRow($ultimaColumna+3, 1, 'Tipo documento')
+					->setCellValueByColumnAndRow($ultimaColumna+4, 1, 'Total documento');
 
 					foreach ($this->Session->read('Cruxe.options') as $i => $nombre) {
 
@@ -144,6 +145,7 @@ Class CrucesController extends AppController {
 
 						$folio = '';
 						$rut_receptor = '';
+						$nombre_receptor = '';
 						$tipo_documento = '';
 						$monto_documento = '';
 						foreach ($dtes as $ia => $d) {
@@ -151,6 +153,7 @@ Class CrucesController extends AppController {
 							if ($d['tipo_documento'] == 33 || $d['tipo_documento'] == 39) {
 								$folio           = $d['folio'];
 								$rut_receptor    = formato_rut($d['rut_receptor']);
+								$nombre_receptor = $d['razon_social_receptor'];
 								$tipo_documento  = $DtesController->tipoDocumento[$d['tipo_documento']];
 								$monto_documento = CakeNumber::currency($d['total'], 'CLP');
 							}
@@ -160,8 +163,9 @@ Class CrucesController extends AppController {
 						$spreadsheet->setActiveSheetIndex(0)
 						->setCellValueByColumnAndRow( $ultimaColumna, $indice, $folio )
 						->setCellValueByColumnAndRow( $ultimaColumna+1, $indice, $rut_receptor )
-						->setCellValueByColumnAndRow( $ultimaColumna+2, $indice, $tipo_documento )
-						->setCellValueByColumnAndRow( $ultimaColumna+3, $indice, $monto_documento );
+						->setCellValueByColumnAndRow( $ultimaColumna+2, $indice, $nombre_receptor )
+						->setCellValueByColumnAndRow( $ultimaColumna+3, $indice, $tipo_documento )
+						->setCellValueByColumnAndRow( $ultimaColumna+4, $indice, $monto_documento );
 					}
 				}
 				
