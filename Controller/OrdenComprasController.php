@@ -1790,7 +1790,7 @@ class OrdenComprasController extends AppController
 			# recalculamos los montos
 			foreach ($itemsAceptados as $i => $item) {
 
-				if ($item['cantidad_validada_proveedor'] == 0) continue;
+				#if ($item['cantidad_validada_proveedor'] == 0) continue;
 
 				$descuento_pp       = $item['descuento_producto'] / $item['cantidad'];
 				$descuento_pp_final = $descuento_pp * $item['cantidad_validada_proveedor'];
