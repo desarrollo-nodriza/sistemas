@@ -20,7 +20,7 @@
 							<thead>
 								<th>ID</th>
 								<th>Código</th>
-								<th>Descripción</th>
+								<th style="width: 150px;">Descripción</th>
 								<th>Precio uni</th>
 								<th>Total</th>
 								<th>Cantidad pedida</th>
@@ -165,7 +165,7 @@
 										<?= $this->Form->input(sprintf('OrdenCompraFactura.%d.nota', $ip), array('type' => 'textarea', 'class' => 'form-control', 'placeholder' => 'Agregue un nota (opcional)', 'value' => $dte['nota'], 'readonly' => ($dte['pagada']) ? true : false)); ?>
 									</td>
 									<td valign="center">
-										<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
+										<button class="remove_tr btn-danger btn-quitar-factura" data-id="<?=$dte['id']; ?>"><i class="fa fa-minus"></i></button>
 									</td>
 								</tr>
 								<? endforeach; ?>

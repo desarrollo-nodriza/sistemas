@@ -179,4 +179,21 @@ class OrdenCompraFactura extends AppModel
 			return (int) $ultimo['OrdenCompraFactura']['id'] + 1;
 		}
 	}
+
+	/**
+	 * Obtiene la factura dado el folio, tipo de dte y prpoveedor
+	 * @param int $invoice FOLIO del DTE
+	 * @param int $supplier_id ID del proveedor
+	 * @param int $type Tipo DTE, 33 o 61
+	 */
+	public function find_by_invoice($invoice, $supplier_id, $type = 33)
+	{
+		return $this->find('first', array(
+			'conditions' => array(
+				'OrdenCompraFactura.folio' => $invoice,
+				'OrdenCompraFactura.proveedor_id' => $supplier_id,
+				'OrdenCompraFactura.tipo_documento' => $type
+			)
+		));
+	}
 }

@@ -2,6 +2,40 @@ var pagado_ocf    = 0;
 var facturado_ocf = 0;
 var oc_seleccionada = 0;
 
+var facturas_oc = function(){
+	return {
+		get: function($params, $token, successCallback, failCallback){
+			
+		},
+		view: function(message_id, $token, successCallback, failCallback){
+			
+
+		},
+		add: function($data, $token, successCallback, failCallback){
+
+		},
+		delete: function($factura_id, $token, successCallback, failCallback){
+
+			$.app.loader.mostrar();
+
+			$.ajax({
+				url: webroot + 'api/facturas-oc/delete/' + $factura_id + '.json?token=' + $token,
+				type: 'POST'
+			})
+			.done(function(res){
+				successCallback.call(this, res);
+			})
+			.fail(function(error, textStatus, message) {
+
+				failCallback(error);
+
+			})
+			.always(function(){
+				$.app.loader.ocultar();
+			});
+		}
+	}
+}();
 
 $.extend({
 	ordenCompraFacturas: {
@@ -104,6 +138,32 @@ $.extend({
 			if ($('.js-factura-id').length) {
 				$.ordenCompraFacturas.indice();
 			}
+
+			$(document).on('click', '.btn-quitar-factura', function(){
+				var token = loggeduser.token.token;
+				var id_factura = $(this).data('id');
+
+				facturas_oc.delete(id_factura, token, 
+					function(res){
+						if (res.response.code == 200)
+						{
+							noty({text: res.response.code + ': ' + res.response.message, layout: 'topRight', type: 'success'});
+
+							setTimeout(function(){
+								$.noty.closeAll();
+							}, 10000);
+						}
+					},
+					function(error){
+						noty({text: error.code + ': ' + error.message, layout: 'topRight', type: 'danger'});
+
+						setTimeout(function(){
+							$.noty.closeAll();
+						}, 10000);
+					}
+				);
+
+			});
 		}
 	}
 });

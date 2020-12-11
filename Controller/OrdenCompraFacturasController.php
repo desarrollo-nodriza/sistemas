@@ -960,4 +960,71 @@ class OrdenCompraFacturasController extends AppController
 
 		$libreDte = $this->Components->load('LibreDte');
 	}
+
+
+
+	/**
+     * Elimina una factura
+     * Endpoint: /api/facturas-oc/delete/:id.json
+     * @param  [type] $id id externo del producto
+     */
+    public function api_delete($id) {
+    	
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 401, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 401, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!$this->OrdenCompraFactura->exists($id))
+		{
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Factura no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$res = array();
+
+		if (!$this->OrdenCompraFactura->delete($id))
+		{
+			$response = array(
+				'code'    => 401, 
+				'message' => 'No fue posible eliminar la Factura. Intente nuevamente.'
+			);
+
+			throw new CakeException($response);
+		}
+
+        $this->set(array(
+            'response' => array(
+				'code' => 200,
+            	'message' => sprintf('La Factura #%s fue eliminada exitosamente.', $id)
+			),
+            '_serialize' => array('response')
+        ));
+			
+    }
 }

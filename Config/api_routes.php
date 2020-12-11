@@ -444,6 +444,22 @@ Router::connect(
         'prefix' => 'api')
 );
 
+/**
+ * Orden compra facturas
+ */
+Router::connect(
+    '/api/facturas-oc/delete/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompraFacturas', 
+        'action' => 'delete',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
 
 /**
  * Mensajes

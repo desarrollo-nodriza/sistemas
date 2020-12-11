@@ -299,7 +299,7 @@ class OrdenComprasController extends AppController
 		);
 
 		if ($this->request->is('post') || $this->request->is('put')) {
-			
+
 			ini_set('max_execution_time', 0);
 
 			# Se debe inngresar un Documeto para hacer la recepcón
@@ -413,6 +413,13 @@ class OrdenComprasController extends AppController
 				if (isset($ocf['id']))
 					continue;
 				
+				# si la factura ya existe, no se procesa
+				if (ClassRegistry::init('OrdenCompraFactura')->find_by_invoice($ocf['folio'], $ocf['proveedor_id']))
+				{	
+					# No se guarda
+					unset($this->request->data['OrdenCompraFactura'][$iocf]);
+					continue;
+				}
 				
 				# Se obtiene el dTE desde el sii y se verifican los datos
 				$emisor   = $this->rutSinDv($this->request->data['OrdenCompra']['rut_proveedor']);
