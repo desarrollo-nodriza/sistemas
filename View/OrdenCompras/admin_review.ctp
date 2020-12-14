@@ -128,7 +128,7 @@
 										
 										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad', $ipp), array('type' => 'text', 'class' => 'form-control not-blank is-number js-cantidad-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['cantidad'], 'min' => $pp['cant_minima_compra'] )); ?></td>
 										
-										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.precio_unitario', $ipp), array('readonly' => true, 'type' => 'text', 'class' => 'form-control not-blank is-number js-precio-producto', 'value' => $pp['OrdenComprasVentaDetalleProducto']['precio_unitario'])); ?></td>
+										<td><?= $this->Form->input(sprintf('VentaDetalleProducto.%d.precio_unitario', $ipp), array('readonly' => true, 'type' => 'text', 'class' => 'form-control not-blank is-number js-precio-producto', 'value' => $pp['precio_costo'])); ?></td>
 										
 										
 										<td id="descuento-<?=$pp['id'];?>" data-toggle="tooltip" data-placement="top" title="<?= (!empty($pp['nombre_descuento'])) ? $pp['nombre_descuento'] : '' ; ?>" class="js-descuento-valor">
