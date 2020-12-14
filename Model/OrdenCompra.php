@@ -247,6 +247,19 @@ class OrdenCompra extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'OrdenCompraHistorico' => array(
+			'className'				=> 'OrdenCompraHistorico',
+			'foreignKey'			=> 'orden_compra_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 

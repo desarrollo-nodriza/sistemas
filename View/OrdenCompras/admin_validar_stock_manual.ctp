@@ -25,7 +25,7 @@
 							<tboby>
 							<? foreach ($this->request->data['VentaDetalleProducto'] as $ipp => $ocp) : ?>	
 
-								<tr class="<?=($ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] == $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] || $ocp['OrdenComprasVentaDetalleProducto']['cantidad'] == $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida']) ? 'hidden' : ''; ?>" data-cantidad="<?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad'];?>">
+								<tr class="<?=($ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] == $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] || $ocp['OrdenComprasVentaDetalleProducto']['cantidad'] == $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida']) ? '' : ''; ?>" data-cantidad="<?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad'];?>">
 									<td>
 										
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.venta_detalle_producto_id', $ipp), array('value' => $ocp['id'])); ?>
@@ -47,12 +47,12 @@
 									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad'];?></td>
 									<td><?=$this->Form->input(sprintf('VentaDetalleProducto.%d.cantidad_validada_proveedor', $ipp), array('class' => 'form-control is-number not-blank js-cantidad', 'placeholder' => 'Ingrese cantidad disponible', 'min' => 0, 'max' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad'], 'value' => (!empty($ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'])) ? $ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] : $ocp['OrdenComprasVentaDetalleProducto']['cantidad'], 'readonly' => true))?></td>
 									<td>
-										<? if ($ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] != $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida']) : ?>
-										<?= $this->Form->select(sprintf('VentaDetalleProducto.%d.estado_proveedor', $ipp), $estados, array('empty' => false, 'default' => 'accept', 'class' => 'form-control js-opcion'))?>
-										<? endif; ?>
+										
+										<?= $this->Form->select(sprintf('VentaDetalleProducto.%d.estado_proveedor', $ipp), $estados, array('empty' => false, 'default' => $ocp['OrdenComprasVentaDetalleProducto']['estado_proveedor'], 'class' => 'form-control js-opcion'))?>
+										
 										<div class="hidden js-wrapper-nota">
 											<?= $this->Form->label(sprintf('VentaDetalleProducto.%d.nota_proveedor', $ipp), 'Nota', array('class' => 'mt-5')); ?>
-											<?= $this->Form->input(sprintf('VentaDetalleProducto.%d.nota_proveedor', $ipp), array('class' => 'form-control js-nota', 'rows' => 2)); ?>
+											<?= $this->Form->input(sprintf('VentaDetalleProducto.%d.nota_proveedor', $ipp), array('class' => 'form-control js-nota', 'rows' => 2, 'value' => $ocp['OrdenComprasVentaDetalleProducto']['nota_proveedor'] )); ?>
 										</div>		
 									</td>
 								</tr>

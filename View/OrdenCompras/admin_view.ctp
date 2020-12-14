@@ -315,5 +315,79 @@
 		</div>
 	</div>
 
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="panel panel-info">
+				<div class="panel-heading">
+					<h5 class="panel-title"><i class="fa fa-list" aria-hidden="true"></i> <?=__('Histórico');?></h5>
+				</div>
+				<div class="panel-body">
+
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<caption><?= __('Historico de cambios de la OC'); ?></caption>
+							<thead>
+								<tr>
+									<th><?= __('Estado');?></th>
+									<th><?= __('Responsable');?></th>
+									<th><?= __('Fecha del cambio');?></th>
+									<th><?= __('Evidencia');?></th>
+								</tr>
+							</thead>
+							<tbody class="">
+
+								<? if (!empty($oc['OrdenCompraHistorico'])) :  ?>
+								<? foreach($oc['OrdenCompraHistorico'] as $ip => $historico) : ?>
+								<tr>
+									<td>
+										<?= $this->Html->estadosOc($historico['estado']); ?>
+									</td>
+									<td>
+										<?=h($historico['responsable']);?>
+									</td>
+									<td>
+										<?=$historico['created'];?>
+									</td>
+									<td>
+
+									<button type="button" class="btn btn-primary btn-xs" data-toggle="modal" data-target="#modalHistorico<?=$historico['id'];?>">
+										<i class="fa fa-eye"></i> Ver
+									</button>
+										
+									<div class="modal fade" id="modalHistorico<?=$historico['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modalHistorico<?=$historico['id'];?>Label">
+										<div class="modal-dialog" role="document">
+											<div class="modal-content">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+												<h4 class="modal-title" id="modalHistorico<?=$historico['id'];?>Label">Evidencia histórico <?=$this->Html->estadosOc($historico['estado']);?> - <?=$historico['created']; ?></h4>
+											</div>
+											<div class="modal-body">
+												<pre><?print_r(json_decode($historico['evidencia'], true)); ?></pre>
+											</div>
+											<div class="modal-footer">
+												<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+											</div>
+											</div>
+										</div>
+									</div>
+
+									</td>
+								</tr>
+								<? endforeach; ?>
+								<? endif; ?>
+								
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="pull-right">
+						<?= $this->Html->link('Volver', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<? endforeach; ?>
 </div>
