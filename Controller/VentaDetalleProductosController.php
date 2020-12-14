@@ -1804,15 +1804,13 @@ class VentaDetalleProductosController extends AppController
 				'contain' => array(
 					'PrecioEspecificoProducto' => array(
 						'conditions' => array(
+							'PrecioEspecificoProducto.activo' => 1,
 							'OR' => array(
 								'PrecioEspecificoProducto.descuento_infinito' => 1,
 								'AND' => array(
 									array('PrecioEspecificoProducto.fecha_inicio <=' => date('Y-m-d')),
 									array('PrecioEspecificoProducto.fecha_termino >=' => date('Y-m-d')),
 								)
-							),
-							'AND' => array(
-								'PrecioEspecificoProducto.activo' => 1,
 							)
 						),
 						'order' => array(
@@ -1822,6 +1820,7 @@ class VentaDetalleProductosController extends AppController
 					'Marca' => array(
 						'PrecioEspecificoMarca' => array(
 							'conditions' => array(
+								'PrecioEspecificoMarca.activo' => 1,
 								'OR' => array(
 									'PrecioEspecificoMarca.descuento_infinito' => 1,
 									'AND' => array(
