@@ -1744,10 +1744,24 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_exportar()
 	{	
+		ini_set('memory_limit', '-1');
+		set_time_limit(0);
 
-		$datos			= $this->OrdenCompra->find('all', array(
-			'recursive'				=> -1
-		));
+		$qry = array(
+			'recursive'			=> -1,
+			'conditions' => array(
+				'OrdenCompra.proveedor_id !=' => ''
+			),
+			'order' => array(
+				'OrdenCompra.id' => 'DESC'
+			)
+		);
+		
+		if (isset($this->request->params['named']['sta'])) {
+			$qry['conditions']['OrdenCompra.estado'] = $this->request->params['named']['sta'];
+		}
+
+		$datos			= $this->OrdenCompra->find('all', $qry);
 		$campos			= array_keys($this->OrdenCompra->_schema);
 		$modelo			= $this->OrdenCompra->alias;
 
