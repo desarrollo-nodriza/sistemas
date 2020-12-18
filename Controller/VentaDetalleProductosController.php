@@ -55,6 +55,27 @@ class VentaDetalleProductosController extends AppController
 
 		}
 
+		# Subquery stock en bodega
+		$db = $this->VentaDetalleProducto->getDataSource();
+		
+		$subQueryStockFisico = $db->buildStatement(
+			array(
+				'fields'     => array('SUM(Bodega.cantidad)'),
+				'table'      => 'rp_bodegas_venta_detalle_productos',
+				'alias'      => 'Bodega',
+				'limit'      => null,
+				'offset'     => null,
+				'joins'      => array(),
+				'conditions' => array('Bodega.venta_detalle_producto_id = VentaDetalleProducto.id'),
+				'order'      => null,
+				'group'      => array('Bodega.venta_detalle_producto_id')
+			),
+			$this->VentaDetalleProducto
+		);
+		$subQueryStockFisico = '(' . $subQueryStockFisico . ') as stock_fisico';
+		$subQueryStockFisicoExpression = $db->expression($subQueryStockFisico);
+
+
 		$paginate = array_replace_recursive($paginate, array(
 			'limit' => 20,
 			'order' => array('VentaDetalleProducto.id_externo' => 'DESC'),
@@ -75,10 +96,10 @@ class VentaDetalleProductosController extends AppController
 				'VentaDetalleProducto.codigo_proveedor', 
 				'VentaDetalleProducto.precio_costo', 
 				'VentaDetalleProducto.cantidad_virtual', 
-				'VentaDetalleProducto.activo'
+				'VentaDetalleProducto.activo',
+				$subQueryStockFisicoExpression->value
 				)
 			));
-
 
 		# Filtrar
 		if ( isset($this->request->params['named']) ) {
@@ -98,67 +119,29 @@ class VentaDetalleProductosController extends AppController
 						break;
 					case 'existencia':
 						
-						$db = $this->VentaDetalleProducto->getDataSource();
-						$subQuery = $db->buildStatement(
-							array(
-								'fields'     => array('SUM(Bodega.cantidad)'),
-								'table'      => 'rp_bodegas_venta_detalle_productos',
-								'alias'      => 'Bodega',
-								'limit'      => null,
-								'offset'     => null,
-								'joins'      => array(),
-								'conditions' => array('Bodega.venta_detalle_producto_id = VentaDetalleProducto.id'),
-								'order'      => null,
-								'group'      => array('Bodega.venta_detalle_producto_id')
-							),
-							$this->VentaDetalleProducto
-						);
-						$subQuery = '(' . $subQuery . ') as stock_fisico';
-						$subQueryExpression = $db->expression($subQuery);
-					
-						$paginate['fields'][] = $subQueryExpression->value;
-						
 						if ($valor == 'en_existencia')
 						{
 							$paginate = array_replace_recursive($paginate, array(
-								'having' => array(
-									'stock_fisico >' => 0
-								)
+								'group' => array(
+									'stock_fisico HAVING stock_fisico > 0'
+								),
+								'order' => 'stock_fisico DESC'
 							));
 						}
-						else
-						{
-							$paginate = array_replace_recursive($paginate, array(
-								'having' => array(
-									'SUM(BP.cantidad)' => 0
-								)
-							));
-						}
-
 						
 						break;
 				}
 			}
 		}
 	
-
 		$this->paginate		= $paginate;
 		$ventadetalleproductos	= $this->paginate();
 
-		$log = $this->VentaDetalleProducto->getDataSource()->getLog(false, false);
-		
-		#debug($log);
-		
-		#prx($ventadetalleproductos);
-
-
 		foreach ($ventadetalleproductos as $iv => $producto) {
-			
-			$ventadetalleproductos[$iv]['VentaDetalleProducto']['stock'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
+			$reservado = $this->VentaDetalleProducto->obtener_cantidad_reservada($producto['VentaDetalleProducto']['id']);
+			$ventadetalleproductos[$iv]['VentaDetalleProducto']['stock'] = (empty($producto[0]['stock_fisico'])) ? 0 : $producto[0]['stock_fisico'] - $reservado;
 			$ventadetalleproductos[$iv]['VentaDetalleProducto']['costo'] = ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($producto['VentaDetalleProducto']['id']);
-
 		}
-
 
 		$marcas = ClassRegistry::init('Marca')->find('list');
 

@@ -19,7 +19,7 @@
 				</div>
 				<div class="panel-body">
 					
-					<div class="col-sm-4 col-xs-12">
+					<div class="col-sm-3 col-xs-12">
 						<div class="form-group">
 							<label>Id del producto</label>
 							<?=$this->Form->input('id', array(
@@ -30,7 +30,7 @@
 								))?>
 						</div>
 					</div>
-					<div class="col-sm-4 col-xs-12">
+					<div class="col-sm-3 col-xs-12">
 						<div class="form-group">
 							<label>Nombre del producto</label>
 							<?=$this->Form->input('nombre', array(
@@ -41,7 +41,7 @@
 								))?>
 						</div>
 					</div>
-					<div class="col-sm-4 col-xs-12">
+					<div class="col-sm-3 col-xs-12">
 						<div class="form-group">
 							<label>Marca</label>
 							<?=$this->Form->select('marca', $marcas, array(
@@ -51,19 +51,18 @@
 								))?>
 						</div>
 					</div>
-					<!--<div class="col-sm-3 col-xs-12">
+					<div class="col-sm-3 col-xs-12">
 						<div class="form-group">
 							<label>En existencia</label>
-							<?/*=$this->Form->select('existencia', array(
-									'en_existencia' => 'En existencia',
-									'sin_existencia' => 'Sin exitencia'
+							<?=$this->Form->select('existencia', array(
+									'en_existencia' => 'En existencia'
 								), array(
 								'class' => 'form-control',
 								'empty' => 'Seleccione',
 								'default' => $existencia
-								))*/?>
+								));?>
 						</div>
-					</div>-->
+					</div>
 				</div>
 				<div class="panel-footer">
 					<div class="col-xs-12">
@@ -130,7 +129,7 @@
 									<th><?= $this->Paginator->sort('codigo_proveedor', 'Ref Proveedor', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('marca_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('precio_costo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('cantidad_virtual', 'Stock fisico', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('cantidad_virtual', 'Stock disponible', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('cantidad_virtual', 'Stock virtual', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
 								</tr>
@@ -151,7 +150,7 @@
 									<td><?= ($ventadetalleproducto['VentaDetalleProducto']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td>
 									<? if ($permisos['edit']) : ?>
-										<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $ventadetalleproducto['VentaDetalleProducto']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
+										<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $ventadetalleproducto['VentaDetalleProducto']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false, 'target' => '_blank')); ?>
 									<? endif; ?>
 									<? if ($permisos['delete']) : ?>
 										<?= $this->Form->postLink('<i class="fa fa-remove"></i> Eliminar', array('action' => 'delete', $ventadetalleproducto['VentaDetalleProducto']['id']), array('class' => 'btn btn-xs btn-danger confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>

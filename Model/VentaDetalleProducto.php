@@ -173,6 +173,22 @@ class VentaDetalleProducto extends AppModel
 		)
 	);
 
+	
+	public function paginateCount($conditions = null, $recursive = 0, $extra = array()) {
+		
+		if (empty($conditions))
+		{
+			return $this->find('count');
+		}
+		else
+		{
+			return $this->find('count', array(
+				'conditions' => $conditions
+			));
+		}
+		
+	}
+
 
 	public function obtener_producto_por_id($id = null)
 	{
