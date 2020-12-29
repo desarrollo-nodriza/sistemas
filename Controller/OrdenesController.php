@@ -573,24 +573,24 @@ class OrdenesController extends AppController
 									}
 
 									# Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
-									if ($d['cantidad_entregada'] > 0) {
+
+									$cant_vendida 	= $d['cantidad'];
+									$cant_entregada = $d['cantidad_entregada'];
+									
+									$cant_diferencia = $cant_vendida - $cant_entregada;
+									$cant_anulada 	 = $detalle['QtyItem'];
+
+									$cant_devolver = $cant_diferencia - $cant_anulada;
+									
+
+									if ( $cant_devolver > 0) {
 										# Quitadmos de entregado los prductos devueltos
-										$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $d['cantidad_entregada'] - $detalle['QtyItem']; 
-									}
+										$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $cant_entregada - $cant_devolver;
 
-									# Cantidad entregada es la misma que se anula
-									if ($d['cantidad_entregada'] == $detalle['QtyItem'])
-									{	
-										$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = $d['cantidad_entregada'];
+										$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = $cant_devolver;
 										$itemsDevuletos[] = $venta['VentaDetalle'][$ip];
 									}
 
-									# Cantidad entregada es menor a la anulada
-									if ($d['cantidad_entregada'] > $detalle['QtyItem'])
-									{	
-										$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = $detalle['QtyItem'];
-										$itemsDevuletos[] = $venta['VentaDetalle'][$ip];
-									}
 								}
 
 								# Total bruto se calcula siempre
@@ -718,12 +718,6 @@ class OrdenesController extends AppController
 										$venta['VentaDetalle'][$ip]['total_neto']   = $d['total_neto'] - ($detalle['QtyItem'] * $detalle['PrcItem']);
 									}
 
-									# Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
-									if ($d['cantidad_entregada'] > 0) {
-
-										# Quitadmos de entregado los prductos devueltos
-										$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $d['cantidad_entregada'] - $detalle['QtyItem']; 
-									}
 								}
 
 								# Total bruto se calcula siempre

@@ -348,11 +348,11 @@
 
 												</td>
 												<td valign="center">
-													<input type="text" class="form-control mask_money editable required editPrcBrItem" name="editPrcBrItem[<?=$indice;?>]" value="<?=round($detalle['PrcItem'] * 1.19);?>" data-original="<?=round($detalle['PrcItem'] * 1.19);?>">
+													<input type="text" class="form-control mask_money editable required editPrcBrItem" name="editPrcBrItem[<?=$indice;?>]" value="<?=monto_bruto($detalle['PrcItem']);?>" data-original="<?=monto_bruto($detalle['PrcItem']);?>">
 												</td>
 												<td class="permitido_modificar" valign="center">
 														
-													<input type="text" class="form-control editable required editQtyItem" name="editQtyItem[<?=$indice;?>]" value="<?= number_format($detalle['QtyItem'], 0, ".", "."); ?>" data-original="<?=$detalle['QtyItem'];?>">
+													<input type="text" class="form-control editable required editQtyItem" name="editQtyItem[<?=$indice;?>]" value="<?= number_format($detalle['QtyItem'], 0, ".", "."); ?>" data-original="<?=$detalle['QtyItem'];?>" max="<?=$detalle['cantidad'] - $detalle['cantidad_anulada'];?>">
 												
 													<?= $this->Form->input(sprintf('DteDetalle.%d.QtyItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => $detalle['QtyItem'])); ?>
 													<?= $this->Form->input(sprintf('Detalle.%d.QtyItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => $detalle['QtyItem'])); ?>
@@ -413,11 +413,11 @@
 
 												</td>
 												<td valign="center">
-													<input type="text" class="form-control mask_money editable required editPrcBrItem" name="editPrcBrItem[<?=$indice;?>]" value="<?=round($detalle['precio'] * 1.19);?>" data-original="<?=round($detalle['precio'] * 1.19);?>">
+													<input type="text" class="form-control mask_money editable required editPrcBrItem" name="editPrcBrItem[<?=$indice;?>]" value="<?=monto_bruto($detalle['precio']);?>" data-original="<?=monto_bruto($detalle['precio']);?>">
 												</td>
 												<td class="permitido_modificar" valign="center">
 														
-													<input type="text" class="form-control editable required editQtyItem" name="editQtyItem[<?=$indice;?>]" value="<?= number_format($detalle['cantidad'] - $detalle['cantidad_anulada'], 0, ".", "."); ?>" data-original="<?=$detalle['cantidad'] - $detalle['cantidad_anulada'];?>">
+													<input type="text" class="form-control editable required editQtyItem" name="editQtyItem[<?=$indice;?>]" value="<?= number_format($detalle['cantidad'] - $detalle['cantidad_anulada'], 0, ".", "."); ?>" data-original="<?=$detalle['cantidad'] - $detalle['cantidad_anulada'];?>" max="<?=$detalle['cantidad'] - $detalle['cantidad_anulada'];?>">
 												
 													<?= $this->Form->input(sprintf('DteDetalle.%d.QtyItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => ($detalle['cantidad']-$detalle['cantidad_anulada']) )); ?>
 													<?= $this->Form->input(sprintf('Detalle.%d.QtyItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => ($detalle['cantidad']-$detalle['cantidad_anulada']) )); ?>
