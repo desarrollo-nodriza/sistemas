@@ -304,6 +304,7 @@ $(function() {
 				// Evitamos que se cierre el modal al recargarlo
 				if (modalAbierto != null) {
 					$(modalAbierto).modal('show');
+					
 				}
 
 				page_content_onresize();
@@ -438,9 +439,10 @@ $(function() {
 			.done(function(res) {
 				
 				var $res = $.parseJSON(res);
-				console.log($res);
+				
 				$('#wrapper-modal-venta-ver-mas').html($res.html);
 				$('#wrapper-modal-venta-ver-mas .modal').modal('show');
+				$('#wrapper-modal-venta-ver-mas .modal').modal('handleUpdate');
 
 			})
 			.fail(function() {
@@ -491,6 +493,46 @@ $(function() {
 				setTimeout(function(){
 					$.noty.closeAll();
 				}, 10000);
+			});
+		}
+
+		var cambiar_venta_estado_en_revision = function($ths){
+			var id_venta 	= $ths.find('input[name="data[Venta][id]"]').val();
+
+			$('#mb-set-picking-revision').removeClass('open');
+			
+			$('.loader').addClass('show');
+
+			$.post(webroot + 'api/ventas/set_picking/' + id_venta + '.json?token=' + loggeduser.token.token, $ths.serialize(), function(res){
+
+				var respuesta = res;
+				
+				if (respuesta.response.code == 200) {
+
+					$('.modal').modal('hide');
+		
+					obtener_ventas_preparacion_busqueda();
+
+					noty({text: respuesta.response.message, layout: 'topRight', type: 'success'});
+
+				}else{
+					
+					$('.loader').removeClass('show');
+					noty({text: respuesta.message, layout: 'topRight', type: 'error'});
+				}
+
+			}).fail(function(){
+				
+				$('.loader').removeClass('show');
+
+				noty({text: 'Ocurrió un error al actualizar la venta. Intente actualizar la página.', layout: 'topRight', type: 'error'});
+
+			}).always(function(){
+
+				setTimeout(function(){
+					$.noty.closeAll();
+				}, 10000);
+				
 			});
 		}
 
@@ -1155,7 +1197,40 @@ $(function() {
 					    obtener_ventas_preparacion_busqueda();
 					}, 120000);
 
+					$(document).on('click', '.js-open-set-picking-revision', function(){
+
+						$.app.formularios.bind('#VentaRevisionForm');
+
+						$('.js-revision-form').removeClass('hidden');
+
+						$(this).parents('.modal').eq(0).modal('handleUpdate');
+						
+						$(this).parents('.modal').eq(0).animate({ 
+							scrollTop: $('.js-revision-form').offset().top 
+						}, 300);
+
+					});
+
+					$(document).on('click', '.js-close-set-picking-revision', function(){
+
+						$('.js-revision-form').addClass('hidden');
+
+					});
+
+					$(document).on('submit', '#VentaRevisionForm', function(e){
+						e.preventDefault();
+						var form = $(this);
+						
+						if (!form.valid()) {
+							return false;
+						}
+
+						cambiar_venta_estado_en_revision($(this));
+						
+					});
+
 				}
+				
 
 				$(document).on('click', '#filtro-venta-btn', function(){
 					obtener_ventas_preparacion_busqueda();

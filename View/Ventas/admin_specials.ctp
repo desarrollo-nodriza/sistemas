@@ -322,6 +322,22 @@
 													</div>
 												</div>
 												<? endif; ?>
+
+												<? if (!empty($venta['Venta']['picking_motivo_revision'])) : ?>
+												<div class="col-xs-12">
+													<h5><i class="fa fa-exclamation"></i> Revisión manual</h5>
+												</div>
+												<div class="col-xs-12">
+													<div class="table-reponsive">
+														<table class="table table-bordered">
+															<tr>
+																<th style="width: 100px;">Motivo</th>
+																<td><?= $this->Text->autoParagraph($venta['Venta']['picking_motivo_revision']);?></td>
+															</tr>
+														</table>
+													</div>
+												</div>
+												<? endif; ?>
 											</div>
 										</td>
 									</tr>

@@ -9840,4 +9840,139 @@ class VentasController extends AppController {
             '_serialize' => array('notificado')
         ));
 	}
+
+
+	/**
+	 * Permite cambiar el estado de picking de una venta
+	 * @param int $id Id de la venta
+	 *
+	 * @return mixed
+	 */
+	public function api_set_picking_estado($id)
+	{
+		# Sólo método post
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Only POST request allow'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# No existe venta
+		$this->Venta->id = $id;
+		if (!$this->Venta->exists()) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$log = array();
+		
+		if (empty($this->request->data['Venta']['estado']))
+		{
+			$response = array(
+				'code'    => 501, 
+				'name' => 'error',
+				'message' => 'estado es Requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if ($this->request->data['Venta']['estado'] == 'en_revision' 
+			&& !isset($this->request->data['Venta']['picking_motivo_revision']))
+		{
+			$response = array(
+				'code'    => 501, 
+				'name' => 'error',
+				'message' => 'picking_motivo_revision es Requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$venta = array(
+			'Venta' => array(
+				'id' => $id,
+				'picking_estado' => $this->request->data['Venta']['estado']
+			)
+		);
+
+		if (isset($this->request->data['Venta']['picking_motivo_revision']))
+		{
+			$venta = array_replace_recursive($venta, array(
+				'Venta' => array(
+					'picking_motivo_revision' => $this->request->data['Venta']['picking_motivo_revision']
+				)
+			));
+		}
+
+		if ($this->Venta->save($venta))
+		{	
+
+			$usuario = ClassRegistry::init('Token')->obtener_propietario_token($this->request->query['token']);
+
+			# Registrar log
+			$log[] = array(
+				'Log' => array(
+					'administrador' => $usuario,
+					'modulo' => 'Ventas',
+					'modulo_accion' => sprintf('Se cambia estado picking venta id %d: ', $id, json_encode($this->request->data))
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
+			$this->set(array(
+				'response' => array(
+					'code' => 200,
+					'name' => 'success',
+					'message' => 'Cambio de estado realizado con éxito',
+					'data' => array()
+				),
+				'_serialize' => array('response')
+			));
+		}
+		else 
+		{
+			$response = array(
+				'code'    => 500, 
+				'name' => 'error',
+				'message' => 'No fue posible cambiar el estado'
+			);
+	
+			throw new CakeException($response);
+		}
+		
+	}
 }

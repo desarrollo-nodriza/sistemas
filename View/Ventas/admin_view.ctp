@@ -641,6 +641,17 @@
 							<?= $this->Form->postLink('<i class="fa fa-remove"></i><p>Marcar no prioritaria</p>', array('action' => 'marcar_no_prioritaria', $venta['Venta']['id']), array('class' => 'tile small tile-default', 'rel' => 'tooltip', 'title' => 'Marcar Venta como Prioritaria', 'escape' => false));?>
 							<? endif; ?>
 
+							<? if ($venta['Venta']['picking_estado'] == 'en_revision') : ?>
+							<div class="panel panel-warning">
+								<div class="panel-body">
+									<h4><i class="fa fa-exclamation" aria-hidden="true"></i> Motivo en <b>revisión manual</b></h4>
+								</div>
+								<div class="panel-body">
+								<?= $this->Text->autoParagraph($venta['Venta']['picking_motivo_revision']);?>
+								</div>
+							</div>
+							<? endif; ?>
+
 							<?= $this->Form->create('Venta', array('url' => array('action' => 'edit', $venta['Venta']['id']), 'id' => 'AgregarNota','class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 								<?=$this->Form->input('id');?>
 							

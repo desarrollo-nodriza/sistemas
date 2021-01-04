@@ -64,7 +64,7 @@ $.extend({
 
 					form.validate(obj);
 
-					form.find('input, select').each(function(){
+					form.find('input, select, textarea').each(function(){
 
 						var $ths = $(this);
 

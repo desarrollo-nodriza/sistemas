@@ -12,6 +12,11 @@ class Venta extends AppModel
 			'leyenda' => 'Estamos recolectando el/los productos de tu pedido',
 			'color' => '#B64645'
 		),
+		'en_revision' => array(
+			'label' => 'En revisión manual',
+			'leyenda' => 'Para que todo vaya bien, estamos revisando manualmente tu pedido.',
+			'color' => '#e0694d'
+		),
 		'empaquetar' => array(
 			'label' => 'Listo para embalar',
 			'leyenda' => 'Tus productos ya se encuentran en nuestra bodega para ser preparados',
@@ -35,6 +40,7 @@ class Venta extends AppModel
 	 */
 	public $picking_estados_lista = array(
 		'no_definido' => 'No preparado',
+		'en_revision' => 'En revisión manual',
 		'empaquetar'  => 'Listo para embalar',
 		'empaquetando' => 'En prepración',
 		'empaquetado'  => 'Emabalaje finalizado'
@@ -477,7 +483,7 @@ class Venta extends AppModel
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
 					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.metodo_envio_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.numero_entrega', 'Venta.otro_entrega', 'Venta.comuna_entrega', 'Venta.ciudad_entrega', 'Venta.nombre_receptor', 'Venta.rut_receptor',
 					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito', 'Venta.etiqueta_envio_externa', 
-					'Venta.venta_manual', 'Venta.administrador_id', 'Venta.nota_interna', 'Venta.paquete_generado', 'Venta.comuna_id'
+					'Venta.venta_manual', 'Venta.administrador_id', 'Venta.nota_interna', 'Venta.paquete_generado', 'Venta.comuna_id', 'Venta.picking_motivo_revision'
 				)
 			)
 		);
@@ -1126,7 +1132,7 @@ class Venta extends AppModel
 		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 
 		if ( $total_reservado == $total_cantidad && $total_reservado > 0) {
-			if (empty($venta['Venta']['picking_estado']) || $venta['Venta']['picking_estado'] == 'no_definido' || $venta['Venta']['picking_estado'] == 'empaquetado' ) {
+			if (empty($venta['Venta']['picking_estado']) || $venta['Venta']['picking_estado'] == 'no_definido' || $venta['Venta']['picking_estado'] == 'en_revision' || $venta['Venta']['picking_estado'] == 'empaquetado' ) {
 				
 				# Pasa a picking
 				$this->cambiar_estado_picking($venta['Venta']['id'], 'empaquetar');
@@ -1208,7 +1214,13 @@ class Venta extends AppModel
 			ClassRegistry::init('VentaDetalle')->saveField('confirmado_app', 0);
 
 			$this->id = ClassRegistry::init('VentaDetalle')->field('venta_id');
-			$this->saveField('picking_estado', 'no_definido');
+			
+			$estado_actual = $this->field('picking_estado');
+
+			if (in_array($estado_actual, array('empaquetar', 'empaquetando', 'empaquetado')))
+			{
+				$this->saveField('picking_estado', 'no_definido');
+			}
 			return $liberar;
 		}else{
 			return 0;
@@ -1371,9 +1383,17 @@ class Venta extends AppModel
 			'fields' => array('OrdenComprasVenta.venta_id')
 		));
 
+		$ventasRevisionPicking = $this->find('all', array(
+			'conditions' => array(
+				'Venta.picking_estado' => 'en_revision'
+			),
+			'fields' => array('Venta.id')
+		));
+
 		$ids_1 = Hash::extract($ventasAgendamiento, '{n}.VentaDetalle.venta_id');
 		$ids_2 = Hash::extract($ventasStockout, '{n}.OrdenComprasVenta.venta_id');
-		$ids   = array_unique(array_merge($ids_1, $ids_2));
+		$ids_3 = Hash::extract($ventasRevisionPicking, '{n}.Venta.id');
+		$ids   = array_unique(array_merge($ids_1, $ids_2, $ids_3));
 
 
 		return $ids;
@@ -1442,7 +1462,7 @@ class Venta extends AppModel
 		$qry = array(
 			'conditions' => array(
 				'Venta.fecha_venta BETWEEN ? AND ?' => array($fecha_limite, $fecha_retraso),
-				'Venta.picking_estado' => array('no_definido', 'empaquetar'),
+				'Venta.picking_estado' => array('no_definido', 'empaquetar', 'en_revision'),
 				'Venta.marketplace_id' => null,
 				'OR' => array(
 					array('Venta.notificado_retraso_cliente' => 0),
@@ -1518,7 +1538,7 @@ class Venta extends AppModel
 		$qry = array(
 			'conditions' => array(
 				'Venta.fecha_venta BETWEEN ? AND ?' => array($fecha_limite, $fecha_retraso),
-				'Venta.picking_estado' => array('no_definido')
+				'Venta.picking_estado' => array('no_definido', 'en_revision')
 			),
 			'joins' => array(
 				array(

@@ -1,5 +1,5 @@
 <!-- Modal -->
-<div class="modal fade modal-venta-detalle" data-id="<?=$venta['Venta']['id'];?>"" id="venta<?=$venta['Venta']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="venta<?=$venta['Venta']['id'];?>Label">
+<div class="modal fade modal-venta-detalle" data-id="<?=$venta['Venta']['id'];?>" id="venta<?=$venta['Venta']['id'];?>" tabindex="-1" role="dialog" aria-labelledby="venta<?=$venta['Venta']['id'];?>Label">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -7,7 +7,7 @@
         <h4 class="modal-title" id="venta<?=$venta['Venta']['id'];?>Label">Embalando paquetes de la venta #<?=$venta['Venta']['id']; ?> <a data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$venta['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= h($venta['VentaEstado']['VentaEstadoCategoria']['estilo']); ?>"><?= h($venta['VentaEstado']['VentaEstadoCategoria']['nombre']); ?></a></h4>
       </div>
       <div class="modal-body">
-		<div class="row">
+		
 			<div class="col-xs-12 col-md-4">
 				<h4><i class="fa fa-qrcode" aria-hidden="true"></i> App Nodriza</h4>
 				<img src="https://chart.googleapis.com/chart?chs=<?=$tamano;?>&cht=qr&chl=<?=$url;?>&choe=UTF-8" title="QR" class="img-responsive qr-code"/>
@@ -148,12 +148,39 @@
 		      	<? endforeach; ?>
 		      	</table>
 			</div>
-		</div>
-      </div>
+		
+	  </div>
+	  
+	  <div class="modal-body js-revision-form hidden">
+		<hr> 
+		
+		<h3>¿Deseas enviar a revisión manual esta venta?</h3>
+		<p>Indique el problema para que el administrador pueda resolverlo. <b>No omitas los detalles importantes</b>.</p>
+		<?= $this->Form->create('Venta', array('id' => 'VentaRevisionForm', 'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+			<?= $this->Form->input('id', array('value' => $venta['Venta']['id'], 'type' => 'hidden'));?>
+			<?= $this->Form->input('estado', array('value' => 'en_revision', 'type' => 'hidden')); ?>
+			<div class="form-group">
+				<?= $this->Form->textarea('picking_motivo_revision', array('class' => 'form-control not-blank', 'rows' => 4, 'placeholder' => 'Indique cuál es el problema...')); ?>
+			</div>
+			<div class="form-group">
+				<div class="btn-group btn-group-justified">
+					<div class="btn-group" role="group">
+						<button type="submit" class="btn btn-warning"><i class="fa fa-exclamation"></i> Enviar a revisión</button>
+					</div>
+					<div class="btn-group" role="group">
+						<button type="submit" class="btn btn-dafult js-close-set-picking-revision">Cancelar</button>
+					</div>
+				</div>
+			</div>
+		<?= $this->Form->end(); ?>
+	  </div>
       <div class="modal-footer">
-      	<?=$this->Html->link('Ver más', array('action' => 'view', $venta['Venta']['id']), array('class' => 'btn btn-info pull-left', 'target' => '_blank')); ?>
-        <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+      	<div class="btn-group pull-left">
+		  <?=$this->Html->link('<i class="fa fa-eye"></i> Ver más', array('action' => 'view', $venta['Venta']['id']), array('class' => 'btn btn-info', 'target' => '_blank', 'escape' => false)); ?>
+		  <button type="button" class="btn btn-warning js-open-set-picking-revision"><i class="fa fa-exclamation"></i> Pasar a revisión manual</button>
+		</div>
+		<button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
       </div>
-    </div>
+	</div>
   </div>
 </div>

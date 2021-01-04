@@ -216,6 +216,20 @@ Router::connect(
 
 
 Router::connect(
+    '/api/ventas/set_picking/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'set_picking_estado',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+Router::connect(
     '/api/ventas', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'Ventas', 

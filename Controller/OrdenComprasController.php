@@ -2002,7 +2002,7 @@ class OrdenComprasController extends AppController
 
 
 		$fecha_actual = date("Y-m-d H:i:s");
-		$hace_un_mes  = date("Y-m-d H:i:s",strtotime($fecha_actual."-1 month")); 
+		$hace_un_mes  = date("Y-m-d H:i:s",strtotime($fecha_actual."-2 month")); 
 
 		$ventas          = $this->OrdenCompra->Venta->find('all', array(
 			'conditions' => array(
