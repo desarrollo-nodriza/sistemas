@@ -1211,7 +1211,8 @@ $(function() {
 
 					});
 
-					$(document).on('click', '.js-close-set-picking-revision', function(){
+					$(document).on('click', '.js-close-set-picking-revision', function(e){
+						e.preventDefault();
 
 						$('.js-revision-form').addClass('hidden');
 

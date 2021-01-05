@@ -97,9 +97,34 @@
 	      	<? endforeach; ?>
 	      	</table>
 	      </div>
+		  <div class="modal-body js-revision-form hidden">
+				<hr> 
+				
+				<h3>¿Deseas enviar a revisión manual esta venta?</h3>
+				<p>Indique el problema para que el administrador pueda resolverlo. <b>No omitas los detalles importantes</b>.</p>
+				<?= $this->Form->create('Venta', array('id' => 'VentaRevisionForm', 'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+					<?= $this->Form->input('id', array('value' => $venta['Venta']['id'], 'type' => 'hidden'));?>
+					<?= $this->Form->input('estado', array('value' => 'en_revision', 'type' => 'hidden')); ?>
+					<div class="form-group">
+						<?= $this->Form->textarea('picking_motivo_revision', array('class' => 'form-control not-blank', 'rows' => 4, 'placeholder' => 'Indique cuál es el problema...')); ?>
+					</div>
+					<div class="form-group">
+						<div class="btn-group btn-group-justified">
+							<div class="btn-group" role="group">
+								<button type="submit" class="btn btn-warning"><i class="fa fa-exclamation"></i> Enviar a revisión</button>
+							</div>
+							<div class="btn-group" role="group">
+								<button class="btn btn-dafult js-close-set-picking-revision">Cancelar</button>
+							</div>
+						</div>
+					</div>
+				<?= $this->Form->end(); ?>
+			</div>
 	      <div class="modal-footer">
-	      	<?=$this->Html->link('Ver más', array('action' => 'view', $venta['Venta']['id']), array('class' => 'btn btn-info pull-left', 'target' => '_blank')); ?>
-	        <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+		  <div class="btn-group pull-left">
+			<?=$this->Html->link('<i class="fa fa-eye"></i> Ver más', array('action' => 'view', $venta['Venta']['id']), array('class' => 'btn btn-info', 'target' => '_blank', 'escape' => false)); ?>
+			<button type="button" class="btn btn-warning js-open-set-picking-revision"><i class="fa fa-exclamation"></i> Pasar a revisión manual</button>
+			</div>
 	      </div>
 	    </div>
 	  </div>

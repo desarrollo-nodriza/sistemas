@@ -168,7 +168,7 @@
 						<button type="submit" class="btn btn-warning"><i class="fa fa-exclamation"></i> Enviar a revisión</button>
 					</div>
 					<div class="btn-group" role="group">
-						<button type="submit" class="btn btn-dafult js-close-set-picking-revision">Cancelar</button>
+						<button class="btn btn-dafult js-close-set-picking-revision">Cancelar</button>
 					</div>
 				</div>
 			</div>
