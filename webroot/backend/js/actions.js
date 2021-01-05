@@ -104,7 +104,7 @@ var page_actions = function(){
     /* DROPDOWN TOGGLE */
 
     /* MESSAGE BOX */
-    $(document).on("click", ".mb-control",  function(){
+    $(".mb-control").on("click", function(){
         var box = $($(this).data("box"));
         if(box.length > 0){
             box.toggleClass("open");
@@ -120,7 +120,7 @@ var page_actions = function(){
         }
         return false;
     });
-    $(document).on("click", ".mb-control-close", function(){
+    $(".mb-control-close").on("click", function(){
        $(this).parents(".message-box").removeClass("open");
        return false;
     });
