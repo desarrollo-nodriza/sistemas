@@ -102,8 +102,12 @@
 					if (isset($this->request->params['named'])) {
 						$export = array_replace_recursive($export, $this->request->params['named']);
 					}?>
-					<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>
-					
+
+					<a href="#" data-toggle="dropdown" class="btn btn-primary dropdown-toggle" aria-expanded="true"><i class="fa fa-file-excel-o"></i> Exportar <span class="caret"></span></a>
+						<ul class="dropdown-menu" role="menu">
+							<li><?= $this->Html->link( $this->Paginator->counter('<i class="fa fa-file-excel-o"></i> Exportar movimientos ({:count} registros).'), $export, array('class' => '', 'escape' => false)); ?></li>
+							<li><?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar productos (formato inventario)', array('action' => 'exportar_inventario'), array('class' => '', 'escape' => false, 'target' => '_blank')); ?></li>                                             
+						</ul>
 					</div>					
 				</div>
 				<div class="panel-body">

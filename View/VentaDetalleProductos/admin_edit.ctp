@@ -389,7 +389,7 @@
                 <div class="owl-carousel">
                 	<div>                                    
                         <div class="widget-title"><?=__('Stock Global');?></div>                                                                      
-                        <div class="widget-int"><?=array_sum(Hash::extract($this->request->data['Bodega'], '{n}.BodegasVentaDetalleProducto.cantidad'));?></div>
+                        <div class="widget-int"><?=$this->request->data['VentaDetalleProducto']['cantidad_real_fisica'];?></div>
                     </div>
                 </div>                                                        
             </div>

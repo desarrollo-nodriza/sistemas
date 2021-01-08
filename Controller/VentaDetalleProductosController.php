@@ -374,8 +374,8 @@ class VentaDetalleProductosController extends AppController
 				}
 
 				if (!ClassRegistry::init('Bodega')->permite_ajuste($id, $m['bodega'])) {
-					$errores[] = 'Item #' . $id . ' No puede ser ajustado en la bodega seleccionada, ya que la bodega no tiene registros de ingreso.';
-					continue;
+					#$errores[] = 'Item #' . $id . ' No puede ser ajustado en la bodega seleccionada, ya que la bodega no tiene registros de ingreso.';
+					#continue;
 				}
 		
 				if (ClassRegistry::init('Bodega')->ajustarInventario($id, $m['bodega'], $m['ajustar'], $m['costo'], $m['glosa'])) {
@@ -1713,14 +1713,14 @@ class VentaDetalleProductosController extends AppController
 			foreach ($datos as $id => $p) {
 				
 				foreach ($bodegas as $ib => $b) {
-					$datos[$id]['VentaDetalleProducto']['stock_fisico_' . strtolower(Inflector::slug($b))] = array_sum(Hash::extract($p['Bodega'], '{n}[id='.$ib.'].BodegasVentaDetalleProducto.cantidad'));		
+					$datos[$id]['VentaDetalleProducto']['stock_fisico_' . strtolower(Inflector::slug($b))] = array_sum(Hash::extract($p['Bodega'], '{n}[id='.$ib.'].BodegasVentaDetalleProducto[tipo!=GT].cantidad'));		
 				}
 
 				$descuento_producto = $this->VentaDetalleProducto->obtener_descuento_por_producto($p, true);
 
 				$precio_costo = $p['VentaDetalleProducto']['precio_costo'] - $descuento_producto['total_descuento'];
 				
-				$datos[$id]['VentaDetalleProducto']['stock_fisico_total'] = array_sum(Hash::extract($p['Bodega'], '{n}.BodegasVentaDetalleProducto.cantidad'));
+				$datos[$id]['VentaDetalleProducto']['stock_fisico_total'] = array_sum(Hash::extract($p['Bodega'], '{n}.BodegasVentaDetalleProducto[tipo!=GT].cantidad'));
 				$datos[$id]['VentaDetalleProducto']['stock_reservado']    = array_sum(Hash::extract($p['VentaDetalle'], '{n}.cantidad_reservada'));
 				$datos[$id]['VentaDetalleProducto']['ultimo_precio_compra'] = ClassRegistry::init('Bodega')->ultimo_precio_compra($p['VentaDetalleProducto']['id']);
 				$datos[$id]['VentaDetalleProducto']['precio_costo'] = $precio_costo;
@@ -1771,6 +1771,76 @@ class VentaDetalleProductosController extends AppController
 
 	}
 
+
+	/**
+	 * Exporta los productos para realizar el inventario
+	 */
+	public function admin_exportar_inventario()
+	{		
+		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
+		set_time_limit(-1);
+		ini_set('memory_limit', -1);
+		
+		$qry = array(
+			'recursive'	=> -1,
+			'contain' => array(
+				'Bodega' => array(
+					'fields' => array(
+						'Bodega.id',
+						'BodegasVentaDetalleProducto.cantidad'
+					)
+				),
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.cantidad_reservada'
+					)
+				)
+			),
+			'fields' => array(
+				'VentaDetalleProducto.id',
+				'VentaDetalleProducto.nombre',
+				'VentaDetalleProducto.codigo_proveedor',
+				'VentaDetalleProducto.cantidad_virtual'
+			)
+		);
+		
+		$productos = $this->VentaDetalleProducto->find('all', $qry);
+		
+
+		$datos = array();
+
+		foreach ($productos as $p)
+		{	
+			$datos[] = array(
+				'id' => $p['VentaDetalleProducto']['id'],
+				'codigo_proveedor' => $p['VentaDetalleProducto']['codigo_proveedor'],
+				'nombre' => $p['VentaDetalleProducto']['nombre'],
+				'stock_fisico_real' => array_sum(Hash::extract($p['Bodega'], '{n}.BodegasVentaDetalleProducto[tipo!=GT].cantidad')),
+				'stock_disponible' => array_sum(Hash::extract($p['Bodega'], '{n}.BodegasVentaDetalleProducto[tipo!=GT].cantidad')) - array_sum(Hash::extract($p['VentaDetalle'], '{n}.cantidad_reservada')),
+				'stock_virtual' => $p['VentaDetalleProducto']['cantidad_virtual']
+			);
+		}	
+
+		$campos			= array(
+			'id',
+			'codigo_proveedor',
+			'nombre',
+			'stock_fisico_real',
+			'stock_disponible',
+			'stock_virtual'
+		);
+
+		$modelo			= $this->VentaDetalleProducto->alias;
+
+		$marketplaces = ClassRegistry::init('Marketplace')->find('all', array(
+			'conditions' => array(
+				'Marketplace.tienda_id' => $this->Session->read('Tienda.id')
+			)
+		));
+		
+		$this->set(compact('datos', 'campos', 'modelo', 'bodegas', 'marketplaces'));
+
+	}
 
 	public function admin_buscar($palabra = '')
 	{	
