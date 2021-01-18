@@ -1880,7 +1880,7 @@ class OrdenComprasController extends AppController
 			$this->request->data['OrdenCompra']['total_neto']      = $total_neto;
 			$this->request->data['OrdenCompra']['descuento']       = $this->OrdenCompra->obtener_descuento_oc($id);
 			$this->request->data['OrdenCompra']['iva']             = obtener_iva($total_neto);
-			$this->request->data['OrdenCompra']['descuento_monto'] = obtener_iva( ($total_neto + $this->request->data['OrdenCompra']['iva']) , $this->request->data['OrdenCompra']['descuento']);
+			$this->request->data['OrdenCompra']['descuento_monto'] = obtener_descuento_monto( ($total_neto + $this->request->data['OrdenCompra']['iva']) , $this->request->data['OrdenCompra']['descuento']);
 			$this->request->data['OrdenCompra']['total']           = ($total_neto - $this->request->data['OrdenCompra']['descuento_monto']) + $this->request->data['OrdenCompra']['iva'];
 
 
@@ -2876,7 +2876,7 @@ class OrdenComprasController extends AppController
 				$nuevaOC['OrdenCompra']['total_neto']         = $total_neto;
 				$nuevaOC['OrdenCompra']['descuento']          = $oc['OrdenCompra']['descuento'];
 				$nuevaOC['OrdenCompra']['iva']                = obtener_iva($total_neto);
-				$nuevaOC['OrdenCompra']['descuento_monto']    = obtener_iva( ($total_neto + $nuevaOC['OrdenCompra']['iva']) , $nuevaOC['OrdenCompra']['descuento']);
+				$nuevaOC['OrdenCompra']['descuento_monto']    = obtener_descuento_monto( ($total_neto + $nuevaOC['OrdenCompra']['iva']) , $nuevaOC['OrdenCompra']['descuento']);
 				$nuevaOC['OrdenCompra']['total']              = ($total_neto - $nuevaOC['OrdenCompra']['descuento_monto']) + $nuevaOC['OrdenCompra']['iva'];
 				$nuevaOC['OrdenCompra']['estado']             = 'validacion_comercial';
 				$nuevaOC['OrdenCompra']['fecha']              = date('Y-m-d');
@@ -2926,7 +2926,7 @@ class OrdenComprasController extends AppController
 				$this->request->data['OrdenCompra']['total_neto']      = $total_neto;
 				$this->request->data['OrdenCompra']['descuento']       = $this->OrdenCompra->obtener_descuento_oc($id);
 				$this->request->data['OrdenCompra']['iva']             = obtener_iva($total_neto);
-				$this->request->data['OrdenCompra']['descuento_monto'] = obtener_iva( ($total_neto + $this->request->data['OrdenCompra']['iva']) , $this->request->data['OrdenCompra']['descuento']);
+				$this->request->data['OrdenCompra']['descuento_monto'] = obtener_descuento_monto( ($total_neto + $this->request->data['OrdenCompra']['iva']) , $this->request->data['OrdenCompra']['descuento']);
 				$this->request->data['OrdenCompra']['total']           = ($total_neto - $this->request->data['OrdenCompra']['descuento_monto']) + $this->request->data['OrdenCompra']['iva'];
 
 			}
@@ -2938,7 +2938,7 @@ class OrdenComprasController extends AppController
 					'evidencia' => json_encode($this->request->data)
 				)
 			);
-
+			
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 
 
