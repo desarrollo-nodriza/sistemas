@@ -1,3 +1,5 @@
+
+
 // Your web app's Firebase configuration
 var firebaseConfig = {
 	apiKey: "AIzaSyD59itPgCqTL3XsG4mxqUj-yneuXVjlSEY",
@@ -20,13 +22,13 @@ var uiConfig = {
 			// Return type determines whether we continue the redirect automatically
 			// or whether we leave that to developer to handle.
 			var email = authResult.user.email;
-
+	
 			$('#LoginForm').addClass('hidden');
 			$('#texto-bienvenida-login').addClass('hidden');
 			$('#texto-exito-login').removeClass('hidden');
 
 			$('#AdministradorEmail').val(email);
-			$('#AdministradorLoginExterno').val(1);
+			$('#AdministradorLoginExterno').val(authResult.user.ra);
 
 			$('#LoginForm').submit();
 		
@@ -56,19 +58,40 @@ var uiConfig = {
 };
 
 $(document).ready(function(){
-	if ($('#LoginForm').length) {
+	
+	if ($('#LoginForm').hasClass('nologged'))
+	{
+		
+		firebase.auth().signOut().then(function() {
+			$('#AdministradorEmail').val('');
+			$('#AdministradorLoginExterno').val('');
+			
+			// User is signed out.
+			ui.start('#firebaseui-auth-container', uiConfig);
+
+		}).catch(function(error) {
+
+			noty({text: error, layout: 'topRight', type: 'error'});
+			setTimeout(function(){
+				$.noty.closeAll();
+			}, 10000);
+
+			return false;
+		});
+	}
+	
+	if ($('#LoginForm').length && !$('#LoginForm').hasClass('nologged')) 
+	{
 
 		firebase.auth().onAuthStateChanged(function(user) {
 			if (user) {
 				var email = user.email;
-
 				$('#LoginForm').addClass('hidden');
 				$('#texto-bienvenida-login').addClass('hidden');
 				$('#texto-exito-login').removeClass('hidden');
 
 				$('#AdministradorEmail').val(email);
-				$('#AdministradorLoginExterno').val(1);
-
+				$('#AdministradorLoginExterno').val(user.ra);
 				$('#LoginForm').submit();
 			} else {
 				// User is signed out.

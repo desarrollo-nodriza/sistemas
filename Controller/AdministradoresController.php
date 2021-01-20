@@ -204,7 +204,7 @@ class AdministradoresController extends AppController
 		 * Login normal
 		 */
 		if ( $this->request->is('post') )
-		{
+		{	
 			if ( !$this->request->data['Administrador']['login_externo'] && $this->Auth->login() )
 			{	
 				# Obtenemos la tienda principal
@@ -239,6 +239,16 @@ class AdministradoresController extends AppController
 				$this->redirect($this->Auth->redirectUrl());
 			}
 			elseif ($this->request->data['Administrador']['login_externo']) {
+
+				$this->Firebase = $this->Components->load('Firebase');
+
+				$logeado = $this->Firebase->isLogged($this->request->data['Administrador']['login_externo']);
+
+				if (!$logeado['logged'])
+				{
+					$this->Session->setFlash($logeado['message'], null, array(), 'danger');
+					$this->redirect(array('action' => 'login2', '?' => array('nologged' => 1)));
+				}
 
 				/**
 				 * Verificamos que exista el usuario en la DB y esté activo
@@ -288,7 +298,10 @@ class AdministradoresController extends AppController
 					
 					# Crear Token
     				$token = ClassRegistry::init('Token')->crear_token($administrador['id'], null, 8760);
-    				$this->Session->write('Auth.Administrador.token', $token);
+					$this->Session->write('Auth.Administrador.token', $token);
+					$this->Session->write('Auth.Administrador.g_token', $this->request->data['Administrador']['login_externo']);
+					
+					$this->Session->write('Auth.Administrador.Google', $logeado['user']);
 
 					$this->redirect($this->Auth->redirectUrl());
 				}
@@ -529,7 +542,87 @@ class AdministradoresController extends AppController
 
 			throw new CakeException($response);
     	}
-    }
+	}
+	
+
+	/**
+	 * Permite generar un token interno mediante la autenticación de google
+	 * 
+	 * Para utilizar le servicio, se debe enviar el token de google, una vez validado por el sistema
+	 * se retorna el token interno.
+	 * 
+	 * @return mixed
+	 */
+	public function api_google_auth()
+	{
+		if ($this->request->is('post')) {
+
+    		$token = $this->request->data['token'];
+    		
+    		# Que los campos de autenticacion no esten vacios
+    		if (empty($token)) {
+    			$response = array(
+					'code'    => 501, 
+					'message' => 'token es requerido'
+				);
+
+				throw new CakeException($response);
+			}
+			
+			# Obtenemos al usuario de google mediante el token
+			$this->Firebase = $this->Components->load('Firebase');
+
+			$logeado = $this->Firebase->isLogged($token);
+
+			if (!$logeado['logged'])
+			{
+				$response = array(
+					'code'    => 401, 
+					'message' => $logeado['message']
+				);
+
+				throw new CakeException($response);
+			}
+    		
+    		# Buscar usuario
+    		$usuario = $this->Administrador->find('first', array(
+    			'conditions' => array(
+    				'Administrador.email' => $logeado['user']['email']
+    			)
+    		));
+
+    		# No existe usuario
+    		if (empty($usuario)) {
+    			$response = array(
+					'code'    => 404, 
+					'message' => 'Usuario no encontrado'
+				);
+
+				throw new CakeException($response);
+    		}
+
+    		# Crear Token
+    		$tokeninterno = ClassRegistry::init('Token')->crear_token($usuario['Administrador']['id'], null, 8760);
+
+    		$this->set(array(
+	            'response' => array(
+					'token' => $tokeninterno,
+					'g_token' => $token,
+					'usuario' => $logeado['user']
+				),
+	            '_serialize' => array('response')
+	        ));
+
+    	}else{
+
+    		$response = array(
+				'code'    => 501, 
+				'message' => 'Only POST request allow'
+			);
+
+			throw new CakeException($response);
+    	}
+	}
 
 
     /**

@@ -112,6 +112,17 @@ Router::connect(
 
 
 Router::connect(
+    '/api/administradores/google_auth', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Administradores', 
+        'action' => 'google_auth',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
+
+
+Router::connect(
     '/api/administradores/userinfo', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'Administradores', 

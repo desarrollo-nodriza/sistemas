@@ -5,7 +5,18 @@
 		<div class="login-title text-center"><strong>Bienvenido</strong></div>
 		<div id="texto-bienvenida-login" class="login-title text-center">Para iniciar sesión debes identificarte.</div>
 		<div id="texto-exito-login" class="login-title text-center hidden"><i class="fa fa-refresh fa-spin"></i> Redirigiendo...</div>
-		<?= $this->Form->create('Administrador', array('id' => 'LoginForm', 'class' => 'form-horizontal', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+		
+		<? 
+		
+		$formClass = 'form-horizontal';
+
+		if (isset($this->request->query['nologged'])) : 
+			$formClass .= ' nologged';	
+		endif;
+
+		?>
+		
+		<?= $this->Form->create('Administrador', array('id' => 'LoginForm', 'class' => $formClass, 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 			
 			<?= $this->Form->hidden('login_externo', array('value' => 0)); ?>
 
