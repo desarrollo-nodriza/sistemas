@@ -687,7 +687,7 @@ class PrestashopComponent extends Component
 		//se obtiene el stock de prestashop
 		$opt = array();
 		$opt['resource'] = 'stock_availables';
-		$opt['display'] = '[quantity]';
+		$opt['display'] = '[id,quantity]';
 		$opt['filter[id_product]'] = '[' .$producto_id. ']';
 
 		$xml = $this->ConexionPrestashop->get($opt);
@@ -848,10 +848,8 @@ class PrestashopComponent extends Component
 	 */
 	public function prestashop_actualizar_stock($stock_id, $NuevoStock)
 	{	
-
-		#return false;
-
-		try {
+		try 
+		{
 
 			$opt                       = array();
 			$opt['resource']           = 'stock_availables';
@@ -867,7 +865,8 @@ class PrestashopComponent extends Component
 			$opt['id'] 	   = $stock_id; 
 			$xml           = $this->ConexionPrestashop->edit($opt);
 			
-		} catch (PrestaShopWebserviceException $ex) {
+		} catch (PrestaShopWebserviceException $ex) 
+		{
 			//prx($ex->getMessage());
 			 // No actualizado
 			return false;

@@ -88,6 +88,8 @@
 					<div class="btn-group pull-right">
 					<? if ($permisos['edit']) : ?>
 						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Actualización masiva', array('action' => 'edicion_masiva'), array('class' => 'btn btn-danger', 'escape' => false)); ?>
+						
+						<a href="#" class="mb-control btn btn-warning" data-box="#mb-actualizar-stock-segun-bodega"><i class="fa fa fa-cubes"></i> Actualizar stock según bodega</a>
 					<? endif; ?>
 					<? if ($permisos['add']) : ?>
 						<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Producto', array('action' => 'add'), array('class' => 'btn btn-success', 'escape' => false)); ?>
@@ -176,4 +178,23 @@
 			</div>
 		</div> <!-- end col -->
 	</div> <!-- end row -->
+</div>
+
+<div class="message-box animated fadeIn" data-sound="alert" id="mb-actualizar-stock-segun-bodega">
+	<div class="mb-container">
+		<div class="mb-middle">
+			<div class="mb-title"><span class="fa fa-sync"></span>Confirmar acción</div>
+			<div class="mb-content">
+				<p>¿Seguro/a que deseas actualizar el stock de la tienda?</p>
+				<p>Se actualizará el stock en la tienda si y solo si el producto tiene stock físico en bodega y no esté reservado.</p>
+				<p>Presiona NO para continuar trabajando y SI para actualizar.</p>
+			</div>
+			<div class="mb-footer">
+				<div class="pull-right">
+					<?= $this->Html->link('Si', array('action' => 'actualizar_canales_stock_fisico'), array('class' => 'btn btn-success btn-lg start-loading-then-redirect', 'escape' => false)); ?>
+					<button class="btn btn-default btn-lg mb-control-close">No</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>

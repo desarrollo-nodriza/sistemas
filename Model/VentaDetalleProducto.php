@@ -249,6 +249,33 @@ class VentaDetalleProducto extends AppModel
 				'VentaDetalle.completo' => 0,
 				'VentaDetalle.created >' => '2019-05-28 18:00:00' 
 			),
+			'joins'      => array(
+				array(
+					'table' => 'rp_ventas',
+					'alias' => 'Venta',
+					'type' => 'INNER',
+					'conditions' => array(
+						'Venta.id = VentaDetalle.venta_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'VentaEstado',
+					'type' => 'INNER',
+					'conditions' => array(
+						'VentaEstado.id = Venta.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'VentaEstadoCategoria',
+					'type' => 'INNER',
+					'conditions' => array(
+						'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
+						'VentaEstadoCategoria.venta = 1'
+					)
+				)
+			),
 			'fields' => array(
 				'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.venta_id', 'VentaDetalle.id'
 			)

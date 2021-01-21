@@ -2285,6 +2285,204 @@ class VentaDetalleProductosController extends AppController
 		return $result;
 	}
 
+
+	/**
+	 * Busca todos los productos con stock fisico disponible
+	 * y los suma a las cantidades virtuales de cada canal
+	 * 
+	 * De momento sólo disponible para Prestashop
+	 * 
+	 * @return array
+	 */
+	public function actualizar_canales_stock_fisico()
+	{	
+		$log = array();
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Demonio',
+				'modulo' => 'Productos',
+				'modulo_accion' => 'Inicia actualización de stock fisico con prestashop: ' . date('Y-m-d H:i:s')
+			)
+		);
+
+		# Subquery stock en bodega
+		$db = $this->VentaDetalleProducto->getDataSource();
+		
+		$subQueryStockFisico = $db->buildStatement(
+			array(
+				'fields'     => array('SUM(Bodega.cantidad)'),
+				'table'      => 'rp_bodegas_venta_detalle_productos',
+				'alias'      => 'Bodega',
+				'limit'      => null,
+				'offset'     => null,
+				'joins'      => array(),
+				'conditions' => array('Bodega.venta_detalle_producto_id = VentaDetalleProducto.id'),
+				'order'      => null,
+				'group'      => array('Bodega.venta_detalle_producto_id'),
+				'having' 	 => array('SUM(Bodega.cantidad) >' => 0)
+			),
+			$this->VentaDetalleProducto
+		);
+		$subQueryStockFisico = '(' . $subQueryStockFisico . ') as stock_fisico_real';
+		$subQueryStockFisicoExpression = $db->expression($subQueryStockFisico);
+
+		# Subquery stock reservado
+		$subQueryStockReservado = $db->buildStatement(
+			array(
+				'fields'     => array('SUM(VentaDetalle.cantidad_reservada)'),
+				'table'      => 'rp_venta_detalles',
+				'alias'      => 'VentaDetalle',
+				'limit'      => null,
+				'offset'     => null,
+				'joins'      => array(
+					array(
+						'table' => 'rp_ventas',
+						'alias' => 'Venta',
+						'type' => 'INNER',
+						'conditions' => array(
+							'Venta.id = VentaDetalle.venta_id'
+						)
+					),
+					array(
+						'table' => 'rp_venta_estados',
+						'alias' => 'VentaEstado',
+						'type' => 'INNER',
+						'conditions' => array(
+							'VentaEstado.id = Venta.venta_estado_id'
+						)
+					),
+					array(
+						'table' => 'rp_venta_estado_categorias',
+						'alias' => 'VentaEstadoCategoria',
+						'type' => 'INNER',
+						'conditions' => array(
+							'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
+							'VentaEstadoCategoria.venta = 1'
+						)
+					)
+				),
+				'conditions' => array('VentaDetalle.venta_detalle_producto_id = VentaDetalleProducto.id'),
+				'order'      => null,
+				'group'      => array('VentaDetalle.venta_detalle_producto_id')
+			),
+			$this->VentaDetalleProducto
+		);
+		$subQueryStockReservado = '(' . $subQueryStockReservado . ') as stock_reservado';
+		$subQueryStockReservadoExpression = $db->expression($subQueryStockReservado);
+	
+		# Obtenemos los productos
+		$productos = $this->VentaDetalleProducto->find('all', array(
+			'order' => 'stock_fisico_real DESC',
+			'fields' => array(
+				'VentaDetalleProducto.id', 
+				'VentaDetalleProducto.id_externo',
+				'VentaDetalleProducto.activo',
+				$subQueryStockFisicoExpression->value,
+				$subQueryStockReservadoExpression->value
+				)
+			)
+		);
+
+		# Obtenemos la tienda principal
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+			'apiurl_prestashop',
+			'apikey_prestashop'
+		));
+
+		# Inicializamos prestashop
+		$this->Prestashop = $this->Components->load('Prestashop');
+
+		# Cliente Prestashop
+		$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
+
+		# comenzamos a actualizar el canal prestashop
+		foreach ($productos as $i => $producto)
+		{	
+			$stock_final = $producto[0]['stock_fisico_real'] - $producto[0]['stock_reservado'];
+			
+			$productos[$i]['VentaDetalleProducto']['stock_fisico_disponible'] = $stock_final;
+			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = 0;
+			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = false;
+
+			# continua solo si el stock fisico es mayor a 0
+			if ($stock_final <= 0)
+				continue;
+			
+			$stockProductoPrestashop = $this->Prestashop->prestashop_obtener_stock_producto($producto['VentaDetalleProducto']['id_externo']);
+			$stockPresta = (isset($stockProductoPrestashop['stock_available']['quantity'])) ? $stockProductoPrestashop['stock_available']['quantity'] : 0;
+
+			# Volvemos a setear el stock de prestashop
+			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = $stockPresta;
+
+			# Igualamos el stock de prestashop al de bodega
+			if ($stockPresta < $stock_final)
+			{	
+				if (Configure::read('ambiente') == 'dev') 
+				{
+					$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = true;
+				}
+				elseif (isset($stockPresta['stock_available']['id']))
+				{
+					$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock_final);
+				}
+			}
+		}
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Demonio',
+				'modulo' => 'Productos',
+				'modulo_accion' => 'Total producto actualización de stock fisico con prestashop: ' . count(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]'))
+			)
+		);
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Demonio',
+				'modulo' => 'Productos',
+				'modulo_accion' => 'Productos actualización de stock fisico con prestashop: ' . json_encode(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]'))
+			)
+		);
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Demonio',
+				'modulo' => 'Productos',
+				'modulo_accion' => 'Finaliza actualización de stock fisico con prestashop: ' . date('Y-m-d H:i:s')
+			)
+		);
+
+		# Guardamos el log
+		ClassRegistry::init('Log')->saveMany($log);
+
+		return $productos;
+		
+	}
+
+	/**
+	 * Ejecuta la actualización de stock según stock físico disponible desde el administrador.
+	 * 
+	 * @return redirect
+	 */
+	public function admin_actualizar_canales_stock_fisico()
+	{
+		$productos = $this->actualizar_canales_stock_fisico();
+	
+		$totalActualizados = count(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]'));
+
+		if ($totalActualizados > 0)
+		{
+			$this->Session->setFlash('Actualización de stock correcta. Total modificados: ' . $totalActualizados, null, array(), 'success');
+		}
+		else 
+		{
+			$this->Session->setFlash('No se encontraron productos para actualizar.', null, array(), 'warning');
+		}
+
+		$this->redirect($this->referer('/', true));
+	}
+
 	
 	/**
 	 * 	Obitne los productos desde prestashop
