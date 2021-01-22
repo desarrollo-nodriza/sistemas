@@ -2317,7 +2317,7 @@ class VentaDetalleProductosController extends AppController
 				'limit'      => null,
 				'offset'     => null,
 				'joins'      => array(),
-				'conditions' => array('Bodega.venta_detalle_producto_id = VentaDetalleProducto.id'),
+				'conditions' => array('Bodega.venta_detalle_producto_id = VentaDetalleProducto.id', 'Bodega.tipo !=' => 'GT'),
 				'order'      => null,
 				'group'      => array('Bodega.venta_detalle_producto_id'),
 				'having' 	 => array('SUM(Bodega.cantidad) >' => 0)
@@ -2383,7 +2383,7 @@ class VentaDetalleProductosController extends AppController
 				)
 			)
 		);
-
+		
 		# Obtenemos la tienda principal
 		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
 			'apiurl_prestashop',
@@ -2401,6 +2401,8 @@ class VentaDetalleProductosController extends AppController
 		{	
 			$stock_final = $producto[0]['stock_fisico_real'] - $producto[0]['stock_reservado'];
 			
+			$productos[$i]['VentaDetalleProducto']['stock_fisico'] = $producto[0]['stock_fisico_real'];
+			$productos[$i]['VentaDetalleProducto']['stock_reservado'] = $producto[0]['stock_reservado'];
 			$productos[$i]['VentaDetalleProducto']['stock_fisico_disponible'] = $stock_final;
 			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = 0;
 			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = false;
@@ -2411,7 +2413,7 @@ class VentaDetalleProductosController extends AppController
 			
 			$stockProductoPrestashop = $this->Prestashop->prestashop_obtener_stock_producto($producto['VentaDetalleProducto']['id_externo']);
 			$stockPresta = (isset($stockProductoPrestashop['stock_available']['quantity'])) ? $stockProductoPrestashop['stock_available']['quantity'] : 0;
-
+			
 			# Volvemos a setear el stock de prestashop
 			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = $stockPresta;
 
@@ -2422,7 +2424,7 @@ class VentaDetalleProductosController extends AppController
 				{
 					$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = true;
 				}
-				elseif (isset($stockPresta['stock_available']['id']))
+				elseif (isset($stockProductoPrestashop['stock_available']['id']))
 				{
 					$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock_final);
 				}
