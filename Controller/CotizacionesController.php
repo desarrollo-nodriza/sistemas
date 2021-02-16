@@ -226,19 +226,19 @@ class CotizacionesController extends AppController
 		$prospecto['Prospecto']['total_neto']      = 0;
 
 		foreach ($prospecto['VentaDetalleProducto'] as $ip => $p) {
-			$prospecto['VentaDetalleProducto'][$ip]['monto_neto'] = quitar_iva($p['ProductosProspecto']['monto']);
-			$prospecto['VentaDetalleProducto'][$ip]['total_neto'] = quitar_iva($p['ProductosProspecto']['monto']) * $p['ProductosProspecto']['cantidad'];
+			$prospecto['VentaDetalleProducto'][$ip]['monto_neto'] = monto_neto($p['ProductosProspecto']['monto']);
+			$prospecto['VentaDetalleProducto'][$ip]['total_neto'] = monto_neto($p['ProductosProspecto']['monto']) * $p['ProductosProspecto']['cantidad'];
 			$prospecto['Prospecto']['total_neto']                 = $prospecto['Prospecto']['total_neto'] + $prospecto['VentaDetalleProducto'][$ip]['total_neto'];
 		}
 
 		$prospecto['Prospecto']['descuento_monto'] = 0;
 
 		# Calcular iva
-		$prospecto['Prospecto']['iva'] = obtener_iva($prospecto['Prospecto']['total_neto']);
+		$prospecto['Prospecto']['iva'] = monto_bruto($prospecto['Prospecto']['total_neto']);
 
 		# Calcular descuento
 		if (!empty($prospecto['Prospecto']['descuento'])) {
-			$prospecto['Prospecto']['descuento_monto'] = obtener_iva( monto_bruto($prospecto['Prospecto']['total_neto']), $prospecto['Prospecto']['descuento']);
+			$prospecto['Prospecto']['descuento_monto'] = monto_bruto( obtener_descuento_monto($prospecto['Prospecto']['total_neto'], $prospecto['Prospecto']['descuento']));
 		}
 		
 	
