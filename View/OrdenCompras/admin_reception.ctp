@@ -36,6 +36,7 @@
 								<tr>
 									<td>
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.id', $ipp), array('value' => $producto['id']));?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.estado_proveedor', $ipp), array('value' => $producto['OrdenComprasVentaDetalleProducto']['estado_proveedor']));?>
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.id_ocp', $ipp), array('value' => $producto['OrdenComprasVentaDetalleProducto']['id']));?>
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.total_neto', $ipp), array('value' => $producto['OrdenComprasVentaDetalleProducto']['total_neto']));?>
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.cantidad_validada_proveedor', $ipp), array('value' => $producto['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']));?>

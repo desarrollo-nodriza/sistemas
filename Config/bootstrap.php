@@ -145,7 +145,7 @@ Configure::write('CakePdf', array(
  define('DOMPDF_ENABLE_REMOTE', true);
 
 // URL Base para consola
-if ( Configure::read('debug' > 1) ) {
+if ( Configure::read('ambiente') == 'dev' ) {
 	@define('FULL_BASE_URL', 'https://sistemasdev.nodriza.cl/');
 }else{
 	@define('FULL_BASE_URL', 'https://sistema.nodriza.cl/');
@@ -168,7 +168,7 @@ function prx()
 
 function obtener_url_base()
 {
-	if (Configure::read('debug') > 1) {
+	if (Configure::read('ambiente') == 'dev') {
 		return 'https://sistemasdev.nodriza.cl/';
 	}else{
 		return 'https://sistema.nodriza.cl/';
@@ -234,7 +234,7 @@ function monto_bruto($precio = null, $iva = 19, $round = 2)
 {
 	if (!is_null($precio)) {
 
-		$iva = ($iva / 100) +1;
+		$iva = (Configure::read('iva_clp') / 100) +1;
 
 		return round( $precio * $iva, $round );
 	}
@@ -247,7 +247,7 @@ function quitar_iva($precio, $iva = 19)
 {
 	if (!is_null($precio)) {
 
-		$iva = ($iva / 100) +1;
+		$iva = (Configure::read('iva_clp') / 100) +1;
 
 		return round( $precio / $iva, 2 );
 	}
@@ -257,14 +257,14 @@ function quitar_iva($precio, $iva = 19)
 
 function agregar_iva($precio, $iva = 19)
 {
-	$iva_monto = obtener_iva($precio, $iva);
+	$iva_monto = obtener_iva($precio, Configure::read('iva_clp'));
 	return round($precio + $iva_monto, 2);
 }
 
 
 function monto_neto($precio = null, $iva = 19, $round = 2)
 {
-	$iva = ($iva / 100) +1;
+	$iva = (Configure::read('iva_clp') / 100) +1;
 
 	return round( $precio / $iva, $round );
 }
@@ -272,9 +272,17 @@ function monto_neto($precio = null, $iva = 19, $round = 2)
 
 function obtener_iva($monto, $iva = 19)
 {	
-	$iva = ($iva/100);
+	$iva = (Configure::read('iva_clp') / 100);
 
 	return (float)($monto * $iva);
+}
+
+
+function obtener_descuento_monto($monto, $descuento)
+{
+	$descuento = ($descuento / 100);
+
+	return (float)($monto * $descuento);
 }
 
 
@@ -350,4 +358,53 @@ function external_url_exists( $url = NULL ) {
         return false;
     }
 
+}
+
+
+function unique_multidim_array($array, $key) {
+    $temp_array = array();
+    $i = 0;
+    $key_array = array();
+   
+    foreach($array as $val) {
+        if (!in_array($val[$key], $key_array)) {
+            $key_array[$i] = $val[$key];
+            $temp_array[$i] = $val;
+        }
+        $i++;
+    }
+    return $temp_array;
+}
+
+function formato_rut($rut)
+{	
+	if (!empty($rut)) {
+
+		# Quitamos los puntos
+		$rut = trim(str_replace('.', '', $rut));
+		$rut = str_replace('-', '', $rut);
+
+		$dv  = substr($rut, -1);
+		$rut = substr($rut, 0, -1);
+		
+		# Formateamos
+		$rut = $rut . '-' . $dv;
+	}
+
+	return $rut;
+}
+
+function array_keys_recursive($input, $maxDepth = INF, $depth = 0, $arrayKeys = [])
+{
+	if ($depth < $maxDepth) {
+		$depth++;
+		$keys = array_keys($input);
+		foreach ($keys as $key) {
+			if (is_array($input[$key]))
+				$arrayKeys[$key] = array_keys_recursive($input[$key], $maxDepth, $depth);
+			else
+				$arrayKeys[] = $key;
+		}
+	}
+	return $arrayKeys;
 }

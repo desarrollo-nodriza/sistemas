@@ -401,7 +401,7 @@ class StarkenComponent extends Component
 
 		foreach ($venta['VentaDetalle'] as $ivd => $d) {
 
-			if ($d['cantidad_reservada'] == 0) {
+			if ($d['cantidad_reservada'] <= 0) {
 				continue;
 			}
 

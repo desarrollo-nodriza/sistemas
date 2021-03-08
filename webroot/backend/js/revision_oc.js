@@ -132,7 +132,7 @@ $.extend({
 				        }
 				    });
 				}else if (valor == 'price_error') {
-					contexto.find('.js-cantidad').val(cantidad);
+					contexto.find('.js-cantidad').val(0);
 					contexto.find('.js-cantidad').attr('readonly', 'readonly');
 					contexto.find('.js-wrapper-nota').removeClass('hidden');
 					contexto.find('.js-cantidad').rules("remove", "min max");

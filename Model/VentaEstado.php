@@ -34,6 +34,19 @@ class VentaEstado extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'EstadoEnvioCategoria' => array(
+			'className'				=> 'EstadoEnvioCategoria',
+			'foreignKey'			=> 'venta_estado_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
@@ -175,6 +188,48 @@ class VentaEstado extends AppModel
 			return false;
 
 		return $est['VentaEstadoCategoria']['cancelado'];
+	}
+
+
+	public function estado_mueve_bodega($estado_id)
+	{
+		$est = $this->find('first', array(
+			'conditions' => array(
+				'VentaEstado.id' => $estado_id
+			),
+			'contain' => array(
+				'VentaEstadoCategoria' => array(
+					'fields' => array(
+						'VentaEstadoCategoria.id',
+						'VentaEstadoCategoria.retiro_en_tienda',
+						'VentaEstadoCategoria.listo_para_envio',
+						'VentaEstadoCategoria.envio',
+						'VentaEstadoCategoria.final'
+					)
+				)
+			),
+			'fields' => array(
+				'VentaEstado.id'
+			)
+		));
+
+		if (empty($est))
+			return false;
+
+		if (empty($est['VentaEstadoCategoria']))
+			return false;
+
+		if ($est['VentaEstadoCategoria']['final'])
+			return false;
+
+		if ($est['VentaEstadoCategoria']['retiro_en_tienda']
+			|| $est['VentaEstadoCategoria']['listo_para_envio']
+			|| $est['VentaEstadoCategoria']['envio'])
+			{
+				return true;
+			}
+		
+			return false;
 	}
 
 

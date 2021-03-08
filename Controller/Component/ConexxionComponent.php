@@ -374,7 +374,7 @@ class ConexxionComponent extends Component
 
 		foreach ($venta['VentaDetalle'] as $ivd => $d) {
 
-			if ($d['cantidad_reservada'] == 0) {
+			if ($d['cantidad_reservada'] <= 0) {
 				continue;
 			}
 
@@ -457,7 +457,7 @@ class ConexxionComponent extends Component
  	}
 
 
- 	public function obtener_a()
+ 	public function obtener_tipo_productos()
  	{
  		return Conexxion::$PRODUCT;
  	}

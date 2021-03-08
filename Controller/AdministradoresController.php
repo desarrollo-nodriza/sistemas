@@ -492,7 +492,7 @@ class AdministradoresController extends AppController
     		if (empty($email) || empty($clave)) {
     			$response = array(
 					'code'    => 502, 
-					'message' => 'Empty value'
+					'message' => 'Email y contraseña son requeridos'
 				);
 
 				throw new CakeException($response);
@@ -509,7 +509,7 @@ class AdministradoresController extends AppController
     		if (empty($usuario)) {
     			$response = array(
 					'code'    => 404, 
-					'message' => 'User not found'
+					'message' => 'El email ingresado no existe'
 				);
 
 				throw new CakeException($response);
@@ -519,7 +519,7 @@ class AdministradoresController extends AppController
     		if (AuthComponent::password($clave) != $usuario['Administrador']['clave']) {
     			$response = array(
 					'code'    => 403, 
-					'message' => 'Not allowed'
+					'message' => 'La contraseña ingresada no es correcta'
 				);
 
 				throw new CakeException($response);
@@ -563,7 +563,7 @@ class AdministradoresController extends AppController
     		if (empty($token)) {
     			$response = array(
 					'code'    => 501, 
-					'message' => 'token es requerido'
+					'message' => 'Token es requerido'
 				);
 
 				throw new CakeException($response);

@@ -4,7 +4,8 @@ class MetodoEnviosController extends AppController
 {	
 	public $components = array(
 		'Starken',
-		'Conexxion'
+		'Conexxion',
+		'Boosmap'
 	);
 
 	public function admin_index () {
@@ -103,7 +104,11 @@ class MetodoEnviosController extends AppController
 		$dependenciasVars['conexxion']['tipo_servicios']      = $this->Conexxion->obtener_tipo_servicios();
 		$dependenciasVars['conexxion']['tipo_notificaciones'] = $this->Conexxion->obtener_tipo_notificaciones();
 		$dependenciasVars['conexxion']['comunas']             = $comunas;
-			
+
+		# Boosmap
+		$dependenciasVars['boosmap']['pickup'] = $this->Boosmap->obtener_pickups();
+		$dependenciasVars['boosmap']['tipo_servicios'] = $this->Boosmap->obtener_tipo_servicios();
+		
 		BreadcrumbComponent::add('Métodos de envio');
 		BreadcrumbComponent::add('Editar Método de envio');
 

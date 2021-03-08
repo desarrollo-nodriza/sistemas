@@ -220,6 +220,60 @@
 					</div>
 				</div>
 			</div>
+
+			<div class="panel panel-default js-panel-boosmap <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'boosmap') ? '' : 'hidden' ;?>">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-truck"></i> Configuración de boosmap</h3>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<th><?= $this->Form->label('boosmap_token', 'Token de Boosmap'); ?></th>
+								<td><?= $this->Form->input('boosmap_token', array('placeholder' => 'Ingrese su token')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('boosmap_pick_up_id', 'Punto de retiro'); ?></th>
+								<td><?= $this->Form->select('boosmap_pick_up_id', $dependenciasVars['boosmap']['pickup'], array('empty' => 'Seleccione pickup', 'class' => 'form-control select', 'data-live-search' => true)); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('boosmap_service', 'Típo de servicio'); ?></th>
+								<td><?= $this->Form->select('boosmap_service', $dependenciasVars['boosmap']['tipo_servicios'], array('class' => 'form-control', 'empty' => false)); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
+								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('peso_maximo', 'Peso máximo del bulto'); ?></th>
+								<td><?= $this->Form->input('peso_maximo', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('peso_default', 'Peso por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('peso_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('alto_default', 'Alto por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('alto_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('ancho_default', 'Ancho por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('ancho_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('largo_default', 'Largo por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
+								<td><?= $this->Form->input('largo_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div> <!-- end row -->
 </div>

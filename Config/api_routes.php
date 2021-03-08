@@ -273,6 +273,19 @@ Router::connect(
     )
 );
 
+Router::connect(
+    '/api/ventas/:id/cambiar_estado_por_transportista', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'cambiar_estado_por_transportista',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
 
 /**
  * Transporte

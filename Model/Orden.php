@@ -24,9 +24,10 @@ Class Orden extends AppModel {
 	 * @var array
 	 */
 	private static $tipo_ndc = array(
-		'devolucion' => 'Anular producto/s (Devuelve items a bodega si corresponde)', 
-		'cambio_dte' => 'Cambio de DTE (No tiene efecto en items)', 
-		'garantia'   => 'Garantía (No devuelve items a bodega, solo los anula de la venta)'
+		'devolucion' => 'Anular y devolver producto/s (Devuelve items a bodega)',
+		'anulacion'  => 'Anular producto/s (No devuelve items a bodega)', 
+		'cambio_dte' => 'Cambio de DTE (No tiene efecto en items ni en la venta)', 
+		'garantia'   => 'Garantía (Devuelve items a bodega sin afectar el stock)'
 	);
 
 	public $belongsTo = array(

@@ -1367,7 +1367,7 @@ class VentaDetalleProductosController extends AppController
 								)
 							)
 						),
-						'limit' => 80,
+						'limit' => 200,
 						'order' => array('VentaDetalle.id' => 'DESC')
 					),
 					'Bodega' => array(

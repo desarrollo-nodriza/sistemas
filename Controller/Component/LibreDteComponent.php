@@ -233,6 +233,81 @@ class LibreDteComponent extends Component
 	}
 
 
+	public function crearDteTest($dte_temporal, &$dteInterno = array(), $code = 200)
+	{	
+
+		$total_dte_precio_bruto = 0;
+	
+		foreach($dteInterno['DteDetalle'] as $detalle)
+		{
+			$total_dte_precio_bruto = $total_dte_precio_bruto + ($detalle['PrcItem'] * $detalle['QtyItem']);
+		}
+
+		// crear DTE test
+		$generar = array(
+			'status' => array(
+				'code' => $code
+			),
+			'body' => array(
+				'emisor' => $dte_temporal['emisor'],
+				'folio'  => 0,
+				'certificacion' => 0,
+				'tasa' => Configure::read('iva_clp'),
+				'fecha' => date('Y-m-d'),
+				'sucursal_sii' => '',
+				'receptor' => $dte_temporal['receptor'],
+				'exento' => '',
+				'neto' => monto_neto($total_dte_precio_bruto, '', 0),
+				'iva'  => obtener_iva(monto_neto($total_dte_precio_bruto, '', 0)),
+				'total' => $total_dte_precio_bruto,
+				'usuario' => 3214,
+				'track_id' => rand(1000,50000),
+				'revision_estado' => '',
+				'revision_detalle' => '',
+			)
+		);
+	
+		if ($generar['status']['code']!=200) {
+
+		    # Guardamos el estado
+		    $dteInterno['Dte']['estado'] = 'dte_real_no_emitido';
+		    ClassRegistry::init('Dte')->save($dteInterno);
+
+		    # Mensaje de retorno
+		    throw new Exception("Error al generar el DTE Real: " . $generar['body'], $generar['status']['code']);
+		    return;
+		}else{
+
+			# Registramos los datos retornados por Libre DTE
+			$dteInterno['Dte']['estado'] 			= 'dte_real_emitido';
+			$dteInterno['Dte']['emisor'] 			= $generar['body']['emisor'];
+			$dteInterno['Dte']['folio'] 			= $generar['body']['folio'];
+			$dteInterno['Dte']['certificacion'] 	= $generar['body']['certificacion'];
+			$dteInterno['Dte']['tasa'] 				= !empty($generar['body']['tasa']) ? $generar['body']['tasa'] : '';;
+			$dteInterno['Dte']['fecha'] 			= $generar['body']['fecha'];
+			$dteInterno['Dte']['sucursal_sii'] 		= !empty($generar['body']['sucursal_sii']) ? $generar['body']['sucursal_sii'] : '';
+			$dteInterno['Dte']['receptor'] 			= $generar['body']['receptor'];
+			$dteInterno['Dte']['exento'] 			= !empty($generar['body']['exento']) ? $generar['body']['exento'] : '';
+			$dteInterno['Dte']['neto'] 				= !empty($generar['body']['neto']) ? $generar['body']['neto'] : '';
+			$dteInterno['Dte']['iva'] 				= !empty($generar['body']['iva']) ? $generar['body']['iva'] : '';
+			$dteInterno['Dte']['total'] 			= $generar['body']['total'];
+			$dteInterno['Dte']['usuario'] 			= $generar['body']['usuario'];
+			$dteInterno['Dte']['track_id'] 			= !empty($generar['body']['track_id']) ? $generar['body']['track_id'] : '';
+			$dteInterno['Dte']['revision_estado'] 	= !empty($generar['body']['revision_estado']) ? $generar['body']['revision_estado'] : '';
+			$dteInterno['Dte']['revision_detalle'] 	= !empty($generar['body']['revision_detalle']) ? $generar['body']['revision_detalle'] : '';
+
+			ClassRegistry::init('Dte')->save($dteInterno);
+
+			// Se marca como atendida
+			ClassRegistry::init('Venta')->id = $dteInterno['Dte']['venta_id'];
+			ClassRegistry::init('Venta')->saveField('atendida', 1);
+
+			# Mensaje de retorno
+			throw new Exception("DTE generado con éxito.", $generar['status']['code']);
+			return;
+		}
+	}
+
 
 	/**
 	 * Consultar estado de un DTE emitido a libredte
@@ -572,7 +647,7 @@ class LibreDteComponent extends Component
 			    		'TpoCodigo' => 'INT1',
 			            'VlrCodigo' => $item['VlrCodigo']
 			    	),
-			        'NmbItem' => $item['NmbItem'],
+			        'NmbItem' => substr($item['NmbItem'], 0, 80),
 			        'QtyItem' => $item['QtyItem'],
 			        'PrcItem' => $item['PrcItem']
 			       );

@@ -2469,7 +2469,7 @@ class OrdenComprasController extends AppController
 		$mensaje = sprintf('Estimados %s, la OC #%d emitida por "%s" se encuentra disponible para ser validada.', $oc['Proveedor']['nombre'], $oc['OrdenCompra']['id'], $oc['Tienda']['nombre']);
 
 		# Quitamos los emails inactivos
-		$oc['Proveedor']['meta_emails'] = Hash::remove($oc['Proveedor']['meta_emails'], '{n}[activo=0]');
+		$oc['Proveedor']['meta_emails'] = @Hash::remove($oc['Proveedor']['meta_emails'], '{n}[activo=0]');
 		
 		# Asignamos los emails respectivos
 		$validadores = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=validador].email');

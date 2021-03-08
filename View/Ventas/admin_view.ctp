@@ -18,6 +18,10 @@
 					
 					<li><a href="#tab-transporte" data-toggle="tab"><i class="fa fa-truck"></i> Transporte Externo</a></li>
 
+					<? if (!empty($venta['Transporte'])) : ?>
+						<li><a href="#tab-seguimiento" data-toggle="tab"><i class="fa fa-truck"></i> Seguimiento del pedido</a></li>
+					<? endif; ?>
+
 					<li><a href="#tab-estados" data-toggle="tab"><i class="fa fa-list"></i> Historial de estados</a></li>
 			    	
 			    </ul>
@@ -263,8 +267,8 @@
 												<th>Opciones</th>
 											</thead>
 											<tbody>
-												<?php $TotalProductos = 0; foreach ($venta['VentaDetalle'] as $indice => $detalle) : $TotalProductos = $TotalProductos + ($detalle['precio']* $detalle['cantidad'] - $detalle['monto_anulado']); ?>
-													<tr class="<?= ($detalle['cantidad'] == $detalle['cantidad_anulada']) ? 'danger' : '' ; ?>  <?= ($detalle['cantidad'] == $detalle['cantidad_entregada']) ? 'success' : '' ; ?>" >
+												<?php $TotalProductos = 0; foreach ($venta['VentaDetalle'] as $indice => $detalle) : $TotalProductos = $TotalProductos + ($detalle['precio'] * $detalle['cantidad'] - $detalle['monto_anulado']); ?>
+													<tr class="<?= ($detalle['cantidad'] == $detalle['cantidad_anulada']) ? 'danger' : '' ; ?>  <?= ( ($detalle['cantidad'] - $detalle['cantidad_anulada'] ) == $detalle['cantidad_entregada'] && $detalle['cantidad_entregada'] > 0) ? 'success' : '' ; ?> <?= ( ($detalle['cantidad'] - $detalle['cantidad_anulada'] ) > $detalle['cantidad_entregada'] && $detalle['cantidad_entregada'] > 0) ? 'warning' : '' ; ?>" >
 														<td>
 															<?=($detalle['confirmado_app']) ? '<i class="fa fa-mobile text-success" data-toggle="tooltip" title="Confirmado vía app"></i>' : '' ; ?> 
 															<? if ($permisos['edit']) : ?>
@@ -1162,8 +1166,21 @@
 						</div>
 						<? endif; ?>
 					</div>
+						
+					<? if (!empty($venta['Transporte'])) : ?>
+					<div class="tab-pane panel-body" id="tab-seguimiento">
+						<div class="row mb-5 mt-5">
+							<div class="col-xs-12">
+								<h3><i class="fa fa-cubes"></i> <?= __('Envios/bultos creados');?></h3>
+							</div>
+							<div class="col-xs-12">
+								<?=$this->element('ventas/tabla-estado-transportes', array('venta' => $venta)); ?>
+							</div>
+						</div>
+					</div>
+					<? endif; ?>
 
-					<div class="tab-pane panel-body active" id="tab-estados">
+					<div class="tab-pane panel-body" id="tab-estados">
 						
 						<div class="table-responsive">
 							<table class="table table-bordered">
@@ -1380,6 +1397,8 @@
   </div>
 </div>
 <? endif; ?>
+
+
 
 <?= $this->Html->script(array(
 	'/backend/js/venta.js?v=' . rand()

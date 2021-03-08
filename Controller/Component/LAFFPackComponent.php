@@ -15,6 +15,94 @@ class LAFFPackComponent extends Component
     
     /** @var array $container_dimensions Current container dimensions */
     private $container_dimensions = null;
+
+    /**
+	 * Calcula a aproximacion de bltos que se deberían armar en base a los itemes
+	 * @param  array $venta         Detalle de la venta
+	 * @param  float $volumenMaximo volumen máximo para cada paquete
+	 * @return array
+	 */
+	public function obtener_bultos_venta($venta, $volumenMaximo)
+	{	
+		$bultos = array();
+
+		foreach ($venta['VentaDetalle'] as $ivd => $d) {
+
+			if ($d['cantidad_reservada'] <= 0) {
+				continue;
+			}
+
+			for ($i=0; $i < $d['cantidad_reservada']; $i++) {
+
+				$alto  = $d['VentaDetalleProducto']['alto'];
+				$ancho = $d['VentaDetalleProducto']['ancho'];
+				$largo = $d['VentaDetalleProducto']['largo'];
+				$peso  = $d['VentaDetalleProducto']['peso'];
+
+				$volumen = $this->calcular_volumen($alto, $ancho, $largo);
+
+				$caja = array(
+					'id'     => $d['VentaDetalleProducto']['id'],
+					'width'  => $ancho,
+					'height' => $alto,
+					'length' => $largo,
+					'weight' => $peso
+				);
+
+				$unico = rand(1000, 100000);
+				
+				if ($volumen > $volumenMaximo) {
+					$bultos[$d['venta_id'] . $unico]['venta_id']    = $d['venta_id'];
+					$bultos[$d['venta_id'] . $unico]['cajas'][]     = $caja;
+				}else{
+					$bultos[$d['venta_id']]['venta_id']    = $d['venta_id'];
+					$bultos[$d['venta_id']]['cajas'][]     = $caja;
+				}	
+			}
+
+		}
+		
+		$resultado = array();
+		
+		foreach ($bultos as $ib => $b) {
+			$resultado[$ib]['paquete']             = $this->obtenerDimensionesPaquete($b['cajas']);
+			$resultado[$ib]['paquete']['weight']   = array_sum(Hash::extract($b['cajas'], '{n}.weight'));
+			$resultado[$ib]['paquete']['venta_id'] = $b['venta_id'];
+			$resultado[$ib]['items']               = $b['cajas'];
+		}
+
+		return $resultado;
+	}
+
+
+	/**
+	 * [calcular_volumen description]
+	 * @param  float $largo cm
+	 * @param  float $ancho cm
+	 * @param  float $alto  cm
+	 * @return float
+	 */
+	public function calcular_volumen($alto, $ancho, $largo)
+	{	
+		return (float) round( ($largo/100) * ($ancho/100) * ($alto/100), 2);
+	}
+
+
+	/**
+	 * [obtenerDimensionesPaquete description]
+	 * @param  array  $cajas [description]
+	 * @return [type]        [description]
+	 */
+	public function obtenerDimensionesPaquete($cajas = array())
+	{	
+		$this->pack($cajas);
+        
+        # Se obtienen las dimensiones del paquete
+        $paquete = $this->get_container_dimensions();
+
+        return $paquete;
+        
+	}
     
     /**
      * Constructor of the BoxPacking class

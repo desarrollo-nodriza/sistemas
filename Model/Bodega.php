@@ -31,9 +31,19 @@ class Bodega extends AppModel
 			'NOMBRE' => 'I/O normal'
 		),
 		'VT' => array(
-			'IN' => 'Ingreso por cancelación o devolución',
+			'IN' => 'Ingreso por cancelación de la venta',
 			'ED' => 'Salida desde venta',
 			'NOMBRE' => 'I/O venta'
+		),
+		'NC' => array(
+			'IN' => 'Ingreso por Nota de crédito por concepto de anulación y/o devolución',
+			'ED' => 'Salida por Nota de crédito', // No se debería usar,
+			'NOMBRE' => 'Nota de crédito'
+		),
+		'GT' => array(
+			'IN' => 'Ingreso por Nota de crédito por concepto de garantia (no computable)',
+			'ED' => 'Salida por Nota de crédito', // No se debería usar,
+			'NOMBRE' => 'Garantia'
 		)
 	); 
 
@@ -148,7 +158,8 @@ class Bodega extends AppModel
 		$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
 			'conditions' => array(
 				'BodegasVentaDetalleProducto.bodega_id' => $id_bodega,
-				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto,
+				'BodegasVentaDetalleProducto.tipo <>' => 'GT'
 			)
 		));
 
@@ -188,10 +199,11 @@ class Bodega extends AppModel
 	{
 		$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
 			'conditions' => array(
-				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto,
+				'BodegasVentaDetalleProducto.tipo <>' => 'GT'
 			)
 		));
-
+		
 		$total = 0;
 
 		if (!empty($historico)) {
@@ -347,25 +359,6 @@ class Bodega extends AppModel
 				'venta_id'     				=> $id_venta
 			)
 		);
-
-		# Validamos que no exista el movimiento creado
-		$creado = ClassRegistry::init('BodegasVentaDetalleProducto')->find('first', array(
-			'conditions' => array(
-				'BodegasVentaDetalleProducto.venta_id'                  => $id_venta,
-				'BodegasVentaDetalleProducto.venta_id !='               => '',
-				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto,
-				'BodegasVentaDetalleProducto.cantidad'                  => -$cantidad,
-				'BodegasVentaDetalleProducto.tipo'                      => $tipo,
-				'BodegasVentaDetalleProducto.io'                        => 'ED',
-				'BodegasVentaDetalleProducto.bodega_id'                 => $bodega_id,
-				'BodegasVentaDetalleProducto.total'                     => $data['BodegasVentaDetalleProducto']['total'],
-			)
-		));
-
-		# Si existe, es pr que ya se quitó el item desde el inventario para la venta indicada
-		if (!empty($creado)) {
-			return true;
-		}
 
 		ClassRegistry::init('BodegasVentaDetalleProducto')->create();
 		if (ClassRegistry::init('BodegasVentaDetalleProducto')->save($data)) {
@@ -534,8 +527,11 @@ class Bodega extends AppModel
 			}
 
 			if (!$this->permite_ajuste($value['id_producto'], $value['bodega_id'])) {
-				$result['errores'][] = 'Item #' . $value['id_producto'] . ' No puede ser ajustado en la bodega seleccionada, ya que la bodega no tiene registros de ingreso.';
-				continue;
+				#$result['errores'][] = 'Item #' . $value['id_producto'] . ' No puede ser ajustado en la bodega seleccionada, ya que la bodega no tiene registros de ingreso.';
+				#continue;
+				
+				
+
 			}
 
 			$ii = $this->ajustarInventario($value['id_producto'], $value['bodega_id'], $value['cantidad'], $value['precio']);
@@ -651,5 +647,42 @@ class Bodega extends AppModel
 		}
 
 		return $costo;
+	}
+
+	
+	/**
+	 * Obtiene el total de unidades movidas para una venta dada
+	 * Tambien se puede usar por bodega
+	 * 
+	 * @param int $id_venta Identificador de la venta
+	 * @param int $id_producto Idenitficador del producto
+	 * @param int $id_bodega Identificador de bodega
+	 * 
+	 * @return int
+	 */
+	public function obtener_total_mv_por_venta($id_venta, $id_producto, $id_bodega = '')
+	{	
+		$qry = array(
+			'conditions' => array(
+				'BodegasVentaDetalleProducto.venta_id' => $id_venta,
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto,
+				'BodegasVentaDetalleProducto.tipo' => array('VT', 'NC')
+			),
+			'fields' => array('BodegasVentaDetalleProducto.cantidad')
+		);
+
+		if (!empty($id_bodega))
+		{
+			$qry =  array_replace_recursive($qry, array(
+				'conditions' => array(
+					'BodegasVentaDetalleProducto.bodega_id' => $id_bodega
+				)
+			));
+		}
+
+		$mvs = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', $qry);
+
+		return array_sum(Hash::extract($mvs, '{n}.BodegasVentaDetalleProducto.cantidad'));
+
 	}
 }

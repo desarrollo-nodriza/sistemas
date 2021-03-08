@@ -344,7 +344,8 @@ $.extend({
 				  			required: true
 				  		},
 				  		'editNmbItem[0]' : {
-				  			required: true
+				  			required: true,
+							maxlength: 80
 				  		},
 				  		'editPrcItem[0]' : {
 				  			required: true,
@@ -422,7 +423,8 @@ $.extend({
 				  			required: 'Ingrese código item'
 				  		},
 				  		'editNmbItem[0]' : {
-				  			required: 'Ingrese nombre item'
+				  			required: 'Ingrese nombre item',
+							maxlength: 'Nombre es demasiado largo: Max 80'
 				  		},
 				  		'editPrcItem[0]' : {
 				  			required: 'Ingrese precio neto item',
@@ -760,8 +762,10 @@ $.extend({
 							if ($that.hasClass('editNmbItem')) {
 								$that.rules("add", {
 							        required: true,
+									maxlength: 80,
 							        messages: {
-							        	required: 'Ingrese nombre item'
+							        	required: 'Ingrese nombre item',
+										maxlength: 'El nombre es demasiado largo: Max 80'
 							        }
 							    });
 							}

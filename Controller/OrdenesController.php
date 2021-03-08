@@ -445,27 +445,36 @@ class OrdenesController extends AppController
 			}
 			
 			# Guardar información del DTE en base de datos local
-			if($this->Orden->Dte->saveAll($this->request->data)) {
+			if($this->Orden->Dte->saveAll($this->request->data)) 
+			{
 
-				try {
+				try 
+				{
 					# Enviar DTE a LibreDTE
 					$this->generarDte();
-				} catch (Exception $e) {
+				} catch (Exception $e) 
+				{
 
-					if($e->getCode() == 200) {
+					if($e->getCode() == 200) 
+					{
 						$this->Session->setFlash($e->getMessage() , null, array(), 'success');
-					}else{
+					}
+					else
+					{
 						$this->Session->setFlash($e->getMessage() , null, array(), 'warning');
 					}
 				}
 
-				if (!isset($this->request->data['Dte']['id'])) {
+				if (!isset($this->request->data['Dte']['id'])) 
+				{
 					$id_dte = $this->Orden->Dte->find('first', array(
 						'conditions' => array('Dte.venta_id' => $id_orden),
 						'order' => array('Dte.id' => 'DESC')
 						)
 					);	
-				}else{
+				}
+				else
+				{
 					$id_dte = $this->Orden->Dte->find('first', array(
 						'conditions' => array('Dte.id' => $this->request->data['Dte']['id']),
 						'order' => array('Dte.id' => 'DESC')
@@ -473,14 +482,21 @@ class OrdenesController extends AppController
 					);
 				}
 
-				if (!empty($id_dte)) {
-					
+				if (!empty($id_dte)) 
+				{
+					# Los tipos de NDC que devuelven stock a bodega
+					$tipos_ndc_devloucion = array(
+						'devolucion',
+						'garantia'
+					);
+
 					# Si es NDC se anulan los items en la venta, se recalculan los montos de la venta y se devuelven a bodega los itmes cancelados si corresponde.
 					if (!empty($this->request->data['DteDetalle']) 
 						&& $this->request->data['Dte']['tipo_documento'] == 61 
 						&& $id_dte['Dte']['estado'] == 'dte_real_emitido' 
-						&& $this->request->data['Dte']['tipo_ntc'] == 'devolucion'
-					) {
+						&& in_array($this->request->data['Dte']['tipo_ntc'], $tipos_ndc_devloucion)
+					) 
+					{
 						
 						$venta = ClassRegistry::init('Venta')->find('first', array(
 							'conditions' => array(
@@ -522,70 +538,97 @@ class OrdenesController extends AppController
 						$itemsDevuletos = array();
 
 						# Aunlamos los items correspondientes
-						foreach ($venta['VentaDetalle'] as $ip => $d) {
-
+						foreach ($venta['VentaDetalle'] as $ip => $d) 
+						{
 							$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = 0;
 
-							foreach ($this->request->data['DteDetalle'] as $ide => $detalle) {
+							foreach ($this->request->data['DteDetalle'] as $ide => $detalle) 
+							{
 
 								$id_item = str_replace('COD-', '', $detalle['VlrCodigo']);
 
-								if ($id_item == $d['venta_detalle_producto_id']) {
-									$venta['VentaDetalle'][$ip]['cantidad_anulada']           = $d['cantidad_anulada'] + $detalle['QtyItem'];
-									$venta['VentaDetalle'][$ip]['monto_anulado']              = $venta['VentaDetalle'][$ip]['cantidad_anulada'] * $detalle['PrcItem'];
-									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
-									$venta['VentaDetalle'][$ip]['dte']                        = $id_dte['Dte']['id'];
+								if ($id_item == $d['venta_detalle_producto_id']) 
+								{
+									# Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
+									$cantidad_entregada = 0;
 
-									# Quitamos las unidades en espera de llegada
-									if ($d['cantidad_en_espera'] > 0 && $d['cantidad_en_espera'] <= $venta['VentaDetalle'][$ip]['cantidad_anulada']) {
-										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = 0;
-										$venta['VentaDetalle'][$ip]['fecha_llegada_en_espera'] = null;
+									# Obtenemos los movimientos del productos en esta venta
+									$cantidad_mv = ClassRegistry::init('Bodega')->obtener_total_mv_por_venta($venta['Venta']['id'], $d['venta_detalle_producto_id']);
+									
+									# tiene salida
+									if ($cantidad_mv < 0)
+									{
+										$cantidad_entregada = ($cantidad_mv * -1);
 									}
 
-									# Quitamos las unidades en espera de llegada
-									if ($d['cantidad_en_espera'] > 0 && $d['cantidad_en_espera'] > $venta['VentaDetalle'][$ip]['cantidad_anulada']) {
-										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = $d['cantidad_en_espera'] - $detalle['QtyItem'];
+									# Calcula la cantidad toal anulada
+									$venta['VentaDetalle'][$ip]['cantidad_anulada'] = $d['cantidad_anulada'] + $detalle['QtyItem'];
+
+									# Calcula el monto anulado
+									$venta['VentaDetalle'][$ip]['monto_anulado'] = $venta['VentaDetalle'][$ip]['cantidad_anulada'] * $detalle['PrcItem'];
+
+									# Asigna NDC a linea de producto
+									$venta['VentaDetalle'][$ip]['dte'] = $id_dte['Dte']['id'];
+
+									# Se calcula la cantidad en espera
+									if ($d['cantidad_en_espera'] > 0)
+									{
+										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = ($d['cantidad'] - $venta['VentaDetalle'][$ip]['cantidad_anulada']) - $d['cantidad_reservada'];
 									}
 
 									# si la cantidad reservada es menor a la cantidad anulada, la reserva se lleva a 0
-									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) {
+									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) 
+									{
 										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = 0;
 									}
 
 									# si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
-									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem']) {
+									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem']) 
+									{
 										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
 									}
 
 									# Stock virtual
-									if ($d['reservado_virtual'] > 0){
-									
+									if ($d['reservado_virtual'] > 0)
+									{
 										# Nuevo stock virtual
 										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $detalle['QtyItem'], 'aumentar');
 										$venta['VentaDetalle'][$ip]['reservado_virtual'] = $d['reservado_virtual'] - $detalle['QtyItem'];
-										
 									}
 
-									if ($d['cantidad'] == $detalle['QtyItem']) {
+									if ($d['cantidad'] == $detalle['QtyItem']) 
+									{
 										$venta['VentaDetalle'][$ip]['total_neto']   = 0;
-									}else{
-										$venta['VentaDetalle'][$ip]['total_neto']   = $d['total_neto'] - ($detalle['QtyItem'] * $detalle['PrcItem']);
 									}
+									else
+									{
+										$venta['VentaDetalle'][$ip]['total_neto']   = $venta['VentaDetalle'][$ip]['monto_anulado'];
 
-									# Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
-
-									$cant_vendida 	= $d['cantidad'];
-									$cant_entregada = $d['cantidad_entregada'];
+										if ($venta['VentaDetalle'][$ip]['total_neto'] < 0)
+										{
+											$venta['VentaDetalle'][$ip]['total_neto'] = (float) 0;
+										}
+									}
 									
-									$cant_diferencia = $cant_vendida - $cant_entregada;
-									$cant_anulada 	 = $detalle['QtyItem'];
+									# Calculamos la cantidad anulada
+									$cant_diferencia = $d['cantidad'] - $cantidad_entregada;
+									$cant_anulada 	 = $venta['VentaDetalle'][$ip]['cantidad_anulada']; 
 
 									$cant_devolver = $cant_diferencia - $cant_anulada;
 									
+									# Devemos devolver
+									if ($cant_devolver < 0)
+									{
+										$cant_devolver = ($cant_devolver * -1);
+									}
 
-									if ( $cant_devolver > 0) {
+									# Calcula cantidad pendiente entrega
+									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad'] - $cant_devolver;
+
+									# Devolvemos a bodega
+									if ( $cant_devolver > 0 && $cantidad_entregada > 0) {
 										# Quitadmos de entregado los prductos devueltos
-										$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $cant_entregada - $cant_devolver;
+										$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $cantidad_entregada - $cant_devolver;
 
 										$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = $cant_devolver;
 										$itemsDevuletos[] = $venta['VentaDetalle'][$ip];
@@ -604,20 +647,35 @@ class OrdenesController extends AppController
 						$descuento      = (float) ($porcentaje_descuento > 0) ? round($subtotal_bruto * $porcentaje_descuento, 2) : 0;
 						
 						# si se anulan todos los items el despacho se deja en 0
-						if ($subtotal_bruto == 0) {
+						if ($subtotal_bruto == 0) 
+						{
 							$venta['Venta']['costo_envio'] = (float) 0;
 						}
 
 						$venta['Venta']['descuento'] = $descuento;
-						
+					
 						# Guardamos los cambios
 						ClassRegistry::init('Venta')->saveAll($venta);
 
 						# Re ingresamos los itemes devueltos
-						if (!empty($itemsDevuletos)) {
-							foreach ($itemsDevuletos as $i => $d) {
+						if (!empty($itemsDevuletos)) 
+						{
+							foreach ($itemsDevuletos as $i => $d) 
+							{
+								
 								$pmp = ClassRegistry::init('Bodega')->obtener_pmp_por_id($d['venta_detalle_producto_id']);
-								ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'VT', null, $d['venta_id']);
+								
+								# Según el tipo de ndc devolvemos con distintas glosas
+								switch($this->request->data['Dte']['tipo_ntc'])
+								{
+									case 'devolucion':
+										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
+										break;
+
+									case 'garantia':
+										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'GT', null, $d['venta_id']);
+										break;
+								}
 							}
 						}
 
@@ -628,13 +686,14 @@ class OrdenesController extends AppController
 						*/
 					}
 
-					# Si es nota de credito por garantia no se devuelve el stock a bodega pero se anula el item de la venta
+
+					# Si es NDC de anulación, anula los items sin devolverlos a bodega
 					if (!empty($this->request->data['DteDetalle']) 
 						&& $this->request->data['Dte']['tipo_documento'] == 61 
 						&& $id_dte['Dte']['estado'] == 'dte_real_emitido' 
-						&& $this->request->data['Dte']['tipo_ntc'] == 'garantia'
-					) {
-						
+						&& $this->request->data['Dte']['tipo_ntc'] == 'anulacion'
+					)
+					{
 						$venta = ClassRegistry::init('Venta')->find('first', array(
 							'conditions' => array(
 								'Venta.id' => $this->request->data['Dte']['venta_id']
@@ -675,53 +734,72 @@ class OrdenesController extends AppController
 						$itemsDevuletos = array();
 
 						# Aunlamos los items correspondientes
-						foreach ($venta['VentaDetalle'] as $ip => $d) {
-							foreach ($this->request->data['DteDetalle'] as $ide => $detalle) {
+						foreach ($venta['VentaDetalle'] as $ip => $d) 
+						{
+
+							foreach ($this->request->data['DteDetalle'] as $ide => $detalle) 
+							{
 
 								$id_item = str_replace('COD-', '', $detalle['VlrCodigo']);
 
-								if ($id_item == $d['venta_detalle_producto_id']) {
-									$venta['VentaDetalle'][$ip]['cantidad_anulada']           = $d['cantidad_anulada'] + $detalle['QtyItem'];
-									$venta['VentaDetalle'][$ip]['monto_anulado']              = $venta['VentaDetalle'][$ip]['cantidad_anulada'] * $detalle['PrcItem'];
-									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
-									$venta['VentaDetalle'][$ip]['dte']                        = $id_dte['Dte']['id'];
+								if ($id_item == $d['venta_detalle_producto_id']) 
+								{
+									# Calcula la cantidad toal anulada
+									$venta['VentaDetalle'][$ip]['cantidad_anulada'] = $d['cantidad_anulada'] + $detalle['QtyItem'];
 
-									# Quitamos las unidades en espera de llegada
-									if ($d['cantidad_en_espera'] > 0 && $d['cantidad_en_espera'] <= $venta['VentaDetalle'][$ip]['cantidad_anulada']) {
-										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = 0;
-										$venta['VentaDetalle'][$ip]['fecha_llegada_en_espera'] = null;
-									}
+									# Calcula el monto anulado
+									$venta['VentaDetalle'][$ip]['monto_anulado'] = $venta['VentaDetalle'][$ip]['cantidad_anulada'] * $detalle['PrcItem'];
 
-									# Quitamos las unidades en espera de llegada
-									if ($d['cantidad_en_espera'] > 0 && $d['cantidad_en_espera'] > $venta['VentaDetalle'][$ip]['cantidad_anulada']) {
-										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = $d['cantidad_en_espera'] - $detalle['QtyItem'];
+									# Asigna NDC a linea de producto
+									$venta['VentaDetalle'][$ip]['dte'] = $id_dte['Dte']['id'];
+
+									# Se calcula la cantidad en espera
+									if ($d['cantidad_en_espera'] > 0)
+									{
+										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = ($d['cantidad'] - $venta['VentaDetalle'][$ip]['cantidad_anulada']) - $d['cantidad_reservada'];
 									}
 
 									# si la cantidad reservada es menor a la cantidad anulada, la reserva se lleva a 0
-									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) {
+									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) 
+									{
 										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = 0;
 									}
 
 									# si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
-									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem']) {
+									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem']) 
+									{
 										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
 									}
 
 									# Stock virtual
-									if ($d['reservado_virtual'] > 0){
+									if ($d['reservado_virtual'] > 0)
+									{
+										# Nuevo stock virtual
+										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $detalle['QtyItem'], 'aumentar');
 										$venta['VentaDetalle'][$ip]['reservado_virtual'] = $d['reservado_virtual'] - $detalle['QtyItem'];
 									}
 
-									if ($d['cantidad'] == $detalle['QtyItem']) {
+									if ($d['cantidad'] == $detalle['QtyItem']) 
+									{
 										$venta['VentaDetalle'][$ip]['total_neto']   = 0;
-									}else{
-										$venta['VentaDetalle'][$ip]['total_neto']   = $d['total_neto'] - ($detalle['QtyItem'] * $detalle['PrcItem']);
 									}
+									else
+									{
+										$venta['VentaDetalle'][$ip]['total_neto']   = $venta['VentaDetalle'][$ip]['monto_anulado'];
+
+										if ($venta['VentaDetalle'][$ip]['total_neto'] < 0)
+										{
+											$venta['VentaDetalle'][$ip]['total_neto'] = (float) 0;
+										}
+									}
+
+									# Calcula cantidad pendiente entrega
+									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
 
 								}
 
 								# Total bruto se calcula siempre
-								$venta['VentaDetalle'][$ip]['total_bruto'] = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
+								$venta['VentaDetalle'][$ip]['total_bruto']      = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
 							}
 						}
 						
@@ -729,16 +807,18 @@ class OrdenesController extends AppController
 						$subtotal_neto  = (float) array_sum(Hash::extract($venta['VentaDetalle'], '{n}.total_neto')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.monto_anulado'));
 						$subtotal_bruto = (float) monto_bruto($subtotal_neto);
 						$descuento      = (float) ($porcentaje_descuento > 0) ? round($subtotal_bruto * $porcentaje_descuento, 2) : 0;
-					
-						$venta['Venta']['descuento'] = $descuento;
 						
 						# si se anulan todos los items el despacho se deja en 0
-						if ($subtotal_bruto == 0) {
+						if ($subtotal_bruto == 0) 
+						{
 							$venta['Venta']['costo_envio'] = (float) 0;
 						}
+
+						$venta['Venta']['descuento'] = $descuento;
 						
 						# Guardamos los cambios
 						ClassRegistry::init('Venta')->saveAll($venta);
+
 					}
 
 					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte['Dte']['id'], $id_orden));
@@ -770,7 +850,14 @@ class OrdenesController extends AppController
 								'VentaDetalle.activo' => 1
 							),
 							'fields' => array(
-								'VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.precio', 'VentaDetalle.cantidad', 'VentaDetalle.venta_id', 'VentaDetalle.cantidad_anulada', 'VentaDetalle.monto_anulado'
+								'VentaDetalle.id', 
+								'VentaDetalle.venta_detalle_producto_id', 
+								'VentaDetalle.precio', 
+								'VentaDetalle.cantidad', 
+								'VentaDetalle.venta_id', 
+								'VentaDetalle.cantidad_anulada', 
+								'VentaDetalle.monto_anulado',
+								'VentaDetalle.cantidad_entregada'
 							)
 						),
 						'VentaEstado' => array(
@@ -1046,7 +1133,14 @@ class OrdenesController extends AppController
 		}
 
 		$tipos_ndc = $this->Orden->get_tipos_ndc();
-		
+
+		# Se desactivan las opciones de ndc de devolución a stock si no han salido productos
+		if (ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id']) && !array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')))
+		{
+			unset($tipos_ndc['devolucion']);
+			unset($tipos_ndc['garantia']);
+		}
+
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');
@@ -1371,12 +1465,29 @@ class OrdenesController extends AppController
 	{	
 		$dte = $this->LibreDte->prepararDte($this->request->data);
 
-		if (!empty($id_dte)) {
+		if (!empty($id_dte)) 
+		{
 			# Obtener DTE interno por id
-			$dteInterno = $this->Orden->Dte->find('first', array('conditions' => array('id' => $id_dte)));
-		}else{
+			$dteInterno = $this->Orden->Dte->find('first', array(
+				'conditions' => array(
+					'id' => $id_dte
+				),
+				'contain' => array(
+					'DteDetalle'
+				)
+			));
+		}
+		else
+		{
 			# Obtener último DTE guardado
-			$dteInterno = $this->Orden->Dte->find('first', array('order' => array('id' => 'DESC')));
+			$dteInterno = $this->Orden->Dte->find('first', array(
+				'order' => array(
+					'id' => 'DESC'
+				),
+				'contain' => array(
+					'DteDetalle'
+				)
+			));
 		}
 		
 		// crear cliente
@@ -1385,12 +1496,22 @@ class OrdenesController extends AppController
 		// crear DTE temporal
 		$dte_temporal = $this->LibreDte->crearDteTemporal($dte, $dteInterno);
 
-		if (empty($dte_temporal)) {
+		if (empty($dte_temporal)) 
+		{
 			return;
 		}
 
-		// crear DTE real
-		$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
+		if (Configure::read('ambiente') == 'dev') 
+		{
+			// crear DTE test en base a dte temporal
+			return $this->LibreDte->crearDteTest($dte_temporal, $dteInterno);
+		}
+		else
+		{
+			// crear DTE real
+			return $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
+		}
+		
 
 		return;
 	}

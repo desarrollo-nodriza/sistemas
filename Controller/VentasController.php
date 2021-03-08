@@ -26,7 +26,8 @@ class VentasController extends AppController {
 		'Toolmania',
 		'LibreDte',
 		'Starken',
-		'Conexxion'
+		'Conexxion',
+		'Boosmap'
 	);
 	
 
@@ -685,6 +686,15 @@ class VentasController extends AppController {
 		$this->output   = '';
 
 		$venta  = $this->preparar_venta($id);
+		
+		# quitamos de la lista de productos los items que no corresponda embalar en esta ocación
+		foreach ($venta['VentaDetalle'] as $ivd => $detalle)
+		{
+			if ($detalle['cantidad_reservada'] <= 0)
+			{
+				unset($venta['VentaDetalle'][$ivd]);
+			}
+		}
 
 		$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
 		$tamano = '500x500';
@@ -917,6 +927,22 @@ class VentasController extends AppController {
 				$this->Session->setFlash('No fue posible crear el envío Conexxion.', null, array(), 'danger');
 			}
 
+		}elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
+			# Es una venta para boosmap
+			
+			# Creamos cliente boosmap
+			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
+			
+			# Creamos la OT
+			if($this->Boosmap->generar_ot($venta)){
+
+				$this->Boosmap->registrar_estados($venta['Venta']['id']);
+
+				$this->Session->setFlash('Envío creado con éxito en Boosmap.', null, array(), 'success');
+			}else{
+				$this->Session->setFlash('No fue posible crear el envío Boosmap.', null, array(), 'danger');
+			}
+
 		}else{
 			$this->Session->setFlash('La venta no aplica para usar un currier externo.', null, array(), 'danger');
 		}
@@ -986,24 +1012,6 @@ class VentasController extends AppController {
 		if ($cambiar_estado) {
 
 			if ($subestado == 'empaquetado') {
-
-				foreach ($detalles as $idd => $d) {
-
-					# Pedido completado
-					$detalles[$idd]['VentaDetalle']['completo']                   = ($detalles[$idd]['VentaDetalle']['cantidad'] == $d['VentaDetalle']['cantidad_reservada']) ? 1 : 0;
-					$detalles[$idd]['VentaDetalle']['fecha_completado']			  = ($detalles[$idd]['VentaDetalle']['completo']) ? date('Y-m-d H:i:s') : '';
-
-					$detalles[$idd]['VentaDetalle']['cantidad_reservada']         = 0;
-					$detalles[$idd]['VentaDetalle']['cantidad_entregada']         = $d['VentaDetalle']['cantidad_reservada'];
-					$detalles[$idd]['VentaDetalle']['cantidad_pendiente_entrega'] = $d['VentaDetalle']['cantidad'] - $d['VentaDetalle']['cantidad_reservada'];
-
-					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], null, 'VT', null, $id);
-						
-				}
-
-				if (!empty($detalles)) {
-					ClassRegistry::init('VentaDetalle')->saveMany($detalles);
-				}
 
 				$this->Venta->id = $id;
 				$this->Venta->saveField('picking_fecha_termino', date('Y-m-d H:i:s'));
@@ -1113,7 +1121,7 @@ class VentasController extends AppController {
 
 			if ($vd['cantidad_reservada'] > 0) {
 				$respuesta['code'] = 520;
-				$respuesta['message'] = 'El producto #' . $vd['venta_detalle_producto_id'] . ' no tiene stock suficiente en la bodega princiapl. Solicite un movimiento entre bodegas.';
+				$respuesta['message'] = 'El producto #' . $vd['venta_detalle_producto_id'] . ' no tiene stock suficiente en la bodega principal. Solicite un movimiento entre bodegas.';
 				echo json_encode($respuesta);
 				exit;
 			}
@@ -1175,6 +1183,26 @@ class VentasController extends AppController {
 						);
 					}
 
+				}elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot'] && !$venta['Venta']['paquete_generado']) {
+					# Es una venta para boosmap
+					
+					# Creamos cliente boosmap
+					$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
+					
+					# Creamos la OT
+					if($this->Boosmap->generar_ot($venta)){
+
+						$this->Boosmap->registrar_estados($venta['Venta']['id']);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Cambiar estado venta: Ingresa Boosmap',
+								'modulo' => 'Ventas',
+								'modulo_accion' => 'creado: OT generada'
+							)
+						);
+					}
+		
 				}
 
 				ClassRegistry::init('Log')->create();
@@ -1193,35 +1221,71 @@ class VentasController extends AppController {
 					)
 				));
 
-				if (count(Hash::extract($detalles, '{n}.VentaDetalle.confirmado_app')) != count(Hash::extract($detalles, '{n}.VentaDetalle.id')) ) {
+				if (count(Hash::extract($detalles, '{n}.VentaDetalle.confirmado_app')) != count(Hash::extract($detalles, '{n}.VentaDetalle.id')) ) 
+				{
 					$respuesta['code'] = 503;
 					$respuesta['message'] = 'Debes confirmar los productos de la venta';
 					echo json_encode($respuesta);
 					exit;
 				}
 
-				foreach ($detalles as $idd => $d) {
+				foreach ($detalles as $idd => $d) 
+				{
+
+					$cantidad_entregada = 0;
+					$cantidad_vendida = $d['VentaDetalle']['cantidad'] - $d['VentaDetalle']['cantidad_anulada'];
+
+					# Obtenemos los movimientos del productos en esta venta
+					$cantidad_mv = ClassRegistry::init('Bodega')->obtener_total_mv_por_venta($id, $d['VentaDetalle']['venta_detalle_producto_id']);
+					
+					# tiene salida
+					if ($cantidad_mv < 0)
+					{
+						$cantidad_entregada = ($cantidad_mv * -1);
+					}
 
 					# Pedido completado
 					$detalles[$idd]['VentaDetalle']['completo']                   = ($detalles[$idd]['VentaDetalle']['cantidad'] == $d['VentaDetalle']['cantidad_reservada']) ? 1 : 0;
-					$detalles[$idd]['VentaDetalle']['fecha_completado']			 = ($detalles[$idd]['VentaDetalle']['completo']) ? date('Y-m-d H:i:s') : '';
+					$detalles[$idd]['VentaDetalle']['fecha_completado']			  = ($detalles[$idd]['VentaDetalle']['completo']) ? date('Y-m-d H:i:s') : '';
 
-					$detalles[$idd]['VentaDetalle']['cantidad_reservada']         = 0;
-					$detalles[$idd]['VentaDetalle']['cantidad_entregada']         = $d['VentaDetalle']['cantidad_reservada'];
-					$detalles[$idd]['VentaDetalle']['cantidad_pendiente_entrega'] = $d['VentaDetalle']['cantidad'] - $d['VentaDetalle']['cantidad_reservada'];
-					$detalles[$idd]['VentaDetalle']['cantidad_en_espera'] 		  = $d['VentaDetalle']['cantidad_en_espera'] - $d['VentaDetalle']['cantidad_reservada'];
+					$detalles[$idd]['VentaDetalle']['cantidad_entregada'] = $cantidad_entregada + $d['VentaDetalle']['cantidad_reservada'];
+
+					# Se finaliza la reserva
+					if ($detalles[$idd]['VentaDetalle']['cantidad_entregada'] == $cantidad_vendida)
+					{
+						$detalles[$idd]['VentaDetalle']['cantidad_reservada'] = 0;
+						$detalles[$idd]['VentaDetalle']['cantidad_pendiente_entrega'] = 0;
+						$detalles[$idd]['VentaDetalle']['cantidad_en_espera'] = 0;
+						$detalles[$idd]['VentaDetalle']['fecha_llegada_en_espera'] = '';
+					}
+					else
+					{	
+						# Vuelve a calcular la reserva
+						$cantidad_reservar = $cantidad_vendida - $detalles[$idd]['VentaDetalle']['cantidad_entregada'];
+						$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($d['VentaDetalle']['venta_detalle_producto_id'],  $cantidad_reservar);
+						$detalles[$idd]['VentaDetalle']['cantidad_reservada'] = $cantidad_reservado;
+					}
+
+					$detalles[$idd]['VentaDetalle']['cantidad_pendiente_entrega'] = $d['VentaDetalle']['cantidad'] - ($d['VentaDetalle']['cantidad_anulada'] + $cantidad_entregada + $d['VentaDetalle']['cantidad_reservada']);
+					
+					# Se calcula la cantidad en espera
+					if ($d['VentaDetalle']['cantidad_en_espera'] > 0)
+					{
+						$detalles[$idd]['VentaDetalle']['cantidad_en_espera'] = ($d['VentaDetalle']['cantidad'] - $d['VentaDetalle']['cantidad_anulada']) - $d['VentaDetalle']['cantidad_reservada'];
+					}
 
 					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], nul, 'VT', null, $id);
 						
 				}
 
-				if (!empty($detalles)) {
+				if (!empty($detalles)) 
+				{
 					ClassRegistry::init('VentaDetalle')->saveMany($detalles);
 				}
 
 				$this->Venta->saveField('picking_fecha_termino', date('Y-m-d H:i:s'));
 				$this->Venta->saveField('prioritario', 0);
-				$this->Venta->saveField('paquete_generado', 1);
+				$this->Venta->saveField('paquete_generado', 0);
 
 				# Sub estados OC de la venta
 				if (array_sum(Hash::extract($detalles, '{n}VentaDetalle.cantidad_pendiente_entrega')) > 0 ) {
@@ -3325,7 +3389,33 @@ class VentasController extends AppController {
 			}*/
 			
 		}
-	
+		
+		# Estados de envios
+		foreach ($venta['Transporte'] as $it => $t)
+		{	
+			$historico = ClassRegistry::init('EnvioHistorico')->find(
+				'all',
+				array(
+					'conditions' => array(
+						'EnvioHistorico.transporte_venta_id' => $t['TransportesVenta']['id']
+					),
+					'contain' => array(
+						'EstadoEnvio' => array(
+							'EstadoEnvioCategoria' => array(
+								'VentaEstado' => array(
+									'VentaEstadoCategoria'
+								)
+							)
+						)
+					),
+					'order' => array('EnvioHistorico.created' => 'DESC')
+				)
+			);
+			
+			$venta['Transporte'][$it]['TransportesVenta']['EnvioHistorico'] = $historico; 
+			
+		}
+		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
@@ -3964,7 +4054,7 @@ class VentasController extends AppController {
 		ClassRegistry::init('Tienda')->id      = $tienda_id;
 
 		# si es marketplace definimos el objeto
-		if (!empty($marketplace_id)) {
+		if (!is_null($marketplace_id)) {
 			ClassRegistry::init('Marketplace')->id = $marketplace_id;				
 		}
 
@@ -3976,7 +4066,7 @@ class VentasController extends AppController {
 		$estado_actual_nombre = ClassRegistry::init('VentaEstado')->obtener_estado_por_id($venta['Venta']['venta_estado_id'])['VentaEstado']['nombre'];
 		$estado_nuevo_nombre  = ClassRegistry::init('VentaEstado')->field('nombre');
 		
-		$esPrestashop         = (empty($marketplace_id)) ? true : false;
+		$esPrestashop         = (empty($marketplace_id) && !$venta['Venta']['venta_manual']) ? true : false;
 		
 		$plantillaEmail       = ClassRegistry::init('VentaEstadoCategoria')->field('plantilla', array('id' => ClassRegistry::init('VentaEstado')->field('venta_estado_categoria_id')));		
 
@@ -3988,10 +4078,12 @@ class VentasController extends AppController {
 		$apiurllinio      = '';
 		$apiuserlinio     = '';
 		$apikeylinio      = '';
-
+		
 		# Es marketplace
-		if (!$esPrestashop) {
-			switch ( ClassRegistry::init('Marketplace')->field('marketplace_tipo_id') ) {
+		if (!$esPrestashop && !empty($marketplace_id)) 
+		{
+			switch ( ClassRegistry::init('Marketplace')->field('marketplace_tipo_id') ) 
+			{
 				case 1: // Linio
 					$esLinio      = true;
 					$apiurllinio  = ClassRegistry::init('Marketplace')->field('api_host');
@@ -4002,14 +4094,21 @@ class VentasController extends AppController {
 				case 2: // Meli
 					$esMercadolibre = true;
 					break;
+				default:
+					$esLinio = false;
+					$esMercadolibre = false;
+					$esPrestashop = false;
 			}
-		}else{
+		}
+		else
+		{
 			$apiurlprestashop = ClassRegistry::init('Tienda')->field('apiurl_prestashop');
 			$apikeyprestashop = ClassRegistry::init('Tienda')->field('apikey_prestashop');
 		}
-		
+
 		# Prestashop
-		if ( $estado_actual_nombre != $estado_nuevo_nombre && $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) {
+		if ( $estado_actual_nombre != $estado_nuevo_nombre && $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) 
+		{	
 			# Para la consola se carga el componente on the fly!
 			if ($this->shell) {
 				$this->Prestashop = $this->Components->load('Prestashop');
@@ -4038,13 +4137,13 @@ class VentasController extends AppController {
 				}
 
 				# si es un estado pagado se reserva el stock disponible
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
+				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
 					$this->Venta->pagar_venta($id_venta);
 					$this->actualizar_canales_stock($id_venta);
 				}
 
 				# Se entrega la venta
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
+				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
 					$this->Venta->entregar($id_venta);
 				}
 
@@ -4053,7 +4152,7 @@ class VentasController extends AppController {
 					$this->Venta->cancelar_venta($id_venta);
 					$this->actualizar_canales_stock($id_venta);
 				}
-
+				
 				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id) ) {
 					$this->Venta->cancelar_venta($id_venta);
 					$this->actualizar_canales_stock($id_venta);
@@ -4064,7 +4163,9 @@ class VentasController extends AppController {
 			}
 			
 		# Linio
-		}elseif ( $estado_actual_nombre != $estado_nuevo_nombre && $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) {
+		}
+		elseif ( $estado_actual_nombre != $estado_nuevo_nombre && $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) 
+		{	
 			# Para la consola se carga el componente on the fly!
 			if ($this->shell) {
 				$this->Linio = $this->Components->load('Linio');
@@ -4130,18 +4231,52 @@ class VentasController extends AppController {
 			}
 			
 		# Meli
-		}elseif ( $estado_actual_nombre != $estado_nuevo_nombre && $esMercadolibre ) {
-			#throw new Exception('¡Error! No está habilitada la opción de cambios de estado en Meli.', 601);
+		}
+		elseif ( $estado_actual_nombre != $estado_nuevo_nombre && $esMercadolibre ) 
+		{	
+			#throw new Exception('¡Error! No está habilitada la opción de cambios de estado en Meli.', 501);
 			
-		}else{
-			throw new Exception('Error al cambiar el estado. Intente nuevamente.', 303);
+		}
+		elseif ($estado_actual_nombre != $estado_nuevo_nombre && $venta['Venta']['venta_manual'])
+		{	
+			# Venta manual
+			# Enviar email al cliente
+			if (!empty($plantillaEmail) && $notificar) {
+				$notificado = $this->notificar_cambio_estado($id_venta, $plantillaEmail, $estado_nuevo_nombre);
+			}
+
+			# si es un estado pagado se reserva el stock disponible
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
+				$this->Venta->pagar_venta($id_venta);
+				$this->actualizar_canales_stock($id_venta);
+			}
+
+			# Se entrega la venta
+			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
+				$this->Venta->entregar($id_venta);
+			}
+
+			# si es un estado cancelado se devuelve el stock a la bodega
+			if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
+				$this->Venta->cancelar_venta($id_venta);
+				$this->actualizar_canales_stock($id_venta);
+			}
+
+			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id) ) {
+				$this->Venta->cancelar_venta($id_venta);
+				$this->actualizar_canales_stock($id_venta);
+			}
+		}
+		else
+		{	
+			throw new Exception('¡Error! Se debe actualizar el estado actual por otro.', 501);
 		}
 
 		# se setea el id de la venta
 		$saveVenta['Venta']['id']                       = $venta['Venta']['id'];
 		$saveVenta['Venta']['venta_estado_id']          = $estado_nuevo_id;
 		$saveVenta['Venta']['venta_estado_responsable'] = (!empty($responsable)) ? $responsable : $this->Session->read('Auth.Administrador.nombre');
-	
+		
 		# Guardamos el estado anterior en la tabla pivot
 		$saveVenta['VentaEstado2'] = array(
 			array(
@@ -4154,7 +4289,7 @@ class VentasController extends AppController {
 		foreach ($venta['VentaEstado2'] as $ive => $ve) {
 			$saveVenta['VentaEstado2'][] = $ve['EstadosVenta'];
 		}
-
+		
 		if ($this->Venta->saveAll($saveVenta)) {
 			return true;
 		}else{
@@ -9975,4 +10110,373 @@ class VentasController extends AppController {
 		}
 		
 	}
+
+
+	public function api_cambiar_estado_por_envios($id)
+	{
+		# Sólo método post
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Only POST request allow'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!isset($this->request->data['estado'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'estado requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# No existe venta
+		if (!$this->Venta->exists($id)) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $id
+			),
+			'contain' => array(
+				'MetodoEnvio' => array(
+					'fields' => array('MetodoEnvio.dependencia')
+				),
+				'Transporte'
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.id_externo',
+				'Venta.tienda_id',
+				'Venta.marketplace_id'
+			)
+		));
+
+
+		$estado_nuevo_arr = array();
+
+		# Cambio de estado para boosmap
+		if ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && !empty($venta['Transporte']))
+		{
+			# obtenemos el estado homologado
+			$estadoNombre = $this->Boosmap->obtener_estado_nombre($this->request->data['estado']);
+			$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estadoNombre);
+			
+		}
+
+
+		# Si el estado nuevo viene vacio no actualizamos
+		if (empty($estado_nuevo_arr))
+		{
+			$response = array(
+				'code'    => 501, 
+				'name' => 'error',
+				'message' => 'No es necesario actualizar'
+			);
+
+			throw new CakeException($response);
+		}
+
+		prx($estado_nuevo_arr);
+
+		/*try {
+			$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id'], '', '', $this->Session->read('Auth.Administrador.nombre'));
+		} catch (Exception $e) {
+			$respuesta['code'] = 506;
+			$respuesta['message'] = $e->getMessage();
+			echo json_encode($respuesta);
+			exit;
+		}*/
+
+	}
+
+
+
+	public function admin_actualizar_venta_por_envios($id)
+	{
+		if ($this->actualizar_venta_por_envios($id))
+		{
+			$this->Session->setFlash('Venta gestionada y/o actualizada con éxito.', null, array(), 'success');
+		}
+		else
+		{
+			$this->Session->setFlash('No fue posible actualizar la venta por el estado de envios.', null, array(), 'warning');
+		}
+
+		$this->redirect($this->referer('/', true));
+	}
+
+
+	/**
+	 * Método encargado de actualizar una venta según sus estados de envios válidos
+	 * 
+	 * @param int $id  Identificador de la venta
+	 * 
+	 * @return bool
+	 */
+	public function actualizar_venta_por_envios($id)
+	{	
+		$log = array();
+
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $id
+			),
+			'contain' => array(
+				'Transporte' => array(
+					'fields' => array(
+						'Transporte.id'
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.id_externo',
+				'Venta.tienda_id',
+				'Venta.marketplace_id'
+			)
+		));
+
+		$historicos = array();
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Auto',
+				'modulo' => 'Ventas',
+				'modulo_accion' => 'comienza proceso de actualización de venta ' . $id . ' por concepto de estados de envio'
+			)
+		);
+
+		foreach ($venta['Transporte'] as $it => $t) 
+		{
+			$historicos = ClassRegistry::init('EnvioHistorico')->find('all', array(
+				'conditions' => array(
+					'EnvioHistorico.transporte_venta_id' => $t['TransportesVenta']['id'],
+					'EnvioHistorico.notificado' => 0
+				),
+				'contain' => array(
+					'EstadoEnvio' => array(
+						'EstadoEnvioCategoria'
+					)
+				),
+				'joins' => array(
+					array(
+						'table' => 'rp_estado_envios',
+						'alias' => 'ee',
+						'type' => 'INNER',
+						'conditions' => array(
+							'ee.id = EnvioHistorico.estado_envio_id'
+						)
+					),
+					array(
+						'table' => 'rp_estado_envio_categorias',
+						'alias' => 'eec',
+						'type' => 'INNER',
+						'conditions' => array(
+							'eec.id = ee.estado_envio_categoria_id',
+							'eec.actualizar_venta'
+						)
+					)
+				),
+				'order' => array('EnvioHistorico.created' => 'asc')
+			));
+
+		}
+		
+		if (empty($historicos)){
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Auto',
+					'modulo' => 'Ventas',
+					'modulo_accion' => 'No registran cambios de envio: ' . $id
+				)
+			);
+
+			ClassRegistry::init('Log')->saveMany($log);
+
+			return false;
+		}
+
+		foreach ($historicos as $ih => $h) 
+		{	
+			if ($h['EstadoEnvio']['EstadoEnvioCategoria']['actualizar_venta'])
+			{	
+				$estado_actualizado = false;
+
+				try {
+					$estado_actualizado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $h['EstadoEnvio']['EstadoEnvioCategoria']['venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', '');
+				} catch (Exception $e) {
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Auto',
+							'modulo' => 'Ventas',
+							'modulo_accion' => sprintf('Error #%d: %s', $id, $e->getMessage())
+						)
+					);
+				}
+
+				if ($estado_actualizado)
+				{	
+					# Registramos que este envio está notificado o ya cambió estado
+					ClassRegistry::init('EnvioHistorico')->id = $h['EnvioHistorico']['id'];
+					ClassRegistry::init('EnvioHistorico')->saveField('notificado', 1);
+					ClassRegistry::init('EnvioHistorico')->clear();
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Auto',
+							'modulo' => 'Ventas',
+							'modulo_accion' => sprintf('Venta #%d actualizada: %s', $id, json_encode($h))
+						)
+					);
+				}
+				else
+				{
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Auto',
+							'modulo' => 'Ventas',
+							'modulo_accion' => sprintf('Venta #%d no actualizada: %s', $id, json_encode($h))
+						)
+					);
+				}
+			}
+		}
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Auto',
+				'modulo' => 'Ventas',
+				'modulo_accion' => 'Finaliza proceso de actualización por envios: ' . $id
+			)
+		);
+
+		ClassRegistry::init('Log')->saveMany($log);
+
+		return true;
+
+	}
+
+	
+
+	/**
+	 * Obtiene las ventas con envio que necesitan ser actualziadas
+	 * 
+	 * @return array Arreglo con las ventas actualizadas y/o procesadas
+	 */
+	public function actualizar_ventas_por_envios()
+	{
+		$ventas = $this->Venta->obtener_ventas_con_envios();
+		
+		if (empty($ventas))
+		{
+			return false;
+		}
+
+		$ventas_actualizadas = array();
+
+		foreach ($ventas as $iv => $venta) {
+
+			# Actualizamos los envios de las ventas
+			if (!$this->actualizar_estados_envios($venta['Venta']['id'])){
+				continue;
+			}
+
+			# Actualizamos las ventas por sus nuevos envios
+			if ($this->actualizar_venta_por_envios($venta['Venta']['id']))
+			{
+				$ventas_actualizadas[] = $venta;
+			}
+		}
+
+		return $ventas_actualizadas;
+
+	}
+
+
+	/**
+	 * Obtiene y actualiza los estados de los envios de una venta dado su ID
+	 * 
+	 * @param int $id Identificador de la venta
+	 * 
+	 * @return bool
+	 */
+	public function actualizar_estados_envios($id)
+	{	
+		$venta = $this->Venta->obtener_venta_por_id($id);
+		
+		# Registro de estados para Boosmap
+		if ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot'])
+		{	
+			if ($this->shell) {
+				$this->Boosmap = $this->Components->load('Boosmap');
+			}
+
+			# Creamos cliente boosmap
+			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
+			
+			# Obtenemos y registramos los estados de los envios
+			return $this->Boosmap->registrar_estados($venta['Venta']['id']);
+
+		}
+
+		return false;
+	}
+
+
+	/**
+	 * Actualizar el estado de los envios admin
+	 * 
+	 * @param int $id Ide de la venta
+	 * 
+	 * @return redirect
+	 */
+	public function admin_actualizar_estados_envios($id)
+	{
+		if ($this->actualizar_estados_envios($id))
+		{
+			$this->Session->setFlash('Estados de los envios actualizados con éxito.', null, array(), 'success');
+		}
+		else
+		{
+			$this->Session->setFlash('No fue posible actualizar los estados de los envios.', null, array(), 'warning');
+		}
+
+		$this->redirect($this->referer('/', true));
+	}
+
 }
