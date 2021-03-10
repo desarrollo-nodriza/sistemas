@@ -16,6 +16,7 @@ class BoosmapComponent extends Component
 
 
 	private static $estadosMap = array(
+		'pre_recepcion_virtual',
 		'ingresado' => '',
 		'aceptado' => '',
 		'en_punto_de_retiro' => '',
@@ -32,9 +33,14 @@ class BoosmapComponent extends Component
 	);
 
 	private static $estadosDetalleMap = array(
+		'pre_recepcion_virtual' => array(
+			'nombre' => 'Pre Recepción Virtual',
+			'leyenda' => 'El pedido fue creado en el sistema',
+			'tipo' => 'inicial'
+		),
 		'ingresado' => array(
 			'nombre' => 'Ingresado',
-			'leyenda' => 'El pedido fue creado en el sistema',
+			'leyenda' => 'El pedido fue recibido por Boosmap',
 			'tipo' => 'inicial'
 		),
 		'aceptado' => array(
@@ -240,7 +246,7 @@ class BoosmapComponent extends Component
                 'pickup' => array(
                     'location' => array(
                         //'id' => $venta['MetodoEnvio']['boosmap_pick_up_id']
-                        'name' => 'Nombre del Punto retiro',
+                        'name' => 'Bodega Toolmania',
                         'address' => 'Los vientos',
                         'district' => 'Pudahuel'
                     )
