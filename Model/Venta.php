@@ -1713,24 +1713,7 @@ class Venta extends AppModel
 						'EnvioHistorico.transporte_venta_id = TransporteVenta.id',
 						'EnvioHistorico.notificado' => 0
 					)
-				),
-				array(
-					'table' => 'rp_estado_envios',
-					'alias' => 'EstadoEnvio',
-					'type' => 'INNER',
-					'conditions' => array(
-						'EstadoEnvio.id = EnvioHistorico.estado_envio_id'
-					)
-				),
-				array(
-					'table' => 'rp_estado_envio_categorias',
-					'alias' => 'EstadoEnvioCategoria',
-					'type' => 'INNER',
-					'conditions' => array(
-						'EstadoEnvioCategoria.id = EstadoEnvio.estado_envio_categoria_id',
-						'EstadoEnvioCategoria.actualizar_venta' => 1
-					)
-				),
+				)
 			),
 			'contain' => array(
 				'Transporte'
