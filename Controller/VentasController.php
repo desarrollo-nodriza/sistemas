@@ -4053,12 +4053,22 @@ class VentasController extends AppController {
 		ClassRegistry::init('VentaEstado')->id = $estado_nuevo_id;
 		ClassRegistry::init('Tienda')->id      = $tienda_id;
 
+		$log = array();
+
 		# si es marketplace definimos el objeto
 		if (!is_null($marketplace_id)) {
 			ClassRegistry::init('Marketplace')->id = $marketplace_id;				
 		}
 
 		$venta                = $this->preparar_venta($id_venta);
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Inicia cambio estado ' . $id_venta,
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($venta)
+			)
+		);
 		
 		$notificar            = ClassRegistry::init('VentaEstado')->field('notificacion_cliente');
 		$notificado           = false;
@@ -4128,34 +4138,95 @@ class VentasController extends AppController {
 			}else{
 				$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
 			}
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Respuesta cambio estado ' . $id_venta,
+					'modulo' => 'Ventas',
+					'modulo_accion' => 'Resultado: ' . $resCambio . ' - Estado nuevo:' . json_encode($estadoPrestashop)
+				)
+			);
 			
 			if ($resCambio) {
 
 				# Enviar email al cliente
 				if (!empty($plantillaEmail) && $notificar) {
 					$notificado = $this->notificar_cambio_estado($id_venta, $plantillaEmail, $estado_nuevo_nombre);
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Notificacion cambio estado ' . $id_venta,
+							'modulo' => 'Ventas',
+							'modulo_accion' => 'Resultado: ' . json_encode(array(
+								'notificado' => $notificado,
+								'plantilla' => $plantillaEmail,
+								'nuevo_estado' => $estado_nuevo_nombre
+							))
+						)
+					);
+
 				}
 
 				# si es un estado pagado se reserva el stock disponible
 				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
 					$this->Venta->pagar_venta($id_venta);
 					$this->actualizar_canales_stock($id_venta);
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Pagar venta cambio estado ' . $id_venta,
+							'modulo' => 'Ventas',
+							'modulo_accion' => 'Resultado: ' . json_encode(array(
+								'nuevo_estado' => $estado_nuevo_nombre
+							))
+						)
+					);
 				}
 
 				# Se entrega la venta
 				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
 					$this->Venta->entregar($id_venta);
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Entregar venta cambio estado ' . $id_venta,
+							'modulo' => 'Ventas',
+							'modulo_accion' => 'Resultado: ' . json_encode(array(
+								'nuevo_estado' => $estado_nuevo_nombre
+							))
+						)
+					);
 				}
 
 				# si es un estado cancelado se devuelve el stock a la bodega
 				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
 					$this->Venta->cancelar_venta($id_venta);
 					$this->actualizar_canales_stock($id_venta);
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Cancelar venta cambio estado ' . $id_venta,
+							'modulo' => 'Ventas',
+							'modulo_accion' => 'Resultado: ' . json_encode(array(
+								'nuevo_estado' => $estado_nuevo_nombre
+							))
+						)
+					);
 				}
 				
 				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id) ) {
 					$this->Venta->cancelar_venta($id_venta);
 					$this->actualizar_canales_stock($id_venta);
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Cancelar venta cambio estado ' . $id_venta,
+							'modulo' => 'Ventas',
+							'modulo_accion' => 'Resultado: ' . json_encode(array(
+								'nuevo_estado' => $estado_nuevo_nombre
+							))
+						)
+					);
 				}
 				
 			}else{
@@ -4243,28 +4314,80 @@ class VentasController extends AppController {
 			# Enviar email al cliente
 			if (!empty($plantillaEmail) && $notificar) {
 				$notificado = $this->notificar_cambio_estado($id_venta, $plantillaEmail, $estado_nuevo_nombre);
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Notificacion cambio estado ' . $id_venta,
+						'modulo' => 'Ventas',
+						'modulo_accion' => 'Resultado: ' . json_encode(array(
+							'notificado' => $notificado,
+							'plantilla' => $plantillaEmail,
+							'nuevo_estado' => $estado_nuevo_nombre
+						))
+					)
+				);
 			}
 
 			# si es un estado pagado se reserva el stock disponible
 			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
 				$this->Venta->pagar_venta($id_venta);
 				$this->actualizar_canales_stock($id_venta);
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Pagar venta cambio estado ' . $id_venta,
+						'modulo' => 'Ventas',
+						'modulo_accion' => 'Resultado: ' . json_encode(array(
+							'nuevo_estado' => $estado_nuevo_nombre
+						))
+					)
+				);
 			}
 
 			# Se entrega la venta
 			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
 				$this->Venta->entregar($id_venta);
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Entregar venta cambio estado ' . $id_venta,
+						'modulo' => 'Ventas',
+						'modulo_accion' => 'Resultado: ' . json_encode(array(
+							'nuevo_estado' => $estado_nuevo_nombre
+						))
+					)
+				);
 			}
 
 			# si es un estado cancelado se devuelve el stock a la bodega
 			if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
 				$this->Venta->cancelar_venta($id_venta);
 				$this->actualizar_canales_stock($id_venta);
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Cancelar venta cambio estado ' . $id_venta,
+						'modulo' => 'Ventas',
+						'modulo_accion' => 'Resultado: ' . json_encode(array(
+							'nuevo_estado' => $estado_nuevo_nombre
+						))
+					)
+				);
 			}
 
 			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id) ) {
 				$this->Venta->cancelar_venta($id_venta);
 				$this->actualizar_canales_stock($id_venta);
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Cancelar venta cambio estado ' . $id_venta,
+						'modulo' => 'Ventas',
+						'modulo_accion' => 'Resultado: ' . json_encode(array(
+							'nuevo_estado' => $estado_nuevo_nombre
+						))
+					)
+				);
 			}
 		}
 		else
@@ -4289,6 +4412,10 @@ class VentasController extends AppController {
 		foreach ($venta['VentaEstado2'] as $ive => $ve) {
 			$saveVenta['VentaEstado2'][] = $ve['EstadosVenta'];
 		}
+
+		# Guardamos el log
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 		
 		if ($this->Venta->saveAll($saveVenta)) {
 			return true;

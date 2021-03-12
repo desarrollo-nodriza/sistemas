@@ -898,7 +898,17 @@ class Venta extends AppModel
 			return false;
 		}
 
+		$log = array();
+
 		$venta = $this->obtener_venta_por_id($id);	
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Inicia pagar venta ' . $id,
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($venta)
+			)
+		);
 		
 		foreach ($venta['VentaDetalle'] as $ip => $producto) 
 		{
@@ -924,10 +934,26 @@ class Venta extends AppModel
 			$cantidad_vendida   = ($producto['cantidad'] - $producto['cantidad_anulada'] - $producto['cantidad_en_espera']);
 			$cantidad_reservar  = $cantidad_vendida - $cantidad_entregada;
 			
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Reservar producto detalle ' . $producto['id'],
+					'modulo' => 'Ventas',
+					'modulo_accion' => 'Cantidad a reservar:' . $cantidad_reservar
+				)
+			);
+
 			# Reservamos
 			if ( $cantidad_reservar > 0 ) 
 			{
 				$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'],  $cantidad_reservar);
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Reservar producto detalle ' . $producto['id'],
+						'modulo' => 'Ventas',
+						'modulo_accion' => 'Cantidad disponible para reservar:' . $cantidad_reservado
+					)
+				);
 
 				ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $cantidad_reservado);
 				ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $cantidad_reservar);
@@ -944,6 +970,18 @@ class Venta extends AppModel
 			}
 
 		}
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Finaliza pagar venta ' . $id,
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($venta)
+			)
+		);
+
+		# Guardamos el log
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 		
 		# Calculamos el total de unidades reservadas de la venta
 		$cant_reservada_sum = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
@@ -1067,7 +1105,7 @@ class Venta extends AppModel
 
 					$log[] = array(
 						'Log' => array(
-							'administrador' => 'Procesa entregar producto sin procesar ' . $producto['id'],
+							'administrador' => 'Procesa entregar producto ya entregado o agendado ' . $producto['id'],
 							'modulo' => 'Ventas',
 							'modulo_accion' => json_encode($detalles[$ip])
 						)
@@ -1097,10 +1135,6 @@ class Venta extends AppModel
 			# Guardamos los cambios
 			ClassRegistry::init('VentaDetalle')->saveMany($detalles);
 
-			# Guardamos el log
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
-
 		}
 
 		# Pedido está entregado completo
@@ -1108,6 +1142,10 @@ class Venta extends AppModel
 					
 		$this->saveField('subestado_oc', 'entregado');
 		$this->saveField('fecha_entregado', date('Y-m-d H:i:s'));		
+
+		# Guardamos el log
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 
 		return;
 	}
