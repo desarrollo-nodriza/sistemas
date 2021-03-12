@@ -1194,7 +1194,9 @@ class Venta extends AppModel
 	 * @return [type]     [description]
 	 */
 	public function reservar_stock_producto($id)
-	{
+	{	
+
+		$log = array();
 		
 		$ventaDetalle     = ClassRegistry::init('VentaDetalle')->find('first', array(
 			'conditions' => array(
@@ -1212,6 +1214,14 @@ class Venta extends AppModel
 				'VentaDetalle.fecha_llegada_en_espera'
 			)
 		));
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Producto reservar inicia ' . $id,
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($ventaDetalle)
+			)
+		);
 		
 		if (empty($ventaDetalle)) 
 		{
@@ -1253,6 +1263,18 @@ class Venta extends AppModel
 			{
 				unset($ventaDetalle['VentaDetalle']['cantidad_en_espera']);
 			}
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Producto reservar finaliza ' . $id,
+					'modulo' => 'Ventas',
+					'modulo_accion' => json_encode($ventaDetalle)
+				)
+			);
+
+			# Guardamos el log
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
 			
 			if(!ClassRegistry::init('VentaDetalle')->save($ventaDetalle))
 				return 0;
