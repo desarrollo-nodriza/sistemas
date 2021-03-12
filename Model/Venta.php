@@ -943,7 +943,7 @@ class Venta extends AppModel
 			);
 
 			# Reservamos
-			if ( $cantidad_reservar > 0 ) 
+			if ( $cantidad_reservar > 0 && $producto['cantidad_reservada'] < $cantidad_reservar) 
 			{
 				$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'],  $cantidad_reservar);
 
