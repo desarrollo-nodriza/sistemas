@@ -983,8 +983,18 @@ class Venta extends AppModel
 			return false;
 		}
 
+		$log = array();
+
 		$venta = $this->obtener_venta_por_id($id);
 		
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Inicia entregar venta ' . $id,
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($venta)
+			)
+		);
+
 		$detalles = array();
 
 		# solo se procesa si el estado de la venta ha cambiado
@@ -1003,6 +1013,19 @@ class Venta extends AppModel
 				{
 					$cantidad_entregada = ($cantidad_mv * -1);
 				}
+
+				$logProducto = array(
+					'producto' => $producto,
+					'cantidad_entregada' => $cantidad_entregada,
+				);
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Inicia entregar producto ' . $producto['id'],
+						'modulo' => 'Ventas',
+						'modulo_accion' => json_encode($logProducto)
+					)
+				);
 				
 				if ($producto['cantidad_reservada'] > 0)
 				{
@@ -1027,12 +1050,28 @@ class Venta extends AppModel
 
 					# Se actualiza la cantidad pendiente de entrega
 					$detalles[$ip]['VentaDetalle']['cantidad_pendiente_entrega'] = $producto['cantidad_pendiente_entrega'] - $detalles[$ip]['VentaDetalle']['cantidad_entregada'];
+					
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Procesa entregar producto aceptada ' . $producto['id'],
+							'modulo' => 'Ventas',
+							'modulo_accion' => json_encode($detalles[$ip])
+						)
+					);
 
 				}
 				else 
 				{
 
 					$detalles[$ip]['VentaDetalle'] = $producto; // Ya se entregó o está agendado
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Procesa entregar producto sin procesar ' . $producto['id'],
+							'modulo' => 'Ventas',
+							'modulo_accion' => json_encode($detalles[$ip])
+						)
+					);
 
 					continue;
 
@@ -1046,9 +1085,21 @@ class Venta extends AppModel
 				}
 
 			}
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Finaliza entregar venta ' . $id,
+					'modulo' => 'Ventas',
+					'modulo_accion' => json_encode($detalles)
+				)
+			);
 			
 			# Guardamos los cambios
 			ClassRegistry::init('VentaDetalle')->saveMany($detalles);
+
+			# Guardamos el log
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
 
 		}
 
