@@ -283,7 +283,7 @@ class PrestaShopWebservice
 			if (isset($options['id']))
 				$url .= '/'.$options['id'];
 
-			$params = array('filter', 'display', 'sort', 'limit', 'id_shop', 'id_group_shop');
+			$params = array('filter', 'display', 'sort', 'limit', 'id_shop', 'id_group_shop', 'price');
 			foreach ($params as $p)
 				foreach ($options as $k => $o)
 					if (strpos($k, $p) !== false)
@@ -293,7 +293,7 @@ class PrestaShopWebservice
 		}
 		else
 			throw new PrestaShopWebserviceException('Bad parameters given');
-
+		#prx($url);
 		$request = self::executeRequest($url, array(CURLOPT_CUSTOMREQUEST => 'GET'));
 
 		self::checkStatusCode($request['status_code']);// check the response validity

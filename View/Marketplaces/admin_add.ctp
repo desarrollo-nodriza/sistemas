@@ -31,6 +31,10 @@
 									<td><?= $this->Form->input('porcentaje_adicional', array('type' => 'text')); ?></td>
 								</tr>
 								<tr>
+									<th><?= $this->Form->label('agregar_despacho_costo', 'Agregar precio despacho'); ?></th>
+									<td><?= $this->Form->input('agregar_despacho_costo', array('class' => 'icheckbox')); ?></td>
+								</tr>
+								<tr>
 									<th><?= $this->Form->label('api_host', 'Api Host'); ?></th>
 									<td><?= $this->Form->input('api_host'); ?></td>
 								</tr>

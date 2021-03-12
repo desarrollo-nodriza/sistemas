@@ -30,11 +30,10 @@
 								<tr class="sort">
 									<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('fee', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('api_host', 'Api Host', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('api_user', 'Api User', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-									<th><?= $this->Paginator->sort('api_key', 'Api key', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('marketplace_tipo_id', 'Tipo', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('tienda_id', 'Tienda', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('porcentaje_adicional', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('agregar_despacho_costo', 'Agregar costo despacho', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('stock_automatico', 'Sincronizar stock', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('activo', 'Activa', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
@@ -49,11 +48,10 @@
 
 										<td><?= h($marketplace['Marketplace']['nombre']); ?>&nbsp;</td>
 										<td><?= h($marketplace['Marketplace']['fee']); ?>%&nbsp;</td>
-										<td><?= h($marketplace['Marketplace']['api_host']); ?>&nbsp;</td>
-										<td><?= h($marketplace['Marketplace']['api_user']); ?>&nbsp;</td>
-										<td><?= h($marketplace['Marketplace']['api_key']); ?>&nbsp;</td>
 										<td><?= h($marketplace['MarketplaceTipo']['nombre']); ?>&nbsp;</td>
 										<td><?= h($marketplace['Tienda']['nombre']); ?>&nbsp;</td>
+										<td><?= h($marketplace['Marketplace']['porcentaje_adicional']); ?>%&nbsp;</td>
+										<td><?= ($marketplace['Marketplace']['agregar_despacho_costo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 										<td><?= ($marketplace['Marketplace']['stock_automatico'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 										<td><?= ($marketplace['Marketplace']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 

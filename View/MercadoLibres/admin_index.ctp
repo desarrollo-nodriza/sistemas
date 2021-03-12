@@ -177,6 +177,7 @@
 						<h3 class="panel-title">Listado de productos</h3>
 						<div class="btn-group pull-right">
 						<? if ($permisos['add']) : ?>
+							<?= $this->Html->link('<i class="fa fa-refresh"></i> Sincronizar', array('action' => 'sincronizar'), array('class' => 'btn btn-danger start-loading-then-redirect', 'escape' => false)); ?>
 							<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Producto', array('action' => 'add'), array('class' => 'btn btn-success', 'escape' => false)); ?>
 						<? endif; ?>
 							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', array('action' => 'exportar'), array('class' => 'btn btn-primary', 'escape' => false)); ?>

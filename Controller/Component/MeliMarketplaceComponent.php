@@ -1,4 +1,5 @@
-<?
+<?php
+
 App::import('Vendor', 'Mercadolibre', array('file' => 'Meli/meli.php'));
 App::uses('Component', 'Controller');
 
@@ -16,6 +17,7 @@ class MeliMarketplaceComponent extends Component
 	public function crearCliente($apiuser, $apikey, $accesstoken, $refreshtoken)
 	{	
 		self::$MeliConexion = new Meli($apiuser, $apikey, $accesstoken, $refreshtoken);
+		self::$accessToken = $accesstoken;
 	}
 
 
@@ -128,6 +130,37 @@ class MeliMarketplaceComponent extends Component
 
 
 	/**
+	 * Obtener información del usuario
+	 * 
+	 * @param string $token  Token de acceso
+	 * 
+	 * @return array
+	 */
+	public function me()
+	{	
+		$result = self::$MeliConexion->get('/users/me', array('access_token' => self::$accessToken));
+		
+		if ($result['httpCode'] < 300) {
+			return to_array($result['body']);
+		}else{
+			return array();
+		}
+	}
+
+
+	public function obtener_app_info($user_id, $app_id)
+	{
+		$result = self::$MeliConexion->get('/applications/' . $app_id, array('access_token' => self::$accessToken));
+		
+		if ($result['httpCode'] < 300) {
+			return to_array($result['body']);
+		}else{
+			return array();
+		}
+	}
+
+
+	/**
 	 * Obtiene las ventas desde mercadolibre
 	 * @param  array   $marketplace Arreglo con la información del Marketplace
 	 * @param  integer $offset      salto del puntero en la búsqueda de ventas
@@ -230,7 +263,7 @@ class MeliMarketplaceComponent extends Component
 	public function mercadolibre_obtener_venta($access_token, $id_externo)
 	{
 		$params = array(
-			'access_token' => $access_token
+			'access_token' => self::$accessToken
 		);
 		
 		try {
@@ -257,7 +290,7 @@ class MeliMarketplaceComponent extends Component
 	public static function mercadolibre_obtener_mensajes($access_token = '', $id = '')
 	{	
 		$params = array(
-			'access_token' => $access_token,
+			'access_token' => self::$accessToken,
 			'limit' => 20
 		);
 
@@ -547,16 +580,17 @@ class MeliMarketplaceComponent extends Component
 	public function mercadolibre_obtener_productos($seller_id = '', $limit = 50, $offset = 0, $scroll_id = '')
 	{
 		$params = array(
-			'access_token' => self::$accessToken,
-			'limit' => $limit,
-			'offset' => $offset
+			'status' => 'active',
+			'include_filters' => 'true',
+			'access_token' => self::$accessToken
 		);
 
 		if (!empty($scroll_id)) {
 			$params = array(
-				'search_type'  => 'scan',
+				'status' => 'active',
+				'include_filters' => 'true',
+				'scroll_id'    => $scroll_id,
 				'access_token' => self::$accessToken,
-				'scroll_id'    => $scroll_id
 			);
 		}
 
@@ -588,7 +622,7 @@ class MeliMarketplaceComponent extends Component
 	{
 		$productosMeli = $this->mercadolibre_obtener_productos($seller_id);
 		$scroll_id     = $this->obtener_scroll_id($seller_id);
-
+		
 		$misProductos = array();
 
 		if (!empty($productosMeli)) {
@@ -615,6 +649,24 @@ class MeliMarketplaceComponent extends Component
 		}
 
 		return Hash::flatten($misProductos);
+	}
+
+
+	public function obtener_items()
+	{	
+		$usuario = $this->me();
+		
+		if (empty($usuario))
+			return false;		
+		
+		try {
+			$producto = self::$MeliConexion->get('/users/' . $usuario['id'] . '/items/search', array('access_token' => self::$accessToken));
+			$producto = to_array($producto);
+		} catch (Exception $e) {
+			
+		}
+
+		prx($producto);
 	}
 
 
@@ -881,7 +933,7 @@ class MeliMarketplaceComponent extends Component
 	 * @return Arr devuelto por MELI	 
 	 */
 	public function update($id, $item = array())
-	{			
+	{	
 		// We call the post request to list a item
 		$result = self::$MeliConexion->put('/items/' . $id, $item, array('access_token' => self::$accessToken));
 		$result = to_array($result);

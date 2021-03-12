@@ -6,7 +6,7 @@ App::uses('VentasController', 'Controller');
 class MercadoLibresController extends AppController
 {	
 
-	public $components = array('MeliMarketplace');
+	public $components = array('MeliMarketplace', 'Prestashop');
 
 	private $envios = array(
 		'me2' => 'Envío por MercadoEnvíos',
@@ -80,6 +80,7 @@ class MercadoLibresController extends AppController
 	public function autorizacionMeli($callback = '')
 	{	
 		$token = $this->Session->read('Meli.access_token');
+		
 		if ( ! empty($this->request->query['code']) || ($this->Session->check('Meli.access_token') && !empty($token)) ) {
 			if( isset($this->request->query['code']) && !$this->Session->check('Meli.access_token') ) {
 				if (!empty($callback)) {
@@ -91,6 +92,7 @@ class MercadoLibresController extends AppController
 				$this->Meli->checkTokenAndRefreshIfNeed();
 			}
 		}else{
+		
 			if (!empty($callback)) {
 				return $this->Meli->getAuthUrl($callback, true);
 			}
@@ -1364,41 +1366,130 @@ class MercadoLibresController extends AppController
 
 	}
 
+	/**
+	 * Actualiza el precio y stock de los productos publicados en meli según sesión activa
+	 */
+	public function admin_sincronizar()
+	{	
 
-	public function admin_actualizarPreciosEnvio()
-	{
-		$auth = $this->autorizacionMeli();
-		if (!empty($auth)) {
-			$this->Session->setFlash('Imposible actualizar los precios en Mercado libre. Detalles del error:<br> La sesión de Mercado libre expiró. Conecte nuevamente la aplicación.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index'));
+		# Creamos cliente Meli
+		$this->MeliMarketplace->crearCliente( $this->Session->read('Marketplace.api_user'), $this->Session->read('Marketplace.api_key'), $this->Session->read('Marketplace.access_token'), $this->Session->read('Marketplace.refresh_token') );
+		
+		$this->MeliMarketplace->mercadolibre_conectar('', $this->Session->read('Marketplace'));
+		
+		# Obtener productos meli 
+		$items = $this->MeliMarketplace->mercadolibre_obtener_todos_productos($this->Session->read('Marketplace.seller_id'));
+
+		if ( empty($this->Session->read('Tienda.apiurl_prestashop')) || empty($this->Session->read('Tienda.apikey_prestashop')) )
+		{
+			$this->Session->setFlash('No es posible sincronizar los productos ya que la tienda no está configurada correctamente.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
 		}
+			
+		# Se crea cliente prestahsop
+		$this->Prestashop->crearCliente($this->Session->read('Tienda.apiurl_prestashop'), $this->Session->read('Tienda.apikey_prestashop'));
+		
+		$margen_adicional = $this->Session->read('Marketplace.porcentaje_adicional');
+		$agregar_despacho = $this->Session->read('Marketplace.agregar_despacho_costo');
 
-		# Tienda
-		$tienda 	= $this->tiendaInfo($this->Session->read('Tienda.id'));	
+		foreach ($items as $ip => $producto) 
+		{
 
-		# Variable que almacena los productos
+			# Obtenemos el item de meli
+			$itml = $this->MeliMarketplace->mercadolibre_obtener_producto($producto);
+
+			if (empty($itml['seller_custom_field']))
+				continue;
+			
+			
+			$precio = $this->Prestashop->prestashop_obtener_precio_producto($itml['seller_custom_field']);
+			$stock = $this->Prestashop->prestashop_obtener_stock_producto($itml['seller_custom_field']);
+			$sync = $this->sincronizar($producto, $stock['stock_available']['quantity'], $precio['product']['final_price'], $margen_adicional, $agregar_despacho);
+		
+			if ($sync)
+			{
+				$productos[] = 'Item <a href="' . $sync['permalink'] . '" target="_blank">' . $producto . '</a> actualizado - Nuevo stock: ' .  $stock['stock_available']['quantity'] . ' - Nuevo precio: ' . $sync['price'];
+			}
+			else
+			{
+				$productos[] = 'Item ' . $producto . ' no pudo ser actualizado.';
+			}
+		}
+		
+		$urlReponse = $this->crearAlertaUl($productos);	
+
+		$this->Session->setFlash($urlReponse , null, array(), 'flash');
+		$this->redirect($this->referer('/', true));
+	}
+
+
+	/**
+	 * Sincroniza todos los items publicados en meli de todos los marketplaces configurados
+	 * 
+	 * @return array  Arreglo de productos procesados
+	 */
+	public function sincronizar_todo()
+	{
+		$melis = ClassRegistry::init('Marketplace')->find('all', array('conditions' => array(
+			'marketplace_tipo_id' => 2, // Meli
+			'activo' => 1,
+			'api_user <>' => '',
+			'api_key <>' => '' 
+		)));
+
 		$productos = array();
 
-		# Obtenemos productos por tiendas
-		$productos[$tienda['Tienda']['configuracion']] = $this->getProductsMeli($tienda);
+		foreach ($melis as $ml) {
+			
+			$this->MeliMarketplace = $this->Components->load('MeliMarketplace');
+			$this->Prestashop = $this->Components->load('Prestashop');
 
-		foreach ($productos[$tienda['Tienda']['configuracion']] as $ip => $producto) {
-			$costoEnvio = $this->Meli->getShippingCost($producto['MercadoLibr']['id_meli'], 'free');
+			# Creamos cliente Meli
+			$this->MeliMarketplace->crearCliente($ml['Marketplace']['api_user'], $ml['Marketplace']['api_key'], $ml['Marketplace']['access_token'], $ml['Marketplace']['refresh_token'] );
+			
+			$this->MeliMarketplace->mercadolibre_conectar('', $ml['Marketplace']);
+			
+			# Obtener productos meli 
+			$items = $this->MeliMarketplace->mercadolibre_obtener_todos_productos($ml['Marketplace']['seller_id']);
+			
+			# Tienda
+			$tienda 	= $this->tiendaInfo($ml['Marketplace']['tienda_id']);
 
-			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio_tienda'] = $producto['Productotienda']['precio'];
-			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['despacho']      = $costoEnvio;
-			$adicional = (float) 0.95;
-			$productos[$tienda['Tienda']['configuracion']][$ip]['Productotienda']['precio']        = round($producto['Productotienda']['precio']/$adicional) + $costoEnvio;
+			if (empty($tienda['Tienda']['apiurl_prestashop']) || empty($tienda['Tienda']['apikey_prestashop']))
+				continue;
+
+			# Se crea cliente prestahsop
+			$this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
+			
+			$margen_adicional = $ml['Marketplace']['porcentaje_adicional'];
+			$agregar_despacho = $ml['Marketplace']['agregar_despacho_costo'];
+
+			foreach ($items as $ip => $producto) {
+
+				# Obtenemos el item de meli
+				$itml = $this->MeliMarketplace->mercadolibre_obtener_producto($producto);
+
+				if (empty($itml['seller_custom_field']))
+					continue;
+				
+				
+				$precio = $this->Prestashop->prestashop_obtener_precio_producto($itml['seller_custom_field']);
+				$stock = $this->Prestashop->prestashop_obtener_stock_producto($itml['seller_custom_field']);
+				$sync = $this->sincronizar($producto, $stock['stock_available']['quantity'], $precio['product']['final_price'], $margen_adicional, $agregar_despacho);
+
+				$productos[$ml['Marketplace']['id']][] = array(
+					'item' => $itml,
+					'precio_venta' => $precio,
+					'stock_real' => $stock,
+					'actualizado' => $sync
+				);
+
+			}
 		}
-		
-		# Actualizamos de los productos publicados, tanto interna como en MELI
-		$result = $this->sincronizarPreciosStock($productos);
-		
-		$urlReponse = $this->htmlResponse($result);	
 
-		$this->Session->setFlash('Resultados de la operación: <br>' . $urlReponse , null, array(), 'flash');
-		$this->redirect(array('action' => 'index'));
+		return $productos;
 	}
+
 
 
 	public function admin_actualizarPreciosStock($console = false)
@@ -1461,6 +1552,52 @@ class MercadoLibresController extends AppController
 	}
 
 
+	/**
+	 * Actualizar precio de un item en meli
+	 * 
+	 * @param var $id_meli  Identificador del producto en meli
+	 * @param int $stock  Nuevo stock del item
+	 * @param int $precio_base Precio base del producto
+	 * @param float $margen_adicional Porcentaje adicional de aumento al $precio_base
+	 * @param bool $agregar_costo_envio Agrega al precio_base el costo de envio del producto
+	 * 
+	 * @return bool
+	 */
+	public function sincronizar($id_meli, $stock, $precio_base, $margen_adicional = 0, $agregar_costo_envio = true)
+	{
+		// We construct the item to POST
+		$item = array(
+			"price"  => $precio_base,
+			"available_quantity" => $stock
+		);
+
+		
+		# Actualizamos el precio agregandole el costo de envio
+		if ($agregar_costo_envio) {
+			$costoEnvio = $this->MeliMarketplace->mercadolibre_obtener_costo_envio($id_meli);
+			$item['price'] = $item['price'] + $costoEnvio;
+		}
+		
+		if ($margen_adicional > 0) {
+			$item['price'] = calcular_sobreprecio($item['price'], $margen_adicional);
+		}
+
+		$item['price'] = round($item['price']);
+		
+		$meliRespuesta = $this->MeliMarketplace->update($id_meli, $item);
+				
+		if (!empty($meliRespuesta)) 
+		{
+			if ($meliRespuesta['httpCode'] < 300) 
+			{
+				return $meliRespuesta['body'];
+			}
+		}
+
+		return false;
+	}
+
+
 	public function sincronizarPreciosStock($tiendas = array())
 	{	
 		$out = array();
@@ -1486,6 +1623,9 @@ class MercadoLibresController extends AppController
 				# Verificamos que el producto esté publicado en mercadolibre
 				if (!empty($producto['MercadoLibr']['id_meli'])) {
 					
+
+					$meliRespuesta = $this->MeliMarketplace->modified_item($producto['MercadoLibr']['id_meli'], $producto['Productotienda']['porcentaje_adicional']);
+
 					# Actualizamos publicación existente en mercado libre
 					$meliRespuesta = $this->Meli->updatePriceAndStockAndCustomField($producto['MercadoLibr']['id_meli'], $producto['Productotienda']['precio'], $producto['Productotienda']['stock'], $producto['Productotienda']['id']);
 					

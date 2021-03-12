@@ -1,4 +1,4 @@
-<?
+<?php
 App::uses('Component', 'Controller');
 
 // Librería Prestashop
@@ -690,13 +690,58 @@ class PrestashopComponent extends Component
 		$opt['display'] = '[id,quantity]';
 		$opt['filter[id_product]'] = '[' .$producto_id. ']';
 
-		$xml = $this->ConexionPrestashop->get($opt);
+		$stock = array(
+			'stock_available' => array(
+				'id' => $producto_id,
+				'quantity' => 0
+			)
+		);
 
-		$PrestashopResources = $xml->children()->children();
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
 
-		$stock = to_array($PrestashopResources);
+			$PrestashopResources = $xml->children()->children();
+
+			$stock = to_array($PrestashopResources);
+
+		} catch (Exception $e) {
+			
+		}
 
 		return $stock;
+	}
+
+
+	public function prestashop_obtener_precio_producto($producto_id)
+	{	
+		//se obtiene el precio de prestashop
+		$opt = array();
+		$opt['resource'] = 'products';
+		$opt['display'] = '[id,price,final_price]';
+		$opt['price[final_price][use_reduction]'] = 1;
+		$opt['filter[id]'] = '[' .$producto_id. ']';
+
+		$precio = array(
+			'product' => array(
+				'id' => $producto_id,
+				'price' => 0,
+				'final_price' => 0
+			)
+		);
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+
+			$PrestashopResources = $xml->children()->children();
+
+			$precio = to_array($PrestashopResources);
+
+		} catch (Exception $e) {
+			
+		}
+		
+
+		return $precio;
 	}
 
 

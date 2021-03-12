@@ -117,7 +117,7 @@ class MeliComponent extends Component
     	$this->setComponentConfig();
 
 		$this->meli = new Meli($this->client_id, $this->client_secret);
-
+		prx($this->meli);
 		return $this->meli->getAuthUrl($redirect_uri, Meli::$AUTH_URL['MLC']);
 	}
 
@@ -485,11 +485,15 @@ class MeliComponent extends Component
 	 */
 	public function updatePriceAndStockAndCustomField($id, $price, $stock, $custom_field, $store_id = '')
 	{
-		if (!empty($id) && !empty($price) && !empty($custom_field)) {
-			if (!empty($store_id)) {
+		if (!empty($id) && !empty($price) && !empty($custom_field)) 
+		{
+			if (!empty($store_id)) 
+			{
 				# Configuración de la tienda
 	    		$this->setComponentConfig($store_id);
-			}else{
+			}
+			else
+			{
 				# Configuración de la tienda
 	    		$this->setComponentConfig();
 			}
