@@ -270,10 +270,10 @@
 											</td>
 											<td class="permitido_modificar" valign="center">
 												
-												<input type="text" class="form-control editable required editNmbItem" name="editNmbItem[99]" value="" data-original="" disabled="disabled">
+												<input type="text" class="form-control editable required editNmbItem" maxlength="80" name="editNmbItem[99]" value="" data-original="" disabled="disabled">
 											
-												<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', 99), array('type' => 'hidden', 'class'=> 'editable_hidden', 'disabled' => true , 'value' => ''));?>
-												<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', 99), array('type' => 'hidden', 'class'=> 'editable_hidden', 'disabled' => true , 'value' => ''));?>
+												<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', 99), array('type' => 'hidden', 'maxlength' => '80', 'class'=> 'editable_hidden', 'disabled' => true , 'value' => ''));?>
+												<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', 99), array('type' => 'hidden', 'maxlength' => '80', 'class'=> 'editable_hidden', 'disabled' => true , 'value' => ''));?>
 
 											</td>
 											<td class="permitido_modificar" valign="center">
@@ -332,10 +332,10 @@
 												</td>
 												<td class="permitido_modificar" valign="center">
 													
-													<input type="text" class="form-control editable required editNmbItem" name="editNmbItem[<?=$indice;?>]" value="<?=$detalle['NmbItem'];?>" data-original="<?=$detalle['NmbItem'];?>">
+													<input type="text" class="form-control editable required editNmbItem" maxlength="80" name="editNmbItem[<?=$indice;?>]" value="<?=h($this->Text->truncate($detalle['NmbItem'], 80, array('ellipsis' => '')))?>" data-original="<?=h($this->Text->truncate($detalle['NmbItem'], 80, array('ellipsis' => '')))?>">
 												
-													<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => $detalle['NmbItem']));?>
-													<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => $detalle['NmbItem']));?>
+													<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'maxlength' => 80, 'class'=> 'editable_hidden', 'value' => h($this->Text->truncate($detalle['NmbItem'], 80, array('ellipsis' => '')))));?>
+													<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'maxlength' => 80, 'class'=> 'editable_hidden', 'value' => h($this->Text->truncate($detalle['NmbItem'], 80, array('ellipsis' => '')))));?>
 
 												</td>
 												<td class="permitido_modificar" valign="center">
@@ -397,10 +397,10 @@
 												</td>
 												<td class="permitido_modificar" valign="center">
 													
-													<input type="text" class="form-control editable required editNmbItem" name="editNmbItem[<?=$indice;?>]" value="<?=h($detalle['VentaDetalleProducto']['nombre']);?>" data-original="<?=h($detalle['VentaDetalleProducto']['nombre']);?>">
+													<input type="text" class="form-control editable required editNmbItem" maxlength="80" name="editNmbItem[<?=$indice;?>]" value="<?=h($this->Text->truncate($detalle['VentaDetalleProducto']['nombre'], 80, array('ellipsis' => '')));?>" data-original="<?=h($this->Text->truncate($detalle['VentaDetalleProducto']['nombre'], 80, array('ellipsis' => '')));?>">
 												
-													<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => h($detalle['VentaDetalleProducto']['nombre'])));?>
-													<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'class'=> 'editable_hidden', 'value' => h($detalle['VentaDetalleProducto']['nombre'])));?>
+													<?= $this->Form->input(sprintf('DteDetalle.%d.NmbItem', $indice), array('type' => 'hidden', 'maxlength' => 80, 'class'=> 'editable_hidden', 'value' => h($this->Text->truncate($detalle['VentaDetalleProducto']['nombre'], 80, array('ellipsis' => '')))));?>
+													<?= $this->Form->input(sprintf('Detalle.%d.NmbItem', $indice), array('type' => 'hidden', 'maxlength' => 80, 'class'=> 'editable_hidden', 'value' => h($this->Text->truncate($detalle['VentaDetalleProducto']['nombre'], 80, array('ellipsis' => '')))));?>
 
 												</td>
 												<td class="permitido_modificar" valign="center">
