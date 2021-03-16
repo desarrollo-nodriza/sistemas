@@ -602,7 +602,7 @@ class OrdenesController extends AppController
 									}
 									else
 									{
-										$venta['VentaDetalle'][$ip]['total_neto']   = $venta['VentaDetalle'][$ip]['monto_anulado'];
+										$venta['VentaDetalle'][$ip]['total_neto']   = $d['total_neto'] - $venta['VentaDetalle'][$ip]['monto_anulado'];
 
 										if ($venta['VentaDetalle'][$ip]['total_neto'] < 0)
 										{
@@ -652,7 +652,7 @@ class OrdenesController extends AppController
 							$venta['Venta']['costo_envio'] = (float) 0;
 						}
 
-						$venta['Venta']['descuento'] = $descuento;
+						#$venta['Venta']['descuento'] = $descuento;
 					
 						# Guardamos los cambios
 						ClassRegistry::init('Venta')->saveAll($venta);
@@ -785,7 +785,7 @@ class OrdenesController extends AppController
 									}
 									else
 									{
-										$venta['VentaDetalle'][$ip]['total_neto']   = $venta['VentaDetalle'][$ip]['monto_anulado'];
+										$venta['VentaDetalle'][$ip]['total_neto']   = $d['total_neto'] - $venta['VentaDetalle'][$ip]['monto_anulado'];
 
 										if ($venta['VentaDetalle'][$ip]['total_neto'] < 0)
 										{
