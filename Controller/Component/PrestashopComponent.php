@@ -903,11 +903,12 @@ class PrestashopComponent extends Component
 			$xml       = $this->ConexionPrestashop->get($opt);
 			$resources = $xml->children()->children();
 			
-			$resources->quantity = $NuevoStock;
+			$resources->quantity = (int) $NuevoStock;
 			
 			$opt           = array('resource' => 'stock_availables');
 			$opt['putXml'] = $xml->asXML();
 			$opt['id'] 	   = $stock_id; 
+			
 			$xml           = $this->ConexionPrestashop->edit($opt);
 			
 		} catch (PrestaShopWebserviceException $ex) 
