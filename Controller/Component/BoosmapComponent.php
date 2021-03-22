@@ -343,7 +343,7 @@ class BoosmapComponent extends Component
                 'transportista' => array(
                     'nombre' => 'BOOSMAP',
                     'tipo_servicio' => $venta['MetodoEnvio']['boosmap_service'],
-                    'codigo_barra' => $response['body'][0]['id']
+                    'codigo_barra' => $response['body'][0]['orderNumber']
                 ),
                 'remitente' => array(
                     'nombre' => $venta['Tienda']['nombre'],
