@@ -35,6 +35,37 @@ $.extend({
 
 			});
 
+			$(document).on('change', '.js-tipo-entrega', function(){
+
+				var $val = $(this).val(),
+					$contexto = $(this).parents('table').eq(0),
+					$receptor = $contexto.find('.js-receptor-informado'),
+					$detalleReceptor = $contexto.find('.js-informacion-entrega');
+				
+				if ($val === 'retiro')
+				{
+					$receptor.parents('tr').eq(0).removeClass('hidden');
+					$detalleReceptor.parents('tr').eq(0).removeClass('hidden');
+					
+					$receptor.rules("add", {
+				        required: true,
+				        messages: {
+				        	required: 'Campo requerido'
+				        }
+				    });
+				}
+				else
+				{
+					$receptor.parents('tr').eq(0).addClass('hidden');
+					$detalleReceptor.parents('tr').eq(0).addClass('hidden');
+					$receptor.val('');
+					$detalleReceptor.val('');
+
+					$receptor.rules('remove', 'required');
+				}
+
+			});
+
 
 			$('.js-validate-oc').validate({
 				rules : {

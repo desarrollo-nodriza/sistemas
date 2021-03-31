@@ -108,9 +108,30 @@
 									<h1 class="text-center"><b>OC #<?= (Configure::read('debug') > 0) ? 'NO APLICA' : $this->request->data['OrdenCompra']['id']; ?></b></h1>
 								</td>-->
 							</tr>
+							<? if ($this->request->data['OrdenCompra']['tipo_entrega']) : ?>
 							<tr>
-								
+								<td colspan="3">
+									<table class="table table-bordered">
+										<caption style="font-size: 14px; font-weight: 600;">Información de la entrega</caption>
+										<tr>
+											<th>Tipo de entrega: </th>
+											<td><?= ($this->request->data['OrdenCompra']['tipo_entrega'] == 'retiro') ? 'Retiro en proveedor' : 'Despachado por proveedor'; ?></td>
+										</tr>
+
+										<? if ($this->request->data['OrdenCompra']['tipo_entrega'] == 'retiro') : ?>
+										<tr>
+											<th>Encargado del retiro: </th>
+											<td><?= $this->request->data['OrdenCompra']['receptor_informado']; ?></td>
+										</tr>
+										<tr>
+											<th>Detalles del retiro: </th>
+											<td><?= $this->request->data['OrdenCompra']['informacion_entrega']; ?></td>
+										</tr>
+										<? endif; ?>
+									</table>
+								</td>
 							</tr>
+							<? endif; ?>
 						</table>
 						<table class="table table-bordered">
 							<caption style="font-size: 14px; font-weight: 600;">Productos <button class="btn btn-danger pull-right" id="rechazar-todo"><i class="fa fa-times"></i> Rechazar todo</button></caption>

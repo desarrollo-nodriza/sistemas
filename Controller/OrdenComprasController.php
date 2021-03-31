@@ -219,7 +219,11 @@ class OrdenComprasController extends AppController
 
 		$estados = $this->OrdenCompra->estados;
 
-		$proveedores = ClassRegistry::init('Proveedor')->find('list');
+		$proveedores = ClassRegistry::init('Proveedor')->find('list', array(
+			'order' => array(
+				'Proveedor.nombre'
+			)
+		));
 
 		$this->set(compact('ordenCompras', 'estados', 'proveedores', 'titulo_index'));
 	}
@@ -713,7 +717,7 @@ class OrdenComprasController extends AppController
 		if ( ! $this->OrdenCompra->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-			$this->redirect(array('action' => 'index'));
+			$this->redirect($this->referer('/', true));
 		}
 
 		$ocs = $this->OrdenCompra->find('first', array(
@@ -1264,8 +1268,19 @@ class OrdenComprasController extends AppController
 			}
 		}
 		
-		$proveedoresLista = ClassRegistry::init('Proveedor')->find('list', array('conditions' => array('Proveedor.activo' => 1)));
-		$marcas 		  = ClassRegistry::init('Marca')->find('list');
+		$proveedoresLista = ClassRegistry::init('Proveedor')->find('list', array(
+			'conditions' => array(
+				'Proveedor.activo' => 1
+			),
+			'order' => array(
+				'Proveedor.nombre'
+			)
+		));
+		$marcas 		  = ClassRegistry::init('Marca')->find('list', array(
+			'order' => array(
+				'Marca.nombre'
+			)
+		));
 		$monedas          = $this->OrdenCompra->Moneda->find('list', array('conditions' => array('Moneda.activo' => 1)));
 
 
@@ -3120,4 +3135,104 @@ class OrdenComprasController extends AppController
 		$this->set(compact('oc', 'url'));
 	}
 
+
+	/**
+	 * API REST
+	 */
+
+	public function api_view($id)
+	{
+		# Sólo método Get
+		if (!$this->request->is('get')) {
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Only GET request allow'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# No existe venta
+		if (!$this->OrdenCompra->exists($id)) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$oc = $this->OrdenCompra->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id
+			),
+			'contain' => array(
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.id',
+						'Tienda.apiurl_prestashop',
+						'Tienda.apikey_prestashop'
+					)
+				),
+				'VentaDetalleProducto' => array(
+					'fields' => array(
+						'VentaDetalleProducto.id',
+						'VentaDetalleProducto.id_externo',
+						'VentaDetalleProducto.peso',
+						'VentaDetalleProducto.alto',
+						'VentaDetalleProducto.ancho',
+						'VentaDetalleProducto.largo',
+					)
+				)
+			)
+		));
+
+		$this->Prestashop = $this->Components->load('Prestashop');
+
+		# Agregamos las imagenes de prstashop al arreglo
+		$this->Prestashop->crearCliente($oc['Tienda']['apiurl_prestashop'], $oc['Tienda']['apikey_prestashop']);
+
+		foreach ($oc['VentaDetalleProducto'] as $iv => $d) 
+		{
+			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['id_externo'], $oc['Tienda']['apiurl_prestashop']);
+			$oc['VentaDetalleProducto'][$iv]['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
+		}
+
+
+		$response = array(
+			'code'    => 200, 
+			'name' => 'success',
+			'message' => 'Oc obtenida correctamente',
+			'data' => $oc
+		);
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
+	}
 }

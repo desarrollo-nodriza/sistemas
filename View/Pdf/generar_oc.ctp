@@ -89,6 +89,23 @@
 					<td style="font-size: 10px !important;">Descuento: </td>
 					<td style="font-size: 10px !important;"><?=$oc['OrdenCompra']['descuento'];?>%</td>
 				</tr>
+				<? if ($oc['OrdenCompra']['tipo_entrega']) : ?>
+					<tr>
+						<td style="font-size: 10px !important;">Tipo de entrega: </td>
+						<td style="font-size: 10px !important;"><?= ($oc['OrdenCompra']['tipo_entrega'] == 'retiro') ? 'Retiro en proveedor' : 'Despachado por proveedor'; ?></td>
+					</tr>
+
+					<? if ($oc['OrdenCompra']['tipo_entrega'] == 'retiro') : ?>
+					<tr>
+						<td style="font-size: 10px !important;">Encargado del retiro: </td>
+						<td style="font-size: 10px !important;"><?= $oc['OrdenCompra']['receptor_informado']; ?></td>
+					</tr>
+					<tr>
+						<td style="font-size: 10px !important;">Detalles del retiro: </td>
+						<td style="font-size: 10px !important;"><?= $oc['OrdenCompra']['informacion_entrega']; ?></td>
+					</tr>
+					<? endif; ?>
+				<? endif; ?>
 			</table>
 		</td>
 	</tr>

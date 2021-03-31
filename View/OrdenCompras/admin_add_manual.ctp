@@ -17,7 +17,7 @@
 					<div class="panel-body">
 						<div class="form-group form-inline">
 							<?=$this->Form->label('proveedor_id', 'Seleccione proveedor');?>
-							<?=$this->Form->input('proveedor_id', array('class' => 'form-control js-select-proveedor not-blank'));?>
+							<?=$this->Form->input('proveedor_id', array('class' => 'form-control js-select-proveedor not-blank select', 'data-live-search' => true));?>
 						</div>
 					</div>
 					<div class="panel-body hide">

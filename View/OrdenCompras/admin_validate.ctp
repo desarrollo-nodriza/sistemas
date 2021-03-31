@@ -124,7 +124,7 @@
 											<td>
 												<table class="table table-bordered">
 													<tr>
-														<td colspan="2"><b>Despacho</b></td>
+														<td colspan="2"><b>Información adicional</b></td>
 													</tr>
 													<tr>
 														<td>Fecha: </td>
@@ -145,6 +145,27 @@
 													<tr>
 														<td>Vendedor: </td>
 														<td><?=$this->Form->input(sprintf('%d.OrdenCompra.vendedor', $ip), array('type' => 'text', 'class' => 'form-control not-blank', 'value' => $this->Session->read('Auth.Administrador.nombre') ) );?></td>
+													</tr>
+													<tr>
+														<td>Método de entrega</td>
+														<td>
+														<?=$this->Form->select(sprintf('%d.OrdenCompra.tipo_entrega', $ip), array(
+															'retiro' => 'Retiro',
+															'despacho' => 'Despacho'
+														), array('empty' => 'Seleccione', 'class' => 'form-control not-blank js-tipo-entrega') );?>
+														</td>
+													</tr>
+													<tr class="hidden">
+														<td>Encargado del retiro</td>
+														<td>
+															<?=$this->Form->input(sprintf('%d.OrdenCompra.receptor_informado', $ip), array('type' => 'text', 'class' => 'form-control js-receptor-informado', 'placeholder' => 'Ingrese nombre del receptor'))?>
+														</td>
+													</tr>
+													<tr class="hidden">
+														<td>Detalle del retiro (opcional)</td>
+														<td>
+															<?=$this->Form->input(sprintf('%d.OrdenCompra.informacion_entrega', $ip), array('class' => 'form-control js-informacion-entrega', 'placeholder' => 'Agregue información adicional de la entrega')); ?>
+														</td>
 													</tr>
 													<!--<tr>
 														<td>Descuento: </td>

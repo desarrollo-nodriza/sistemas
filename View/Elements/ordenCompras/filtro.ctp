@@ -88,7 +88,8 @@
                     'class' => 'form-control select',
                     'empty' => 'Seleccione Proveedor',
                     'multiple' => true,
-                    'value' => $prov
+                    'value' => $prov,
+                    'data-live-search' => true
                     )
                 );?>
             </div>
