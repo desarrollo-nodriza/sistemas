@@ -38,6 +38,22 @@ class Venta extends AppModel
 	/**
 	 * @var array
 	 */
+	public $canal_venta_manual = array(
+		'cotizacion' => 'Cotización',
+		'telefono' => 'Teléfono',
+		'correo' => 'Correo',
+		'facebook' => 'RRSS Facebook',
+		'meson' => 'Mesón',
+		'chat' => 'Chat (Tawk)',
+		'whatsapp' => 'Wahtsapp',
+		'contacto' => 'Contacto Web',
+		'cambio_por_ndc' => 'Cambio por NDC'
+	);
+
+
+	/**
+	 * @var array
+	 */
 	public $picking_estados_lista = array(
 		'no_definido' => 'No preparado',
 		'en_revision' => 'En revisión manual',
@@ -492,7 +508,7 @@ class Venta extends AppModel
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
 					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.metodo_envio_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.numero_entrega', 'Venta.otro_entrega', 'Venta.comuna_entrega', 'Venta.ciudad_entrega', 'Venta.nombre_receptor', 'Venta.rut_receptor',
 					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito', 'Venta.etiqueta_envio_externa', 
-					'Venta.venta_manual', 'Venta.administrador_id', 'Venta.nota_interna', 'Venta.paquete_generado', 'Venta.comuna_id', 'Venta.picking_motivo_revision'
+					'Venta.venta_manual', 'Venta.administrador_id', 'Venta.nota_interna', 'Venta.paquete_generado', 'Venta.comuna_id', 'Venta.picking_motivo_revision', 'Venta.origen_venta_manual'
 				)
 			)
 		);

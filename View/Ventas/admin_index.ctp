@@ -48,14 +48,14 @@
 
 					<div class="panel-body">
 
-						<div class="col-xs-6 col-sm-6 col-md-3">
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
 							<div class="form-group">
 								<label>Venta</label>
 								<input name="data[Venta][filtroventa]" class="form-control" value="<?= $FiltroVenta; ?>" id="VentaFiltro" type="text" placeholder="ID, Ref" />
 							</div>
 						</div>
 
-						<div class="col-xs-6 col-sm-6 col-md-3">
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
 							<div class="form-group">
 								<label>Cliente</label>
 								<input name="data[Venta][filtrocliente]" class="form-control" value="<?= $FiltroCliente; ?>" id="VentaCliente" type="text" placeholder="Nombre, rut, email, telefono" />
@@ -80,6 +80,13 @@
 							<div class="form-group">
 								<label>Estado</label>
 								<?= $this->Form->input('venta_estado_categoria_id', array('class' => 'form-control', 'empty' => 'Estado', 'required' => false, 'default' => $FiltroVentaEstadoCategoria)); ?>
+							</div>
+						</div>
+
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
+							<div class="form-group">
+								<label>Origen de la venta</label>
+								<?= $this->Form->select('origen_venta_manual', $this->Html->origen_venta_manual(), array('class' => 'form-control', 'empty' => 'Origen', 'required' => false, 'default' => $FiltroVentaOrigen)); ?>
 							</div>
 						</div>
 

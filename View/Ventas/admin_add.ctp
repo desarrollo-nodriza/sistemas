@@ -85,6 +85,18 @@
 									</div>
 								</div>
 								<div class="col-xs-12 col-md-6">
+
+									<div class="panel panel-default">
+										<div class="panel-heading">
+											<h5 class="panel-title"><i class="fa fa-cogs" aria-hidden="true"></i> <?= __('Origen de la venta');?></h5>
+										</div>
+										<div class="panel-body">
+											<div class="form-group">
+												<?=$this->Form->select('origen_venta_manual', $origen_venta, array('empty' => 'Seleccione', 'class' => 'form-control not-blank')); ?>
+											</div>
+										</div>
+									</div>
+
 									<div class="panel panel-default">
 										<div class="panel-heading">
 											<h5 class="panel-title"><i class="fa fa-truck" aria-hidden="true"></i> <?= __('Método de tranporte');?></h5>

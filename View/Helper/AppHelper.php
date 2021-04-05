@@ -248,7 +248,6 @@ class AppHelper extends Helper
 	}
 
 
-
 	public function items_per_page()
 	{	
 		$inicial = array(
@@ -290,5 +289,13 @@ class AppHelper extends Helper
 		}
 
 		return $inicial;
+	}
+
+
+	public function origen_venta_manual($slug = '')
+	{	
+		$canales = ClassRegistry::init('Venta')->canal_venta_manual;
+
+		return ($slug) ? $canales[$slug] : $canales;
 	}
 }

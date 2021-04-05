@@ -90,6 +90,7 @@ class VentasController extends AppController {
 		$FiltroMarketplace          = '';
 		$FiltroMedioPago            = '';
 		$FiltroVentaEstadoCategoria = '';
+		$FiltroVentaOrigen 			= '';
 		$FiltroPrioritario          = '';
 		$FiltroPicking              = '';
 		$FiltroFechaDesde           = '';
@@ -317,6 +318,16 @@ class VentasController extends AppController {
 						}
 
 						break;
+				
+					case 'origen_venta_manual' :
+						
+						$FiltroVentaOrigen = $valor;
+
+						if ($FiltroVentaOrigen != "") {
+							$condiciones['Venta.origen_venta_manual'] = $FiltroVentaOrigen;
+						}
+						break;
+				
 				}
 			}
 		}
@@ -425,8 +436,25 @@ class VentasController extends AppController {
 		BreadcrumbComponent::add('Ventas', '/ventas');
 
 		$this->set(compact(
-			'ventas', 'tiendas', 'marketplaces', 'ventaEstadoCategorias', 'medioPagos',
-			'FiltroVenta', 'FiltroCliente', 'FiltroTienda', 'FiltroMarketplace', 'FiltroMedioPago', 'FiltroVentaEstadoCategoria', 'FiltroPrioritario', 'FiltroPicking', 'FiltroFechaDesde', 'FiltroFechaHasta', 'FiltroDte', 'meliConexion', 'picking'
+			'ventas', 
+			'tiendas', 
+			'marketplaces', 
+			'ventaEstadoCategorias', 
+			'medioPagos',
+			'FiltroVenta', 
+			'FiltroCliente', 
+			'FiltroTienda', 
+			'FiltroMarketplace', 
+			'FiltroMedioPago', 
+			'FiltroVentaEstadoCategoria', 
+			'FiltroPrioritario', 
+			'FiltroPicking', 
+			'FiltroFechaDesde', 
+			'FiltroFechaHasta', 
+			'FiltroDte', 
+			'meliConexion', 
+			'picking', 
+			'FiltroVentaOrigen'
 		));
 
 	}
@@ -3850,8 +3878,10 @@ class VentasController extends AppController {
 		$metodoEnvios = ClassRegistry::init('MetodoEnvio')->find('list', array('conditions' => array('activo' => 1)));
 		
 		$clientes     = ClassRegistry::init('VentaCliente')->find('list', array('fields' => array('VentaCliente.id', 'VentaCliente.email')));
+
+		$origen_venta = $this->Venta->canal_venta_manual;
 		
-		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios'));
+		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios', 'origen_venta'));
 		
 	}
 
@@ -8674,6 +8704,72 @@ class VentasController extends AppController {
 
 			throw new CakeException($response);
 		}
+
+		$this->set(array(
+            'response' => $respuesta,
+            '_serialize' => array('response')
+        ));
+
+	}
+
+
+	/**
+	 * Retorna una venta
+	 */
+	public function api_obtener_venta_por_id($id)
+	{	
+		# Sólo método Get
+		if (!$this->request->is('get')) {
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Only GET request allow'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# No existe venta
+		if (!$this->Venta->exists($id)) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Detalles de la venta
+		$venta = $this->Venta->obtener_venta_por_id_tiny($id);
+
+		$respuesta = array(
+			'code' => 200,
+			'message' => 'Venta obtenida con éxito',
+			'data' => $venta
+		);
 
 		$this->set(array(
             'response' => $respuesta,

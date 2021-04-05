@@ -239,6 +239,19 @@
 												<th>Atendida</th>
 												<td><?= ($venta['Venta']['atendida'] ? "<span class='btn btn-xs btn-success'>Sí</span>" : "<span class='btn btn-xs btn-danger'>No</span>"); ?></td>
 											</tr>
+											<? if ($venta['Venta']['origen_venta_manual']) : ?>
+											<tr>
+												<th>Origen de la venta</th>
+												<td>
+													<div class="input-group">
+														<?=$this->Form->select('origen_venta_manual', $this->Html->origen_venta_manual(), array('empty' => 'Seleccione', 'default' => $venta['Venta']['origen_venta_manual'], 'class' => 'form-control')); ?>
+														<span class="input-group-btn">
+															<button class="btn btn-default start-loading-when-form-is-validate" type="submit"><i class="fa fa-refresh"></i></button>
+														</span>
+													</div>
+												</td>
+											</tr>
+											<? endif; ?>
 										</table>
 									</div>
 								<?= $this->Form->end(); ?>
