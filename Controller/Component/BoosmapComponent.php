@@ -273,8 +273,10 @@ class BoosmapComponent extends Component
                     )
                 ),
                 'tags' => array(
-                    'brand' => 'No definido'
-                )
+                    'brand' => 'Toolmania'
+				),
+				'delivery_end_time' 	=> '21:00:00',
+  				'delivery_start_time'	=> '09:00:00'
 			);
 
             $dtes_url = Hash::extract($venta['Dte'], '{n}');
