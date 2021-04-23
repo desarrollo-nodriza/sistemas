@@ -59,4 +59,17 @@ class DATABASE_CONFIG
 		'prefix' => 'ac_',
 		'encoding' => 'utf8',
 	);
+
+
+	public $warehouse = array(
+		'datasource'	=> 'Database/Mysql',
+		'persistent'	=> false,
+		'host'			=> '45.79.14.210',
+		'login'			=> 'nz_warehouse',
+		'password'		=> 'TZPFnZUBY6nN',
+		'database'		=> 'nz_warehouse',
+		'prefix'		=> '',
+		'port' => '23366',
+		'encoding'		=> 'utf8'
+	);
 }
