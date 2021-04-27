@@ -3363,6 +3363,28 @@ class OrdenComprasController extends AppController
 			)
 		);
 
+		if ($oc['OrdenCompra']['estado'] == 'recepcion_completa')
+		{
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Recepción oc app - Ya recepcionada',
+					'modulo' => 'OrdenCompras',
+					'modulo_accion' => json_encode($oc)
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Oc ya fue recepcionada'
+			);
+
+			throw new CakeException($response);
+		}
+
 		$productosRecepcionar = array();
 		
 		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $ioc => $ocp) 
@@ -3407,7 +3429,6 @@ class OrdenComprasController extends AppController
 				}
 
 				$precio_compra_oc = round($ocp['precio_unitario'] - ($ocp['descuento_producto'] / $ocp['cantidad_validada_proveedor']), 0);
-				$precio_compra_recibido = round($p['precio_compra'], 0);
 
 				$bodega_id = ($oc['OrdenCompra']['bodega_id']) ? $oc['OrdenCompra']['bodega_id'] : ClassRegistry::init('Bodega')->obtener_bodega_principal()['Bodega']['id'];
 
@@ -3417,12 +3438,12 @@ class OrdenComprasController extends AppController
 					'cantidad_recibida_ahora' => $cantidadRecibidaAhora,
 					'bodega_id' => $bodega_id,
 					'producto_id' => $ocp['venta_detalle_producto_id'],
-					'precio_compra' => $p['precio_compra'],
+					'precio_compra' => $precio_compra_oc,
 					'oc_id' => $id,
-					'diferencia_precio' => ($precio_compra_oc == $precio_compra_recibido ) ? false : true
+					'diferencia_precio' => $p['error_de_precio']
 				);
 
-				$oc['OrdenComprasVentaDetalleProducto'][$ioc]['total_neto'] = ($p['precio_compra'] * ($cantidadRecibidaAhora + $ocp['cantidad_recibida']));
+				$oc['OrdenComprasVentaDetalleProducto'][$ioc]['total_neto'] = ($precio_compra_oc * ($cantidadRecibidaAhora + $ocp['cantidad_recibida']));
 			}
 		}
 
@@ -3520,10 +3541,6 @@ class OrdenComprasController extends AppController
 			));
 		}
 
-		# Cliente Libredte
-		$libreDte = $this->Components->load('LibreDte');
-		$libreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
-
 		# Dtes para descontar saldo
 		$dtesDescontar = array();
 
@@ -3534,15 +3551,30 @@ class OrdenComprasController extends AppController
 			$tipo_dte = $dte['tipo_dte'];
 			$folio    = $dte['folio'];
 			$receptor = $this->rutSinDv($oc['Tienda']['rut']);
+			$id_factura = null;
 
-			# Creamos el id antes de setear sus valores
-			$id_factura = ClassRegistry::init('OrdenCompraFactura')->crear(array(
-				'OrdenCompraFactura' => array(
-					'orden_compra_id' => $id,
-					'proveedor_id'    => $oc['OrdenCompra']['proveedor_id']
-				)
-			));
-			
+			# Obtenemos el factura id de los dte ya guardados
+			foreach ($oc['OrdenCompraFactura'] as $fact)
+			{	
+				if ($fact['folio'] == $folio && $fact['tipo_documento'] == $tipo_dte)
+				{
+					$id_factura = $fact['id'];
+				}
+			}
+
+			if (!$id_factura)
+			{
+				# Creamos el id antes de setear sus valores
+				$id_factura = ClassRegistry::init('OrdenCompraFactura')->crear(array(
+					'OrdenCompraFactura' => array(
+						'orden_compra_id' => $id,
+						'proveedor_id'    => $oc['OrdenCompra']['proveedor_id'],
+						'folio' => $folio,
+						'tipo_documento' => $tipo_dte
+					)
+				));
+			}
+
 			# DTE a relacionar
 			$ocSave['OrdenCompraFactura'][] = array(
 				'id' => $id_factura,
@@ -3576,7 +3608,6 @@ class OrdenComprasController extends AppController
 		{
 			if ($factura['tipo_documento'] != 33)
 				continue;
-			
 			$yaFacturado = $yaFacturado + $factura['monto_facturado'];
 		}
 
@@ -3590,8 +3621,33 @@ class OrdenComprasController extends AppController
 		if ($total_facturado <= $total_oc_max && $total_facturado >= $total_oc_min)
 		{
 			$facturado_completo = true;
-		}	
+		}
+		
+		# OC ya facturada completa
+		if ($yaFacturado <= $total_oc_max && $yaFacturado >= $total_oc_min)
+		{
+			
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Recepción oc app - Ya facturada completa',
+					'modulo' => 'OrdenCompras',
+					'modulo_accion' => json_encode($ocSave)
+				)
+			);
 
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Oc ya fue facturada'
+			);
+
+			throw new CakeException($response);
+
+		}
+		
 		# OC queda en estado de espera de factura
 		if ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && count($dtesDescontar) == 0 ) 
 		{
@@ -3600,6 +3656,10 @@ class OrdenComprasController extends AppController
 		elseif ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && !$facturado_completo ) 
 		{
 			$ocSave['OrdenCompra']['estado'] = 'espera_dte';
+		}
+		elseif ($facturado_completo)
+		{
+			$ocSave['OrdenCompra']['estado'] = 'recepcion_completa';
 		}
 
 		$ocSave['OrdenCompraHistorico'] = array(
@@ -3617,7 +3677,7 @@ class OrdenComprasController extends AppController
 				'modulo_accion' => json_encode($ocSave)
 			)
 		);
-		
+	
 		# Al guardar relacionamos todas las facturas a los pagos que existan para ésta OC
 		if ($this->OrdenCompra->saveAll($ocSave)) {
 
