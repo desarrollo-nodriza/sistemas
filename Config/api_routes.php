@@ -143,6 +143,15 @@ Router::connect(
     )
 );
 
+Router::connect(
+    '/api/administradores/validate', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Administradores', 
+        'action' => 'validate_token',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
 
 /**
  * Venta
