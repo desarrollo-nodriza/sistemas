@@ -161,6 +161,19 @@ Router::connect(
 );
 
 Router::connect(
+    '/api/ventas/ver/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'obtener_venta_bodega',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+Router::connect(
     '/api/ventas/ver/referencia', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'Ventas', 
@@ -557,6 +570,37 @@ Router::connect(
         'action' => 'index',
         'api' => true,
         'prefix' => 'api')
+);
+
+
+/**
+ * Orden compra
+ */
+Router::connect(
+    '/api/ordenes-de-compra/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompras', 
+        'action' => 'view',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+Router::connect(
+    '/api/ordenes-de-compra/recepcionar/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompras', 
+        'action' => 'reception',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
 );
 
 
