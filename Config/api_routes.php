@@ -590,6 +590,28 @@ Router::connect(
  * Métodos de envios
  */
 
+Router::connect(
+    '/api/metodo-envio/obtener', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'MetodoEnvios', 
+        'action' => 'obtener_metodos',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+/**
+ * MarketPlace
+ */
+
+Router::connect(
+    '/api/marketplaces/obtener', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Marketplaces', 
+        'action' => 'obtener_marketPlaces',
+        'api' => true,
+        'prefix' => 'api')
+);
+
 
  /**
   * Comunas
