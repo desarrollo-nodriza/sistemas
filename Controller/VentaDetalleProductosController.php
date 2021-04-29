@@ -3030,6 +3030,96 @@ class VentaDetalleProductosController extends AppController
 			
     }
 
+	/**
+     * Visualiza un producto
+     * Endpoint: /api/producto/view-by-reference/:sku.json
+     * @param  [type] $sku referencia del producto
+     */
+    public function api_view_by_reference($sku) {
+    	
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$producto = $this->VentaDetalleProducto->find('first', array(
+			'conditions' => array(
+				'VentaDetalleProducto.codigo_proveedor' => $sku
+			)
+		));
+
+		if(empty($producto))
+		{
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Producto not found'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		$producto['VentaDetalleProducto']['stock_enbodega'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
+
+		if (isset($this->request->query['external'])) {
+
+			$canales = $this->verificar_canales($producto['VentaDetalleProducto']['id_externo']);
+
+			foreach ($canales as $ic => $canal) {
+				foreach ($canal as $i => $c) {
+
+					if (!$c['existe'])
+						continue;
+
+					$producto['VentaDetalleProducto'][$ic][$c['nombre']] = array(
+						'precio_venta'     => $c['item']['precio'],
+						'stock_disponible' => $c['item']['stock_disponible'],
+						'estado'           => $c['item']['estado']
+					);
+
+				}
+			}
+
+		}
+
+		# Etiqueta sec
+		if (!empty($producto['VentaDetalleProducto']['qr_sec'])) {
+			
+			$url_sec = obtener_url_base() . 'webroot/img/VentaDetalleProducto/' . $producto['VentaDetalleProducto']['qr_sec'];
+			$producto['VentaDetalleProducto']['qr_sec'] = $url_sec;
+
+		}
+
+		$producto['VentaDetalleProducto']['tiempo_entrega'] = $this->VentaDetalleProducto->obtener_tiempo_entrega($producto['VentaDetalleProducto']['id']);
+
+
+        $this->set(array(
+            'producto' => $producto['VentaDetalleProducto'],
+            '_serialize' => array('producto')
+        ));
+			
+    }
 
     /**
      * Crear un producto
@@ -3164,6 +3254,108 @@ class VentaDetalleProductosController extends AppController
 			throw new CakeException($response);
     	}
        
+    }
+
+
+	
+	/**
+	 * api_update
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
+	public function api_update($id) {
+
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!$this->VentaDetalleProducto->exists($id))
+		{
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Not found'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$producto = array(
+			'VentaDetalleProducto' => array(
+				'id' => $id
+			)
+		);
+
+		$campos = array_keys($this->VentaDetalleProducto->schema());
+
+		foreach ($campos as $col)
+		{	
+			if (isset($this->request->data[$col]) && !empty($this->request->data[$col]))
+			{
+				$producto = array_replace_recursive($producto, array(
+					'VentaDetalleProducto' => array(
+						$col => $this->data[$col]
+					)
+				));
+			}
+		}
+
+		if (!$this->VentaDetalleProducto->save($producto, array('callbacks' => false)))
+		{
+			$response = array(
+				'code'    => 403, 
+				'message' => 'No fue posible guardar la información'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$respuesta = array(
+			'code' => 200,
+			'message' => 'Registro editado con éxito',
+			'body' => $producto
+		);
+
+		$log = array();
+
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Api producto',
+				'modulo' => 'Productos',
+				'modulo_accion' => json_encode($this->request->data)
+			)
+		);
+
+		ClassRegistry::init('Log')->saveMany($log);
+
+		$this->set(array(
+            'response' => $respuesta,
+            '_serialize' => array('response')
+        ));
+
     }
 
 

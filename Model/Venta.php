@@ -235,6 +235,19 @@ class Venta extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'EmbalajeWarehouse' => array(
+			'className'				=> 'EmbalajeWarehouse',
+			'foreignKey'			=> 'venta_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
@@ -1006,18 +1019,21 @@ class Venta extends AppModel
 		$cant_entregada_sum = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));
 		$cant_vendida_sum   = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - $cant_anulada_sum - $cant_en_espera_sum - $cant_entregada_sum;
 
+		$picking_estado = $this->field('picking_estado');
+
 		# Pasamos a picking
 		if ( $cant_reservada_sum == $cant_vendida_sum && $cant_vendida_sum > 0) 
 		{
-
-			$picking_estado = $this->field('picking_estado');
-			
 			if (empty($picking_estado) || $picking_estado == 'no_definido' ) 
-			{
+			{	
 				$this->cambiar_estado_picking($id, 'empaquetar');
 			}
 
 			$this->saveField('subestado_oc', 'no_entregado');
+		}
+		elseif ($picking_estado == 'no_definido')
+		{
+			$this->cambiar_estado_picking($id, 'no_definido'); // Creamos embalaje
 		}
 		
 		return;
@@ -1354,17 +1370,119 @@ class Venta extends AppModel
 			)
 		);
 
+		$venta = $this->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $id
+			),
+			'contain' => array(
+				'EmbalajeWarehouse'
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.metodo_envio_id',
+				'Venta.marketplace_id',
+				'Venta.comuna_id',
+				'Venta.fecha_venta',
+				'Venta.venta_estado_id',
+				'Venta.administrador_id'
+			)
+		));
+
+		$bodega = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+
+		$dte_valido = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
+
 		if (!empty($picking_email)) {
 			$save = array_replace_recursive($save, array('Venta' => array('picking_email' => $picking_email) ));
 		}
 
 		switch ($picking_estado) {
 			case 'no_definido':
-				$save = array_replace_recursive($save, array('Venta' => array('picking_email' => '', 'picking_fecha_embalar' => '', 'picking_fecha_inicio' => '', 'picking_fecha_temrino' => '')));
+
+				$save = array_replace_recursive($save, array(
+					'Venta' => array(
+						'picking_email' => '', 
+						'picking_fecha_embalar' => '', 
+						'picking_fecha_inicio' => '', 
+						'picking_fecha_temrino' => ''
+					)
+				));
+				
+				# si no hay embalaje lo creamos en estado inicial
+				if (empty($venta['EmbalajeWarehouse']))
+				{
+					ClassRegistry::init('EmbalajeWarehouse')->save(array(
+						'EmbalajeWarehouse' => array(
+							'venta_id' => $venta['Venta']['id'],
+							'estado' => 'inicial',
+							'bodega_id' => $bodega['Bodega']['id'],
+							'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+							'marketplace_id' => $venta['Venta']['marketplace_id'],
+							'comuna_id' => $venta['Venta']['comuna_id'],
+							'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+							'fecha_venta' => $venta['Venta']['fecha_venta'],
+							'fecha_creacion' => date('Y-m-d H:i:s'),
+							'ultima_modifacion' => date('Y-m-d H:i:s')
+						)
+					));
+				}
+				
 				break;
 			
 			case 'empaquetar':
-				$save = array_replace_recursive($save, array('Venta' => array('picking_email' => '', 'picking_fecha_embalar' => date('Y-m-d H:i:s'), 'picking_fecha_inicio' => '', 'picking_fecha_temrino' => '', 'paquete_generado' => 0)));
+
+				$save = array_replace_recursive($save, array(
+					'Venta' => array(
+						'picking_email' => '', 
+						'picking_fecha_embalar' => date('Y-m-d H:i:s'), 
+						'picking_fecha_inicio' => '', 
+						'picking_fecha_temrino' => '', 
+						'paquete_generado' => 0
+					)
+				));
+				
+				# si existe embalaje inicial lo actualizamos
+				if (!empty($venta['EmbalajeWarehouse']))
+				{
+					foreach($venta['EmbalajeWarehouse'] as $embalaje)
+					{
+						if ($embalaje['estado'] == 'inicial' && $dte_valido)
+						{
+							ClassRegistry::init('EmbalajeWarehouse')->save(array(
+								'EmbalajeWarehouse' => array(
+									'id' => $embalaje['id'],
+									'estado' => 'listo_para_embalar',
+									'bodega_id' => $bodega['Bodega']['id'],
+									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+									'marketplace_id' => $venta['Venta']['marketplace_id'],
+									'comuna_id' => $venta['Venta']['comuna_id'],
+									'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+									'fecha_listo_para_embalar' => date('Y-m-d H:i:s'),
+									'ultima_modifacion' => date('Y-m-d H:i:s')
+								)
+							));
+						}
+					}
+				}
+				elseif ($dte_valido)
+				{	# Se crea si
+					ClassRegistry::init('EmbalajeWarehouse')->save(array(
+						'EmbalajeWarehouse' => array(
+							'venta_id' => $venta['Venta']['id'],
+							'estado' => 'listo_para_embalar',
+							'bodega_id' => $bodega['Bodega']['id'],
+							'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+							'marketplace_id' => $venta['Venta']['marketplace_id'],
+							'comuna_id' => $venta['Venta']['comuna_id'],
+							'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+							'fecha_venta' => $venta['Venta']['fecha_venta'],
+							'fecha_creacion' => date('Y-m-d H:i:s'),
+							'fecha_listo_para_embalar' => date('Y-m-d H:i:s'),
+							'ultima_modifacion' => date('Y-m-d H:i:s')
+						)
+					));
+				}
+				
 				break;
 
 			case 'empaquetando':
@@ -1373,10 +1491,72 @@ class Venta extends AppModel
 				if (empty($picking_email))
 					return false;
 				
-				$save = array_replace_recursive($save, array('Venta' => array('picking_fecha_inicio' => date('Y-m-d H:i:s'))));
+				$save = array_replace_recursive($save, array(
+					'Venta' => array(
+						'picking_fecha_inicio' => date('Y-m-d H:i:s')
+					)
+				));
+
+				# si existe embalaje listo para embalar lo actualizamos
+				if (!empty($venta['EmbalajeWarehouse']))
+				{
+					foreach($venta['EmbalajeWarehouse'] as $embalaje)
+					{
+						if ($embalaje['estado'] == 'listo_para_embalar')
+						{
+							ClassRegistry::init('EmbalajeWarehouse')->save(array(
+								'EmbalajeWarehouse' => array(
+									'id' => $embalaje['id'],
+									'estado' => 'procesando',
+									'bodega_id' => $bodega['Bodega']['id'],
+									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+									'marketplace_id' => $venta['Venta']['marketplace_id'],
+									'comuna_id' => $venta['Venta']['comuna_id'],
+									'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+									'ultima_modifacion' => date('Y-m-d H:i:s'),
+									'responsable_id_procesando' => $venta['Venta']['administrador_id'],
+									'fecha_procesando' => date('Y-m-d H:i:s')
+								)
+							));
+						}
+					}
+				}
+
 				break;
 			case 'empaquetado':
-				$save = array_replace_recursive($save, array('Venta' => array('paquete_generado' => 0, 'picking_fecha_termino' => date('Y-m-d H:i:s'))));
+
+				$save = array_replace_recursive($save, array(
+					'Venta' => array(
+						'paquete_generado' => 0, 
+						'picking_fecha_termino' => date('Y-m-d H:i:s')
+					)
+				));
+
+				# si existe embalaje procesado lo actualizamos
+				if (!empty($venta['EmbalajeWarehouse']))
+				{
+					foreach($venta['EmbalajeWarehouse'] as $embalaje)
+					{
+						if ($embalaje['estado'] == 'procesando')
+						{
+							ClassRegistry::init('EmbalajeWarehouse')->save(array(
+								'EmbalajeWarehouse' => array(
+									'id' => $embalaje['id'],
+									'estado' => 'finalizado',
+									'bodega_id' => $bodega['Bodega']['id'],
+									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+									'marketplace_id' => $venta['Venta']['marketplace_id'],
+									'comuna_id' => $venta['Venta']['comuna_id'],
+									'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+									'ultima_modifacion' => date('Y-m-d H:i:s'),
+									'responsable_id_finalizado' => $venta['Venta']['administrador_id'],
+									'fecha_finalizado' => date('Y-m-d H:i:s')
+								)
+							));
+						}
+					}
+				}
+
 				break;
 		}
 

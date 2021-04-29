@@ -203,6 +203,13 @@ class AppController extends Controller
 		header('P3P:CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT"');
 
 		/**
+		 * Cors
+		 */
+		header('Access-Control-Allow-Origin: *');
+		header('Access-Control-Allow-Methods: POST, GET, PUT, PATCH, DELETE, OPTIONS');
+		header('Access-Control-Allow-Headers: *');
+
+		/**
 		 * Cambiar tienda
 		 */ 
 		$this->cambioTienda();

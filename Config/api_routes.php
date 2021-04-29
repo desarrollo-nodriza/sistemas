@@ -47,11 +47,40 @@ Router::connect(
     )
 );
 
+
+Router::connect(
+    '/api/producto/view-by-reference/:sku', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'view_by_reference',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('sku'),
+        'id' => '[0-9-a-Z]+'
+    )
+);
+
 Router::connect(
     '/api/producto/edit/:id', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'VentaDetalleProductos', 
         'action' => 'edit',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+Router::connect(
+    '/api/producto/update/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'update',
+        '[method]' => 'POST',
         'api' => true,
         'prefix' => 'api'),
     array(

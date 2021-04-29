@@ -10,146 +10,22 @@ class ProductoWarehouse extends AppModel
 	public $useTable = 'productos';
 	public $displayField	= 'nombre';
 
+	
 	/**
-	 * ASOCIACIONES
+	 * beforeSave
+	 *
+	 * @param  mixed $options
+	 * @return void
 	 */
-	public $belongsTo = array(
-		'MarcaWarehouse' => array(
-			'className'				=> 'MarcaWarehouse',
-			'foreignKey'			=> 'marca_id',
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
-		)
-	);
+	public function beforeSave($options = array())
+	{
+		if (isset($this->data['ProductoWarehouse']['nombre']))
+		{
+			$this->data['ProductoWarehouse']['nombre_corto'] = Inflector::slug($this->data['ProductoWarehouse']['nombre'], '-');
+		}
 
-	public $hasMany = array(
-		'VentaDetalle' => array(
-			'className'				=> 'VentaDetalle',
-			'foreignKey'			=> 'venta_detalle_producto_id',
-			'dependent'				=> false,
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'limit'					=> '',
-			'offset'				=> '',
-			'exclusive'				=> '',
-			'finderQuery'			=> '',
-			'counterQuery'			=> ''
-        ),
-		'PrecioEspecificoProductoWarehouse' => array(
-			'className'				=> 'PrecioEspecificoProductoWarehouse',
-			'foreignKey'			=> 'producto_id',
-			'dependent'				=> false,
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'limit'					=> '',
-			'offset'				=> '',
-			'exclusive'				=> '',
-			'finderQuery'			=> '',
-			'counterQuery'			=> ''
-		),
-		'Mensaje' => array(
-			'className'				=> 'Mensaje',
-			'foreignKey'			=> 'venta_detalle_producto_id',
-			'dependent'				=> false,
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'limit'					=> '',
-			'offset'				=> '',
-			'exclusive'				=> '',
-			'finderQuery'			=> '',
-			'counterQuery'			=> ''
-		)
-	);
-
-
-	public $hasAndBelongsToMany = array(
-		'BodegaWarehouse' => array(
-			'className'				=> 'BodegaWarehouse',
-			'joinTable'				=> 'bodegas_productos',
-			'foreignKey'			=> 'producto_id',
-			'associationForeignKey'	=> 'bodega_id',
-			'unique'				=> true,
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'limit'					=> '',
-			'offset'				=> '',
-			'width'					=> '',
-			'finderQuery'			=> '',
-			'deleteQuery'			=> '',
-			'insertQuery'			=> ''
-		),
-		'ProveedorWarehouse' => array(
-			'className'				=> 'ProveedorWarehouse',
-			'joinTable'				=> 'proveedores_productos',
-			'foreignKey'			=> 'producto_id',
-			'associationForeignKey'	=> 'proveedor_id',
-			'unique'				=> true,
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'limit'					=> '',
-			'offset'				=> '',
-			'width'					=> 'ProductoWarehousesProveedorWarehouse',
-			'finderQuery'			=> '',
-			'deleteQuery'			=> '',
-			'insertQuery'			=> ''
-		),
-		'OrdenCompra' => array(
-			'className'				=> 'OrdenCompra',
-			'joinTable'				=> 'orden_compras_venta_detalle_productos',
-			'foreignKey'			=> 'venta_detalle_producto_id',
-			'associationForeignKey'	=> 'orden_compra_id',
-			'unique'				=> true,
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'limit'					=> '',
-			'width'					=> 'ProductoWarehousesOrdenCompra',
-			'offset'				=> '',
-			'finderQuery'			=> '',
-			'deleteQuery'			=> '',
-			'insertQuery'			=> ''
-		),
-		'Prospecto' => array(
-			'className'				=> 'Prospecto',
-			'joinTable'				=> 'productos_prospectos',
-			'foreignKey'			=> 'venta_detalle_producto_id',
-			'associationForeignKey'	=> 'prospecto_id',
-			'unique'				=> true,
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'limit'					=> '',
-			'offset'				=> '',
-			'with'					=> 'ProductosProspecto',
-			'finderQuery'			=> '',
-			'deleteQuery'			=> '',
-			'insertQuery'			=> ''
-		),
-		'Cotizacion' => array(
-			'className'				=> 'Cotizacion',
-			'joinTable'				=> 'cotizaciones_productos',
-			'foreignKey'			=> 'venta_detalle_producto_id',
-			'associationForeignKey'	=> 'cotizacion_id',
-			'unique'				=> true,
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'limit'					=> '',
-			'offset'				=> '',
-			'with'					=> 'CotizacionesProducto',
-			'finderQuery'			=> '',
-			'deleteQuery'			=> '',
-			'insertQuery'			=> ''
-		)
-	);
+		return true;
+	}
 
 	
 	public function paginateCount($conditions = null, $recursive = 0, $extra = array()) {
