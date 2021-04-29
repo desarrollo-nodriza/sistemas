@@ -356,7 +356,7 @@ class AdministradoresController extends AppController
 	}
 
 	public function admin_index()
-	{
+	{	
 		$this->paginate		= array(
 			'recursive'			=> 0
 		);
