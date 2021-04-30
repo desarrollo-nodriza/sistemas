@@ -171,4 +171,49 @@ class MarketplacesController extends AppController
 
 	}
 
+	public function api_obtener_marketPlaces()
+	{
+		# Sólo método Get
+		if (!$this->request->is('get')) {
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Only GET request allow'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+		
+		$filtrar = [
+			'nombre LIKE' 	=> isset($this->request->query['nombre'])?'%'.$this->request->query['nombre'].'%':null,			
+			array('activo' 	=> $this->request->query['activo']??1)
+		];
+		$filtrar = array_filter($filtrar);		
+		$Marketplace = $this->Marketplace->find('list', ['conditions' => $filtrar]);
+
+		$this->set(array(
+            'response' => $Marketplace,
+            '_serialize' => array('response')));
+	}
+
 }
