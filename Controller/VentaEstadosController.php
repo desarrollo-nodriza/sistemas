@@ -148,4 +148,41 @@ class VentaEstadosController extends AppController
 
 	}
 
+
+
+	/**
+	 * Obtener estados para embalaje
+	 * @return mixed
+	 */
+	public function api_obtener_para_emabalaje()
+	{	
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$estados = $this->VentaEstado->obtener_estados_logistica();
+
+		$this->set(array(
+            'response' => $estados,
+            '_serialize' => array('response')
+        ));
+
+	}
+
 }

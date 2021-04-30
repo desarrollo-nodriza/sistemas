@@ -731,3 +731,18 @@ Router::connect(
         'prefix' => 'api'
     )
 );
+
+
+/**
+ * Venta estados
+ */
+Router::connect(
+    '/api/venta-estado-embalaje', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaEstados', 
+        'action' => 'obtener_para_emabalaje',
+        '[method]' => 'GET',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
