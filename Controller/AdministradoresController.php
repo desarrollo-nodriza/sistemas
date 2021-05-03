@@ -724,7 +724,7 @@ class AdministradoresController extends AppController
 						)
 					),
 					'fields' => array(
-						'Administrador.nombre', 'Administrador.email', 'Administrador.google_imagen'
+						'Administrador.id', 'Administrador.nombre', 'Administrador.email', 'Administrador.google_imagen'
 					)
 				)
 			),
@@ -743,6 +743,7 @@ class AdministradoresController extends AppController
 
 		$response = array(
 			'Usuario' => array(
+				'id' => $tokenData['Administrador']['id'],
 				'nombre' => $tokenData['Administrador']['nombre'],
 				'email'  => $tokenData['Administrador']['email'],
 				'avatar' => (!empty($tokenData['Administrador']['google_imagen'])) ? $tokenData['Administrador']['google_imagen'] : 'https://ui-avatars.com/api/?size=50&background=fff&color=771D97&name=' . urlencode($tokenData['Administrador']['nombre']),
