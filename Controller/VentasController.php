@@ -9383,6 +9383,7 @@ class VentasController extends AppController {
 			
 			$respuesta['body']['itemes'][$i] = array(
 				'id' => $item['id'],
+				'producto_id' => $item['venta_detalle_producto_id'],
 				'nombre' => $item['VentaDetalleProducto']['nombre'],
 				'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
 				'cantidad_pendiente_entrega' => $item['cantidad_pendiente_entrega'],
