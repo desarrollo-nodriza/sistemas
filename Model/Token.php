@@ -301,5 +301,52 @@ class Token extends AppModel
 		return 'No definido';
 
 	}
+	
+
+	/**
+	 * obtener_propietario_token_full
+	 *
+	 * @param  mixed $token
+	 * @return void
+	 */
+	public function obtener_propietario_token_full($token)
+	{
+		$token = $this->find('first', array(
+			'conditions' => array(
+				'Token.token' => trim($token)
+			),
+			'contain' => array(
+				'Administrador' => array(
+					'fields' => array(
+						'Administrador.id',
+						'Administrador.nombre',
+						'Administrador.email'
+					)
+				),
+				'Proveedor' => array(
+					'fields' => array(
+						'Proveedor.id',
+						'Proveedor.nombre'
+					)
+				),
+				'VentaCliente' => array(
+					'fields' => array(
+						'VentaCliente.id',
+						'VentaCliente.nombre',
+						'VentaCliente.email'
+					)
+				)
+			),
+			'fields' => array(
+				'Token.administrador_id',
+				'Token.proveedor_id',
+				'Token.venta_cliente_id'
+			)
+		));
+
+		return $token;
+
+	}
+
 
 }

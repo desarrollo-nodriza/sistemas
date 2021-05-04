@@ -70,6 +70,35 @@ class Bodega extends AppModel
 		)
 	);
 
+	public $hasMany = array(
+		'Rol' => array(
+			'className'				=> 'Rol',
+			'foreignKey'			=> 'bodega_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'OrdenCompra' => array(
+			'className'				=> 'OrdenCompra',
+			'foreignKey'			=> 'bodega_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		)
+	);
+
 
 	public function beforeSave($options = array())
 	{
@@ -684,5 +713,16 @@ class Bodega extends AppModel
 
 		return array_sum(Hash::extract($mvs, '{n}.BodegasVentaDetalleProducto.cantidad'));
 
+	}
+
+	
+	/**
+	 * obtener_bodega_principal
+	 *
+	 * @return void
+	 */
+	public function obtener_bodega_principal()
+	{
+		return $this->find('first', array('conditions' => array('Bodega.principal' => 1), 'limit' => 1, 'fields' => array('Bodega.id')));
 	}
 }

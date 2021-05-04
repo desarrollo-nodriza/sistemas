@@ -3451,6 +3451,170 @@ class VentasController extends AppController {
 
 	}
 
+	
+	/**
+	 * admin_crear_embalajes
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
+	public function admin_crear_embalajes($id)
+	{
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $id
+			),
+			'contain' => array(
+				'EmbalajeWarehouse'
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.metodo_envio_id',
+				'Venta.marketplace_id',
+				'Venta.comuna_id',
+				'Venta.fecha_venta',
+				'Venta.venta_estado_id',
+				'Venta.administrador_id',
+				'Venta.picking_estado'
+			)
+		));
+
+		$bodega = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+		
+		switch ($venta['Venta']['picking_estado']) {
+			case 'no_definido':
+
+				
+				# si no hay embalaje lo creamos en estado inicial
+				if (empty($venta['EmbalajeWarehouse']))
+				{
+					ClassRegistry::init('EmbalajeWarehouse')->save(array(
+						'EmbalajeWarehouse' => array(
+							'venta_id' => $venta['Venta']['id'],
+							'estado' => 'inicial',
+							'bodega_id' => $bodega['Bodega']['id'],
+							'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+							'marketplace_id' => $venta['Venta']['marketplace_id'],
+							'comuna_id' => $venta['Venta']['comuna_id'],
+							'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+							'fecha_venta' => $venta['Venta']['fecha_venta'],
+							'fecha_creacion' => date('Y-m-d H:i:s'),
+							'ultima_modifacion' => date('Y-m-d H:i:s')
+						)
+					));
+				}
+				
+				break;
+			
+			case 'empaquetar':
+				
+				# si existe embalaje inicial lo actualizamos
+				if (!empty($venta['EmbalajeWarehouse']))
+				{
+					foreach($venta['EmbalajeWarehouse'] as $embalaje)
+					{
+						if ($embalaje['estado'] == 'inicial')
+						{
+							ClassRegistry::init('EmbalajeWarehouse')->save(array(
+								'EmbalajeWarehouse' => array(
+									'id' => $embalaje['id'],
+									'estado' => 'listo_para_embalar',
+									'bodega_id' => $bodega['Bodega']['id'],
+									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+									'marketplace_id' => $venta['Venta']['marketplace_id'],
+									'comuna_id' => $venta['Venta']['comuna_id'],
+									'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+									'fecha_listo_para_embalar' => date('Y-m-d H:i:s'),
+									'ultima_modifacion' => date('Y-m-d H:i:s')
+								)
+							));
+						}
+					}
+				}
+				else
+				{	# Se crea
+					ClassRegistry::init('EmbalajeWarehouse')->save(array(
+						'EmbalajeWarehouse' => array(
+							'venta_id' => $venta['Venta']['id'],
+							'estado' => 'listo_para_embalar',
+							'bodega_id' => $bodega['Bodega']['id'],
+							'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+							'marketplace_id' => $venta['Venta']['marketplace_id'],
+							'comuna_id' => $venta['Venta']['comuna_id'],
+							'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+							'fecha_venta' => $venta['Venta']['fecha_venta'],
+							'fecha_creacion' => date('Y-m-d H:i:s'),
+							'fecha_listo_para_embalar' => date('Y-m-d H:i:s'),
+							'ultima_modifacion' => date('Y-m-d H:i:s')
+						)
+					));
+				}
+				
+				break;
+
+			case 'empaquetando':
+
+				
+				# si existe embalaje listo para embalar lo actualizamos
+				if (!empty($venta['EmbalajeWarehouse']))
+				{
+					foreach($venta['EmbalajeWarehouse'] as $embalaje)
+					{
+						if ($embalaje['estado'] == 'listo_para_embalar')
+						{
+							ClassRegistry::init('EmbalajeWarehouse')->save(array(
+								'EmbalajeWarehouse' => array(
+									'id' => $embalaje['id'],
+									'estado' => 'procesando',
+									'bodega_id' => $bodega['Bodega']['id'],
+									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+									'marketplace_id' => $venta['Venta']['marketplace_id'],
+									'comuna_id' => $venta['Venta']['comuna_id'],
+									'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+									'ultima_modifacion' => date('Y-m-d H:i:s'),
+									'responsable_id_procesando' => $venta['Venta']['administrador_id'],
+									'fecha_procesando' => date('Y-m-d H:i:s')
+								)
+							));
+						}
+					}
+				}
+
+				break;
+			case 'empaquetado':
+
+				
+				# si existe embalaje procesado lo actualizamos
+				if (!empty($venta['EmbalajeWarehouse']))
+				{
+					foreach($venta['EmbalajeWarehouse'] as $embalaje)
+					{
+						if ($embalaje['estado'] == 'procesando')
+						{
+							ClassRegistry::init('EmbalajeWarehouse')->save(array(
+								'EmbalajeWarehouse' => array(
+									'id' => $embalaje['id'],
+									'estado' => 'finalizado',
+									'bodega_id' => $bodega['Bodega']['id'],
+									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+									'marketplace_id' => $venta['Venta']['marketplace_id'],
+									'comuna_id' => $venta['Venta']['comuna_id'],
+									'venta_estado_id' => $venta['Venta']['venta_estado_id'],
+									'ultima_modifacion' => date('Y-m-d H:i:s'),
+									'responsable_id_finalizado' => $venta['Venta']['administrador_id'],
+									'fecha_finalizado' => date('Y-m-d H:i:s')
+								)
+							));
+						}
+					}
+				}
+
+				break;
+		}
+
+		$this->redirect($this->referer('/', true));
+	}
+
 
 	public function admin_specials()
 	{	
@@ -5544,32 +5708,31 @@ class VentasController extends AppController {
 		# Creamos la etiqueta de despacho interna
 		$logo = FULL_BASE_URL . '/webroot/img/Tienda/' . $venta['Tienda']['id'] . '/' . $venta['Tienda']['logo'] ;
 		
-		$this->layoutPath = 'pdf';
-		$this->viewPath   = 'Ventas/pdf';
-		$this->output     = '';
-		$this->layout     = 'default';
-
+		$this->View           = new View();
+		$this->View->layoutPath = 'pdf';
+		$this->View->viewPath   = 'Ventas/pdf';
+		$this->View->output     = '';
+		$this->View->layout     = 'default';
+		
 		$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
 		$tamano = '500x500';
 
-		$this->set(compact('venta', 'logo', 'url', 'tamano'));
+		$this->View->set(compact('venta', 'logo', 'url', 'tamano'));
 
 		if ($orientacion == 'horizontal') {
-			$vista = $this->render('etiqueta_envio_default');	
+			$vista = $this->View->render('etiqueta_envio_default');	
 		}
 		
 		if ($orientacion == 'vertical') {
-			$vista = $this->render('etiqueta_envio_default_vertical');	
+			$vista = $this->View->render('etiqueta_envio_default_vertical');	
 		}
 
-		$html  = $vista->body();
-
 		if ($orientacion == 'horizontal') {
-			$url   = $this->generar_pdf($html, $venta['Venta']['id'], 'transporte', 'landscape', '10x15');
+			$url   = $this->generar_pdf($vista, $venta['Venta']['id'], 'transporte', 'landscape', '10x15');
 		}
 
 		if ($orientacion == 'vertical') {
-			$url   = $this->generar_pdf($html, $venta['Venta']['id'], 'transporte', 'portrait', 'nodriza');
+			$url   = $this->generar_pdf($vista, $venta['Venta']['id'], 'transporte', 'portrait', 'nodriza');
 		}
 
 		return $url;
@@ -8770,6 +8933,478 @@ class VentasController extends AppController {
 			'message' => 'Venta obtenida con éxito',
 			'data' => $venta
 		);
+
+		$this->set(array(
+            'response' => $respuesta,
+            '_serialize' => array('response')
+        ));
+
+	}
+
+	
+	/**
+	 * generar_documentos
+	 *
+	 * @param  mixed $venta
+	 * @return void
+	 */
+	public function generar_documentos($venta)
+	{	
+
+		# Variable que contendrá los documentos
+		$archivos = array();
+		
+		# Linio
+		if ($venta['Marketplace']['marketplace_tipo_id'] == 1) 
+		{
+			# cliente Linio
+			$this->Linio = $this->Components->load('Linio');
+			$this->Linio->crearCliente( $venta['Marketplace']['api_host'], $venta['Marketplace']['api_user'], $venta['Marketplace']['api_key'] );
+
+			//$mensajes =  $this->Linio->linio_obtener_venta_mensajes($venta, $ConexionLinio);
+
+			// Obtener detall venta externo
+			$venta['VentaExterna'] = $this->Linio->linio_obtener_venta($venta['Venta']['id_externo'], true);
+
+			// Datos d facturacion
+			$venta['VentaExterna']['facturacion'] = array(
+				'tipo_documento'        => 39, # Boleta por defecto,
+				'glosa_tipo_documento'  => $this->LibreDte->tipoDocumento[39],
+				'rut_receptor'          => $venta['VentaCliente']['rut'],
+				'razon_social_receptor' => $venta['VentaCliente']['nombre']  . ' ' . $venta['VentaCliente']['apellido'],
+				'giro_receptor'         => null,
+				'direccion_receptor'    => $venta['Venta']['direccion_entrega'],
+				'comuna_receptor'       => $venta['Venta']['comuna_entrega']
+			);
+
+			// Se define transportista
+			$venta['VentaExterna']['transportista'] = (!empty($venta['MetodoEnvio']['id'])) ? $venta['MetodoEnvio']['nombre'] : 'Sin especificar' ;
+
+			// Detalles de envio
+			$venta['Envio'][0] = array(
+				'id'                      => null,
+				'tipo'                    => null,
+				'estado'                  => null,
+				'direccion_envio'         => sprintf('%s, %s, %s', $venta['VentaExterna']['AddressShipping']['Address1'], $venta['VentaExterna']['AddressShipping']['Address2'], $venta['VentaExterna']['AddressShipping']['City']),
+				'nombre_receptor'         => sprintf('%s %s', $venta['VentaExterna']['AddressShipping']['FirstName'], $venta['VentaExterna']['AddressShipping']['LastName']),
+				'fono_receptor'           => $venta['VentaExterna']['AddressShipping']['Phone'],
+				'producto'                => null,
+				'cantidad'                => 1, // No especifica
+				'costo'                   => 0,
+				'fecha_entrega_estimada'  => $venta['VentaExterna']['PromisedShippingTime'],
+				'comentario'              => '',
+				'mostrar_etiqueta'        => false,
+				'paquete' 				  => false
+			);
+
+			$documentoEnvio   = $this->Linio->linio_obtener_documentos(Hash::extract($venta['VentaExterna']['Products'], '{n}.OrderItemId'), 'shippingParcel');
+			$documentoInvoice = $this->Linio->linio_obtener_documentos(Hash::extract($venta['VentaExterna']['Products'], '{n}.OrderItemId'), 'invoice');
+			
+			$rutaAbsoluta = APP . 'webroot' . DS. 'Venta' . DS . $id . DS;
+			$rutaPublica  =  Router::url('/', true) . 'Venta/' . $id . '/';
+
+			# Invoice Linio
+			if (!empty($documentoInvoice)) 
+			{
+				$invoice = $this->generar_pdf(base64_decode($documentoInvoice['pdf']), $id, 'invoice');
+		 		
+		 		if (!empty($invoice)) 
+				{
+		 			$archivos[] = $invoice['path'];
+		 		}
+
+			}
+
+			# Doc tranportista linio
+			if (!empty($documentoEnvio)) 
+			{
+				$archivoPdfEnvio = 'transporte' . rand() . '.pdf';
+
+				$documentoEnvioPdfs = $this->guardar_pdf_base64($documentoEnvio['pdf'], $rutaAbsoluta, $rutaPublica, $archivoPdfEnvio);
+		 		
+		 		if (!empty($documentoEnvioPdfs)) 
+				{
+		 			$archivos[] = $documentoEnvioPdfs['path'];
+		 		}
+
+			}
+			
+		}
+
+		# MEli
+		if ($venta['Marketplace']['marketplace_tipo_id'] == 2) 
+		{
+			$this->MeliMarketplace = $this->Components->load('MeliMarketplace');
+
+			$this->MeliMarketplace->crearCliente( $venta['Marketplace']['api_user'], $venta['Marketplace']['api_key'], $venta['Marketplace']['access_token'], $venta['Marketplace']['refresh_token'] );
+			$this->MeliMarketplace->mercadolibre_conectar('', $venta['Marketplace']);
+
+			$mensajes = $this->MeliMarketplace->mercadolibre_obtener_mensajes($venta['Marketplace']['access_token'], $venta['Venta']['id_externo']);
+
+			foreach ($mensajes as $mensaje) 
+			{
+				$data = array();
+				$data['mensaje'] = $this->removeEmoji($mensaje['text']['plain']);
+				$data['fecha'] = CakeTime::format($mensaje['date'], '%d-%m-%Y %H:%M:%S');
+				$data['asunto'] = (empty($mensaje['subject'])) ? 'Sin asunto' : $mensaje['subject'] ;
+				$venta['VentaMensaje'][] = $data;
+			}
+
+			// Detalles de la venta externa
+			$venta['VentaExterna'] = $this->MeliMarketplace->mercadolibre_obtener_venta_detalles($venta['Marketplace']['access_token'], $venta['Venta']['id_externo'], true);
+
+			$venta['VentaExterna']['transportista'] = (!empty($venta['MetodoEnvio']['id'])) ? $venta['MetodoEnvio']['nombre'] : 'Sin especificar' ;
+			
+			// Datos d facturacion
+			$venta['VentaExterna']['facturacion'] = array(
+				'tipo_documento'        => 39, # Boleta por defecto,
+				'glosa_tipo_documento'  => $this->LibreDte->tipoDocumento[39],
+				'rut_receptor'          => $venta['VentaCliente']['rut'],
+				'razon_social_receptor' => $venta['VentaCliente']['nombre']  . ' ' . $venta['VentaCliente']['apellido'],
+				'giro_receptor'         => null,
+				'direccion_receptor'    => $venta['Venta']['direccion_entrega'],
+				'comuna_receptor'       => $venta['Venta']['comuna_entrega']
+			);
+
+
+			if (isset($venta['VentaExterna']['shipping']['id'])) 
+			{
+
+				$envio = $this->MeliMarketplace->mercadolibre_obtener_envio($venta['VentaExterna']['shipping']['id']);
+
+				// Detalles de envio
+				$direccion_envio = '';
+				$nombre_receptor = '';
+				$fono_receptor   = '';
+				$comentario      = '';
+
+				if (isset($envio['receiver_address']['address_line'])
+					&& isset($envio['receiver_address']['city']['name'])) 
+				{
+					$direccion_envio = sprintf('%s, %s', $envio['receiver_address']['address_line'], $envio['receiver_address']['city']['name']);
+				}
+
+				if (isset($envio['receiver_address']['receiver_name'])) 
+				{
+					$nombre_receptor = $envio['receiver_address']['receiver_name'];
+				}
+
+				if (isset($envio['receiver_address']['receiver_phone'])) 
+				{
+					$fono_receptor = $envio['receiver_address']['receiver_phone'];
+				}
+
+				if (isset($envio['receiver_address']['comment'])) 
+				{
+					$comentario = $envio['receiver_address']['comment'];
+				}
+
+				$venta['Envio'][0] = array(
+					'id'                      => $envio['id'],
+					'tipo'                    => $envio['shipping_option']['name'],
+					'estado'                  => $envio['status'],
+					'direccion_envio'         => $direccion_envio,
+					'nombre_receptor'         => $nombre_receptor,
+					'fono_receptor'           => $fono_receptor,
+					'producto'                => null,
+					'cantidad'                => 1,
+					'costo'                   => $envio['shipping_option']['cost'],
+					'fecha_entrega_estimada'  => (isset($envio['shipping_option']['estimated_delivery_time'])) ? CakeTime::format($envio['shipping_option']['estimated_delivery_time']['date'], '%d-%m-%Y %H:%M:%S') : __('No especificado') ,
+					'comentario'              => $comentario,
+					'mostrar_etiqueta'        => ($envio['status'] == 'ready_to_ship') ? true : false,
+					'paquete' 				  => false
+				);	
+				
+			}
+
+			$documentoEnvio = $this->MeliMarketplace->mercadolibre_obtener_etiqueta_envio($envio, 'Y');
+			
+			$rutaAbsoluta = APP . 'webroot' . DS. 'Venta' . DS . $id . DS;
+			$rutaPublica  =  Router::url('/', true) . 'Venta/' . $id . '/';
+
+			# Tranposrte Meli
+			if (!empty($documentoEnvio)) 
+			{
+				$archivoPdfEnvio = 'transporte' . rand() . '.pdf';
+
+				$documentoEnvioPdfs = $this->guardar_pdf_base64($documentoEnvio, $rutaAbsoluta, $rutaPublica, $archivoPdfEnvio, false);
+		 		
+		 		if (!empty($documentoEnvioPdfs)) 
+				{
+		 			$archivos[] = $documentoEnvioPdfs['path'];
+		 		}
+			}
+		}	
+
+		# Prestashop
+		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) 
+		{
+			# Para la consola se carga el componente on the fly!
+			$this->Prestashop = $this->Components->load('Prestashop');
+
+			# Cliente Prestashop
+			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
+
+			// Obtener detall venta externo
+			$venta['VentaExterna'] = $this->Prestashop->prestashop_obtener_venta($venta['Venta']['id_externo']);		
+
+			$venta['VentaExterna']['transportista'] = (!empty($venta['MetodoEnvio']['id'])) ? $venta['MetodoEnvio']['nombre'] : 'Sin especificar' ;
+
+			$venta['VentaMensaje'] = $this->Prestashop->prestashop_obtener_venta_mensajes($venta['Venta']['id_externo']);
+
+			$direccionEnvio       = $this->Prestashop->prestashop_obtener_venta_direccion($venta['VentaExterna']['id_address_delivery']);				
+
+			// Detalles de envio
+			$telefonosEnvio = '';
+			
+			if (is_array($direccionEnvio['address']['phone_mobile']) && !empty($direccionEnvio['address']['phone_mobile'])) 
+			{
+				$telefonosEnvio .= implode(' ', $direccionEnvio['address']['phone_mobile']);
+			}
+
+			if (!is_array($direccionEnvio['address']['phone_mobile']) && !empty($direccionEnvio['address']['phone_mobile'])) 
+			{
+				$telefonosEnvio .= ' ' . $direccionEnvio['address']['phone_mobile'];
+			}
+
+			if (is_array($direccionEnvio['address']['phone']) && !empty($direccionEnvio['address']['phone'])) 
+			{
+				$telefonosEnvio .= implode(' ', $direccionEnvio['address']['phone']);
+			}
+
+			if (!is_array($direccionEnvio['address']['phone']) && !empty($direccionEnvio['address']['phone'])) 
+			{
+				$telefonosEnvio .= ' ' . $direccionEnvio['address']['phone'];
+			}
+			
+			// Detalles de envio
+			$venta['Envio'][0] = array(
+				'id'                      => $direccionEnvio['address']['id'],
+				'tipo'                    => 'Dir. despacho',
+				'estado'                  => (!$direccionEnvio['address']['deleted']) ? 'activo' : 'eliminada',
+				'direccion_envio'         => @sprintf('%s %s, %s', $direccionEnvio['address']['address1'], implode(',', $direccionEnvio['address']['address2']), $direccionEnvio['address']['city']),
+				'nombre_receptor'         => @sprintf('%s %s', $direccionEnvio['address']['firstname'], $direccionEnvio['address']['lastname']),
+				'fono_receptor'           => $telefonosEnvio,
+				'producto'                => null,
+				'cantidad'                => 1, // No especifica
+				'costo'                   => $venta['VentaExterna']['total_shipping_tax_incl'],
+				'fecha_entrega_estimada'  => 'No especificado',
+				'comentario'              => implode(',', $direccionEnvio['address']['other']),
+				'mostrar_etiqueta'        => true,
+				'paquete' 				  => false
+			);
+		}
+
+		# Obtenemos DTE
+		if (!empty($venta['Dte'])) 
+		{
+			$dtes = $this->obtener_dtes_pdf_venta($venta['Dte'], 2);
+		
+			foreach ($dtes as $dte) 
+			{
+				$archivos[] = $dte['path'];
+			}
+		}
+
+		$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta);
+		
+		$archivos[]         = $url_etiqueta_envio['path'];
+
+		# Unimos todos los PDFS obtenidos
+		if (!empty($archivos)) 
+		{	
+			
+
+			$pdf = $this->unir_documentos($archivos, $venta['Venta']['id']);
+
+			return $pdf;
+
+		}
+		
+		return;
+	}
+
+		
+	/**
+	 * api_obtener_venta_bodega
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
+	public function api_obtener_venta_bodega($id)
+	{	
+		# Sólo método Get
+		if (!$this->request->is('get')) {
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Only GET request allow'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# No existe venta
+		if (!$this->Venta->exists($id)) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Detalles de la venta
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $id
+			),
+			'contain' => array(
+				'VentaCliente',
+				'MetodoEnvio',
+				'VentaDetalle' => array(
+					'VentaDetalleProducto' => array(
+						'fields' => array(
+							'VentaDetalleProducto.id',
+							'VentaDetalleProducto.nombre',
+							'VentaDetalleProducto.codigo_proveedor'
+						)
+					)
+				),
+				'VentaMensaje',
+				'Dte',
+				'MedioPago',
+				'Transporte',
+				'Tienda',
+				'Marketplace',
+				'VentaEstado' => array(
+					'VentaEstadoCategoria'
+				),
+				'EmbalajeWarehouse'
+			)
+		));
+
+		$documentos = $this->generar_documentos($venta);
+		
+		$etiqueta_interna = $this->obtener_etiqueta_envio_default_url($venta);
+		
+		$dtes = $this->obtener_dtes_pdf_venta($venta['Dte'], 1);
+
+		$respuesta =  array(
+			'code' => 200,
+			'message' => 'Información obtenida con éxito',
+			'body' => array(
+				'cliente' => array(
+					'rut'      => $venta['VentaCliente']['rut'],
+					'nombre'   => $venta['VentaCliente']['nombre'],
+					'apellido' => $venta['VentaCliente']['apellido'],
+					'email'    => $venta['VentaCliente']['email'],
+					'fono'     => $venta['VentaCliente']['telefono'],
+				),
+				'venta' => array(
+					'id'          => $venta['Venta']['id'],
+					'id_externo'  => $venta['Venta']['id_externo'],
+					'referencia'  => $venta['Venta']['referencia'],
+					'fecha_venta' => $venta['Venta']['fecha_venta'],
+					'estado'      => $venta['VentaEstado']['VentaEstadoCategoria']['nombre'],
+					'subestado'   => $venta['VentaEstado']['nombre'],
+					'canal_venta' => (!empty($venta['Marketplace']['id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'],
+					'nota_interna' => $venta['Venta']['nota_interna']
+				),
+				'etiquetas' => array(
+					'todos' => $documentos['result'],
+					'interna' => $etiqueta_interna['public'],
+					'externa' => $venta['Venta']['etiqueta_envio_externa'],
+					'dtes' => $dtes 
+				),
+				'entrega' => array(
+					'metodo'                 => $venta['MetodoEnvio']['nombre'],
+					'fecha_entrega_estimada' => 'No definido',
+				),
+				'transportes' => array(),
+				'itemes' => array(),
+				'embalajes' => $venta['EmbalajeWarehouse']
+			)
+		);
+
+		# Agregamos los transportes
+		foreach ($venta['Transporte'] as $transporte)
+		{
+			$respuesta['body']['transportes'][] =  array(
+				'transporte_id' => $transporte['id'],
+				'nombre' => $transporte['nombre'],
+				'codigo' => $transporte['codigo'],
+				'url_seguimiento_externa' => $transporte['url_seguimiento'],
+				'cod_seguimiento' => $transporte['TransportesVenta']['cod_seguimiento'],
+				'fecha_entrega_aprox' => $transporte['TransportesVenta']['entrega_aprox'],
+				'etiqueta' => $transporte['TransportesVenta']['etiqueta'],
+				'activo' => $transporte['activo'] 
+			);
+		}
+
+		# Cargamos componente prestashop para obtener info del produto desde toolmania
+		$this->Prestashop = $this->Components->load('Prestashop');
+		$this->Prestashop->crearCliente($venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop']);
+
+		# Agregamos los productos
+		foreach ($venta['VentaDetalle'] as $i => $item) 
+		{	
+			# Producto bodega
+			$pbodega = ClassRegistry::init('ProductoWarehouse')->find('first', array(
+				'conditions' => array(
+					'id' => $item['venta_detalle_producto_id']
+				)
+			));
+			
+			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($item['venta_detalle_producto_id'], $venta['Tienda']['apiurl_prestashop']);
+			
+			$respuesta['body']['itemes'][$i] = array(
+				'id' => $item['id'],
+				'producto_id' => $item['venta_detalle_producto_id'],
+				'nombre' => $item['VentaDetalleProducto']['nombre'],
+				'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
+				'cantidad_pendiente_entrega' => $item['cantidad_pendiente_entrega'],
+				'cantidad_reservada' => $item['cantidad_reservada'],
+				'imagen' => Hash::extract($imagen, '{n}[principal=1].url')[0],
+				'peso' => $pbodega['ProductoWarehouse']['peso'],
+				'ancho' => $pbodega['ProductoWarehouse']['ancho'],
+				'largo' => $pbodega['ProductoWarehouse']['largo'],
+				'alto' => $pbodega['ProductoWarehouse']['alto']
+			);
+
+			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['peso'] = $pbodega['ProductoWarehouse']['peso'];
+			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['alto'] = $pbodega['ProductoWarehouse']['alto'];
+			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['ancho'] = $pbodega['ProductoWarehouse']['ancho'];
+			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['largo'] = $pbodega['ProductoWarehouse']['largo'];
+			
+		}
+		
+		# bultos 
+		$this->LAFFPack = $this->Components->load('LAFFPack');
+		$respuesta['body']['bultos'] = $this->LAFFPack->obtener_bultos_venta($venta, $venta['MetodoEnvio']['peso_maximo']); 
 
 		$this->set(array(
             'response' => $respuesta,

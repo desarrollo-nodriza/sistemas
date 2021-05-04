@@ -6,6 +6,8 @@ class OrdenCompra extends AppModel
 	/**
 	 * CONFIGURACION DB
 	 */
+	public $useDbConfig = 'default';
+	public $useTable = 'orden_compras';
 	public $displayField	= 'id';
 
 
@@ -165,6 +167,15 @@ class OrdenCompra extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
+		),
+		'Bodega' => array(
+			'className'				=> 'Bodega',
+			'foreignKey'			=> 'bodega_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
 		)
 	);
 
@@ -260,7 +271,20 @@ class OrdenCompra extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
-		)
+		),
+		'OrdenComprasVentaDetalleProducto' => array(
+			'className'				=> 'OrdenComprasVentaDetalleProducto',
+			'foreignKey'			=> 'orden_compra_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
 	);
 
 	public $hasAndBelongsToMany = array(

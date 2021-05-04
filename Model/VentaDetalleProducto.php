@@ -173,6 +173,43 @@ class VentaDetalleProducto extends AppModel
 		)
 	);
 
+
+		
+	/**
+	 * beforeSave
+	 *
+	 * @param  mixed $options
+	 * @return void
+	 */
+	public function beforeSave($options = array())
+	{
+		# Guardamos en el otro modelo espejo
+		$campos = array_keys(ClassRegistry::init('ProductoWarehouse')->schema());
+		
+		$productoWarehouse = array();
+
+		foreach ($campos as $col)
+		{	
+			if (isset($this->data['VentaDetalleProducto'][$col]))
+			{
+				$productoWarehouse = array_replace_recursive($productoWarehouse, array(
+					$col => $this->data['VentaDetalleProducto'][$col]
+				));
+			}
+		}
+
+		# Guardamos
+		if (!empty($productoWarehouse))
+		{
+			ClassRegistry::init('ProductoWarehouse')->save(
+				array(
+					'ProductoWarehouse' => $productoWarehouse
+				)
+			);
+		}
+
+	}
+
 	
 	public function paginateCount($conditions = null, $recursive = 0, $extra = array()) {
 		

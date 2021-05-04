@@ -1,4 +1,15 @@
 <?php
+/**
+ * Cors api rest
+ */
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, GET, PUT, PATCH, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: *');
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit(0);
+}
+
+
 // Setup a 'default' cache configuration for use in the application.
 Cache::config('default', array('engine' => 'File'));
 

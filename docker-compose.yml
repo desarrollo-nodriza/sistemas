@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  app:
+    build:
+        context: .
+        dockerfile: ./Dockerfile
+    working_dir: /var/www/html/
+    ports:
+        - '8989:80'
+    volumes:
+        - './:/var/www/html/'
+    networks:
+        - sistemas-net
+networks:
+  sistemas-net:
+    driver: bridge
+  
