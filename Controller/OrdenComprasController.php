@@ -1110,6 +1110,8 @@ class OrdenComprasController extends AppController
 					)
 				);
 
+				$d['OrdenCompra']['bodega_id'] = $this->Session->read('Auth.Administrador.Rol.bodega_id');
+
 				$d['Venta'] = unique_multidim_array($d['Venta'], 'venta_id');
 				
 				if ( ! $this->OrdenCompra->saveAll($d, array('deep' => true)) ) {
@@ -1461,6 +1463,9 @@ class OrdenComprasController extends AppController
 	{
 		if ( $this->request->is('post') )
 		{	
+
+			$this->request->data['OrdenCompra']['bodega_id'] = $this->Session->read('Auth.Administrador.Rol.bodega_id');
+
 			$this->OrdenCompra->create();
 			if ( $this->OrdenCompra->save($this->request->data) )
 			{	
@@ -1507,6 +1512,8 @@ class OrdenComprasController extends AppController
 					'evidencia' => json_encode($this->request->data)
 				)
 			);
+
+			$this->request->data['OrdenCompra']['bodega_id'] = $this->Session->read('Auth.Administrador.Rol.bodega_id');
 			
 			$this->OrdenCompra->create();
 			if ( $this->OrdenCompra->saveAll($this->request->data) )
@@ -3756,5 +3763,149 @@ class OrdenComprasController extends AppController
             '_serialize' => array('response')
         ));
 
+	}
+
+	
+	/**
+	 * api_zonificar
+	 *
+	 * @param  mixed $bodega_id
+	 * @return void
+	 */
+	public function api_zonificar($bodega_id)
+	{
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+		
+		$ocs = $this->OrdenCompra->find('all', array(
+			'conditions' => array(
+				'OrdenCompra.estado IN' => array(
+					'recepcion_completa',
+					'recepcion_incompleta',
+					'espera_dte'
+				),
+				'OrdenCompra.fecha_recibido <>' => '',
+				'OrdenCompra.bodega_id' => $bodega_id
+			),
+			'joins' => array(
+				array(
+					'table' => 'orden_compras_venta_detalle_productos',
+					'alias' => 'OrdenComprasVentaDetalleProducto',
+					'type'  => 'inner',
+					'conditions' => array(
+						'OrdenComprasVentaDetalleProducto.orden_compra_id = OrdenCompra.id',
+						'OrdenComprasVentaDetalleProducto.zonificado' => 0,
+						'OrdenComprasVentaDetalleProducto.cantidad_zonificada < OrdenComprasVentaDetalleProducto.cantidad_recibida'
+					)
+				)
+			),
+			'contain' => array(
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.id',
+						'Tienda.apiurl_prestashop',
+						'Tienda.apikey_prestashop'
+					)
+				),
+				'OrdenComprasVentaDetalleProducto'
+			),
+			'order' => array(
+				'OrdenCompra.fecha_recibido' => 'ASC'
+			),
+			'limit' => 50
+		));
+
+		
+		if (empty($ocs))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'No hay Ocs disponibles para zonificar'
+			);
+
+			throw new CakeException($response);			
+		}
+
+
+		$this->Prestashop = $this->Components->load('Prestashop');
+		# Agregamos las imagenes de prstashop al arreglo
+		$this->Prestashop->crearCliente($ocs[0]['Tienda']['apiurl_prestashop'], $ocs[0]['Tienda']['apikey_prestashop']);
+
+
+		foreach($ocs as $i => $oc)
+		{
+			foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iv => $d) 
+			{	
+				// Producto
+				$pbodega = ClassRegistry::init('ProductoWarehouse')->find('first', array(
+					'conditions' => array(
+						'id' => $d['venta_detalle_producto_id']
+					)
+				));
+
+				$pLocal = ClassRegistry::init('VentaDetalleProducto')->find('first', array(
+					'conditions' => array(
+						'id' => $d['venta_detalle_producto_id']
+					)
+				));
+
+				# Precio final
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
+				
+				$descuentoOC = round(obtener_descuento_monto($ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'], $ocs[$i]['OrdenCompra']['descuento']), 0);
+				
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final'] = $ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC;
+
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse'] = $pLocal['VentaDetalleProducto'];
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = '';
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = 0;
+				
+				
+
+				$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $ocs[$i]['Tienda']['apiurl_prestashop']);
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
+
+				if (!empty($pbodega))
+				{
+					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pbodega['ProductoWarehouse']['sku'];
+					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
+					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = $pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra'];
+				}
+
+			}
+		}
+
+		$response = array(
+			'code'    => 200, 
+			'name' => 'success',
+			'message' => 'Ocs obtenida correctamente',
+			'data' => $ocs
+		);
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
 	}
 }
