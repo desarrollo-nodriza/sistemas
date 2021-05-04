@@ -615,6 +615,21 @@ Router::connect(
  * Orden compra
  */
 Router::connect(
+    '/api/ordenes-de-compra/zonificar/:bodega_id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompras', 
+        'action' => 'zonificar',
+        'api' => true,
+        '[method]' => 'GET',
+        'prefix' => 'api'
+    ),
+    array(
+        'pass' => array('bodega_id'),
+        'bodega_id' => '[0-9]+'
+    )
+);
+
+Router::connect(
     '/api/ordenes-de-compra/:id', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'OrdenCompras', 
