@@ -9295,6 +9295,8 @@ class VentasController extends AppController {
 					)
 				),
 				'VentaMensaje',
+				'Mensaje',
+				'Comuna',
 				'Dte',
 				'MedioPago',
 				'Transporte',
@@ -9343,12 +9345,56 @@ class VentasController extends AppController {
 				'entrega' => array(
 					'metodo'                 => $venta['MetodoEnvio']['nombre'],
 					'fecha_entrega_estimada' => 'No definido',
+					'calle' => $venta['Venta']['direccion_entrega'],
+					'numero' => $venta['Venta']['numero_entrega'],
+					'otro' => $venta['Venta']['otro_entrega'],
+					'comuna' => $venta['Comuna']['nombre'],
+					'receptor' => $venta['Venta']['nombre_receptor'],
+					'rut' => $venta['Venta']['rut_receptor'],
+					'fono_receptor' => $venta['Venta']['fono_receptor']
 				),
+				'mensajes' => array(),
 				'transportes' => array(),
 				'itemes' => array(),
 				'embalajes' => $venta['EmbalajeWarehouse']
 			)
 		);
+		
+		$mensajes = array();
+		$auxFechas = array();
+
+		# Mensajes venta
+		foreach($venta['VentaMensaje'] as $mensaje)
+		{
+			$mensajes[] = array(
+				'emisor' => $mensaje['emisor'],
+				'fecha' => $mensaje['fecha'],
+				'asunto' => $mensaje['nombre'],
+				'mensaje' => $mensaje['mensaje']
+			);
+		}
+
+		# Mensajes adicionales
+		foreach ($venta['Mensaje'] as $mensaje2) 
+		{
+			$mensajes[] = array(
+				'emisor' => $venta['VentaCliente']['rut'],
+				'fecha' => $mensaje2['created'],
+				'asunto' => ($mensaje2['origen'] == 'cliente') ? 'Mensaje de cliente' : 'Mensaje interno',
+				'mensaje' => $mensaje['mensaje']
+			);
+		}
+
+		# Agrupamos para ordenar
+		foreach ($mensajes as $im => $mensaje3) 
+		{
+			$auxFechas[$im] = $mensaje3['fecha'];
+		}
+
+		# Ordenamos los mensajes por fecha
+		array_multisort($auxFechas, SORT_DESC, $mensajes);
+		
+		$respuesta['body']['mensajes'] = $mensajes;
 
 		# Agregamos los transportes
 		foreach ($venta['Transporte'] as $transporte)
@@ -9379,6 +9425,7 @@ class VentasController extends AppController {
 				)
 			));
 			
+			# Se obtiene imagen desde prestashop
 			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($item['venta_detalle_producto_id'], $venta['Tienda']['apiurl_prestashop']);
 			
 			$respuesta['body']['itemes'][$i] = array(
