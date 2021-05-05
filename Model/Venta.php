@@ -156,6 +156,15 @@ class Venta extends AppModel
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'VentaEstado')
 		),
+		'Comuna' => array(
+			'className'				=> 'Comuna',
+			'foreignKey'			=> 'comuna_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'VentaEstado')
+		),
 	);
 	public $hasMany = array(
 		'VentaDetalle' => array(
