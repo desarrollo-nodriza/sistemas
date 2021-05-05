@@ -1558,7 +1558,7 @@ class VentaDetalleProductosController extends AppController
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
 			foreach ($this->request->data['Form'] as $key => $value) {
-				if(!$this->VentaDetalleProducto->saveAll($value, array('callbacks' => false))){
+				if(!$this->VentaDetalleProducto->saveAll($value)){
 					$noGuardados++;
 				}
 			}
