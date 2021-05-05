@@ -200,12 +200,12 @@ class VentaDetalleProducto extends AppModel
 
 		# Guardamos
 		if (!empty($productoWarehouse))
-		{
-			ClassRegistry::init('ProductoWarehouse')->save(
+		{	
+			/*ClassRegistry::init('ProductoWarehouse')->save(
 				array(
 					'ProductoWarehouse' => $productoWarehouse
 				)
-			);
+			);*/
 		}
 
 	}
