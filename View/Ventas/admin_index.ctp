@@ -140,6 +140,21 @@
 									<span class="input-group-addon glyphicon glyphicon-calendar"></span>
 								</div>
 							</div>
+						</div>		
+
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
+							<div class="form-group">
+								<br />
+								<label>Monto Total (desde)</label>
+								<input name="data[Venta][MontoDesde]" class="form-control" value="<?= $FiltroMontoDesde; ?>" id="MontoDesde" type="number" min="1" placeholder="5000, 9000" />
+							</div>
+						</div>
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
+							<div class="form-group">
+								<br />
+								<label>Monto Total (hasta)</label>
+								<input name="data[Venta][MontoHasta]" class="form-control" value="<?= $FiltroMontoHasta; ?>" id="MontoHasta" type="number" min="1" placeholder="90000, 100000" />
+							</div>
 						</div>						
 
 					</div>
