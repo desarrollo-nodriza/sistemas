@@ -79,7 +79,8 @@ class VentasController extends AppController {
 			'Venta.venta_cliente_id', 
 			'Venta.prioritario', 
 			'Venta.picking_estado', 
-			'Venta.venta_manual'
+			'Venta.venta_manual',
+			'Venta.total'
 		);
 
 		
@@ -96,6 +97,8 @@ class VentasController extends AppController {
 		$FiltroFechaDesde           = '';
 		$FiltroFechaHasta           = '';
 		$FiltroDte           	    = '';
+		$FiltroMontoDesde           = '';
+		$FiltroMontoHasta           = '';
 
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
@@ -107,6 +110,21 @@ class VentasController extends AppController {
 		if ( isset($this->request->params['named']) ) {
 			foreach ($this->request->params['named'] as $campo => $valor) {
 				switch ($campo) {
+
+					case 'filtroventa':
+						$FiltroVenta = trim($valor);
+
+						if ($FiltroVenta != "") {
+
+							$condiciones["OR"] = array(
+								"Venta.id LIKE '%" .$FiltroVenta. "%'",
+								"Venta.id_externo LIKE '%" .$FiltroVenta. "%'",
+								"Venta.referencia LIKE '%" .$FiltroVenta. "%'"
+							);
+							
+						}
+						break;
+
 					case 'filtroventa':
 						$FiltroVenta = trim($valor);
 
@@ -232,6 +250,28 @@ class VentasController extends AppController {
 
 						} 
 						break;
+
+					case 'MontoDesde':
+						
+
+						if (isset($valor)) {
+
+							$FiltroMontoDesde = trim($valor);
+							$condiciones["Venta.total >="] = $FiltroMontoDesde;
+							
+
+						} 
+						break;
+					case 'MontoHasta':
+						
+
+						if (isset($valor)) {							
+							$FiltroMontoHasta = trim($valor);
+							$condiciones["Venta.total <="] = $FiltroMontoHasta;
+							
+
+						} 
+						break;
 					case 'facturado':
 
 						$FiltroDte = trim($valor);
@@ -331,6 +371,8 @@ class VentasController extends AppController {
 				}
 			}
 		}
+
+		// prx($condiciones);
 
 		$paginate = array(
 			'recursive' => 0,
@@ -454,7 +496,9 @@ class VentasController extends AppController {
 			'FiltroDte', 
 			'meliConexion', 
 			'picking', 
-			'FiltroVentaOrigen'
+			'FiltroVentaOrigen',
+			'FiltroMontoDesde',
+			'FiltroMontoHasta'
 		));
 
 	}
