@@ -564,7 +564,7 @@ class VentaDetalleProductosController extends AppController
 			ini_set('post_max_size', '1G');
 			ini_set('memory_limit', -1);
 			ini_set('max_input_vars', 1000000);
-
+			
 			if ($this->request->data['VentaDetalleProducto']['archivo']['error'] == 0 ) {
 				# Reconocer cabecera e idenitficador
 				if ($this->request->data['VentaDetalleProducto']['archivo']['error'] != 0) {
@@ -1038,7 +1038,7 @@ class VentaDetalleProductosController extends AppController
 			'errores' => array(),
 			'procesados' => array()
 		);
-
+		
 		foreach ($data as $id => $p) {
 			
 			# No existe
@@ -1046,18 +1046,18 @@ class VentaDetalleProductosController extends AppController
 				$resultado['errores'][] = '404 - Item id #' . $p['VentaDetalleProducto']['id'] . ' no existe en los registros.';
 				continue;
 			}
-
+			
 			# No se pudo guardar
 			if (!$this->VentaDetalleProducto->save($p)) {
 				$resultado['errores'][] = 'Imposible guardar Item id #' . $p['VentaDetalleProducto']['id'] . '.';
 				continue;
 			}
 
-			$subProcesados['success'][] = 'Campos locaes item #' . $p['VentaDetalleProducto']['id'] . ' actualizados con exitos.';
-
-			$id_externo = $this->VentaDetalleProducto->field('id_externo', array('id' => $p['VentaDetalleProducto']['id']));
-
 			$subProcesados = array('success' => array(), 'errors' => array());
+			
+			$resultado['procesados'][] = 'Campos locales item #' . $p['VentaDetalleProducto']['id'] . ' actualizados con exitos.';
+			
+			$id_externo = $this->VentaDetalleProducto->field('id_externo', array('id' => $p['VentaDetalleProducto']['id']));
 
 			$this->Prestashop      = $this->Components->load('Prestashop');
 			$this->Linio           = $this->Components->load('Linio');
@@ -1083,7 +1083,7 @@ class VentaDetalleProductosController extends AppController
 					
 					if (isset($t['activo'])) { 
 						$cambioActivo = $this->Prestashop->prestashop_activar_desactivar_producto($id_externo, $t['activo']); 
-						$subProcesados['success'][] = ($t['activo']) ? sprintf('%s: Item #%d activado con éxito.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d desactivado con éxito.',$tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']) ; 
+						$resultado['procesados'][] = ($t['activo']) ? sprintf('%s: Item #%d activado con éxito.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d desactivado con éxito.',$tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']) ; 
 					}
 
 					# Stock en toolmania
@@ -1092,9 +1092,9 @@ class VentaDetalleProductosController extends AppController
 						$actualizar = $this->Prestashop->prestashop_actualizar_stock($item['item']['associations']['stock_availables']['stock_available']['id'], $t['cantidad_virtual']);
 						
 						if ($actualizar) {
-							$subProcesados['success'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']);			
+							$resultado['procesados'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']);			
 						}else{
-							$subProcesados['errors'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']);
+							$resultado['errores'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']);
 						}
 
 					}
@@ -1131,10 +1131,10 @@ class VentaDetalleProductosController extends AppController
 							$cambioEstado = $this->Linio->actualizar_estado_producto($id_externo, $estado);
 
 							if ($cambioEstado['code'] == 200) {
-								$subProcesados['success'][] = ($m['activo']) ? sprintf('%s: Item #%d - Activado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d - Desactivado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) ; 
+								$resultado['procesados'][] = ($m['activo']) ? sprintf('%s: Item #%d - Activado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d - Desactivado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) ; 
 							}else{
 
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioEstado['message']); 
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioEstado['message']); 
 							}
 						}
 
@@ -1144,9 +1144,9 @@ class VentaDetalleProductosController extends AppController
 							$actualizar = $this->Linio->actualizar_stock_producto(array(), $id_externo, $m['cantidad_virtual']);
 					
 							if ($actualizar['code'] == 200) {
-								$subProcesados['success'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);					
+								$resultado['procesados'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);					
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);
+								$resultado['errores'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);
 							}
 
 						}
@@ -1161,9 +1161,9 @@ class VentaDetalleProductosController extends AppController
 							$cambioPrecio = $this->Linio->actualizar_precio_producto($id_externo, $precio);
 
 							if ($cambioPrecio['code'] == 200) {
-								$subProcesados['success'][] =  sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['message']); 
+								$resultado['procesados'][] =  sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['message']); 
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['message']);
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['message']);
 							}
 						}
 
@@ -1177,9 +1177,9 @@ class VentaDetalleProductosController extends AppController
 							$cambioPrecioOferta = $this->Linio->actualizar_precio_oferta_producto($id_externo, $precio);
 
 							if ($cambioPrecioOferta['code'] == 200) {
-								$subProcesados['success'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecioOferta['message']); 
+								$resultado['procesados'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecioOferta['message']); 
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecioOferta['message']);; 
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecioOferta['message']);; 
 							}
 						}
 
@@ -1206,9 +1206,9 @@ class VentaDetalleProductosController extends AppController
 							$cambioEstado = $this->MeliMarketplace->mercadolibre_cambiar_estado($itemMeli['item']['id'], $estado);
 
 							if ($cambioEstado['httpCode'] == 200) {
-								$subProcesados['success'][] = ($m['activo']) ? sprintf('%s: Item #%d - Activado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d - Desactivado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) ;  
+								$resultado['procesados'][] = ($m['activo']) ? sprintf('%s: Item #%d - Activado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d - Desactivado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) ;  
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioEstado['body']['message']); 
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioEstado['body']['message']); 
 							}
 						}
 
@@ -1218,9 +1218,9 @@ class VentaDetalleProductosController extends AppController
 							$actualizar = $this->MeliMarketplace->mercadolibre_actualizar_stock($itemMeli['item']['id'], $m['cantidad_virtual']);
 					
 							if ($actualizar['httpCode'] == 200) {
-								$subProcesados['success'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);					
+								$resultado['procesados'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);					
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);
+								$resultado['errores'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);
 							}
 						}
 
@@ -1237,9 +1237,9 @@ class VentaDetalleProductosController extends AppController
 							$cambioPrecio = $this->MeliMarketplace->mercadolibre_cambiar_precio($itemMeli['item']['id'], $precio);
 
 							if ($cambioPrecio['httpCode'] == 200) {
-								$subProcesados['success'][] = sprintf('%s: Item #%d - Precio actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']); 
+								$resultado['procesados'][] = sprintf('%s: Item #%d - Precio actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']); 
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['body']['message']); 
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['body']['message']); 
 							}
 						}
 
@@ -1256,9 +1256,9 @@ class VentaDetalleProductosController extends AppController
 							$cambioPrecioOferta = $this->MeliMarketplace->mercadolibre_cambiar_precio_oferta($itemMeli['item']['id'], $precio_oferta);
 
 							if ($cambioPrecioOferta['httpCode'] == 200) {
-								$subProcesados['success'][] = sprintf('%s: Item #%d - Precio actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']); 
+								$resultado['procesados'][] = sprintf('%s: Item #%d - Precio actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']); 
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['body']['message']);
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['body']['message']);
 							}
 						}
 
@@ -1267,11 +1267,8 @@ class VentaDetalleProductosController extends AppController
 
 			}
 			
-			$resultado['procesados'] = $subProcesados['success'];
-			$resultado['errores']    = $subProcesados['errors'];
-			
 		}
-
+		
 		return $resultado;
 	}
 
