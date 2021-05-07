@@ -11,13 +11,14 @@ RUN apt-get update && apt-get install -y \
     chrony \
     systemd \
     libmcrypt-dev \
+    libzip-dev \
   && rm -rf /var/lib/apt/lists
 
 
 # Extensiones requeridas
-RUN docker-php-ext-install pdo_mysql mysqli gd mbstring sockets soap dom
+RUN docker-php-ext-install pdo_mysql mysqli gd mbstring sockets soap dom zip
 
-RUN docker-php-ext-enable gd
+RUN docker-php-ext-enable gd soap dom zip
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin/ --filename=composer

@@ -1,0 +1,12 @@
+{
+    "name": "crist/qr-code",
+    "require": {
+        "2amigos/qrcode-library": "^2.0"
+    },
+    "authors": [
+        {
+            "name": "Nodriza  Spa",
+            "email": "desarrollo@nodriza.cl"
+        }
+    ]
+}

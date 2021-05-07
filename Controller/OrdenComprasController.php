@@ -3769,6 +3769,8 @@ class OrdenComprasController extends AppController
 	/**
 	 * api_zonificar
 	 *
+	 * Retorna las OC que estan pendiente de zonificar
+	 * 
 	 * @param  mixed $bodega_id
 	 * @return void
 	 */
@@ -3907,5 +3909,154 @@ class OrdenComprasController extends AppController
             'response' => $response,
             '_serialize' => array('response')
         ));
+	}
+
+
+		
+	/**
+	 * api_detalle_zonificar
+	 * 
+	 * Se encarga de actualizar una linea de producto de la oc, según 
+	 * la cantidad zonificada en warehouse
+	 *
+	 * @return void
+	 */
+	public function api_detalle_zonificar($id)
+	{
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 400, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!isset($this->request->data['cantidad_zonificada']))
+		{
+			$response = array(
+				'code'    => 400, 
+				'name' => 'error',
+				'message' => 'cantidad_zonificada es requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$ocp = ClassRegistry::init('OrdenComprasVentaDetalleProducto')->find('first', array(
+			'conditions' => array(
+				'OrdenComprasVentaDetalleProducto.id' => $id
+			),
+			'joins' => array(
+				array(
+					'table' => 'orden_compras',
+					'alias' => 'OrdenCompra',
+					'type'  => 'inner',
+					'conditions' => array(
+						'OrdenCompra.id = OrdenComprasVentaDetalleProducto.orden_compra_id',
+						'OrdenCompra.estado IN' => array(
+							'recepcion_completa',
+							'recepcion_incompleta',
+							'espera_dte'
+						)
+					)
+				)
+			)
+		));
+
+		if (empty($ocp))
+		{
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Detalle oc no encontrado o la oc no está disponible para zonificar'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$cantidad_pendiente_zonificar = $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] - $ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'];
+		
+		# Ya esta zonificada
+		if ($ocp['OrdenComprasVentaDetalleProducto']['zonificado'])
+		{
+			$response = array(
+				'code'    => 400, 
+				'name' => 'error',
+				'message' => sprintf('%s ya fue zonificado - Detalle id #%d', $ocp['OrdenComprasVentaDetalleProducto']['descripcion'], $id)
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Se intenta zonificar mas unidades
+		if ($this->request->data['cantidad_zonificada'] > $cantidad_pendiente_zonificar)
+		{	
+			$response = array(
+				'code'    => 400, 
+				'name' => 'error',
+				'message' => sprintf('La cantidad a zonificar es mayor a la cantidad pendiente: Pendiente %d', $cantidad_pendiente_zonificar)
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Menos a 0
+		if ($this->request->data['cantidad_zonificada'] <= 0)
+		{	
+			$response = array(
+				'code'    => 400, 
+				'name' => 'error',
+				'message' => 'La cantidad a zonificar es debe ser mayor 0'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$cantidad_zonificar = $ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'] + $this->request->data['cantidad_zonificada'];
+
+		if ($cantidad_pendiente_zonificar == $cantidad_zonificar)
+		{
+			$ocp['OrdenComprasVentaDetalleProducto']['zonificado'] = 1;
+		}
+
+		$ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'] = $cantidad_zonificar;
+
+		if (!ClassRegistry::init('OrdenComprasVentaDetalleProducto')->save($ocp))
+		{
+			$response = array(
+				'code'    => 500, 
+				'name' => 'error',
+				'message' => 'No fue posible actualizar el detalle'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$response = array(
+			'code'    => 200, 
+			'name' => 'success',
+			'message' => sprintf('%s zonificado con éxito', $ocp['OrdenComprasVentaDetalleProducto']['descripcion']),
+			'data' => $ocp
+		);
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
+
 	}
 }
