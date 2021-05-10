@@ -2,9 +2,9 @@
 
 class Zona extends AppModel {
 
-        public $useDbConfig     = "warehouse";
+    public $useDbConfig     = "warehouse";
 	public $useTable        = 'zonas';
-
+	public $displayField	= 'nombre';
         public $belongsTo = array(
 		'Bodega' => array(
 			'className'	                => 'Bodega',
