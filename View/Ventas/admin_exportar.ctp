@@ -10,14 +10,14 @@ $this->PhpSpreadsheet->createWorksheet();
 $cabeceras		= array();
 $opciones		= array('width' => 'auto', 'filter' => true, 'wrap' => true);
 
-$campos = array("ID", "ID Externo", "Referencia", "Fecha", "Total", "Medio de Pago", "Estado", "Tienda", "Marketplace", "Cliente", "Dte");
+$campos = array("ID", "ID Externo", "Referencia", "Fecha", "Total", "Medio de Pago", "Estado", "Tienda", "Marketplace", "Cliente", "Dte","Estado picking");
 
 foreach ($campos as $campo) {
 	array_push($cabeceras, array_merge(array('label' => Inflector::humanize($campo)), $opciones));
 }
 
 $this->PhpSpreadsheet->addTableHeader($cabeceras, array('bold' => true));
-
+$picking = ClassRegistry::init('Venta')->picking_estados_lista;
 /**
  * Escribe los datos
  */
@@ -67,6 +67,8 @@ foreach ($datos as $dato) {
 		}
 	}
 
+
+
 	$this->PhpSpreadsheet->addTableRow(
 		array(
 			$dato['Venta']['id'],
@@ -79,7 +81,8 @@ foreach ($datos as $dato) {
 			$dato['Tienda']['nombre'],
 			$marketplace,
 			$cliente,
-			$dtes
+			$dtes,
+			$picking[$dato['Venta']['picking_estado']]
 		)
 	);
 
