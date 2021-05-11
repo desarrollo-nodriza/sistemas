@@ -3361,7 +3361,7 @@ class VentasController extends AppController {
 				'joins' => $joins,
 				'fields' => array(
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo',
-					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id'
+					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id','Venta.picking_estado'
 				),
 				'order' => 'Venta.fecha_venta DESC'
 			)
