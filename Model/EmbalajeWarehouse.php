@@ -11,6 +11,16 @@ Class EmbalajeWarehouse extends AppModel {
 	public $displayField	= 'id';
 
 
+	private $estados = array(
+		'inicial' => 'Inicial',
+		'en_revision' => 'En revisión manual',
+		'listo_para_embalar' => 'Listo para embalar',
+		'procesando' => 'En preparación',
+		'finalizado' => 'Finalizado',
+		'cancelado' => 'Cancelado'
+	);
+
+
 	/**
 	 * Asosiaciones
 	 * @var array
@@ -62,4 +72,53 @@ Class EmbalajeWarehouse extends AppModel {
 			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
 		)
 	);
+
+	public $hasMany = array(
+		'EmbalajeProductoWarehouse' => array(
+			'className'				=> 'EmbalajeProductoWarehouse',
+			'foreignKey'			=> 'embalaje_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		)
+	);
+
+
+	public function obtener_estados()
+	{
+		return $this->estados;
+	}
+
+	
+	/**
+	 * cancelar_emabalaje
+	 *
+	 * @param  mixed $id
+	 * @param  mixed $responsable
+	 * @return void
+	 */
+	public function cancelar_embalaje($id, $responsable = '')
+	{	
+		$emabalaje = array(
+			'EmbalajeWarehouse' => array(
+				'id' => $id,
+				'estado' => 'cancelado',
+				'responsable_id_cancelado' => $responsable,
+				'fecha_cancelado' => date('Y-m-d H:i:s')
+			)
+		);
+
+		if ($this->save($emabalaje))
+		{
+			return true;
+		}
+
+		return false;
+	}
 }

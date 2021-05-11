@@ -401,10 +401,6 @@ class OrdenComprasController extends AppController
 				));
 			}
 
-			# Cliente Libredte
-			$libreDte = $this->Components->load('LibreDte');
-			$libreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
-
 			$folios = array();
 
 			foreach ($this->request->data['OrdenCompraFactura'] as $iocf => $ocf) {
@@ -430,8 +426,6 @@ class OrdenComprasController extends AppController
 				$tipo_dte = $ocf['tipo_documento']; // Facturas
 				$folio    = $ocf['folio'];
 				$receptor = $this->rutSinDv($this->request->data['OrdenCompra']['rut_tienda']);
-
-				$res = $libreDte->obtener_documento_recibido($emisor, $tipo_dte, $folio, $receptor);
 				
 				if (empty($ocf['id'])) {
 					# Creamos el id antes de setear sus valores
@@ -445,23 +439,11 @@ class OrdenComprasController extends AppController
 					$id_factura = $ocf['id'];
 				}
 
-				if (!empty($res)) {
-
-					$this->request->data['OrdenCompraFactura'][$iocf]['id']              = $id_factura; // seteamos el id de la factura para crear el saldo
-					$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $res['total'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $res['emisor'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['proveedor_id']    = $ocf['proveedor_id'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['receptor']        = $res['receptor'];
-				
-				}else{
-
-					#$folios[] = $libreDte->tipoDocumento[$ocf['tipo_documento']] . ' folio #' . $ocf['folio'] . ' no fue encontrado. Verifique que la información del DTE sea correcta.';
-					$this->request->data['OrdenCompraFactura'][$iocf]['id']              = $id_factura; // seteamos el id de la factura para crear el saldo
-					$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $ocf['monto_facturado'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['proveedor_id']    = $ocf['proveedor_id'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $emisor;
-					$this->request->data['OrdenCompraFactura'][$iocf]['receptor']        = $receptor;
-				}
+				$this->request->data['OrdenCompraFactura'][$iocf]['id']              = $id_factura; // seteamos el id de la factura para crear el saldo
+				$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $ocf['monto_facturado'];
+				$this->request->data['OrdenCompraFactura'][$iocf]['proveedor_id']    = $ocf['proveedor_id'];
+				$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $emisor;
+				$this->request->data['OrdenCompraFactura'][$iocf]['receptor']        = $receptor;
 
 				# Es factura
 				if ($tipo_dte == 33) {
@@ -3475,7 +3457,7 @@ class OrdenComprasController extends AppController
 			# Guardamos
 			ClassRegistry::init('OrdenComprasVentaDetalleProducto')->save($detalle);
 			
-			if (ClassRegistry::init('Bodega')->crearEntradaBodega($p['producto_id'], $p['bodega_id'], $p['cantidad_recibida_ahora'], $p['precio_compra'], 'OC', $p['oc_id'])) 
+			if (ClassRegistry::init('Bodega')->crearEntradaBodega($p['producto_id'], $p['bodega_id'], $p['cantidad_recibida_ahora'], $p['precio_compra'], 'OC', $p['oc_id'], null, null, $tokenInfo['Administrador']['email'])) 
 			{
 				$log[] = array(
 					'Log' => array(
@@ -3833,7 +3815,10 @@ class OrdenComprasController extends AppController
 			'order' => array(
 				'OrdenCompra.fecha_recibido' => 'ASC'
 			),
-			'limit' => 50
+			'limit' => 50,
+			'group' => array(
+				'OrdenCompra.id'
+			)
 		));
 
 		

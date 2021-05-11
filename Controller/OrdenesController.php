@@ -518,6 +518,9 @@ class OrdenesController extends AppController
 										'VentaDetalle.cantidad_en_espera',
 										'VentaDetalle.fecha_llegada_en_espera'
 									)
+								),
+								'EmbalajeWarehouse' => array(
+									'EmbalajeProductoWarehouse'
 								)
 							),
 							'fields' => array(
@@ -626,18 +629,59 @@ class OrdenesController extends AppController
 									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad'] - $cant_devolver;
 
 									# Devolvemos a bodega
-									if ( $cant_devolver > 0 && $cantidad_entregada > 0) {
+									if ( $cant_devolver > 0 && $cantidad_entregada > 0) 
+									{
 										# Quitadmos de entregado los prductos devueltos
 										$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $cantidad_entregada - $cant_devolver;
 
 										$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = $cant_devolver;
 										$itemsDevuletos[] = $venta['VentaDetalle'][$ip];
 									}
-
 								}
 
 								# Total bruto se calcula siempre
 								$venta['VentaDetalle'][$ip]['total_bruto']      = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
+							}
+
+							# Procesamos los embalajes relacionados
+							foreach ($venta['EmbalajeWarehouse'] as $iem => $em) 
+							{	
+								foreach ($em['EmbalajeProductoWarehouse'] as $iemp => $emp) 
+								{
+									if ($emp['detalle_id'] != $d['id'])
+									{
+										continue;
+									}
+
+									if ($venta['VentaDetalle'][$ip]['cantidad_reservada'] == 0)
+									{
+										$venta['EmbalajeWarehouse'][$iem]['EmbalajeProductoWarehouse'][$iemp]['cantidad_a_embalar'] = 0;
+									}
+									else
+									{
+										$venta['EmbalajeWarehouse'][$iem]['EmbalajeProductoWarehouse'][$iemp]['cantidad_a_embalar'] = $venta['VentaDetalle'][$ip]['cantidad_reservada'];
+
+										# Actualizamos las cantidades a embalar descontando las unidades anuladas
+										ClassRegistry::init('EmbalajeProductoWarehouse')->save(array(
+											'EmbalajeProductoWarehouse' => array(
+												'id' => $emp['id'],
+												'cantidad_a_embalar' => $venta['EmbalajeWarehouse'][$iem]['EmbalajeProductoWarehouse'][$iemp]['cantidad_a_embalar'],
+												'cantidad_embalada' => 0,
+												'ultima_modifacion' => date('Y-m-d H:i:s')
+											)
+										));
+
+									}
+
+								}
+
+								# si las cantidades a embalar son 0 se cancela el embalaje
+								$total_producto_embalar = array_sum(Hash::extract($venta, 'EmbalajeWarehouse.{n}.EmbalajeProductoWarehouse.{n}.cantidad_a_embalar'));
+
+								if ($total_producto_embalar == 0)
+								{
+									ClassRegistry::init('EmbalajeProducto')->cancelar_embalaje($em['id'], CakeSession::read('Auth.Administrador.id'));
+								}
 							}
 						}
 						
@@ -714,6 +758,9 @@ class OrdenesController extends AppController
 										'VentaDetalle.cantidad_en_espera',
 										'VentaDetalle.fecha_llegada_en_espera'
 									)
+								),
+								'EmbalajeWarehouse' => array(
+									'EmbalajeProductoWarehouse'
 								)
 							),
 							'fields' => array(
@@ -800,6 +847,48 @@ class OrdenesController extends AppController
 
 								# Total bruto se calcula siempre
 								$venta['VentaDetalle'][$ip]['total_bruto']      = monto_bruto($venta['VentaDetalle'][$ip]['total_neto']);
+							}
+
+
+							# Procesamos los embalajes relacionados
+							foreach ($venta['EmbalajeWarehouse'] as $iem => $em) 
+							{	
+								foreach ($em['EmbalajeProductoWarehouse'] as $iemp => $emp) 
+								{
+									if ($emp['detalle_id'] != $d['id'])
+									{
+										continue;
+									}
+
+									if ($venta['VentaDetalle'][$ip]['cantidad_reservada'] == 0)
+									{
+										$venta['EmbalajeWarehouse'][$iem]['EmbalajeProductoWarehouse'][$iemp]['cantidad_a_embalar'] = 0;
+									}
+									else
+									{
+										$venta['EmbalajeWarehouse'][$iem]['EmbalajeProductoWarehouse'][$iemp]['cantidad_a_embalar'] = $venta['VentaDetalle'][$ip]['cantidad_reservada'];
+
+										# Actualizamos las cantidades a embalar descontando las unidades anuladas
+										ClassRegistry::init('EmbalajeProductoWarehouse')->save(array(
+											'EmbalajeProductoWarehouse' => array(
+												'id' => $emp['id'],
+												'cantidad_a_embalar' => $venta['EmbalajeWarehouse'][$iem]['EmbalajeProductoWarehouse'][$iemp]['cantidad_a_embalar'],
+												'cantidad_embalada' => 0,
+												'ultima_modifacion' => date('Y-m-d H:i:s')
+											)
+										));
+
+									}
+
+								}
+
+								# si las cantidades a embalar son 0 se cancela el embalaje
+								$total_producto_embalar = array_sum(Hash::extract($venta, 'EmbalajeWarehouse.{n}.EmbalajeProductoWarehouse.{n}.cantidad_a_embalar'));
+
+								if ($total_producto_embalar == 0)
+								{
+									ClassRegistry::init('EmbalajeProducto')->cancelar_embalaje($em['id'], CakeSession::read('Auth.Administrador.id'));
+								}
 							}
 						}
 						
