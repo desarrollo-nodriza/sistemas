@@ -680,7 +680,7 @@ class OrdenesController extends AppController
 
 								if ($total_producto_embalar == 0)
 								{
-									ClassRegistry::init('EmbalajeProducto')->cancelar_embalaje($em['id'], CakeSession::read('Auth.Administrador.id'));
+									ClassRegistry::init('EmbalajeWarehouse')->cancelar_embalaje($em['id'], CakeSession::read('Auth.Administrador.id'));
 								}
 							}
 						}
@@ -887,7 +887,7 @@ class OrdenesController extends AppController
 
 								if ($total_producto_embalar == 0)
 								{
-									ClassRegistry::init('EmbalajeProducto')->cancelar_embalaje($em['id'], CakeSession::read('Auth.Administrador.id'));
+									ClassRegistry::init('EmbalajeWarehouse')->cancelar_embalaje($em['id'], CakeSession::read('Auth.Administrador.id'));
 								}
 							}
 						}
