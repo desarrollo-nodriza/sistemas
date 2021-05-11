@@ -59,7 +59,7 @@ class Venta extends AppModel
 		'en_revision' => 'En revisión manual',
 		'empaquetar'  => 'Listo para embalar',
 		'empaquetando' => 'En prepración',
-		'empaquetado'  => 'Emabalaje finalizado'
+		'empaquetado'  => 'Embalaje finalizado'
 	);
 
 	/**
@@ -394,11 +394,15 @@ class Venta extends AppModel
 				),
 				'contain' => array(
 					'VentaDetalle' => array(
+						'EmbalajeProductoWarehouse' => array(
+							'EmbalajeWarehouse'
+						),
 						'VentaDetalleProducto' => array(
 							'Bodega' => array(
 								'fields' => array(
 									'Bodega.id', 'Bodega..nombre', 'Bodega.activo', 'Bodega.principal', 'Bodega.direccion', 'Bodega.fono'
-								)
+								),
+								'limit' => 10
 							),
 							'fields' => array(
 								'VentaDetalleProducto.id', 'VentaDetalleProducto.id_externo', 'VentaDetalleProducto.nombre', 'VentaDetalleProducto.codigo_proveedor', 'VentaDetalleProducto.cantidad_virtual', 'VentaDetalleProducto.stock_automatico', 'VentaDetalleProducto.ancho', 'VentaDetalleProducto.alto', 'VentaDetalleProducto.largo', 'VentaDetalleProducto.peso',
@@ -523,6 +527,21 @@ class Venta extends AppModel
 						'fields' => array(
 							'OrdenCompra.id',
 							'OrdenCompra.estado'
+						)
+					),
+					'EmbalajeWarehouse' => array(
+						'Bodega' => array(
+							'fields' => array(
+								'Bodega.id',
+								'Bodega.nombre'
+							)
+						),
+						'EmbalajeProductoWarehouse' => array(
+							'VentaDetalleProducto' => array(
+								'fields' => array(
+									'VentaDetalleProducto.nombre'
+								)
+							)
 						)
 					)
 				),
@@ -1383,8 +1402,12 @@ class Venta extends AppModel
 			'conditions' => array(
 				'Venta.id' => $id
 			),
-			'contain' => array(
-				'EmbalajeWarehouse'
+			'contain' => array(	
+				'VentaDetalle' => array(
+					'EmbalajeProductoWarehouse' => array(
+						'EmbalajeWarehouse'
+					)
+				)
 			),
 			'fields' => array(
 				'Venta.id',
@@ -1396,14 +1419,27 @@ class Venta extends AppModel
 				'Venta.administrador_id'
 			)
 		));
-
+		
 		$bodega = ClassRegistry::init('Bodega')->obtener_bodega_principal();
 
 		$dte_valido = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
 
+		# Buscamos el id del responsable
+		$responsable = ClassRegistry::init('Administrador')->find('first', array(
+			'conditions' => array(
+				'email' => $picking_email
+			),
+			'fields' => array(
+				'id'
+			)
+		));
+
 		if (!empty($picking_email)) {
 			$save = array_replace_recursive($save, array('Venta' => array('picking_email' => $picking_email) ));
 		}
+
+		# Indicamos el responsable de los cambios
+		$responsable_id = (isset($responsable['Administrador']['id'])) ? $responsable['Administrador']['id'] : null;
 
 		switch ($picking_estado) {
 			case 'no_definido':
@@ -1416,24 +1452,19 @@ class Venta extends AppModel
 						'picking_fecha_temrino' => ''
 					)
 				));
-				
-				# si no hay embalaje lo creamos en estado inicial
-				if (empty($venta['EmbalajeWarehouse']))
-				{
-					ClassRegistry::init('EmbalajeWarehouse')->save(array(
-						'EmbalajeWarehouse' => array(
-							'venta_id' => $venta['Venta']['id'],
-							'estado' => 'inicial',
-							'bodega_id' => $bodega['Bodega']['id'],
-							'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
-							'marketplace_id' => $venta['Venta']['marketplace_id'],
-							'comuna_id' => $venta['Venta']['comuna_id'],
-							'venta_estado_id' => $venta['Venta']['venta_estado_id'],
-							'fecha_venta' => $venta['Venta']['fecha_venta'],
-							'fecha_creacion' => date('Y-m-d H:i:s'),
-							'ultima_modifacion' => date('Y-m-d H:i:s')
-						)
-					));
+
+				# si hay un embalaje creado se cancela siempre y cuando sean las 
+				# unidades del embalaje las que se quitan de la reserva
+				foreach ($venta['VentaDetalle'] as $d) 
+				{	
+					if (!empty($d['EmbalajeProductoWarehouse']) && $d['cantidad_reservada'] == 0)
+					{	
+						# Cancelamos todos loe embalajes relacionados al detalle
+						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
+						{
+							ClassRegistry::init('EmbalajeWarehouse')->cancelar_embalaje($emp['embalaje_id'], $responsable_id);
+						}
+					}
 				}
 				
 				break;
@@ -1449,47 +1480,61 @@ class Venta extends AppModel
 						'paquete_generado' => 0
 					)
 				));
+
+				# Embalaje
+				$embalaje = array(
+					'EmbalajeWarehouse' => array(
+						'venta_id' => $venta['Venta']['id'],
+						'estado' => 'listo_para_embalar',
+						'bodega_id' => $bodega['Bodega']['id'],
+						'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+						'marketplace_id' => $venta['Venta']['marketplace_id'],
+						'comuna_id' => $venta['Venta']['comuna_id'],
+						'venta_estado_id' => '',
+						'fecha_venta' => $venta['Venta']['fecha_venta'],
+						'fecha_creacion' => date('Y-m-d H:i:s'),
+						'fecha_listo_para_embalar' => date('Y-m-d H:i:s'),
+						'ultima_modifacion' => date('Y-m-d H:i:s')
+					),
+					'EmbalajeProductoWarehouse' => array()
+				);
 				
-				# si existe embalaje inicial lo actualizamos
-				if (!empty($venta['EmbalajeWarehouse']))
-				{
-					foreach($venta['EmbalajeWarehouse'] as $embalaje)
-					{
-						if ($embalaje['estado'] == 'inicial' && $dte_valido)
+				# Asignamos los productos al embalaje
+				foreach ($venta['VentaDetalle'] as $ivd => $d) 
+				{	
+					$crear_emabalaje = true;
+
+					if (!empty($d['EmbalajeProductoWarehouse']) && $d['cantidad_reservada'] > 0)
+					{	
+						# si el producto ya está en un embalaje valido, se omite
+						# su creación.
+						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
 						{
-							ClassRegistry::init('EmbalajeWarehouse')->save(array(
-								'EmbalajeWarehouse' => array(
-									'id' => $embalaje['id'],
-									'estado' => 'listo_para_embalar',
-									'bodega_id' => $bodega['Bodega']['id'],
-									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
-									'marketplace_id' => $venta['Venta']['marketplace_id'],
-									'comuna_id' => $venta['Venta']['comuna_id'],
-									'venta_estado_id' => $venta['Venta']['venta_estado_id'],
-									'fecha_listo_para_embalar' => date('Y-m-d H:i:s'),
-									'ultima_modifacion' => date('Y-m-d H:i:s')
-								)
-							));
+							if (in_array($emp['EmbalajeWarehouse']['estado'], array('listo_para_embalar', 'procesando', 'finalizado')))
+							{
+								$crear_emabalaje = false;
+							}
 						}
 					}
-				}
-				elseif ($dte_valido)
-				{	# Se crea si
-					ClassRegistry::init('EmbalajeWarehouse')->save(array(
-						'EmbalajeWarehouse' => array(
-							'venta_id' => $venta['Venta']['id'],
-							'estado' => 'listo_para_embalar',
-							'bodega_id' => $bodega['Bodega']['id'],
-							'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
-							'marketplace_id' => $venta['Venta']['marketplace_id'],
-							'comuna_id' => $venta['Venta']['comuna_id'],
-							'venta_estado_id' => $venta['Venta']['venta_estado_id'],
-							'fecha_venta' => $venta['Venta']['fecha_venta'],
+					
+					# Agregamos el item al nuevo embalaje
+					if ($crear_emabalaje && $d['cantidad_reservada'] > 0)
+					{	
+						$embalaje['EmbalajeProductoWarehouse'][] = array(
+							'producto_id' => $d['venta_detalle_producto_id'],
+							'detalle_id' => $d['id'],
+							'cantidad_a_embalar' => $d['cantidad_reservada'],
 							'fecha_creacion' => date('Y-m-d H:i:s'),
-							'fecha_listo_para_embalar' => date('Y-m-d H:i:s'),
 							'ultima_modifacion' => date('Y-m-d H:i:s')
-						)
-					));
+						);
+					}
+
+				}
+				
+				# si hay productos para embalar y tiene dte válido pasa a embalaje
+				if (!empty($embalaje['EmbalajeProductoWarehouse']) && $dte_valido)
+				{
+					ClassRegistry::init('EmbalajeWarehouse')->saveAll($embalaje);
 				}
 				
 				break;
@@ -1506,31 +1551,6 @@ class Venta extends AppModel
 					)
 				));
 
-				# si existe embalaje listo para embalar lo actualizamos
-				if (!empty($venta['EmbalajeWarehouse']))
-				{
-					foreach($venta['EmbalajeWarehouse'] as $embalaje)
-					{
-						if ($embalaje['estado'] == 'listo_para_embalar')
-						{
-							ClassRegistry::init('EmbalajeWarehouse')->save(array(
-								'EmbalajeWarehouse' => array(
-									'id' => $embalaje['id'],
-									'estado' => 'procesando',
-									'bodega_id' => $bodega['Bodega']['id'],
-									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
-									'marketplace_id' => $venta['Venta']['marketplace_id'],
-									'comuna_id' => $venta['Venta']['comuna_id'],
-									'venta_estado_id' => $venta['Venta']['venta_estado_id'],
-									'ultima_modifacion' => date('Y-m-d H:i:s'),
-									'responsable_id_procesando' => $venta['Venta']['administrador_id'],
-									'fecha_procesando' => date('Y-m-d H:i:s')
-								)
-							));
-						}
-					}
-				}
-
 				break;
 			case 'empaquetado':
 
@@ -1540,31 +1560,6 @@ class Venta extends AppModel
 						'picking_fecha_termino' => date('Y-m-d H:i:s')
 					)
 				));
-
-				# si existe embalaje procesado lo actualizamos
-				if (!empty($venta['EmbalajeWarehouse']))
-				{
-					foreach($venta['EmbalajeWarehouse'] as $embalaje)
-					{
-						if ($embalaje['estado'] == 'procesando')
-						{
-							ClassRegistry::init('EmbalajeWarehouse')->save(array(
-								'EmbalajeWarehouse' => array(
-									'id' => $embalaje['id'],
-									'estado' => 'finalizado',
-									'bodega_id' => $bodega['Bodega']['id'],
-									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
-									'marketplace_id' => $venta['Venta']['marketplace_id'],
-									'comuna_id' => $venta['Venta']['comuna_id'],
-									'venta_estado_id' => $venta['Venta']['venta_estado_id'],
-									'ultima_modifacion' => date('Y-m-d H:i:s'),
-									'responsable_id_finalizado' => $venta['Venta']['administrador_id'],
-									'fecha_finalizado' => date('Y-m-d H:i:s')
-								)
-							));
-						}
-					}
-				}
 
 				break;
 		}
@@ -1590,7 +1585,7 @@ class Venta extends AppModel
 		if ($liberar == 0 || $liberar < 0 || $liberar > ClassRegistry::init('VentaDetalle')->field('cantidad_reservada'))
 			return 0;
 
-		$nueva_cantidad = ClassRegistry::init('VentaDetalle')->field('cantidad_reservada') - $liberar;
+		$nueva_cantidad = ClassRegistry::init('VentaDetalle')->field('cantidad_reservada') - (int) $liberar;
 			
 		if(ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $nueva_cantidad)) {
 
@@ -1602,7 +1597,7 @@ class Venta extends AppModel
 
 			if (in_array($estado_actual, array('empaquetar', 'empaquetando', 'empaquetado')))
 			{
-				$this->saveField('picking_estado', 'no_definido');
+				$this->cambiar_estado_picking($this->id, 'no_definido');
 			}
 			return $liberar;
 		}else{

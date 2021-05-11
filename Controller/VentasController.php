@@ -3927,7 +3927,7 @@ class VentasController extends AppController {
 		}
 
 		if ($this->request->is('post') || $this->request->is('put')) {
-
+			
 			if (empty($this->request->data['Venta']['venta_cliente_id'])) {
 				$this->Session->setFlash('No se logró relacionar al cliente con la venta. Intentelo nuevamente.', null, array(), 'warning');
 				$this->redirect(array('action' => 'add', $id));
