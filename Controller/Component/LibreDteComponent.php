@@ -226,6 +226,9 @@ class LibreDteComponent extends Component
 			ClassRegistry::init('Venta')->id = $dteInterno['Dte']['venta_id'];
 			ClassRegistry::init('Venta')->saveField('atendida', 1);
 
+			# Preparamos los embalajes
+			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($dteInterno['Dte']['venta_id']);
+
 			# Mensaje de retorno
 			throw new Exception("DTE generado con éxito.", $generar['status']['code']);
 			return;
@@ -301,6 +304,10 @@ class LibreDteComponent extends Component
 			// Se marca como atendida
 			ClassRegistry::init('Venta')->id = $dteInterno['Dte']['venta_id'];
 			ClassRegistry::init('Venta')->saveField('atendida', 1);
+
+
+			# Preparamos los embalajes
+			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($dteInterno['Dte']['venta_id']);
 
 			# Mensaje de retorno
 			throw new Exception("DTE generado con éxito.", $generar['status']['code']);

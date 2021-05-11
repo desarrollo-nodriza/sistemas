@@ -87,6 +87,19 @@ class VentaDetalleProducto extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'EmbalajeProductoWarehouse' => array(
+			'className'				=> 'EmbalajeProductoWarehouse',
+			'foreignKey'			=> 'producto_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
