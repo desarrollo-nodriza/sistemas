@@ -126,7 +126,7 @@ Class EmbalajeWarehouse extends AppModel {
 
 	public function procesar_embalajes($id)
 	{
-		$venta = $this->find('first', array(
+		$venta = ClassRegistry::init('Venta')->find('first', array(
 			'conditions' => array(
 				'Venta.id' => $id
 			),
@@ -153,15 +153,6 @@ Class EmbalajeWarehouse extends AppModel {
 
 		$dte_valido = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
 
-		# Buscamos el id del responsable
-		$responsable = ClassRegistry::init('Administrador')->find('first', array(
-			'conditions' => array(
-				'email' => $picking_email
-			),
-			'fields' => array(
-				'id'
-			)
-		));
 
 		switch ($venta['Venta']['picking_estado']) {
 			case 'no_definido':
@@ -175,7 +166,7 @@ Class EmbalajeWarehouse extends AppModel {
 						# Cancelamos todos loe embalajes relacionados al detalle
 						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
 						{
-							ClassRegistry::init('EmbalajeWarehouse')->cancelar_embalaje($emp['embalaje_id'], $responsable_id);
+							ClassRegistry::init('EmbalajeWarehouse')->cancelar_embalaje($emp['embalaje_id']);
 						}
 					}
 				}
