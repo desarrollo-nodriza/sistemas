@@ -359,9 +359,13 @@
 																							<table class="table table-bordered">
 																								<th>Cantidad validada en proveedor</th>
 																								<th>Comentario del proveedor</th>
+																								<th>Fecha validada por proveedor</th>
+																								<th>Ir a Orden de Compra</th>
 																								<tr>
 																									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']; ?></td>
 																									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['nota_proveedor']; ?></td>
+																									<td><?=$oc['fecha_validado_proveedor']; ?></td>
+																									<td><?= $this->Html->link('<i class="fa fa-eye"></i> Ver OC', array('controller' => 'ordenCompras', 'action' => 'view',$oc['OrdenComprasVenta']['orden_compra_id']), array('class' => 'btn btn-success btn-xs btn-block', 'data-toggle' => 'tooltip', 'title' => 'Ver orden de compra', 'escape' => false, 'target' => '_blank')); ?></td>
 																								</tr>
 																							</table>
 																						</div>
