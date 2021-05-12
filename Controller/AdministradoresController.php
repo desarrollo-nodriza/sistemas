@@ -604,6 +604,9 @@ class AdministradoresController extends AppController
     		# Crear Token
     		$tokeninterno = ClassRegistry::init('Token')->crear_token($usuario['Administrador']['id'], null, 8760);
 
+			# Se agrega id del usuario
+			$logeado['user']['administrador_id'] = $usuario['Administrador']['id'];
+
     		$this->set(array(
 	            'response' => array(
 					'token' => $tokeninterno,
