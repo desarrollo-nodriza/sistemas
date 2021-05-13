@@ -3,7 +3,7 @@
 	<tr>
 		<td colspan="2" valign="center" align="left" style="border: none;">
 			<?=$this->Html->image(sprintf('Tienda/%d/%s', $oc['Tienda']['id'], $oc['Tienda']['logo']), array('class' => 'logo-cotizacion', 'fullBase' => true, 'width' => 150));?>
-			<?=$this->Html->image($this->QrCode->generarQr($oc['OrdenCompra']['id'], 100), array('class' => 'logo-cotizacion', 'fullBase' => true, 'height' => 100, 'style' => 'float: right;'));?>
+			<img src="<?=$this->QrCode->generarQr($oc['OrdenCompra']['id'], 50);?>" style="float: right; height: 50px;">
 		</td>
 	</tr>
 	<tr>
