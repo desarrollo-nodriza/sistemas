@@ -6273,8 +6273,16 @@ class VentasController extends AppController {
 					return $respuesta;
 				}
 
-				// crear DTE real
-				$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
+				if (Configure::read('ambiente') == 'dev') 
+				{
+					// crear DTE test en base a dte temporal
+					$generar = $this->LibreDte->crearDteTest($dte_temporal, $dteInterno);
+				}
+				else
+				{
+					// crear DTE real
+					$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
+				}
 
 			} catch (Exception $e) {
 
@@ -6284,6 +6292,9 @@ class VentasController extends AppController {
 				}
 
 			}
+
+			# Preparamos los embalajes
+			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($dteInterno['Dte']['venta_id'], CakeSession::read('Auth.Administrador.id'));
 
 			try {
 				$this->LibreDte->generarPDFDteEmitido($dteInterno['Dte']['venta_id'], $dteInterno['Dte']['id'], $dteInterno['Dte']['tipo_documento'], $dteInterno['Dte']['folio'], $dteInterno['Dte']['emisor'] );
