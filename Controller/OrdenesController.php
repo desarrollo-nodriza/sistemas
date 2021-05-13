@@ -661,7 +661,7 @@ class OrdenesController extends AppController
 						ClassRegistry::init('Venta')->saveAll($venta);
 
 						# Preparamos los embalajes
-						ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($$venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
+						ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
 
 						# Re ingresamos los itemes devueltos
 						if (!empty($itemsDevuletos)) 
@@ -829,7 +829,7 @@ class OrdenesController extends AppController
 						ClassRegistry::init('Venta')->saveAll($venta);
 
 						# Preparamos los embalajes
-						ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($$venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
+						ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
 
 					}
 

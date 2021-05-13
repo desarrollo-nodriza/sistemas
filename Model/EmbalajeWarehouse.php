@@ -256,6 +256,12 @@ Class EmbalajeWarehouse extends AppModel {
 					{	
 						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
 						{	
+
+							if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado')
+							{
+								continue;
+							}
+
 							$cantidad_a_embalar = $cantidad_a_embalar - $emp['cantidad_a_embalar'];
 						}
 					}
