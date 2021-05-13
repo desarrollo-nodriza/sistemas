@@ -374,9 +374,9 @@ class Venta extends AppModel
 	}
 
 
-	public function afterSave($created, $optionas = array())
-	{
-
+	public function afterSave($created, $options = array())
+	{	
+		
 	}
 
 	/**
@@ -937,6 +937,10 @@ class Venta extends AppModel
 		}
 
 		$this->cambiar_estado_picking($id, 'no_definido');
+		
+		# Preparamos los embalajes
+		ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id);
+
 		$this->saveField('subestado_oc', 'no_entregado');
 
 		return;
@@ -1199,7 +1203,7 @@ class Venta extends AppModel
 
 		# Pedido está entregado completo
 		$this->cambiar_estado_picking($id, 'empaquetado');
-					
+
 		$this->saveField('subestado_oc', 'entregado');
 		$this->saveField('fecha_entregado', date('Y-m-d H:i:s'));		
 
@@ -1302,17 +1306,22 @@ class Venta extends AppModel
 		
 		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], $reservar);
 		$reservado  = $cant_reservada + $disponible;
-
+		
 		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente
 		if ($cant_reservada != $cant_vendida ) 
 		{
 			$cant_vendida = $cant_vendida - $cant_entregada;
 			$ventaDetalle['VentaDetalle']['cantidad_reservada'] = $reservado;
 			$diff = $cant_vendida - $reservado;
-
+			
 			if ($diff >= $cant_en_espera) 
 			{
 				$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = $cant_en_espera;
+			}
+			elseif ($diff == 0) 
+			{
+				$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = 0;
+				$ventaDetalle['VentaDetalle']['fecha_llegada_en_espera'] = '';		
 			}
 			else 
 			{
@@ -1323,7 +1332,7 @@ class Venta extends AppModel
 			{
 				unset($ventaDetalle['VentaDetalle']['cantidad_en_espera']);
 			}
-
+			
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Producto reservar finaliza ' . $id,
@@ -1338,6 +1347,13 @@ class Venta extends AppModel
 			
 			if(!ClassRegistry::init('VentaDetalle')->save($ventaDetalle))
 				return 0;
+		}
+
+		# El agendamiento se elimina si esta todo reservado
+		if ($cant_reservada == $cant_vendida)
+		{
+			$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = 0;
+			$ventaDetalle['VentaDetalle']['fecha_llegada_en_espera'] = '';
 		}
 		
 		$venta = $this->find('first', array(
@@ -1360,7 +1376,7 @@ class Venta extends AppModel
 				'Venta.picking_estado'
 			)
 		));
-		
+	
 		$total_cantidad = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
 		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 		
@@ -1377,6 +1393,9 @@ class Venta extends AppModel
 			# Se cambia a no preparado
 			$this->cambiar_estado_picking($venta['Venta']['id'], 'no_definido');
 		}
+		
+		# Preparamos los embalajes
+		ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
 
 		return $reservado;
 	}
@@ -1456,9 +1475,6 @@ class Venta extends AppModel
 				break;
 		}
 
-		# Preparamos los embalajes
-		ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id);
-
 		return $this->save($save, array('callbacks' => false));
 
 	}
@@ -1494,6 +1510,10 @@ class Venta extends AppModel
 			{
 				$this->cambiar_estado_picking($this->id, 'no_definido');
 			}
+
+			# Preparamos los embalajes
+			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($this->id, CakeSession::read('Auth.Administrador.id'));
+
 			return $liberar;
 		}else{
 			return 0;
