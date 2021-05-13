@@ -3,6 +3,7 @@ App::uses('AppController', 'Controller');
 App::uses('VentaDetalleProductosController', 'Controller');
 App::uses('DtesController', 'Controller');
 App::uses('CakePdf', 'Plugin/CakePdf/Pdf');
+App::uses('MetodoEnviosController', 'Controller');
 
 //App::import('Vendor', 'Mercadopago', array('file' => 'Mercadopago/mercadopago.php'));
 App::import('Vendor', 'Mercadolibre', array('file' => 'Meli/meli.php'));
@@ -11039,7 +11040,7 @@ class VentasController extends AppController {
 				)
 			));
 		}
-
+		
 		if ($this->Venta->save($venta))
 		{	
 
@@ -11053,6 +11054,13 @@ class VentasController extends AppController {
 					'modulo_accion' => sprintf('Se cambia estado picking venta id %d: ', $id, json_encode($this->request->data))
 				)
 			);
+
+			# Generamos la etiqueta externa si corresponde
+			if ($venta['Venta']['picking_estado'] == 'empaquetando')
+			{	
+				$metodo_envios = new MetodoEnviosController();
+				$metodo_envios->generar_etiqueta_envio_externo($id);
+			}
 
 			ClassRegistry::init('Log')->create();
 			ClassRegistry::init('Log')->saveMany($log);
@@ -11448,4 +11456,94 @@ class VentasController extends AppController {
 		$this->redirect($this->referer('/', true));
 	}
 
+
+	public function api_cambiar_estado_desde_warehouse($id)
+	{	
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!isset($this->request->data['estado_venta_id']))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'estado_venta_id es requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos que el estado recibido sea de logistica
+		if (!ClassRegistry::init('VentaEstado')->estado_mueve_bodega($this->request->data['estado_venta_id']))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'estado_venta_id debe ser de tipo logistico'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$tokeninfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+		
+		# Body
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $id
+			)
+		));
+
+		try {
+			$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $this->request->data['estado_venta_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+		} catch (Exception $e) {
+			
+			$response = array(
+				'code'    => 500, 
+				'name' => 'error',
+				'message' => $e->getMessage()
+			);
+
+			throw new CakeException($response);
+		}
+
+		$respuesta = array(
+			'code' => 401,
+			'message' => 'No fue posible cambiar el estado',
+			'body' => array()
+		);
+
+		if ($cambiar_estado) 
+		{
+			$respuesta = array(
+				'code' => 200,
+				'message' => 'Estado actualizado con éxito',
+				'body' => array()
+			);
+		}
+
+		$this->set(array(
+            'response' => $respuesta,
+            '_serialize' => array('response')
+		));
+	}
 }

@@ -214,6 +214,140 @@ class MetodoEnviosController extends AppController
 	
 	}
 
+	
+	/**
+	 * generar_etiqueta_envio_externo
+	 *
+	 * @param  mixed $id_venta
+	 * @return void
+	 */
+	public function generar_etiqueta_envio_externo($id_venta)
+	{
+		$venta = ClassRegistry::init('Venta')->obtener_venta_por_id($id_venta);
+		
+		$logs = array();
+
+		$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
+
+		$resultado = false;
+
+		$logs[] = array(
+			'Log' => array(
+				'administrador' => 'Crear etiqueta envio externa venta ' . $id_venta,
+				'modulo' => 'MetodoEnvio',
+				'modulo_accion' => json_encode($venta)
+			)
+		);
+		
+		# Creamos pedido en enviame si corresponde
+		if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) 
+		{	
+			$this->Enviame = $this->Components->load('Enviame');
+			$this->Enviame = $this->Components->load('Enviame');
+
+			# conectamos con enviame
+			$this->Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
+
+			$resultadoEnviame = $this->Enviame->crearEnvio($venta);
+
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => 'Crear etiqueta Enviame venta ' . $id_venta,
+					'modulo' => 'MetodoEnvio',
+					'modulo_accion' => json_encode($resultadoEnviame)
+				)
+			);
+
+			if ($resultadoEnviame) 
+			{
+				$resultado = true;
+			}
+
+		}
+		elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) 
+		{
+			# Es una venta para starken
+			
+			# Creamos cliente starken
+			$this->Starken = $this->Components->load('Starken');
+			$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
+
+			# Creamos la OT
+			if($this->Starken->generar_ot($venta)){
+				$resultado = true;
+
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => 'Crear etiqueta Starken venta ' . $id_venta,
+						'modulo' => 'MetodoEnvio',
+						'modulo_accion' => 'Generada con éxito'
+					)
+				);
+			}
+
+		}
+		elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot']) 
+		{
+			# Es una venta para conexxion
+			
+			# Creamos cliente conexxion
+			$this->Conexxion = $this->Components->load('Conexxion');
+			$this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
+
+			# Creamos la OT
+			if($this->Conexxion->generar_ot($venta)){
+				$resultado = true;
+
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => 'Crear etiqueta Conexxion venta ' . $id_venta,
+						'modulo' => 'MetodoEnvio',
+						'modulo_accion' => 'Generada con éxito'
+					)
+				);
+
+			}
+
+		}
+		elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) 
+		{
+			# Es una venta para boosmap
+			
+			# Creamos cliente boosmap
+			$this->Boosmap = $this->Components->load('Boosmap');
+			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
+			
+			# Creamos la OT
+			if($this->Boosmap->generar_ot($venta)){
+
+				$this->Boosmap->registrar_estados($venta['Venta']['id']);
+
+				$resultado = true;
+
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => 'Crear etiqueta Boosmap venta ' . $id_venta,
+						'modulo' => 'MetodoEnvio',
+						'modulo_accion' => 'Generada con éxito'
+					)
+				);
+			}
+
+		}
+
+		$logs[] = array(
+			'Log' => array(
+				'administrador' => 'Finaliza generar etiqueta externa venta ' . $id_venta,
+				'modulo' => 'MetodoEnvio',
+				'modulo_accion' => 'Resultado de la operación: ' . $resultado
+			)
+		);
+
+
+		ClassRegistry::init('Log')->saveMany($logs);
+
+		return $resultado;
+	}
 
 
 	/**
@@ -262,7 +396,12 @@ class MetodoEnviosController extends AppController
 
 	}
 
-
+	
+	/**
+	 * api_obtener_metodos
+	 *
+	 * @return void
+	 */
 	public function api_obtener_metodos()
 	{
 
@@ -306,7 +445,60 @@ class MetodoEnviosController extends AppController
 
 		$this->set(array(
             'response' => $metodoEnvios,
-            '_serialize' => array('response')));
+            '_serialize' => array('response')
+		));
 
+	}
+
+	
+	/**
+	 * api_generar_etiqueta_externa
+	 *
+	 * @param  mixed $id_venta
+	 * @return void
+	 */
+	public function api_generar_etiqueta_externa($id_venta)
+	{
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
 		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$respuesta = array(
+			'code' => 401,
+			'message' => 'No fue posible generar etiqueta externa o no aplica',
+			'body' => array()
+		);
+
+		# Generamos
+		if ($this->generar_etiqueta_envio_externo($id_venta))
+		{	
+			$respuesta = array(
+				'code' => 200,
+				'message' => 'Etiqueta generada con éxito',
+				'body' => array()
+			);
+		}
+
+		$this->set(array(
+            'response' => $respuesta,
+            '_serialize' => array('response')
+		));
+	}
+		
 }

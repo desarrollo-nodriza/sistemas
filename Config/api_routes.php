@@ -338,6 +338,21 @@ Router::connect(
 );
 
 
+Router::connect(
+    '/api/ventas/cambiar-estado-desde-warehouse/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'cambiar_estado_desde_warehouse',
+        'api' => true,
+        '[method]' => 'POST',
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
 /**
  * Transporte
  */
@@ -709,6 +724,21 @@ Router::connect(
         'action' => 'obtener_metodos',
         'api' => true,
         'prefix' => 'api')
+);
+
+
+Router::connect(
+    '/api/metodo-envio/generar-etiqueta-externa/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'MetodoEnvios', 
+        'action' => 'generar_etiqueta_externa',
+        '[method]' => 'POST',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
 );
 
 /**
