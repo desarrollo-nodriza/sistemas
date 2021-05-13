@@ -9292,6 +9292,9 @@ class VentasController extends AppController {
 							'VentaDetalleProducto.nombre',
 							'VentaDetalleProducto.codigo_proveedor'
 						)
+					),
+					'EmbalajeProductoWarehouse' => array(
+						'EmbalajeWarehouse'
 					)
 				),
 				'VentaMensaje',
@@ -9427,26 +9430,43 @@ class VentasController extends AppController {
 			
 			# Se obtiene imagen desde prestashop
 			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($item['venta_detalle_producto_id'], $venta['Tienda']['apiurl_prestashop']);
-			
-			$respuesta['body']['itemes'][$i] = array(
-				'id' => $item['id'],
-				'producto_id' => $item['venta_detalle_producto_id'],
-				'nombre' => $item['VentaDetalleProducto']['nombre'],
-				'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
-				'cantidad_pendiente_entrega' => $item['cantidad_pendiente_entrega'],
-				'cantidad_reservada' => $item['cantidad_reservada'],
-				'imagen' => Hash::extract($imagen, '{n}[principal=1].url')[0],
-				'peso' => $pbodega['ProductoWarehouse']['peso'],
-				'ancho' => $pbodega['ProductoWarehouse']['ancho'],
-				'largo' => $pbodega['ProductoWarehouse']['largo'],
-				'alto' => $pbodega['ProductoWarehouse']['alto']
+
+			foreach ($item['EmbalajeProductoWarehouse'] as $iemp => $emp) 
+			{
+				if ($emp['EmbalajeWarehouse']['estado'] == 'procesando')
+				{
+					$respuesta['body']['itemes'][$iemp] = array(
+						'id' => $item['id'],
+						'producto_id' => $item['venta_detalle_producto_id'],
+						'nombre' => $item['VentaDetalleProducto']['nombre'],
+						'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
+						'cantidad_pendiente_entrega' => (int) $item['cantidad_pendiente_entrega'],
+						'cantidad_reservada' => (int) $item['cantidad_reservada'],
+						'cantidad_a_emabalar' => $emp['cantidad_a_embalar'] - $emp['cantidad_embalada'],
+						'imagen' => Hash::extract($imagen, '{n}[principal=1].url')[0],
+						'peso' => $pbodega['ProductoWarehouse']['peso'],
+						'ancho' => $pbodega['ProductoWarehouse']['ancho'],
+						'largo' => $pbodega['ProductoWarehouse']['largo'],
+						'alto' => $pbodega['ProductoWarehouse']['alto']
+					);
+				}
+
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['peso'] = $pbodega['ProductoWarehouse']['peso'];
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['alto'] = $pbodega['ProductoWarehouse']['alto'];
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['ancho'] = $pbodega['ProductoWarehouse']['ancho'];
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['largo'] = $pbodega['ProductoWarehouse']['largo'];
+			}
+		}
+
+		if (empty($respuesta['body']['itemes']))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Venta no disponible para procesar'
 			);
 
-			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['peso'] = $pbodega['ProductoWarehouse']['peso'];
-			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['alto'] = $pbodega['ProductoWarehouse']['alto'];
-			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['ancho'] = $pbodega['ProductoWarehouse']['ancho'];
-			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['largo'] = $pbodega['ProductoWarehouse']['largo'];
-			
+			throw new CakeException($response);
 		}
 		
 		# bultos 
