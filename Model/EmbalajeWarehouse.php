@@ -105,27 +105,69 @@ Class EmbalajeWarehouse extends AppModel {
 	 */
 	public function cancelar_embalaje($id, $responsable = '')
 	{	
-		$embalaje = array(
-			'EmbalajeWarehouse' => array(
-				'id' => $id,
-				'estado' => 'cancelado',
-				'responsable_id_cancelado' => $responsable,
-				'fecha_cancelado' => date('Y-m-d H:i:s')
+		$logs = array();
+
+		$embalaje = $this->find('first', array(
+			'conditions' => array(
+				'id' => $id
+			),
+			'contain' => array(
+				'EmbalajeProductoWarehouse'
+			)
+		));
+		
+		$embalaje['EmbalajeWarehouse']['estado'] = 'cancelado';
+		$embalaje['EmbalajeWarehouse']['responsable_id_cancelado'] = $responsable;
+		$embalaje['EmbalajeWarehouse']['fecha_cancelado'] = date('Y-m-d H:i:s');
+		$embalaje['EmbalajeWarehouse']['ultima_modifacion'] = date('Y-m-d H:i:s');
+
+		# Anulamos las unidades que no corresponden
+		foreach ($embalaje['EmbalajeProductoWarehouse'] as $im => $p) 
+		{
+			$embalaje['EmbalajeProductoWarehouse'][$im]['cantidad_a_embalar'] = 0;
+			$embalaje['EmbalajeProductoWarehouse'][$im]['ultima_modifacion'] = date('Y-m-d H:i:s');
+		}
+
+		$logs[] = array(
+			'Log' => array(
+				'administrador' => 'Inicia cancelar embalaje ' . $id,
+				'modulo' => 'EmbalajeWarehouse',
+				'modulo_accion' => json_encode($embalaje)
 			)
 		);
 
-		if ($this->save($embalaje))
+		$return = false;
+		
+		if ($this->saveAll($embalaje))
 		{
-			return true;
+			$return = true;
+
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => 'Embalaje cancelado ' . $id,
+					'modulo' => 'EmbalajeWarehouse',
+					'modulo_accion' => json_encode($embalaje)
+				)
+			);
 		}
 
-		return false;
+		ClassRegistry::init('Log')->saveMany($logs);
+
+		return $return;
 	}
 
-
-
+	
+	/**
+	 * procesar_embalajes
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
 	public function procesar_embalajes($id)
-	{
+	{	
+
+		$logs = array();
+
 		$venta = ClassRegistry::init('Venta')->find('first', array(
 			'conditions' => array(
 				'Venta.id' => $id
@@ -148,11 +190,18 @@ Class EmbalajeWarehouse extends AppModel {
 				'Venta.picking_estado'
 			)
 		));
+
+		$logs[] = array(
+			'Log' => array(
+				'administrador' => 'Inicia embalaje venta ' . $id,
+				'modulo' => 'EmbalajeWarehouse',
+				'modulo_accion' => json_encode($venta)
+			)
+		);
 		
 		$bodega = ClassRegistry::init('Bodega')->obtener_bodega_principal();
 
 		$dte_valido = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
-
 
 		switch ($venta['Venta']['picking_estado']) {
 			case 'no_definido':
@@ -161,12 +210,17 @@ Class EmbalajeWarehouse extends AppModel {
 				# unidades del embalaje las que se quitan de la reserva
 				foreach ($venta['VentaDetalle'] as $d) 
 				{	
-					if (!empty($d['EmbalajeProductoWarehouse']) && $d['cantidad_reservada'] == 0)
+					if (!empty($d['EmbalajeProductoWarehouse']))
 					{	
 						# Cancelamos todos loe embalajes relacionados al detalle
 						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
-						{
-							ClassRegistry::init('EmbalajeWarehouse')->cancelar_embalaje($emp['embalaje_id']);
+						{	
+							if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado')
+							{
+								continue;
+							}
+
+							$this->cancelar_embalaje($emp['embalaje_id']);
 						}
 					}
 				}
@@ -196,34 +250,37 @@ Class EmbalajeWarehouse extends AppModel {
 				# Asignamos los productos al embalaje
 				foreach ($venta['VentaDetalle'] as $ivd => $d) 
 				{	
-					$crear_emabalaje = true;
+					$cantidad_a_embalar = $d['cantidad_reservada'];
 
-					if (!empty($d['EmbalajeProductoWarehouse']) && $d['cantidad_reservada'] > 0)
+					if (!empty($d['EmbalajeProductoWarehouse']))
 					{	
-						# si el producto ya está en un embalaje valido, se omite
-						# su creación.
 						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
-						{
-							if (in_array($emp['EmbalajeWarehouse']['estado'], array('listo_para_embalar', 'procesando', 'finalizado')))
-							{
-								$crear_emabalaje = false;
-							}
+						{	
+							$cantidad_a_embalar = $cantidad_a_embalar - $emp['cantidad_a_embalar'];
 						}
 					}
 					
 					# Agregamos el item al nuevo embalaje
-					if ($crear_emabalaje && $d['cantidad_reservada'] > 0)
+					if ($cantidad_a_embalar > 0)
 					{	
 						$embalaje['EmbalajeProductoWarehouse'][] = array(
 							'producto_id' => $d['venta_detalle_producto_id'],
 							'detalle_id' => $d['id'],
-							'cantidad_a_embalar' => $d['cantidad_reservada'],
+							'cantidad_a_embalar' => $cantidad_a_embalar,
 							'fecha_creacion' => date('Y-m-d H:i:s'),
 							'ultima_modifacion' => date('Y-m-d H:i:s')
 						);
 					}
 
 				}
+
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => 'Crear embalaje venta ' . $id,
+						'modulo' => 'EmbalajeWarehouse',
+						'modulo_accion' => json_encode($embalaje)
+					)
+				);
 				
 				# si hay productos para embalar y tiene dte válido pasa a embalaje
 				if (!empty($embalaje['EmbalajeProductoWarehouse']) && $dte_valido)
@@ -240,5 +297,10 @@ Class EmbalajeWarehouse extends AppModel {
 
 				break;
 		}
+
+		ClassRegistry::init('Log')->saveMany($logs);
+
+		return;
+
 	}
 }

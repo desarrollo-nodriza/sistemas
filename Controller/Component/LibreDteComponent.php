@@ -227,7 +227,7 @@ class LibreDteComponent extends Component
 			ClassRegistry::init('Venta')->saveField('atendida', 1);
 
 			# Preparamos los embalajes
-			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($dteInterno['Dte']['venta_id']);
+			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($dteInterno['Dte']['venta_id'], CakeSession::read('Auth.Administrador.id'));
 
 			# Mensaje de retorno
 			throw new Exception("DTE generado con éxito.", $generar['status']['code']);
@@ -307,7 +307,7 @@ class LibreDteComponent extends Component
 
 
 			# Preparamos los embalajes
-			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($dteInterno['Dte']['venta_id']);
+			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($dteInterno['Dte']['venta_id'], CakeSession::read('Auth.Administrador.id'));
 
 			# Mensaje de retorno
 			throw new Exception("DTE generado con éxito.", $generar['status']['code']);
