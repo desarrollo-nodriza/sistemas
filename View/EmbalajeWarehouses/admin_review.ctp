@@ -1,5 +1,5 @@
 <div class="page-title">
-	<h2><span class="fa fa-cube"></span> Embalaje #<?=$embalaje['EmbalajeWarehouse']['id'];?></h2>
+	<h2><span class="fa fa-cube"></span> Revisión del embalaje #<?=$embalaje['EmbalajeWarehouse']['id'];?></h2>
 </div>
 
 <div class="page-content-wrap">
@@ -86,20 +86,7 @@
                                 <td><?= $embalaje['EmbalajeWarehouse']['ultima_modifacion'];?></td>
                             </tr>
 
-                            <? if (!empty($embalaje['EmbalajeWarehouse']['detalle_revision'])) : ?>
-                            <tr>
-                                <td>Motivo por el cual se envió a revisión</td>
-                                <td><?=$embalaje['EmbalajeWarehouse']['detalle_revision'];?></td>
-                            </tr>
-                            <? endif; ?>
-
-                            <? if (!empty($embalaje['EmbalajeWarehouse']['solucion_revision'])) : ?>
-                            <tr>
-                                <td>Solución de la última revisión</td>
-                                <td><?=$embalaje['EmbalajeWarehouse']['solucion_revision'];?></td>
-                            </tr>
-                            <? endif; ?>
-
+                            
 						</table>
 					</div>
 				</div>
@@ -182,6 +169,39 @@
 			</div>
 		</div>
 	</div>
+    <?= $this->Form->create('EmbalajeWarehouse', array('class' => 'form-horizontal js-formulario', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+    <?= $this->Form->input('id', array('type' => 'hidden', 'value' => $embalaje['EmbalajeWarehouse']['id']));?>
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+					<h3 class="panel-title">Revisar embalaje</h3>
+				</div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-12 form-group">
+                            <?=$this->Form->label('detalle_revision', 'Motivo por el cual se envió a revisión');?>
+                            <?=$this->Text->autoParagraph($embalaje['EmbalajeWarehouse']['detalle_revision']); ?>
+                        </div>
+                    </div>
+                    <br/>
+                    <div class="row">
+                        <div class="col-xs-12 form-group">
+                            <?=$this->Form->label('solucion_revision', 'Solución propuesta');?>
+                            <?=$this->Form->input('solucion_revision', array('class' => 'not-blank form-control', 'rows' => 3, 'placeholder' => 'Describa cómo solucionó el problema'));?>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="pull-right">
+						<?= $this->Form->button('Enviar a listo para embalar', array('type' => 'submit', 'class' => 'btn btn-primary start-loading-when-form-is-validate')); ?>
+                        <?= $this->Html->link('Cancelar embalaje', array('action' => 'cancelar', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-danger start-loading-then-redirect')); ?>
+					</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?= $this->Form->end(); ?>
 
     <div class="row">
         <div class="col-xs-12">

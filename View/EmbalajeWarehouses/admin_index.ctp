@@ -100,7 +100,7 @@
 							if (isset($this->request->params['named'])) {
 								$export = array_replace_recursive($export, $this->request->params['named']);
 							}?>
-							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>
+							<!--<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>-->
 						</div>
 					</div>
 					<div class="panel-body">
@@ -134,14 +134,14 @@
 										<td><?= h($embalaje['EmbalajeWarehouse']['fecha_creacion']); ?>&nbsp;</td>
 										
 										<td>
-										<? if ($permisos['edit']) : ?>
+										<? if ($permisos['view']) : ?>
 											<?= $this->Html->link('<i class="fa fa-eye"></i> Ver', array('action' => 'view', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
 										<? endif; ?>
-										<? if ($permisos['edit']) : ?>
-											<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-warning', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
+										<? if ($permisos['edit'] && $embalaje['EmbalajeWarehouse']['estado'] == 'en_revision') : ?>
+											<?= $this->Html->link('<i class="fa fa-edit"></i> Revisar', array('action' => 'review', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-warning', 'rel' => 'tooltip', 'title' => 'Revisar este registro', 'escape' => false)); ?>
 										<? endif; ?>
-										<? if ($permisos['delete']) : ?>
-											<?= $this->Form->postLink('<i class="fa fa-remove"></i> Eliminar', array('action' => 'delete', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-danger confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
+										<? if ($permisos['edit'] && in_array($embalaje['EmbalajeWarehouse']['estado'], array('listo_para_embalar', 'procesando', 'en_revision'))) : ?>
+											<?= $this->Html->link('<i class="fa fa-remove"></i> Cancelar', array('action' => 'cancelar', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-danger start-loading-then-redirect', 'escape' => false)); ?>
 										<? endif; ?>
 										</td>
 									</tr>
