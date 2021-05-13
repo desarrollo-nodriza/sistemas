@@ -247,12 +247,11 @@ class BoosmapComponent extends Component
 			}
 			# creamos el arreglo para generar la OT
 			$boosmapArr = array(
-                // 'order_number' => sprintf('B%d-%d', count($transportes) + 1, $venta['Venta']['id']),
-				'order_number' => (count($transportes) + 1).' '.($venta['Venta']['id']),
+                
+				'order_number' => sprintf('B%d %d', count($transportes) + 1, $venta['Venta']['id']),
                 'delivery_date' => date('Y-m-d H:i:s'),
                 'delivery_service' => $venta['MetodoEnvio']['boosmap_service'],
-                // 'notes' => 'OT generada automáticamente por ' . $venta['Tienda']['nombre'] . ' - Venta Ref: ' . $venta['Venta']['referencia'],
-				'notes' => $note,
+                'notes' => $note,
                 'pickup' => array(
                     'location' => array(
                         //'id' => $venta['MetodoEnvio']['boosmap_pick_up_id']
