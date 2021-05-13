@@ -172,8 +172,14 @@ class EmbalajeWarehousesController extends AppController
 		$this->set(compact('embalajes', 'estados', 'bodegas', 'marketplaces', 'comunas', 'prioritarios'));
 	}
 
-
-    public function admin_view($id = null)
+    
+    /**
+     * admin_view
+     *
+     * @param  mixed $id
+     * @return void
+     */
+    public function admin_view($id)
 	{	
 		if ( ! $this->EmbalajeWarehouse->exists($id) )
 		{
@@ -181,7 +187,7 @@ class EmbalajeWarehousesController extends AppController
 			$this->redirect(array('action' => 'index'));
 		}
 
-        $this->request->data	= $this->EmbalajeWarehouse->find('first', array(
+        $embalaje	= $this->EmbalajeWarehouse->find('first', array(
             'conditions'	=> array('EmbalajeWarehouse.id' => $id),
 			'contain' => array(
 				'EmbalajeProductoWarehouse' => array(
@@ -189,13 +195,221 @@ class EmbalajeWarehousesController extends AppController
 					'VentaDetalleProducto'
 				),
 				'Venta' => array(
-					'VentaDetalle'
+					'VentaDetalle' => array(
+						'VentaDetalleProducto' => array(
+							'fields' => array(
+								'VentaDetalleProducto.nombre'
+							)
+						)
+					),
+					'VentaEstado' => array(
+						'VentaEstadoCategoria'
+					)
 				),
-				'Bodega'
+				'Bodega' => array(
+					'fields' => array(
+						'Bodega.nombre'
+					)
+				),
+				'MetodoEnvio' => array(
+					'fields' => array(
+						'MetodoEnvio.nombre'
+					)
+				),
+				'Comuna' => array(
+					'fields' => array(
+						'Comuna.nombre'
+					)
+				),
+				'Marketplace' => array(
+					'fields' => array(
+						'Marketplace.nombre'
+					)
+				)
 			)
         ));
-		prx($this->request->data);
-		BreadcrumbComponent::add('Embalajes ', '/embalajes');
-		BreadcrumbComponent::add('Ver ');
+
+		$embalado_por = ClassRegistry::init('Administrador')->find('first', array(
+			'conditions' => array(
+				'id' => $embalaje['EmbalajeWarehouse']['responsable_id_procesando']
+			),
+			'fields' => array(
+				'id',
+				'nombre',
+				'email'
+			)
+		));
+
+		$finalizado_por = ClassRegistry::init('Administrador')->find('first', array(
+			'conditions' => array(
+				'id' => $embalaje['EmbalajeWarehouse']['responsable_id_procesando']
+			),
+			'fields' => array(
+				'id',
+				'nombre',
+				'email'
+			)
+		));
+
+		$cancelado_por = ClassRegistry::init('Administrador')->find('first', array(
+			'conditions' => array(
+				'id' => $embalaje['EmbalajeWarehouse']['responsable_id_procesando']
+			),
+			'fields' => array(
+				'id',
+				'nombre',
+				'email'
+			)
+		));
+
+
+		BreadcrumbComponent::add('Embalajes ', '/embalajeWarehouses');
+		BreadcrumbComponent::add('Ver embalaje');
+
+		$this->set(compact('embalaje', 'embalado_por', 'finalizado_por', 'cancelado_por'));
+
+	}
+
+
+	public function admin_review($id)
+	{
+		if ( ! $this->EmbalajeWarehouse->exists($id) )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		if ($this->request->is('post'))
+		{	
+			$this->request->data['EmbalajeWarehouse']['estado'] = 'listo_para_embalar';
+			$this->request->data['EmbalajeWarehouse']['ultima_modifacion'] = date('Y-m-d H:i:s');
+			
+			if ($this->EmbalajeWarehouse->save($this->request->data))
+			{
+				$this->Session->setFlash('Embalaje procesado con éxito.', null, array(), 'success');
+				$this->redirect(array('action' => 'index'));
+			}
+			else
+			{
+				$this->Session->setFlash('Embalaje no pudo ser procesado. Intente nuevamente.', null, array(), 'warning');
+			}
+		}
+
+		$embalaje	= $this->EmbalajeWarehouse->find('first', array(
+            'conditions'	=> array('EmbalajeWarehouse.id' => $id),
+			'contain' => array(
+				'EmbalajeProductoWarehouse' => array(
+					'VentaDetalle',
+					'VentaDetalleProducto'
+				),
+				'Venta' => array(
+					'VentaDetalle' => array(
+						'VentaDetalleProducto' => array(
+							'fields' => array(
+								'VentaDetalleProducto.nombre'
+							)
+						)
+					),
+					'VentaEstado' => array(
+						'VentaEstadoCategoria'
+					)
+				),
+				'Bodega' => array(
+					'fields' => array(
+						'Bodega.nombre'
+					)
+				),
+				'MetodoEnvio' => array(
+					'fields' => array(
+						'MetodoEnvio.nombre'
+					)
+				),
+				'Comuna' => array(
+					'fields' => array(
+						'Comuna.nombre'
+					)
+				),
+				'Marketplace' => array(
+					'fields' => array(
+						'Marketplace.nombre'
+					)
+				)
+			)
+        ));
+
+		if ($embalaje['EmbalajeWarehouse']['estado'] != 'en_revision')
+		{
+			$this->Session->setFlash('El embalaje no está disponible para revisión.', null, array(), 'warning');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$embalado_por = ClassRegistry::init('Administrador')->find('first', array(
+			'conditions' => array(
+				'id' => $embalaje['EmbalajeWarehouse']['responsable_id_procesando']
+			),
+			'fields' => array(
+				'id',
+				'nombre',
+				'email'
+			)
+		));
+
+		$finalizado_por = ClassRegistry::init('Administrador')->find('first', array(
+			'conditions' => array(
+				'id' => $embalaje['EmbalajeWarehouse']['responsable_id_procesando']
+			),
+			'fields' => array(
+				'id',
+				'nombre',
+				'email'
+			)
+		));
+
+		$cancelado_por = ClassRegistry::init('Administrador')->find('first', array(
+			'conditions' => array(
+				'id' => $embalaje['EmbalajeWarehouse']['responsable_id_procesando']
+			),
+			'fields' => array(
+				'id',
+				'nombre',
+				'email'
+			)
+		));
+
+
+		BreadcrumbComponent::add('Embalajes ', '/embalajeWarehouses');
+		BreadcrumbComponent::add('Revisar embalaje');
+
+		$this->set(compact('embalaje', 'embalado_por', 'finalizado_por', 'cancelado_por'));
+	}
+
+
+		
+	/**
+	 * admin_cancelar
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
+	public function admin_cancelar($id)
+	{	
+		$this->EmbalajeWarehouse->id = $id;
+
+		if ( ! $this->EmbalajeWarehouse->exists() )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		if ( $this->EmbalajeWarehouse->saveField('estado', 'cancelado') )
+		{
+			$this->Session->setFlash('Embalaje cancelado con éxito.', null, array(), 'success');
+		}
+		else
+		{
+			$this->Session->setFlash('No fue posible cancelar el embalaje.', null, array(), 'warning');
+		}
+	
+		$this->redirect(array('action' => 'index'));
 	}
 }
