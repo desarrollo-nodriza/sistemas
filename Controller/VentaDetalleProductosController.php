@@ -564,7 +564,7 @@ class VentaDetalleProductosController extends AppController
 			ini_set('post_max_size', '1G');
 			ini_set('memory_limit', -1);
 			ini_set('max_input_vars', 1000000);
-
+			
 			if ($this->request->data['VentaDetalleProducto']['archivo']['error'] == 0 ) {
 				# Reconocer cabecera e idenitficador
 				if ($this->request->data['VentaDetalleProducto']['archivo']['error'] != 0) {
@@ -1038,7 +1038,7 @@ class VentaDetalleProductosController extends AppController
 			'errores' => array(),
 			'procesados' => array()
 		);
-
+		
 		foreach ($data as $id => $p) {
 			
 			# No existe
@@ -1046,18 +1046,18 @@ class VentaDetalleProductosController extends AppController
 				$resultado['errores'][] = '404 - Item id #' . $p['VentaDetalleProducto']['id'] . ' no existe en los registros.';
 				continue;
 			}
-
+			
 			# No se pudo guardar
 			if (!$this->VentaDetalleProducto->save($p)) {
 				$resultado['errores'][] = 'Imposible guardar Item id #' . $p['VentaDetalleProducto']['id'] . '.';
 				continue;
 			}
 
-			$subProcesados['success'][] = 'Campos locaes item #' . $p['VentaDetalleProducto']['id'] . ' actualizados con exitos.';
-
-			$id_externo = $this->VentaDetalleProducto->field('id_externo', array('id' => $p['VentaDetalleProducto']['id']));
-
 			$subProcesados = array('success' => array(), 'errors' => array());
+			
+			$resultado['procesados'][] = 'Campos locales item #' . $p['VentaDetalleProducto']['id'] . ' actualizados con exitos.';
+			
+			$id_externo = $this->VentaDetalleProducto->field('id_externo', array('id' => $p['VentaDetalleProducto']['id']));
 
 			$this->Prestashop      = $this->Components->load('Prestashop');
 			$this->Linio           = $this->Components->load('Linio');
@@ -1083,7 +1083,7 @@ class VentaDetalleProductosController extends AppController
 					
 					if (isset($t['activo'])) { 
 						$cambioActivo = $this->Prestashop->prestashop_activar_desactivar_producto($id_externo, $t['activo']); 
-						$subProcesados['success'][] = ($t['activo']) ? sprintf('%s: Item #%d activado con éxito.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d desactivado con éxito.',$tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']) ; 
+						$resultado['procesados'][] = ($t['activo']) ? sprintf('%s: Item #%d activado con éxito.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d desactivado con éxito.',$tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']) ; 
 					}
 
 					# Stock en toolmania
@@ -1092,9 +1092,9 @@ class VentaDetalleProductosController extends AppController
 						$actualizar = $this->Prestashop->prestashop_actualizar_stock($item['item']['associations']['stock_availables']['stock_available']['id'], $t['cantidad_virtual']);
 						
 						if ($actualizar) {
-							$subProcesados['success'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']);			
+							$resultado['procesados'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']);			
 						}else{
-							$subProcesados['errors'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']);
+							$resultado['errores'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $tienda['Tienda']['nombre'], $p['VentaDetalleProducto']['id']);
 						}
 
 					}
@@ -1131,10 +1131,10 @@ class VentaDetalleProductosController extends AppController
 							$cambioEstado = $this->Linio->actualizar_estado_producto($id_externo, $estado);
 
 							if ($cambioEstado['code'] == 200) {
-								$subProcesados['success'][] = ($m['activo']) ? sprintf('%s: Item #%d - Activado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d - Desactivado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) ; 
+								$resultado['procesados'][] = ($m['activo']) ? sprintf('%s: Item #%d - Activado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d - Desactivado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) ; 
 							}else{
 
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioEstado['message']); 
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioEstado['message']); 
 							}
 						}
 
@@ -1144,9 +1144,9 @@ class VentaDetalleProductosController extends AppController
 							$actualizar = $this->Linio->actualizar_stock_producto(array(), $id_externo, $m['cantidad_virtual']);
 					
 							if ($actualizar['code'] == 200) {
-								$subProcesados['success'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);					
+								$resultado['procesados'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);					
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);
+								$resultado['errores'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);
 							}
 
 						}
@@ -1161,9 +1161,9 @@ class VentaDetalleProductosController extends AppController
 							$cambioPrecio = $this->Linio->actualizar_precio_producto($id_externo, $precio);
 
 							if ($cambioPrecio['code'] == 200) {
-								$subProcesados['success'][] =  sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['message']); 
+								$resultado['procesados'][] =  sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['message']); 
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['message']);
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['message']);
 							}
 						}
 
@@ -1177,9 +1177,9 @@ class VentaDetalleProductosController extends AppController
 							$cambioPrecioOferta = $this->Linio->actualizar_precio_oferta_producto($id_externo, $precio);
 
 							if ($cambioPrecioOferta['code'] == 200) {
-								$subProcesados['success'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecioOferta['message']); 
+								$resultado['procesados'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecioOferta['message']); 
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecioOferta['message']);; 
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecioOferta['message']);; 
 							}
 						}
 
@@ -1206,9 +1206,9 @@ class VentaDetalleProductosController extends AppController
 							$cambioEstado = $this->MeliMarketplace->mercadolibre_cambiar_estado($itemMeli['item']['id'], $estado);
 
 							if ($cambioEstado['httpCode'] == 200) {
-								$subProcesados['success'][] = ($m['activo']) ? sprintf('%s: Item #%d - Activado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d - Desactivado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) ;  
+								$resultado['procesados'][] = ($m['activo']) ? sprintf('%s: Item #%d - Activado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) : sprintf('%s: Item #%d - Desactivado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']) ;  
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioEstado['body']['message']); 
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioEstado['body']['message']); 
 							}
 						}
 
@@ -1218,9 +1218,9 @@ class VentaDetalleProductosController extends AppController
 							$actualizar = $this->MeliMarketplace->mercadolibre_actualizar_stock($itemMeli['item']['id'], $m['cantidad_virtual']);
 					
 							if ($actualizar['httpCode'] == 200) {
-								$subProcesados['success'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);					
+								$resultado['procesados'][] = sprintf('%s: Item #%d - Stock actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);					
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);
+								$resultado['errores'][] = sprintf('%s: Item #%d - Imposible actualizar stock.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']);
 							}
 						}
 
@@ -1237,9 +1237,9 @@ class VentaDetalleProductosController extends AppController
 							$cambioPrecio = $this->MeliMarketplace->mercadolibre_cambiar_precio($itemMeli['item']['id'], $precio);
 
 							if ($cambioPrecio['httpCode'] == 200) {
-								$subProcesados['success'][] = sprintf('%s: Item #%d - Precio actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']); 
+								$resultado['procesados'][] = sprintf('%s: Item #%d - Precio actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']); 
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['body']['message']); 
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['body']['message']); 
 							}
 						}
 
@@ -1256,9 +1256,9 @@ class VentaDetalleProductosController extends AppController
 							$cambioPrecioOferta = $this->MeliMarketplace->mercadolibre_cambiar_precio_oferta($itemMeli['item']['id'], $precio_oferta);
 
 							if ($cambioPrecioOferta['httpCode'] == 200) {
-								$subProcesados['success'][] = sprintf('%s: Item #%d - Precio actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']); 
+								$resultado['procesados'][] = sprintf('%s: Item #%d - Precio actualizado con éxito.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id']); 
 							}else{
-								$subProcesados['errors'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['body']['message']);
+								$resultado['errores'][] = sprintf('%s: Item #%d - %s.', $market['Marketplace']['nombre'], $p['VentaDetalleProducto']['id'], $cambioPrecio['body']['message']);
 							}
 						}
 
@@ -1267,11 +1267,8 @@ class VentaDetalleProductosController extends AppController
 
 			}
 			
-			$resultado['procesados'] = $subProcesados['success'];
-			$resultado['errores']    = $subProcesados['errors'];
-			
 		}
-
+		
 		return $resultado;
 	}
 
@@ -3022,6 +3019,18 @@ class VentaDetalleProductosController extends AppController
 
 		$producto['VentaDetalleProducto']['tiempo_entrega'] = $this->VentaDetalleProducto->obtener_tiempo_entrega($id);
 
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+			'apiurl_prestashop',
+			'apikey_prestashop'
+		));
+
+		# Cargamos componente prestashop para obtener info del produto desde toolmania
+		$this->Prestashop = $this->Components->load('Prestashop');
+		$this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
+
+		# Se obtiene imagen desde prestashop
+		$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($id, $tienda['Tienda']['apiurl_prestashop']);
+		$producto['VentaDetalleProducto']['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
 
         $this->set(array(
             'producto' => $producto['VentaDetalleProducto'],
@@ -3030,6 +3039,96 @@ class VentaDetalleProductosController extends AppController
 			
     }
 
+	/**
+     * Visualiza un producto
+     * Endpoint: /api/producto/view-by-reference/:sku.json
+     * @param  [type] $sku referencia del producto
+     */
+    public function api_view_by_reference($sku) {
+    	
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$producto = $this->VentaDetalleProducto->find('first', array(
+			'conditions' => array(
+				'VentaDetalleProducto.codigo_proveedor' => $sku
+			)
+		));
+
+		if(empty($producto))
+		{
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Producto not found'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		$producto['VentaDetalleProducto']['stock_enbodega'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
+
+		if (isset($this->request->query['external'])) {
+
+			$canales = $this->verificar_canales($producto['VentaDetalleProducto']['id_externo']);
+
+			foreach ($canales as $ic => $canal) {
+				foreach ($canal as $i => $c) {
+
+					if (!$c['existe'])
+						continue;
+
+					$producto['VentaDetalleProducto'][$ic][$c['nombre']] = array(
+						'precio_venta'     => $c['item']['precio'],
+						'stock_disponible' => $c['item']['stock_disponible'],
+						'estado'           => $c['item']['estado']
+					);
+
+				}
+			}
+
+		}
+
+		# Etiqueta sec
+		if (!empty($producto['VentaDetalleProducto']['qr_sec'])) {
+			
+			$url_sec = obtener_url_base() . 'webroot/img/VentaDetalleProducto/' . $producto['VentaDetalleProducto']['qr_sec'];
+			$producto['VentaDetalleProducto']['qr_sec'] = $url_sec;
+
+		}
+
+		$producto['VentaDetalleProducto']['tiempo_entrega'] = $this->VentaDetalleProducto->obtener_tiempo_entrega($producto['VentaDetalleProducto']['id']);
+
+
+        $this->set(array(
+            'producto' => $producto['VentaDetalleProducto'],
+            '_serialize' => array('producto')
+        ));
+			
+    }
 
     /**
      * Crear un producto
@@ -3164,6 +3263,108 @@ class VentaDetalleProductosController extends AppController
 			throw new CakeException($response);
     	}
        
+    }
+
+
+	
+	/**
+	 * api_update
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
+	public function api_update($id) {
+
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!$this->VentaDetalleProducto->exists($id))
+		{
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Not found'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$producto = array(
+			'VentaDetalleProducto' => array(
+				'id' => $id
+			)
+		);
+
+		$campos = array_keys($this->VentaDetalleProducto->schema());
+
+		foreach ($campos as $col)
+		{	
+			if (isset($this->request->data[$col]) && !empty($this->request->data[$col]))
+			{
+				$producto = array_replace_recursive($producto, array(
+					'VentaDetalleProducto' => array(
+						$col => $this->data[$col]
+					)
+				));
+			}
+		}
+
+		if (!$this->VentaDetalleProducto->save($producto, array('callbacks' => false)))
+		{
+			$response = array(
+				'code'    => 403, 
+				'message' => 'No fue posible guardar la información'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$respuesta = array(
+			'code' => 200,
+			'message' => 'Registro editado con éxito',
+			'body' => $producto
+		);
+
+		$log = array();
+
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Api producto',
+				'modulo' => 'Productos',
+				'modulo_accion' => json_encode($this->request->data)
+			)
+		);
+
+		ClassRegistry::init('Log')->saveMany($log);
+
+		$this->set(array(
+            'response' => $respuesta,
+            '_serialize' => array('response')
+        ));
+
     }
 
 

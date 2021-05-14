@@ -47,11 +47,40 @@ Router::connect(
     )
 );
 
+
+Router::connect(
+    '/api/producto/view-by-reference/:sku', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'view_by_reference',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('sku'),
+        'id' => '[0-9-a-Z]+'
+    )
+);
+
 Router::connect(
     '/api/producto/edit/:id', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'VentaDetalleProductos', 
         'action' => 'edit',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+Router::connect(
+    '/api/producto/update/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'update',
+        '[method]' => 'POST',
         'api' => true,
         'prefix' => 'api'),
     array(
@@ -143,6 +172,15 @@ Router::connect(
     )
 );
 
+Router::connect(
+    '/api/administradores/validate', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Administradores', 
+        'action' => 'validate_token',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
 
 /**
  * Venta
@@ -152,6 +190,19 @@ Router::connect(
     array(
         'controller' => 'Ventas', 
         'action' => 'obtener_venta',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/api/ventas/ver/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'obtener_venta_bodega',
         'api' => true,
         'prefix' => 'api'),
     array(
@@ -279,6 +330,21 @@ Router::connect(
         'controller' => 'Ventas', 
         'action' => 'cambiar_estado_por_transportista',
         'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+Router::connect(
+    '/api/ventas/cambiar-estado-desde-warehouse/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'cambiar_estado_desde_warehouse',
+        'api' => true,
+        '[method]' => 'POST',
         'prefix' => 'api'),
     array(
         'pass' => array('id'),
@@ -561,6 +627,67 @@ Router::connect(
 
 
 /**
+ * Orden compra
+ */
+Router::connect(
+    '/api/ordenes-de-compra/zonificar/:bodega_id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompras', 
+        'action' => 'zonificar',
+        'api' => true,
+        '[method]' => 'GET',
+        'prefix' => 'api'
+    ),
+    array(
+        'pass' => array('bodega_id'),
+        'bodega_id' => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/api/ordenes-de-compra/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompras', 
+        'action' => 'view',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
+Router::connect(
+    '/api/ordenes-de-compra/recepcionar/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompras', 
+        'action' => 'reception',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/api/ordenes-de-compra/detalle/zonificar/:id_detalle', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompras', 
+        'action' => 'detalle_zonificar',
+        '[method]' => 'POST',
+        'api' => true,
+        'prefix' => 'api'
+    ),
+    array(
+        'pass' => array('id_detalle'),
+        'id_detalle' => '[0-9]+'
+    )
+);
+
+
+/**
  * Monedas
  */
 Router::connect(
@@ -597,6 +724,21 @@ Router::connect(
         'action' => 'obtener_metodos',
         'api' => true,
         'prefix' => 'api')
+);
+
+
+Router::connect(
+    '/api/metodo-envio/generar-etiqueta-externa/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'MetodoEnvios', 
+        'action' => 'generar_etiqueta_externa',
+        '[method]' => 'POST',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
 );
 
 /**
@@ -645,6 +787,21 @@ Router::connect(
     array(
         'controller' => 'Contactos', 
         'action' => 'atender',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
+
+
+/**
+ * Venta estados
+ */
+Router::connect(
+    '/api/venta-estado-embalaje', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaEstados', 
+        'action' => 'obtener_para_emabalaje',
+        '[method]' => 'GET',
         'api' => true,
         'prefix' => 'api'
     )

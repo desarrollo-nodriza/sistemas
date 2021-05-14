@@ -99,6 +99,10 @@
 								<th><?= $this->Form->label('stock_automatico', 'Sincronizar stock'); ?></th>
 								<td><?= $this->Form->input('stock_automatico', array('class' => 'icheckbox')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('permitir_ingreso_sin_barra', '¿Permitir ingreso sin barra?'); ?></th>
+								<td><?= $this->Form->input('permitir_ingreso_sin_barra', array('type' => 'checkbox', 'class' => 'icheckbox')); ?></td>
+							</tr>
 						</table>
 					</div>
 				</div>

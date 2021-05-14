@@ -87,6 +87,19 @@ class VentaDetalleProducto extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'EmbalajeProductoWarehouse' => array(
+			'className'				=> 'EmbalajeProductoWarehouse',
+			'foreignKey'			=> 'producto_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
@@ -172,6 +185,43 @@ class VentaDetalleProducto extends AppModel
 			'insertQuery'			=> ''
 		)
 	);
+
+
+		
+	/**
+	 * beforeSave
+	 *
+	 * @param  mixed $options
+	 * @return void
+	 */
+	public function beforeSave($options = array())
+	{
+		# Guardamos en el otro modelo espejo
+		$campos = array_keys(ClassRegistry::init('ProductoWarehouse')->schema());
+		
+		$productoWarehouse = array();
+
+		foreach ($campos as $col)
+		{	
+			if (isset($this->data['VentaDetalleProducto'][$col]))
+			{
+				$productoWarehouse = array_replace_recursive($productoWarehouse, array(
+					$col => $this->data['VentaDetalleProducto'][$col]
+				));
+			}
+		}
+
+		# Guardamos
+		if (!empty($productoWarehouse))
+		{	
+			/*ClassRegistry::init('ProductoWarehouse')->save(
+				array(
+					'ProductoWarehouse' => $productoWarehouse
+				)
+			);*/
+		}
+
+	}
 
 	
 	public function paginateCount($conditions = null, $recursive = 0, $extra = array()) {

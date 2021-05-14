@@ -401,10 +401,6 @@ class OrdenComprasController extends AppController
 				));
 			}
 
-			# Cliente Libredte
-			$libreDte = $this->Components->load('LibreDte');
-			$libreDte->crearCliente($this->Session->read('Tienda.facturacion_apikey'));
-
 			$folios = array();
 
 			foreach ($this->request->data['OrdenCompraFactura'] as $iocf => $ocf) {
@@ -430,8 +426,6 @@ class OrdenComprasController extends AppController
 				$tipo_dte = $ocf['tipo_documento']; // Facturas
 				$folio    = $ocf['folio'];
 				$receptor = $this->rutSinDv($this->request->data['OrdenCompra']['rut_tienda']);
-
-				$res = $libreDte->obtener_documento_recibido($emisor, $tipo_dte, $folio, $receptor);
 				
 				if (empty($ocf['id'])) {
 					# Creamos el id antes de setear sus valores
@@ -445,23 +439,11 @@ class OrdenComprasController extends AppController
 					$id_factura = $ocf['id'];
 				}
 
-				if (!empty($res)) {
-
-					$this->request->data['OrdenCompraFactura'][$iocf]['id']              = $id_factura; // seteamos el id de la factura para crear el saldo
-					$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $res['total'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $res['emisor'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['proveedor_id']    = $ocf['proveedor_id'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['receptor']        = $res['receptor'];
-				
-				}else{
-
-					#$folios[] = $libreDte->tipoDocumento[$ocf['tipo_documento']] . ' folio #' . $ocf['folio'] . ' no fue encontrado. Verifique que la información del DTE sea correcta.';
-					$this->request->data['OrdenCompraFactura'][$iocf]['id']              = $id_factura; // seteamos el id de la factura para crear el saldo
-					$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $ocf['monto_facturado'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['proveedor_id']    = $ocf['proveedor_id'];
-					$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $emisor;
-					$this->request->data['OrdenCompraFactura'][$iocf]['receptor']        = $receptor;
-				}
+				$this->request->data['OrdenCompraFactura'][$iocf]['id']              = $id_factura; // seteamos el id de la factura para crear el saldo
+				$this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado'] = $ocf['monto_facturado'];
+				$this->request->data['OrdenCompraFactura'][$iocf]['proveedor_id']    = $ocf['proveedor_id'];
+				$this->request->data['OrdenCompraFactura'][$iocf]['emisor']          = $emisor;
+				$this->request->data['OrdenCompraFactura'][$iocf]['receptor']        = $receptor;
 
 				# Es factura
 				if ($tipo_dte == 33) {
@@ -1110,6 +1092,8 @@ class OrdenComprasController extends AppController
 					)
 				);
 
+				$d['OrdenCompra']['bodega_id'] = $this->Session->read('Auth.Administrador.Rol.bodega_id');
+
 				$d['Venta'] = unique_multidim_array($d['Venta'], 'venta_id');
 				
 				if ( ! $this->OrdenCompra->saveAll($d, array('deep' => true)) ) {
@@ -1461,6 +1445,9 @@ class OrdenComprasController extends AppController
 	{
 		if ( $this->request->is('post') )
 		{	
+
+			$this->request->data['OrdenCompra']['bodega_id'] = $this->Session->read('Auth.Administrador.Rol.bodega_id');
+
 			$this->OrdenCompra->create();
 			if ( $this->OrdenCompra->save($this->request->data) )
 			{	
@@ -1507,6 +1494,8 @@ class OrdenComprasController extends AppController
 					'evidencia' => json_encode($this->request->data)
 				)
 			);
+
+			$this->request->data['OrdenCompra']['bodega_id'] = $this->Session->read('Auth.Administrador.Rol.bodega_id');
 			
 			$this->OrdenCompra->create();
 			if ( $this->OrdenCompra->saveAll($this->request->data) )
@@ -3140,6 +3129,10 @@ class OrdenComprasController extends AppController
 	 * API REST
 	 */
 
+	/**
+	 * API REST
+	 */
+
 	public function api_view($id)
 	{
 		# Sólo método Get
@@ -3198,28 +3191,54 @@ class OrdenComprasController extends AppController
 						'Tienda.apikey_prestashop'
 					)
 				),
-				'VentaDetalleProducto' => array(
-					'fields' => array(
-						'VentaDetalleProducto.id',
-						'VentaDetalleProducto.id_externo',
-						'VentaDetalleProducto.peso',
-						'VentaDetalleProducto.alto',
-						'VentaDetalleProducto.ancho',
-						'VentaDetalleProducto.largo',
-					)
-				)
+				'OrdenComprasVentaDetalleProducto'
 			)
 		));
-
+		
 		$this->Prestashop = $this->Components->load('Prestashop');
 
 		# Agregamos las imagenes de prstashop al arreglo
 		$this->Prestashop->crearCliente($oc['Tienda']['apiurl_prestashop'], $oc['Tienda']['apikey_prestashop']);
+		
+		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iv => $d) 
+		{	
+			// Producto
+			$pbodega = ClassRegistry::init('ProductoWarehouse')->find('first', array(
+				'conditions' => array(
+					'id' => $d['venta_detalle_producto_id']
+				)
+			));
 
-		foreach ($oc['VentaDetalleProducto'] as $iv => $d) 
-		{
-			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['id_externo'], $oc['Tienda']['apiurl_prestashop']);
-			$oc['VentaDetalleProducto'][$iv]['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
+			$pLocal = ClassRegistry::init('VentaDetalleProducto')->find('first', array(
+				'conditions' => array(
+					'id' => $d['venta_detalle_producto_id']
+				)
+			));
+
+			# Precio final
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
+			
+			$descuentoOC = round(obtener_descuento_monto($oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'], $oc['OrdenCompra']['descuento']), 0);
+			
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final'] = $oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC;
+
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse'] = $pLocal['VentaDetalleProducto'];
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = '';
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = 0;
+			
+			
+
+			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $oc['Tienda']['apiurl_prestashop']);
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
+
+			if (!empty($pbodega))
+			{
+				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pbodega['ProductoWarehouse']['sku'];
+				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
+				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = $pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra'];
+			}
+
 		}
 
 
@@ -3234,5 +3253,795 @@ class OrdenComprasController extends AppController
             'response' => $response,
             '_serialize' => array('response')
         ));
+	}
+
+
+		
+	/**
+	 * api_reception
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
+	public function api_reception($id)
+	{
+		# Sólo método POST
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Only POST request allow'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# No existe venta
+		if (!$this->OrdenCompra->exists($id)) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Venta no encontrada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (empty($this->request->data['Dte']) || empty($this->request->data['ProductoOc']))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Falta DTE o Producto'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Información del token y propietario
+		$tokenInfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+
+		$oc = $this->OrdenCompra->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id
+			),
+			'contain' => array(
+				'OrdenComprasVentaDetalleProducto',
+				'OrdenCompraFactura',
+				'Tienda'
+			)
+		));
+		
+		$log = array();
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Recepción oc app',
+				'modulo' => 'OrdenCompras',
+				'modulo_accion' => json_encode($oc)
+			)
+		);
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Recepción oc app - Request',
+				'modulo' => 'OrdenCompras',
+				'modulo_accion' => json_encode($this->request->data)
+			)
+		);
+
+		if ($oc['OrdenCompra']['estado'] == 'recepcion_completa')
+		{
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Recepción oc app - Ya recepcionada',
+					'modulo' => 'OrdenCompras',
+					'modulo_accion' => json_encode($oc)
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Oc ya fue recepcionada'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$productosRecepcionar = array();
+		
+		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $ioc => $ocp) 
+		{	
+			$oc['OrdenComprasVentaDetalleProducto'][$ioc]['total_neto'] = $ocp['total_neto'];
+
+			foreach ($this->request->data['ProductoOc'] as $ip => $p) 
+			{	
+				if ($p['id_detalle'] != $ocp['id'])
+					continue;
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Recepción oc app - Producto',
+						'modulo' => 'OrdenCompras',
+						'modulo_accion' => json_encode($p) . ' ' . json_encode($ocp)
+					)
+				);
+
+				# Calcula la cantidad  de productos que faltan por recibir.
+				$cantidadFaltante      = $ocp['cantidad_validada_proveedor'] - $ocp['cantidad_recibida'];
+				$cantidadRecibidaAhora = $p['cantidad_recibida'];
+
+				if (!$cantidadFaltante || !$cantidadRecibidaAhora) 
+				{
+					continue;
+				}
+
+				# La cantidad recibida es mayor a la permitida
+				if ($cantidadRecibidaAhora > $cantidadFaltante)
+				{
+					$response = array(
+						'code'    => 401, 
+						'name' => 'error',
+						'message' => sprintf('Producto #%d: La cantidad recepcionada es mayor a la permitida', $ocp['id'])
+					);
+
+					ClassRegistry::init('Log')->create();
+					ClassRegistry::init('Log')->saveMany($log);
+		
+					throw new CakeException($response);
+				}
+
+				$precio_compra_oc = round($ocp['precio_unitario'] - ($ocp['descuento_producto'] / $ocp['cantidad_validada_proveedor']), 0);
+
+				$bodega_id = ($oc['OrdenCompra']['bodega_id']) ? $oc['OrdenCompra']['bodega_id'] : ClassRegistry::init('Bodega')->obtener_bodega_principal()['Bodega']['id'];
+
+				$productosRecepcionar[] = array(
+					'id' => $p['id_detalle'],
+					'cantidad_recibida_total' => ($cantidadRecibidaAhora + $ocp['cantidad_recibida']),
+					'cantidad_recibida_ahora' => $cantidadRecibidaAhora,
+					'bodega_id' => $bodega_id,
+					'producto_id' => $ocp['venta_detalle_producto_id'],
+					'precio_compra' => $precio_compra_oc,
+					'oc_id' => $id,
+					'diferencia_precio' => $p['error_de_precio']
+				);
+
+				$oc['OrdenComprasVentaDetalleProducto'][$ioc]['total_neto'] = ($precio_compra_oc * ($cantidadRecibidaAhora + $ocp['cantidad_recibida']));
+			}
+		}
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Recepción oc app - Recepcionar',
+				'modulo' => 'OrdenCompras',
+				'modulo_accion' => json_encode($productosRecepcionar)
+			)
+		);
+
+		# Agregamos a la bodega las unidades recepcionadas
+		foreach ($productosRecepcionar as $ip => $p) 
+		{	
+			# Actualiamos la cantidad recibida
+			$detalle = array(
+				'id' => $p['id'],
+				'cantidad_recibida' => $p['cantidad_recibida_total'],
+				'diff_precio_recepcion' => $p['diferencia_precio']
+			);
+
+			# Guardamos
+			ClassRegistry::init('OrdenComprasVentaDetalleProducto')->save($detalle);
+			
+			if (ClassRegistry::init('Bodega')->crearEntradaBodega($p['producto_id'], $p['bodega_id'], $p['cantidad_recibida_ahora'], $p['precio_compra'], 'OC', $p['oc_id'], null, null, $tokenInfo['Administrador']['email'])) 
+			{
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Recepción oc app - Agregar a inventario',
+						'modulo' => 'OrdenCompras',
+						'modulo_accion' => json_encode($p)
+					)
+				);	
+			}
+			else
+			{
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Recepción oc app - Error agregar a inventario',
+						'modulo' => 'OrdenCompras',
+						'modulo_accion' => json_encode($p)
+					)
+				);
+			}
+		}
+		
+		# Reservamos los productos de las ventas relacionadas a la OC padre
+		if (!$oc['OrdenCompra']['oc_manual']) 
+		{
+			ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
+		}
+		else
+		{
+			# Reservamos las ventas mas antiguas
+			$ventasSinReserva = ClassRegistry::init('Venta')->obtener_ventas_sin_reserva();
+
+			foreach ($ventasSinReserva as $venta) 
+			{
+				foreach ($venta['VentaDetalle'] as $detalle) 
+				{
+					ClassRegistry::init('VentaDetalle')->reservar_stock_producto($detalle['id']);
+				}	
+			}
+		}
+
+		$ocSave = array(
+			'OrdenCompra' => array(
+				'id' => $id ,
+				'estado' => 'recepcion_completa',
+				'retiro' => 0
+			)
+		);
+
+		# Guardamos la fecha de la primera recepción
+		if (empty($oc['OrdenCompra']['fecha_recibido'])) 
+		{
+			$ocSave = array_replace_recursive($ocSave, array(
+				'OrdenCompra' => array(
+					'fecha_recibido' => date('Y-m-d H:i:s')
+				)
+			));
+		}
+
+		# Items recibidos
+		$total_recibidos = array_sum(Hash::extract($productosRecepcionar, '{n}.cantidad_recibida_total'));
+		$total_validados_proveedor = array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.cantidad_validada_proveedor'));
+
+		# Recepción incompleta
+		if ($total_recibidos != $total_validados_proveedor)
+		{
+			$ocSave = array_replace_recursive($ocSave, array(
+				'OrdenCompra' => array(
+					'estado' => 'recepcion_incompleta'
+				)
+			));
+		}
+
+		# Dtes para descontar saldo
+		$dtesDescontar = array();
+
+		# Guardamos los nuevos dtes
+		foreach ($this->request->data['Dte'] as $dte) 
+		{	
+			$emisor   = $this->rutSinDv($oc['OrdenCompra']['rut_empresa']);
+			$tipo_dte = $dte['tipo_dte'];
+			$folio    = $dte['folio'];
+			$receptor = $this->rutSinDv($oc['Tienda']['rut']);
+			$id_factura = null;
+
+			# Obtenemos el factura id de los dte ya guardados
+			foreach ($oc['OrdenCompraFactura'] as $fact)
+			{	
+				if ($fact['folio'] == $folio && $fact['tipo_documento'] == $tipo_dte)
+				{
+					$id_factura = $fact['id'];
+				}
+			}
+
+			if (!$id_factura)
+			{
+				# Creamos el id antes de setear sus valores
+				$id_factura = ClassRegistry::init('OrdenCompraFactura')->crear(array(
+					'OrdenCompraFactura' => array(
+						'orden_compra_id' => $id,
+						'proveedor_id'    => $oc['OrdenCompra']['proveedor_id'],
+						'folio' => $folio,
+						'tipo_documento' => $tipo_dte
+					)
+				));
+			}
+
+			# DTE a relacionar
+			$ocSave['OrdenCompraFactura'][] = array(
+				'id' => $id_factura,
+				'tipo_documento' => $tipo_dte,
+				'folio' => $folio,
+				'emisor' => $emisor,
+				'receptor' => $receptor,
+				'monto_facturado' => round($dte['total'], 0)
+			);
+
+			# Dtes que deben descontar saldo
+			if ($tipo_dte != 33)
+				continue;
+
+			$dtesDescontar[] = array(
+				array(
+					'tipo_dte' => $tipo_dte,
+					'folio' => $folio,
+					'monto_facturado' => round($dte['total'], 2),
+					'proveedor_id' => $oc['OrdenCompra']['proveedor_id'],
+					'emisor' => $emisor,
+					'receptor' => $receptor
+				)
+			);
+		}
+
+		# Calculamos el total facturado
+		$yaFacturado = 0;
+
+		foreach ($oc['OrdenCompraFactura'] as $factura) 
+		{
+			if ($factura['tipo_documento'] != 33)
+				continue;
+			$yaFacturado = $yaFacturado + $factura['monto_facturado'];
+		}
+
+		$total_oc = round(monto_bruto(array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.total_neto'))), 0) - $oc['OrdenCompra']['descuento_monto'];
+		$total_oc_max = $total_oc + 100;
+		$total_oc_min = $total_oc - 100;
+		$total_facturado = array_sum(Hash::extract($ocSave['OrdenCompraFactura'], '{n}.monto_facturado')) + $yaFacturado;
+
+		$facturado_completo = false;
+
+		if ($total_facturado <= $total_oc_max && $total_facturado >= $total_oc_min)
+		{
+			$facturado_completo = true;
+		}
+		
+		# OC ya facturada completa
+		if ($yaFacturado <= $total_oc_max && $yaFacturado >= $total_oc_min)
+		{
+			
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Recepción oc app - Ya facturada completa',
+					'modulo' => 'OrdenCompras',
+					'modulo_accion' => json_encode($ocSave)
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Oc ya fue facturada'
+			);
+
+			throw new CakeException($response);
+
+		}
+		
+		# OC queda en estado de espera de factura
+		if ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && count($dtesDescontar) == 0 ) 
+		{
+			$ocSave['OrdenCompra']['estado'] = 'espera_dte';
+		}
+		elseif ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && !$facturado_completo ) 
+		{
+			$ocSave['OrdenCompra']['estado'] = 'espera_dte';
+		}
+		elseif ($facturado_completo)
+		{
+			$ocSave['OrdenCompra']['estado'] = 'recepcion_completa';
+		}
+
+		$ocSave['OrdenCompraHistorico'] = array(
+			array(
+				'estado' => $ocSave['OrdenCompra']['estado'],
+				'responsable' => $tokenInfo['Administrador']['email'],
+				'evidencia' => json_encode($ocSave)
+			)
+		);
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Recepción oc app - Guardar oc',
+				'modulo' => 'OrdenCompras',
+				'modulo_accion' => json_encode($ocSave)
+			)
+		);
+	
+		# Al guardar relacionamos todas las facturas a los pagos que existan para ésta OC
+		if ($this->OrdenCompra->saveAll($ocSave)) {
+
+			# Pagos relacionados
+			$pagos = ClassRegistry::init('Pago')->find('all', array(
+				'conditions' => array(
+					'Pago.orden_compra_id' => $id,
+				),
+				'fields' => array(
+					'Pago.id', 'Pago.pagado'
+				)
+			));
+
+			# Facturas recien creadas
+			$facturas = ClassRegistry::init('OrdenCompraFactura')->find('all', array(
+				'conditions' => array(
+					'OrdenCompraFactura.orden_compra_id' => $id,
+					'OrdenCompraFactura.tipo_documento' => 33 // Fatura
+				),
+				'contain' => array(
+					'Pago' => array(
+						'fields' => array(
+							'Pago.id'
+						)
+					)
+				),
+				'fields' => array(
+					'OrdenCompraFactura.id'
+				), 
+			));
+
+			# Relacionamos pagos facturas
+			foreach ($pagos as $ip => $p) {
+				foreach ($facturas as $if => $f) {
+
+					# si tiene pago/s relaconados continua el ciclo
+					foreach ($f['Pago'] as $ifp => $fp) {
+						if ($fp['id'] == $p['Pago']['id']) {
+							continue;
+						}
+					}
+
+					$pagos[$ip]['OrdenCompraFactura'][$if] = array(
+						'factura_id' => $f['OrdenCompraFactura']['id']
+					);
+				}
+			}
+
+			# Guardamos para que valide los pagos y faturas
+			if (!empty($pagos)) {
+				ClassRegistry::init('Pago')->saveMany($pagos, array('deep' => true));
+
+				# Notificamos los pagos si corresponde
+				$pagosController = new PagosController;
+
+				foreach ($pagos as $ip => $p) {
+					$pagosController->guardarEmailPagoFactura($p['Pago']['id']);
+				}
+
+			}
+
+		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
+
+		$response = array(
+			'code'    => 200, 
+			'name' => 'success',
+			'message' => 'Oc recepcionada correctamente',
+			'data' => array()
+		);
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
+
+	}
+
+	
+	/**
+	 * api_zonificar
+	 *
+	 * Retorna las OC que estan pendiente de zonificar
+	 * 
+	 * @param  mixed $bodega_id
+	 * @return void
+	 */
+	public function api_zonificar($bodega_id)
+	{
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 502, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 505, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+		
+		$ocs = $this->OrdenCompra->find('all', array(
+			'conditions' => array(
+				'OrdenCompra.estado IN' => array(
+					'recepcion_completa',
+					'recepcion_incompleta',
+					'espera_dte'
+				),
+				'OrdenCompra.fecha_recibido <>' => '',
+				'OrdenCompra.bodega_id' => $bodega_id
+			),
+			'joins' => array(
+				array(
+					'table' => 'orden_compras_venta_detalle_productos',
+					'alias' => 'OrdenComprasVentaDetalleProducto',
+					'type'  => 'inner',
+					'conditions' => array(
+						'OrdenComprasVentaDetalleProducto.orden_compra_id = OrdenCompra.id',
+						'OrdenComprasVentaDetalleProducto.zonificado' => 0,
+						'OrdenComprasVentaDetalleProducto.cantidad_zonificada < OrdenComprasVentaDetalleProducto.cantidad_recibida'
+					)
+				)
+			),
+			'contain' => array(
+				'Tienda' => array(
+					'fields' => array(
+						'Tienda.id',
+						'Tienda.apiurl_prestashop',
+						'Tienda.apikey_prestashop'
+					)
+				),
+				'OrdenComprasVentaDetalleProducto'
+			),
+			'order' => array(
+				'OrdenCompra.fecha_recibido' => 'ASC'
+			),
+			'limit' => 50,
+			'group' => array(
+				'OrdenCompra.id'
+			)
+		));
+
+		
+		if (empty($ocs))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'No hay Ocs disponibles para zonificar'
+			);
+
+			throw new CakeException($response);			
+		}
+
+
+		$this->Prestashop = $this->Components->load('Prestashop');
+		# Agregamos las imagenes de prstashop al arreglo
+		$this->Prestashop->crearCliente($ocs[0]['Tienda']['apiurl_prestashop'], $ocs[0]['Tienda']['apikey_prestashop']);
+
+
+		foreach($ocs as $i => $oc)
+		{
+			foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iv => $d) 
+			{	
+				// Producto
+				$pbodega = ClassRegistry::init('ProductoWarehouse')->find('first', array(
+					'conditions' => array(
+						'id' => $d['venta_detalle_producto_id']
+					)
+				));
+
+				$pLocal = ClassRegistry::init('VentaDetalleProducto')->find('first', array(
+					'conditions' => array(
+						'id' => $d['venta_detalle_producto_id']
+					)
+				));
+
+				# Precio final
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
+				
+				$descuentoOC = round(obtener_descuento_monto($ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'], $ocs[$i]['OrdenCompra']['descuento']), 0);
+				
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final'] = $ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC;
+
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse'] = $pLocal['VentaDetalleProducto'];
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = '';
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = 0;
+				
+				
+
+				$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $ocs[$i]['Tienda']['apiurl_prestashop']);
+				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
+
+				if (!empty($pbodega))
+				{
+					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pbodega['ProductoWarehouse']['sku'];
+					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
+					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = $pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra'];
+				}
+
+			}
+		}
+
+		$response = array(
+			'code'    => 200, 
+			'name' => 'success',
+			'message' => 'Ocs obtenida correctamente',
+			'data' => $ocs
+		);
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
+	}
+
+
+		
+	/**
+	 * api_detalle_zonificar
+	 * 
+	 * Se encarga de actualizar una linea de producto de la oc, según 
+	 * la cantidad zonificada en warehouse
+	 *
+	 * @return void
+	 */
+	public function api_detalle_zonificar($id)
+	{
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 400, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!isset($this->request->data['cantidad_zonificada']))
+		{
+			$response = array(
+				'code'    => 400, 
+				'name' => 'error',
+				'message' => 'cantidad_zonificada es requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$ocp = ClassRegistry::init('OrdenComprasVentaDetalleProducto')->find('first', array(
+			'conditions' => array(
+				'OrdenComprasVentaDetalleProducto.id' => $id
+			),
+			'joins' => array(
+				array(
+					'table' => 'orden_compras',
+					'alias' => 'OrdenCompra',
+					'type'  => 'inner',
+					'conditions' => array(
+						'OrdenCompra.id = OrdenComprasVentaDetalleProducto.orden_compra_id',
+						'OrdenCompra.estado IN' => array(
+							'recepcion_completa',
+							'recepcion_incompleta',
+							'espera_dte'
+						)
+					)
+				)
+			)
+		));
+
+		if (empty($ocp))
+		{
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Detalle oc no encontrado o la oc no está disponible para zonificar'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$cantidad_pendiente_zonificar = $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] - $ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'];
+		
+		# Ya esta zonificada
+		if ($ocp['OrdenComprasVentaDetalleProducto']['zonificado'])
+		{
+			$response = array(
+				'code'    => 400, 
+				'name' => 'error',
+				'message' => sprintf('%s ya fue zonificado - Detalle id #%d', $ocp['OrdenComprasVentaDetalleProducto']['descripcion'], $id)
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Se intenta zonificar mas unidades
+		if ($this->request->data['cantidad_zonificada'] > $cantidad_pendiente_zonificar)
+		{	
+			$response = array(
+				'code'    => 400, 
+				'name' => 'error',
+				'message' => sprintf('La cantidad a zonificar es mayor a la cantidad pendiente: Pendiente %d', $cantidad_pendiente_zonificar)
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Menos a 0
+		if ($this->request->data['cantidad_zonificada'] <= 0)
+		{	
+			$response = array(
+				'code'    => 400, 
+				'name' => 'error',
+				'message' => 'La cantidad a zonificar es debe ser mayor 0'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$cantidad_zonificar = $ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'] + $this->request->data['cantidad_zonificada'];
+
+		if ($cantidad_pendiente_zonificar == $cantidad_zonificar)
+		{
+			$ocp['OrdenComprasVentaDetalleProducto']['zonificado'] = 1;
+		}
+
+		$ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'] = $cantidad_zonificar;
+
+		if (!ClassRegistry::init('OrdenComprasVentaDetalleProducto')->save($ocp))
+		{
+			$response = array(
+				'code'    => 500, 
+				'name' => 'error',
+				'message' => 'No fue posible actualizar el detalle'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$response = array(
+			'code'    => 200, 
+			'name' => 'success',
+			'message' => sprintf('%s zonificado con éxito', $ocp['OrdenComprasVentaDetalleProducto']['descripcion']),
+			'data' => $ocp
+		);
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
+
 	}
 }

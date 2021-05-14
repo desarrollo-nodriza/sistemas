@@ -49,6 +49,18 @@ class AdministradoresController extends AppController
 					$this->Session->setFlash('Su tienda principal es ' . $tiendaPrincipal['Tienda']['nombre'], null, array(), 'success');
 					$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
 					$this->Session->write('Auth.Administrador.token', $token);
+
+					# Asignamos el rol
+					$rol = ClassRegistry::init('Rol')->find('first', array(
+						'conditions' => array(
+							'Rol.id' => $this->Session->read('Auth.Administrador.rol_id')
+						)	
+					));
+
+					if (!empty($rol))
+					{
+						$this->Session->write('Auth.Administrador.Rol', $rol['Rol']);
+					}
 				}
 
 				$this->Session->delete('Google.token');
@@ -233,6 +245,18 @@ class AdministradoresController extends AppController
 					$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
 
 					$this->Session->write('Auth.Administrador.token', $token);
+
+					# Asignamos el rol
+					$rol = ClassRegistry::init('Rol')->find('first', array(
+						'conditions' => array(
+							'Rol.id' => $this->Session->read('Auth.Administrador.rol_id')
+						)	
+					));
+
+					if (!empty($rol))
+					{
+						$this->Session->write('Auth.Administrador.Rol', $rol['Rol']);
+					}
 				}
 
 				$this->Session->delete('Google.token');
@@ -303,6 +327,18 @@ class AdministradoresController extends AppController
 					
 					$this->Session->write('Auth.Administrador.Google', $logeado['user']);
 
+					# Asignamos el rol
+					$rol = ClassRegistry::init('Rol')->find('first', array(
+						'conditions' => array(
+							'Rol.id' => $this->Session->read('Auth.Administrador.rol_id')
+						)	
+					));
+
+					if (!empty($rol))
+					{
+						$this->Session->write('Auth.Administrador.Rol', $rol['Rol']);
+					}
+
 					$this->redirect($this->Auth->redirectUrl());
 				}
 
@@ -356,7 +392,7 @@ class AdministradoresController extends AppController
 	}
 
 	public function admin_index()
-	{
+	{	
 		$this->paginate		= array(
 			'recursive'			=> 0
 		);
@@ -604,6 +640,9 @@ class AdministradoresController extends AppController
     		# Crear Token
     		$tokeninterno = ClassRegistry::init('Token')->crear_token($usuario['Administrador']['id'], null, 8760);
 
+			# Se agrega id del usuario
+			$logeado['user']['administrador_id'] = $usuario['Administrador']['id'];
+
     		$this->set(array(
 	            'response' => array(
 					'token' => $tokeninterno,
@@ -622,6 +661,60 @@ class AdministradoresController extends AppController
 
 			throw new CakeException($response);
     	}
+	}
+	
+	
+	/**
+	 * api_validate_token
+	 *
+	 * @return void
+	 */
+	public function api_validate_token()
+	{	
+
+		if (!$this->request->is('post')) 
+		{
+			$response = array(
+				'code'    => 400, 
+				'message' => 'Only post method'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$token = '';
+
+    	if (isset($this->request->data['token'])) {
+    		$token = $this->request->data['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$this->set(array(
+            'response' => array(
+				'code' => 200,
+				'message' => 'Token válido'
+			),
+            '_serialize' => array('response')
+        ));
 	}
 
 
@@ -666,18 +759,17 @@ class AdministradoresController extends AppController
 				'Administrador' => array(
 					'Rol' => array(
 						'fields' => array(
-							'Rol.nombre', 'Rol.app_retiro', 'Rol.app_despacho', 'Rol.app_entrega', 'Rol.app_agencia', 'Rol.app_picking', 'Rol.app_perfil'
+							'Rol.nombre', 'Rol.app_retiro', 'Rol.app_despacho', 'Rol.app_entrega', 'Rol.app_agencia', 'Rol.app_picking', 'Rol.app_perfil', 'Rol.app_embalajes', 'Rol.bodega_id'
 						)
 					),
 					'fields' => array(
-						'Administrador.nombre', 'Administrador.email', 'Administrador.google_imagen'
+						'Administrador.id', 'Administrador.nombre', 'Administrador.email', 'Administrador.google_imagen'
 					)
 				)
 			),
 			'fields' => array('Token.token', 'Token.administrador_id')
 		));
 
-		
 		# Validamos usuario
 		if (empty($tokenData['Administrador'])) {
 			$response = array(
@@ -690,9 +782,11 @@ class AdministradoresController extends AppController
 
 		$response = array(
 			'Usuario' => array(
+				'id' => $tokenData['Administrador']['id'],
 				'nombre' => $tokenData['Administrador']['nombre'],
 				'email'  => $tokenData['Administrador']['email'],
-				'avatar' => (!empty($tokenData['Administrador']['google_imagen'])) ? $tokenData['Administrador']['google_imagen'] : 'https://ui-avatars.com/api/?size=50&background=fff&color=771D97&name=' . urlencode($tokenData['Administrador']['nombre'])
+				'avatar' => (!empty($tokenData['Administrador']['google_imagen'])) ? $tokenData['Administrador']['google_imagen'] : 'https://ui-avatars.com/api/?size=50&background=fff&color=771D97&name=' . urlencode($tokenData['Administrador']['nombre']),
+				'bodega_predeterminada' => ($tokenData['Administrador']['Rol']['bodega_id']) ? $tokenData['Administrador']['Rol']['bodega_id'] : null
 			)
 		);
 
@@ -708,8 +802,27 @@ class AdministradoresController extends AppController
 					'entrega_domicilio' => $tokenData['Administrador']['Rol']['app_entrega'],
 					'entrega_agencia'   => $tokenData['Administrador']['Rol']['app_agencia'],
 					'picking'           => $tokenData['Administrador']['Rol']['app_picking']
-				)
+				),
+				'Ambientes' => array()
 			);
+		
+			if ($tokenData['Administrador']['Rol']['app_embalajes'])
+			{
+				$permisos = array_replace_recursive($permisos, array(
+					'Ambientes' => array(
+						'embalajes' => true
+					)
+				));
+			}
+			
+			if ($tokenData['Administrador']['Rol']['app_perfil'])
+			{
+				$permisos = array_replace_recursive($permisos, array(
+					'Ambientes' => array(
+						'app_mobile' => true
+					)
+				));
+			}
 
 			$response = array_replace_recursive($response, $permisos);
 		}

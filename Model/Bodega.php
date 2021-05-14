@@ -70,6 +70,35 @@ class Bodega extends AppModel
 		)
 	);
 
+	public $hasMany = array(
+		'Rol' => array(
+			'className'				=> 'Rol',
+			'foreignKey'			=> 'bodega_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'OrdenCompra' => array(
+			'className'				=> 'OrdenCompra',
+			'foreignKey'			=> 'bodega_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		)
+	);
+
 
 	public function beforeSave($options = array())
 	{
@@ -277,7 +306,7 @@ class Bodega extends AppModel
 	 * @param  [string] $glosa
 	 * @return [type]               [description]
 	 */
-	public function crearEntradaBodega($id_producto, $bodega_id = null, $cantidad, $precio_costo, $tipo, $id_oc = null, $id_venta = null, $glosa = '')
+	public function crearEntradaBodega($id_producto, $bodega_id = null, $cantidad, $precio_costo, $tipo, $id_oc = null, $id_venta = null, $glosa = '', $responsable = '')
 	{	
 		if ($cantidad <= 0) {
 			return false;
@@ -300,7 +329,7 @@ class Bodega extends AppModel
 				'valor'                     => round($precio_costo, 2),
 				'total'                     => round($precio_costo * $cantidad, 2),
 				'fecha'                     => date('Y-m-d H:i:s'),
-				'responsable'               => CakeSession::read('Auth.Administrador.email'),
+				'responsable'               => ($responsable) ? $responsable : CakeSession::read('Auth.Administrador.email'),
 				'glosa'						=> (empty($glosa)) ? $this->tipoMovimientos[$tipo]['IN'] : $glosa,
 				'orden_compra_id'			=> $id_oc,
 				'venta_id'     				=> $id_venta
@@ -684,5 +713,16 @@ class Bodega extends AppModel
 
 		return array_sum(Hash::extract($mvs, '{n}.BodegasVentaDetalleProducto.cantidad'));
 
+	}
+
+	
+	/**
+	 * obtener_bodega_principal
+	 *
+	 * @return void
+	 */
+	public function obtener_bodega_principal()
+	{
+		return $this->find('first', array('conditions' => array('Bodega.principal' => 1), 'limit' => 1, 'fields' => array('Bodega.id')));
 	}
 }

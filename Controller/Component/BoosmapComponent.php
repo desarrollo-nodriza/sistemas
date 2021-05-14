@@ -161,7 +161,7 @@ class BoosmapComponent extends Component
      */
     public function generar_ot($venta)
 	{	
-		$volumenMaximo = (float) 60;
+		$volumenMaximo = (float) 5832000;
 		
 		# Algoritmo LAFF para ordenamiento de productos
 		$paquetes = $this->LAFFPack->obtener_bultos_venta($venta, $volumenMaximo);

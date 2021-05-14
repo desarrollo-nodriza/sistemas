@@ -141,6 +141,13 @@ class Dte extends AppModel
 		return $dteValido;
 	}
 
+
+		
+	/**
+	 * obtener_dtes_mal_emitidos
+	 *
+	 * @return void
+	 */
 	public function obtener_dtes_mal_emitidos()
 	{
 		return $this->find('all', array(
@@ -159,7 +166,13 @@ class Dte extends AppModel
 			)
 		));
 	}
+	
 
+	/**
+	 * limpiar_dte
+	 *
+	 * @return void
+	 */
 	public function limpiar_dte()
 	{
 		return $this->deleteAll(array(
@@ -167,9 +180,29 @@ class Dte extends AppModel
 				'no_generado',
 				'dte_temporal_no_emitido',
 				'dte_real_no_emitido',
-				'dte_no_emitido',
-				''
+				'dte_no_emitido'
 			)
 		), false);
+	}
+
+		
+	/**
+	 * obtener_dte_valido_venta
+	 *
+	 * @param  mixed $id_venta
+	 * @return void
+	 */
+	public function obtener_dte_valido_venta($id_venta)
+	{
+		return $this->find('first', array(
+			'conditions' => array(
+				'Dte.venta_id' => $id_venta,
+				'Dte.estado' => 'dte_real_emitido',
+				'Dte.tipo_documento' => array(
+					33, 39
+				),
+				'Dte.invalidado' => 0
+			)
+		));
 	}
 }

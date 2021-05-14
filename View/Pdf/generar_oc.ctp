@@ -1,7 +1,10 @@
 <div class="table-responsive tabla-cotizacion">
 <table>
 	<tr>
-		<td colspan="2" valign="center" align="left" style="border: none;"><?=$this->Html->image(sprintf('Tienda/%d/%s', $oc['Tienda']['id'], $oc['Tienda']['logo']), array('class' => 'logo-cotizacion', 'fullBase' => true, 'width' => 150));?></td>
+		<td colspan="2" valign="center" align="left" style="border: none;">
+			<?=$this->Html->image(sprintf('Tienda/%d/%s', $oc['Tienda']['id'], $oc['Tienda']['logo']), array('class' => 'logo-cotizacion', 'fullBase' => true, 'width' => 150));?>
+			<img src="https://chart.googleapis.com/chart?chs=80&cht=qr&chl=<?=$oc['OrdenCompra']['id'];?>&choe=UTF-8" style="float: right; height: 80px;">
+		</td>
 	</tr>
 	<tr>
 		<td valign="center" align="left">
