@@ -9447,7 +9447,7 @@ class VentasController extends AppController {
 			{
 				if ($emp['EmbalajeWarehouse']['estado'] == 'procesando')
 				{
-					$respuesta['body']['itemes'][$iemp] = array(
+					$respuesta['body']['itemes'][] = array(
 						'id' => $item['id'],
 						'producto_id' => $item['venta_detalle_producto_id'],
 						'nombre' => $item['VentaDetalleProducto']['nombre'],
