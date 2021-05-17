@@ -518,6 +518,9 @@ class OrdenesController extends AppController
 										'VentaDetalle.cantidad_en_espera',
 										'VentaDetalle.fecha_llegada_en_espera'
 									)
+								),
+								'EmbalajeWarehouse' => array(
+									'EmbalajeProductoWarehouse'
 								)
 							),
 							'fields' => array(
@@ -583,7 +586,7 @@ class OrdenesController extends AppController
 									}
 
 									# si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
-									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem']) 
+									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem'] && $d['cantidad_reservada'] != ($d['cantidad'] - $detalle['QtyItem']) ) 
 									{
 										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
 									}
@@ -626,14 +629,14 @@ class OrdenesController extends AppController
 									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad'] - $cant_devolver;
 
 									# Devolvemos a bodega
-									if ( $cant_devolver > 0 && $cantidad_entregada > 0) {
+									if ( $cant_devolver > 0 && $cantidad_entregada > 0) 
+									{
 										# Quitadmos de entregado los prductos devueltos
 										$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $cantidad_entregada - $cant_devolver;
 
 										$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = $cant_devolver;
 										$itemsDevuletos[] = $venta['VentaDetalle'][$ip];
 									}
-
 								}
 
 								# Total bruto se calcula siempre
@@ -714,6 +717,9 @@ class OrdenesController extends AppController
 										'VentaDetalle.cantidad_en_espera',
 										'VentaDetalle.fecha_llegada_en_espera'
 									)
+								),
+								'EmbalajeWarehouse' => array(
+									'EmbalajeProductoWarehouse'
 								)
 							),
 							'fields' => array(
@@ -766,7 +772,7 @@ class OrdenesController extends AppController
 									}
 
 									# si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
-									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem']) 
+									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem'] && $d['cantidad_reservada'] != ($d['cantidad'] - $detalle['QtyItem']) ) 
 									{
 										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
 									}
@@ -820,6 +826,9 @@ class OrdenesController extends AppController
 						ClassRegistry::init('Venta')->saveAll($venta);
 
 					}
+
+					# Preparamos los embalajes
+					ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id_orden, CakeSession::read('Auth.Administrador.id'));
 
 					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte['Dte']['id'], $id_orden));
 				}

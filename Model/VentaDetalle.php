@@ -26,6 +26,22 @@ class VentaDetalle extends AppModel
 		)
 	);
 
+	public $hasMany = array(
+		'EmbalajeProductoWarehouse' => array(
+			'className'				=> 'EmbalajeProductoWarehouse',
+			'foreignKey'			=> 'detalle_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		)
+	);
+
 	public function recalcular_total_producto($id_detalle){
 
 		$detalle = $this->find('first', array(

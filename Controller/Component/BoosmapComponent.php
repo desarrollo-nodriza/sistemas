@@ -236,13 +236,22 @@ class BoosmapComponent extends Component
 		$ruta_pdfs = array();
         
 		foreach ($paquetes as $paquete) {
-
+			
+			$tramo = $paquete['paquete'];
+			$tramo_1 = 80;
+			$note = 'Tramo 2';
+			if ($tramo['weight'] <= 20) {
+				if ($tramo['length'] <= $tramo_1 && $tramo['width'] <= $tramo_1 && $tramo['weight'] <= $tramo_1) {
+					$note = 'Tramo 1';
+				}
+			}
 			# creamos el arreglo para generar la OT
 			$boosmapArr = array(
-                'order_number' => sprintf('B%d-%d', count($transportes) + 1, $venta['Venta']['id']),
+                
+				'order_number' => sprintf('B%d %d', count($transportes) + 1, $venta['Venta']['id']),
                 'delivery_date' => date('Y-m-d H:i:s'),
                 'delivery_service' => $venta['MetodoEnvio']['boosmap_service'],
-                'notes' => 'OT generada automáticamente por ' . $venta['Tienda']['nombre'] . ' - Venta Ref: ' . $venta['Venta']['referencia'],
+                'notes' => $note,
                 'pickup' => array(
                     'location' => array(
                         //'id' => $venta['MetodoEnvio']['boosmap_pick_up_id']
@@ -279,7 +288,7 @@ class BoosmapComponent extends Component
   				'delivery_start_time'	=> '09:00:00'
 			);
 
-            $dtes_url = Hash::extract($venta['Dte'], '{n}');
+			$dtes_url = Hash::extract($venta['Dte'], '{n}');
 
             foreach ($dtes_url as $dte)
             {

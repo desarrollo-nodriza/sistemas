@@ -3,6 +3,7 @@ App::uses('AppController', 'Controller');
 App::uses('VentaDetalleProductosController', 'Controller');
 App::uses('DtesController', 'Controller');
 App::uses('CakePdf', 'Plugin/CakePdf/Pdf');
+App::uses('MetodoEnviosController', 'Controller');
 
 //App::import('Vendor', 'Mercadopago', array('file' => 'Mercadopago/mercadopago.php'));
 App::import('Vendor', 'Mercadolibre', array('file' => 'Meli/meli.php'));
@@ -3971,7 +3972,7 @@ class VentasController extends AppController {
 		}
 
 		if ($this->request->is('post') || $this->request->is('put')) {
-
+			
 			if (empty($this->request->data['Venta']['venta_cliente_id'])) {
 				$this->Session->setFlash('No se logró relacionar al cliente con la venta. Intentelo nuevamente.', null, array(), 'warning');
 				$this->redirect(array('action' => 'add', $id));
@@ -6316,8 +6317,16 @@ class VentasController extends AppController {
 					return $respuesta;
 				}
 
-				// crear DTE real
-				$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
+				if (Configure::read('ambiente') == 'dev') 
+				{
+					// crear DTE test en base a dte temporal
+					$generar = $this->LibreDte->crearDteTest($dte_temporal, $dteInterno);
+				}
+				else
+				{
+					// crear DTE real
+					$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
+				}
 
 			} catch (Exception $e) {
 
@@ -6327,6 +6336,9 @@ class VentasController extends AppController {
 				}
 
 			}
+
+			# Preparamos los embalajes
+			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($dteInterno['Dte']['venta_id'], CakeSession::read('Auth.Administrador.id'));
 
 			try {
 				$this->LibreDte->generarPDFDteEmitido($dteInterno['Dte']['venta_id'], $dteInterno['Dte']['id'], $dteInterno['Dte']['tipo_documento'], $dteInterno['Dte']['folio'], $dteInterno['Dte']['emisor'] );
@@ -9336,6 +9348,9 @@ class VentasController extends AppController {
 							'VentaDetalleProducto.nombre',
 							'VentaDetalleProducto.codigo_proveedor'
 						)
+					),
+					'EmbalajeProductoWarehouse' => array(
+						'EmbalajeWarehouse'
 					)
 				),
 				'VentaMensaje',
@@ -9471,26 +9486,43 @@ class VentasController extends AppController {
 			
 			# Se obtiene imagen desde prestashop
 			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($item['venta_detalle_producto_id'], $venta['Tienda']['apiurl_prestashop']);
-			
-			$respuesta['body']['itemes'][$i] = array(
-				'id' => $item['id'],
-				'producto_id' => $item['venta_detalle_producto_id'],
-				'nombre' => $item['VentaDetalleProducto']['nombre'],
-				'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
-				'cantidad_pendiente_entrega' => $item['cantidad_pendiente_entrega'],
-				'cantidad_reservada' => $item['cantidad_reservada'],
-				'imagen' => Hash::extract($imagen, '{n}[principal=1].url')[0],
-				'peso' => $pbodega['ProductoWarehouse']['peso'],
-				'ancho' => $pbodega['ProductoWarehouse']['ancho'],
-				'largo' => $pbodega['ProductoWarehouse']['largo'],
-				'alto' => $pbodega['ProductoWarehouse']['alto']
+
+			foreach ($item['EmbalajeProductoWarehouse'] as $iemp => $emp) 
+			{
+				if ($emp['EmbalajeWarehouse']['estado'] == 'procesando')
+				{
+					$respuesta['body']['itemes'][] = array(
+						'id' => $item['id'],
+						'producto_id' => $item['venta_detalle_producto_id'],
+						'nombre' => $item['VentaDetalleProducto']['nombre'],
+						'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
+						'cantidad_pendiente_entrega' => (int) $item['cantidad_pendiente_entrega'],
+						'cantidad_reservada' => (int) $item['cantidad_reservada'],
+						'cantidad_a_emabalar' => $emp['cantidad_a_embalar'] - $emp['cantidad_embalada'],
+						'imagen' => Hash::extract($imagen, '{n}[principal=1].url')[0],
+						'peso' => $pbodega['ProductoWarehouse']['peso'],
+						'ancho' => $pbodega['ProductoWarehouse']['ancho'],
+						'largo' => $pbodega['ProductoWarehouse']['largo'],
+						'alto' => $pbodega['ProductoWarehouse']['alto']
+					);
+				}
+
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['peso'] = $pbodega['ProductoWarehouse']['peso'];
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['alto'] = $pbodega['ProductoWarehouse']['alto'];
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['ancho'] = $pbodega['ProductoWarehouse']['ancho'];
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['largo'] = $pbodega['ProductoWarehouse']['largo'];
+			}
+		}
+
+		if (empty($respuesta['body']['itemes']))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Venta no disponible para procesar'
 			);
 
-			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['peso'] = $pbodega['ProductoWarehouse']['peso'];
-			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['alto'] = $pbodega['ProductoWarehouse']['alto'];
-			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['ancho'] = $pbodega['ProductoWarehouse']['ancho'];
-			$venta['VentaDetalle'][$i]['VentaDetalleProducto']['largo'] = $pbodega['ProductoWarehouse']['largo'];
-			
+			throw new CakeException($response);
 		}
 		
 		# bultos 
@@ -11019,7 +11051,7 @@ class VentasController extends AppController {
 				)
 			));
 		}
-
+		
 		if ($this->Venta->save($venta))
 		{	
 
@@ -11033,6 +11065,13 @@ class VentasController extends AppController {
 					'modulo_accion' => sprintf('Se cambia estado picking venta id %d: ', $id, json_encode($this->request->data))
 				)
 			);
+
+			# Generamos la etiqueta externa si corresponde
+			if ($venta['Venta']['picking_estado'] == 'empaquetando')
+			{	
+				$metodo_envios = new MetodoEnviosController();
+				$metodo_envios->generar_etiqueta_envio_externo($id);
+			}
 
 			ClassRegistry::init('Log')->create();
 			ClassRegistry::init('Log')->saveMany($log);
@@ -11428,4 +11467,94 @@ class VentasController extends AppController {
 		$this->redirect($this->referer('/', true));
 	}
 
+
+	public function api_cambiar_estado_desde_warehouse($id)
+	{	
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!isset($this->request->data['estado_venta_id']))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'estado_venta_id es requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos que el estado recibido sea de logistica
+		if (!ClassRegistry::init('VentaEstado')->estado_mueve_bodega($this->request->data['estado_venta_id']))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'estado_venta_id debe ser de tipo logistico'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$tokeninfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+		
+		# Body
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $id
+			)
+		));
+
+		try {
+			$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $this->request->data['estado_venta_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+		} catch (Exception $e) {
+			
+			$response = array(
+				'code'    => 500, 
+				'name' => 'error',
+				'message' => $e->getMessage()
+			);
+
+			throw new CakeException($response);
+		}
+
+		$respuesta = array(
+			'code' => 401,
+			'message' => 'No fue posible cambiar el estado',
+			'body' => array()
+		);
+
+		if ($cambiar_estado) 
+		{
+			$respuesta = array(
+				'code' => 200,
+				'message' => 'Estado actualizado con éxito',
+				'body' => array()
+			);
+		}
+
+		$this->set(array(
+            'response' => $respuesta,
+            '_serialize' => array('response')
+		));
+	}
 }

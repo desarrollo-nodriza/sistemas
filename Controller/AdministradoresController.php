@@ -49,6 +49,18 @@ class AdministradoresController extends AppController
 					$this->Session->setFlash('Su tienda principal es ' . $tiendaPrincipal['Tienda']['nombre'], null, array(), 'success');
 					$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
 					$this->Session->write('Auth.Administrador.token', $token);
+
+					# Asignamos el rol
+					$rol = ClassRegistry::init('Rol')->find('first', array(
+						'conditions' => array(
+							'Rol.id' => $this->Session->read('Auth.Administrador.rol_id')
+						)	
+					));
+
+					if (!empty($rol))
+					{
+						$this->Session->write('Auth.Administrador.Rol', $rol['Rol']);
+					}
 				}
 
 				$this->Session->delete('Google.token');
@@ -233,6 +245,18 @@ class AdministradoresController extends AppController
 					$this->Session->write('Tienda', $tiendaPrincipal['Tienda']);
 
 					$this->Session->write('Auth.Administrador.token', $token);
+
+					# Asignamos el rol
+					$rol = ClassRegistry::init('Rol')->find('first', array(
+						'conditions' => array(
+							'Rol.id' => $this->Session->read('Auth.Administrador.rol_id')
+						)	
+					));
+
+					if (!empty($rol))
+					{
+						$this->Session->write('Auth.Administrador.Rol', $rol['Rol']);
+					}
 				}
 
 				$this->Session->delete('Google.token');
@@ -302,6 +326,18 @@ class AdministradoresController extends AppController
 					$this->Session->write('Auth.Administrador.g_token', $this->request->data['Administrador']['login_externo']);
 					
 					$this->Session->write('Auth.Administrador.Google', $logeado['user']);
+
+					# Asignamos el rol
+					$rol = ClassRegistry::init('Rol')->find('first', array(
+						'conditions' => array(
+							'Rol.id' => $this->Session->read('Auth.Administrador.rol_id')
+						)	
+					));
+
+					if (!empty($rol))
+					{
+						$this->Session->write('Auth.Administrador.Rol', $rol['Rol']);
+					}
 
 					$this->redirect($this->Auth->redirectUrl());
 				}
@@ -603,6 +639,9 @@ class AdministradoresController extends AppController
 
     		# Crear Token
     		$tokeninterno = ClassRegistry::init('Token')->crear_token($usuario['Administrador']['id'], null, 8760);
+
+			# Se agrega id del usuario
+			$logeado['user']['administrador_id'] = $usuario['Administrador']['id'];
 
     		$this->set(array(
 	            'response' => array(

@@ -3019,6 +3019,18 @@ class VentaDetalleProductosController extends AppController
 
 		$producto['VentaDetalleProducto']['tiempo_entrega'] = $this->VentaDetalleProducto->obtener_tiempo_entrega($id);
 
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+			'apiurl_prestashop',
+			'apikey_prestashop'
+		));
+
+		# Cargamos componente prestashop para obtener info del produto desde toolmania
+		$this->Prestashop = $this->Components->load('Prestashop');
+		$this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
+
+		# Se obtiene imagen desde prestashop
+		$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($id, $tienda['Tienda']['apiurl_prestashop']);
+		$producto['VentaDetalleProducto']['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
 
         $this->set(array(
             'producto' => $producto['VentaDetalleProducto'],

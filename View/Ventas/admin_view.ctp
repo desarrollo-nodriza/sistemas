@@ -24,6 +24,10 @@
 
 					<li><a href="#tab-estados" data-toggle="tab"><i class="fa fa-list"></i> Historial de estados</a></li>
 			    	
+					<? if (!empty($venta['EmbalajeWarehouse'])) : ?>
+						<li><a href="#tab-embalajes" data-toggle="tab"><i class="fa fa-cube"></i> Embalajes</a></li>
+					<? endif; ?>
+
 			    </ul>
 
 			    <div class="tab-content">
@@ -359,9 +363,13 @@
 																							<table class="table table-bordered">
 																								<th>Cantidad validada en proveedor</th>
 																								<th>Comentario del proveedor</th>
+																								<th>Fecha validada por proveedor</th>
+																								<th>Ir a Orden de Compra</th>
 																								<tr>
 																									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor']; ?></td>
 																									<td><?=$ocp['OrdenComprasVentaDetalleProducto']['nota_proveedor']; ?></td>
+																									<td><?=$oc['fecha_validado_proveedor']; ?></td>
+																									<td><?= $this->Html->link('<i class="fa fa-eye"></i> Ver OC', array('controller' => 'ordenCompras', 'action' => 'view',$oc['OrdenComprasVenta']['orden_compra_id']), array('class' => 'btn btn-success btn-xs btn-block', 'data-toggle' => 'tooltip', 'title' => 'Ver orden de compra', 'escape' => false, 'target' => '_blank')); ?></td>
 																								</tr>
 																							</table>
 																						</div>
@@ -382,7 +390,7 @@
 															<? endif; ?>
 
 															<? if ($permisos['storage'] && $detalle['cantidad_reservada'] > 0 ) : ?>
-																<?=$this->Html->link('<i class="fa fa-ban"></i> Liberar', array('action' => 'liberar_stock_reservado', $venta['Venta']['id'], $detalle['id'], $detalle['cantidad_reservada']), array('class' => 'btn btn-warning btn-block btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Liberar stock'))?>
+																<?= $this->element('ventas/liberar-stock', array('venta' => $venta, 'detalle' => $detalle)); ?>
 															<? endif; ?>
 
 															<? if ($permisos['storage'] && $detalle['cantidad_en_espera'] > 0 ) : ?>
@@ -1222,6 +1230,66 @@
 						</div>
 						
 					</div>
+
+					<? if ($venta['EmbalajeWarehouse']) : ?>
+						<div class="tab-pane panel-body" id="tab-embalajes">
+						
+						<div class="table-responsive">
+							<table class="table table-bordered">
+								<caption>Embalajes de la venta.</caption>
+								<th>ID</th>
+								<th>Estado</th>
+								<th>Bodega</th>
+								<th>Fecha creación</th>
+								<th>Fecha listo para embalar</th>
+								<th>Fecha preparación</th>
+								<th>Fecha finalizado</th>
+								<th></th>
+								<tbody>
+								<? foreach ($venta['EmbalajeWarehouse'] as $im => $em) : ?>
+									<tr>
+										<td><?= $em['id']; ?></td>
+										<td><?= $em['estado']; ?></td>
+										<td><?= $em['Bodega']['nombre']; ?></td>
+										<td><?= $em['fecha_creacion']; ?></td>
+										<td><?= $em['fecha_listo_para_embalar']; ?></td>
+										<td><?= $em['fecha_procesando']; ?></td>
+										<td><?= $em['fecha_finalizado']; ?></td>
+										<td><button class="btn btn-xs btn-block btn-primary btn-expandir-venta" data-toggle="collapse" data-target="#accordion-embalaje-<?=$em['id']; ?>"><i class="fa fa-expand"></i> Productos</button></td>
+									</tr>
+									<tr>
+										<td colspan="8">
+											<div id="accordion-embalaje-<?=$em['id']; ?>" class="collapse">
+												<div class="table-responsive">
+													<table class="table table-bordered">
+														<th>Producto</th>
+														<th>Cantidad para embalar</th>
+														<th>Cantidad embalada</th>
+														<th>Última modificación</th>
+														<tbody>
+														<? foreach ($em['EmbalajeProductoWarehouse'] as $iemp => $emp) : ?>
+														<tr>
+															<td><?= $emp['VentaDetalleProducto']['nombre'];?></td>
+															<td><?= $emp['cantidad_a_embalar']; ?></td>
+															<td><?= $emp['cantidad_embalada']; ?></td>
+															<td><?= $emp['ultima_modifacion']; ?></td>
+														</tr>
+														<? endforeach; ?>
+														</tbody>
+													</table>
+												</div>
+											</div>
+										</td>
+									</tr>
+								<? endforeach; ?>
+								</tbody>
+
+							</table>
+						</div>
+						
+					</div>
+					<? endif; ?>
+
 			    </div>
 
 			</div>
