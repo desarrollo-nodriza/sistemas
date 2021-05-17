@@ -187,7 +187,8 @@ Class EmbalajeWarehouse extends AppModel {
 				'Venta.fecha_venta',
 				'Venta.venta_estado_id',
 				'Venta.administrador_id',
-				'Venta.picking_estado'
+				'Venta.picking_estado',
+				'Venta.prioritario'
 			)
 		));
 
@@ -239,6 +240,7 @@ Class EmbalajeWarehouse extends AppModel {
 						'marketplace_id' => $venta['Venta']['marketplace_id'],
 						'comuna_id' => $venta['Venta']['comuna_id'],
 						'venta_estado_id' => '',
+						'prioritario' => ($venta['Venta']['prioritario']) ? 1 : 0,
 						'fecha_venta' => $venta['Venta']['fecha_venta'],
 						'fecha_creacion' => date('Y-m-d H:i:s'),
 						'fecha_listo_para_embalar' => date('Y-m-d H:i:s'),
@@ -246,7 +248,7 @@ Class EmbalajeWarehouse extends AppModel {
 					),
 					'EmbalajeProductoWarehouse' => array()
 				);
-				
+
 				# Asignamos los productos al embalaje
 				foreach ($venta['VentaDetalle'] as $ivd => $d) 
 				{	

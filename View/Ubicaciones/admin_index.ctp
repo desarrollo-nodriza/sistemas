@@ -11,8 +11,11 @@
 						<div class="btn-group pull-right">
 						<? if ($permisos['add']) : ?>
 							<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Ubicacion', array('action' => 'add'), array('class' => 'btn btn-success', 'escape' => false)); ?>
+							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Creación masiva', array('action' => 'creacion_masiva'), array('class' => 'btn btn-danger', 'escape' => false)); ?>
 						<? endif; ?>
-							<!-- <?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', array('action' => 'exportar'), array('class' => 'btn btn-primary', 'escape' => false)); ?> -->
+							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', array('action' => 'exportar'), array('class' => 'btn btn-primary', 'escape' => false)); ?>
+							
+							<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Generar QRs', array('action' => 'crear_etiqueta_qr'), array('class' => 'btn btn-info', 'escape' => false)); ?>
 						</div>
 					</div>
 					<div class="panel-body">
