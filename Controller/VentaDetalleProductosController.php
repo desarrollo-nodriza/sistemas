@@ -3592,4 +3592,113 @@ class VentaDetalleProductosController extends AppController
 	    ));
 	}
 
+	public function api_view_by_reference2() {
+    	
+		# Solo método POST
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
+			);
+
+			throw new CakeException($response);
+		}
+
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos los campo
+		
+        if (!isset($this->request->data['sku']))
+        {
+            $response = array(
+				'code'    => 401, 
+				'message' => 'sku es requerido'
+			);
+
+			throw new CakeException($response);
+        }
+
+		$producto = $this->VentaDetalleProducto->find('first', array(
+			'conditions' => array(
+				'VentaDetalleProducto.codigo_proveedor' => $this->request->data['sku']
+			)
+		));
+
+		if(empty($producto))
+		{
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Producto not found'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		$producto['VentaDetalleProducto']['stock_enbodega'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
+
+		if (isset($this->request->query['external'])) {
+
+			$canales = $this->verificar_canales($producto['VentaDetalleProducto']['id_externo']);
+
+			foreach ($canales as $ic => $canal) {
+				foreach ($canal as $i => $c) {
+
+					if (!$c['existe'])
+						continue;
+
+					$producto['VentaDetalleProducto'][$ic][$c['nombre']] = array(
+						'precio_venta'     => $c['item']['precio'],
+						'stock_disponible' => $c['item']['stock_disponible'],
+						'estado'           => $c['item']['estado']
+					);
+
+				}
+			}
+
+		}
+
+		# Etiqueta sec
+		if (!empty($producto['VentaDetalleProducto']['qr_sec'])) {
+			
+			$url_sec = obtener_url_base() . 'webroot/img/VentaDetalleProducto/' . $producto['VentaDetalleProducto']['qr_sec'];
+			$producto['VentaDetalleProducto']['qr_sec'] = $url_sec;
+
+		}
+
+		$producto['VentaDetalleProducto']['tiempo_entrega'] = $this->VentaDetalleProducto->obtener_tiempo_entrega($producto['VentaDetalleProducto']['id']);
+
+
+        $this->set(array(
+            'producto' => $producto['VentaDetalleProducto'],
+            '_serialize' => array('producto')
+        ));
+			
+    }
+
 }
