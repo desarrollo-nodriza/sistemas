@@ -1,6 +1,7 @@
 <?php
 
 App::uses('AppController', 'Controller');
+App::import('Vendor', 'PhpSpreadsheet', array('file' => 'PhpSpreadsheet/vendor/autoload.php'));
 
 class ZonasController extends AppController
 {
@@ -110,4 +111,5 @@ class ZonasController extends AppController
 
 		$this->set(compact('zona','bodegas','tipos'));
 	}
+
 }
