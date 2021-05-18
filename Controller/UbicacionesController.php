@@ -522,8 +522,8 @@ class UbicacionesController extends AppController
 			$ii++;
 		}
 
-		if (!is_dir(APP . 'webroot' . DS. 'Ubicaciones' . DS . 'Masivo')) {
-			@mkdir(APP . 'webroot' . DS. 'Ubicaciones' . DS . 'Masivo', 0775);
+		if (!is_dir(APP . 'webroot' . DS. 'Pdf' .DS. 'Ubicacion' . DS . 'Masivo')) {
+			@mkdir(APP . 'webroot' . DS. 'Pdf' .DS. 'Ubicacion' . DS . 'Masivo', 0775);
 		}
 
 		# Se procesan por Lotes de 500 documentos para no volcar la memoria
@@ -536,9 +536,9 @@ class UbicacionesController extends AppController
 				
 				$pdfname = 'documentos-' . date('YmdHis') .'.pdf';
 
-				$res = $pdf->merge('file', APP . 'webroot' . DS. 'Ubicaciones' . DS . 'Masivo' . DS . $pdfname);
+				$res = $pdf->merge('file', APP . 'webroot' . DS. 'Pdf' .DS. 'Ubicacion' . DS . 'Masivo' . DS . $pdfname);
 				if ($res) {
-					$resultados['result'][]['document'] = Router::url('/', true) . 'Ubicaciones/' . 'Masivo' . '/' . $pdfname;
+					$resultados['result'][]['document'] = Router::url('/', true) . 'Pdf/Ubicacion/' . 'Masivo' . '/' . $pdfname;
 				}
 
 			} catch (Exception $e) {
