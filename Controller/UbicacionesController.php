@@ -343,6 +343,8 @@ class UbicacionesController extends AppController
 
 	public function admin_crear_etiqueta_qr()
 	{	
+		ini_set('max_execution_time', 0);
+		ini_set('memory_limit', -1);
 
 		$ubicaciones = $this->Ubicacion->find('all', array(
 			'conditions' => array(
