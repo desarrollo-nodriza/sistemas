@@ -110,10 +110,22 @@
 
 			<div class="panel panel-default">
 
+				<?  $export = array(
+						'action' => 'export_specials'
+					);
+
+				if (isset($this->request->params['named'])) {
+					$export = array_replace_recursive($export, $this->request->params['named']);
+				}?>
+
 				<div class="panel-heading">
 
 					<h3 class="panel-title">Listado de Ventas con observaciones</h3>
-					
+					 
+					<div class="btn-group pull-right">
+						<?= $this->Html->link( $this->Paginator->counter('<i class="fa fa-file-excel-o"></i> Exportar ({:count}) ventas'), $export, array('class' => 'btn btn-danger', 'escape' => false)); ?>
+					</div>
+
 				</div>
 
 				<div class="panel-body">

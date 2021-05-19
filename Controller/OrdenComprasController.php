@@ -3173,7 +3173,7 @@ class OrdenComprasController extends AppController
 			$response = array(
 				'code'    => 404, 
 				'name' => 'error',
-				'message' => 'Venta no encontrada'
+				'message' => 'OC no encontrada'
 			);
 
 			throw new CakeException($response);
@@ -3181,7 +3181,12 @@ class OrdenComprasController extends AppController
 
 		$oc = $this->OrdenCompra->find('first', array(
 			'conditions' => array(
-				'OrdenCompra.id' => $id
+				'OrdenCompra.id' => $id,
+				'OrdenCompra.estado' => array(
+					'espera_recepcion',
+					'recepcion_incompleta',
+					'espera_dte'
+				)
 			),
 			'contain' => array(
 				'Tienda' => array(
@@ -3194,6 +3199,17 @@ class OrdenComprasController extends AppController
 				'OrdenComprasVentaDetalleProducto'
 			)
 		));
+
+		if (empty($oc))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'La OC no está disponible para recepcionar'
+			);
+
+			throw new CakeException($response);
+		}
 		
 		$this->Prestashop = $this->Components->load('Prestashop');
 
@@ -3221,6 +3237,7 @@ class OrdenComprasController extends AppController
 			$descuentoOC = round(obtener_descuento_monto($oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'], $oc['OrdenCompra']['descuento']), 0);
 			
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final'] = $oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC;
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final_neto'] = monto_neto($oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC, null, 0);
 
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse'] = $pLocal['VentaDetalleProducto'];
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
