@@ -3925,6 +3925,183 @@ class VentasController extends AppController {
 	}
 
 
+	public function admin_export_specials()
+	{	
+		set_time_limit(0);
+		ini_set('memory_limit', '-1');
+
+		$ids = $this->Venta->obtener_ventas_productos_retraso_ids();
+
+		$condiciones = array(
+			'Venta.id' => $ids
+		);
+
+		$joins = array();
+
+		// Filtrado de ordenes por formulario
+		if ( $this->request->is('post') ) {
+			$this->filtrar('ventas', 'export_specials');
+		}
+
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'ide':
+
+						$id = trim($valor);
+
+						if ($id != "") {
+
+							$condiciones = array();
+
+							$condiciones["OR"] = array(
+								"Venta.id"         => $id,
+								"Venta.id_externo"         => $id,
+								"Venta.referencia" => $id
+							);
+							
+						}
+
+						break;
+					case 'picking':
+
+							$estado = trim($valor);
+	
+							$condiciones['Venta.picking_estado'] = $estado;
+	
+							break;
+					case 'cliente_email':
+
+						$email = trim($valor);
+
+						$joins[] = array(
+							'table' => 'rp_venta_clientes',
+							'alias' => 'vc',
+							'type' => 'INNER',
+							'conditions' => array(
+								'vc.id = Venta.venta_cliente_id',
+								'OR' => array(
+									"vc.nombre LIKE '%" .$email. "%'",
+									"vc.apellido LIKE '%" .$email. "%'",
+									"vc.rut LIKE '%" .$email. "%'",
+									"vc.email LIKE '%" .$email. "%'",
+									"vc.telefono LIKE '%" .$email. "%'"
+								)
+							)
+						);
+
+						break;
+					case 'mensaje':
+						
+						if ($valor == 'cancelar')
+						{
+							$joins[] = array(
+								'table' => 'rp_mensajes',
+								'alias' => 'mj',
+								'type' => 'INNER',
+								'conditions' => array(
+									'mj.venta_id = Venta.id',
+									'mj.origen' => 'cliente',
+									'mj.mensaje' => '(auto-atención) Cliente solicita cancelar la venta.' 
+								)
+							);
+						}
+
+						if ($valor == 'procesar')
+						{
+							$joins[] = array(
+								'table' => 'rp_mensajes',
+								'alias' => 'mj',
+								'type' => 'INNER',
+								'conditions' => array(
+									'mj.venta_id = Venta.id',
+									'mj.origen' => 'cliente',
+									'mj.mensaje' => '(auto-atención) Cliente solicita devolución del dinero del/los productos con stockout y que se le envien el/los productos con existencias.' 
+								)
+							);
+						}
+
+						if ($valor == 'cambio')
+						{
+							$joins[] = array(
+								'table' => 'rp_mensajes',
+								'alias' => 'mj',
+								'type' => 'INNER',
+								'conditions' => array(
+									'mj.venta_id = Venta.id',
+									'mj.origen' => 'cliente',
+									'mj.mensaje' => '(auto-atención) Cliente solicita cambio del/los productos con stockout, llamarlo y ofrecerle una alternativa.' 
+								)
+							);
+						}
+
+						if ($valor == 'no-auto')
+						{
+							$joins[] = array(
+								'table' => 'rp_mensajes',
+								'alias' => 'mj',
+								'type' => 'LEFT',
+								'conditions' => array(
+									'mj.venta_id = Venta.id',
+									'mj.origen' => 'cliente',
+								)
+							);
+
+							$condiciones['mj.id'] = null;
+						}
+
+						break;
+					case 'fecha_desde':
+						$FiltroFechaDesde = trim($valor);
+
+						if ($FiltroFechaDesde != "") {
+
+							$ArrayFecha = explode("-", $FiltroFechaDesde);
+
+							$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
+
+							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 00:00:00"));
+
+							$condiciones["Venta.fecha_venta >="] = $Fecha;
+
+						}
+						break;
+					case 'fecha_hasta':
+						$FiltroFechaHasta = trim($valor);
+
+						if ($FiltroFechaHasta != "") {
+
+							$ArrayFecha = explode("-", $FiltroFechaHasta);
+
+							$Fecha = $ArrayFecha[2]. "-" .$ArrayFecha[1]. "-" .$ArrayFecha[0];
+
+							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 23:59:59"));
+
+							$condiciones["Venta.fecha_venta <="] = $Fecha;
+
+						} 
+						break;
+				}
+			}
+		}
+
+		$qry = array(
+			'recursive' => -1,
+			'order' => array('Venta.fecha_venta' => 'DESC'),
+			'conditions' => $condiciones,
+			'joins' => $joins,
+			'group' => 'Venta.id'
+		);
+	
+		$datos = $this->Venta->find('all', $qry);
+
+		$campos			= array_keys($this->Venta->_schema);
+
+		$this->set(compact('datos', 'campos'));
+
+	}
+
+
 	/**
 	 * Intenta reservar el stock a la ventas más antiguas primero
 	 * @return void
