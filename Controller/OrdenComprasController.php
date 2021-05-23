@@ -3247,7 +3247,7 @@ class OrdenComprasController extends AppController
 			
 
 			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $oc['Tienda']['apiurl_prestashop']);
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : '';
 
 			if (!empty($pbodega))
 			{
