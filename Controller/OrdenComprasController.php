@@ -3231,6 +3231,13 @@ class OrdenComprasController extends AppController
 				)
 			));
 
+			# No esta validada, se elimina
+			if ($d['cantidad_validada_proveedor'] == 0)
+			{
+				unset($oc['OrdenComprasVentaDetalleProducto'][$iv]);
+				continue;
+			}
+
 			# Precio final
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
 			
@@ -3872,6 +3879,13 @@ class OrdenComprasController extends AppController
 						'id' => $d['venta_detalle_producto_id']
 					)
 				));
+
+				# No valida proveedor
+				if ($d['cantidad_validada_proveedor'] == 0)
+				{
+					unset($ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]);
+					continue;
+				}
 
 				# Precio final
 				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
