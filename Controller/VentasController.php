@@ -11644,7 +11644,13 @@ class VentasController extends AppController {
 		$this->redirect($this->referer('/', true));
 	}
 
-
+	
+	/**
+	 * api_cambiar_estado_desde_warehouse
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
 	public function api_cambiar_estado_desde_warehouse($id)
 	{	
 		# Existe token
@@ -11733,5 +11739,36 @@ class VentasController extends AppController {
             'response' => $respuesta,
             '_serialize' => array('response')
 		));
+	}
+
+	
+	/**
+	 * admin_crear_embalaje_masivo
+	 *
+	 * @return void
+	 */
+	public function admin_crear_embalaje_masivo()
+	{
+		$ventas = $this->Venta->find('all', array(
+			'conditions' => array(
+				'Venta.picking_estado' => 'empaquetar'
+			),
+			'fields' => array(
+				'Venta.id'
+			)
+		));
+
+		$procesadas = 0;
+
+		foreach ($ventas as $v) 
+		{
+			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($v['Venta']['id']);
+			
+			$procesadas++;
+		
+		}
+
+		$this->Session->setFlash(sprintf('%d ventas procesadas', $procesadas), null, array(), 'success');
+		$this->redirect($this->referer('/', true));
 	}
 }
