@@ -196,31 +196,56 @@ class VentaDetalleProducto extends AppModel
 	 */
 	public function beforeSave($options = array())
 	{
-		# Guardamos en el otro modelo espejo
-		$campos = array_keys(ClassRegistry::init('ProductoWarehouse')->schema());
 		
-		$productoWarehouse = array();
+	}
 
-		foreach ($campos as $col)
+	public function afterSave($created, $options = array())
+	{
+		$item = $this->find('first', array(
+			'conditions' => array(
+				'id' => $this->data['VentaDetalleProducto']['id']
+			)
+		));
+
+		$productoWarehouse = array(
+			'ProductoWarehouse' => array(
+				'id' => $item['VentaDetalleProducto']['id'],
+				'marca_id' => $item['VentaDetalleProducto']['marca_id'],
+				'nombre' => $item['VentaDetalleProducto']['nombre'],
+				'nombre_corto' => strtolower(Inflector::slug($item['VentaDetalleProducto']['nombre'], '-')),
+				'cantidad_virtual' => $item['VentaDetalleProducto']['cantidad_virtual'],
+				'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
+				'peso' => $item['VentaDetalleProducto']['peso'],
+				'alto' => $item['VentaDetalleProducto']['alto'],
+				'ancho' => $item['VentaDetalleProducto']['ancho'],
+				'largo' => $item['VentaDetalleProducto']['largo'],
+				'qr_sec' => $item['VentaDetalleProducto']['qr_sec'],
+				'activo' => $item['VentaDetalleProducto']['activo'],
+				'fecha_creacion' => $item['VentaDetalleProducto']['created'],
+				'ultima_modifacion' => $item['VentaDetalleProducto']['modified']
+			)
+		);
+
+		foreach ($this->data['VentaDetalleProducto'] as $index => $val)
 		{	
-			if (isset($this->data['VentaDetalleProducto'][$col]))
+			
+			if ($index == 'cod_barra')
 			{
-				$productoWarehouse = array_replace_recursive($productoWarehouse, array(
-					$col => $this->data['VentaDetalleProducto'][$col]
-				));
+				$productoWarehouse['ProductoWarehouse']['cod_barra'] = trim($val);
 			}
+
+			if ($index == 'permitir_ingreso_sin_barra')
+			{
+				$productoWarehouse['ProductoWarehouse']['permitir_ingreso_sin_barra'] = $val;
+			}
+
 		}
 
 		# Guardamos
 		if (!empty($productoWarehouse))
 		{	
-			/*ClassRegistry::init('ProductoWarehouse')->save(
-				array(
-					'ProductoWarehouse' => $productoWarehouse
-				)
-			);*/
+			ClassRegistry::init('ProductoWarehouse')->save($productoWarehouse);
 		}
-
 	}
 
 	
