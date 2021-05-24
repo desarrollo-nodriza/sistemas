@@ -409,6 +409,65 @@ class UbicacionesController extends AppController
 	}
 
 
+	public function admin_qr_ubicacion($ubicacion_id)
+	{
+		if (!$this->Ubicacion->exists($ubicacion_id))
+		{
+			$this->Session->setFlash('No existe la ubicación indicada.', null, array(), 'warning');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$ubicacion = $this->Ubicacion->find('first', array(
+			'conditions' => array(
+				'Ubicacion.id' => $ubicacion_id
+			),
+			'contain' => array(
+				'Zona' => array(
+					'Bodega' => array(
+						'fields' => array(
+							'Bodega.id',
+							'Bodega.nombre'
+						)
+					),
+					'fields' => array(
+						'Zona.id',
+						'Zona.nombre'
+					)
+				)
+			),
+			'fields' => array(
+				'Ubicacion.id',
+				'Ubicacion.fila',
+				'Ubicacion.columna'
+			)
+		));
+
+		$this->pdfConfig = array(
+			'download' => false,
+			'filename' => 'ubicacion_' . $ubicacion_id .'.pdf'
+		);
+		
+		$tamano = '500x500';
+
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+			'id',
+			'logo'
+		));
+
+		# Creamos la etiqueta de despacho interna
+		$logo = FULL_BASE_URL . '/webroot/img/' . $tienda['Tienda']['logo']['path'] ;
+
+		$this->set(compact('ubicacion', 'tamano', 'logo'));
+
+	}
+
+	
+	/**
+	 * crear_etiqueta_qr
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
 	public function crear_etiqueta_qr($id)
 	{
 		if (!$this->Ubicacion->exists($id))
