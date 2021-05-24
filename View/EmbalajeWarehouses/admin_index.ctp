@@ -100,6 +100,8 @@
 							if (isset($this->request->params['named'])) {
 								$export = array_replace_recursive($export, $this->request->params['named']);
 							}?>
+
+							<?= $this->Html->link('<i class="fa fa-cubes"></i> Creación masiva de embalajes', array('controller' => 'ventas', 'action' => 'crear_embalaje_masivo'), array('class' => 'btn btn-danger start-loading-then-redirect', 'escape' => false)); ?>
 							<!--<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>-->
 						</div>
 					</div>
