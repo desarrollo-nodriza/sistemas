@@ -3864,7 +3864,9 @@ class OrdenComprasController extends AppController
 
 
 		foreach($ocs as $i => $oc)
-		{
+		{	
+			$productos = array();
+
 			foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iv => $d) 
 			{	
 				// Producto
@@ -3883,35 +3885,40 @@ class OrdenComprasController extends AppController
 				# No valida proveedor
 				if ($d['cantidad_validada_proveedor'] == 0)
 				{
-					unset($ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]);
 					continue;
 				}
 
-				# Precio final
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
-				
-				$descuentoOC = round(obtener_descuento_monto($ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'], $ocs[$i]['OrdenCompra']['descuento']), 0);
-				
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final'] = $ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC;
-
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse'] = $pLocal['VentaDetalleProducto'];
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = '';
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = 0;
-				
-				
-
 				$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $ocs[$i]['Tienda']['apiurl_prestashop']);
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
+
+				$pWarehouse = $pLocal['VentaDetalleProducto'];
+				$pWarehouse['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
+				$pWarehouse['cod_barra'] = '';
+				$pWarehouse['permitir_ingreso_sin_barra'] = 0;
+				$pWarehouse['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
 
 				if (!empty($pbodega))
 				{
-					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pbodega['ProductoWarehouse']['sku'];
-					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
-					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = $pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra'];
+					$pWarehouse['sku'] = $pbodega['ProductoWarehouse']['sku'];
+					$pWarehouse['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
+					$pWarehouse['permitir_ingreso_sin_barra'] = $pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra'];
 				}
 
+				$precioBruto = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
+				$descuentoOC = round(obtener_descuento_monto($precioBruto, $ocs[$i]['OrdenCompra']['descuento']), 0);
+
+				# Asignamos a la variable p el contenido de d
+				$p = $d;
+				$p = array_replace_recursive($p, array(
+					'precio_unitario_bruto' => $precioBruto,
+					'precio_unitario_final' => $precioBruto - $descuentoOC,
+					'ProductoWarehouse' => $pWarehouse
+				));
+
+				$productos[] = $p;
+
 			}
+
+			$ocs[$i]['OrdenComprasVentaDetalleProducto'] = $productos;
 		}
 
 		$response = array(
