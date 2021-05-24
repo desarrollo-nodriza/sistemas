@@ -1433,11 +1433,18 @@ class VentaDetalleProductosController extends AppController
 		$this->Prestashop->crearCliente($this->Session->read('Tienda.apiurl_prestashop'), $this->Session->read('Tienda.apikey_prestashop'));
 		$imagenes = $this->Prestashop->prestashop_obtener_imagenes_producto($id);
 
+		# Producto warehouse
+		$productoWarehouse = ClassRegistry::init('ProductoWarehouse')->find('first', array(
+			'conditions' => array(
+				'id' => $id
+			)
+		));
+
 		
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos');
 		BreadcrumbComponent::add('Editar');
 
-		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes'));
+		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes', 'productoWarehouse'));
 	}
 
 
