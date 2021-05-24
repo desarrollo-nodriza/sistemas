@@ -42,6 +42,7 @@
 										<td><?= ($ubicacion['Ubicacion']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 										<td><?= h($ubicacion['Ubicacion']['fecha_creacion']); ?>&nbsp;</td>
 										<td>
+										<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Generar Qr', array('action' => 'qr_ubicacion', $ubicacion['Ubicacion']['id'], 'ext' => 'pdf'), array('class' => 'btn btn-xs btn-primary', 'rel' => 'tooltip', 'title' => 'EGenerar qr', 'escape' => false, 'target' => '_blank')); ?>
 										<? if ($permisos['edit']) : ?>
 											<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $ubicacion['Ubicacion']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
 										<? endif; ?>
