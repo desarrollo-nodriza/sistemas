@@ -3893,7 +3893,7 @@ class OrdenComprasController extends AppController
 				$pWarehouse = $pLocal['VentaDetalleProducto'];
 				$pWarehouse['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
 				$pWarehouse['cod_barra'] = '';
-				$pWarehouse['permitir_ingreso_sin_barra'] = 0;
+				$pWarehouse['permitir_ingreso_sin_barra'] = false;
 				$pWarehouse['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
 
 				if (!empty($pbodega))
