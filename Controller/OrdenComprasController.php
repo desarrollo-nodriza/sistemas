@@ -3249,7 +3249,7 @@ class OrdenComprasController extends AppController
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse'] = $pLocal['VentaDetalleProducto'];
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = '';
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = 0;
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = false;
 			
 			
 
@@ -3260,7 +3260,7 @@ class OrdenComprasController extends AppController
 			{
 				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pbodega['ProductoWarehouse']['sku'];
 				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
-				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = $pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra'];
+				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = ($pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra']) ? true : false;
 			}
 
 		}
@@ -3900,7 +3900,7 @@ class OrdenComprasController extends AppController
 				{
 					$pWarehouse['sku'] = $pbodega['ProductoWarehouse']['sku'];
 					$pWarehouse['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
-					$pWarehouse['permitir_ingreso_sin_barra'] = $pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra'];
+					$pWarehouse['permitir_ingreso_sin_barra'] = ($pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra']) ? true : false;
 				}
 
 				$precioBruto = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
