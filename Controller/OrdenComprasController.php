@@ -3173,7 +3173,7 @@ class OrdenComprasController extends AppController
 			$response = array(
 				'code'    => 404, 
 				'name' => 'error',
-				'message' => 'Venta no encontrada'
+				'message' => 'OC no encontrada'
 			);
 
 			throw new CakeException($response);
@@ -3181,7 +3181,12 @@ class OrdenComprasController extends AppController
 
 		$oc = $this->OrdenCompra->find('first', array(
 			'conditions' => array(
-				'OrdenCompra.id' => $id
+				'OrdenCompra.id' => $id,
+				'OrdenCompra.estado' => array(
+					'espera_recepcion',
+					'recepcion_incompleta',
+					'espera_dte'
+				)
 			),
 			'contain' => array(
 				'Tienda' => array(
@@ -3194,6 +3199,17 @@ class OrdenComprasController extends AppController
 				'OrdenComprasVentaDetalleProducto'
 			)
 		));
+
+		if (empty($oc))
+		{
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'La OC no está disponible para recepcionar'
+			);
+
+			throw new CakeException($response);
+		}
 		
 		$this->Prestashop = $this->Components->load('Prestashop');
 
@@ -3215,28 +3231,36 @@ class OrdenComprasController extends AppController
 				)
 			));
 
+			# No esta validada, se elimina
+			if ($d['cantidad_validada_proveedor'] == 0)
+			{
+				unset($oc['OrdenComprasVentaDetalleProducto'][$iv]);
+				continue;
+			}
+
 			# Precio final
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
 			
 			$descuentoOC = round(obtener_descuento_monto($oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'], $oc['OrdenCompra']['descuento']), 0);
 			
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final'] = $oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC;
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final_neto'] = monto_neto($oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC, null, 0);
 
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse'] = $pLocal['VentaDetalleProducto'];
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
 			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = '';
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = 0;
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = false;
 			
 			
 
 			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $oc['Tienda']['apiurl_prestashop']);
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
+			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
 
 			if (!empty($pbodega))
 			{
 				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pbodega['ProductoWarehouse']['sku'];
 				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
-				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = $pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra'];
+				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = ($pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra']) ? true : false;
 			}
 
 		}
@@ -3840,7 +3864,9 @@ class OrdenComprasController extends AppController
 
 
 		foreach($ocs as $i => $oc)
-		{
+		{	
+			$productos = array();
+
 			foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iv => $d) 
 			{	
 				// Producto
@@ -3856,31 +3882,43 @@ class OrdenComprasController extends AppController
 					)
 				));
 
-				# Precio final
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
-				
-				$descuentoOC = round(obtener_descuento_monto($ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'], $ocs[$i]['OrdenCompra']['descuento']), 0);
-				
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final'] = $ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC;
-
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse'] = $pLocal['VentaDetalleProducto'];
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = '';
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = 0;
-				
-				
+				# No valida proveedor
+				if ($d['cantidad_validada_proveedor'] == 0)
+				{
+					continue;
+				}
 
 				$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $ocs[$i]['Tienda']['apiurl_prestashop']);
-				$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['imagen'] = Hash::extract($imagen, '{n}[principal=1].url')[0];
+
+				$pWarehouse = $pLocal['VentaDetalleProducto'];
+				$pWarehouse['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
+				$pWarehouse['cod_barra'] = '';
+				$pWarehouse['permitir_ingreso_sin_barra'] = false;
+				$pWarehouse['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
 
 				if (!empty($pbodega))
 				{
-					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pbodega['ProductoWarehouse']['sku'];
-					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
-					$ocs[$i]['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = $pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra'];
+					$pWarehouse['sku'] = $pbodega['ProductoWarehouse']['sku'];
+					$pWarehouse['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
+					$pWarehouse['permitir_ingreso_sin_barra'] = ($pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra']) ? true : false;
 				}
 
+				$precioBruto = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
+				$descuentoOC = round(obtener_descuento_monto($precioBruto, $ocs[$i]['OrdenCompra']['descuento']), 0);
+
+				# Asignamos a la variable p el contenido de d
+				$p = $d;
+				$p = array_replace_recursive($p, array(
+					'precio_unitario_bruto' => $precioBruto,
+					'precio_unitario_final' => $precioBruto - $descuentoOC,
+					'ProductoWarehouse' => $pWarehouse
+				));
+
+				$productos[] = $p;
+
 			}
+
+			$ocs[$i]['OrdenComprasVentaDetalleProducto'] = $productos;
 		}
 
 		$response = array(

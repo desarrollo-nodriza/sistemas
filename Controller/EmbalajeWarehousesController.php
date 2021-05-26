@@ -412,4 +412,27 @@ class EmbalajeWarehousesController extends AppController
 	
 		$this->redirect(array('action' => 'index'));
 	}
+
+
+	public function admin_prioritario($id, $prioritario = 1)
+	{	
+		$this->EmbalajeWarehouse->id = $id;
+
+		if ( ! $this->EmbalajeWarehouse->exists() )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		if ( $this->EmbalajeWarehouse->saveField('prioritario', $prioritario) )
+		{
+			$this->Session->setFlash('Embalaje actualizado con éxito.', null, array(), 'success');
+		}
+		else
+		{
+			$this->Session->setFlash('No fue posible actualizar el embalaje.', null, array(), 'warning');
+		}
+	
+		$this->redirect($this->referer('/', true));
+	}
 }

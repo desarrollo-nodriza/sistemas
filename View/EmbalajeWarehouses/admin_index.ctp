@@ -100,6 +100,8 @@
 							if (isset($this->request->params['named'])) {
 								$export = array_replace_recursive($export, $this->request->params['named']);
 							}?>
+
+							<?= $this->Html->link('<i class="fa fa-cubes"></i> Creación masiva de embalajes', array('controller' => 'ventas', 'action' => 'crear_embalaje_masivo'), array('class' => 'btn btn-danger start-loading-then-redirect', 'escape' => false)); ?>
 							<!--<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>-->
 						</div>
 					</div>
@@ -134,15 +136,26 @@
 										<td><?= h($embalaje['EmbalajeWarehouse']['fecha_creacion']); ?>&nbsp;</td>
 										
 										<td>
+										<div class="btn-group">
 										<? if ($permisos['view']) : ?>
 											<?= $this->Html->link('<i class="fa fa-eye"></i> Ver', array('action' => 'view', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false)); ?>
 										<? endif; ?>
 										<? if ($permisos['edit'] && $embalaje['EmbalajeWarehouse']['estado'] == 'en_revision') : ?>
 											<?= $this->Html->link('<i class="fa fa-edit"></i> Revisar', array('action' => 'review', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-warning', 'rel' => 'tooltip', 'title' => 'Revisar este registro', 'escape' => false)); ?>
 										<? endif; ?>
+										
+										<? if ($permisos['edit'] && $embalaje['EmbalajeWarehouse']['prioritario']) : ?>
+											<?= $this->Html->link('<i class="fa fa-ban"></i> Urgencia normal', array('action' => 'prioritario', $embalaje['EmbalajeWarehouse']['id'], 0), array('class' => 'btn btn-xs btn-primary', 'rel' => 'tooltip', 'title' => 'Urgencia normal', 'escape' => false)); ?>
+										<? endif; ?>
+
+										<? if ($permisos['edit'] && !$embalaje['EmbalajeWarehouse']['prioritario']) : ?>
+											<?= $this->Html->link('<i class="fa fa-bell"></i> Activar urgencia', array('action' => 'prioritario', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-success', 'rel' => 'tooltip', 'title' => 'Embalaje urgente', 'escape' => false)); ?>
+										<? endif; ?>
+
 										<? if ($permisos['edit'] && in_array($embalaje['EmbalajeWarehouse']['estado'], array('listo_para_embalar', 'procesando', 'en_revision'))) : ?>
 											<?= $this->Html->link('<i class="fa fa-remove"></i> Cancelar', array('action' => 'cancelar', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-danger start-loading-then-redirect', 'escape' => false)); ?>
 										<? endif; ?>
+										</div>
 										</td>
 									</tr>
 									<?php endforeach; ?>
