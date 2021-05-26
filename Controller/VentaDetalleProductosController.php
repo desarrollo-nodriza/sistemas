@@ -14,7 +14,8 @@ class VentaDetalleProductosController extends AppController
 		'Linio',
 		'Prestashop',
 		'MeliMarketplace',
-		'RequestHandler'
+		'RequestHandler',
+		'Onestock'
 	);
 
 	/**
@@ -3700,5 +3701,271 @@ class VentaDetalleProductosController extends AppController
         ));
 			
     }
+
+	public function actualizar_canal_de_venta()
+	{
+		
+		#Obtengo productos desde onestock asociandos a nosotros como cliente
+		$onestock = $this->Components->load('Onestock');
+		$productos = $onestock->obtenerProductosClienteOneStock();
+		
+		if (!isset($productos['ids_con_stock'])) 
+		{
+			return $productos;
+		}
+
+
+		#valido que existan id de productos sin stock
+		$noTieneStock = $this->SinStock($productos);
+		$siTieneStock = $this->ConStock($productos);
+		return ['noTieneStock'=>$noTieneStock,'siTieneStock'=>$siTieneStock];
+
+	}
+
+	public function ConStock($productos)
+	{
+		$siTieneStock 	=[];
+		$actualizar 	=[];
+		if (isset($productos['ids_con_stock'])) {
+			$stock_sistema= [];
+			#obtengo stock de los mismos productos e onestock pero en SISTEMAS
+			foreach ($productos['ids_con_stock'] as $id ) {
+
+				$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
+					'conditions' => array(
+						'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id,
+						'BodegasVentaDetalleProducto.tipo <>' => 'GT'
+					)
+				));
+				
+				$total = 0;
+		
+				if (!empty($historico)) {
+					
+					$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));		
+				}
+				
+				$stock_sistema []=['id'=>$id,"stock"=>$total,"fuente"=>"sistemas"];
+			}
+			
+			
+			
+			#recorro los productos sin stock y verifico que tanto onestock como sistema no tengas stock
+			foreach ($productos['conStock'] as $key => $onestock) {
+				
+				#obtengo último historico de actualización en onestock
+				$historial = ClassRegistry::init('HistorialOnestock')->find('first',
+				[
+					'conditions'=>
+						[
+							'HistorialOnestock.producto_id 	='=>$onestock['id'],
+							'HistorialOnestock.proveedor_id ='=>$onestock['proveedor_id'],
+							
+							
+						],
+					'order' => 
+						[
+							'HistorialOnestock.fecha_modificacion' => 'desc'
+						]
+				]);
+
+				#valido que exista un historio
+				if(count($historial)!=0){
+
+					#si existe y es distito al que trae onestock añado un nuevo historico en sistema y actualizo el stock en los canales de venta
+					if ($onestock['fecha_modificacion'] != $historial['HistorialOnestock']['fecha_modificacion']) {
+						
+
+						#validacion extra para asegurar que efectivamente es un sin stock
+						if ($stock_sistema[$key]['stock'] != 0) {
+							// aqui se manda stock de sistema en canales de ventas
+							$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],$stock_sistema[$key]['stock'],['Linio','Mercadolibre']);
+							$noTieneStock[]=$stock_sistema[$key];
+						}else{
+
+							$data =[
+								'producto_id'			=>$onestock['id'],
+								'proveedor_id'			=>$onestock['proveedor_id'],
+								'stock'					=>$onestock['stock'],
+								'disponible'			=>$onestock['disponible'],
+								'fecha_modificacion'	=>$onestock['fecha_modificacion'],
+							];
+							ClassRegistry::init('HistorialOnestock')->create();
+							ClassRegistry::init('HistorialOnestock')->save($data);
+
+							if ($onestock['stock'] != 0) {
+								// aqui se manda stock de onestock
+								$stock = 5;
+
+								if ($onestock['stock']>1) {
+									$stock = ($onestock['stock']>20)?20:$onestock['stock'];
+								}
+	
+								$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],$stock,['Linio','Mercadolibre']);
+								$siTieneStock[]=
+								[
+									'id'	=>$onestock['id'],
+									'stock'	=>$onestock['stock'],
+									'fuente'=>'onestock',
+								];
+							}
+						}
+						
+					}
+						
+				}
+				else{
+
+					#validacion extra para asegurar que efectivamente es un sin stock
+					if ($stock_sistema[$key]['stock'] != 0) {
+						// aqui se manda stock de sistema
+						$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],$stock_sistema[$key]['stock'],['Linio','Mercadolibre']);
+						$noTieneStock[]=$stock_sistema[$key];
+					}else{
+
+						$data =[
+							'producto_id'			=>$onestock['id'],
+							'proveedor_id'			=>$onestock['proveedor_id'],
+							'stock'					=>$onestock['stock'],
+							'disponible'			=>$onestock['disponible'],
+							'fecha_modificacion'	=>$onestock['fecha_modificacion'],
+						];
+						ClassRegistry::init('HistorialOnestock')->create();
+						ClassRegistry::init('HistorialOnestock')->save($data);
+
+						if ($onestock['stock'] != 0) {
+							// aqui se manda stock de onestock
+							$stock = 5;
+
+							if ($onestock['stock']>1) {
+								$stock = ($onestock['stock']>20)?20:$onestock['stock'];
+							}
+
+							$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],$stock,['Linio','Mercadolibre']);
+							$siTieneStock[]=
+								[
+									'id'	=>$onestock['id'],
+									'stock'	=>$onestock['stock'],
+									'fuente'=>'onestock',
+								];
+						}
+					}
+				}
+				
+			}
+
+		}
+
+		return ['stock_actualizado'=>$siTieneStock, 'respuesta_actualizar_canales_stock'=>$actualizar];
+	}
+
+	public function SinStock($productos)
+	{
+		$noTieneStock 	=[];
+		$actualizar 	=[];
+		if (isset($productos['ids_sin_stock'])) {
+			$stock_sistema= [];
+			#obtengo stock de los mismos productos e onestock pero en SISTEMAS
+			foreach ($productos['ids_sin_stock'] as $id ) {
+
+				$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
+					'conditions' => array(
+						'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id,
+						'BodegasVentaDetalleProducto.tipo <>' => 'GT'
+					)
+				));
+				
+				$total = 0;
+		
+				if (!empty($historico)) {
+				
+					$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));		
+				}
+				
+				$stock_sistema []=['id'=>$id,"stock"=>$total,"fuente"=>"sistemas"];
+			}
+			
+			
+			
+			
+			#recorro los productos sin stock y verifico que tanto onestock como sistema no tengas stock
+			foreach ($productos['sinStock'] as $key => $onestock) {
+				
+				#obtengo último historico de actualización en onestock
+				$historial = ClassRegistry::init('HistorialOnestock')->find('first',
+				[
+					'conditions'=>
+						[
+							'HistorialOnestock.producto_id 	='=>$onestock['id'],
+							'HistorialOnestock.proveedor_id ='=>$onestock['proveedor_id'],
+							
+							
+						],
+					'order' => 
+						[
+							'HistorialOnestock.fecha_modificacion' => 'desc'
+						]
+				]);
+
+				#valido que exista un historio
+				if(count($historial)!=0){
+
+					#si existe y es distito al que trae onestock añado un nuevo historico en sistema y actualizo el stock en los canales de venta
+					if ($onestock['fecha_modificacion'] != $historial['HistorialOnestock']['fecha_modificacion']) {
+						$data =[
+							'producto_id'			=>$onestock['id'],
+							'proveedor_id'			=>$onestock['proveedor_id'],
+							'stock'					=>$onestock['stock'],
+							'disponible'			=>$onestock['disponible'],
+							'fecha_modificacion'	=>$onestock['fecha_modificacion'],
+						];
+						ClassRegistry::init('HistorialOnestock')->create();
+						ClassRegistry::init('HistorialOnestock')->save($data);
+
+						#validacion extra para asegurar que efectivamente es un sin stock
+						if ($stock_sistema[$key]['stock'] == 0) {
+							$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],0,['Linio','Mercadolibre']);
+							$noTieneStock[]=
+							[
+								'id'	=>$onestock['id'],
+								'stock'	=>$onestock['stock'],
+								'fuente'=>'onestock',
+							];
+						}
+					}
+						
+				}
+				else{
+
+					#si no existe un registro se crea para tener un historico
+					$data =[
+						'producto_id'			=>$onestock['id'],
+						'proveedor_id'			=>$onestock['proveedor_id'],
+						'stock'					=>$onestock['stock'],
+						'disponible'			=>$onestock['disponible'],
+						'fecha_modificacion'	=>$onestock['fecha_modificacion'],
+					];
+					
+					ClassRegistry::init('HistorialOnestock')->create();
+					ClassRegistry::init('HistorialOnestock')->save($data);
+
+					#validacion extra para asegurar que efectivamente es un sin stock
+					if ($stock_sistema[$key]['stock']==0) {
+						$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],0,['Linio','Mercadolibre']);
+						$noTieneStock[]=
+							[
+								'id'	=>$onestock['id'],
+								'stock'	=>$onestock['stock'],
+								'fuente'=>'onestock',
+							];
+					}
+				}
+				
+			}
+
+		}
+		return ['stock_actualizado'=>$noTieneStock, 'respuesta_actualizar_canales_stock'=>$actualizar];
+		
+	}
 
 }
