@@ -207,6 +207,12 @@ class VentaDetalleProducto extends AppModel
 			)
 		));
 
+		$pWarehouse = ClassRegistry::init('ProductoWarehouse')->find('first', array(
+			'conditions' => array(
+				'id' => $this->data['VentaDetalleProducto']['id']
+			)
+		));
+
 		$productoWarehouse = array(
 			'ProductoWarehouse' => array(
 				'id' => $item['VentaDetalleProducto']['id'],
@@ -221,14 +227,25 @@ class VentaDetalleProducto extends AppModel
 				'largo' => $item['VentaDetalleProducto']['largo'],
 				'qr_sec' => $item['VentaDetalleProducto']['qr_sec'],
 				'activo' => $item['VentaDetalleProducto']['activo'],
+				'cod_barra' => null,
 				'fecha_creacion' => $item['VentaDetalleProducto']['created'],
 				'ultima_modifacion' => $item['VentaDetalleProducto']['modified']
 			)
 		);
 
+		# Existe el producto en warehouse
+		if ($pWarehouse)
+		{	
+			# Tiene codigo de barra
+			if (!empty($pWarehouse['ProductoWarehouse']['cod_barra']))
+			{
+				$productoWarehouse['ProductoWarehouse']['cod_barra'] = $pWarehouse['ProductoWarehouse']['cod_barra'];
+			}
+		}
+
+		# En caso de modificar alguno de estos valores se actualiza o crea
 		foreach ($this->data['VentaDetalleProducto'] as $index => $val)
 		{	
-			
 			if ($index == 'cod_barra')
 			{
 				$productoWarehouse['ProductoWarehouse']['cod_barra'] = trim($val);
@@ -238,9 +255,8 @@ class VentaDetalleProducto extends AppModel
 			{
 				$productoWarehouse['ProductoWarehouse']['permitir_ingreso_sin_barra'] = $val;
 			}
-
 		}
-
+	
 		# Guardamos
 		if (!empty($productoWarehouse))
 		{	
