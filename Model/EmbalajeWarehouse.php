@@ -158,6 +158,69 @@ Class EmbalajeWarehouse extends AppModel {
 
 	
 	/**
+	 * finalizar_embalaje
+	 *
+	 * @param  mixed $id
+	 * @param  mixed $responsable
+	 * @return void
+	 */
+	public function finalizar_embalaje($id, $responsable = '')
+	{
+		$logs = array();
+
+		$embalaje = $this->find('first', array(
+			'conditions' => array(
+				'id' => $id
+			),
+			'contain' => array(
+				'EmbalajeProductoWarehouse'
+			)
+		));
+		
+		$embalaje['EmbalajeWarehouse']['estado'] = 'finalizado';
+		$embalaje['EmbalajeWarehouse']['responsable_id_finalizado'] = $responsable;
+		$embalaje['EmbalajeWarehouse']['fecha_finalizado'] = date('Y-m-d H:i:s');
+		$embalaje['EmbalajeWarehouse']['ultima_modifacion'] = date('Y-m-d H:i:s');
+
+		# Anulamos las unidades que no corresponden
+		foreach ($embalaje['EmbalajeProductoWarehouse'] as $im => $p) 
+		{
+			$embalaje['EmbalajeProductoWarehouse'][$im]['cantidad_embalada'] = $p['cantidad_a_embalar'];
+			$embalaje['EmbalajeProductoWarehouse'][$im]['ultima_modifacion'] = date('Y-m-d H:i:s');
+		}
+
+		# si todos los productos estan embalados
+
+		$logs[] = array(
+			'Log' => array(
+				'administrador' => 'Inicia finalizar embalaje ' . $id,
+				'modulo' => 'EmbalajeWarehouse',
+				'modulo_accion' => json_encode($embalaje)
+			)
+		);
+
+		$return = false;
+		
+		if ($this->saveAll($embalaje))
+		{
+			$return = true;
+
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => 'Embalaje finalizado ' . $id,
+					'modulo' => 'EmbalajeWarehouse',
+					'modulo_accion' => json_encode($embalaje)
+				)
+			);
+		}
+
+		ClassRegistry::init('Log')->saveMany($logs);
+
+		return $return;
+	}
+
+	
+	/**
 	 * procesar_embalajes
 	 *
 	 * @param  mixed $id
@@ -229,6 +292,12 @@ Class EmbalajeWarehouse extends AppModel {
 				break;
 			
 			case 'empaquetar':
+
+				# si el estado de la venta no es pagado no pasa
+				if (!ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id']))
+				{
+					break;
+				}
 
 				# Embalaje
 				$embalaje = array(
@@ -302,7 +371,7 @@ Class EmbalajeWarehouse extends AppModel {
 
 				break;
 			case 'empaquetado':
-
+				
 				break;
 		}
 
