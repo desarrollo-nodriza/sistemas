@@ -9439,7 +9439,7 @@ class VentasController extends AppController {
 			}
 		}
 
-		$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta);
+		$url_etiqueta_envio = $this->obtener_etiqueta_envio_default_url($venta, 'vertical');
 		
 		$archivos[]         = $url_etiqueta_envio['path'];
 
