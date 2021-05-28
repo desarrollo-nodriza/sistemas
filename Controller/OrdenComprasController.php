@@ -3882,8 +3882,8 @@ class OrdenComprasController extends AppController
 					)
 				));
 
-				# No valida proveedor
-				if ($d['cantidad_validada_proveedor'] == 0)
+				# No recibido
+				if (!$d['cantidad_recibida'])
 				{
 					continue;
 				}
