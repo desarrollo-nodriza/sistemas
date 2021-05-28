@@ -140,6 +140,7 @@ Class EmbalajeWarehouse extends AppModel {
 		
 		if ($this->saveAll($embalaje))
 		{
+			$this->NotificacionFirebase('¡Ups un embalaje a sido cancelado!');
 			$return = true;
 
 			$logs[] = array(
@@ -287,7 +288,7 @@ Class EmbalajeWarehouse extends AppModel {
         					
 
 							$this->cancelar_embalaje($emp['embalaje_id']);
-							$this->NotificacionFirebase('¡Ups un embalaje a sido cancelado!');
+							
 							
 						}
 					}
