@@ -3216,6 +3216,8 @@ class OrdenComprasController extends AppController
 		# Agregamos las imagenes de prstashop al arreglo
 		$this->Prestashop->crearCliente($oc['Tienda']['apiurl_prestashop'], $oc['Tienda']['apikey_prestashop']);
 		
+		$productos = array();
+
 		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iv => $d) 
 		{	
 			// Producto
@@ -3231,39 +3233,43 @@ class OrdenComprasController extends AppController
 				)
 			));
 
-			# No esta validada, se elimina
-			if ($d['cantidad_validada_proveedor'] == 0)
-			{
-				unset($oc['OrdenComprasVentaDetalleProducto'][$iv]);
+			# No recibido
+			if (!$d['cantidad_validada_proveedor'])
+			{	
 				continue;
 			}
 
-			# Precio final
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
-			
-			$descuentoOC = round(obtener_descuento_monto($oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'], $oc['OrdenCompra']['descuento']), 0);
-			
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final'] = $oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC;
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_final_neto'] = monto_neto($oc['OrdenComprasVentaDetalleProducto'][$iv]['precio_unitario_bruto'] - $descuentoOC, null, 0);
-
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse'] = $pLocal['VentaDetalleProducto'];
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = '';
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = false;
-			
-			
-
 			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $oc['Tienda']['apiurl_prestashop']);
-			$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
+
+			$pWarehouse = $pLocal['VentaDetalleProducto'];
+			$pWarehouse['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
+			$pWarehouse['cod_barra'] = null;
+			$pWarehouse['permitir_ingreso_sin_barra'] = false;
+			$pWarehouse['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
 
 			if (!empty($pbodega))
 			{
-				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['sku'] = $pbodega['ProductoWarehouse']['sku'];
-				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
-				$oc['OrdenComprasVentaDetalleProducto'][$iv]['ProductoWarehouse']['permitir_ingreso_sin_barra'] = ($pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra']) ? true : false;
+				$pWarehouse['sku'] = $pbodega['ProductoWarehouse']['sku'];
+				$pWarehouse['cod_barra'] = ($pbodega['ProductoWarehouse']['cod_barra']) ? $pbodega['ProductoWarehouse']['cod_barra'] : null ;
+				$pWarehouse['permitir_ingreso_sin_barra'] = ($pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra']) ? true : false;
 			}
 
+			$precioBruto = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
+			$descuentoOC = round(obtener_descuento_monto($precioBruto, $oc['OrdenCompra']['descuento']), 0);
+
+			# Asignamos a la variable p el contenido de d
+			$p = $d;
+			$p = array_replace_recursive($p, array(
+				'precio_unitario_bruto' => $precioBruto,
+				'precio_unitario_final' => $precioBruto - $descuentoOC,
+				'ProductoWarehouse' => $pWarehouse
+			));
+
+			$productos[] = $p;
+
 		}
+
+		$oc['OrdenComprasVentaDetalleProducto'] = $productos;
 
 
 		$response = array(
@@ -3892,14 +3898,14 @@ class OrdenComprasController extends AppController
 
 				$pWarehouse = $pLocal['VentaDetalleProducto'];
 				$pWarehouse['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
-				$pWarehouse['cod_barra'] = '';
+				$pWarehouse['cod_barra'] = null;
 				$pWarehouse['permitir_ingreso_sin_barra'] = false;
 				$pWarehouse['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
 
 				if (!empty($pbodega))
 				{
 					$pWarehouse['sku'] = $pbodega['ProductoWarehouse']['sku'];
-					$pWarehouse['cod_barra'] = $pbodega['ProductoWarehouse']['cod_barra'];
+					$pWarehouse['cod_barra'] = ($pbodega['ProductoWarehouse']['cod_barra']) ? $pbodega['ProductoWarehouse']['cod_barra'] : null ;
 					$pWarehouse['permitir_ingreso_sin_barra'] = ($pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra']) ? true : false;
 				}
 
