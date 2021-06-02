@@ -3,7 +3,7 @@
 class Ubicacion extends AppModel {
 
         public $useDbConfig     = "warehouse";
-	public $useTable        = 'ubicaciones';
+		public $useTable        = 'ubicaciones';
 
         public $belongsTo = array(
 		'Zona' => array(
