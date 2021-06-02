@@ -1441,11 +1441,17 @@ class VentaDetalleProductosController extends AppController
 			)
 		));
 
-		
+		# Producto warehouse
+		$zonificaciones = ClassRegistry::init('Zonificacion')->find('all', array(
+			'conditions' => array(
+				'producto_id' => $id
+			)
+		));
+
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos');
 		BreadcrumbComponent::add('Editar');
 
-		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes', 'productoWarehouse'));
+		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes', 'productoWarehouse','zonificaciones'));
 	}
 
 
