@@ -8,18 +8,43 @@ App::import('Vendor', 'PDFMerger', array('file' => 'PDFMerger/PDFMerger.php'));
 class UbicacionesController extends AppController
 {
     public $helpers = array('Html','Form');
+	
 
     public function admin_index()
     {
+
+		$filtro =[];
+		
+		if ( isset($this->request->data['Filtro']) ) {
+
+			$inputs = $this->request->data['Filtro'];
+			
+			$filtro = [
+				'id' 				=> $inputs['id']		?? null,
+				'zona_id' 			=> $inputs['zona_id']	?? null,
+				'fila LIKE' 		=> (trim($inputs['fila']) != '' )  ? '%'.$inputs['fila'].'%': null,
+				'columna LIKE' 		=> (trim($inputs['columna']) != '' )  ? '%'.$inputs['columna'].'%': null,
+				'Ubicacion.activo' 	=> $inputs['activo']	?? null,
+			];
+			$filtro = array_filter($filtro,function($v, $k) {
+				return $v === false || $v === true  || $v != ''  || $v != null ;
+			}, ARRAY_FILTER_USE_BOTH);
+		}
+
+		
         $this->paginate		= array(
 			'recursive'	=> 0,
-            // 'limit'     => 1
+            'limit' => 20,
+			'order' => array('id' => 'DESC'),
+			'conditions'=> $filtro
 		);
+
+		$zonas = ClassRegistry::init('Zona')->find('list');
 
 		BreadcrumbComponent::add('Ubicaciones');
 
 		$ubicaciones	= $this->paginate();
-		$this->set(compact('ubicaciones'));
+		$this->set(compact('ubicaciones', 'zonas'));
     }
 
     public function admin_add()
