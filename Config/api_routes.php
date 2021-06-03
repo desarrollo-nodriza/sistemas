@@ -60,6 +60,14 @@ Router::connect(
         'id' => '[0-9-a-Z]+'
     )
 );
+Router::connect(
+    '/api/producto/v2/view-by-reference', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'view_by_reference2',
+        'api' => true,
+        'prefix' => 'api')
+);
 
 Router::connect(
     '/api/producto/edit/:id', // E.g. /blog/3-CakePHP_Rocks
