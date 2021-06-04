@@ -401,7 +401,7 @@ class EmbalajeWarehousesController extends AppController
 			$this->redirect(array('action' => 'index'));
 		}
 
-		if ( $this->EmbalajeWarehouse->saveField('estado', 'cancelado') )
+		if ( $this->EmbalajeWarehouse->cancelar_embalaje($id, $this->Auth->user('id')) )
 		{
 			$this->Session->setFlash('Embalaje cancelado con éxito.', null, array(), 'success');
 		}
