@@ -92,7 +92,7 @@ class FirebaseComponent extends Component
             [
                 "title"         =>  "Embalajes",
                 "body"          =>  $mensaje,
-                "click_action"  =>  "https://dwarehouse-app.nodriza.cl/catalogue"
+                "click_action"  =>  "https://warehouse-app.nodriza.cl/catalogue"
             ] ,
             "registration_ids"  =>  $tokens,
         ];
