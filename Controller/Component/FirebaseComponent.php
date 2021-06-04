@@ -71,4 +71,56 @@ class FirebaseComponent extends Component
             'message' => 'Token de google validado con éxito.'
         );
     }
+
+
+    public function NotificacionFirebase($mensaje)
+    {
+		$tokens = ClassRegistry::init('NotificacionFirebase')->find('all',
+				[
+					'fields'=>
+						[
+							'token'
+                        ]
+				]
+        );
+		$tokens = Hash::extract($tokens, '{n}.NotificacionFirebase.token');
+        
+        
+        $data =
+        [
+            "notification"      => 
+            [
+                "title"         =>  "Embalajes",
+                "body"          =>  $mensaje,
+                "click_action"  =>  "https://dwarehouse-app.nodriza.cl/catalogue"
+            ] ,
+            "registration_ids"  =>  $tokens,
+        ];
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://fcm.googleapis.com/fcm/send',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => json_encode($data,true),
+        CURLOPT_HTTPHEADER => array(
+        'Content-Type: application/json',
+        'Authorization: Bearer AAAALM6Ru-g:APA91bEw4kiA0eCGEV6iAyqgJV4b_1l0Awg75RkPB61QuoD9c3-Le5TwznNdYNen1g-xPL2LWRPacXbAMNA2sEaOtw-uYi_3mqwnVsykfOKCnpFOgKNWNZp0ALDhntv5zkA81R1VTw59'
+        ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+
+
+		
+		return json_decode($response,true);
+    }
 }

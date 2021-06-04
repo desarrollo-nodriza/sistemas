@@ -104,10 +104,12 @@
 
                             <tbody>
                             <? foreach ($embalaje['EmbalajeProductoWarehouse'] as $iemp => $producto) : ?>
+                            <tr>
                                 <td><?=$producto['producto_id']; ?></td>
                                 <td><?=$producto['VentaDetalleProducto']['nombre']; ?></td>
                                 <td><?=$producto['cantidad_a_embalar']; ?></td>
                                 <td><?=$producto['cantidad_embalada']; ?></td>
+                            </tr>
                             <? endforeach; ?>
                             </tbody>
                         </table>

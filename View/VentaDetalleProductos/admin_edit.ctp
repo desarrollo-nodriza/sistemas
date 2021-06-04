@@ -471,7 +471,71 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="row">
+
+		<div class="col-xs-12 col-md-12">
+			<div class="panel panel-info">
+				<div class="panel-heading">
+					<h5 class="panel-title"><i class="fa fa-archive" aria-hidden="true"></i> <?=__('Movimientos de zonificaciones');?></h5>
+					<div class="panel-footer">
+					<div class="pull-right">
+						<?= $this->Html->link('<i class="fa fa-arrows"></i> Reubicar stock', array('controller' => 'zonificaciones','action' => 'mover_de_ubicacion', $this->request->data['VentaDetalleProducto']['id']), array('class' => 'btn btn-success', 'escape' => false)); ?>
+						<?= $this->Html->link('Reubicar stock masivamente', array('controller' => 'zonificaciones','action' => 'reubicacion_masiva', $this->request->data['VentaDetalleProducto']['id']), array('class' => 'btn btn-success', 'escape' => false)); ?>
+					</div>
+				
+				<div class="panel-body">
+					<? if (!empty($zonificaciones)) : ?>
+			        <div class="table-responsive" style="max-height: 352px; overflow-y: auto;">
+						<table class="table table-bordered table-striped">
+							<thead>
+								<th><?=__('Id');?></th>
+								<th><?=__('Ubicacion');?></th>
+								
+								<th><?=__('Cantidad');?></th>
+								<th><?=__('Movimiento');?></th>
+								<th><?=__('Responsable');?></th>
+								<th><?=__('Embalaje');?></th>
+								<th><?=__('Ubicacion nueva');?></th>
+								<th><?=__('Ubicacion antiguo');?></th>
+								<th><?=__('Orden de compra');?></th>
+							</thead>
+							<tbody>
+							<? foreach ($zonificaciones as $ubicacion) : ?>
+								<tr>
+									<td><?=$ubicacion['Zonificacion']['id'];?></td>
+									<td><?=$ubicacion['Zonificacion']['ubicacion_id'];?></td>
+								
+									<td><?=$ubicacion['Zonificacion']['cantidad'];?></td>
+									<td><?=$ubicacion['Zonificacion']['movimiento'];?></td>
+									<td><?=$ubicacion['Zonificacion']['responsable_id'];?></td>
+									<td><?=$ubicacion['Zonificacion']['embalaje_id'];?></td>
+									<td><?=$ubicacion['Zonificacion']['nueva_ubicacion_id'];?></td>
+									<td><?=$ubicacion['Zonificacion']['antigua_ubicacion_id'];?></td>
+									<td>
+										<? if (!empty($ubicacion['Zonificacion']['orden_de_compra'])) : ?>
+											<?=$this->Html->link('#' . $ubicacion['Zonificacion']['orden_de_compra'], array('controller' => 'ordenCompras', 'action' => 'view', $ubicacion['Zonificacion']['orden_de_compra']), array('target' => '_blank')); ?>
+										<? else : ?>
+											--
+										<? endif; ?>
+									</td>
+									
+								</tr>
+							<? endforeach; ?>
+							</tbody>
+						</table>
+			        </div>
+					<? else : ?>
+						<p><?=__('No registra movimientos.');?></p>
+					<? endif; ?>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
 </div>
+
 
 <!-- MESSAGE BOX-->
 <div class="message-box message-box-info animated fadeIn" data-sound="alert" id="modal_alertas">

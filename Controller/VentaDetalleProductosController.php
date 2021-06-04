@@ -14,7 +14,8 @@ class VentaDetalleProductosController extends AppController
 		'Linio',
 		'Prestashop',
 		'MeliMarketplace',
-		'RequestHandler'
+		'RequestHandler',
+		'Onestock'
 	);
 
 	/**
@@ -1440,11 +1441,17 @@ class VentaDetalleProductosController extends AppController
 			)
 		));
 
-		
+		# Producto warehouse
+		$zonificaciones = ClassRegistry::init('Zonificacion')->find('all', array(
+			'conditions' => array(
+				'producto_id' => $id
+			)
+		));
+
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos');
 		BreadcrumbComponent::add('Editar');
 
-		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes', 'productoWarehouse'));
+		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes', 'productoWarehouse','zonificaciones'));
 	}
 
 
@@ -3597,6 +3604,381 @@ class VentaDetalleProductosController extends AppController
 			'response'   => $resultado,
 			'_serialize' => array('response')
 	    ));
+	}
+
+	public function api_view_by_reference2() {
+    	
+		# Solo método POST
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
+			);
+
+			throw new CakeException($response);
+		}
+
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos los campo
+		
+        if (!isset($this->request->data['sku']))
+        {
+            $response = array(
+				'code'    => 401, 
+				'message' => 'sku es requerido'
+			);
+
+			throw new CakeException($response);
+        }
+
+		$producto = $this->VentaDetalleProducto->find('first', array(
+			'conditions' => array(
+				'VentaDetalleProducto.codigo_proveedor' => $this->request->data['sku']
+			)
+		));
+
+		if(empty($producto))
+		{
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Producto not found'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		$producto['VentaDetalleProducto']['stock_enbodega'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
+
+		if (isset($this->request->query['external'])) {
+
+			$canales = $this->verificar_canales($producto['VentaDetalleProducto']['id_externo']);
+
+			foreach ($canales as $ic => $canal) {
+				foreach ($canal as $i => $c) {
+
+					if (!$c['existe'])
+						continue;
+
+					$producto['VentaDetalleProducto'][$ic][$c['nombre']] = array(
+						'precio_venta'     => $c['item']['precio'],
+						'stock_disponible' => $c['item']['stock_disponible'],
+						'estado'           => $c['item']['estado']
+					);
+
+				}
+			}
+
+		}
+
+		# Etiqueta sec
+		if (!empty($producto['VentaDetalleProducto']['qr_sec'])) {
+			
+			$url_sec = obtener_url_base() . 'webroot/img/VentaDetalleProducto/' . $producto['VentaDetalleProducto']['qr_sec'];
+			$producto['VentaDetalleProducto']['qr_sec'] = $url_sec;
+
+		}
+
+		$producto['VentaDetalleProducto']['tiempo_entrega'] = $this->VentaDetalleProducto->obtener_tiempo_entrega($producto['VentaDetalleProducto']['id']);
+
+
+        $this->set(array(
+            'producto' => $producto['VentaDetalleProducto'],
+            '_serialize' => array('producto')
+        ));
+			
+    }
+
+	public function actualizar_canal_de_venta()
+	{
+		
+		#Obtengo productos desde onestock asociandos a nosotros como cliente
+		$onestock = $this->Components->load('Onestock');
+		$productos = $onestock->obtenerProductosClienteOneStock();
+		
+		if (!isset($productos['ids_con_stock'])) 
+		{
+			return $productos;
+		}
+
+
+		#valido que existan id de productos sin stock
+		$noTieneStock = $this->SinStock($productos);
+		$siTieneStock = $this->ConStock($productos);
+		return ['noTieneStock'=>$noTieneStock,'siTieneStock'=>$siTieneStock];
+
+	}
+
+	public function ConStock($productos)
+	{
+		$siTieneStock 	=[];
+		$actualizar 	=[];
+		if (isset($productos['ids_con_stock'])) {
+			$stock_sistema= [];
+			#obtengo stock de los mismos productos e onestock pero en SISTEMAS
+			foreach ($productos['ids_con_stock'] as $id ) {
+
+				$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
+					'conditions' => array(
+						'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id,
+						'BodegasVentaDetalleProducto.tipo <>' => 'GT'
+					)
+				));
+				
+				$total = 0;
+		
+				if (!empty($historico)) {
+					
+					$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));		
+				}
+				
+				$stock_sistema []=['id'=>$id,"stock"=>$total,"fuente"=>"sistemas"];
+			}
+			
+			
+			
+			#recorro los productos sin stock y verifico que tanto onestock como sistema no tengas stock
+			foreach ($productos['conStock'] as $key => $onestock) {
+				
+				#obtengo último historico de actualización en onestock
+				$historial = ClassRegistry::init('HistorialOnestock')->find('first',
+				[
+					'conditions'=>
+						[
+							'HistorialOnestock.producto_id 	='=>$onestock['id'],
+							'HistorialOnestock.proveedor_id ='=>$onestock['proveedor_id'],
+							
+							
+						],
+					'order' => 
+						[
+							'HistorialOnestock.fecha_modificacion' => 'desc'
+						]
+				]);
+
+				#valido que exista un historio
+				if(count($historial)!=0){
+
+					#si existe y es distito al que trae onestock añado un nuevo historico en sistema y actualizo el stock en los canales de venta
+					if ($onestock['fecha_modificacion'] != $historial['HistorialOnestock']['fecha_modificacion']) {
+						
+
+						#validacion extra para asegurar que efectivamente es un sin stock
+						if ($stock_sistema[$key]['stock'] != 0) {
+							// aqui se manda stock de sistema en canales de ventas
+							$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],$stock_sistema[$key]['stock'],['Linio','Mercadolibre']);
+							$noTieneStock[]=$stock_sistema[$key];
+						}else{
+
+							$data =[
+								'producto_id'			=>$onestock['id'],
+								'proveedor_id'			=>$onestock['proveedor_id'],
+								'stock'					=>$onestock['stock'],
+								'disponible'			=>$onestock['disponible'],
+								'fecha_modificacion'	=>$onestock['fecha_modificacion'],
+							];
+							ClassRegistry::init('HistorialOnestock')->create();
+							ClassRegistry::init('HistorialOnestock')->save($data);
+
+							if ($onestock['stock'] != 0) {
+								// aqui se manda stock de onestock
+								$stock = 5;
+
+								if ($onestock['stock']>1) {
+									$stock = ($onestock['stock']>20)?20:$onestock['stock'];
+								}
+	
+								$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],$stock,['Linio','Mercadolibre']);
+								$siTieneStock[]=
+								[
+									'id'	=>$onestock['id'],
+									'stock'	=>$onestock['stock'],
+									'fuente'=>'onestock',
+								];
+							}
+						}
+						
+					}
+						
+				}
+				else{
+
+					#validacion extra para asegurar que efectivamente es un sin stock
+					if ($stock_sistema[$key]['stock'] != 0) {
+						// aqui se manda stock de sistema
+						$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],$stock_sistema[$key]['stock'],['Linio','Mercadolibre']);
+						$noTieneStock[]=$stock_sistema[$key];
+					}else{
+
+						$data =[
+							'producto_id'			=>$onestock['id'],
+							'proveedor_id'			=>$onestock['proveedor_id'],
+							'stock'					=>$onestock['stock'],
+							'disponible'			=>$onestock['disponible'],
+							'fecha_modificacion'	=>$onestock['fecha_modificacion'],
+						];
+						ClassRegistry::init('HistorialOnestock')->create();
+						ClassRegistry::init('HistorialOnestock')->save($data);
+
+						if ($onestock['stock'] != 0) {
+							// aqui se manda stock de onestock
+							$stock = 5;
+
+							if ($onestock['stock']>1) {
+								$stock = ($onestock['stock']>20)?20:$onestock['stock'];
+							}
+
+							$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],$stock,['Linio','Mercadolibre']);
+							$siTieneStock[]=
+								[
+									'id'	=>$onestock['id'],
+									'stock'	=>$onestock['stock'],
+									'fuente'=>'onestock',
+								];
+						}
+					}
+				}
+				
+			}
+
+		}
+
+		return ['stock_actualizado'=>$siTieneStock, 'respuesta_actualizar_canales_stock'=>$actualizar];
+	}
+
+	public function SinStock($productos)
+	{
+		$noTieneStock 	=[];
+		$actualizar 	=[];
+		if (isset($productos['ids_sin_stock'])) {
+			$stock_sistema= [];
+			#obtengo stock de los mismos productos e onestock pero en SISTEMAS
+			foreach ($productos['ids_sin_stock'] as $id ) {
+
+				$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
+					'conditions' => array(
+						'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id,
+						'BodegasVentaDetalleProducto.tipo <>' => 'GT'
+					)
+				));
+				
+				$total = 0;
+		
+				if (!empty($historico)) {
+				
+					$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));		
+				}
+				
+				$stock_sistema []=['id'=>$id,"stock"=>$total,"fuente"=>"sistemas"];
+			}
+			
+			
+			
+			
+			#recorro los productos sin stock y verifico que tanto onestock como sistema no tengas stock
+			foreach ($productos['sinStock'] as $key => $onestock) {
+				
+				#obtengo último historico de actualización en onestock
+				$historial = ClassRegistry::init('HistorialOnestock')->find('first',
+				[
+					'conditions'=>
+						[
+							'HistorialOnestock.producto_id 	='=>$onestock['id'],
+							'HistorialOnestock.proveedor_id ='=>$onestock['proveedor_id'],
+							
+							
+						],
+					'order' => 
+						[
+							'HistorialOnestock.fecha_modificacion' => 'desc'
+						]
+				]);
+
+				#valido que exista un historio
+				if(count($historial)!=0){
+
+					#si existe y es distito al que trae onestock añado un nuevo historico en sistema y actualizo el stock en los canales de venta
+					if ($onestock['fecha_modificacion'] != $historial['HistorialOnestock']['fecha_modificacion']) {
+						$data =[
+							'producto_id'			=>$onestock['id'],
+							'proveedor_id'			=>$onestock['proveedor_id'],
+							'stock'					=>$onestock['stock'],
+							'disponible'			=>$onestock['disponible'],
+							'fecha_modificacion'	=>$onestock['fecha_modificacion'],
+						];
+						ClassRegistry::init('HistorialOnestock')->create();
+						ClassRegistry::init('HistorialOnestock')->save($data);
+
+						#validacion extra para asegurar que efectivamente es un sin stock
+						if ($stock_sistema[$key]['stock'] == 0) {
+							$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],0,['Linio','Mercadolibre']);
+							$noTieneStock[]=
+							[
+								'id'	=>$onestock['id'],
+								'stock'	=>$onestock['stock'],
+								'fuente'=>'onestock',
+							];
+						}
+					}
+						
+				}
+				else{
+
+					#si no existe un registro se crea para tener un historico
+					$data =[
+						'producto_id'			=>$onestock['id'],
+						'proveedor_id'			=>$onestock['proveedor_id'],
+						'stock'					=>$onestock['stock'],
+						'disponible'			=>$onestock['disponible'],
+						'fecha_modificacion'	=>$onestock['fecha_modificacion'],
+					];
+					
+					ClassRegistry::init('HistorialOnestock')->create();
+					ClassRegistry::init('HistorialOnestock')->save($data);
+
+					#validacion extra para asegurar que efectivamente es un sin stock
+					if ($stock_sistema[$key]['stock']==0) {
+						$actualizar []= $this->actualizar_canales_stock($stock_sistema[$key]['id'],0,['Linio','Mercadolibre']);
+						$noTieneStock[]=
+							[
+								'id'	=>$onestock['id'],
+								'stock'	=>$onestock['stock'],
+								'fuente'=>'onestock',
+							];
+					}
+				}
+				
+			}
+
+		}
+		return ['stock_actualizado'=>$noTieneStock, 'respuesta_actualizar_canales_stock'=>$actualizar];
+		
 	}
 
 }
