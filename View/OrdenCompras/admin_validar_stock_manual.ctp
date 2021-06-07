@@ -38,6 +38,9 @@
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.descuento_producto', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['descuento_producto'])); ?>
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.tipo_descuento', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['tipo_descuento'])); ?>
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.estado_recibido', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['estado_recibido'])); ?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.diff_precio_recepcion', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['diff_precio_recepcion'])); ?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.cantidad_zonificada', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'])); ?>
+										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.zonificado', $ipp), array('value' => $ocp['OrdenComprasVentaDetalleProducto']['zonificado'])); ?>
 										
 										<?=$ocp['OrdenComprasVentaDetalleProducto']['codigo'];?>
 											
