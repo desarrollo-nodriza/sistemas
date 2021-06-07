@@ -1,6 +1,7 @@
 <?php
 App::uses('AppController', 'Controller');
 App::uses('VentaDetalleProductosController', 'Controller');
+App::uses('EmbalajeWarehousesController', 'Controller');
 App::uses('DtesController', 'Controller');
 App::uses('CakePdf', 'Plugin/CakePdf/Pdf');
 App::uses('MetodoEnviosController', 'Controller');
@@ -1395,6 +1396,23 @@ class VentasController extends AppController {
 			$this->request->data['Venta']['prioritario'] = 1;
 
 			if ( $this->Venta->save($this->request->data) ) {
+
+				$embalajes = ClassRegistry::init('EmbalajeWarehouse')->find('all', array(
+					'conditions' => array(
+						'EmbalajeWarehouse.venta_id' => $id,
+						'EmbalajeWarehouse.estado' => 'listo_para_embalar',
+						'EmbalajeWarehouse.prioritario' => 0
+					),
+					'fields' => 'EmbalajeWarehouse.id'
+				));
+
+				$embalajesController = new EmbalajeWarehousesController();
+
+				foreach ($embalajes as $e) 
+				{
+					$embalajesController->embalaje_prioritario($e['EmbalajeWarehouse']['id'], 1);	
+				}
+
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
 			}
 			else {
@@ -1425,6 +1443,23 @@ class VentasController extends AppController {
 			$this->request->data['Venta']['prioritario'] = 0;
 
 			if ( $this->Venta->save($this->request->data) ) {
+
+				$embalajes = ClassRegistry::init('EmbalajeWarehouse')->find('all', array(
+					'conditions' => array(
+						'EmbalajeWarehouse.venta_id' => $id,
+						'EmbalajeWarehouse.estado' => 'listo_para_embalar',
+						'EmbalajeWarehouse.prioritario' => 1
+					),
+					'fields' => 'EmbalajeWarehouse.id'
+				));
+
+				$embalajesController = new EmbalajeWarehousesController();
+
+				foreach ($embalajes as $e) 
+				{
+					$embalajesController->embalaje_prioritario($e['EmbalajeWarehouse']['id'], 0);	
+				}
+
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
 			}
 			else {
