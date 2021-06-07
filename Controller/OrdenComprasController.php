@@ -1869,6 +1869,9 @@ class OrdenComprasController extends AppController
 				$this->request->data['VentaDetalleProducto'][$i]['precio_unitario']    = $item['precio_unitario'];
 				$this->request->data['VentaDetalleProducto'][$i]['total_neto']         = ($item['precio_unitario'] * $item['cantidad_validada_proveedor']) - $descuento_pp_final;
 				$this->request->data['VentaDetalleProducto'][$i]['descuento_producto'] = $descuento_pp_final;
+				$this->request->data['VentaDetalleProducto'][$i]['diff_precio_recepcion'] = ($item['diff_precio_recepcion']) ? true : false;
+				$this->request->data['VentaDetalleProducto'][$i]['cantidad_zonificada'] = ($item['cantidad_zonificada']) ? $item['cantidad_zonificada'] : 0;
+				$this->request->data['VentaDetalleProducto'][$i]['zonificado'] = ($item['zonificado']) ? true : false;
 
 				$total_neto = $total_neto + $this->request->data['VentaDetalleProducto'][$i]['total_neto'];
 			}
@@ -1986,7 +1989,7 @@ class OrdenComprasController extends AppController
 
 		BreadcrumbComponent::add('Ordenes de compra ', array('action' => 'index'));
 		BreadcrumbComponent::add('Validar OC');
-
+		
 		$estados = $this->OrdenCompra->estado_proveedor;
 		unset($estados['price_error']);
 		$this->set(compact('estados'));
