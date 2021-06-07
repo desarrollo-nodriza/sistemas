@@ -248,7 +248,7 @@ class VentaDetalleProducto extends AppModel
 		{	
 			if ($index == 'cod_barra')
 			{
-				$productoWarehouse['ProductoWarehouse']['cod_barra'] = trim($val);
+				$productoWarehouse['ProductoWarehouse']['cod_barra'] = ($val) ? $val : null;
 			}
 
 			if ($index == 'permitir_ingreso_sin_barra')

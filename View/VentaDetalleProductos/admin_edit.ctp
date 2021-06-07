@@ -158,6 +158,26 @@
 		                	</div>
 		                </div>                             
 		            </div>
+					<? else : ?>
+						<div class="panel panel-info">
+		                <div class="panel-heading">
+		                    <h3 class="panel-title"><i class="fa fa-cubes" aria-hidden="true"></i> Warehouse</h3>
+		                </div>
+		                <div class="panel-body">
+		                	<div class="table-responsive">
+								<table class="table table-bordered">
+									<tr>
+										<th><?= $this->Form->label('permitir_ingreso_sin_barra', '¿Permitir ingreso sin barra?'); ?></th>
+										<td><?= $this->Form->input('permitir_ingreso_sin_barra', array('type' => 'checkbox', 'class' => 'icheckbox')); ?></td>
+									</tr>
+									<tr>
+										<th><?= $this->Form->label('cod_barra', 'Código de barras'); ?></th>
+										<td><?= $this->Form->input('cod_barra', array('class' => 'form-control is-number', 'type' => 'text')); ?></td>
+									</tr>
+								</table>
+		                	</div>
+		                </div>                             
+		            </div>
 					<? endif; ?>
 
 		            <div class="panel panel-info">
