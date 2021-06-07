@@ -401,7 +401,7 @@ class EmbalajeWarehousesController extends AppController
 			$this->redirect(array('action' => 'index'));
 		}
 
-		if ( $this->EmbalajeWarehouse->saveField('estado', 'cancelado') )
+		if ( $this->EmbalajeWarehouse->cancelar_embalaje($id, $this->Auth->user('id')) )
 		{
 			$this->Session->setFlash('Embalaje cancelado con éxito.', null, array(), 'success');
 		}
@@ -424,7 +424,7 @@ class EmbalajeWarehousesController extends AppController
 			$this->redirect(array('action' => 'index'));
 		}
 
-		if ( $this->EmbalajeWarehouse->saveField('prioritario', $prioritario) )
+		if ( $this->embalaje_prioritario($id, $prioritario) )
 		{
 			$this->Session->setFlash('Embalaje actualizado con éxito.', null, array(), 'success');
 		}
@@ -434,5 +434,38 @@ class EmbalajeWarehousesController extends AppController
 		}
 	
 		$this->redirect($this->referer('/', true));
+	}
+
+	
+	/**
+	 * Actualiza campo prioritario y notifica a firebase
+	 *
+	 * @param  mixed $id id del embalaje
+	 * @param  mixed $prioritario 1|0
+	 * @return bool
+	 */
+	public function embalaje_prioritario($id, $prioritario)
+	{	
+		$this->EmbalajeWarehouse->id = $id;
+		if ( $this->EmbalajeWarehouse->saveField('prioritario', $prioritario) )
+		{	
+			if ($prioritario)
+			{
+				$mensaje = sprintf('¡Embalaje #%d cambió a urgente!', $id);
+			}
+			else
+			{
+				$mensaje = sprintf('Embalaje #%d cambió a urgencia normal', $id);
+			}
+
+			$this->Firebase = $this->Components->load('Firebase');
+			$this->Firebase->NotificacionFirebase($mensaje);
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 }

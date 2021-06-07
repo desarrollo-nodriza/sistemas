@@ -108,7 +108,7 @@ class Token extends AppModel
 	}
 
 
-	public function crear_token_proveedor($proveedor_id, $tienda_id = '', $duracion = 48)
+	public function crear_token_proveedor($proveedor_id, $tienda_id = '', $duracion = 240)
 	{	
 		$expira = new DateTime(date('Y-m-d H:i:s'));
 		$expira->modify(sprintf('+%d hours', $duracion));
