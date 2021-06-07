@@ -135,14 +135,14 @@ Class EmbalajeWarehouse extends AppModel {
 				'modulo_accion' => json_encode($embalaje)
 			)
 		);
-
-		$return = false;
 		
+		$return = false;
+
 		if ($this->saveAll($embalaje))
 		{
 			$this->NotificacionFirebase('¡Ups un embalaje a sido cancelado!');
+			$respuesta = ClassRegistry::init('Zonificacion')->crearEntradaVentaCanceladaZonificacion($id);
 			$return = true;
-
 			$logs[] = array(
 				'Log' => array(
 					'administrador' => 'Embalaje cancelado ' . $id,
