@@ -2,6 +2,99 @@
 	<h2><span class="fa fa-flag-checkered"></span> Ubicaciones</h2>
 </div>
 <div class="page-content-wrap">
+
+<div class="row">
+		<div class="col-xs-12">
+			<?= $this->Form->create('Filtro', array('url' => array('controller' => 'ubicaciones', 'action' => 'index'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
+			<? 
+				$inputs 	= $this->request->data['Filtro'] ?? null;
+				$id     	= (isset($inputs['id'])) 		? str_replace('%2F', '/', urldecode($inputs['id'])) : '' ;
+				$zona 		= (isset($inputs['zona_id'])) ? str_replace('%2F', '/', urldecode($inputs['zona_id'])) : '' ;
+				$fila 		= (isset($inputs['fila'])) 	? str_replace('%2F', '/', urldecode($inputs['fila'])) : '' ;
+				$columna	= (isset($inputs['columna'])) 		? str_replace('%2F', '/', urldecode($inputs['columna'])) : '' ;
+				$activo 	= (isset($inputs['activo']))	? str_replace('%2F', '/', urldecode($inputs['activo'])) : '' ;
+			?>
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
+				</div>
+				<div class="panel-body">
+					
+					<div class="col-sm-3 col-xs-12">
+						<div class="form-group">
+							<label>Zona</label>
+							<?=$this->Form->select('zona_id', $zonas, array(
+								'class' => 'form-control',
+								'empty' => 'Seleccione',
+								'default' => $zona
+								));?>
+						</div>
+					</div>
+					<div class="col-sm-3 col-xs-12">
+						<div class="form-group">
+							<label>Id Ubicacion</label>
+							<?=$this->Form->input('id', array(
+								'class' => 'form-control',
+								'type' => 'text',
+								'placeholder' => 'Ej: 1, 10',
+								'value' => $id
+								))?>
+						</div>
+					</div>
+
+					<div class="col-sm-3 col-xs-12">
+						<div class="form-group">
+							<label>Fila</label>
+							<?=$this->Form->input('fila', array(
+								'class' => 'form-control',
+								'type' => 'text',
+								'placeholder' => 'Ej: 2-00, 4-00',
+								'value' => $fila
+								))?>
+						</div>
+					</div>
+
+					<div class="col-sm-3 col-xs-12">
+						<div class="form-group">
+							<label>Columna</label>
+							<?=$this->Form->input('columna', array(
+								'class' => 'form-control',
+								'type' => 'text',
+								'placeholder' => 'Ej: 0, 1, 13',
+								'value' => $columna
+								))?>
+						</div>
+					</div>
+					
+					<div class="col-sm-3 col-xs-12">
+						<div class="form-group">
+							<label>Activo</label>
+							<?=$this->Form->select('activo', array(
+									'0' => 'No',
+									'1' => 'Si'
+								), array(
+								'class' => 'form-control',
+								'empty' => 'Seleccione',
+								'default' => $activo
+								));?>
+						</div>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="col-xs-12">
+						<div class="pull-right">
+							<?= $this->Form->button('<i class="fa fa-search" aria-hidden="true"></i> Filtrar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
+						</div>
+						<div class="pull-left">
+							<?= $this->Html->link('<i class="fa fa-ban" aria-hidden="true"></i> Limpiar filtro', array('action' => 'index'), array('class' => 'btn btn-buscar btn-primary btn-block', 'escape' => false)); ?>
+						</div>
+					</div>
+				</div>
+				<?= $this->Form->end(); ?>
+				</div>
+		</div>
+	</div>
+
 	<div class="row">
 		<div class="col-xs-12">
 			<div class="page-content-wrap">
@@ -72,3 +165,5 @@
 		</div>
 	</div>
 </div>
+
+
