@@ -1396,7 +1396,7 @@ class Venta extends AppModel
 		}
 		
 		# Preparamos los embalajes
-		ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
+		ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($venta['Venta']['id']);
 
 		return $reservado;
 	}
@@ -1513,7 +1513,7 @@ class Venta extends AppModel
 			}
 
 			# Preparamos los embalajes
-			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($this->id, CakeSession::read('Auth.Administrador.id'));
+			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($this->id);
 
 			return $liberar;
 		}else{
