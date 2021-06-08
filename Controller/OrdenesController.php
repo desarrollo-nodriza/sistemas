@@ -530,6 +530,11 @@ class OrdenesController extends AppController
 								'Venta.costo_envio'
 							)
 						));
+						$EmbalajeWarehouse =[];
+						if (isset($venta['EmbalajeWarehouse'][0])) {
+							$EmbalajeWarehouse = $venta['EmbalajeWarehouse'][0];
+						}
+						
 
 						# Obtenemos el porcentaje de descuento
 						if ($venta['Venta']['descuento'] > 0) {
@@ -673,10 +678,18 @@ class OrdenesController extends AppController
 								{
 									case 'devolucion':
 										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
+										if ($EmbalajeWarehouse) {
+											ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($EmbalajeWarehouse['id'],$d['venta_detalle_producto_id'],'devolucion');
+										}
+										
 										break;
 
 									case 'garantia':
 										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'GT', null, $d['venta_id']);
+										if ($EmbalajeWarehouse) {
+											ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($EmbalajeWarehouse['id'],$d['venta_detalle_producto_id'],'garantia');
+										}
+										
 										break;
 								}
 							}
