@@ -374,7 +374,7 @@ class EtiquetasComponent extends Component
         ^FO240,20^FDTRANSPORTE: " . $datos['transportista']['nombre'] . "^FS
         
         ^CF0,20
-        ^FO815,20^FDVID:#" . $datos['venta']['id'] . "^FS
+        ^FO815,20^FDVID: #" . $datos['venta']['id'] . "^FS
         
         ^CF0,20
         ^FO1015,20^FDEMBALAJE:#" . $datos['embalaje']['id'] . "^FS
