@@ -9570,7 +9570,11 @@ class VentasController extends AppController {
 				'Comuna',
 				'Dte',
 				'MedioPago',
-				'Transporte',
+				'Transporte' => array(
+					'order' => array(
+						'Transporte.id' => 'DESC'
+					)
+				),
 				'Tienda',
 				'Marketplace',
 				'VentaEstado' => array(
@@ -9579,7 +9583,7 @@ class VentasController extends AppController {
 				'EmbalajeWarehouse'
 			)
 		));
-
+		
 		$etiquetas_embalajes = array();
 		
 		$embalajesController = new EmbalajeWarehousesController();
@@ -9603,6 +9607,22 @@ class VentasController extends AppController {
 		
 		$dtes = $this->obtener_dtes_pdf_venta($venta['Dte'], 1);
 
+		$etiqueta_externa = $venta['Venta']['etiqueta_envio_externa'];
+
+		# Obtenems la etiqueta externa si no está definida aun
+		if (empty($etiqueta_externa))
+		{
+			# Buscamos la última etiqueta generada en el transporte
+			foreach ($venta['Transporte'] as $it => $t) 
+			{
+				if ($t['TransportesVenta']['etiqueta'])
+				{
+					$etiqueta_externa = $t['TransportesVenta']['etiqueta'];
+					break;
+				}
+			}
+		}
+		
 		$respuesta =  array(
 			'code' => 200,
 			'message' => 'Información obtenida con éxito',
@@ -9627,7 +9647,7 @@ class VentasController extends AppController {
 				'etiquetas' => array(
 					'todos' => $documentos['result'],
 					'interna' => (empty($etiqueta_interna2)) ? $etiqueta_interna['public'] : $etiqueta_interna2,
-					'externa' => $venta['Venta']['etiqueta_envio_externa'],
+					'externa' => $etiqueta_externa,
 					'dtes' => $dtes 
 				),
 				'entrega' => array(
