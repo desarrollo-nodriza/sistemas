@@ -406,6 +406,7 @@ class ManifiestosController extends AppController {
 		
 		$campos = array(
 			'ID',
+			'VENTA ID',
 			'Cód Referencia',
 			'OT Transporte',
 			'N° folio',
@@ -427,6 +428,7 @@ class ManifiestosController extends AppController {
 			
 			if (!empty($detalle['ManifiestosVenta'])) {
 				$datos[$io]['Manifiesto']['n_documento']    = $manifiesto['Manifiesto']['id'];
+				$datos[$io]['Manifiesto']['venta_id'] 		= $detalle['ManifiestosVenta']['venta_id'];
 				$datos[$io]['Manifiesto']['cod_referencia'] = $detalle['ManifiestosVenta']['referencia_pedido'];
 				$datos[$io]['Manifiesto']['ot_transporte']  = (!empty($manifiesto['Manifiesto']['ot_manual'])) ? $manifiesto['Manifiesto']['ot_manual'] : 0 ;
 				$datos[$io]['Manifiesto']['n_folio']        = $detalle['ManifiestosVenta']['folio_dte'];
@@ -592,6 +594,7 @@ class ManifiestosController extends AppController {
 		
 		$campos = array(
 			'ID',
+			'Venta ID',
 			'Cód Referencia',
 			'OT Transporte',
 			'N° folio',
@@ -613,6 +616,7 @@ class ManifiestosController extends AppController {
 			
 			if (!empty($detalle['ManifiestosVenta'])) {
 				$datos[$io]['Manifiesto']['n_documento']    = $manifiesto['Manifiesto']['id'];
+				$datos[$io]['Manifiesto']['cod_referencia'] = $detalle['ManifiestosVenta']['venta_id'];
 				$datos[$io]['Manifiesto']['cod_referencia'] = $detalle['ManifiestosVenta']['referencia_pedido'];
 				$datos[$io]['Manifiesto']['ot_transporte']  = (!empty($manifiesto['Manifiesto']['ot_manual'])) ? $manifiesto['Manifiesto']['ot_manual'] : 0 ;
 				$datos[$io]['Manifiesto']['n_folio']        = $detalle['ManifiestosVenta']['folio_dte'];
