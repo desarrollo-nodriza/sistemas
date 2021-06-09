@@ -5996,6 +5996,114 @@ class VentasController extends AppController {
 	}
 
 
+
+	/**
+	 * Genera la etiqueta de envio intenra y retorna la url púbica y absoluta del archivo.
+	 * @param  array  $venta [description]
+	 * @param  int 		$embalaje_id Identificador del embalaje
+	 * @param  string $orientacion horizontal/vertical
+	 * @return [type]        [description]
+	 */
+	public function obtener_etiqueta_envio_interna_url($venta = array(), $embalaje_id = null,  $orientacion = 'horizontal')
+	{	
+		# Componentes
+		$this->Etiquetas = $this->Components->load('Etiqueta');
+		$this->LAFFPack = $this->Components->load('LAFFPack');
+
+		# Bultos máximo de 2 metros
+		$volumenMaximo = (float) 8000000;
+
+		# Algoritmo LAFF para ordenamiento de productos
+		$paquetes = $this->LAFFPack->obtener_bultos_venta($venta, $volumenMaximo);
+
+		# Almacenarmos las etiquetas
+		$etiquetas = array();
+
+		foreach ($paquetes as $paquete) 
+		{
+			$etiquetaArr = array(
+				'venta' => array(
+					'id' => $venta['Venta']['id'],
+					'metodo_envio' => $venta['MetodoEnvio']['nombre'],
+					'canal' => $canal_venta,
+					'medio_de_pago' => $venta['MedioPago']['nombre'],
+					'fecha_venta' => $venta['Venta']['fecha_venta']
+				),
+				'transportista' => array(
+					'nombre' => 'BOOSMAP',
+					'tipo_servicio' => $venta['MetodoEnvio']['boosmap_service'],
+					'codigo_barra' => $response['body'][0]['orderNumber']
+				),
+				'remitente' => array(
+					'nombre' => $venta['Tienda']['nombre'],
+					'rut' => $venta['Tienda']['rut'],
+					'fono' => $venta['Tienda']['fono'],
+					'url' => $venta['Tienda']['url'],
+					'email' => 'ventas@toolmania.cl',
+					'direccion' => $venta['Tienda']['direccion']
+				),
+				'destinatario' => array(
+					'nombre' => $response['body'][0]['contactName'],
+					'rut' => $venta['VentaCliente']['rut'],
+					'fono' => $response['body'][0]['contactPhone'],
+					'email' => $response['body'][0]['contactEmail'],
+					'direccion' => $response['body'][0]['destinyAddress']['address'],
+					'comuna' => $response['body'][0]['destinyAddress']['district']
+				),
+				'bulto' => array(
+					'referencia' => $response['body'][0]['orderNumber'],
+					'peso' => $paquete['paquete']['weight'],
+					'ancho' => (int) $paquete['paquete']['width'],
+					'alto' => (int) $paquete['paquete']['height'],
+					'largo' => (int) $paquete['paquete']['length']
+				),
+				'pdf' => array(
+					'dir' => 'Venta/' . $venta['Venta']['id']
+				)
+			);
+
+			$etiquetas[] = $this->Etiquetas->generarEtiquetaInterna($etiquetaArr);
+		}
+
+		prx($etiquetas);
+
+		return;
+
+
+		# Creamos la etiqueta de despacho interna
+		$logo = FULL_BASE_URL . '/webroot/img/Tienda/' . $venta['Tienda']['id'] . '/' . $venta['Tienda']['logo'] ;
+		
+		$this->View           = new View();
+		$this->View->layoutPath = 'pdf';
+		$this->View->viewPath   = 'Ventas/pdf';
+		$this->View->output     = '';
+		$this->View->layout     = 'default';
+		
+		$url    = Router::url( sprintf('/api/ventas/%d.json', $venta['Venta']['id']), true);
+		$tamano = '500x500';
+
+		$this->View->set(compact('venta', 'logo', 'url', 'tamano'));
+
+		if ($orientacion == 'horizontal') {
+			$vista = $this->View->render('etiqueta_envio_default');	
+		}
+		
+		if ($orientacion == 'vertical') {
+			$vista = $this->View->render('etiqueta_envio_default_vertical');	
+		}
+		prx($vista);
+		if ($orientacion == 'horizontal') {
+			$url   = $this->generar_pdf($vista, $venta['Venta']['id'], 'transporte', 'landscape', '10x15');
+		}
+
+		if ($orientacion == 'vertical') {
+			$url   = $this->generar_pdf($vista, $venta['Venta']['id'], 'transporte', 'portrait', 'nodriza');
+		}
+
+		return $url;
+	}
+
+
 	/**
 	 * Genera Código QR identificador de la venta
 	 * @param  [type] $id_venta [description]
@@ -9580,6 +9688,23 @@ class VentasController extends AppController {
 			)
 		));
 
+		$etiquetas_embalajes = array();
+		
+		$embalajesController = new EmbalajeWarehousesController();
+
+		# Creamos las etiquetas internas necesarias
+		foreach ($venta['EmbalajeWarehouse'] as $iem => $e) 
+		{
+			if ($e['estado'] == 'procesando')
+			{
+				$etiquetas_embalajes[] = $embalajesController->obtener_etiqueta_envio_interna_url($e['id'], $venta);
+			}
+		}
+
+		# Unir etiquetas embalajes. nunca serán más de 500
+		$this->Etiquetas = $this->Components->load('Etiquetas');
+		$etiqueta_interna2 = $this->Etiquetas->unir_documentos(Hash::extract($etiquetas_embalajes, '{n}.path'), date('Y-m-d-H-i-s'))['result'][0]['document'];
+
 		$documentos = $this->generar_documentos($venta);
 		
 		$etiqueta_interna = $this->obtener_etiqueta_envio_default_url($venta);
@@ -9609,12 +9734,12 @@ class VentasController extends AppController {
 				),
 				'etiquetas' => array(
 					'todos' => $documentos['result'],
-					'interna' => $etiqueta_interna['public'],
+					'interna' => (empty($etiqueta_interna2)) ? $etiqueta_interna['public'] : $etiqueta_interna2,
 					'externa' => $venta['Venta']['etiqueta_envio_externa'],
 					'dtes' => $dtes 
 				),
 				'entrega' => array(
-					'metodo'                 => $venta['MetodoEnvio']['nombre'],
+					'metodo' => $venta['MetodoEnvio']['nombre'],
 					'fecha_entrega_estimada' => 'No definido',
 					'calle' => $venta['Venta']['direccion_entrega'],
 					'numero' => $venta['Venta']['numero_entrega'],

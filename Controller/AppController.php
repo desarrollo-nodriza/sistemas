@@ -717,13 +717,13 @@ class AppController extends Controller
 				'libredte_token',
 				'sincronizar_compras',
 				'starken_rut',
-				'starken_clave'
+				'starken_clave',
+				'notificacion_retraso_venta'
 			); 
-
+			
 			# Verificar que la tienda esté configurada
 			foreach ($tiendaConf['Tienda'] as $campo => $valor) {
 				if (empty($valor) && !in_array($campo, $camposVacios)) {
-					
 					$semaforo = false;
 					throw new Exception('La tienda no está configurada correctamente. Verifiquela y vuelva a intentarlo', 400);
 				}
