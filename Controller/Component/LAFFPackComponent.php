@@ -75,6 +75,65 @@ class LAFFPackComponent extends Component
 	}
 
 
+    /**
+	 * Calcula a aproximacion de bltos que se deberían armar en base a los itemes
+	 * @param  array $embalaje         Detalle de la venta
+	 * @param  float $volumenMaximo volumen máximo para cada paquete
+	 * @return array
+	 */
+    public function obtener_bultos_venta_por_embalaje($embalaje, $volumenMaximo)
+	{	
+		$bultos = array();
+
+		foreach ($embalaje['EmbalajeProductoWarehouse'] as $ivd => $d) {
+
+			if ($d['cantidad_a_embalar'] <= 0) {
+				continue;
+			}
+
+			for ($i=0; $i < $d['cantidad_a_embalar']; $i++) {
+
+				$alto  = ($d['ProductoWarehouse']) ? $d['ProductoWarehouse']['alto'] : $d['VentaDetalleProducto']['alto'];
+				$ancho = ($d['ProductoWarehouse']) ? $d['ProductoWarehouse']['ancho'] : $d['VentaDetalleProducto']['ancho'];;
+				$largo = ($d['ProductoWarehouse']) ? $d['ProductoWarehouse']['largo'] : $d['VentaDetalleProducto']['largo'];
+				$peso  = ($d['ProductoWarehouse']) ? $d['ProductoWarehouse']['peso'] : $d['VentaDetalleProducto']['peso'];;
+
+				$volumen = $this->calcular_volumen($alto, $ancho, $largo);
+
+				$caja = array(
+					'id'     => $d['id'],
+					'width'  => $ancho,
+					'height' => $alto,
+					'length' => $largo,
+					'weight' => $peso
+				);
+
+				$unico = rand(1000, 100000);
+				
+				if ($volumen > $volumenMaximo) {
+					$bultos[$d['embalaje_id'] . $unico]['embalaje_id']    = $d['embalaje_id'];
+					$bultos[$d['embalaje_id'] . $unico]['cajas'][]     = $caja;
+				}else{
+					$bultos[$d['embalaje_id']]['embalaje_id']    = $d['embalaje_id'];
+					$bultos[$d['embalaje_id']]['cajas'][]     = $caja;
+				}	
+			}
+
+		}
+		
+		$resultado = array();
+		
+		foreach ($bultos as $ib => $b) {
+			$resultado[$ib]['paquete']             = $this->obtenerDimensionesPaquete($b['cajas']);
+			$resultado[$ib]['paquete']['weight']   = array_sum(Hash::extract($b['cajas'], '{n}.weight'));
+			$resultado[$ib]['paquete']['embalaje_id'] = $b['embalaje_id'];
+			$resultado[$ib]['items']               = $b['cajas'];
+		}
+
+		return $resultado;
+	}
+
+
 	/**
 	 * [calcular_volumen description]
 	 * @param  float $largo cm

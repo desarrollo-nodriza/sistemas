@@ -34,6 +34,15 @@ Class EmbalajeProductoWarehouse extends AppModel {
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
 		),
+		'ProductoWarehouse' => array(
+			'className'				=> 'ProductoWarehouse',
+			'foreignKey'			=> 'producto_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
+		),
         'VentaDetalle' => array(
 			'className'				=> 'VentaDetalle',
 			'foreignKey'			=> 'detalle_id',

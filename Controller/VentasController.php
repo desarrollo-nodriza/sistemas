@@ -9580,6 +9580,23 @@ class VentasController extends AppController {
 			)
 		));
 
+		$etiquetas_embalajes = array();
+		
+		$embalajesController = new EmbalajeWarehousesController();
+
+		# Creamos las etiquetas internas necesarias
+		foreach ($venta['EmbalajeWarehouse'] as $iem => $e) 
+		{
+			if ($e['estado'] == 'procesando')
+			{
+				$etiquetas_embalajes[] = $embalajesController->obtener_etiqueta_envio_interna_url($e['id'], $venta);
+			}
+		}
+
+		# Unir etiquetas embalajes. nunca serán más de 500
+		$this->Etiquetas = $this->Components->load('Etiquetas');
+		$etiqueta_interna2 = $this->Etiquetas->unir_documentos(Hash::extract($etiquetas_embalajes, '{n}.path'), date('Y-m-d-H-i-s'))['result'][0]['document'];
+
 		$documentos = $this->generar_documentos($venta);
 		
 		$etiqueta_interna = $this->obtener_etiqueta_envio_default_url($venta);
@@ -9609,12 +9626,12 @@ class VentasController extends AppController {
 				),
 				'etiquetas' => array(
 					'todos' => $documentos['result'],
-					'interna' => $etiqueta_interna['public'],
+					'interna' => (empty($etiqueta_interna2)) ? $etiqueta_interna['public'] : $etiqueta_interna2,
 					'externa' => $venta['Venta']['etiqueta_envio_externa'],
 					'dtes' => $dtes 
 				),
 				'entrega' => array(
-					'metodo'                 => $venta['MetodoEnvio']['nombre'],
+					'metodo' => $venta['MetodoEnvio']['nombre'],
 					'fecha_entrega_estimada' => 'No definido',
 					'calle' => $venta['Venta']['direccion_entrega'],
 					'numero' => $venta['Venta']['numero_entrega'],
