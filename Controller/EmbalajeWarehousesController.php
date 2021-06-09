@@ -515,7 +515,11 @@ class EmbalajeWarehousesController extends AppController
 					'Mensaje',
 					'Comuna',
 					'MedioPago',
-					'Transporte',
+					'Transporte' => array(
+						'order' => array(
+							'Transporte.id' => 'DESC'
+						)
+					),
 					'Tienda',
 					'Marketplace',
 					'VentaEstado' => array(
@@ -604,7 +608,7 @@ class EmbalajeWarehousesController extends AppController
 					'id' => $paquete['paquete']['embalaje_id']
 				),
 				'transportista' => array(
-					'nombre' => ($venta['Transporte']) ? $venta['Transporte']['nombre'] : '',
+					'nombre' => ($venta['Transporte']) ? $venta['Transporte'][0]['nombre'] : '',
 				),
 				'destinatario' => array(
 					'nombre' => $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'],
