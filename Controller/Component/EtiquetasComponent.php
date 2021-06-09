@@ -366,12 +366,12 @@ class EtiquetasComponent extends Component
         ^FO10,10^GB1180,780,2^FS
         ^FO800,175^GB390,1,2,B,0^FS
         ^FO800,325^GB390,1,2,B,0^FS
-        ^FO10,305^GB790,1,2,B,0^FS
+        ^FO10,325^GB790,1,2,B,0^FS
         ^FO800,625^GB390,1,2,B,0^FS
         
         ^FX Información superior
         ^CF0,20
-        ^FO240,20^FDTransporte: " . $datos['transportista']['nombre'] . "^FS
+        ^FO240,20^FDTRANSPORTE: " . $datos['transportista']['nombre'] . "^FS
         
         ^CF0,20
         ^FO815,20^FDVID:#" . $datos['venta']['id'] . "^FS
@@ -386,15 +386,15 @@ class EtiquetasComponent extends Component
         ^FX Destinatario
         ^CF0,25
         ^FO20,155^FDDESTINATARIO : " . Inflector::slug($datos['destinatario']['nombre'], ' ') . "^FS
-        ^FO400,155^FDRUT : " . $datos['destinatario']['rut'] . "^FS
-        ^FO20,195^FDFONO : " . $datos['destinatario']['fono'] . "^FS
-        ^FO400,195^FDEMAIL : " . $datos['destinatario']['email'] . "^FS
-        ^FO20,234^FDDIRECCION : " . Inflector::slug($datos['destinatario']['direccion'], ' ') . "^FS
-        ^FO20,273^FDCOMUNA : " . Inflector::slug($datos['destinatario']['comuna'], ' ') . "^FS
+        ^FO20,190^FDRUT : " . $datos['destinatario']['rut'] . "^FS
+        ^FO20,225^FDFONO : " . $datos['destinatario']['fono'] . "^FS
+        ^FO400,225^FDEMAIL : " . $datos['destinatario']['email'] . "^FS
+        ^FO20,260^FDDIRECCION : " . Inflector::slug($datos['destinatario']['direccion'], ' ') . "^FS
+        ^FO20,295^FDCOMUNA : " . Inflector::slug($datos['destinatario']['comuna'], ' ') . "^FS
         
         ^FX Mensajes
         ^CF0,25
-        ^FO20,330
+        ^FO20,350
         ^FB770,270,,^FDMENSAJE:". $this->autoLine($datos['mensajes']['texto'], 60) ."^FS
         ^FX detalle compra
         ^CF0,20
