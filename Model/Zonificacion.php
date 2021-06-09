@@ -13,6 +13,14 @@ Class Zonificacion extends AppModel {
         'Ubicacion' => array(
             'className' => 'Ubicacion',
             'foreignKey' => 'ubicacion_id'
+        ),
+        'VentaCliente' => array(
+            'className' => 'VentaCliente',
+            'foreignKey' => 'responsable_id'
+        ),
+        'VentaDetalleProducto' => array(
+            'className' => 'VentaDetalleProducto',
+            'foreignKey' => 'producto_id'
         )
     );
 

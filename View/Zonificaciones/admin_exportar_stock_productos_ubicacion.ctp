@@ -28,4 +28,4 @@ foreach ( $datos as $dato )
  * Cierra la tabla y crea el archivo
  */
 $this->PhpSpreadsheet->addTableFooter();
-$this->PhpSpreadsheet->output(sprintf('Ubicaciones_id_'.$id.'_producto_%s.csv', date('Y_m_d-H_i_s')), 'Csv');
+$this->PhpSpreadsheet->output(sprintf('Ubicacion_masiva_de_productos_%s.csv', date('Y_m_d-H_i_s')), 'Csv');
