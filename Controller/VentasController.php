@@ -10889,6 +10889,16 @@ class VentasController extends AppController {
 			)
 		);
 
+		$tokeninfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop rest - propietario - ' . $this->request->data['id_externo'],
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($tokeninfo)
+			)
+		);
+
 		$venta = $this->Venta->find('first', array(
 			'conditions' => array(
 				'Venta.id_externo' => $this->request->data['id_externo']
