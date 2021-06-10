@@ -147,7 +147,6 @@ class VentaDetalleProductosController extends AppController
 		$marcas = ClassRegistry::init('Marca')->find('list');
 
 		BreadcrumbComponent::add('Productos');
-
 		$this->set(compact('ventadetalleproductos', 'marcas'));
 	}
 
@@ -1445,8 +1444,12 @@ class VentaDetalleProductosController extends AppController
 		$zonificaciones = ClassRegistry::init('Zonificacion')->find('all', array(
 			'conditions' => array(
 				'producto_id' => $id
-			)
+			),
+			'contain' =>['VentaCliente','Ubicacion'=>'Zona'],
+			'order'   	=>['Zonificacion.fecha_creacion desc']
 		));
+
+		
 
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos');
 		BreadcrumbComponent::add('Editar');

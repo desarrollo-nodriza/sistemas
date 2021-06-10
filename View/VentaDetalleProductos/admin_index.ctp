@@ -86,7 +86,18 @@
 					<h3 class="panel-title">Listado de Productos</h3>
 
 					<div class="btn-group pull-right">
+					<?  
+						$exportar_productos = array(
+							'controller' => 'zonificaciones',
+							'action' => 'reubicacion_masivamente'
+						);
+						if (isset($this->request->params['named'])) {
+							
+							$exportar_productos = array_replace_recursive($exportar_productos, $this->request->params['named']);
+						}?>
+					
 					<? if ($permisos['edit']) : ?>
+						<?= $this->Html->link('<i class="fa fa-cogs"></i> Reubicar stock masivamente del producto',$exportar_productos, array('class' => 'btn btn-info', 'escape' => false)); ?>
 						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Actualización masiva', array('action' => 'edicion_masiva'), array('class' => 'btn btn-danger', 'escape' => false)); ?>
 						
 						<a href="#" class="mb-control btn btn-warning" data-box="#mb-actualizar-stock-segun-bodega"><i class="fa fa fa-cubes"></i> Actualizar stock según bodega</a>

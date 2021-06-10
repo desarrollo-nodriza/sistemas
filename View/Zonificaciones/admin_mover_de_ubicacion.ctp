@@ -34,7 +34,12 @@
 											<?=  $zonificacion[0]['cantidad'];?>
 										</td>
 										<td style="width: 500px">
-											<?=$this->Form->select(sprintf('%d.ubicacion_id', $key), $ubicaciones, array('empty' => 'Seleccione Ubicación', 'class' =>[ 'form-control', 'mi-selector'],'style'=>"width: 400px")); ?>
+											<?php 
+											$ubicacion = $ubicaciones;
+											unset($ubicacion[$zonificacion['Zonificacion']['ubicacion_id']]);
+											asort($ubicacion);
+											?>
+											<?=$this->Form->select(sprintf('%d.ubicacion_id', $key), $ubicacion, array('empty' => 'Seleccione Ubicación', 'class' =>[ 'form-control', 'mi-selector'],'style'=>"width: 400px")); ?>
 										</td>
 										<td>
 											<?=$this->Form->input(sprintf('%d.cantidad', $key), array('type'=> "text", 'class' => 'is-number form-control', 'max' => $zonificacion['Zonificacion']['cantidad'], 'min' => 1));?>
@@ -52,7 +57,7 @@
 				<div class="panel-footer">
 					<div class="col-xs-12">
 						<div class="pull-left">
-							<?= $this->Html->link('<i class="fa fa-shopping-bag"></i> Ir al producto', array('action' => 'edit', $zonificacion['Zonificacion']['producto_id']), array('class' => 'btn btn-primary btn-buscar btn-block', 'rel' => 'tooltip', 'title' => 'Ir al producto', 'escape' => false)); ?>
+							<?= $this->Html->link('<i class="fa fa-shopping-bag"></i> Ir al producto', array('controller' => 'ventaDetalleProductos', 'action' => 'edit',$zonificacion['Zonificacion']['producto_id']), array('class' => 'btn btn-primary btn-buscar btn-block', 'rel' => 'tooltip', 'title' => 'Ir al producto', 'escape' => false)); ?>
 						</div>
 						<div class="pull-right">
 							<?= $this->Form->button('<i class="fa fa-send" aria-hidden="true"></i> Mover', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
