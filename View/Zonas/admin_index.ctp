@@ -7,7 +7,7 @@
 		<div class="col-xs-12">
 			<?= $this->Form->create('Filtro', array('url' => array('controller' => 'zonas', 'action' => 'index'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
 			<? 
-				$inputs = $this->request->data['Filtro'] ?? null;
+				$inputs = $this->request->params['named'] ?? null;
 				$id     = (isset($inputs['id'])) 		? str_replace('%2F', '/', urldecode($inputs['id'])) : '' ;
 				$bodega = (isset($inputs['bodega_id'])) ? str_replace('%2F', '/', urldecode($inputs['bodega_id'])) : '' ;
 				$nombre = (isset($inputs['nombre'])) 	? str_replace('%2F', '/', urldecode($inputs['nombre'])) : '' ;

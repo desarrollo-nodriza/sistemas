@@ -8,22 +8,43 @@ App::import('Vendor', 'PDFMerger', array('file' => 'PDFMerger/PDFMerger.php'));
 class UbicacionesController extends AppController
 {
     public $helpers = array('Html','Form');
+
+	public function filtrar($controlador = '', $accion = '')
+    {
+    	$redirect = array(
+    		'controller' => $controlador,
+    		'action' => $accion
+    		);
+
+		foreach ($this->request->data['Filtro'] as $campo => $valor) {
+			if ($valor != '') {
+				$redirect[$campo] = str_replace('/', '-', $valor);
+			}
+		}
+		
+    	$this->redirect($redirect);
+
+    }
 	
 
     public function admin_index()
     {
 
 		$filtro =[];
-		
-		if ( isset($this->request->data['Filtro']) ) {
 
-			$inputs = $this->request->data['Filtro'];
+		if ( $this->request->is('post') ) { 
+			$this->filtrar('ubicaciones', 'index');
+		}
+		
+		if ( isset($this->request->params['named']) ) {
+
+			$inputs = $this->request->params['named'];
 			
 			$filtro = [
-				'id' 				=> $inputs['id']		?? null,
+				'Ubicacion.id' 		=> $inputs['id']		?? null,
 				'zona_id' 			=> $inputs['zona_id']	?? null,
-				'fila LIKE' 		=> (trim($inputs['fila']) != '' )  ? '%'.$inputs['fila'].'%': null,
-				'columna LIKE' 		=> (trim($inputs['columna']) != '' )  ? '%'.$inputs['columna'].'%': null,
+				'fila LIKE' 		=> ($inputs['fila']??null )  ? '%'.$inputs['fila'].'%': null,
+				'columna LIKE' 		=> ($inputs['columna']??null )  ? '%'.$inputs['columna'].'%': null,
 				'Ubicacion.activo' 	=> $inputs['activo']	?? null,
 			];
 			$filtro = array_filter($filtro,function($v, $k) {
