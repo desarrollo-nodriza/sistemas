@@ -3178,8 +3178,9 @@ class OrdenComprasController extends AppController
 				'name' => 'error',
 				'message' => 'OC no encontrada'
 			);
-
-			throw new CakeException($response);
+			
+			$this->set($response);
+			return $this->set('_serialize', array_keys($response));
 		}
 
 		$oc = $this->OrdenCompra->find('first', array(
@@ -3211,7 +3212,8 @@ class OrdenComprasController extends AppController
 				'message' => 'La OC no está disponible para recepcionar'
 			);
 
-			throw new CakeException($response);
+			$this->set($response);
+			return $this->set('_serialize', array_keys($response));
 		}
 		
 		$this->Prestashop = $this->Components->load('Prestashop');
@@ -3297,7 +3299,7 @@ class OrdenComprasController extends AppController
 	 * @return void
 	 */
 	public function api_reception($id)
-	{
+	{	
 		# Sólo método POST
 		if (!$this->request->is('post')) {
 			$response = array(
@@ -3339,7 +3341,8 @@ class OrdenComprasController extends AppController
 				'message' => 'Venta no encontrada'
 			);
 
-			throw new CakeException($response);
+			$this->set($response);
+			return $this->set('_serialize', array_keys($response));
 		}
 
 		if (empty($this->request->data['Dte']) || empty($this->request->data['ProductoOc']))
@@ -3350,7 +3353,8 @@ class OrdenComprasController extends AppController
 				'message' => 'Falta DTE o Producto'
 			);
 
-			throw new CakeException($response);
+			$this->set($response);
+			return $this->set('_serialize', array_keys($response));
 		}
 
 		# Información del token y propietario
@@ -3404,7 +3408,8 @@ class OrdenComprasController extends AppController
 				'message' => 'Oc ya fue recepcionada'
 			);
 
-			throw new CakeException($response);
+			$this->set($response);
+			return $this->set('_serialize', array_keys($response));
 		}
 
 		$productosRecepcionar = array();
@@ -3447,7 +3452,8 @@ class OrdenComprasController extends AppController
 					ClassRegistry::init('Log')->create();
 					ClassRegistry::init('Log')->saveMany($log);
 		
-					throw new CakeException($response);
+					$this->set($response);
+					return $this->set('_serialize', array_keys($response));
 				}
 
 				$precio_compra_oc = round($ocp['precio_unitario'] - ($ocp['descuento_producto'] / $ocp['cantidad_validada_proveedor']), 0);
@@ -3476,7 +3482,7 @@ class OrdenComprasController extends AppController
 				'modulo_accion' => json_encode($productosRecepcionar)
 			)
 		);
-
+		
 		# Agregamos a la bodega las unidades recepcionadas
 		foreach ($productosRecepcionar as $ip => $p) 
 		{	
@@ -3517,24 +3523,11 @@ class OrdenComprasController extends AppController
 		{
 			ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
 		}
-		else
-		{
-			# Reservamos las ventas mas antiguas
-			$ventasSinReserva = ClassRegistry::init('Venta')->obtener_ventas_sin_reserva();
-
-			foreach ($ventasSinReserva as $venta) 
-			{
-				foreach ($venta['VentaDetalle'] as $detalle) 
-				{
-					ClassRegistry::init('VentaDetalle')->reservar_stock_producto($detalle['id']);
-				}	
-			}
-		}
 
 		$ocSave = array(
 			'OrdenCompra' => array(
 				'id' => $id ,
-				'estado' => 'recepcion_completa',
+				'estado' => 'recepcion_incompleta',
 				'retiro' => 0
 			)
 		);
@@ -3549,22 +3542,10 @@ class OrdenComprasController extends AppController
 			));
 		}
 
-		# Items recibidos
-		$total_recibidos = array_sum(Hash::extract($productosRecepcionar, '{n}.cantidad_recibida_total'));
-		$total_validados_proveedor = array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.cantidad_validada_proveedor'));
-
-		# Recepción incompleta
-		if ($total_recibidos != $total_validados_proveedor)
-		{
-			$ocSave = array_replace_recursive($ocSave, array(
-				'OrdenCompra' => array(
-					'estado' => 'recepcion_incompleta'
-				)
-			));
-		}
-
 		# Dtes para descontar saldo
 		$dtesDescontar = array();
+
+		$this->request->data['Dte'] = array_unique($this->request->data['Dte']);
 
 		# Guardamos los nuevos dtes
 		foreach ($this->request->data['Dte'] as $dte) 
@@ -3612,14 +3593,12 @@ class OrdenComprasController extends AppController
 				continue;
 
 			$dtesDescontar[] = array(
-				array(
-					'tipo_dte' => $tipo_dte,
-					'folio' => $folio,
-					'monto_facturado' => round($dte['total'], 2),
-					'proveedor_id' => $oc['OrdenCompra']['proveedor_id'],
-					'emisor' => $emisor,
-					'receptor' => $receptor
-				)
+				'tipo_dte' => $tipo_dte,
+				'folio' => $folio,
+				'monto_facturado' => round($dte['total'], 2),
+				'proveedor_id' => $oc['OrdenCompra']['proveedor_id'],
+				'emisor' => $emisor,
+				'receptor' => $receptor
 			);
 		}
 
@@ -3630,56 +3609,41 @@ class OrdenComprasController extends AppController
 		{
 			if ($factura['tipo_documento'] != 33)
 				continue;
+
 			$yaFacturado = $yaFacturado + $factura['monto_facturado'];
 		}
 
-		$total_oc = round(monto_bruto(array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.total_neto'))), 0) - $oc['OrdenCompra']['descuento_monto'];
-		$total_oc_max = $total_oc + 100;
-		$total_oc_min = $total_oc - 100;
-		$total_facturado = array_sum(Hash::extract($ocSave['OrdenCompraFactura'], '{n}.monto_facturado')) + $yaFacturado;
+		$total_oc = 0;
+		
+		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iocp => $p) 
+		{
+			if ($p['cantidad_validada_proveedor'] == 0)
+				continue;
 
+			$total_oc = $total_oc + monto_bruto($p['total_neto']);
+		}
+
+		$total_oc_min = $total_oc - 100;
+		$total_facturado = array_sum(Hash::extract($ocSave['OrdenCompraFactura'], '{n}[tipo_documento=33].monto_facturado')) + $yaFacturado;
+
+		# Facturado
 		$facturado_completo = false;
 
-		if ($total_facturado <= $total_oc_max && $total_facturado >= $total_oc_min)
+		if ($total_facturado >= $total_oc_min)
 		{
 			$facturado_completo = true;
 		}
-		
-		# OC ya facturada completa
-		if ($yaFacturado <= $total_oc_max && $yaFacturado >= $total_oc_min)
-		{
-			
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'Recepción oc app - Ya facturada completa',
-					'modulo' => 'OrdenCompras',
-					'modulo_accion' => json_encode($ocSave)
-				)
-			);
 
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
-
-			$response = array(
-				'code'    => 401, 
-				'name' => 'error',
-				'message' => 'Oc ya fue facturada'
-			);
-
-			throw new CakeException($response);
-
-		}
+		# Items recibidos
+		$total_recibidos = array_sum(Hash::extract($productosRecepcionar, '{n}.cantidad_recibida_total')) + array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.cantidad_recibida'));
+		$total_validados_proveedor = array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.cantidad_validada_proveedor'));
 		
 		# OC queda en estado de espera de factura
-		if ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && count($dtesDescontar) == 0 ) 
+		if ($total_recibidos == $total_validados_proveedor && !$facturado_completo ) 
 		{
 			$ocSave['OrdenCompra']['estado'] = 'espera_dte';
 		}
-		elseif ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && !$facturado_completo ) 
-		{
-			$ocSave['OrdenCompra']['estado'] = 'espera_dte';
-		}
-		elseif ($facturado_completo)
+		elseif ($total_recibidos == $total_validados_proveedor && $facturado_completo)
 		{
 			$ocSave['OrdenCompra']['estado'] = 'recepcion_completa';
 		}
@@ -3699,7 +3663,7 @@ class OrdenComprasController extends AppController
 				'modulo_accion' => json_encode($ocSave)
 			)
 		);
-	
+
 		# Al guardar relacionamos todas las facturas a los pagos que existan para ésta OC
 		if ($this->OrdenCompra->saveAll($ocSave)) {
 
@@ -3769,7 +3733,7 @@ class OrdenComprasController extends AppController
 		$response = array(
 			'code'    => 200, 
 			'name' => 'success',
-			'message' => 'Oc recepcionada correctamente',
+			'message' => 'Oc recepcionada como ' . $ocSave['OrdenCompra']['estado'],
 			'data' => array()
 		);
 
