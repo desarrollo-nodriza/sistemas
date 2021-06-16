@@ -220,7 +220,7 @@
 
 							<thead>
 								<tr class="sort">
-									<th></th>
+									<th><label><input type="checkbox" id="seleccionar-todo"></label></th>
 									<th><?= $this->Paginator->sort('id', 'ID', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('fecha_venta', 'Fecha', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('total', 'Total', array('title' => 'Haz click para ordenar por este criterio')); ?></th>

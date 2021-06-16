@@ -7064,7 +7064,7 @@ class VentasController extends AppController {
 		$url_retorno = $this->request->data['Venta']['return_url'];
 
 		if ($this->request->is('post')) {
-
+			
 			foreach ($this->request->data['Venta'] as $iv => $v) {
 
 				if ($iv == 'return_url')
@@ -7077,10 +7077,6 @@ class VentasController extends AppController {
 				}
 
 				$venta = $this->preparar_venta($v['id']);
-
-				/*$url_etiqueta_qr = $this->obtener_codigo_qr_url($venta['Venta']['id']);
-				
-				$pdfs[] = $url_etiqueta_qr['path'];*/
 				
 				$result_dte = $this->crearDteAutomatico($venta);
 
