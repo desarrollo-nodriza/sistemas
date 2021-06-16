@@ -205,7 +205,7 @@ Class Boosmap {
      */
     public function getOT($id_ot)
     {   
-        return $this->get('/order/' . $id_ot);
+        return $this->get('/order/' . rawurlencode($id_ot));
     }
 
 
