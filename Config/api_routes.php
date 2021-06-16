@@ -814,3 +814,16 @@ Router::connect(
         'prefix' => 'api'
     )
 );
+
+/**
+ * EmbalajeWarehouses
+ */
+
+Router::connect(
+    '/api/notificar-embalaje-a-revisar', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'EmbalajeWarehouses', 
+        'action'        => 'notificar_embalaje_a_revisar',
+        'api'           => true,
+        'prefix'        => 'api')
+);

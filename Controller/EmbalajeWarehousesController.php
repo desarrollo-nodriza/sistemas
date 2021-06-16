@@ -9,7 +9,8 @@ class EmbalajeWarehousesController extends AppController
      * @param 		$accion 		String 		Nombre del método receptor de la petición
      * @return 		void
      */
-    public function filtrar($controlador = '', $accion = '')
+	
+	public function filtrar($controlador = '', $accion = '')
     {
     	$redirect = array(
     		'controller' => $controlador,
@@ -469,7 +470,6 @@ class EmbalajeWarehousesController extends AppController
 		}
 	}
 
-
 	/**
 	 * Genera la etiqueta de envio intenra y retorna la url púbica y absoluta del archivo.
 	 * @param  int 		$id Identificador del embalaje
@@ -639,6 +639,124 @@ class EmbalajeWarehousesController extends AppController
 
 		#unimos
 		return ($archivos) ? $archivos[0] : array();
+
+	}
+
+	public function api_notificar_embalaje_a_revisar()
+	{
+
+		$token = '';
+
+		if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+		
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		if (!isset($this->request->query['embalaje_id']))
+        {
+            $response = array(
+				'code'    => 401, 
+				'message' => 'embalaje_id es requerido'
+			);
+
+			throw new CakeException($response);
+        }
+		
+		$embalaje_id 	= $this->request->query['embalaje_id'];
+		$tienda 		= ClassRegistry::init('Tienda')->tienda_principal(array(
+			'mandrill_apikey', 'nombre'
+		));
+
+		$EmbalajeWarehouse = ClassRegistry::init('EmbalajeWarehouse')->find('first', array(
+            'conditions' => array(
+                'id' => $embalaje_id
+            )
+        ));
+
+		$EmbalajeWarehouse = $EmbalajeWarehouse['EmbalajeWarehouse'];
+		
+
+		$this->View           = new View();
+		$this->View->viewPath = 'EmbalajeWarehouses' . DS . 'html';
+		$this->View->layout   = 'backend' . DS . 'emails';
+		
+		$this->View->set(compact('EmbalajeWarehouse'));
+		
+		$html = $this->View->render('notificar_embalaje_a_revisar');
+
+		$mandrill_apikey = $tienda['Tienda']['mandrill_apikey'];
+
+		if (empty($mandrill_apikey)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => "'mandrill_apikey' Invalid or expired Token"
+			);
+			
+			throw new CakeException($response);
+		}
+		
+		$mandrill = $this->Components->load('Mandrill');
+
+		$mandrill->conectar($mandrill_apikey);
+
+		$asunto = '[Nodriza Spa-'.rand(100,10000).'] La venta #'.$EmbalajeWarehouse['venta_id'].' tiene un embalaje para revisión - #'.$embalaje_id;
+		
+		if (Configure::read('ambiente') == 'dev') {
+			$asunto = '[Nodriza Spa-'.rand(100,10000).'-DEV] La venta #'.$EmbalajeWarehouse['venta_id'].' tiene un embalaje para revisión - #'.$embalaje_id;
+		}
+
+		$remitente = array(
+			'email' => 'no-reply@nodriza.cl',
+			'nombre' => 'Nodriza Spa'
+		);
+
+		$emails = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('embalajes');
+
+		$destinatarios = array();
+
+		foreach ($emails as $im => $e) {
+			$destinatarios[$im]['email'] = $e;
+		}
+		try {
+			$mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
+			$response = array(
+				'code'    	=> 200, 
+				'message' 	=> "Todo Ok",	
+				'body'		=> $EmbalajeWarehouse
+			);
+		} catch (\Throwable $th) {
+			$response = array(
+				'code'    => 400, 
+				'message' => "Ups problemas para enviar correo"
+			);
+			throw new CakeException($response);
+		}
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
+		
 
 	}
 }
