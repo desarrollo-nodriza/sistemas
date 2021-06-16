@@ -7,18 +7,41 @@ class ZonasController extends AppController
 {
     public $helpers = array('Html','Form');
 
+
+	public function filtrar($controlador = '', $accion = '')
+    {
+    	$redirect = array(
+    		'controller' => $controlador,
+    		'action' => $accion
+    		);
+
+		foreach ($this->request->data['Filtro'] as $campo => $valor) {
+			if ($valor != '') {
+				$redirect[$campo] = str_replace('/', '-', $valor);
+			}
+		}
+		
+    	$this->redirect($redirect);
+
+    }
+
     public function admin_index()
     {
         $filtro =[];
-		
-		if ( isset($this->request->data['Filtro']) ) {
 
-			$inputs = $this->request->data['Filtro'];
+
+		if ( $this->request->is('post') ) { 
+			$this->filtrar('zonas', 'index');
+		}
+		
+		if ( isset($this->request->params['named']) ) {
+
+			$inputs = $this->request->params['named'];
 			
 			$filtro = [
 				'id' 			=> $inputs['id']		?? null,
 				'bodega_id' 	=> $inputs['bodega_id']	?? null,
-				'nombre LIKE' 	=> (trim($inputs['nombre']) != '' )  ? '%'.$inputs['nombre'].'%': null,
+				'nombre LIKE' 	=> ($inputs['nombre']??null)  ? '%'.$inputs['nombre'].'%': null,
 				'tipo' 			=> $inputs['tipo']		?? null,
 				'activo' 		=> $inputs['activo']	?? null,
 			];

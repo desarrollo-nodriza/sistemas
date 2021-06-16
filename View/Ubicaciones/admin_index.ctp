@@ -7,7 +7,7 @@
 		<div class="col-xs-12">
 			<?= $this->Form->create('Filtro', array('url' => array('controller' => 'ubicaciones', 'action' => 'index'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
 			<? 
-				$inputs 	= $this->request->data['Filtro'] ?? null;
+				$inputs 	= $this->request->params['named'] ?? null;
 				$id     	= (isset($inputs['id'])) 		? str_replace('%2F', '/', urldecode($inputs['id'])) : '' ;
 				$zona 		= (isset($inputs['zona_id'])) ? str_replace('%2F', '/', urldecode($inputs['zona_id'])) : '' ;
 				$fila 		= (isset($inputs['fila'])) 	? str_replace('%2F', '/', urldecode($inputs['fila'])) : '' ;
@@ -22,6 +22,18 @@
 					
 					<div class="col-sm-3 col-xs-12">
 						<div class="form-group">
+							<label>Id Ubicacion</label>
+							<?=$this->Form->input('id', array(
+								'class' => 'form-control',
+								'type' => 'text',
+								'placeholder' => 'Ej: 1, 10',
+								'value' => $id
+								))?>
+						</div>
+					</div>
+					
+					<div class="col-sm-3 col-xs-12">
+						<div class="form-group">
 							<label>Zona</label>
 							<?=$this->Form->select('zona_id', $zonas, array(
 								'class' => 'form-control',
@@ -30,14 +42,16 @@
 								));?>
 						</div>
 					</div>
+					
+
 					<div class="col-sm-3 col-xs-12">
 						<div class="form-group">
-							<label>Id Ubicacion</label>
-							<?=$this->Form->input('id', array(
+							<label>Columna</label>
+							<?=$this->Form->input('columna', array(
 								'class' => 'form-control',
 								'type' => 'text',
-								'placeholder' => 'Ej: 1, 10',
-								'value' => $id
+								'placeholder' => 'Ej: 0, 1, 13',
+								'value' => $columna
 								))?>
 						</div>
 					</div>
@@ -54,17 +68,7 @@
 						</div>
 					</div>
 
-					<div class="col-sm-3 col-xs-12">
-						<div class="form-group">
-							<label>Columna</label>
-							<?=$this->Form->input('columna', array(
-								'class' => 'form-control',
-								'type' => 'text',
-								'placeholder' => 'Ej: 0, 1, 13',
-								'value' => $columna
-								))?>
-						</div>
-					</div>
+					
 					
 					<div class="col-sm-3 col-xs-12">
 						<div class="form-group">
@@ -118,8 +122,9 @@
 									<tr class="sort">
                                         <th><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('zona', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-										<th><?= $this->Paginator->sort('fila', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('columna', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+										<th><?= $this->Paginator->sort('fila', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+										
                                         <th><?= $this->Paginator->sort('activo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('fecha_creacion', 'Fecha de creación', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th>Acciones</th>
@@ -130,8 +135,9 @@
 									<tr>
 										<td><?= h($ubicacion['Ubicacion']['id']); ?>&nbsp;</td>
                                         <td><?= h($ubicacion['Zona']['nombre']); ?>&nbsp;</td>
+										<td><?= h($ubicacion['Ubicacion']['columna']); ?>&nbsp;</td>
                                         <td><?= h($ubicacion['Ubicacion']['fila']); ?>&nbsp;</td>
-                                        <td><?= h($ubicacion['Ubicacion']['columna']); ?>&nbsp;</td>
+                                      
 										<td><?= ($ubicacion['Ubicacion']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 										<td><?= h($ubicacion['Ubicacion']['fecha_creacion']); ?>&nbsp;</td>
 										<td>
