@@ -2946,9 +2946,33 @@ class OrdenComprasController extends AppController
 				)
 			);
 			
-			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
+			$stockoutProductos = Hash::extract($this->request->data['VentaDetalleProducto'], '{n}[estado_proveedor=stockout]');
+			
+			# Bajamos de los canales de venta los productos sin stock
+			if ($stockoutProductos)
+			{	
+				# Cambiamos stock canales
+				$productoscontroller = new VentaDetalleProductosController;
 
+				foreach ($stockoutProductos as $ps) 
+				{	
+					$productoscontroller->actualizar_canales_stock($ps['venta_detalle_producto_id'], 0);
 
+					# Actualizamos stock virtual sistema
+					$ppp = array(
+						'VentaDetalleProducto' => array(
+							'id' => $ps['venta_detalle_producto_id'],
+							'cantidad_virtual' => 0
+						)
+					);
+
+					ClassRegistry::init('VentaDetalleProducto')->save($ppp);
+				}
+
+			}
+			
+			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) 
+			{
 				# Flujo para cuando un producto no tenga stock
 				if ($total_stockout > 0) {
 					# Notificar a ventas para que coordine con el cliente
