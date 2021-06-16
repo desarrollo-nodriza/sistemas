@@ -9457,7 +9457,7 @@ class VentasController extends AppController {
 				'cantidad'                => 1, // No especifica
 				'costo'                   => $venta['VentaExterna']['total_shipping_tax_incl'],
 				'fecha_entrega_estimada'  => 'No especificado',
-				'comentario'              => implode(',', $direccionEnvio['address']['other']),
+				'comentario'              => @implode(',', $direccionEnvio['address']['other']),
 				'mostrar_etiqueta'        => true,
 				'paquete' 				  => false
 			);
@@ -9597,6 +9597,15 @@ class VentasController extends AppController {
 			}
 		}
 
+
+		# si es una venta parcial se indica en la nota interna
+		$total_agendado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
+
+		if ($total_agendado)
+		{
+			$venta['Venta']['nota_interna'] = $venta['Venta']['nota_interna'] . "\r\n\r\n---Embalaje/venta parcial---";
+		}
+
 		# Unir etiquetas embalajes. nunca serán más de 500
 		$this->Etiquetas = $this->Components->load('Etiquetas');
 		$etiqueta_interna2 = $this->Etiquetas->unir_documentos(Hash::extract($etiquetas_embalajes, '{n}.path'), date('Y-m-d-H-i-s'))['result'][0]['document'];
@@ -9689,7 +9698,7 @@ class VentasController extends AppController {
 				'emisor' => $venta['VentaCliente']['rut'],
 				'fecha' => $mensaje2['created'],
 				'asunto' => ($mensaje2['origen'] == 'cliente') ? 'Mensaje de cliente' : 'Mensaje interno',
-				'mensaje' => $mensaje['mensaje']
+				'mensaje' => $mensaje2['mensaje']
 			);
 		}
 
@@ -9698,9 +9707,12 @@ class VentasController extends AppController {
 		{
 			$auxFechas[$im] = $mensaje3['fecha'];
 		}
-
+		
 		# Ordenamos los mensajes por fecha
-		array_multisort($auxFechas, SORT_DESC, $mensajes);
+		if ($auxFechas)
+		{
+			array_multisort($auxFechas, SORT_DESC, $mensajes);
+		}		
 		
 		$respuesta['body']['mensajes'] = $mensajes;
 

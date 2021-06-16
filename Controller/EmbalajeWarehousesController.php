@@ -552,7 +552,8 @@ class EmbalajeWarehousesController extends AppController
 		}
 
 		$mensajes = array();
-
+		$auxFechas = array();
+	
 		# Mensajes venta
 		foreach($venta['VentaMensaje'] as $mensaje)
 		{
@@ -571,7 +572,7 @@ class EmbalajeWarehousesController extends AppController
 				'emisor' => $venta['VentaCliente']['rut'],
 				'fecha' => $mensaje2['created'],
 				'asunto' => ($mensaje2['origen'] == 'cliente') ? 'Mensaje de cliente' : 'Mensaje interno',
-				'mensaje' => $mensaje['mensaje']
+				'mensaje' => $mensaje2['mensaje']
 			);
 		}
 
@@ -582,7 +583,10 @@ class EmbalajeWarehousesController extends AppController
 		}
 
 		# Ordenamos los mensajes por fecha
-		array_multisort($auxFechas, SORT_DESC, $mensajes);
+		if ($auxFechas)
+		{
+			array_multisort($auxFechas, SORT_DESC, $mensajes);
+		}
 
 		# formeteamos el mensaje a texto
 		$msjTexto = '';
