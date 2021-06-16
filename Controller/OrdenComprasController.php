@@ -1903,6 +1903,31 @@ class OrdenComprasController extends AppController
 					'evidencia' => json_encode($this->request->data)
 				)
 			);
+
+			$stockoutProductos = Hash::extract($this->request->data['VentaDetalleProducto'], '{n}[estado_proveedor=stockout]');
+			
+			# Bajamos de los canales de venta los productos sin stock
+			if ($stockoutProductos)
+			{	
+				# Cambiamos stock canales
+				$productoscontroller = new VentaDetalleProductosController;
+
+				foreach ($stockoutProductos as $ps) 
+				{	
+					$productoscontroller->actualizar_canales_stock($ps['venta_detalle_producto_id'], 0);
+
+					# Actualizamos stock virtual sistema
+					$ppp = array(
+						'VentaDetalleProducto' => array(
+							'id' => $ps['venta_detalle_producto_id'],
+							'cantidad_virtual' => 0
+						)
+					);
+
+					ClassRegistry::init('VentaDetalleProducto')->save($ppp);
+				}
+
+			}
 			
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 
@@ -2995,6 +3020,10 @@ class OrdenComprasController extends AppController
 					# Notificamos stockout a clientes
 					foreach ($ventasNotificar as $iv => $v) {
 						
+						# No se notifica en dev
+						if (Configure::read('ambiente') == 'dev') 
+							break;
+
 						$request		= $socket->get(
 							Router::url('/api/ventas/stockout/' . $v['Venta']['id'] . '.json?token=' . $this->request->query['access_token'], true)
 						);
