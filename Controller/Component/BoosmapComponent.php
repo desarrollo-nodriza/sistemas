@@ -516,7 +516,9 @@ class BoosmapComponent extends Component
 
 	
 	public function registrar_estados($id)
-	{
+	{	
+		$log = [];
+
 		# Obtenemos los transportes de la venta
 		$v = ClassRegistry::init('Venta')->find('first', array(
 			'conditions' => array(
@@ -539,6 +541,14 @@ class BoosmapComponent extends Component
 				'Venta.id'
 			)
 		));
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'registrar_estados - vid ' . $id,
+				'modulo' => 'BoosmapComponent',
+				'modulo_accion' => json_encode($v)
+			)
+		);
 		
 		$historicos = array();
 
@@ -565,6 +575,14 @@ class BoosmapComponent extends Component
 			{
 				$es_envio_parcial = true;
 			}
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'registrar_estados - vid ' . $id,
+					'modulo' => 'BoosmapComponent',
+					'modulo_accion' => 'Estados embalaje: ' . json_encode($estados)
+				)
+			);
 			
 			foreach ($estados as $e) 
 			{	
@@ -579,7 +597,17 @@ class BoosmapComponent extends Component
 
 				# Verificamos que el estado no exista en los registros
 				if (ClassRegistry::init('EnvioHistorico')->existe($estado_nombre, $trans['TransportesVenta']['id']))
+				{	
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'registrar_estados - vid ' . $id,
+							'modulo' => 'BoosmapComponent',
+							'modulo_accion' => 'Estado ya registrado: ' . json_encode($estado_nombre)
+						)
+					);
+
 					continue;
+				}
 				
 				$estado_id = ClassRegistry::init('EstadoEnvio')->obtener_id_por_nombre($estado_nombre);
 
@@ -594,8 +622,20 @@ class BoosmapComponent extends Component
 				$historicos[$it]['EnvioHistorico']['nombre'] = $estado_nombre;
 				$historicos[$it]['EnvioHistorico']['leyenda'] = $e['leyenda'];
 				$historicos[$it]['EnvioHistorico']['canal'] = 'Boosmap';
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'registrar_estados - vid ' . $id,
+						'modulo' => 'BoosmapComponent',
+						'modulo_accion' => 'Nuevo estado historico: ' . json_encode($historicos)
+					)
+				);
+				
 			}
 		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 		
 		if (empty($historicos))
 		{
