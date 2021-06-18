@@ -636,6 +636,14 @@ class BoosmapComponent extends Component
 				);
 				
 			}
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'registrar_estados - vid ' . $id,
+					'modulo' => 'BoosmapComponent',
+					'modulo_accion' => 'Finaliza estados transporte: ' . json_encode($trans)
+				)
+			);
 		}
 
 		ClassRegistry::init('Log')->create();
