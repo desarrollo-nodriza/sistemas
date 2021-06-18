@@ -617,11 +617,15 @@ class BoosmapComponent extends Component
 				}
 
 				# Sólo se crean los estados nuevos
-				$historicos[$it]['EnvioHistorico']['transporte_venta_id'] = $trans['TransportesVenta']['id'];
-				$historicos[$it]['EnvioHistorico']['estado_envio_id'] = $estado_id;
-				$historicos[$it]['EnvioHistorico']['nombre'] = $estado_nombre;
-				$historicos[$it]['EnvioHistorico']['leyenda'] = $e['leyenda'];
-				$historicos[$it]['EnvioHistorico']['canal'] = 'Boosmap';
+				$historicos[] = array(
+					'EnvioHistorico' => array(
+						'transporte_venta_id' => $trans['TransportesVenta']['id'],
+						'estado_envio_id' => $estado_id,
+						'nombre' => $estado_nombre,
+						'leyenda' => $e['leyenda'],
+						'canal' => 'Boosmap'
+					)
+				);
 
 				$log[] = array(
 					'Log' => array(
