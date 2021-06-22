@@ -2059,7 +2059,8 @@ class OrdenComprasController extends AppController
 					'type' => 'INNER',
 					'conditions' => array(
 						'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
-						'venta_estados_cat.venta = 1',
+						'venta_estados_cat.rechazo = 0',
+						'venta_estados_cat.cancelado = 0',
 						'venta_estados_cat.final = 0'
 					)
 				),

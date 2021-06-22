@@ -398,12 +398,6 @@ class Venta extends AppModel
 							'EmbalajeWarehouse'
 						),
 						'VentaDetalleProducto' => array(
-							'Bodega' => array(
-								'fields' => array(
-									'Bodega.id', 'Bodega..nombre', 'Bodega.activo', 'Bodega.principal', 'Bodega.direccion', 'Bodega.fono'
-								),
-								'limit' => 10
-							),
 							'fields' => array(
 								'VentaDetalleProducto.id', 'VentaDetalleProducto.id_externo', 'VentaDetalleProducto.nombre', 'VentaDetalleProducto.codigo_proveedor', 'VentaDetalleProducto.cantidad_virtual', 'VentaDetalleProducto.stock_automatico', 'VentaDetalleProducto.ancho', 'VentaDetalleProducto.alto', 'VentaDetalleProducto.largo', 'VentaDetalleProducto.peso',
 							)
