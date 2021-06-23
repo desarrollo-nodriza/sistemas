@@ -654,6 +654,7 @@ class BoosmapComponent extends Component
 			return false;
 		}
 		
+		ClassRegistry::init('EnvioHistorico')->create();
 		return ClassRegistry::init('EnvioHistorico')->saveMany($historicos);
 	}
 
