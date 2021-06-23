@@ -37,7 +37,7 @@
                     <STRONG>Venta #<?echo $EmbalajeWarehouse['venta_id'];?></STRONG>
                   </P>
                   <h4 style="text-align: left;" >Embalaje #<?echo $EmbalajeWarehouse['id'];?> requiere ser revisado antes de proceder, para más detalles usa este link  
-                    <a href= <?echo $this->Html->url('/embalajeWarehouses/view/'. $EmbalajeWarehouse['id'], true); ?>> Ir a embalaje</a> 
+                    <a href= <?echo $this->Html->url('/embalajeWarehouses/review/'. $EmbalajeWarehouse['id'], true); ?>> Ir a embalaje</a> 
                   </h4>
                   <P style="FONT-SIZE: 12px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>Atte Equipo de Nodriza Spa.</P>
                 </TD>
