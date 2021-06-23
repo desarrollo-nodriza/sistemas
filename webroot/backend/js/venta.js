@@ -734,6 +734,8 @@ $(function() {
             		total_transporte = 0,
             		total_productos = 0;
 
+				var finalizarWizard = true;
+
                 //Check count of steps in each wizard
                 $("#buy-steps > ul").each(function(){
                     $(this).addClass("steps_"+$(this).children("li").length);
@@ -752,57 +754,36 @@ $(function() {
 					},            
                     // This part of code can be removed FROM
                     onLeaveStep: function(obj){
-                        var wizard = obj.parents("#buy-steps");
-
-                        if(wizard.hasClass("wizard-validation")){
-
-                            var valid = true;
-
-                            $('input,textarea,select',$(obj.attr("href"))).each(function(i,v){
-                                valid = validator.element(v) && valid;
-                            });
-
-                            if(!valid){
-                                wizard.find(".stepContainer").removeAttr("style");
-                                validator.focusInvalid();
-
-                                noty({text: 'Complete todos los campos requeridos.', layout: 'topRight', type: 'error'});
-                                setTimeout(function(){
-									$.noty.closeAll();
-								}, 2000);
-
-                                return false;
-                            }
-
-                        }
-
-                        // Info
-                        if(obj.attr('rel') == 4 && $('.js-pagos-wrapper > tr:not(.hidden)').length == 0){
-
-                        	noty({text: 'Debe agregar al menos un pago', layout: 'topRight', type: 'error'});
-							
-							setTimeout(function(){
-								$.noty.closeAll();
-							}, 10000);
-
-							return false;
-                        }
-
-
-                        // Productos
-                        if(obj.attr('rel') == 2 && $('.js-productos-wrapper > tr').length == 0){
-
-                        	noty({text: 'Debe agregar al menos un producto', layout: 'topRight', type: 'error'});
-							
-							setTimeout(function(){
-								$.noty.closeAll();
-							}, 10000);
-
-							return false;
-                        }
+                        
 
                         // Se calcula el total a pagar
                         if(obj.attr('rel') == 1) {
+
+							var wizard = obj.parents("#buy-steps");
+
+							if(wizard.hasClass("wizard-validation")){
+
+								var valid = true;
+
+								$('input,textarea,select',$(obj.attr("href"))).each(function(i,v){
+									valid = validator.element(v) && valid;
+								});
+
+								if(!valid){
+									wizard.find(".stepContainer").removeAttr("style");
+									validator.focusInvalid();
+
+									noty({text: 'Complete todos los campos requeridos.', layout: 'topRight', type: 'error'});
+									setTimeout(function(){
+										$.noty.closeAll();
+									}, 2000);
+
+									finalizarWizard = false;
+
+									return false;
+								}
+
+							}
 
                         	$('#transporte').data('value', $('#VentaCostoEnvio').val());
 							recalcular_monto_pagar();
@@ -833,7 +814,60 @@ $(function() {
                         page_content_onresize();
 
                         return true;
-                    }//End
+                    },//End
+					onFinish: function(){
+
+						var wizard = $("#buy-steps");
+
+						if(wizard.hasClass("wizard-validation")){
+
+							var valid = true;
+
+							$('input,textarea,select',$('#VentaAdminAddForm')).each(function(i,v){
+								valid = validator.element(v) && valid;
+							});
+
+							if(!valid){
+								wizard.find(".stepContainer").removeAttr("style");
+								validator.focusInvalid();
+
+								noty({text: 'Complete todos los campos requeridos.', layout: 'topRight', type: 'error'});
+								setTimeout(function(){
+									$.noty.closeAll();
+								}, 2000);
+
+								return false;
+							}
+
+						}
+
+						if($('.js-pagos-wrapper > tr:not(.hidden)').length == 0){
+
+                        	noty({text: 'Debe agregar al menos un pago', layout: 'topRight', type: 'error'});
+							
+							setTimeout(function(){
+								$.noty.closeAll();
+							}, 10000);
+
+							return false;
+                        }
+
+						if($('.js-productos-wrapper > tr').length == 0){
+
+                        	noty({text: 'Debe agregar al menos un producto', layout: 'topRight', type: 'error'});
+							
+							setTimeout(function(){
+								$.noty.closeAll();
+							}, 10000);
+
+							return false;
+                        }
+						
+						$.app.loader.mostrar();
+
+						$('#VentaAdminAddForm').submit();
+							
+					}
                 });
             }
 
