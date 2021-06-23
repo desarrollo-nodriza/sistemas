@@ -332,13 +332,32 @@ class Venta extends AppModel
 		$total_venta = (float) 0;
 		$descuento   = (!isset($this->data['Venta']['descuento'])) ? 0 : $this->data['Venta']['descuento'];
 		$costo_envio = (!isset($this->data['Venta']['costo_envio'])) ? 0 : $this->data['Venta']['costo_envio'];
-
+		
 		if (isset($this->data['VentaDetalle'])) {
 
 			foreach ($this->data['VentaDetalle'] as $i => $d) {
 
 				if (!isset($d['VentaDetalle']['venta_detalle_producto_id']))
 					continue;
+
+
+				# Si la venta ya tiene agregado el item se descarta
+				if (!isset($d['VentaDetalle']['id']) && isset($this->data['Venta']['id']))
+				{
+					$existe = ClassRegistry::init('VentaDetalle')->find('first', array(
+						'conditions' => array(
+							'VentaDetalle.venta_id' => $this->data['Venta']['id'],
+							'VentaDetalle.venta_detalle_producto_id' => $d['VentaDetalle']['venta_detalle_producto_id']
+						)
+					));
+
+					# si ya est
+					if ($existe)
+					{
+						unset($this->data['VentaDetalle'][$i]);
+						continue;
+					}
+				}
 
 				# Obtenemos el peso del producto
 				$peso_producto = (float) ClassRegistry::init('VentaDetalleProducto')->field('peso', array('id' => $d['VentaDetalle']['venta_detalle_producto_id']));

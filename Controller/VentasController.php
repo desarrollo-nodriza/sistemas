@@ -4195,13 +4195,20 @@ class VentasController extends AppController {
 				$this->redirect(array('action' => 'add', $id));
 			}
 
-			foreach ($this->request->data['VentaDetalle'] as $iv => $d) {
-				$this->request->data['VentaDetalle'][$iv]['precio']                     = monto_neto($d['precio_bruto']);
-				$this->request->data['VentaDetalle'][$iv]['cantidad_pendiente_entrega'] = $d['cantidad'];
-				$this->request->data['VentaDetalle'][$iv]['cantidad_reservada']         = 0;
-				$this->request->data['VentaDetalle'][$iv]['total_neto']                 = $this->request->data['VentaDetalle'][$iv]['precio'] * $d['cantidad'];			
-				$this->request->data['VentaDetalle'][$iv]['total_bruto']				= monto_bruto($this->request->data['VentaDetalle'][$iv]['total_neto']);
+			$this->request->data['VentaDetalle'] = Hash::extract($this->request->data['VentaDetalle'], '{n}');
+
+			foreach ($this->request->data['VentaDetalle'] as $iv => $d) 
+			{
+				$this->request->data['VentaDetalle'][$iv] = array_replace_recursive($this->request->data['VentaDetalle'][$iv], array(
+					'precio' => monto_neto($d['precio_bruto']),
+					'cantidad_pendiente_entrega' => $d['cantidad'],
+					'cantidad_reservada' => 0,
+					'total_neto' => monto_neto($d['precio_bruto']) * $d['cantidad'],
+					'total_bruto' => monto_bruto(monto_neto($d['precio_bruto']) * $d['cantidad'])
+				));
 			}
+			# Evitamos la duplicación de productos en la misma venta
+			$this->request->data['VentaDetalle'] = unique_multidim_array($this->request->data['VentaDetalle'], 'venta_detalle_producto_id');
 
 			$total_pagado = 0;	
 			foreach ($this->request->data['VentaTransaccion'] as $ip => $p) {
@@ -4928,21 +4935,14 @@ class VentasController extends AppController {
 	public function actualizar_canales_stock($id_venta, $excluir = array())
 	{	
 		$venta = $this->Venta->obtener_venta_por_id($id_venta);
-
-		# si a tienda tiene desactivada la opcion de stock se termina el flujo
-		if (!$venta['Tienda']['stock_automatico']) {
-			return false;
-		}
-
+		
 		# si el marketplace tiene desactivada la opcion de stock se termina el flujo
 		if (!empty($venta['Marketplace'])) {
-			if (!$venta['Marketplace']['stock_automatico']) {
+			if ($venta['Marketplace']['id'] && !$venta['Marketplace']['stock_automatico']) {
 				return false;
 			}
 		}
-
-		$ventaDetalles = array();
-
+		
 		foreach ($venta['VentaDetalle'] as $ip => $producto) {
 
 			# si el producto tiene desactivada la opcion de stock se termina el flujo
@@ -4953,11 +4953,7 @@ class VentasController extends AppController {
 			# Descontar stock virtual y refrescar canales
 			$productosController = new VentaDetalleProductosController();
 
-			if (Configure::read('ambiente') == 'dev') {
-				$res = true;
-			}else{
-				$res = $productosController->actualizar_canales_stock($producto['VentaDetalleProducto']['id_externo'], $producto['VentaDetalleProducto']['cantidad_virtual'], $excluir);
-			}		
+			$productosController->actualizar_canales_stock($producto['VentaDetalleProducto']['id_externo'], $producto['VentaDetalleProducto']['cantidad_virtual'], $excluir);	
 
 		}
 
@@ -6306,10 +6302,6 @@ class VentasController extends AppController {
 	 */
 	public function notificar_cambio_estado($id_venta = null, $plantillaEmail = null, $nombre_estado_nuevo = '')
 	{	
-		if (Configure::read('ambiente') == 'dev') {
-            return true;
-      	}
-
 		$venta = $this->Venta->obtener_venta_por_id($id_venta);
 		
 		$plantillaDefault = @$venta['VentaEstado']['VentaEstadoCategoria']['plantilla'];
@@ -6378,6 +6370,15 @@ class VentasController extends AppController {
 			)
 		);
 		
+		if (Configure::read('ambiente') == 'dev') {
+            $destinatarios = array(
+				array(
+					'email' => 'cristian.rojas@nodriza.cl',
+					'name' => 'Cristian rojas'
+				)
+			);
+      	}
+
 		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 		
 	}
