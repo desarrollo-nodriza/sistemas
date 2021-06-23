@@ -470,6 +470,181 @@ class EmbalajeWarehousesController extends AppController
 		}
 	}
 
+	/**
+	 * Genera la etiqueta de envio intenra y retorna la url púbica y absoluta del archivo.
+	 * @param  int 		$id Identificador del embalaje
+	 * @param  string $orientacion horizontal/vertical
+	 * @return [type]        [description]
+	 */
+	public function obtener_etiqueta_envio_interna_url($id, $venta = array(), $orientacion = 'horizontal')
+	{	
+		# Componentes
+		$this->Etiquetas = $this->Components->load('Etiquetas');
+		$this->LAFFPack = $this->Components->load('LAFFPack');
+
+		# Bultos máximo de 2 metros
+		$volumenMaximo = (float) 8000000;
+
+		$embalaje = $this->EmbalajeWarehouse->find('first', array(
+			'conditions' => array(
+				'EmbalajeWarehouse.id' => $id
+			),
+			'contain' => array(
+				'EmbalajeProductoWarehouse' => array(
+					'ProductoWarehouse',
+					'VentaDetalleProducto'
+				)
+			)
+		));
+		
+		if (empty($venta))
+		{
+			# Detalles de la venta
+			$venta = ClassRegistry::init('Venta')->find('first', array(
+				'conditions' => array(
+					'Venta.id' => $embalaje['EmbalajeWarehouse']['venta_id']
+				),
+				'contain' => array(
+					'VentaCliente',
+					'MetodoEnvio' => array(
+						'fields' => array(
+							'MetodoEnvio.nombre'
+						)
+					),
+					'VentaMensaje',
+					'Mensaje',
+					'Comuna',
+					'MedioPago',
+					'Transporte' => array(
+						'order' => array(
+							'Transporte.id' => 'DESC'
+						)
+					),
+					'Tienda',
+					'Marketplace',
+					'VentaEstado' => array(
+						'VentaEstadoCategoria'
+					)
+				)
+			));
+		}
+
+		# Algoritmo LAFF para ordenamiento de productos
+		$paquetes = $this->LAFFPack->obtener_bultos_venta_por_embalaje($embalaje, $volumenMaximo);
+
+		# Almacenarmos las etiquetas
+		$etiquetas = array();
+
+
+		$canal_venta = '';
+
+		if ($venta['Venta']['venta_manual'])
+		{
+			$canal_venta = 'POS de venta';
+		}
+		else if ($venta['Venta']['marketplace_id'])
+		{
+			$canal_venta = $venta['Marketplace']['nombre'];
+		}
+		else
+		{
+			$canal_venta = $venta['Tienda']['nombre'];
+		}
+
+		$mensajes = array();
+		$auxFechas = array();
+	
+		# Mensajes venta
+		foreach($venta['VentaMensaje'] as $mensaje)
+		{
+			$mensajes[] = array(
+				'emisor' => $mensaje['emisor'],
+				'fecha' => $mensaje['fecha'],
+				'asunto' => $mensaje['nombre'],
+				'mensaje' => $mensaje['mensaje']
+			);
+		}
+
+		# Mensajes adicionales
+		foreach ($venta['Mensaje'] as $mensaje2) 
+		{
+			$mensajes[] = array(
+				'emisor' => $venta['VentaCliente']['rut'],
+				'fecha' => $mensaje2['created'],
+				'asunto' => ($mensaje2['origen'] == 'cliente') ? 'Mensaje de cliente' : 'Mensaje interno',
+				'mensaje' => $mensaje2['mensaje']
+			);
+		}
+
+		# Agrupamos para ordenar
+		foreach ($mensajes as $im => $mensaje3) 
+		{
+			$auxFechas[$im] = $mensaje3['fecha'];
+		}
+
+		# Ordenamos los mensajes por fecha
+		if ($auxFechas)
+		{
+			array_multisort($auxFechas, SORT_DESC, $mensajes);
+		}
+
+		# formeteamos el mensaje a texto
+		$msjTexto = '';
+		foreach ($mensajes as $valor) 
+		{
+			$msjTexto .= $valor['mensaje'];
+		}
+		
+		$archivos = array();
+
+		foreach ($paquetes as $paquete) 
+		{
+			$etiquetaArr = array(
+				'venta' => array(
+					'id' => $venta['Venta']['id'],
+					'metodo_envio' => $venta['MetodoEnvio']['nombre'],
+					'canal' => $canal_venta,
+					'externo' => $venta['Venta']['id_externo'],
+					'medio_de_pago' => $venta['MedioPago']['nombre'],
+					'fecha_venta' => $venta['Venta']['fecha_venta']
+				),
+				'embalaje' => array(
+					'id' => $paquete['paquete']['embalaje_id']
+				),
+				'transportista' => array(
+					'nombre' => ($venta['Transporte']) ? $venta['Transporte'][0]['nombre'] : '',
+				),
+				'destinatario' => array(
+					'nombre' => $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'],
+					'rut' => formato_rut($venta['VentaCliente']['rut']),
+					'fono' => $venta['VentaCliente']['telefono'],
+					'email' => $venta['VentaCliente']['email'],
+					'direccion' => $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega']  . ', ' . $venta['Venta']['otro_entrega'],
+					'comuna' => $venta['Comuna']['nombre']
+				),
+				'bulto' => array(
+					'referencia' => $paquete['paquete']['embalaje_id'],
+					'peso' => $paquete['paquete']['weight'],
+					'ancho' => (int) $paquete['paquete']['width'],
+					'alto' => (int) $paquete['paquete']['height'],
+					'largo' => (int) $paquete['paquete']['length'],
+					'n_items' => count($paquete['items'])
+				),
+				'mensajes' => array(
+					'texto' => $msjTexto
+				),
+				'pdf' => array(
+					'dir' => 'EmbalajeWarehouse/' . $paquete['paquete']['embalaje_id']
+				)
+			);
+
+			$archivos[] = $this->Etiquetas->generarEtiquetaInterna($etiquetaArr);
+		}
+
+		#unimos
+		return ($archivos) ? $archivos[0] : array();
+
+	}
 
 	public function api_notificar_embalaje_a_revisar()
 	{

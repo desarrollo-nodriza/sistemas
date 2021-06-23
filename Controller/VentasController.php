@@ -7064,7 +7064,7 @@ class VentasController extends AppController {
 		$url_retorno = $this->request->data['Venta']['return_url'];
 
 		if ($this->request->is('post')) {
-
+			
 			foreach ($this->request->data['Venta'] as $iv => $v) {
 
 				if ($iv == 'return_url')
@@ -7077,10 +7077,6 @@ class VentasController extends AppController {
 				}
 
 				$venta = $this->preparar_venta($v['id']);
-
-				/*$url_etiqueta_qr = $this->obtener_codigo_qr_url($venta['Venta']['id']);
-				
-				$pdfs[] = $url_etiqueta_qr['path'];*/
 				
 				$result_dte = $this->crearDteAutomatico($venta);
 
@@ -9457,7 +9453,7 @@ class VentasController extends AppController {
 				'cantidad'                => 1, // No especifica
 				'costo'                   => $venta['VentaExterna']['total_shipping_tax_incl'],
 				'fecha_entrega_estimada'  => 'No especificado',
-				'comentario'              => implode(',', $direccionEnvio['address']['other']),
+				'comentario'              => @implode(',', $direccionEnvio['address']['other']),
 				'mostrar_etiqueta'        => true,
 				'paquete' 				  => false
 			);
@@ -9570,7 +9566,11 @@ class VentasController extends AppController {
 				'Comuna',
 				'Dte',
 				'MedioPago',
-				'Transporte',
+				'Transporte' => array(
+					'order' => array(
+						'Transporte.id' => 'DESC'
+					)
+				),
 				'Tienda',
 				'Marketplace',
 				'VentaEstado' => array(
@@ -9579,6 +9579,32 @@ class VentasController extends AppController {
 				'EmbalajeWarehouse'
 			)
 		));
+		
+		$etiquetas_embalajes = array();
+		
+		$embalajesController = new EmbalajeWarehousesController();
+
+		# Creamos las etiquetas internas necesarias
+		foreach ($venta['EmbalajeWarehouse'] as $iem => $e) 
+		{
+			if ($e['estado'] == 'procesando')
+			{
+				$etiquetas_embalajes[] = $embalajesController->obtener_etiqueta_envio_interna_url($e['id'], $venta);
+			}
+		}
+
+
+		# si es una venta parcial se indica en la nota interna
+		$total_agendado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
+
+		if ($total_agendado)
+		{
+			$venta['Venta']['nota_interna'] = $venta['Venta']['nota_interna'] . "\r\n\r\n---Embalaje/venta parcial---";
+		}
+
+		# Unir etiquetas embalajes. nunca serán más de 500
+		$this->Etiquetas = $this->Components->load('Etiquetas');
+		$etiqueta_interna2 = $this->Etiquetas->unir_documentos(Hash::extract($etiquetas_embalajes, '{n}.path'), date('Y-m-d-H-i-s'))['result'][0]['document'];
 
 		$documentos = $this->generar_documentos($venta);
 		
@@ -9586,6 +9612,22 @@ class VentasController extends AppController {
 		
 		$dtes = $this->obtener_dtes_pdf_venta($venta['Dte'], 1);
 
+		$etiqueta_externa = $venta['Venta']['etiqueta_envio_externa'];
+
+		# Obtenems la etiqueta externa si no está definida aun
+		if (empty($etiqueta_externa))
+		{
+			# Buscamos la última etiqueta generada en el transporte
+			foreach ($venta['Transporte'] as $it => $t) 
+			{
+				if ($t['TransportesVenta']['etiqueta'])
+				{
+					$etiqueta_externa = $t['TransportesVenta']['etiqueta'];
+					break;
+				}
+			}
+		}
+		
 		$respuesta =  array(
 			'code' => 200,
 			'message' => 'Información obtenida con éxito',
@@ -9609,12 +9651,12 @@ class VentasController extends AppController {
 				),
 				'etiquetas' => array(
 					'todos' => $documentos['result'],
-					'interna' => $etiqueta_interna['public'],
-					'externa' => $venta['Venta']['etiqueta_envio_externa'],
+					'interna' => (empty($etiqueta_interna2)) ? $etiqueta_interna['public'] : $etiqueta_interna2,
+					'externa' => $etiqueta_externa,
 					'dtes' => $dtes 
 				),
 				'entrega' => array(
-					'metodo'                 => $venta['MetodoEnvio']['nombre'],
+					'metodo' => $venta['MetodoEnvio']['nombre'],
 					'fecha_entrega_estimada' => 'No definido',
 					'calle' => $venta['Venta']['direccion_entrega'],
 					'numero' => $venta['Venta']['numero_entrega'],
@@ -9652,7 +9694,7 @@ class VentasController extends AppController {
 				'emisor' => $venta['VentaCliente']['rut'],
 				'fecha' => $mensaje2['created'],
 				'asunto' => ($mensaje2['origen'] == 'cliente') ? 'Mensaje de cliente' : 'Mensaje interno',
-				'mensaje' => $mensaje['mensaje']
+				'mensaje' => $mensaje2['mensaje']
 			);
 		}
 
@@ -9661,9 +9703,12 @@ class VentasController extends AppController {
 		{
 			$auxFechas[$im] = $mensaje3['fecha'];
 		}
-
+		
 		# Ordenamos los mensajes por fecha
-		array_multisort($auxFechas, SORT_DESC, $mensajes);
+		if ($auxFechas)
+		{
+			array_multisort($auxFechas, SORT_DESC, $mensajes);
+		}		
 		
 		$respuesta['body']['mensajes'] = $mensajes;
 
@@ -10849,6 +10894,16 @@ class VentasController extends AppController {
 				'administrador' => 'Prestashop rest',
 				'modulo' => 'Ventas',
 				'modulo_accion' => json_encode($this->request->data)
+			)
+		);
+
+		$tokeninfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'Prestashop rest - propietario - ' . $this->request->data['id_externo'],
+				'modulo' => 'Ventas',
+				'modulo_accion' => json_encode($tokeninfo)
 			)
 		);
 

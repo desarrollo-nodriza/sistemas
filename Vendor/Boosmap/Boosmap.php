@@ -33,11 +33,6 @@ Class Boosmap {
     );
 
     public  static $STATES = array(
-        'pre_recepcion_virtual' => array(
-			'nombre' => 'Pre Recepción Virtual',
-			'leyenda' => 'El pedido fue creado en el sistema',
-			'tipo' => 'inicial'
-		),
 		'ingresado' => array(
 			'nombre' => 'Ingresado',
 			'leyenda' => 'El pedido fue creado en el sistema',
@@ -205,7 +200,7 @@ Class Boosmap {
      */
     public function getOT($id_ot)
     {   
-        return $this->get('/order/' . $id_ot);
+        return $this->get('/order/' . rawurlencode($id_ot));
     }
 
 

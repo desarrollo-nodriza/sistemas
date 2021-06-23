@@ -1172,6 +1172,16 @@ $(function() {
 
 				});
 			},
+			seleccion_masiva_factura: function(){
+				$(document).on('click', '#seleccionar-todo', function(){
+
+					if ($(this).is(':checked')) {
+						$(this).parents('table').eq(0).find('.facturacion_masiva:not(disabled)').click();
+					}else{
+						$(this).parents('table').eq(0).find('.facturacion_masiva:not(disabled)').click();
+					}
+				});
+			},
 			init: function(){
 
 				if ($('#preparacion_index').length) {
@@ -1232,6 +1242,7 @@ $(function() {
 
 				}
 				
+				venta.seleccion_masiva_factura();
 
 				$(document).on('click', '#filtro-venta-btn', function(){
 					obtener_ventas_preparacion_busqueda();
