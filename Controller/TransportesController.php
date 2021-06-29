@@ -139,9 +139,10 @@ class TransportesController extends AppController
 		);
 
 		if ($this->request->is('post')) {
+			
 			if(ClassRegistry::init('TransportesVenta')->delete($this->request->data['id'])){
-
-				ClassRegistry::init('EnvioHistorico')->deleteAll(array('transporte_venta_id', $this->request->data['id']));
+				
+				ClassRegistry::init('EnvioHistorico')->deleteAll(array('EnvioHistorico.transporte_venta_id' => $this->request->data['id']));
 
 				$res['code'] = 200;
 				$res['message'] = 'Registro eliminado con éxito.';
