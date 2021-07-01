@@ -500,8 +500,10 @@
 					<h5 class="panel-title"><i class="fa fa-archive" aria-hidden="true"></i> <?=__('Movimientos de zonificaciones');?></h5>
 					
 					<div class="btn-group pull-right">
+						<?= $this->Html->link('<i class="fa fa-arrows"></i> Ajustar stock', array('controller' => 'zonificaciones','action' => 'ajustar_stock', $this->request->data['VentaDetalleProducto']['id']), array('class' => 'btn btn-info', 'escape' => false)); ?>
+						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Ajustar stock masivamente del producto', array('controller' => 'zonificaciones','action' => 'ajustar_stock_masiva', $this->request->data['VentaDetalleProducto']['id']), array('class' => 'btn btn-danger', 'escape' => false)); ?>
 						<?= $this->Html->link('<i class="fa fa-arrows"></i> Reubicar stock', array('controller' => 'zonificaciones','action' => 'mover_de_ubicacion', $this->request->data['VentaDetalleProducto']['id']), array('class' => 'btn btn-success', 'escape' => false)); ?>
-						<?= $this->Html->link('<i class="fa fa-cogs"></i> Reubicar stock masivamente del producto', array('controller' => 'zonificaciones','action' => 'reubicacion_masiva', $this->request->data['VentaDetalleProducto']['id']), array('class' => 'btn btn-warning', 'escape' => false)); ?>
+						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Reubicar stock masivamente del producto', array('controller' => 'zonificaciones','action' => 'reubicacion_masiva', $this->request->data['VentaDetalleProducto']['id']), array('class' => 'btn btn-warning', 'escape' => false)); ?>
 					</div>
 						
 					<div class="panel-body">

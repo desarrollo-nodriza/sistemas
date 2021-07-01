@@ -8,6 +8,7 @@ class Bodega extends AppModel
 	 * CONFIGURACION DB
 	 */
 	public $displayField	= 'nombre';
+	public $useDbConfig     = "default";
 
 	public $tipoMovimientos = array(
 		'MV' => array(
