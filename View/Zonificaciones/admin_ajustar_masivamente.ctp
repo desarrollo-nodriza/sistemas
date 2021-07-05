@@ -76,7 +76,7 @@
 		</ul>
       </div>
       <div class="modal-footer">
-      	<?= $this->Form->button('<i class="fa fa-upload" aria-hidden="true"></i> Continuar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-success')); ?>
+      	<?= $this->Form->button('<i class="fa fa-upload" aria-hidden="true"></i> Continuar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-success start-loading-then-redirect')); ?>
       </div>
     </div>
   </div>

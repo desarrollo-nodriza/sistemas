@@ -14,19 +14,13 @@ class ZonificacionesController extends AppController
 	
 	// Reubicar
     public function admin_mover_de_ubicacion($id )
-	{
-
-		
+	{	
 		if ( ! ClassRegistry::init('VentaDetalleProducto')->find('first', array('conditions' => array('id' => $id))) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-            $this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
-			
+			$this->redirect(array('action' => 'index' ,'controller' => 'ventaDetalleProductos'));
 		}
 		
-		$errores = array();
-		$aceptados = array();
-
 		$ubicacion = ClassRegistry::init('Ubicacion')->find('all', array(
             'conditions' => array('Ubicacion.activo' => 1),
             'fields' => array('id', 'fila','columna','Zona.nombre'),
@@ -83,10 +77,8 @@ class ZonificacionesController extends AppController
                         "ultima_modifacion"     => $date
                     ]; 
                 }
-				
-				
-			}
 
+			}
 			
 			if (!$persistir)
             {
@@ -110,15 +102,6 @@ class ZonificacionesController extends AppController
 		}
 
 	
-		if (!empty($errores)) {
-			$this->Session->setFlash($this->crearAlertaUl($errores, 'Errores encontrados'), null, array(), 'danger');
-		}
-
-		if (!empty($aceptados)) {
-			$this->Session->setFlash($this->crearAlertaUl($aceptados, 'Movimientos correcto'), null, array(), 'success');
-			$this->redirect(array('action' => 'moverInventario', $id));
-		}
-
 		BreadcrumbComponent::add('Editar Producto', '/ventaDetalleProductos/edit/'.$id);
 		BreadcrumbComponent::add('Movimientos de Ubicación');
 		
@@ -135,11 +118,11 @@ class ZonificacionesController extends AppController
 		$datos = [];
 
         $zonificaciones = $this->Zonificacion->find('all', array(
-            'fields' => array('Zonificacion.*','SUM(Zonificacion.cantidad) as cantidad','Ubicacion.*'),
+            'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 			'conditions' => array(
 				'producto_id' => $id,
             ),
-            'contain' => array('Ubicacion'),
+            'contain' => array('Ubicacion'=>'Zona','VentaDetalleProducto'),
             'group' => array('ubicacion_id'),
 		));
        
@@ -151,7 +134,9 @@ class ZonificacionesController extends AppController
 				$datos[] = 
 				array(
 					'producto_id'       => $id,
+					'nombre'			=> $valor['VentaDetalleProducto']['nombre'],
 					'ubicacion_origen'  => $valor['Zonificacion']['ubicacion_id'],
+					'nombre_ubicacion'	=> $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
 					'cantidad'          => $valor[0]['cantidad'],
 					'ubicacion_destino' => '',
 					'cantidad_a_mover'  => ''
@@ -159,7 +144,7 @@ class ZonificacionesController extends AppController
 			}
 			
 		}	
-        $campos = array('producto_id','ubicacion_origen','cantidad','ubicacion_destino', 'cantidad_a_mover');
+        $campos = array('producto_id','nombre','ubicacion_origen','nombre_ubicacion','cantidad','ubicacion_destino', 'cantidad_a_mover');
 
 	
 		
@@ -194,17 +179,13 @@ class ZonificacionesController extends AppController
 					$this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
 				}
 
-              
-
 				$ext = pathinfo($this->request->data['Zonificacion']['archivo']['name'], PATHINFO_EXTENSION);
               
 				if (!in_array($ext, $tipoPermitido)) {
                     
-					$this->Session->setFlash('El formato '.$ext.' no es válido. Los formatos permitidos son: ' . implode($tipoPermitido, ','), null, array(), 'danger');
+					$this->Session->setFlash('El formato '.$ext.' no es válido. Los formatos permitidos son: ' . implode($tipoPermitido,[ ',']), null, array(), 'danger');
 					$this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
 				}
-
-               
 
 				$spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($this->request->data['Zonificacion']['archivo']['tmp_name']);
                 
@@ -246,39 +227,34 @@ class ZonificacionesController extends AppController
 							$ubicacion = ClassRegistry::init('Ubicacion')->find('first', array(
 								'conditions' => array(
 									'activo' 	=> 1,
-									'id'		=> $value['D']
+									'id'		=> $value['F']
 								),
 								'fields' => array('id', 'fila','columna'),
 								'order' => array('fila ASC'),
 							));
 
 							if (!$ubicacion) {
-								$existe_ubicacion[]= "¡La ubicación con id ".$value['D']." no existe!";
+								$existe_ubicacion[]= "¡La ubicación con id ".$value['F']." no existe!";
 							}else{
 
-							 $zonificaciones = $this->Zonificacion->find('all', array(
-								'fields' => array('Zonificacion.*','SUM(Zonificacion.cantidad) as cantidad','Ubicacion.*'),
-								'conditions' => array(
-									'producto_id' => $id,
-									'ubicacion_id' => $value['B'],
-								),
-								'contain' => array('Ubicacion'),
-								'group' => array('ubicacion_id'),
-							));
+								$zonificaciones = $this->Zonificacion->find('all', array(
+									'fields' => array('Zonificacion.*','SUM(Zonificacion.cantidad) as cantidad','Ubicacion.*'),
+									'conditions' => array(
+										'producto_id' => $id,
+										'ubicacion_id' => $value['C'],
+									),
+									'contain' => array('Ubicacion'),
+									'group' => array('ubicacion_id'),
+								));
 
-							$zonificacion=  $zonificaciones[0];
-							if ($zonificacion[0]['cantidad'] < $value['E'] ) {
-								$cantidad_es_mayor[]= "'Cantidad a Mover' es mayor a 'Cantidad' existente en sistema en la fila ".$key." del excel";
+								$zonificacion=  $zonificaciones[0];
+								if ($zonificacion[0]['cantidad'] < $value['G'] ) {
+									$cantidad_es_mayor[]= "'Cantidad a Mover' es mayor a 'Cantidad' existente en sistema en la fila ".$key." del excel";
+								}
 							}
-						}
-
-							
-							
-
+					
 						}
 					}
-
-					
 				}
 
 				if ($existe_ubicacion ) {
@@ -309,11 +285,11 @@ class ZonificacionesController extends AppController
 						if ($existe) {
 							$persistir []=
 							[
-								"ubicacion_id"          => $value['D'],
+								"ubicacion_id"          => $value['F'],
 								"producto_id"           => $id,
-								"cantidad"              => $value['E'],
+								"cantidad"              => $value['G'],
 								"responsable_id"        => $this->Auth->user('id'),
-								"antigua_ubicacion_id"  => $value['B'],
+								"antigua_ubicacion_id"  => $value['C'],
 								"movimiento"            => 'ubicacion',
 								"fecha_creacion"        => $date,
 								"ultima_modifacion"     => $date
@@ -321,11 +297,11 @@ class ZonificacionesController extends AppController
 
 							$persistir [] =
 							[
-								"ubicacion_id"          => $value['B'],
+								"ubicacion_id"          => $value['C'],
 								"producto_id"           => $id,
-								"cantidad"              => ($value['E']* -1),
+								"cantidad"              => ($value['G']* -1),
 								"responsable_id"        => $this->Auth->user('id'),
-								"nueva_ubicacion_id"    => $value['D'],
+								"nueva_ubicacion_id"    => $value['F'],
 								"movimiento"            => 'ubicacion',
 								"fecha_creacion"        => $date,
 								"ultima_modifacion"     => $date
@@ -333,6 +309,10 @@ class ZonificacionesController extends AppController
 
 						}
 					}
+				}
+				if (!$persistir) {
+					$this->Session->setFlash('Asegurate de haber indicado cantidad a ajustar', null, array(), 'danger');
+					$this->redirect(array('action' => 'reubicacion_masiva', $id));
 				}
 				
 				$this->Zonificacion->create();
@@ -391,7 +371,7 @@ class ZonificacionesController extends AppController
               
 				if (!in_array($ext, $tipoPermitido)) {
                     
-					$this->Session->setFlash('El formato '.$ext.' no es válido. Los formatos permitidos son: ' . implode($tipoPermitido, ','), null, array(), 'danger');
+					$this->Session->setFlash('El formato '.$ext.' no es válido. Los formatos permitidos son: ' . implode($tipoPermitido, [',']), null, array(), 'danger');
 					$this->redirect(array('action' => 'index' ,'controller' => 'ventaDetalleProductos'));
 				}
 
@@ -413,7 +393,7 @@ class ZonificacionesController extends AppController
 
 				if (!$datos['data']) {
 
-					$this->Session->setFlash($this->crearAlertaUl([], 'No hay datos a porcesar en excel'), null, array(), 'danger');
+					$this->Session->setFlash($this->crearAlertaUl([], 'No hay datos a procesar en excel'), null, array(), 'danger');
 					$this->redirect(array('action' => 'reubicacion_masivamente'));
 					
 				}
@@ -437,14 +417,14 @@ class ZonificacionesController extends AppController
 							$ubicacion = ClassRegistry::init('Ubicacion')->find('first', array(
 								'conditions' => array(
 									'activo' 	=> 1,
-									'id'		=> $value['E']
+									'id'		=> $value['F']
 								),
 								'fields' => array('id', 'fila','columna'),
 								'order' => array('fila ASC'),
 							));
 
 							if (!$ubicacion) {
-								$existe_ubicacion[]= "¡La ubicación con id ".$value['E']." no existe!";
+								$existe_ubicacion[]= "¡La ubicación con id ".$value['F']." no existe!";
 							}else{
 
 							 $zonificaciones = $this->Zonificacion->find('all', array(
@@ -458,7 +438,7 @@ class ZonificacionesController extends AppController
 							));
 
 							$zonificacion=  $zonificaciones[0];
-							if ($zonificacion[0]['cantidad'] < $value['F'] ) {
+							if ($zonificacion[0]['cantidad'] < $value['G'] ) {
 								$cantidad_es_mayor[]= "'Cantidad a Mover' es mayor a 'Cantidad' existente en sistema en la fila ".$key." del excel";
 							}
 						}
@@ -500,9 +480,9 @@ class ZonificacionesController extends AppController
 						if ($existe) {
 							$persistir []=
 							[
-								"ubicacion_id"          => $value['E'],
+								"ubicacion_id"          => $value['F'],
 								"producto_id"           => $value['A'],
-								"cantidad"              => $value['F'],
+								"cantidad"              => $value['G'],
 								"responsable_id"        => $this->Auth->user('id'),
 								"antigua_ubicacion_id"  => $value['C'],
 								"movimiento"            => 'ubicacion',
@@ -514,9 +494,9 @@ class ZonificacionesController extends AppController
 							[
 								"ubicacion_id"          => $value['C'],
 								"producto_id"           => $value['A'],
-								"cantidad"              => ($value['F']* -1),
+								"cantidad"              => ($value['G']* -1),
 								"responsable_id"        => $this->Auth->user('id'),
-								"nueva_ubicacion_id"    => $value['E'],
+								"nueva_ubicacion_id"    => $value['F'],
 								"movimiento"            => 'ubicacion',
 								"fecha_creacion"        => $date,
 								"ultima_modifacion"     => $date
@@ -649,7 +629,7 @@ class ZonificacionesController extends AppController
 		
 		
 		$productos 	= ClassRegistry::init('VentaDetalleProducto')->find('list',$opciones);
-		
+		$zonificaciones=[];
         foreach ($productos as $id) {
 			
 			$zonificaciones = $this->Zonificacion->find('all', array(
@@ -657,7 +637,7 @@ class ZonificacionesController extends AppController
 				'conditions' => array(
 					'Zonificacion.producto_id' => $id,
 				),
-				'contain' => array('Ubicacion','VentaDetalleProducto'),
+				'contain' => array('Ubicacion'=>'Zona','VentaDetalleProducto'),
 				'group' => array('Zonificacion.ubicacion_id'),
 			));
 			
@@ -670,6 +650,7 @@ class ZonificacionesController extends AppController
 						'producto_id'       => $id,
 						'nombre'			=> $valor['VentaDetalleProducto']['nombre'],
 						'ubicacion_origen'  => $valor['Zonificacion']['ubicacion_id'],
+						'nombre_ubicacion'	=> $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
 						'cantidad'          => $valor[0]['cantidad'],
 						'ubicacion_destino' => '',
 						'cantidad_a_mover'  => ''
@@ -678,27 +659,31 @@ class ZonificacionesController extends AppController
 				
 			}	
 		}
-        $campos = array('producto_id','nombre','ubicacion_origen','cantidad','ubicacion_destino', 'cantidad_a_mover');
+		$this->TieneZonificacion($zonificaciones);
+		
+        $campos = array('producto_id','nombre','ubicacion_origen','nombre_ubicacion','cantidad','ubicacion_destino', 'cantidad_a_mover');
 		$this->set(compact('datos', 'campos'));
 
 	}
 
-
 	// Ajustar
-	public function admin_ajustar_stock($id )
+	public function admin_ajustar_stock($id)
 	{
 		if ( ! ClassRegistry::init('VentaDetalleProducto')->find('first', array('conditions' => array('id' => $id))) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
-            $this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
+			$this->redirect(array('action' => 'index' ,'controller' => 'ventaDetalleProductos'));
 			
 		}
+		$ubicacion = ClassRegistry::init('Ubicacion')->find('all', array(
+            'conditions' => array('Ubicacion.activo' => 1),
+            'fields' => array('id', 'fila','columna','Zona.nombre'),
+			'contain' => ['Zona'],
+            'order' => array('Zona.nombre ASC'),
+        ));
 		
-		$errores = array();
-		$aceptados = array();
-
 		$zonificaciones = $this->Zonificacion->find('all', array(
-            'fields' => array('Zonificacion.*','SUM(Zonificacion.cantidad) as cantidad','Ubicacion.*'),
+            'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 			'conditions' => array(
 				'producto_id' => $id
 				
@@ -707,64 +692,20 @@ class ZonificacionesController extends AppController
             'group' => array('ubicacion_id'),
 		));
 		
-		$this->TieneZonificacion($zonificaciones,$id);
-      
-        $ubicaciones	= [];
-        $persistir		= [];
-		$persistir2		= [];
-
+		foreach ($ubicacion as $value) {
+            $ubicaciones[$value['Ubicacion']['id']] =  $value['Zona']['nombre'].' - '.$value['Ubicacion']['columna'].' - '.$value['Ubicacion']['fila'];
+        }
+		
 		if ( $this->request->is('post') || $this->request->is('put')) {
-
-            $date = date("Y-m-d H:i:s");
-
 			
-			foreach ($this->request->data['Zonificacion'] as $key => $valor) {
-
-                $PrepararInfoPersistir = $this->PrepararInfoPersistir($valor,$id,$date);
-				$persistir	[] = $PrepararInfoPersistir['persistir'];
-				$persistir2	[] = $PrepararInfoPersistir['persistir2'];
-			}
-			
-			if (!$persistir && $persistir2)
-            {
-            	$this->Session->setFlash('Asegurate de haber seleccionado una nueva ubicación e indicado cantidad a mover', null, array(), 'danger');
-				
-			}else{
-
-				$this->Zonificacion->create();
-         
-				if ( $this->Zonificacion->saveMany($persistir) )
-				{
-					ClassRegistry::init('BodegasVentaDetalleProducto')->create();
-         
-					if ( ClassRegistry::init('BodegasVentaDetalleProducto')->saveMany($persistir2) )
-					{
-						$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');
-						$this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
-
-					}
-				}
-				
-				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
-				
-			}
-            
-		}
-
-	
-		if (!empty($errores)) {
-			$this->Session->setFlash($this->crearAlertaUl($errores, 'Errores encontrados'), null, array(), 'danger');
-		}
-
-		if (!empty($aceptados)) {
-			$this->Session->setFlash($this->crearAlertaUl($aceptados, 'Ajuste realizado con exito'), null, array(), 'success');
-			$this->redirect(array('action' => 'moverInventario', $id));
+            $this->PersistirABaseDato($this->request->data['Zonificacion'],$id);
+		
 		}
 
 		BreadcrumbComponent::add('Editar Producto', '/ventaDetalleProductos/edit/'.$id);
 		BreadcrumbComponent::add('Ajuste de Inventario');
 		
-		$this->set(compact('zonificaciones'));
+		$this->set(compact('zonificaciones','id','ubicaciones'));
 	}
 
 	public function admin_ajustar_stock_masiva( $id )
@@ -800,7 +741,7 @@ class ZonificacionesController extends AppController
               
 				if (!in_array($ext, $tipoPermitido)) {
                     
-					$this->Session->setFlash('El formato '.$ext.' no es válido. Los formatos permitidos son: ' . implode($tipoPermitido, ','), null, array(), 'danger');
+					$this->Session->setFlash('El formato '.$ext.' no es válido. Los formatos permitidos son: ' . implode($tipoPermitido, [',']), null, array(), 'danger');
 					$this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
 				}
 
@@ -823,92 +764,61 @@ class ZonificacionesController extends AppController
 				if (!$datos['data']) {
 
 					$this->Session->setFlash($this->crearAlertaUl([], 'No hay datos a porcesar en excel'), null, array(), 'danger');
-					$this->redirect(array('action' => 'reubicacion_masiva', $id));
+					$this->redirect(array('action' => 'ajustar_stock_masiva', $id));
 					
 				}
 
 				$date = date("Y-m-d H:i:s");
-				$persistir= [];
-				$cantidad_es_mayor =[];
-				$existe_ubicacion =[];
+				$valores_excel		= [];
+				$existe_ubicacion 	= [];	
 				
 				foreach ($datos['data'] as $key => $value) {
-					$existe = true;
-					if ($key != 1 ) {
-						
-						foreach ($value as $data) {
-							
-							if (!$data) {
-								$existe = false;
-							}
-						}
+					
+					if ($key == 1 ) {
+						continue;
+					}
 
-						if ($existe) {
-
-							$ubicacion = ClassRegistry::init('Ubicacion')->find('first', array(
-								'conditions' => array(
-									'activo' 	=> 1,
-									'id'		=> $value['D']
-								),
-								'fields' => array('id', 'fila','columna'),
-								'order' => array('fila ASC'),
-							));
-
-							if (!$ubicacion) {
-								$existe_ubicacion[]= "¡La ubicación con id ".$value['D']." no existe!";
-							}else {
-
-								if (is_null($value['D']) || is_null($value['G']) ) {
-									continue;
-								}
-								
-								$valores_excel [] = 
-								[
-									'id'		=> $value['D'],
-									'cantidad'	=> $value['G']
-								];
-							}
+					if (is_null($value['A']) || is_null($value['D']) || is_null($value['G'])) {
+						if ($value['G']!==0 ) {
+							continue;
 						}
 					}
+
+					$ubicacion = ClassRegistry::init('Ubicacion')->find('first', array(
+						'conditions' => array(
+							'activo' 	=> 1,
+							'id'		=> $value['D']
+						),
+						'fields' => array('id', 'fila','columna'),
+						'order' => array('fila ASC'),
+					));
+
+					if (!$ubicacion) {
+						$existe_ubicacion[]= "¡La ubicación con id ".$value['D']." no existe!";
+					}else {
+
+						$valores_excel [] = 
+						[
+							'id'		=> $value['D'],
+							'cantidad'	=> $value['G']
+						];
+					}
+					
+				}
+
+				if (!$valores_excel ) {
+					$this->Session->setFlash('Asegurate de haber indicado cantidad a ajustar', null, array(), 'danger');
+					$this->redirect(array('action' => 'ajustar_stock_masiva', $id));
 				}
 
 				if ($existe_ubicacion ) {
 
 					$this->Session->setFlash($this->crearAlertaUl($existe_ubicacion, 'Errores encontrados'), null, array(), 'danger');
-					$this->redirect(array('action' => 'reubicacion_masiva', $id));
+					$this->redirect(array('action' => 'ajustar_stock_masiva', $id));
 				}
-				$date = date("Y-m-d H:i:s");
-				foreach ($valores_excel as $valor) {
 
-					$PrepararInfoPersistir = $this->PrepararInfoPersistir($valor,$id,$date);
-					$persistir	[] = $PrepararInfoPersistir['persistir'];
-					$persistir2	[] = $PrepararInfoPersistir['persistir2'];
-				}
-				
-				
-				if (!$persistir && $persistir2)
-				{
-					$this->Session->setFlash('Asegurate de haber seleccionado una nueva ubicación e indicado cantidad a mover', null, array(), 'danger');
-					
-				}else{
-
-					$this->Zonificacion->create();
+				$this->PersistirABaseDato($valores_excel,$id);
 			
-					if ( $this->Zonificacion->saveMany($persistir) )
-					{
-						ClassRegistry::init('BodegasVentaDetalleProducto')->create();
-			
-						if ( ClassRegistry::init('BodegasVentaDetalleProducto')->saveMany($persistir2) )
-						{
-							$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');
-							$this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
-
-						}
-					}
-					
-					$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
-					
-				}
 			}
 
 		}
@@ -939,11 +849,9 @@ class ZonificacionesController extends AppController
             'group' => array('ubicacion_id'),
 		));
 
-		$this->TieneZonificacion($zonificaciones,$id);
-
 		foreach ($zonificaciones as $valor)
 		{	
-			if ($valor[0]['cantidad']>0) {
+			
 				$datos[] = 
 				array(
 					'producto_id'       			=> $id,
@@ -954,9 +862,28 @@ class ZonificacionesController extends AppController
 					'cantidad_actual'				=> $valor[0]['cantidad'],
 					'indique_cantidad_a_ajustar'  	=> ''
 				);
-			}
+			
 			
 		}
+		if (!$zonificaciones) {
+			
+			$producto = ClassRegistry::init('VentaDetalleProducto')->find('first', 
+			array(
+				'fields' => array('nombre','codigo_proveedor'),
+				'conditions' => array('id' =>$id)));
+
+			$datos[] = 
+				array(
+					'producto_id'       			=> $id,
+					'referencia'       				=> $producto['VentaDetalleProducto']['codigo_proveedor'],
+					'nompre_del_producto'			=> $producto['VentaDetalleProducto']['nombre'],
+					'ubicacion_id'  				=> '',
+					'nombre_ubicacion'				=> '',
+					'cantidad_actual'				=> '',
+					'indique_cantidad_a_ajustar'  	=> ''
+				);
+		}
+		
 
         $campos = array('producto_id','referencia','nompre_del_producto','ubicacion_id','nombre_ubicacion','cantidad_actual', 'indique_cantidad_a_ajustar');
 	
@@ -964,7 +891,6 @@ class ZonificacionesController extends AppController
 		$this->set(compact('datos', 'campos','id'));
 
 	}
-	
 
 	public function admin_ajustar_masivamente()
 	{	
@@ -1000,7 +926,7 @@ class ZonificacionesController extends AppController
               
 				if (!in_array($ext, $tipoPermitido)) {
                     
-					$this->Session->setFlash('El formato '.$ext.' no es válido. Los formatos permitidos son: ' . implode($tipoPermitido, ','), null, array(), 'danger');
+					$this->Session->setFlash('El formato '.$ext.' no es válido. Los formatos permitidos son: ' . implode($tipoPermitido, [',']), null, array(), 'danger');
 					$this->redirect(array('action' => 'index' ,'controller' => 'ventaDetalleProductos'));
 				}
 
@@ -1023,57 +949,59 @@ class ZonificacionesController extends AppController
 				if (!$datos['data']) {
 
 					$this->Session->setFlash($this->crearAlertaUl([], 'No hay datos a porcesar en excel'), null, array(), 'danger');
-					$this->redirect(array('action' => 'reubicacion_masivamente'));
+					$this->redirect(array('action' => 'ajustar_masivamente'));
 					
 				}
 				$date = date("Y-m-d H:i:s");
-				$persistir= [];
-				$existe_ubicacion =[];
+				$persistir			= [];
+				$persistir2			= [];
+				$existe_ubicacion 	= [];
+				$valores_excel		= [];
+				
 				foreach ($datos['data'] as $key => $value) {
-					$existe = true;
-					if ($key != 1 ) {
-						
-						foreach ($value as $data) {
-							
-							if (!$data) {
-								$existe = false;
-							}
-						}
 
-						if ($existe) {
-
-							$ubicacion = ClassRegistry::init('Ubicacion')->find('first', array(
-								'conditions' => array(
-									'activo' 	=> 1,
-									'id'		=> $value['D']
-								),
-								'fields' => array('id', 'fila','columna'),
-								'order' => array('fila ASC'),
-							));
-
-							if (!$ubicacion) {
-								$existe_ubicacion[]= "¡La ubicación con id ".$value['D']." no existe!";
-							}else {
-
-								if (is_null($value['D']) || is_null($value['G']) ) {
-									continue;
-								}
-								
-								$valores_excel [] = 
-								[
-									'id'			=> $value['D'],
-									'cantidad'		=> $value['G'],
-									'producto_id'	=> $value['A'],
-								];
-							}
-						}
+					if ($key == 1 ) {
+						continue;
 					}
+					
+					if (is_null($value['D']) ) {
+							continue;
+					}
+
+					if (is_null($value['G'])) {
+						if ($value['G']!= 0 ) {
+							continue;
+						}
+							
+					}
+					
+					$ubicacion = ClassRegistry::init('Ubicacion')->find('first', array(
+						'conditions' => array(
+							'activo' 	=> 1,
+							'id'		=> $value['D']
+						),
+						'fields' => array('id', 'fila','columna'),
+						'order' => array('fila ASC'),
+					));
+
+					if (!$ubicacion) {
+						$existe_ubicacion[]= "¡La ubicación con id ".$value['D']." no existe!";
+					}else {
+
+						$valores_excel [] = 
+						[
+							'id'			=> $value['D'],
+							'cantidad'		=> $value['G'],
+							'producto_id'	=> $value['A'],
+						];
+					}
+
 				}
 
 				if ($existe_ubicacion ) {
 
 					$this->Session->setFlash($this->crearAlertaUl($existe_ubicacion, 'Errores encontrados'), null, array(), 'danger');
-					$this->redirect(array('action' => 'reubicacion_masivamente'));
+					$this->redirect(array('action' => 'ajustar_masivamente'));
 				}
 				
 				$date = date("Y-m-d H:i:s");
@@ -1083,25 +1011,36 @@ class ZonificacionesController extends AppController
 					$persistir	[] = $PrepararInfoPersistir['persistir'];
 					$persistir2	[] = $PrepararInfoPersistir['persistir2'];
 				}
-				
-				if (!$persistir && $persistir2)
+				$persistir	= array_filter($persistir);
+				$persistir2	= array_filter($persistir2);
+				$persistir2 = array_unique($persistir2 , SORT_REGULAR );
+			
+				if (!$persistir)
 				{
-					$this->Session->setFlash('Asegurate de haber seleccionado una nueva ubicación e indicado cantidad a mover', null, array(), 'danger');
+					$this->Session->setFlash('Asegurate de haber indicado cantidad a ajustar', null, array(), 'danger');
 					
 				}else{
 
 					$this->Zonificacion->create();
-			
+					$infoPersistirInventario=[];
 					if ( $this->Zonificacion->saveMany($persistir) )
 					{
-						ClassRegistry::init('BodegasVentaDetalleProducto')->create();
-			
-						if ( ClassRegistry::init('BodegasVentaDetalleProducto')->saveMany($persistir2) )
-						{
-							$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');
-							$this->redirect(array('action' => 'index' ,'controller' => 'ventaDetalleProductos'));
-
+						foreach ($persistir2 as $value) {
+							$infoPersistirInventario[] = $this->PrepararInfoPersistirInventario($value['bodega_id'],$value['producto_id'],$date);
 						}
+
+						if ($infoPersistirInventario) {
+							$result=[];
+							$result = ClassRegistry::init('Bodega')->ajustarInventarioMasivo($infoPersistirInventario);
+							if ( $result )
+							{
+								$this->Session->setFlash('Se ajusto correctamente Bodega y Zonificación', null, array(), 'success');
+								$this->redirect(array('action' => 'index' ,'controller' => 'ventaDetalleProductos'));
+		
+							}
+						}
+						$this->Session->setFlash('Solo se ajusto zonificación, el inventario de bodega no pudo ser ajustado', null, array(), 'danger');
+					
 					}
 					
 					$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
@@ -1129,13 +1068,6 @@ class ZonificacionesController extends AppController
 		
 		$datos 		= [];
 
-		$ids = ClassRegistry::init('Zonificacion')->find('all',[
-			'fields'     =>'producto_id',
-			'group'      => 'producto_id'
-		]
-		);
-		$ids = Hash::extract($ids, '{n}.Zonificacion.producto_id');
-		
 		$db = ClassRegistry::init('VentaDetalleProducto')->getDataSource();
 		$subQueryStockFisico = $db->buildStatement(
 			array(
@@ -1168,21 +1100,12 @@ class ZonificacionesController extends AppController
 			),
 			'fields' => array(
 				'VentaDetalleProducto.id', 
-				'VentaDetalleProducto.id_externo',
 				'VentaDetalleProducto.nombre', 
-				'VentaDetalleProducto.marca_id', 
-				'VentaDetalleProducto.cantidad_virtual', 
 				'VentaDetalleProducto.codigo_proveedor', 
-				'VentaDetalleProducto.precio_costo', 
-				'VentaDetalleProducto.cantidad_virtual', 
-				'VentaDetalleProducto.activo',
 				$subQueryStockFisicoExpression->value
 			),
-			'conditions'=>
-			[
-				'VentaDetalleProducto.id in'=>$ids
-			]
-			));
+			)
+		);
 
 		# Filtrar
 		if ( isset($this->request->params['named']) ) {
@@ -1217,15 +1140,15 @@ class ZonificacionesController extends AppController
 			}
 		}
 		
-		$productos 	= ClassRegistry::init('VentaDetalleProducto')->find('list',$opciones);
+		$productos 	= ClassRegistry::init('VentaDetalleProducto')->find('all',$opciones);
+	
 		
-		
-        foreach ($productos as $id) {
+        foreach ($productos as $producto) {
 			
 			$zonificaciones = $this->Zonificacion->find('all', array(
 				'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 				'conditions' => array(
-					'producto_id' => $id,
+					'producto_id' => $producto['VentaDetalleProducto']['id'],
 				),
 				'contain' =>[
 					'Ubicacion'=>'Zona',
@@ -1233,13 +1156,13 @@ class ZonificacionesController extends AppController
 				'group' => array('ubicacion_id'),
 			));
 			
-	
+		
+
 			foreach ($zonificaciones as $valor)
 			{	
-				if ($valor[0]['cantidad']>0) {
 					$datos[] = 
 					array(
-						'producto_id'       			=> $id,
+						'producto_id'       			=> $valor['VentaDetalleProducto']['id'],
 						'referencia'       				=> $valor['VentaDetalleProducto']['codigo_proveedor'],
 						'nompre_del_producto'			=> $valor['VentaDetalleProducto']['nombre'],
 						'ubicacion_id'  				=> $valor['Zonificacion']['ubicacion_id'],
@@ -1247,12 +1170,24 @@ class ZonificacionesController extends AppController
 						'cantidad_actual'				=> $valor[0]['cantidad'],
 						'indique_cantidad_a_ajustar'  	=> ''
 					);
-				}
-				
+								
+			}
+			if (!$zonificaciones ) {
+				$datos[] = 
+					array(
+						'producto_id'       			=> $producto['VentaDetalleProducto']['id'],
+						'referencia'       				=> $producto['VentaDetalleProducto']['codigo_proveedor'],
+						'nompre_del_producto'			=> $producto['VentaDetalleProducto']['nombre'],
+						'ubicacion_id'  				=> '',
+						'nombre_ubicacion'				=> '',
+						'cantidad_actual'				=> '',
+						'indique_cantidad_a_ajustar'  	=> ''
+					);
 			}
 
 		}
-        $campos = array('producto_id','referencia','nompre_del_producto','ubicacion_id','nombre_ubicacion','cantidad_actual', 'indique_cantidad_a_ajustar');
+
+		$campos = array('producto_id','referencia','nompre_del_producto','ubicacion_id','nombre_ubicacion','cantidad_actual', 'indique_cantidad_a_ajustar');
 		$this->set(compact('datos', 'campos'));
 
 	}
@@ -1263,7 +1198,7 @@ class ZonificacionesController extends AppController
 		$persistir2		= [];
 
 		if (trim($valor['cantidad']) !='') {
-
+			
 			$zonificacion = $this->Zonificacion->find('all', array(
 				'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 				'conditions' => array(
@@ -1274,67 +1209,212 @@ class ZonificacionesController extends AppController
 				'group' => array('ubicacion_id'),
 			));
 
-			$bodega = ClassRegistry::init('Bodega')->find('first', 
-			array(
-				'fields' => array('id','nombre'),
-				'conditions' => array('id' =>$zonificacion[0]['Ubicacion']['Zona']['bodega_id'])));
-			
-			$producto = ClassRegistry::init('VentaDetalleProducto')->find('first', 
-			array(
-				'fields' => array('codigo_proveedor'),
-				'conditions' => array('id' =>$id)));
-			
-			$pmp = ClassRegistry::init('Pmp')->obtener_pmp($id, $bodega['Bodega']['id']);
-			
-			$cantidad = ($valor['cantidad'] - $zonificacion[0][0]['cantidad'] );
-			
-			$pmp = ($pmp == 0)?ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo ($id):$pmp;
-		
-			$persistir =
-			[
-				"ubicacion_id"          => $valor['id'],
-				"producto_id"           => $id,
-				"cantidad"              => $cantidad,
-				"responsable_id"        => $this->Auth->user('id'),
-				"movimiento"            => 'ajuste',
-				"fecha_creacion"        => $date,
-				"ultima_modifacion"     => $date
-			];
+			if (!$zonificacion) {
+				$bodega = ClassRegistry::init('Ubicacion')->find('first', 
+				array(
+					'fields' => array('Zona.bodega_id'),
+					'conditions' => array('Ubicacion.id' =>$valor['id']),
+					'contain' =>  [ 'Zona' ],
+				));
+				
+				$cantidad = $valor['cantidad'];
+				if ($cantidad == 0) {
 
-			$persistir2 =
-			[
-				'venta_detalle_producto_id'	=> $id,
-				'bodega_id'         		=> $bodega['Bodega']['id'],
-				'bodega'     				=> $bodega['Bodega']['nombre'],
-				'sku'               		=> $producto['VentaDetalleProducto']['codigo_proveedor'],
-				'cantidad'          		=> $cantidad,
-				'tipo'              		=> 'AJ',
-				'io'                		=> $cantidad>0?'IN':'ED',
-				'valor'             		=> $pmp,
-				'total'             		=> ($pmp * $cantidad),
-				'fecha'             		=> $date,
-				'responsable_id'    		=> $this->Auth->user('id'),
-				'glosa'             		=> $cantidad>0?'Ajuste de inventario: Ingresar':'Ajuste de inventario: Salida',
-				'fecha_creacion'    		=> $date,
-				'ultima_modifacion' 		=> $date
-			];
+					return [
+						'persistir'		=> $persistir,
+						'persistir2'	=> $persistir2
+					];
+
+				}
+				$persistir =
+				[
+					"ubicacion_id"          => $valor['id'],
+					"producto_id"           => $id,
+					"cantidad"              => $cantidad,
+					"responsable_id"        => $this->Auth->user('id'),
+					"movimiento"            => 'ajuste',
+					"fecha_creacion"        => $date,
+					"ultima_modifacion"     => $date
+				];
+
+				$persistir2 =
+				[
+					'producto_id'				=> $id,
+					'bodega_id'         		=> $bodega['Zona']['bodega_id']
+				];
+
+			}else{
+
+				$bodega = ClassRegistry::init('Bodega')->find('first', 
+				array(
+					'fields' => array('id','nombre'),
+					'conditions' => array('id' =>$zonificacion[0]['Ubicacion']['Zona']['bodega_id'])));
+					
+				$cantidad = $valor['cantidad'] - $zonificacion[0][0]['cantidad'];
+				if ($cantidad == 0) {
+
+					return [
+						'persistir'		=> $persistir,
+						'persistir2'	=> $persistir2
+					];
+
+				}
+				$persistir =
+				[
+					"ubicacion_id"          => $valor['id'],
+					"producto_id"           => $id,
+					"cantidad"              => $cantidad,
+					"responsable_id"        => $this->Auth->user('id'),
+					"movimiento"            => 'ajuste',
+					"fecha_creacion"        => $date,
+					"ultima_modifacion"     => $date
+				];
+
+				$persistir2 =
+				[
+					'producto_id'				=> $id,
+					'bodega_id'         		=> $bodega['Bodega']['id']
+				];
+			}
 		}
-
+		
 		return [
 			'persistir'		=> $persistir,
 			'persistir2'	=> $persistir2
 		];
 	}
 
-	private function TieneZonificacion($zonificaciones, $id)
+	private function PrepararInfoPersistirInventario($bodega_id, $id, $date){
+
+		$persistir2		= [];
+		
+		$zonificacion = $this->Zonificacion->find('all', array(
+			'fields' => array('SUM(Zonificacion.cantidad) as cantidad'),
+			'conditions' => array(
+				'Zonificacion.producto_id' 	=> $id ,
+				
+			),
+			'contain' => ['Ubicacion'] ,
+			'joins'      => array(
+				array(
+					'table' => 'zonas',
+					'alias' => 'Zona',
+					'type' => 'INNER',
+					'conditions' => array(
+						'Ubicacion.Zona_id = Zona.id',
+						'Zona.bodega_id' => $bodega_id
+					)
+				),
+			
+		)));
+		
+		if (is_null( $zonificacion[0][0]['cantidad'])) {
+			return $persistir2;
+		}
+		
+		$bodega = ClassRegistry::init('Bodega')->find('first', 
+		array(
+			'fields' => array('id','nombre'),
+			'conditions' => array('id' =>$bodega_id)));
+
+
+		$pmp = ClassRegistry::init('Pmp')->obtener_pmp($id, $bodega['Bodega']['id']);
+		
+		$cantidad = $zonificacion[0][0]['cantidad'];
+		
+		$pmp = ($pmp == 0)?ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo ($id):$pmp;
+
+		$persistir2 =
+		[
+			'id_producto'				=> $id,
+			'bodega_id'         		=> $bodega['Bodega']['id'],			
+			'cantidad'          		=> $cantidad,
+			'precio'             		=> $pmp			
+		];
+		
+
+		return $persistir2;
+	}
+
+	private function TieneZonificacion($zonificaciones, $id= null)
 	{
 		if (!$zonificaciones) {
 		
-			$this->Session->setFlash('No posee zonificación.', null, array(), 'danger');
+			$this->Session->setFlash('El o los productos no se encuentran Zonificados. Antes de realizar alguna acción prefiera Zonificar.', null, array(), 'danger');
+			if ( is_null($id)) {
+
+				$this->redirect(array('action' => 'index' ,'controller' => 'ventaDetalleProductos'));
+				
+			}
+
 			$this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
+
+			
 		}
 
 		return ;
+	}
+	
+	private function PersistirABaseDato($ajuste, $id)
+	{
+
+		$date = date("Y-m-d H:i:s");
+
+		foreach ($ajuste as $valor) {
+			
+			if (!is_null($valor['cantidad'])) {
+				$PrepararInfoPersistir = $this->PrepararInfoPersistir($valor,$id,$date);
+				$persistir	[] = $PrepararInfoPersistir['persistir'];
+				$persistir2	[] = $PrepararInfoPersistir['persistir2'];
+			}
+			
+		}
+		$persistir	= array_filter($persistir);
+		$persistir2	= array_filter($persistir2);
+		$persistir2 = array_unique($persistir2 , SORT_REGULAR );
+		
+		foreach ($persistir2 as $value) {
+			$infoPersistirInventario[] = $this->PrepararInfoPersistirInventario($value['bodega_id'],$value['producto_id'],$date);
+		}
+
+		
+		if (!$persistir)
+		{
+			$this->Session->setFlash('Asegurate de haber indicado cantidad a ajustar o que cantidad sea distinta a la ya existe', null, array(), 'danger');
+			
+		}else{
+
+			$this->Zonificacion->create();
+			$infoPersistirInventario=[];
+			
+			if ( $this->Zonificacion->saveMany($persistir) )
+			{
+				foreach ($persistir2 as $value) {
+					$infoPersistirInventario[] = $this->PrepararInfoPersistirInventario($value['bodega_id'],$value['producto_id'],$date);
+				}
+
+				if ($infoPersistirInventario) {
+					$result=[];
+
+					$result = ClassRegistry::init('Bodega')->ajustarInventarioMasivo($infoPersistirInventario);
+					if ( $result )
+					{
+						$this->Session->setFlash('Se ajusto correctamente Bodega y Zonificación', null, array(), 'success');
+						$this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
+
+					}
+					
+				}
+
+				$this->Session->setFlash('Solo se ajusto zonificación, el inventario de bodega no pudo ser ajustado', null, array(), 'danger');
+				
+			}
+			
+			$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
+			
+		}
+
+
 	}
    
 

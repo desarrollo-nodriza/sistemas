@@ -410,7 +410,7 @@
 	</div>
 	
 	<div class="row">
-		<div class="col-xs-12 col-md-4">
+		<div class="col-xs-12 col-md-3">
 			<div class="widget" style="background-color: #<?=random_color();?>;">
                 <div class="owl-carousel">
                 	<div>                                    
@@ -420,7 +420,7 @@
                 </div>                                                        
             </div>
 		</div>
-		<div class="col-xs-12 col-md-4">
+		<div class="col-xs-12 col-md-3">
 			<div class="widget" style="background-color: #<?=random_color();?>;">
                 <div class="owl-carousel">
                 	<div>                                    
@@ -430,12 +430,22 @@
                 </div>                                                        
             </div>
 		</div>
-		<div class="col-xs-12 col-md-4">
+		<div class="col-xs-12 col-md-3">
 			<div class="widget" style="background-color: #<?=random_color();?>;">
                 <div class="owl-carousel">
                 	<div>                                    
                         <div class="widget-title"><?=__('Stock Global');?></div>                                                                      
                         <div class="widget-int"><?=$this->request->data['VentaDetalleProducto']['cantidad_real_fisica'];?></div>
+                    </div>
+                </div>                                                        
+            </div>
+		</div>
+		<div class="col-xs-12 col-md-3">
+			<div class="widget" style="background-color: #<?=random_color();?>;">
+                <div class="owl-carousel">
+                	<div>                                    
+                        <div class="widget-title"><?=__('Stock Global Zonificada');?></div>                                                                      
+                        <div class="widget-int"><?=$totalZonificado;?></div>
                     </div>
                 </div>                                                        
             </div>
@@ -468,7 +478,22 @@
 			<? endforeach; ?>
 		<? endif; ?>
 	</div>
-
+	<div class="row">		
+		<? if (isset($totalBodegasZonificadas)) : ?>
+			<? foreach ($totalBodegasZonificadas as $nombre => $stock) : ?>
+			<div class="col-xs-12 col-md-4">
+				<div class="widget small-widget" style="background-color: #<?=random_color();?>;">
+	                <div class="owl-carousel">
+	                	<div>                                    
+	                        <div class="widget-title"><?=sprintf('Stock zonificado bodega %s', $nombre);?></div>                                                                      
+	                        <div class="widget-int"><?=$stock;?></div>
+	                    </div>
+	                </div>                                                        
+	            </div>
+			</div>
+			<? endforeach; ?>
+		<? endif; ?>
+	</div>
 	<!-- end row -->
 	<div class="row">
 		<div class="col-xs-12">
@@ -521,6 +546,7 @@
 									<th><?=__('Ubicacion nueva');?></th>
 									<th><?=__('Ubicacion antiguo');?></th>
 									<th><?=__('Orden de compra');?></th>
+									<th><?=__('Fecha de creación');?></th>
 								</thead>
 								<tbody>
 								<? foreach ($zonificaciones as $ubicacion) : ?>
@@ -533,7 +559,7 @@
 									
 										<td><?=$ubicacion['Zonificacion']['cantidad'];?></td>
 										<td><?=$ubicacion['Zonificacion']['movimiento'];?></td>
-										<td><?=$ubicacion['VentaCliente']['nombre'].' '.$ubicacion['VentaCliente']['apellido'];?></td>
+										<td><?=$ubicacion['Administrador']['nombre']??'El id '.$ubicacion['Zonificacion']['responsable_id'].' No  tiene nombre definido';?></td>
 										<td><?=$ubicacion['Zonificacion']['embalaje_id'];?></td>
 										<td><?=$ubicacion['Zonificacion']['nueva_ubicacion_id'];?></td>
 										<td><?=$ubicacion['Zonificacion']['antigua_ubicacion_id'];?></td>
@@ -544,6 +570,7 @@
 												--
 											<? endif; ?>
 										</td>
+										<td><?=$ubicacion['Zonificacion']['fecha_creacion'];?></td>
 										
 									</tr>
 								<? endforeach; ?>
