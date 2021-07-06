@@ -1,5 +1,5 @@
 <div class="page-title">
-	<h2><span class="fa fa-tags"></span> Reubicación Masiva de Productos</h2>
+	<h2><span class="fa fa-tags"></span> Ajustar Producto de forma Masiva</h2>
 </div>
 
 <?= $this->Form->create('Zonificacion', array('inputDefaults' => array('div' => false, 'label' => false), 'class' => 'js-validate-producto', 'type' => 'file')); ?>
@@ -16,17 +16,9 @@
 				</div>
 				<div class="panel-body">
 					<div class="form-group col-xs-12">
-						<label>Descarga el archivo con stock actual de productos</label>
+						<label>Descarga el archivo con stock actual</label>
 						<br>
-						<?  
-						$exportar_productos = array(
-							'controller' => 'zonificaciones',
-							'action' => 'exportar_stock_productos_ubicacion'
-						);
-						if (isset($this->request->params['named'])) {
-							$exportar_productos = array_replace_recursive($exportar_productos, $this->request->params['named']);
-						}?>
-						<?= $this->Html->link('<i class="fa fa-download"></i> Plantilla con stock actual', $exportar_productos, array('class' => 'btn btn-success', 'escape' => false)); ?>
+						<?= $this->Html->link('<i class="fa fa-download"></i> Plantilla con stock actual', array('controller' => 'zonificaciones','action' => 'exportar_stock_ajuste', $id), array('class' => 'btn btn-success', 'escape' => false)); ?>
 						
 					</div>
 					<div class="form-group col-xs-12 col-md-6">
@@ -40,7 +32,7 @@
 				<div class="panel-footer">
 					<div class="col-xs-12">
 						<div class="pull-right">
-							<?= $this->Form->button('<i class="fa fa-send" aria-hidden="true"></i> Continuar', array('type' => 'button', 'escape' => false, 'class' => 'btn btn-success btn-block start-loading-then-redirect', 'data-toggle' => 'modal','data-target' => '#modalHelp')); ?>
+							<?= $this->Form->button('<i class="fa fa-send" aria-hidden="true"></i> Continuar', array('type' => 'button', 'escape' => false, 'class' => 'btn btn-success btn-block', 'data-toggle' => 'modal','data-target' => '#modalHelp')); ?>
 						</div>
 					</div>
 				</div>
@@ -76,7 +68,7 @@
 		</ul>
       </div>
       <div class="modal-footer">
-      	<?= $this->Form->button('<i class="fa fa-upload" aria-hidden="true"></i> Continuar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-success')); ?>
+      	<?= $this->Form->button('<i class="fa fa-upload" aria-hidden="true"></i> Continuar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-success start-loading-then-redirect')); ?>
       </div>
     </div>
   </div>

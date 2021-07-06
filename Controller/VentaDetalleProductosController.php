@@ -1417,8 +1417,27 @@ class VentaDetalleProductosController extends AppController
 
 		# PMP
 		$this->request->data['VentaDetalleProducto']['pmp_global'] = ClassRegistry::init('Bodega')->obtener_pmp_por_id($id);
-
+		$zonificacionBodegas = [];
+		
 		foreach ($bodegas as $ib => $b) {
+			$zonificacionBodegas [] = ClassRegistry::init('Zonificacion')->find('all', array(
+				'fields'		=>['SUM(Zonificacion.cantidad) as cantidad'],
+				'conditions' 	=> array(
+					'producto_id' => $id
+				),
+				'contain' => ['Ubicacion'] ,
+				'joins'      => array(
+					array(
+						'table' => 'zonas',
+						'alias' => 'Zona',
+						'type' => 'INNER',
+						'conditions' => array(
+							'Ubicacion.Zona_id = Zona.id',
+							'Zona.bodega_id' => $ib
+						)
+					)
+					)
+			));
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_id'] = $ib;
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_nombre'] = $b;
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib, true);
@@ -1445,16 +1464,29 @@ class VentaDetalleProductosController extends AppController
 			'conditions' => array(
 				'producto_id' => $id
 			),
-			'contain' =>['VentaCliente','Ubicacion'=>'Zona'],
+			'contain' 	=>['Administrador','Ubicacion'=>'Zona'],
 			'order'   	=>['Zonificacion.fecha_creacion desc']
 		));
 
 		
+		$totalBodegasZonificadas = [];
+		foreach ($zonificacionBodegas as $key => $value) {
+			
+			$totalBodegasZonificadas [$bodegas[($key+1)] ]= $value[0][0]['cantidad']??0;
+		}
 
+		$totalZonificado = ClassRegistry::init('Zonificacion')->find('all', array(
+			'fields'		=>['SUM(Zonificacion.cantidad) as cantidad'],
+			'conditions' 	=> array(
+				'producto_id' => $id
+			),
+			'contain' => ['Ubicacion']
+		));
+		$totalZonificado = $totalZonificado[0][0]['cantidad']??0;
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos');
 		BreadcrumbComponent::add('Editar');
 
-		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes', 'productoWarehouse','zonificaciones'));
+		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes', 'productoWarehouse','zonificaciones','totalZonificado','totalBodegasZonificadas'));
 	}
 
 

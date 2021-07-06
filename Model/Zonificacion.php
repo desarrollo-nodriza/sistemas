@@ -14,8 +14,8 @@ Class Zonificacion extends AppModel {
             'className'     => 'Ubicacion',
             'foreignKey'    => 'ubicacion_id'
         ),
-        'VentaCliente' => array(
-            'className'     => 'VentaCliente',
+        'Administrador' => array(
+            'className'     => 'Administrador',
             'foreignKey'    => 'responsable_id'
         ),
         'VentaDetalleProducto' => array(
