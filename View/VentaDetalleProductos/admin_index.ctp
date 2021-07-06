@@ -91,13 +91,32 @@
 							'controller' => 'zonificaciones',
 							'action' => 'reubicacion_masivamente'
 						);
+						
+						$exportar_productos_ajustar = array(
+							'controller' => 'zonificaciones',
+							'action' => 'ajustar_masivamente'
+						);
+
 						if (isset($this->request->params['named'])) {
 							
-							$exportar_productos = array_replace_recursive($exportar_productos, $this->request->params['named']);
-						}?>
+							$exportar_productos 		= array_replace_recursive($exportar_productos, $this->request->params['named']);
+							$exportar_productos_ajustar = array_replace_recursive($exportar_productos_ajustar, $this->request->params['named']);
+						}
+						
+						?>
+						
 					
 					<? if ($permisos['edit']) : ?>
-						<?= $this->Html->link('<i class="fa fa-cogs"></i> Reubicar stock masivamente del producto',$exportar_productos, array('class' => 'btn btn-info', 'escape' => false)); ?>
+						<div class="dropdown pull-left btn-group">
+							<a href="#" data-toggle="dropdown" id="dropdownubicacion" class="btn btn-info dropdown-toggle" aria-expanded="true"><i class="fa fa-file-excel-o"></i> Acciones para Ubicación <span class="caret"></span></a>
+							<ul  aria-labelledby="dropdownubicacion" class="dropdown-menu">
+								<li><?= $this->Html->link('<i class="fa fa-arrows"></i> Reubicar stock masivamente del producto',$exportar_productos, array('class' => 'btn btn-info', 'escape' => false)); ?></li>
+								<li><?= $this->Html->link('<i class="fa fa-arrows"></i> Ajustar stock masivamente del producto',$exportar_productos_ajustar, array('class' => 'btn btn-info', 'escape' => false)); ?></li>                                             
+							</ul>
+						</div>
+						
+
+
 						<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Actualización masiva', array('action' => 'edicion_masiva'), array('class' => 'btn btn-danger', 'escape' => false)); ?>
 						
 						<a href="#" class="mb-control btn btn-warning" data-box="#mb-actualizar-stock-segun-bodega"><i class="fa fa fa-cubes"></i> Actualizar stock según bodega</a>
@@ -121,8 +140,8 @@
 							$export2 = array_replace_recursive($export2, $this->request->params['named']);
 						}?>
 					
-						<a href="#" data-toggle="dropdown" class="btn btn-primary dropdown-toggle" aria-expanded="true"><i class="fa fa-file-excel-o"></i> Exportar <span class="caret"></span></a>
-						<ul class="dropdown-menu" role="menu">
+						<a id="dropdownexportar" href="#" data-toggle="dropdown" class="btn btn-primary dropdown-toggle" aria-expanded="true"><i class="fa fa-file-excel-o"></i> Exportar <span class="caret"></span></a>
+						<ul aria-labelledby="dropdownexportar" class="dropdown-menu" role="menu">
 							<li><?= $this->Html->link( $this->Paginator->counter('<i class="fa fa-file-excel-o"></i> Exportar simple ({:count} registros).'), $export, array('class' => '', 'escape' => false)); ?></li>
 							<li><?= $this->Html->link( $this->Paginator->counter('<i class="fa fa-file-excel-o"></i> Exportar con stock ({:count} registros).'), $export2, array('class' => '', 'escape' => false)); ?></li>                                             
 						</ul>

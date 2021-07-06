@@ -11,115 +11,166 @@ Class Zonificacion extends AppModel {
 
 	public $belongsTo = array(
         'Ubicacion' => array(
-            'className' => 'Ubicacion',
-            'foreignKey' => 'ubicacion_id'
+            'className'     => 'Ubicacion',
+            'foreignKey'    => 'ubicacion_id'
         ),
-        'VentaCliente' => array(
-            'className' => 'VentaCliente',
-            'foreignKey' => 'responsable_id'
+        'Administrador' => array(
+            'className'     => 'Administrador',
+            'foreignKey'    => 'responsable_id'
         ),
         'VentaDetalleProducto' => array(
-            'className' => 'VentaDetalleProducto',
-            'foreignKey' => 'producto_id'
+            'className'     => 'VentaDetalleProducto',
+            'foreignKey'    => 'producto_id'
         )
     );
-
-
-    public function crearEntradaParcialZonificacion($embalaje_id, $producto_id, $movimiento, $cantidad_devolver)
+    
+    
+    public function crearEntradaParcialZonificacion($venta_id, $producto_id, $movimiento, $cantidad_devolver)
 	{
-
-
-        $persistir = [];
         
         if ($cantidad_devolver < 1) {
-           return  $persistir;
+           return  [];
         }
-        $embalaje_producto = ClassRegistry::init('EmbalajeProductoWarehouse')->find('first',[
-            'conditions'=>[
-                'embalaje_id'   => $embalaje_id,
-                'producto_id'   => $producto_id
-            ],
-            'contain' => [
-                'EmbalajeWarehouse' 
-                ]
-            ,
+
+        $embalaje_productos = ClassRegistry::init('EmbalajeProductoWarehouse')->find('all',[
+            'conditions' => array(
+                'EmbalajeWarehouse.venta_id'            => $venta_id,
+                'EmbalajeProductoWarehouse.producto_id' => $producto_id
+            ),
+            'contain' => array(
+                'EmbalajeWarehouse'
+            ),
+            'fields' => array(
+                'EmbalajeProductoWarehouse.id',
+                'EmbalajeProductoWarehouse.cantidad_embalada',
+                'EmbalajeWarehouse.id',
+                'EmbalajeProductoWarehouse.producto_id'                        
+            ),
+            'order' => 'EmbalajeProductoWarehouse.cantidad_embalada desc'
         ]);
+
+        return $this->PersistirDataV2($embalaje_productos,$movimiento,$cantidad_devolver);
+
+	}
+
+    public function crearEntradaVentaCanceladaZonificacion($embalaje_id)
+	{
+        
+        $embalaje_productos = ClassRegistry::init('EmbalajeProductoWarehouse')->find('all',[
+            'conditions' => array(
+                'EmbalajeWarehouse.id'=> $embalaje_id,
+            ),
+            'contain' => array(
+                'EmbalajeWarehouse'
+            ),
+            'fields' => array(
+                'EmbalajeProductoWarehouse.id',
+                'EmbalajeProductoWarehouse.cantidad_embalada',
+                'EmbalajeWarehouse.id',
+                'EmbalajeProductoWarehouse.producto_id'                        
+            ),
+            'order' => 'EmbalajeProductoWarehouse.cantidad_embalada desc'
+        ]);
+
+        return $this->PersistirDataV2($embalaje_productos,'venta_cancelada');
 
         
 
-        // Verifica que el producto tenga que ser embalado
-        if ($embalaje_producto) {
+	}
+    
+    private function PersistirDataV2($embalaje_productos, $movimiento, $cantidad_devolver = null)
+    {
+        $persistir = [];
+        $persistirEmbalajeProductoWarehouse = [];
+        $leer_cantidad_embalada = true;
+        
+        if (!is_null($cantidad_devolver)) {
+            $leer_cantidad_embalada = false;
+            if ($cantidad_devolver < 1) {
+                return  $persistir;
+            }
+        }
+       
 
-            // Verifica que el producto haya sido embalado
-            if ($embalaje_producto['EmbalajeProductoWarehouse']['cantidad_embalada']!= 0) {
+        if ($embalaje_productos) {
 
-                $producto_id        =$embalaje_producto['EmbalajeProductoWarehouse']['producto_id'];
+            foreach ($embalaje_productos as $embalaje_producto) {
+               
                 
-                $zonificaciones     = ClassRegistry::init('Zonificacion')->find('all',[
-                    'fields' => array('Zonificacion.* , SUM(cantidad) as cantidad'),
-                    'conditions'=>[
-                        'embalaje_id'   => $embalaje_id,
-                        'producto_id'   => $producto_id,
-                        'movimiento'    => 'embalaje'
-                    ],
-                    'group' => array('ubicacion_id'),
-                    'order' => 'cantidad asc'
-                ]);
-
+                if ($leer_cantidad_embalada) {
+                    $cantidad_devolver = $embalaje_producto['EmbalajeProductoWarehouse']['cantidad_embalada'];
+                }
                 
-
-                $date = date("Y-m-d H:i:s");
-                
-                // Se recorre las zonificaciones de donde se saco un mismo producto
-                foreach ($zonificaciones as $zonificacion) {
-
-                    $seguir = true;
-
-                    if ($cantidad_devolver == 0) {
-                        break;
-                    }
-
-
-                    $ubicacion_id       = $zonificacion['Zonificacion']['ubicacion_id'];
-
-                    // Se valida que el producto no haya sido devuelto
-                    $si_ya_devolvieron     = ClassRegistry::init('Zonificacion')->find('all',[
-                        'fields' => array('Zonificacion.* , SUM(cantidad) as cantidad'),
+                // Verifica que el producto haya sido embalado
+                if ($embalaje_producto['EmbalajeProductoWarehouse']['cantidad_embalada']!= 0) {
+                    
+                    $cantidad_ya_devuelta   = 0;
+                    $embalaje_id            = $embalaje_producto['EmbalajeWarehouse']['id'];
+                    
+                    $zonificaciones = ClassRegistry::init('Zonificacion')->find('all',[
+                        'fields' => array('*' ,'SUM(cantidad) as cantidad'),
                         'conditions'=>[
                             'embalaje_id'   => $embalaje_id,
-                            'producto_id'   => $producto_id,
-                            'ubicacion_id'  => $ubicacion_id
+                            'producto_id'   => $embalaje_producto['EmbalajeProductoWarehouse']['producto_id'],
+                            'movimiento'    => ['embalaje','devolucion','venta_cancelada','garantia']
                         ],
-                        'group' => array('ubicacion_id'),
+                        'contain' => array(
+                                     'Ubicacion' => 'Zona'
+                                ),
+                        'group' => array('producto_id'),
+                        'order' => 'cantidad asc'
                     ]);
-
                     
-                    
-                    $si_ya_devolvieron = $si_ya_devolvieron[0];
-                    
-                    if ($si_ya_devolvieron[0]['cantidad']==0 ) {
+                    $date = date("Y-m-d H:i:s");
 
-                        $seguir = false;
-                    }
+                    // Se recorre las zonificaciones de donde se saco un mismo producto
+                    foreach ($zonificaciones as $zonificacion) {
 
-                    if ($seguir) {
+                        // Si ya se devolvieron cantidad a devolver se rompe el flujo y no sigue
+                        if ($cantidad_devolver == 0) {
+                            break;
+                        }
+                        
+                        $bodega_id = $zonificacion['Ubicacion']['Zona']['bodega_id'];
+
+                        $ubicacion_id = ClassRegistry::init('Ubicacion')->find('first',[
+                            'fields' => array('Ubicacion.id'),
+                            'conditions'=>[
+                                'Zona.bodega_id'        => $bodega_id ,
+                                'Ubicacion.devolucion'  => true
+                            ],
+                            'contain' => array('Zona')
+                        ]);
+
+                        
+
+                        if ($ubicacion_id) {
+
+                            $ubicacion_id       = $ubicacion_id['Ubicacion']['id'];
+
+                        }else {
+
+                            $ubicacion_id       = $zonificacion['Zonificacion']['ubicacion_id'];
+                        }
 
                         // Si la cantidad a devolver es menor a la embalada se considera cantidad_devolver
                         if ($cantidad_devolver  < ($zonificacion[0]['cantidad']*-1)) {
 
-                       
                             $cantidad           = $cantidad_devolver;
                             $cantidad_devolver  = $cantidad_devolver - $cantidad_devolver;
                         }else {
-    
+
                             $cantidad_devolver  = $cantidad_devolver + $zonificacion[0]['cantidad'];
                             $cantidad           = $zonificacion[0]['cantidad']*-1;
                         }
 
+                        
+                        $cantidad_ya_devuelta = $cantidad_ya_devuelta + $cantidad;
+                        
                         $persistir [] =
                         [
                             "ubicacion_id"          => $ubicacion_id,
-                            "producto_id"           => $producto_id,
+                            "producto_id"           => $embalaje_producto['EmbalajeProductoWarehouse']['producto_id'],
                             "cantidad"              => $cantidad,
                             "responsable_id"        => $zonificacion['Zonificacion']['responsable_id'],
                             "embalaje_id"           => $embalaje_id,
@@ -127,162 +178,37 @@ Class Zonificacion extends AppModel {
                             "fecha_creacion"        => $date,
                             "ultima_modifacion"     => $date
                         ]; 
-                       
                     }
+
+                    $persistirEmbalajeProductoWarehouse []= 
+                    [
+                        'id'                => $embalaje_producto['EmbalajeProductoWarehouse']['id'],
+                        'cantidad_embalada' => ($embalaje_producto['EmbalajeProductoWarehouse']['cantidad_embalada'] - $cantidad_ya_devuelta)
+                    ];
                 }
+                
             }
         }
-
+       
         // Se zonifican los productos
 
         if ($persistir) {
             ClassRegistry::init('Zonificacion')->create();
             if (ClassRegistry::init('Zonificacion')->saveMany($persistir))
             {
-                return $persistir;
-                
-            }
-        }
-        
-        return $persistir;
 
-	}
+                // En EmbalajeProductoWarehouse se inidica cantidad_embalada resultante
+                foreach ($persistirEmbalajeProductoWarehouse as $EmbalajeProductoWarehouse) {
+                    ClassRegistry::init('EmbalajeProductoWarehouse')->id = $EmbalajeProductoWarehouse['id'];
+                    if (ClassRegistry::init('EmbalajeProductoWarehouse')->save(['cantidad_embalada' => $EmbalajeProductoWarehouse['cantidad_embalada']])) {
 
-    public function crearEntradaVentaCanceladaZonificacion($embalaje_id)
-	{
-
-        $embalaje_productos = ClassRegistry::init('EmbalajeProductoWarehouse')->find('all',[
-            'conditions'=>[
-                'embalaje_id'   => $embalaje_id,
-            ]
-        ]);
-        $persistir = [];
-        // Se recorre cada producto del embalaje
-        foreach ($embalaje_productos as $embalaje_producto) {
-            
-            // se valida que el producto haya sido embalado
-            if ($embalaje_producto['EmbalajeProductoWarehouse']['cantidad_embalada']!= 0) {
-                
-                $producto_id        =$embalaje_producto['EmbalajeProductoWarehouse']['producto_id'];
-                
-                $zonificaciones     = ClassRegistry::init('Zonificacion')->find('all',[
-                    'fields' => array('Zonificacion.* , SUM(cantidad) as cantidad'),
-                    'conditions'=>[
-                        'embalaje_id'   => $embalaje_id,
-                        'producto_id'   => $producto_id,
-                        'movimiento'    => 'embalaje'
-                    ],
-                    'group' => array('ubicacion_id'),
-                ]);
-
-                $date = date("Y-m-d H:i:s");
-                
-                // Se recorre las zonificaciones de donde se saco un mismo producto
-                foreach ($zonificaciones as $zonificacion) {
-
-                    $ubicacion_id       = $zonificacion['Zonificacion']['ubicacion_id'];
-                    $cantidad           = $zonificacion[0]['cantidad']*-1;
-                    $validar_movimiento = $this->ValidarPorMovimiento($embalaje_id,$producto_id,$ubicacion_id,$cantidad);
-
-                    if ($validar_movimiento) {
-                        $persistir [] =
-                        [
-                            "ubicacion_id"          => $ubicacion_id,
-                            "producto_id"           => $producto_id,
-                            "cantidad"              => $cantidad,
-                            "responsable_id"        => $zonificacion['Zonificacion']['responsable_id'],
-                            "embalaje_id"           => $embalaje_id,
-                            "movimiento"            => 'venta_cancelada',
-                            "fecha_creacion"        => $date,
-                            "ultima_modifacion"     => $date
-                        ]; 
                     }
-                
                 }
-               
-            }
-            
-        }
-        
-        // Se zonifican los productos
-        if ($persistir) {
-            ClassRegistry::init('Zonificacion')->create();
-            if (ClassRegistry::init('Zonificacion')->saveMany($persistir))
-            {
                 return $persistir;
-                
             }
         }
         
         return $persistir;
-
-
-	}
-
-    private function ValidarPorMovimiento($embalaje_id,$producto_id,$ubicacion_id,$cantidad)
-    {
-        $venta_cancelada = ClassRegistry::init('Zonificacion')->find('all',[
-            'fields' => array('Zonificacion.*,  SUM(cantidad) as cantidad'),
-            'conditions'=>[
-                'embalaje_id'   => $embalaje_id,
-                'producto_id'   => $producto_id,
-                'ubicacion_id'  => $ubicacion_id,
-                'movimiento'    =>'venta_cancelada'
-            ],
-            'group' => array('ubicacion_id'),
-        ]);
-
-        $devolucion = ClassRegistry::init('Zonificacion')->find('all',[
-            'fields' => array('Zonificacion.*,  SUM(cantidad) as cantidad'),
-            'conditions'=>[
-                'embalaje_id'   => $embalaje_id,
-                'producto_id'   => $producto_id,
-                'ubicacion_id'  => $ubicacion_id,
-                'movimiento'    =>'devolucion'
-              
-            ],
-            'group' => array('ubicacion_id'),
-        ]);
-
-        $garantia = ClassRegistry::init('Zonificacion')->find('all',[
-            'fields' => array('Zonificacion.*,  SUM(cantidad) as cantidad'),
-            'conditions'=>[
-                'embalaje_id'   => $embalaje_id,
-                'producto_id'   => $producto_id,
-                'ubicacion_id'  => $ubicacion_id,
-                'movimiento'    =>'garantia'
-                
-            ],
-            'group' => array('ubicacion_id'),
-        ]);
-        
-        $validar_movimiento = true;
-        
-        // Se valida que no se hayan devuelto stock
-        if ($venta_cancelada) {
-            $venta_cancelada = $venta_cancelada[0];
-            if ($venta_cancelada['Zonificacion']['cantidad'] == ($cantidad)) {
-               $validar_movimiento = false;
-            }
-        }
-
-        if ($garantia) {
-            $garantia = $garantia[0];
-            if ($garantia['Zonificacion']['cantidad'] == ($cantidad)) {
-                $validar_movimiento = false;
-            }
-        }
-
-        if ($devolucion) {
-            $devolucion = $devolucion[0];
-            if ($devolucion['Zonificacion']['cantidad'] == ($cantidad)) {
-                $validar_movimiento = false;
-            }
-        }
-
-        return $validar_movimiento;
     }
 
-	
-	
 }

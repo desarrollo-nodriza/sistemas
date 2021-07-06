@@ -1,5 +1,5 @@
 <div class="page-title">
-	<h2><span class="fa fa-tags"></span> Reubicación Masiva de Productos</h2>
+	<h2><span class="fa fa-tags"></span> Ajustar de forma Masiva los Productos </h2>
 </div>
 
 <?= $this->Form->create('Zonificacion', array('inputDefaults' => array('div' => false, 'label' => false), 'class' => 'js-validate-producto', 'type' => 'file')); ?>
@@ -21,7 +21,7 @@
 						<?  
 						$exportar_productos = array(
 							'controller' => 'zonificaciones',
-							'action' => 'exportar_stock_productos_ubicacion'
+							'action' => 'exportar_stock_productos_ajustar'
 						);
 						if (isset($this->request->params['named'])) {
 							$exportar_productos = array_replace_recursive($exportar_productos, $this->request->params['named']);
@@ -40,7 +40,7 @@
 				<div class="panel-footer">
 					<div class="col-xs-12">
 						<div class="pull-right">
-							<?= $this->Form->button('<i class="fa fa-send" aria-hidden="true"></i> Continuar', array('type' => 'button', 'escape' => false, 'class' => 'btn btn-success btn-block start-loading-then-redirect', 'data-toggle' => 'modal','data-target' => '#modalHelp')); ?>
+							<?= $this->Form->button('<i class="fa fa-send" aria-hidden="true"></i> Continuar', array('type' => 'button', 'escape' => false, 'class' => 'btn btn-success btn-block', 'data-toggle' => 'modal','data-target' => '#modalHelp')); ?>
 						</div>
 					</div>
 				</div>
@@ -76,7 +76,7 @@
 		</ul>
       </div>
       <div class="modal-footer">
-      	<?= $this->Form->button('<i class="fa fa-upload" aria-hidden="true"></i> Continuar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-success')); ?>
+      	<?= $this->Form->button('<i class="fa fa-upload" aria-hidden="true"></i> Continuar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-success start-loading-then-redirect')); ?>
       </div>
     </div>
   </div>

@@ -42,7 +42,7 @@
 											<?=$this->Form->select(sprintf('%d.ubicacion_id', $key), $ubicacion, array('empty' => 'Seleccione Ubicación', 'class' =>[ 'form-control', 'mi-selector'],'style'=>"width: 400px")); ?>
 										</td>
 										<td>
-											<?=$this->Form->input(sprintf('%d.cantidad', $key), array('type'=> "text", 'class' => 'is-number form-control', 'max' => $zonificacion['Zonificacion']['cantidad'], 'min' => 1));?>
+											<?=$this->Form->input(sprintf('%d.cantidad', $key), array('type'=> "text", 'class' => 'is-number form-control', 'max' => $zonificacion[0]['cantidad'], 'min' => 1));?>
 										</td>
 									</tr>
 
@@ -60,7 +60,7 @@
 							<?= $this->Html->link('<i class="fa fa-shopping-bag"></i> Ir al producto', array('controller' => 'ventaDetalleProductos', 'action' => 'edit',$zonificacion['Zonificacion']['producto_id']), array('class' => 'btn btn-primary btn-buscar btn-block', 'rel' => 'tooltip', 'title' => 'Ir al producto', 'escape' => false)); ?>
 						</div>
 						<div class="pull-right">
-							<?= $this->Form->button('<i class="fa fa-send" aria-hidden="true"></i> Mover', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block')); ?>
+							<?= $this->Form->button('<i class="fa fa-send" aria-hidden="true"></i> Mover', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-buscar btn-success btn-block start-loading-then-redirect')); ?>
 						</div>
 					</div>
 				</div>
