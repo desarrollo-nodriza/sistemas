@@ -45,9 +45,10 @@
 						<div class="form-group">
 							<label>Marca</label>
 							<?=$this->Form->select('marca', $marcas, array(
-								'class' => 'form-control',
+								'class' => 'form-control select',
 								'empty' => 'Seleccione',
-								'default' => $marca
+								'default' => $marca,
+								'data-live-search' => true
 								))?>
 						</div>
 					</div>
