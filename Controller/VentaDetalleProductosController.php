@@ -85,8 +85,7 @@ class VentaDetalleProductosController extends AppController
 					'fields' => array(
 						'Marca.id', 'Marca.nombre'
 					)
-				),
-
+				)
 			),
 			'fields' => array(
 				'VentaDetalleProducto.id', 
@@ -99,7 +98,7 @@ class VentaDetalleProductosController extends AppController
 				'VentaDetalleProducto.cantidad_virtual', 
 				'VentaDetalleProducto.activo',
 				$subQueryStockFisicoExpression->value
-				)
+			)
 			));
 
 		# Filtrar
@@ -118,6 +117,20 @@ class VentaDetalleProductosController extends AppController
 						$paginate = array_replace_recursive($paginate, array(
 							'conditions' => array('VentaDetalleProducto.marca_id' => $valor)));
 						break;
+					case 'proveedor':
+						$paginate = array_replace_recursive($paginate, array(
+							'joins'=> array(
+								array(
+									'alias' => 'Proveedor',
+									'table' => 'proveedores_venta_detalle_productos',
+									'type' => 'INNER',
+									'conditions' => array(
+										'Proveedor.venta_detalle_producto_id = VentaDetalleProducto.id',
+										'Proveedor.proveedor_id' => $valor
+									)
+								),
+							)));
+						break;
 					case 'existencia':
 						
 						if ($valor == 'en_existencia')
@@ -134,8 +147,9 @@ class VentaDetalleProductosController extends AppController
 				}
 			}
 		}
-	
+		
 		$this->paginate		= $paginate;
+		
 		$ventadetalleproductos	= $this->paginate();
 
 		foreach ($ventadetalleproductos as $iv => $producto) {
@@ -145,9 +159,10 @@ class VentaDetalleProductosController extends AppController
 		}
 
 		$marcas = ClassRegistry::init('Marca')->find('list');
-
+		$proveedores = ClassRegistry::init('Proveedor')->find('list',['order' => 'nombre ASC']);
+		
 		BreadcrumbComponent::add('Productos');
-		$this->set(compact('ventadetalleproductos', 'marcas'));
+		$this->set(compact('ventadetalleproductos', 'marcas','proveedores'));
 	}
 
 
@@ -1735,6 +1750,33 @@ class VentaDetalleProductosController extends AppController
 					case 'marca':
 						$qry = array_replace_recursive($qry, array(
 							'conditions' => array('VentaDetalleProducto.marca_id' => $valor)));
+						break;
+					case 'proveedor':
+						$qry = array_replace_recursive($qry, array(
+							'joins'=> array(
+								array(
+									'alias' => 'Proveedor',
+									'table' => 'proveedores_venta_detalle_productos',
+									'type' => 'INNER',
+									'conditions' => array(
+										'Proveedor.venta_detalle_producto_id = VentaDetalleProducto.id',
+										'Proveedor.proveedor_id' => $valor
+									)
+								),
+							)));
+						break;
+					case 'existencia':
+					
+						if ($valor == 'en_existencia')
+						{
+							$qry = array_replace_recursive($qry, array(
+								'group' => array(
+									'stock_fisico HAVING stock_fisico > 0'
+								),
+								'order' => 'stock_fisico DESC'
+							));
+						}
+						
 						break;
 				}
 			}
