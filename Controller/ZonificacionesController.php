@@ -610,6 +610,20 @@ class ZonificacionesController extends AppController
 						$opciones = array_replace_recursive($opciones, array(
 							'conditions' => array('VentaDetalleProducto.marca_id' => $valor)));
 						break;
+					case 'proveedor':
+						$opciones = array_replace_recursive($opciones, array(
+							'joins'=> array(
+								array(
+									'alias' => 'Proveedor',
+									'table' => 'proveedores_venta_detalle_productos',
+									'type' => 'INNER',
+									'conditions' => array(
+										'Proveedor.venta_detalle_producto_id = VentaDetalleProducto.id',
+										'Proveedor.proveedor_id' => $valor
+									)
+								),
+							)));
+						break;
 					case 'existencia':
 						
 						if ($valor == 'en_existencia')
@@ -1122,6 +1136,20 @@ class ZonificacionesController extends AppController
 					case 'marca':
 						$opciones = array_replace_recursive($opciones, array(
 							'conditions' => array('VentaDetalleProducto.marca_id' => $valor)));
+						break;
+					case 'proveedor':
+						$opciones = array_replace_recursive($opciones, array(
+							'joins'=> array(
+								array(
+									'alias' => 'Proveedor',
+									'table' => 'proveedores_venta_detalle_productos',
+									'type' => 'INNER',
+									'conditions' => array(
+										'Proveedor.venta_detalle_producto_id = VentaDetalleProducto.id',
+										'Proveedor.proveedor_id' => $valor
+									)
+								),
+							)));
 						break;
 					case 'existencia':
 						

@@ -8,9 +8,10 @@
 		<div class="col-xs-12">
 			<?= $this->Form->create('Filtro', array('url' => array('controller' => 'ventaDetalleProductos', 'action' => 'index'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
 			<? 
-				$id     = (isset($this->request->params['named']['id'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['id'])) : '' ;
-				$nombre = (isset($this->request->params['named']['nombre'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['nombre'])) : '' ;
-				$marca = (isset($this->request->params['named']['marca'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['marca'])) : '' ;
+				$id     	= (isset($this->request->params['named']['id'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['id'])) : '' ;
+				$nombre 	= (isset($this->request->params['named']['nombre'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['nombre'])) : '' ;
+				$marca 		= (isset($this->request->params['named']['marca'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['marca'])) : '' ;
+				$proveedor 	= (isset($this->request->params['named']['proveedor'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['proveedor'])) : '' ;
 				$existencia = (isset($this->request->params['named']['existencia'])) ? str_replace('%2F', '/', urldecode($this->request->params['named']['existencia'])) : '' ;
 			?>
 			<div class="panel panel-default">
@@ -48,6 +49,17 @@
 								'class' => 'form-control select',
 								'empty' => 'Seleccione',
 								'default' => $marca,
+								'data-live-search' => true
+								))?>
+						</div>
+					</div>
+					<div class="col-sm-3 col-xs-12">
+						<div class="form-group">
+							<label>Proveedor</label>
+							<?=$this->Form->select('proveedor', $proveedores, array(
+								'class' => 'form-control select',
+								'empty' => 'Seleccione',
+								'default' => $proveedor,
 								'data-live-search' => true
 								))?>
 						</div>
