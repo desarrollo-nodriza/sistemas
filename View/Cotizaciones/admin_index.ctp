@@ -14,6 +14,8 @@
 				$email_vendedor       = (isset($this->request->params['named']['email_vendedor'])) ? $this->request->params['named']['email_vendedor'] : '' ;
 				$fecha_desde          = (isset($this->request->params['named']['fecha_desde'])) ? $this->request->params['named']['fecha_desde'] : '' ;
 				$fecha_hasta          = (isset($this->request->params['named']['fecha_hasta'])) ? $this->request->params['named']['fecha_hasta'] : '' ;
+				$monto_desde          = (isset($this->request->params['named']['monto_desde'])) ? $this->request->params['named']['monto_desde'] : '' ;
+				$monto_hasta          = (isset($this->request->params['named']['monto_hasta'])) ? $this->request->params['named']['monto_hasta'] : '' ;
 			?>
 			
 			<div class="panel panel-default">
@@ -21,15 +23,15 @@
 					<h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
 				</div>
 				<div class="panel-body">
-					<div class="form-group col-sm-4 col-xs-12">
+					<div class="form-group col-sm-3 col-xs-12">
 							<label>Identificador, nombre o email cliente</label>
 							<?= $this->Form->input('id_email', array('class' => 'form-control input-buscar', 'placeholder' => 'Ingrese email o nombre del cliente', 'value' => $id_email)); ?>
 					</div>
-					<div class="form-group col-sm-4 col-xs-12">
+					<div class="form-group col-sm-3 col-xs-12">
 							<label>Responsable</label>
 							<?= $this->Form->select('email_vendedor', $administradores, array('class' => 'form-control', 'empty' => 'Seleccione', 'default' => $email_vendedor)); ?>
 					</div>
-					<div class="form-group col-sm-4 col-xs-12">
+					<div class="form-group col-sm-3 col-xs-12">
 							<label>Estado</label>
 							<?= $this->Form->select('estado_cotizacion_id', $estadoCotizaciones, array('class' => 'form-control', 'empty' => 'Seleccione', 'default' => $estado_cotizacion_id)); ?>
 					</div>
@@ -53,6 +55,21 @@
 								))?>
                         </div>
 					</div>
+					<div class="form-group col-sm-3 col-xs-12">
+							<div class="form-group">
+								<br />
+								<label>Monto Total (desde)</label>
+								<?= $this->Form->input('monto_desde', array('class' => 'form-control ', 'placeholder' => '5000, 9000', 'value' => $monto_desde)); ?>
+							</div>
+					</div>
+					<div class="form-group col-sm-3 col-xs-12">
+						<div class="form-group">
+							<br />
+							<label>Monto Total (hasta)</label>
+							<?= $this->Form->input('monto_hasta', array('class' => 'form-control ', 'placeholder' => '90000, 100000', 'value' => $monto_hasta)); ?>
+							
+						</div>
+					</div>					
 				</div>
 				<div class="panel-footer">
 					<div class="col-xs-12">
@@ -89,6 +106,7 @@
 					</div>
 				</div>
 				<div class="panel-body">
+					<?= $this->element('contador_resultados', array('col' => true)); ?>
 					<div class="table-responsive">
 						<table class="table">
 							<thead>
