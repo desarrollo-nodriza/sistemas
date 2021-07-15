@@ -511,7 +511,18 @@ class ZonificacionesController extends AppController
 				if ( $this->Zonificacion->saveMany($persistir) )
 				{
 					$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');
-					$this->redirect(array('action' => 'index' ,'controller' => 'ventaDetalleProductos'));
+					$opciones = array(
+						'action' 		=> 	'index' ,
+						'controller' 	=> 	'ventaDetalleProductos',
+						'id'			=>	$this->request->params['named']['id']??null,
+						'nombre'		=>	$this->request->params['named']['nombre']??null,
+						'marca'			=>	$this->request->params['named']['marca']??null,
+						'proveedor'		=>	$this->request->params['named']['proveedor']??null,
+						'existencia'	=>	$this->request->params['named']['existencia']??null,
+					);
+					$opciones=array_filter($opciones);
+					$this->redirect($opciones);
+					
 				}
 				else
 				{
@@ -715,11 +726,30 @@ class ZonificacionesController extends AppController
             $this->PersistirABaseDato($this->request->data['Zonificacion'],$id);
 		
 		}
+		
+		$bodegas = ClassRegistry::init('Bodega')->find('list'); 
+		foreach ($bodegas as $key => $value) {
+			$PMP[$key]= ClassRegistry::init('Pmp')->obtener_pmp($id, $key);
+		}
+		
+		$movimientos_sinfiltrar = ClassRegistry::init('TipoMovimiento')->find('all',[
+			'fields' =>['TipoMovimiento.glosa_tipo_movimiento'],
+			'conditions' => array(
+				'TipoMovimiento.tipo_movimiento' => 'AJ'
+            ),
 
+		]);
+	
+		$movimientos_filtrado =Hash::extract($movimientos_sinfiltrar, '{*}.{*}.glosa_tipo_movimiento');
+		
+		foreach ($movimientos_filtrado as $key => $value) {
+			$movimientos[$value ]=$value;
+		}
+		
 		BreadcrumbComponent::add('Editar Producto', '/ventaDetalleProductos/edit/'.$id);
 		BreadcrumbComponent::add('Ajuste de Inventario');
 		
-		$this->set(compact('zonificaciones','id','ubicaciones'));
+		$this->set(compact('zonificaciones','id','ubicaciones','PMP','movimientos'));
 	}
 
 	public function admin_ajustar_stock_masiva( $id )
@@ -814,7 +844,9 @@ class ZonificacionesController extends AppController
 						$valores_excel [] = 
 						[
 							'id'		=> $value['D'],
-							'cantidad'	=> $value['G']
+							'cantidad'	=> $value['G'],
+							'glosa'		=> $value['I'],
+							'costo'		=> $value['H']
 						];
 					}
 					
@@ -863,9 +895,27 @@ class ZonificacionesController extends AppController
             'group' => array('ubicacion_id'),
 		));
 
+		$bodegas = ClassRegistry::init('Bodega')->find('list'); 
+		foreach ($bodegas as $key => $value) {
+			$PMP[$key]= ClassRegistry::init('Pmp')->obtener_pmp($id, $key);
+		}
+
+		$movimientos_sinfiltrar = ClassRegistry::init('TipoMovimiento')->find('all',[
+			'fields' =>['TipoMovimiento.glosa_tipo_movimiento'],
+			'conditions' => array(
+				'TipoMovimiento.tipo_movimiento' => 'AJ'
+            ),
+
+		]);
+		$movimientos			= '';
+		$movimientos_filtrado 	=	Hash::extract($movimientos_sinfiltrar, '{*}.{*}.glosa_tipo_movimiento');
+		foreach ($movimientos_filtrado as $key => $value) {
+			$movimientos	=	$movimientos .' < '.$value.' > ';
+		}
+
 		foreach ($zonificaciones as $valor)
 		{	
-			
+			if ($valor[0]['cantidad']>0) {
 				$datos[] = 
 				array(
 					'producto_id'       			=> $id,
@@ -874,32 +924,17 @@ class ZonificacionesController extends AppController
 					'ubicacion_id'  				=> $valor['Zonificacion']['ubicacion_id'],
 					'nombre_ubicacion'				=> $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
 					'cantidad_actual'				=> $valor[0]['cantidad'],
-					'indique_cantidad_a_ajustar'  	=> ''
+					'indique_cantidad_a_ajustar'  	=> '',
+					'precio'						=> $PMP[$valor['Ubicacion']['Zona']['bodega_id']]==0?'':$PMP[$valor['Ubicacion']['Zona']['bodega_id']],
+					'glosa'							=> '',
+					'glosas_definidas'				=> $movimientos
 				);
-			
+				$movimientos='';
+			}
 			
 		}
-		if (!$zonificaciones) {
-			
-			$producto = ClassRegistry::init('VentaDetalleProducto')->find('first', 
-			array(
-				'fields' => array('nombre','codigo_proveedor'),
-				'conditions' => array('id' =>$id)));
 
-			$datos[] = 
-				array(
-					'producto_id'       			=> $id,
-					'referencia'       				=> $producto['VentaDetalleProducto']['codigo_proveedor'],
-					'nompre_del_producto'			=> $producto['VentaDetalleProducto']['nombre'],
-					'ubicacion_id'  				=> '',
-					'nombre_ubicacion'				=> '',
-					'cantidad_actual'				=> '',
-					'indique_cantidad_a_ajustar'  	=> ''
-				);
-		}
-		
-
-        $campos = array('producto_id','referencia','nompre_del_producto','ubicacion_id','nombre_ubicacion','cantidad_actual', 'indique_cantidad_a_ajustar');
+		$campos = array('producto_id','referencia','nompre_del_producto','ubicacion_id','nombre_ubicacion','cantidad_actual', 'indique_cantidad_a_ajustar','precio','glosa','glosas_que_puedes_usar_pero_no_son_obligatorias');
 	
 		
 		$this->set(compact('datos', 'campos','id'));
@@ -1007,11 +1042,13 @@ class ZonificacionesController extends AppController
 							'id'			=> $value['D'],
 							'cantidad'		=> $value['G'],
 							'producto_id'	=> $value['A'],
+							'glosa'			=> $value['I'],
+							'costo'			=> $value['H']
 						];
 					}
 
 				}
-
+				
 				if ($existe_ubicacion ) {
 
 					$this->Session->setFlash($this->crearAlertaUl($existe_ubicacion, 'Errores encontrados'), null, array(), 'danger');
@@ -1019,19 +1056,22 @@ class ZonificacionesController extends AppController
 				}
 				
 				$date = date("Y-m-d H:i:s");
+				
 				foreach ($valores_excel as $valor) {
-
+				
 					$PrepararInfoPersistir = $this->PrepararInfoPersistir($valor,$valor['producto_id'],$date);
 					$persistir	[] = $PrepararInfoPersistir['persistir'];
 					$persistir2	[] = $PrepararInfoPersistir['persistir2'];
 				}
+			
 				$persistir	= array_filter($persistir);
 				$persistir2	= array_filter($persistir2);
 				$persistir2 = array_unique($persistir2 , SORT_REGULAR );
-			
+				
 				if (!$persistir)
 				{
-					$this->Session->setFlash('Asegurate de haber indicado cantidad a ajustar', null, array(), 'danger');
+					$this->Session->setFlash('1) Asegurate de haber indicado cantidad a ajustar 2) Asegurate que cantidad sea distinta a la ya existente 3) Asegurate de haber indicado una glosa', null, array(), 'danger');
+					
 					
 				}else{
 
@@ -1040,7 +1080,7 @@ class ZonificacionesController extends AppController
 					if ( $this->Zonificacion->saveMany($persistir) )
 					{
 						foreach ($persistir2 as $value) {
-							$infoPersistirInventario[] = $this->PrepararInfoPersistirInventario($value['bodega_id'],$value['producto_id'],$date);
+							$infoPersistirInventario[] = $this->PrepararInfoPersistirInventario($value);
 						}
 
 						if ($infoPersistirInventario) {
@@ -1049,7 +1089,17 @@ class ZonificacionesController extends AppController
 							if ( $result )
 							{
 								$this->Session->setFlash('Se ajusto correctamente Bodega y Zonificación', null, array(), 'success');
-								$this->redirect(array('action' => 'index' ,'controller' => 'ventaDetalleProductos'));
+								$opciones = array(
+									'action' 		=> 	'index' ,
+									'controller' 	=> 	'ventaDetalleProductos',
+									'id'			=>	$this->request->params['named']['id']??null,
+									'nombre'		=>	$this->request->params['named']['nombre']??null,
+									'marca'			=>	$this->request->params['named']['marca']??null,
+									'proveedor'		=>	$this->request->params['named']['proveedor']??null,
+									'existencia'	=>	$this->request->params['named']['existencia']??null,
+								);
+								$opciones=array_filter($opciones);
+								$this->redirect($opciones);
 		
 							}
 						}
@@ -1169,7 +1219,9 @@ class ZonificacionesController extends AppController
 		}
 		
 		$productos 	= ClassRegistry::init('VentaDetalleProducto')->find('all',$opciones);
-	
+
+		$movimientos = $this->Movimientos();
+		$bodegas = ClassRegistry::init('Bodega')->find('list'); 
 		
         foreach ($productos as $producto) {
 			
@@ -1184,10 +1236,11 @@ class ZonificacionesController extends AppController
 				'group' => array('ubicacion_id'),
 			));
 			
-		
-
 			foreach ($zonificaciones as $valor)
 			{	
+				$PMP = $this->PMP($bodegas,$valor['VentaDetalleProducto']['id']);
+			
+				if ($valor[0]['cantidad']>0) {
 					$datos[] = 
 					array(
 						'producto_id'       			=> $valor['VentaDetalleProducto']['id'],
@@ -1196,11 +1249,16 @@ class ZonificacionesController extends AppController
 						'ubicacion_id'  				=> $valor['Zonificacion']['ubicacion_id'],
 						'nombre_ubicacion'				=> $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
 						'cantidad_actual'				=> $valor[0]['cantidad'],
-						'indique_cantidad_a_ajustar'  	=> ''
+						'indique_cantidad_a_ajustar'  	=> '',
+						'precio'						=> $PMP[$valor['Ubicacion']['Zona']['bodega_id']]==0?'':$PMP[$valor['Ubicacion']['Zona']['bodega_id']],
+						'glosa'							=> '',
+						'glosas_definidas'				=> $movimientos
 					);
+				}
 								
 			}
 			if (!$zonificaciones ) {
+				$PMP = $this->PMP($bodegas,$producto['VentaDetalleProducto']['id']);
 				$datos[] = 
 					array(
 						'producto_id'       			=> $producto['VentaDetalleProducto']['id'],
@@ -1209,24 +1267,60 @@ class ZonificacionesController extends AppController
 						'ubicacion_id'  				=> '',
 						'nombre_ubicacion'				=> '',
 						'cantidad_actual'				=> '',
-						'indique_cantidad_a_ajustar'  	=> ''
+						'indique_cantidad_a_ajustar'  	=> '',
+						'precio'						=> $PMP[1]==0?'':$PMP[1],
+						'glosa'							=> '',
+						'glosas_definidas'				=> $movimientos
 					);
 			}
 
-		}
-
-		$campos = array('producto_id','referencia','nompre_del_producto','ubicacion_id','nombre_ubicacion','cantidad_actual', 'indique_cantidad_a_ajustar');
+		}	
+		
+		$campos = array('producto_id','referencia','nompre_del_producto','ubicacion_id','nombre_ubicacion','cantidad_actual', 'indique_cantidad_a_ajustar','precio','glosa','glosas_que_puedes_usar_pero_no_son_obligatorias');
 		$this->set(compact('datos', 'campos'));
 
 	}
 
-	private function PrepararInfoPersistir($valor, $id,$date){
 
+	// funciones utilidad
+
+	private function PrepararInfoPersistir($valor, $id,$date){
+		
+		
+		
 		$persistir		= [];
 		$persistir2		= [];
+		$validar_glosa 	= true;
+		$glosa			= $valor['glosa']??'';
+		
+		if (isset($valor['manual'])) {
 
-		if (trim($valor['cantidad']) !='') {
-			
+			if ($valor['manual']==1) {
+
+				$glosa =trim($valor['glosa_manual']);
+
+				if (trim($valor['glosa_manual']) == '') {
+					$validar_glosa = false;
+				}
+
+			}else
+			{
+				$glosa =trim($valor['glosa']);
+
+				if (trim($valor['glosa']) == '') {
+					$validar_glosa = false;
+				}
+			}
+		}else
+		{
+			if (trim($glosa) == '') {
+				$validar_glosa = false;
+			}
+		}
+
+		
+		if (trim($valor['cantidad']) !='' && $validar_glosa) {
+		
 			$zonificacion = $this->Zonificacion->find('all', array(
 				'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 				'conditions' => array(
@@ -1236,8 +1330,41 @@ class ZonificacionesController extends AppController
 				'contain' => ['Ubicacion' => [ 'Zona' => ['Bodega']]],
 				'group' => array('ubicacion_id'),
 			));
+			
+			
+			if (count($zonificacion)>0) {
+			
+				$cantidad = $valor['cantidad'] - $zonificacion[0][0]['cantidad'];
+				if ($cantidad == 0) {
 
-			if (!$zonificacion) {
+					return [
+						'persistir'		=> $persistir,
+						'persistir2'	=> $persistir2
+					];
+
+				}
+				$persistir =
+				[
+					"ubicacion_id"          => $valor['id'],
+					"producto_id"           => $id,
+					"cantidad"              => $cantidad,
+					"responsable_id"        => $this->Auth->user('id'),
+					"movimiento"            => 'ajuste',
+					"glosa"            		=> $glosa,
+					"fecha_creacion"        => $date,
+					"ultima_modifacion"     => $date
+				];
+
+				$persistir2 =
+				[
+					'producto_id'	=> $id,
+					'bodega_id'    	=> $zonificacion[0]['Ubicacion']['Zona']['bodega_id'],
+					'glosa'        	=> $glosa,
+					'pmp'			=> $valor['costo'],
+				];
+				
+			}else{
+
 				$bodega = ClassRegistry::init('Ubicacion')->find('first', 
 				array(
 					'fields' => array('Zona.bodega_id'),
@@ -1261,65 +1388,37 @@ class ZonificacionesController extends AppController
 					"cantidad"              => $cantidad,
 					"responsable_id"        => $this->Auth->user('id'),
 					"movimiento"            => 'ajuste',
+					"glosa"            		=> $glosa,
 					"fecha_creacion"        => $date,
 					"ultima_modifacion"     => $date
 				];
 
 				$persistir2 =
 				[
-					'producto_id'				=> $id,
-					'bodega_id'         		=> $bodega['Zona']['bodega_id']
+					'producto_id'	=> $id,
+					'bodega_id'    	=> $bodega['Zona']['bodega_id'],
+					'glosa'        	=> $glosa,
+					'pmp'			=> $valor['costo'],
 				];
 
-			}else{
-
-				$bodega = ClassRegistry::init('Bodega')->find('first', 
-				array(
-					'fields' => array('id','nombre'),
-					'conditions' => array('id' =>$zonificacion[0]['Ubicacion']['Zona']['bodega_id'])));
-					
-				$cantidad = $valor['cantidad'] - $zonificacion[0][0]['cantidad'];
-				if ($cantidad == 0) {
-
-					return [
-						'persistir'		=> $persistir,
-						'persistir2'	=> $persistir2
-					];
-
-				}
-				$persistir =
-				[
-					"ubicacion_id"          => $valor['id'],
-					"producto_id"           => $id,
-					"cantidad"              => $cantidad,
-					"responsable_id"        => $this->Auth->user('id'),
-					"movimiento"            => 'ajuste',
-					"fecha_creacion"        => $date,
-					"ultima_modifacion"     => $date
-				];
-
-				$persistir2 =
-				[
-					'producto_id'				=> $id,
-					'bodega_id'         		=> $bodega['Bodega']['id']
-				];
+				
 			}
 		}
-		
+	
 		return [
 			'persistir'		=> $persistir,
 			'persistir2'	=> $persistir2
 		];
 	}
 
-	private function PrepararInfoPersistirInventario($bodega_id, $id, $date){
+	private function PrepararInfoPersistirInventario($value){
 
 		$persistir2		= [];
 		
 		$zonificacion = $this->Zonificacion->find('all', array(
 			'fields' => array('SUM(Zonificacion.cantidad) as cantidad'),
 			'conditions' => array(
-				'Zonificacion.producto_id' 	=> $id ,
+				'Zonificacion.producto_id' 	=> $value['producto_id'] ,
 				
 			),
 			'contain' => ['Ubicacion'] ,
@@ -1330,34 +1429,31 @@ class ZonificacionesController extends AppController
 					'type' => 'INNER',
 					'conditions' => array(
 						'Ubicacion.Zona_id = Zona.id',
-						'Zona.bodega_id' => $bodega_id
+						'Zona.bodega_id' => $value['bodega_id']
 					)
 				),
 			
 		)));
-		
+		#sino hay nada zonificado no se ajusta el inventario
 		if (is_null( $zonificacion[0][0]['cantidad'])) {
 			return $persistir2;
 		}
-		
-		$bodega = ClassRegistry::init('Bodega')->find('first', 
-		array(
-			'fields' => array('id','nombre'),
-			'conditions' => array('id' =>$bodega_id)));
+		$pmp = trim($value['pmp']);
 
+		if (trim($value['pmp'])=='') {
+			$pmp = ClassRegistry::init('Pmp')->obtener_pmp($value['producto_id'], $value['bodega_id']);
+			$pmp = ($pmp == 0)?ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($value['producto_id']):$pmp;
+		}
 
-		$pmp = ClassRegistry::init('Pmp')->obtener_pmp($id, $bodega['Bodega']['id']);
-		
 		$cantidad = $zonificacion[0][0]['cantidad'];
-		
-		$pmp = ($pmp == 0)?ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo ($id):$pmp;
 
 		$persistir2 =
 		[
-			'id_producto'				=> $id,
-			'bodega_id'         		=> $bodega['Bodega']['id'],			
-			'cantidad'          		=> $cantidad,
-			'precio'             		=> $pmp			
+			'id_producto'	=> $value['producto_id'],
+			'bodega_id'     => $value['bodega_id'],			
+			'cantidad'      => $cantidad,
+			'glosa'			=> $value['glosa'],			
+			'precio'        => $pmp			
 		];
 		
 
@@ -1401,14 +1497,9 @@ class ZonificacionesController extends AppController
 		$persistir2	= array_filter($persistir2);
 		$persistir2 = array_unique($persistir2 , SORT_REGULAR );
 		
-		foreach ($persistir2 as $value) {
-			$infoPersistirInventario[] = $this->PrepararInfoPersistirInventario($value['bodega_id'],$value['producto_id'],$date);
-		}
-
-		
 		if (!$persistir)
 		{
-			$this->Session->setFlash('Asegurate de haber indicado cantidad a ajustar o que cantidad sea distinta a la ya existe', null, array(), 'danger');
+			$this->Session->setFlash('1) Asegurate de haber indicado cantidad a ajustar 2) Asegurate que cantidad sea distinta a la ya existente 3) Asegurate de haber indicado una glosa', null, array(), 'danger');
 			
 		}else{
 
@@ -1418,7 +1509,7 @@ class ZonificacionesController extends AppController
 			if ( $this->Zonificacion->saveMany($persistir) )
 			{
 				foreach ($persistir2 as $value) {
-					$infoPersistirInventario[] = $this->PrepararInfoPersistirInventario($value['bodega_id'],$value['producto_id'],$date);
+					$infoPersistirInventario[] = $this->PrepararInfoPersistirInventario($value);
 				}
 
 				if ($infoPersistirInventario) {
@@ -1444,6 +1535,31 @@ class ZonificacionesController extends AppController
 
 
 	}
-   
+
+	private function Movimientos()
+	{
+		$movimientos_sinfiltrar = ClassRegistry::init('TipoMovimiento')->find('all',[
+			'fields' =>['TipoMovimiento.glosa_tipo_movimiento'],
+			'conditions' => array(
+				'TipoMovimiento.tipo_movimiento' => 'AJ'
+			),
+
+		]);
+		$movimientos			= '';
+		$movimientos_filtrado 	=	Hash::extract($movimientos_sinfiltrar, '{*}.{*}.glosa_tipo_movimiento');
+		foreach ($movimientos_filtrado as $key => $value) {
+			$movimientos	=	$movimientos .' < '.$value.' > ';
+		}
+		return $movimientos;
+	}
+
+	private function PMP($bodegas ,$id){
+
+		foreach ($bodegas as $key => $value) {
+			$PMP[$key]= ClassRegistry::init('Pmp')->obtener_pmp($id, $key);
+			
+		}
+		return $PMP;
+	}
 
 }

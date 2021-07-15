@@ -563,8 +563,13 @@ class Bodega extends AppModel
 				
 
 			}
-
-			$ii = $this->ajustarInventario($value['id_producto'], $value['bodega_id'], $value['cantidad'], $value['precio']);
+			if (isset($value['glosa'])) {
+				$ii = $this->ajustarInventario($value['id_producto'], $value['bodega_id'], $value['cantidad'], $value['precio'], $value['glosa']);
+			}else
+			{
+				$ii = $this->ajustarInventario($value['id_producto'], $value['bodega_id'], $value['cantidad'], $value['precio']);
+			}
+			
 
 			if ($ii) {
 				$result['procesados'] = (isset($result['procesados'])) ? $result['procesados']+1 : 1;

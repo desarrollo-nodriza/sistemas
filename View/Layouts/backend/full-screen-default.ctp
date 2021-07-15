@@ -106,5 +106,6 @@
         <audio id="audio-alert" src="<?= $this->Html->url('/backend/audio/alert.mp3'); ?>" preload="auto"></audio>
         <audio id="audio-fail" src="<?= $this->Html->url('/backend/audio/fail.mp3'); ?>" preload="auto"></audio>
 		<?= $this->Html->script(array('/backend/js/actions')); ?>
+		<?= $this->Html->script(array('/backend/js/utilidad')); ?>
     </body>
 </html>
