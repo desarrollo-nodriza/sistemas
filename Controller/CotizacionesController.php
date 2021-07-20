@@ -34,9 +34,7 @@ class CotizacionesController extends AppController
 	public function admin_index()
 	{
 
-    	$conditions = array(
-			'Cotizacion.tienda_id' => $this->Session->read('Tienda.id')
-		);
+    	$conditions []='Cotizacion.tienda_id = '.$this->Session->read('Tienda.id');
 		
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) { 
@@ -54,7 +52,6 @@ class CotizacionesController extends AppController
 						if ($id_email != "") {
 
 							$conditions["OR"] = array(
-								"Cotizacion.id LIKE '%" .$id_email. "%'",
 								"Cotizacion.nombre_cliente LIKE '%" .$id_email. "%'",
 								"Cotizacion.email_cliente LIKE '%" .$id_email. "%'"
 							);
@@ -63,16 +60,16 @@ class CotizacionesController extends AppController
 						break;
 					case 'estado_cotizacion_id':
 
-						$conditions['Cotizacion.estado_cotizacion_id'] = $valor;
+						$conditions[] = 'Cotizacion.estado_cotizacion_id ='.$valor;
 
 						break;
 					case 'validez_fecha_id':
 
-						$conditions['Cotizacion.validez_fecha_id'] = $valor;
+						$conditions[] = 'Cotizacion.validez_fecha_id ='.$valor;
 
 						break;
 					case 'email_vendedor':
-						$conditions['Cotizacion.email_vendedor'] = $valor;
+						$conditions[] = 'Cotizacion.email_vendedor ='."'".$valor."'";
 
 						break;
 					case 'fecha_desde':
@@ -87,7 +84,7 @@ class CotizacionesController extends AppController
 
 							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 00:00:00"));
 
-							$conditions["Cotizacion.created >="] = $Fecha;
+							$conditions[] = "Cotizacion.created >="."'".$Fecha."'";
 
 						}
 						break;
@@ -103,14 +100,31 @@ class CotizacionesController extends AppController
 
 							$Fecha = date('Y-m-d H:i:s', strtotime($Fecha . " 23:59:59"));
 
-							$conditions["Cotizacion.created <="] = $Fecha;
+							$conditions[] = "Cotizacion.created <="."'".$Fecha."'";
 
 						} 
+						break;
+					case 'monto_desde':
+
+						$monto_desde = trim($valor);
+
+						if ($monto_desde != "") {
+							$conditions[] = 'Cotizacion.total_bruto >='.$monto_desde;
+						} 
+						break;
+					case 'monto_hasta':
+
+						$monto_hasta = trim($valor);
+
+						if ($monto_hasta != "") {
+							$conditions[] = "Cotizacion.total_bruto <=".$monto_hasta;
+						} 
+						
 						break;
 				}
 			}
 		}
-
+		
 		// Opciones de paginación
 		$paginate = array_replace_recursive(array(
 			'limit'      => 10,
@@ -122,6 +136,7 @@ class CotizacionesController extends AppController
 				'EstadoCotizacion'
 			),
 			'conditions' => $conditions,
+			
 			'recursive' => 0,
 			'order'     => 'Cotizacion.id DESC'
 		));

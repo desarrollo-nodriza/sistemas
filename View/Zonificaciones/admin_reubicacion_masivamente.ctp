@@ -40,7 +40,7 @@
 				<div class="panel-footer">
 					<div class="col-xs-12">
 						<div class="pull-right">
-							<?= $this->Form->button('<i class="fa fa-send" aria-hidden="true"></i> Continuar', array('type' => 'button', 'escape' => false, 'class' => 'btn btn-success btn-block start-loading-then-redirect', 'data-toggle' => 'modal','data-target' => '#modalHelp')); ?>
+							<?= $this->Form->button('<i class="fa fa-send" aria-hidden="true"></i> Continuar', array('type' => 'button', 'escape' => false, 'class' => 'btn btn-success btn-block', 'data-toggle' => 'modal','data-target' => '#modalHelp')); ?>
 						</div>
 					</div>
 				</div>
@@ -76,7 +76,7 @@
 		</ul>
       </div>
       <div class="modal-footer">
-      	<?= $this->Form->button('<i class="fa fa-upload" aria-hidden="true"></i> Continuar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-success')); ?>
+      	<?= $this->Form->button('<i class="fa fa-upload" aria-hidden="true"></i> Continuar', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-success start-loading-then-redirect')); ?>
       </div>
     </div>
   </div>

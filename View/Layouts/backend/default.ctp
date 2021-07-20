@@ -143,6 +143,7 @@
                 s.parentNode.insertBefore(g, s);
         }(document, "script"));
         </script>
+		<?= $this->Html->script(array('/backend/js/utilidad')); ?>
         <!-- End PushAlert -->
     </body>
 </html>

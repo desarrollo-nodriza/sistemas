@@ -541,6 +541,7 @@
 									
 									<th><?=__('Cantidad');?></th>
 									<th><?=__('Movimiento');?></th>
+									<th><?=__('Glosa');?></th>
 									<th><?=__('Responsable');?></th>
 									<th><?=__('Embalaje');?></th>
 									<th><?=__('Ubicacion nueva');?></th>
@@ -559,6 +560,7 @@
 									
 										<td><?=$ubicacion['Zonificacion']['cantidad'];?></td>
 										<td><?=$ubicacion['Zonificacion']['movimiento'];?></td>
+										<td><?=$ubicacion['Zonificacion']['glosa'];?></td>
 										<td><?=$ubicacion['Administrador']['nombre']??'El id '.$ubicacion['Zonificacion']['responsable_id'].' No  tiene nombre definido';?></td>
 										<td><?=$ubicacion['Zonificacion']['embalaje_id'];?></td>
 										<td><?=$ubicacion['Zonificacion']['nueva_ubicacion_id'];?></td>
