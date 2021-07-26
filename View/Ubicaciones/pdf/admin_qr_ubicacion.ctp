@@ -20,7 +20,7 @@
             </td>
 		</tr>
 		<tr>
-            <td align="center" style="font-family: Arial, Helvetica, sans-serif; font-size: 55px; font-weight: bold; text-transform: uppercase; padding: 10px;">id: <?=$ubicacion['Ubicacion']['id']; ?></td>
+            <td align="center" style="font-family: Arial, Helvetica, sans-serif; font-size: 55px; font-weight: bold; text-transform: uppercase; padding: 10px;">UID: <?=$ubicacion['Ubicacion']['id']; ?></td>
 		</tr>
 	</table>
 </div>
