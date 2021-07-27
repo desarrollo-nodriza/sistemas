@@ -52,6 +52,7 @@ class CotizacionesController extends AppController
 						if ($id_email != "") {
 
 							$conditions["OR"] = array(
+								"Cotizacion.id LIKE '%" .$id_email. "%'",
 								"Cotizacion.nombre_cliente LIKE '%" .$id_email. "%'",
 								"Cotizacion.email_cliente LIKE '%" .$id_email. "%'"
 							);
