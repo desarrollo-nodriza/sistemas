@@ -280,12 +280,10 @@ Class EmbalajeWarehouse extends AppModel {
 						# Cancelamos todos loe embalajes relacionados al detalle
 						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
 						{	
-							if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado')
+							if (in_array($emp['EmbalajeWarehouse']['estado'], array('cancelado', 'finalizado')) )
 							{
 								continue;
 							}
-							
-        					
 
 							$this->cancelar_embalaje($emp['embalaje_id']);
 							
@@ -297,7 +295,7 @@ Class EmbalajeWarehouse extends AppModel {
 				break;
 			
 			case 'empaquetar':
-
+				
 				# si el estado de la venta no es pagado no pasa
 				if (!ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id']))
 				{

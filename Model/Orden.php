@@ -27,7 +27,8 @@ Class Orden extends AppModel {
 		'devolucion' => 'Anular y devolver producto/s (Devuelve items a bodega)',
 		'anulacion'  => 'Anular producto/s (No devuelve items a bodega)', 
 		'cambio_dte' => 'Cambio de DTE (No tiene efecto en items ni en la venta)', 
-		'garantia'   => 'Garantía (Devuelve items a bodega sin afectar el stock)'
+		'garantia'   => 'Garantía (Devuelve items a bodega sin afectar el stock)',
+		'stockout'   => 'Stockout (Devuelve items a bodega si corresponde)'
 	);
 
 	public $belongsTo = array(

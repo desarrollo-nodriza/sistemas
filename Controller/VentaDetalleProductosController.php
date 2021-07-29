@@ -2278,7 +2278,7 @@ class VentaDetalleProductosController extends AppController
 			      	}
 
 					if ($actualizar && $c['existe']) {
-						$result['successes'][] = sprintf('Item %d actualizado con éxto en %s', $id_externo, $c['nombre']);					
+						$result['successes'][] = sprintf('Item %d actualizado con éxto en %s: Nuevo Stock %d', $id_externo, $c['nombre'], $nuevo_stock);					
 					}else{
 						$result['errors'][] = sprintf('Error al actualizar el item %d en %s o no existe en el canal', $id_externo, $c['nombre']);
 					}
