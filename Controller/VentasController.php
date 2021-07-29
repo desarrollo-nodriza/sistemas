@@ -3972,7 +3972,13 @@ class VentasController extends AppController {
 		);
 
 		$joins = array();
-
+		$joins[] = array(
+			'table' => 'rp_venta_mensajes',
+			'alias' => 'VentaMensaje',
+			'type' => 'LEFT',
+			'conditions' =>[
+			'VentaMensaje.venta_id = Venta.id']
+		);
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
 			$this->filtrar('ventas', 'export_specials');
@@ -4125,13 +4131,28 @@ class VentasController extends AppController {
 			'order' => array('Venta.fecha_venta' => 'DESC'),
 			'conditions' => $condiciones,
 			'joins' => $joins,
-			'group' => 'Venta.id'
+			'group' => 'Venta.id',
+			'contain'=> ['VentaMensaje'],
 		);
-	
-		$datos = $this->Venta->find('all', $qry);
+		
+		$datos 					= $this->Venta->find('all', $qry);
+		$cantidad_comentarios 	= 0;
+		$campos					= array_keys($this->Venta->_schema);
+		foreach ($datos as $key => $value) {
 
-		$campos			= array_keys($this->Venta->_schema);
+			$observaciones = Hash::extract($value,'VentaMensaje.{*}.mensaje');
+			if($observaciones){
+				$datos[$key]['Venta'] =array_merge($datos[$key]['Venta'],$observaciones);
+				if ($cantidad_comentarios < count($observaciones) ) {
+					$cantidad_comentarios = count($observaciones);
+				}
+			}
+			unset($datos[$key]['VentaMensaje']);
+		}
 
+		for ($i=1; $i <= $cantidad_comentarios; $i++) { 
+			array_push($campos,('observacion_'.$i));
+		}
 		$this->set(compact('datos', 'campos'));
 
 	}
