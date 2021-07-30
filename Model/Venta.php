@@ -1306,6 +1306,29 @@ class Venta extends AppModel
 			return 0;
 		}
 
+		# Venta del detalle
+		$venta = $this->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $ventaDetalle['VentaDetalle']['venta_id']
+			),
+			'contain' => array(
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.cantidad',
+						'VentaDetalle.cantidad_anulada',
+						'VentaDetalle.cantidad_entregada',
+						'VentaDetalle.cantidad_en_espera',
+						'VentaDetalle.cantidad_reservada'
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.picking_estado',
+				'Venta.venta_estado_id'
+			)
+		));
+
 		$cant_reservada = $ventaDetalle['VentaDetalle']['cantidad_reservada'];
 		$cant_vendida   = $ventaDetalle['VentaDetalle']['cantidad'] - $ventaDetalle['VentaDetalle']['cantidad_anulada'];
 		$cant_entregada = $ventaDetalle['VentaDetalle']['cantidad_entregada'];
@@ -1369,27 +1392,6 @@ class Venta extends AppModel
 			$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = 0;
 			$ventaDetalle['VentaDetalle']['fecha_llegada_en_espera'] = '';
 		}
-		
-		$venta = $this->find('first', array(
-			'conditions' => array(
-				'Venta.id' => $ventaDetalle['VentaDetalle']['venta_id']
-			),
-			'contain' => array(
-				'VentaDetalle' => array(
-					'fields' => array(
-						'VentaDetalle.cantidad',
-						'VentaDetalle.cantidad_anulada',
-						'VentaDetalle.cantidad_entregada',
-						'VentaDetalle.cantidad_en_espera',
-						'VentaDetalle.cantidad_reservada'
-					)
-				)
-			),
-			'fields' => array(
-				'Venta.id',
-				'Venta.picking_estado'
-			)
-		));
 	
 		$total_cantidad = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
 		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));

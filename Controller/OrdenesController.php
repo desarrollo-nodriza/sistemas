@@ -488,7 +488,8 @@ class OrdenesController extends AppController
 					# Los tipos de NDC que devuelven stock a bodega
 					$tipos_ndc_devloucion = array(
 						'devolucion',
-						'garantia'
+						'garantia',
+						'stockout'
 					);
 
 					# Si es NDC se anulan los items en la venta, se recalculan los montos de la venta y se devuelven a bodega los itmes cancelados si corresponde.
@@ -593,14 +594,6 @@ class OrdenesController extends AppController
 										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
 									}
 
-									# Stock virtual
-									if ($d['reservado_virtual'] > 0)
-									{
-										# Nuevo stock virtual
-										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $detalle['QtyItem'], 'aumentar');
-										$venta['VentaDetalle'][$ip]['reservado_virtual'] = $d['reservado_virtual'] - $detalle['QtyItem'];
-									}
-
 									if ($d['cantidad'] == $detalle['QtyItem']) 
 									{
 										$venta['VentaDetalle'][$ip]['total_neto']   = 0;
@@ -613,6 +606,12 @@ class OrdenesController extends AppController
 										{
 											$venta['VentaDetalle'][$ip]['total_neto'] = (float) 0;
 										}
+									}
+
+									# Stock virtual
+									if ($d['reservado_virtual'] > 0)
+									{
+										$venta['VentaDetalle'][$ip]['reservado_virtual'] = $d['reservado_virtual'] - $detalle['QtyItem'];
 									}
 									
 									# Calculamos la cantidad anulada
@@ -673,8 +672,15 @@ class OrdenesController extends AppController
 								
 								# Según el tipo de ndc devolvemos con distintas glosas
 								switch($this->request->data['Dte']['tipo_ntc'])
-								{
+								{	
+									case 'stockout': 
+										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $d['cantidad_entregada_anulada'], 'aumentar');
+										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
+										ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'devolucion',$d['cantidad_entregada_anulada']);
+										break;
+
 									case 'devolucion':
+										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $d['cantidad_entregada_anulada'], 'aumentar');
 										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
 										ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'devolucion',$d['cantidad_entregada_anulada']);
 									
