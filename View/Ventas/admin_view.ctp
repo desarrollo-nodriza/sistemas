@@ -516,7 +516,15 @@
 																<? if (!empty($transporte['TransportesVenta']['etiqueta'])) : ?>
 																<a href="<?=$transporte['TransportesVenta']['etiqueta']?>" class="btn btn-xs btn-primary" target="_blank"><i class="fa fa-file-pdf-o"></i> Ver</a>
 																<? else : ?>													
-																No aplica
+																	<? if (is_null( $transporte['TransportesVenta']['cod_seguimiento'])) : ?>
+																		No aplica
+																	<? else : ?>	
+																		<? if ( $transporte['id']!=18) : ?>
+																			No aplica
+																		<? else : ?>	
+																			<?= $this->Html->link('<i class="fa fa-file-pdf-o" aria-hidden="true"></i>Generar etiqueta', array('action' => 'admin_regenerar_etiqueta',$transporte['TransportesVenta']['id']), array('class' => 'btn btn-primary', 'escape' => false)); ?>
+																		<? endif; ?>
+																	<? endif; ?>
 																<? endif; ?>
 															</td>
 															<td><span class="js-fecha-entrega"><?=(!empty($transporte['TransportesVenta']['entrega_aprox'])) ? $transporte['TransportesVenta']['entrega_aprox'] : $transporte['tiempo_entrega']; ?></span></td>

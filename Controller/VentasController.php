@@ -29,7 +29,9 @@ class VentasController extends AppController {
 		'LibreDte',
 		'Starken',
 		'Conexxion',
-		'Boosmap'
+		'Boosmap',
+		'Etiquetas',
+		'LAFFPack'
 	);
 	
 
@@ -11883,4 +11885,168 @@ class VentasController extends AppController {
 		$this->Session->setFlash(sprintf('%d ventas procesadas', $procesadas), null, array(), 'success');
 		$this->redirect($this->referer('/', true));
 	}
+
+	public function admin_regenerar_etiqueta($ot)
+	{
+
+		$transportes_venta =  ClassRegistry::init('TransportesVenta')->find('first',
+		[
+			'conditions' => [
+				'TransportesVenta.id' 		=> $ot,
+		],
+			'fields' => [
+				'TransportesVenta.venta_id',
+				'TransportesVenta.cod_seguimiento'
+			]
+		]);
+		
+		$venta_id= $transportes_venta['TransportesVenta']['venta_id'];
+
+		$venta = $this->Venta->find('first',  [
+			'conditions' => ['Venta.id' => $venta_id],
+			'contain' => [	
+				'MedioPago' => [
+					'fields' => ['MedioPago.nombre']],
+				'MetodoEnvio' => [
+					'fields' => [
+						'MetodoEnvio.nombre',
+						'MetodoEnvio.boosmap_service']],
+				'Tienda' => [
+					'fields' => [
+						'Tienda.nombre',
+						'Tienda.rut',
+						'Tienda.fono',
+						'Tienda.url',
+						'Tienda.direccion',
+						]
+					],
+				'VentaCliente' => [
+					'fields' => [
+						'VentaCliente.email',
+						]
+					],
+				],
+		]);
+
+		$venta_detalle =  ClassRegistry::init('VentaDetalle')->find('all',
+		[
+			'conditions' => ['VentaDetalle.venta_id' => $venta_id],
+			'contain' => [	
+				'VentaDetalleProducto' => [
+					'fields' => [
+						'VentaDetalleProducto.id',
+						'VentaDetalleProducto.alto',
+						'VentaDetalleProducto.ancho',
+						'VentaDetalleProducto.largo',
+						'VentaDetalleProducto.peso',
+						]],
+					],
+			'fields' => [
+				'VentaDetalle.venta_id',
+				'VentaDetalle.cantidad_reservada',
+			]
+		]);
+		$venta_detalle_filtrado 			= Hash::extract($venta_detalle,'{n}.VentaDetalle');
+		$Venta_detalle_producto_filtrado 	= Hash::extract($venta_detalle,'{n}.VentaDetalleProducto');
+		$venta_detalle_final 				= [];
+
+		foreach ($venta_detalle_filtrado as $key => $value) {
+			$value['VentaDetalleProducto']	= $Venta_detalle_producto_filtrado[$key];
+			$venta_detalle_final []			= $value;
+		}
+
+		$volumenMaximo = (float) 5832000;
+		$bulto = $this->LAFFPack->obtener_bultos_venta(['VentaDetalle'=>$venta_detalle_final ],$volumenMaximo);
+	
+		$canal_venta = '';
+
+		if ($venta['Venta']['venta_manual'])
+		{
+			$canal_venta = 'POS de venta';
+		}
+		else if ($venta['Venta']['marketplace_id'])
+		{
+			$canal_venta = $venta['Marketplace']['nombre'];
+		}
+		else
+		{
+			$canal_venta = $venta['Tienda']['nombre'];
+		}
+
+		$etiquetaArr = array(
+			'venta' => array(
+				'id' 			=> $venta['Venta']['id'],
+				'metodo_envio' 	=> $venta['MetodoEnvio']['nombre'],
+				'canal' 		=> $canal_venta,
+				'medio_de_pago' => $venta['MedioPago']['nombre'],
+				'fecha_venta' 	=> $venta['Venta']['fecha_venta']
+			),
+			'transportista' => array(
+				'nombre' 		=> 'BOOSMAP',
+				'tipo_servicio' => $venta['MetodoEnvio']['boosmap_service'],
+				'codigo_barra' 	=> $transportes_venta['TransportesVenta']['cod_seguimiento'],
+			),
+			'remitente' => array(
+				'nombre' 	=> $venta['Tienda']['nombre'],
+				'rut' 		=> $venta['Tienda']['rut'],
+				'fono' 		=> $venta['Tienda']['fono'],
+				'url' 		=> $venta['Tienda']['url'],
+				'email' 	=> 'ventas@toolmania.cl',
+				'direccion' => $venta['Tienda']['direccion']
+			),
+			'destinatario' => array(
+				'nombre' 	=> $venta['Venta']['nombre_receptor'],
+				'rut'		=> $venta['Venta']['rut_receptor'],
+				'fono' 		=> $venta['Venta']['fono_receptor'],
+				'email' 	=> $venta['VentaCliente']['email'],
+				'direccion' => $venta['Venta']['direccion_entrega'].' '.$venta['Venta']['numero_entrega'],
+				'comuna' 	=> $venta['Venta']['comuna_entrega']
+			),
+			'bulto' => array(
+				'referencia' 	=> $transportes_venta['TransportesVenta']['cod_seguimiento'],
+				'peso' 			=> $bulto[$venta_id]['paquete']['weight'],
+				'ancho' 		=> $bulto[$venta_id]['paquete']['width'],
+				'alto' 			=> $bulto[$venta_id]['paquete']['height'],
+				'largo' 		=> $bulto[$venta_id]['paquete']['length']
+			),
+			'pdf' => array(
+				'dir' => 'ModuloBoosmap'
+			)
+		);
+		
+		$etiqueta = $this->Etiquetas->generarEtiquetaTransporte($etiquetaArr);
+		
+		if (!empty($etiqueta['url'])) {
+
+			$url_etiqueta = $etiqueta['url'];
+
+			if(ClassRegistry::init('TransportesVenta')->exists($ot) && ClassRegistry::init('Venta')->exists($venta_id)){
+				
+				ClassRegistry::init('TransportesVenta')->id = $ot;
+				ClassRegistry::init('Venta')->id			= $venta_id;
+
+				if(ClassRegistry::init('TransportesVenta')->saveField('etiqueta',$url_etiqueta) && ClassRegistry::init('Venta')->saveField('etiqueta_envio_externa',$url_etiqueta)){
+				
+					$this->Session->setFlash('Se creo etiqueta', null, array(), 'success');
+					$this->redirect(array('action' => 'view', $venta_id ,'controller' => 'ventas'));
+				}
+			}
+			
+		}{
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Boosmap vid:' . $venta_id,
+					'modulo' => 'Ventas',
+					'modulo_accion' => 'Response(admin_regenerar_etiqueta): ' . json_encode($etiquetaArr)
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+		}
+		$this->Session->setFlash('No se pudo crear su etiqueta', null, array(), 'danger');
+		$this->redirect($this->referer('/', true));
+		
+	}
+
 }
