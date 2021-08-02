@@ -48,6 +48,11 @@ Class Boosmap {
 			'leyenda' => 'El repartido llegó a nuestra bodega',
 			'tipo' => 'sin_especificar'
 		),
+        'en_camino_entrega' => array(
+			'nombre' => 'En Camino Entrega',
+			'leyenda' => 'El repartidos va camino a destino con el producto',
+			'tipo' => 'en_reparto'
+		),
 		'en_despacho' => array(
 			'nombre' => 'En despacho',
 			'leyenda' => 'El pedido está en reparto',
@@ -98,7 +103,7 @@ Class Boosmap {
 			'leyenda' => 'Se ha anulado el envio',
 			'tipo' => 'error'
 		),
-		'rechazo_cliente' => array(
+		'rechazado_cliente' => array(
 			'nombre' => 'Pedido rechazado por cliente',
 			'leyenda' => 'El destinatario rechazó el pedido',
 			'tipo' => 'error'
@@ -108,7 +113,7 @@ Class Boosmap {
 			'leyenda' => 'No pudimos dar con la dirección proporcionada',
 			'tipo' => 'error'
 		),
-		'extraviado' => array(
+		'extraviado_en_bodega' => array(
 			'nombre' => 'Pedido extraviado',
 			'leyenda' => 'Lo sentimos pero el pedido se extravió en el camino a destino. Nos podremos en contacto con usted lo antes posible.',
 			'tipo' => 'error'
@@ -122,6 +127,11 @@ Class Boosmap {
 			'nombre' => 'Pedido cancelado',
 			'leyenda' => 'El pedido fue cancelado',
 			'tipo' => 'error'
+        ),
+        'recepcion_log_inversa' => array(
+			'nombre' => 'Recepcion Log inversa',
+			'leyenda' => 'Re intento de entrega luego de un intento de entrega a cliente',
+			'tipo' => 'sin_especificar'
 		)
 	);
 
