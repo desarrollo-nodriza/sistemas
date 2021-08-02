@@ -404,6 +404,19 @@ class BoosmapComponent extends Component
 						'etiqueta' => $etiqueta['url']
 					)
 				));	
+			}else{
+
+				$log_1 = array(
+					'Log' => array(
+						'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
+						'modulo' => 'Ventas',
+						'modulo_accion' => 'Response(generar_ot): ' . json_encode($etiquetaArr)
+					)
+				);
+	
+				ClassRegistry::init('Log')->create();
+				ClassRegistry::init('Log')->save($log_1);
+
 			}
 
 			$transportes[] = array(
