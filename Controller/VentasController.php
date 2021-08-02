@@ -12033,7 +12033,7 @@ class VentasController extends AppController {
 			}
 			
 		}{
-			$log[] = array(
+			$log= array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta_id,
 					'modulo' => 'Ventas',
@@ -12042,7 +12042,7 @@ class VentasController extends AppController {
 			);
 
 			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
+			ClassRegistry::init('Log')->save($log);
 		}
 		$this->Session->setFlash('No se pudo crear su etiqueta', null, array(), 'danger');
 		$this->redirect($this->referer('/', true));

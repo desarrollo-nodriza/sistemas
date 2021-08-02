@@ -406,7 +406,7 @@ class BoosmapComponent extends Component
 				));	
 			}else{
 
-				$log[] = array(
+				$log_1 = array(
 					'Log' => array(
 						'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
 						'modulo' => 'Ventas',
@@ -415,7 +415,7 @@ class BoosmapComponent extends Component
 				);
 	
 				ClassRegistry::init('Log')->create();
-				ClassRegistry::init('Log')->saveMany($log);
+				ClassRegistry::init('Log')->save($log_1);
 
 			}
 
