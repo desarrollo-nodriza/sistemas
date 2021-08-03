@@ -90,6 +90,7 @@ class VentasController extends AppController {
 		
 
 		$FiltroVenta                = '';
+		$FiltroVentaId              = '';
 		$FiltroCliente              = '';
 		$FiltroTienda               = '';
 		$FiltroMarketplace          = '';
@@ -121,7 +122,6 @@ class VentasController extends AppController {
 						if ($FiltroVenta != "") {
 
 							$condiciones["OR"] = array(
-								"Venta.id LIKE '%" .$FiltroVenta. "%'",
 								"Venta.id_externo LIKE '%" .$FiltroVenta. "%'",
 								"Venta.referencia LIKE '%" .$FiltroVenta. "%'"
 							);
@@ -129,17 +129,11 @@ class VentasController extends AppController {
 						}
 						break;
 
-					case 'filtroventa':
-						$FiltroVenta = trim($valor);
+					case 'filtroventa_id':
+						$FiltroVentaId = trim($valor);
 
-						if ($FiltroVenta != "") {
-
-							$condiciones["OR"] = array(
-								"Venta.id LIKE '%" .$FiltroVenta. "%'",
-								"Venta.id_externo LIKE '%" .$FiltroVenta. "%'",
-								"Venta.referencia LIKE '%" .$FiltroVenta. "%'"
-							);
-							
+						if ($FiltroVentaId != "") {
+							$condiciones['Venta.id'] = explode(',',$FiltroVentaId);
 						}
 						break;
 					case 'filtrocliente':
@@ -502,7 +496,8 @@ class VentasController extends AppController {
 			'picking', 
 			'FiltroVentaOrigen',
 			'FiltroMontoDesde',
-			'FiltroMontoHasta'
+			'FiltroMontoHasta',
+			'FiltroVentaId'
 		));
 
 	}
@@ -3211,7 +3206,7 @@ class VentasController extends AppController {
 
 		$condiciones = array();
 		$joins = array();
-
+		
 		$FiltroVenta                = '';
 		$FiltroCliente              = '';
 		$FiltroTienda               = '';
@@ -3222,6 +3217,7 @@ class VentasController extends AppController {
 		$FiltroPicking              = '';
 		$FiltroFechaDesde           = '';
 		$FiltroFechaHasta           = '';
+		$FiltroVentaId              = '';
 
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
@@ -3239,11 +3235,18 @@ class VentasController extends AppController {
 						if ($FiltroVenta != "") {
 
 							$condiciones["OR"] = array(
-								"Venta.id LIKE '%" .$FiltroVenta. "%'",
 								"Venta.id_externo LIKE '%" .$FiltroVenta. "%'",
 								"Venta.referencia LIKE '%" .$FiltroVenta. "%'"
 							);
 							
+						}
+						break;
+
+					case 'filtroventa_id':
+						$FiltroVentaId = trim($valor);
+
+						if ($FiltroVentaId != "") {
+							$condiciones['Venta.id'] = explode(',',$FiltroVentaId);
 						}
 						break;
 					case 'filtrocliente':

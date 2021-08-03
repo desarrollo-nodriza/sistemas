@@ -50,8 +50,27 @@
 
 						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
 							<div class="form-group">
+								<label>VID</label>
+								<input 
+								name		= "data[Venta][filtroventa_id]" 
+								class		= "form-control tagsinput" 
+								value		= "<?= $FiltroVentaId; ?>" 
+								id			= "FiltroVentaId" 
+								type		= "text" 
+								placeholder	= "ID"/>
+							</div>
+						</div>
+
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
+							<div class="form-group">
 								<label>Venta</label>
-								<input name="data[Venta][filtroventa]" class="form-control" value="<?= $FiltroVenta; ?>" id="VentaFiltro" type="text" placeholder="ID, Ref" />
+								<input 
+								name="data[Venta][filtroventa]" 
+								class="form-control" 
+								value="<?= $FiltroVenta; ?>" 
+								id="VentaFiltro" 
+								type="text" 
+								placeholder="Referencia, Id externo" />
 							</div>
 						</div>
 
@@ -85,6 +104,7 @@
 
 						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
 							<div class="form-group">
+								<br />
 								<label>Origen de la venta</label>
 								<?= $this->Form->select('origen_venta_manual', $this->Html->origen_venta_manual(), array('class' => 'form-control', 'empty' => 'Origen', 'required' => false, 'default' => $FiltroVentaOrigen)); ?>
 							</div>
