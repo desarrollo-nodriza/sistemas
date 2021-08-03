@@ -553,18 +553,14 @@
 								<? foreach ($zonificaciones as $ubicacion) : ?>
 									<tr>
 										<td><?=$ubicacion['Zonificacion']['id'];?></td>
-										<?php
-										$zona =$ubicacion['Ubicacion']['Zona'];
-										?>
-										<td><?="{$zona['nombre']} - {$ubicacion['Ubicacion']['columna']}".' - '."{$ubicacion['Ubicacion']['fila']}";?></td>
-									
+										<td><?=$ubicaciones[$ubicacion['Zonificacion']['ubicacion_id']];?></td>
 										<td><?=$ubicacion['Zonificacion']['cantidad'];?></td>
 										<td><?=$ubicacion['Zonificacion']['movimiento'];?></td>
 										<td><?=$ubicacion['Zonificacion']['glosa'];?></td>
 										<td><?=$ubicacion['Administrador']['nombre']??'El id '.$ubicacion['Zonificacion']['responsable_id'].' No  tiene nombre definido';?></td>
 										<td><?=$ubicacion['Zonificacion']['embalaje_id'];?></td>
-										<td><?=$ubicacion['Zonificacion']['nueva_ubicacion_id'];?></td>
-										<td><?=$ubicacion['Zonificacion']['antigua_ubicacion_id'];?></td>
+										<td><?=$ubicaciones[$ubicacion['Zonificacion']['nueva_ubicacion_id']]??'';?></td>
+										<td><?=$ubicaciones[$ubicacion['Zonificacion']['antigua_ubicacion_id']]??'';?></td>
 										<td>
 											<? if (!empty($ubicacion['Zonificacion']['orden_de_compra'])) : ?>
 												<?=$this->Html->link('#' . $ubicacion['Zonificacion']['orden_de_compra'], array('controller' => 'ordenCompras', 'action' => 'view', $ubicacion['Zonificacion']['orden_de_compra']), array('target' => '_blank')); ?>

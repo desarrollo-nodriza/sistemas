@@ -1438,7 +1438,8 @@ class VentaDetalleProductosController extends AppController
 			$zonificacionBodegas [] = ClassRegistry::init('Zonificacion')->find('all', array(
 				'fields'		=>['SUM(Zonificacion.cantidad) as cantidad'],
 				'conditions' 	=> array(
-					'producto_id' => $id
+					'producto_id' 	=> $id,
+					'movimiento !='	=> 'garantia'
 				),
 				'contain' => ['Ubicacion'] ,
 				'joins'      => array(
@@ -1479,7 +1480,7 @@ class VentaDetalleProductosController extends AppController
 			'conditions' => array(
 				'producto_id' => $id
 			),
-			'contain' 	=>['Administrador','Ubicacion'=>'Zona'],
+			'contain' 	=>['Administrador'],
 			'order'   	=>['Zonificacion.fecha_creacion desc']
 		));
 
@@ -1493,15 +1494,29 @@ class VentaDetalleProductosController extends AppController
 		$totalZonificado = ClassRegistry::init('Zonificacion')->find('all', array(
 			'fields'		=>['SUM(Zonificacion.cantidad) as cantidad'],
 			'conditions' 	=> array(
-				'producto_id' => $id
+				'producto_id' 	=> $id,
+				'movimiento !='	=> 'garantia'
 			),
 			'contain' => ['Ubicacion']
 		));
+
+		$ubicacion = ClassRegistry::init('Ubicacion')->find('all', array(
+            'conditions' => array('Ubicacion.activo' => 1),
+            'fields' => array('id', 'fila','columna','Zona.nombre'),
+			'contain' => ['Zona'],
+            'order' => array('Zona.nombre ASC'),
+        ));
+
+		$ubicaciones= [];
+		foreach ($ubicacion as $value) {
+			$ubicaciones[$value['Ubicacion']['id']] =  $value['Zona']['nombre'].' - '.$value['Ubicacion']['columna'].' - '.$value['Ubicacion']['fila'];
+		}
+
 		$totalZonificado = $totalZonificado[0][0]['cantidad']??0;
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos');
 		BreadcrumbComponent::add('Editar');
 
-		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes', 'productoWarehouse','zonificaciones','totalZonificado','totalBodegasZonificadas'));
+		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes', 'productoWarehouse','zonificaciones','totalZonificado','totalBodegasZonificadas','ubicaciones'));
 	}
 
 
