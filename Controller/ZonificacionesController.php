@@ -30,7 +30,8 @@ class ZonificacionesController extends AppController
 		$zonificaciones = $this->Zonificacion->find('all', array(
             'fields' => array('Zonificacion.*','SUM(Zonificacion.cantidad) as cantidad','Ubicacion.*'),
 			'conditions' => array(
-				'producto_id' => $id
+				'producto_id' 	=> $id,
+				'movimiento !='	=> 'garantia'
 				
             ),
             'contain' => array('Ubicacion'),
@@ -120,7 +121,8 @@ class ZonificacionesController extends AppController
         $zonificaciones = $this->Zonificacion->find('all', array(
             'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 			'conditions' => array(
-				'producto_id' => $id,
+				'producto_id' 	=> $id,
+				'movimiento !='	=> 'garantia'
             ),
             'contain' => array('Ubicacion'=>'Zona','VentaDetalleProducto'),
             'group' => array('ubicacion_id'),
@@ -240,8 +242,9 @@ class ZonificacionesController extends AppController
 								$zonificaciones = $this->Zonificacion->find('all', array(
 									'fields' => array('Zonificacion.*','SUM(Zonificacion.cantidad) as cantidad','Ubicacion.*'),
 									'conditions' => array(
-										'producto_id' => $id,
-										'ubicacion_id' => $value['C'],
+										'producto_id' 	=> $id,
+										'ubicacion_id' 	=> $value['C'],
+										'movimiento !='	=> 'garantia'
 									),
 									'contain' => array('Ubicacion'),
 									'group' => array('ubicacion_id'),
@@ -430,8 +433,9 @@ class ZonificacionesController extends AppController
 							 $zonificaciones = $this->Zonificacion->find('all', array(
 								'fields' => array('Zonificacion.*','SUM(Zonificacion.cantidad) as cantidad','Ubicacion.*'),
 								'conditions' => array(
-									'producto_id' => $value['A'],
-									'ubicacion_id' => $value['C'],
+									'producto_id' 	=> $value['A'],
+									'ubicacion_id' 	=> $value['C'],
+									'movimiento !='	=> 'garantia'
 								),
 								'contain' => array('Ubicacion'),
 								'group' => array('ubicacion_id'),
@@ -660,7 +664,8 @@ class ZonificacionesController extends AppController
 			$zonificaciones = $this->Zonificacion->find('all', array(
 				'fields' => array('Zonificacion.*','SUM(Zonificacion.cantidad) as cantidad','Ubicacion.*'),
 				'conditions' => array(
-					'Zonificacion.producto_id' => $id,
+					'Zonificacion.producto_id' 		=> $id,
+					'Zonificacion.movimiento !='	=> 'garantia'
 				),
 				'contain' => array('Ubicacion'=>'Zona','VentaDetalleProducto'),
 				'group' => array('Zonificacion.ubicacion_id'),
@@ -710,7 +715,8 @@ class ZonificacionesController extends AppController
 		$zonificaciones = $this->Zonificacion->find('all', array(
             'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 			'conditions' => array(
-				'producto_id' => $id
+				'producto_id' 	=> $id,
+				'movimiento !='	=> 'garantia'
 				
             ),
             'contain' => array('Ubicacion'=>'Zona'),
@@ -887,7 +893,8 @@ class ZonificacionesController extends AppController
         $zonificaciones = $this->Zonificacion->find('all', array(
             'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 			'conditions' => array(
-				'producto_id' => $id,
+				'producto_id' 	=> $id,
+				'movimiento !='	=> 'garantia'
             ),
             'contain' =>[
 				'Ubicacion'=>'Zona',
@@ -932,6 +939,26 @@ class ZonificacionesController extends AppController
 				$movimientos='';
 			}
 			
+		}
+		if (!$zonificaciones) {
+			$producto = ClassRegistry::init('VentaDetalleProducto')->find('first',[
+				'conditions' => array(
+					'VentaDetalleProducto.id' => $id,
+				),
+			]); 
+			$datos[] = 
+				array(
+					'producto_id'       			=> $id,
+					'referencia'       				=> $producto['VentaDetalleProducto']['codigo_proveedor'],
+					'nompre_del_producto'			=> $producto['VentaDetalleProducto']['nombre'],
+					'ubicacion_id'  				=> '',
+					'nombre_ubicacion'				=> '',
+					'cantidad_actual'				=> '',
+					'indique_cantidad_a_ajustar'  	=> '',
+					'precio'						=> '',
+					'glosa'							=> '',
+					'glosas_definidas'				=> $movimientos
+				);
 		}
 
 		$campos = array('producto_id','referencia','nompre_del_producto','ubicacion_id','nombre_ubicacion','cantidad_actual', 'indique_cantidad_a_ajustar','precio','glosa','glosas_que_puedes_usar_pero_no_son_obligatorias');
@@ -1070,7 +1097,7 @@ class ZonificacionesController extends AppController
 				
 				if (!$persistir)
 				{
-					$this->Session->setFlash('1) Asegurate de haber indicado cantidad a ajustar 2) Asegurate que cantidad sea distinta a la ya existente 3) Asegurate de haber indicado una glosa', null, array(), 'danger');
+					$this->Session->setFlash('1) Asegurate de haber indicado cantidad a ajustar 2) Asegurate que cantidad sea distinta a la ya existente 3) Asegurate de haber indicado una glosa 4) Asegurate de haber indicado una ubicación id', null, array(), 'danger');
 					
 					
 				}else{
@@ -1084,26 +1111,25 @@ class ZonificacionesController extends AppController
 						}
 
 						if ($infoPersistirInventario) {
-							$result=[];
-							$result = ClassRegistry::init('Bodega')->ajustarInventarioMasivo($infoPersistirInventario);
-							if ( $result )
-							{
-								$this->Session->setFlash('Se ajusto correctamente Bodega y Zonificación', null, array(), 'success');
-								$opciones = array(
-									'action' 		=> 	'index' ,
-									'controller' 	=> 	'ventaDetalleProductos',
-									'id'			=>	$this->request->params['named']['id']??null,
-									'nombre'		=>	$this->request->params['named']['nombre']??null,
-									'marca'			=>	$this->request->params['named']['marca']??null,
-									'proveedor'		=>	$this->request->params['named']['proveedor']??null,
-									'existencia'	=>	$this->request->params['named']['existencia']??null,
-								);
-								$opciones=array_filter($opciones);
-								$this->redirect($opciones);
+							
+							$resultado = ClassRegistry::init('Bodega')->ajustarInventarioMasivo($infoPersistirInventario);
+							$resultado_json = json_encode($resultado,true);
+							$this->Session->setFlash('Zonificacion se ajusto correctamente. Bodega : '.$resultado_json, null, array(), 'danger');
+							$opciones = array(
+								'action' 		=> 	'index' ,
+								'controller' 	=> 	'ventaDetalleProductos',
+								'id'			=>	$this->request->params['named']['id']??null,
+								'nombre'		=>	$this->request->params['named']['nombre']??null,
+								'marca'			=>	$this->request->params['named']['marca']??null,
+								'proveedor'		=>	$this->request->params['named']['proveedor']??null,
+								'existencia'	=>	$this->request->params['named']['existencia']??null,
+							);
+							$opciones=array_filter($opciones);
+							$this->redirect($opciones);
 		
-							}
+							
 						}
-						$this->Session->setFlash('Solo se ajusto zonificación, el inventario de bodega no pudo ser ajustado', null, array(), 'danger');
+						
 					
 					}
 					
@@ -1228,7 +1254,8 @@ class ZonificacionesController extends AppController
 			$zonificaciones = $this->Zonificacion->find('all', array(
 				'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 				'conditions' => array(
-					'producto_id' => $producto['VentaDetalleProducto']['id'],
+					'producto_id' 	=> $producto['VentaDetalleProducto']['id'],
+					'movimiento !='	=> 'garantia'
 				),
 				'contain' =>[
 					'Ubicacion'=>'Zona',
@@ -1324,8 +1351,9 @@ class ZonificacionesController extends AppController
 			$zonificacion = $this->Zonificacion->find('all', array(
 				'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 				'conditions' => array(
-					'Zonificacion.producto_id' 	=> $id,
-					'Zonificacion.ubicacion_id' => $valor['id']
+					'Zonificacion.producto_id' 		=> $id,
+					'Zonificacion.ubicacion_id' 	=> $valor['id'],
+					'Zonificacion.movimiento !='	=> 'garantia'
 				),
 				'contain' => ['Ubicacion' => [ 'Zona' => ['Bodega']]],
 				'group' => array('ubicacion_id'),
@@ -1357,7 +1385,7 @@ class ZonificacionesController extends AppController
 
 				$persistir2 =
 				[
-					'producto_id'	=> $id,
+					'id_producto'	=> $id,
 					'bodega_id'    	=> $zonificacion[0]['Ubicacion']['Zona']['bodega_id'],
 					'glosa'        	=> $glosa,
 					'pmp'			=> $valor['costo'],
@@ -1395,7 +1423,7 @@ class ZonificacionesController extends AppController
 
 				$persistir2 =
 				[
-					'producto_id'	=> $id,
+					'id_producto'	=> $id,
 					'bodega_id'    	=> $bodega['Zona']['bodega_id'],
 					'glosa'        	=> $glosa,
 					'pmp'			=> $valor['costo'],
@@ -1418,7 +1446,8 @@ class ZonificacionesController extends AppController
 		$zonificacion = $this->Zonificacion->find('all', array(
 			'fields' => array('SUM(Zonificacion.cantidad) as cantidad'),
 			'conditions' => array(
-				'Zonificacion.producto_id' 	=> $value['producto_id'] ,
+				'Zonificacion.producto_id' 		=> $value['id_producto'] ,
+				'Zonificacion.movimiento !=' 	=> 'garantia'
 				
 			),
 			'contain' => ['Ubicacion'] ,
@@ -1441,15 +1470,15 @@ class ZonificacionesController extends AppController
 		$pmp = trim($value['pmp']);
 
 		if (trim($value['pmp'])=='') {
-			$pmp = ClassRegistry::init('Pmp')->obtener_pmp($value['producto_id'], $value['bodega_id']);
-			$pmp = ($pmp == 0)?ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($value['producto_id']):$pmp;
+			$pmp = ClassRegistry::init('Pmp')->obtener_pmp($value['id_producto'], $value['bodega_id']);
+			$pmp = ($pmp == 0)?ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($value['id_producto']):$pmp;
 		}
 
 		$cantidad = $zonificacion[0][0]['cantidad'];
 
 		$persistir2 =
 		[
-			'id_producto'	=> $value['producto_id'],
+			'id_producto'	=> $value['id_producto'],
 			'bodega_id'     => $value['bodega_id'],			
 			'cantidad'      => $cantidad,
 			'glosa'			=> $value['glosa'],			
@@ -1513,19 +1542,12 @@ class ZonificacionesController extends AppController
 				}
 
 				if ($infoPersistirInventario) {
-					$result=[];
-
-					$result = ClassRegistry::init('Bodega')->ajustarInventarioMasivo($infoPersistirInventario);
-					if ( $result )
-					{
-						$this->Session->setFlash('Se ajusto correctamente Bodega y Zonificación', null, array(), 'success');
-						$this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
-
-					}
 					
+					$resultado = ClassRegistry::init('Bodega')->ajustarInventarioMasivo($infoPersistirInventario);
+					$resultado_json = json_encode($resultado,true);
+					$this->Session->setFlash('Zonificacion se ajusto correctamente. Bodega : '.$resultado_json, null, array(), 'danger');
+					$this->redirect(array('action' => 'edit', $id ,'controller' => 'ventaDetalleProductos'));
 				}
-
-				$this->Session->setFlash('Solo se ajusto zonificación, el inventario de bodega no pudo ser ajustado', null, array(), 'danger');
 				
 			}
 			
