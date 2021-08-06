@@ -3521,7 +3521,7 @@ class VentasController extends AppController {
 							)
 						)
 					),
-					'order' => array('EnvioHistorico.created' => 'DESC')
+					'order' => array('EnvioHistorico.id' => 'ASC')
 				)
 			);
 			
@@ -11593,7 +11593,7 @@ class VentasController extends AppController {
 						)
 					)
 				),
-				'order' => array('EnvioHistorico.created' => 'asc')
+				'order' => array('EnvioHistorico.id' => 'desc')
 			));
 
 		}
@@ -11612,7 +11612,7 @@ class VentasController extends AppController {
 
 			return false;
 		}
-
+		
 		foreach ($historicos as $ih => $h) 
 		{	
 			if ($h['EstadoEnvio']['EstadoEnvioCategoria']['actualizar_venta'])
