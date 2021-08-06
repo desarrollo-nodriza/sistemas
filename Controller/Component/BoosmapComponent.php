@@ -3,6 +3,7 @@
 App::uses('Component', 'Controller');
 App::import('Vendor', 'Boosmap', array('file' => 'Boosmap/Boosmap.php'));
 App::import('Vendor', 'PDFMerger', array('file' => 'PDFMerger/PDFMerger.php'));
+App::uses('CakeTime', 'Utility');
 
 class BoosmapComponent extends Component
 {
@@ -114,7 +115,7 @@ class BoosmapComponent extends Component
     {	
     	# Usamos dev mode
     	if (Configure::read('ambiente') == 'dev') {
-    		$this->BoosmapCliente = new Boosmap($apitoken, true);
+    		$this->BoosmapCliente = new Boosmap($apitoken);
     	}else{
     		$this->BoosmapCliente = new Boosmap($apitoken);
     	}
@@ -511,7 +512,7 @@ class BoosmapComponent extends Component
 			$i = 0;
 			foreach ($pedido['state'] as $i => $estado) {
 				$estados[$i] = $this->obtener_estado_nombre_map($estado['status']);
-				$estados[$i]['fecha'] = $estado['date'];
+				$estados[$i]['fecha'] = CakeTime::format($estado['date'], '%Y-%m-%d %H:%I:%S');
 	
 			}
 
@@ -636,7 +637,8 @@ class BoosmapComponent extends Component
 						'estado_envio_id' => $estado_id,
 						'nombre' => $estado_nombre,
 						'leyenda' => $e['leyenda'],
-						'canal' => 'Boosmap'
+						'canal' => 'Boosmap',
+						'created' => $e['fecha']
 					)
 				);
 
@@ -658,7 +660,7 @@ class BoosmapComponent extends Component
 				)
 			);
 		}
-
+		
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->saveMany($log);
 		
