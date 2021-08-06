@@ -132,6 +132,11 @@ Class Boosmap {
 			'nombre' => 'Recepcion Log inversa',
 			'leyenda' => 'Re intento de entrega luego de un intento de entrega a cliente',
 			'tipo' => 'sin_especificar'
+		),
+        'almacenaje' => array(
+			'nombre' => 'Almacenaje',
+			'leyenda' => '',
+			'tipo' => 'sin_especificar'
 		)
 	);
 
