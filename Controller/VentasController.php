@@ -370,8 +370,6 @@ class VentasController extends AppController {
 			}
 		}
 
-		// prx($condiciones);
-
 		$paginate = array(
 			'recursive' => 0,
 			'contain' => array(
@@ -533,8 +531,6 @@ class VentasController extends AppController {
 			}
 		}
 
-		prx($total);
-		
 	}
 
 
@@ -3419,6 +3415,8 @@ class VentasController extends AppController {
 	 */
 	public function admin_view ($id = null) 
 	{
+
+
 		if ( ! $this->Venta->exists($id) ) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
@@ -3528,11 +3526,19 @@ class VentasController extends AppController {
 			$venta['Transporte'][$it]['TransportesVenta']['EnvioHistorico'] = $historico; 
 			
 		}
-		
+
+		$metodos_de_envios = ClassRegistry::init('MetodoEnvio')->find(
+			'list',
+			array(
+				'conditions' => array(
+					'MetodoEnvio.activo' => true
+				),
+			)
+		);
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
-		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas'));
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios'));
 
 	}
 
@@ -4354,7 +4360,37 @@ class VentasController extends AppController {
 				$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega']);
 			}
 			
+			if(isset($this->request->data['Venta']['opt'])){
+
+				if ($this->request->data['Venta']['metodo_envio_id_original'] != $this->request->data['Venta']['metodo_envio_id']){
+
+					if (!empty($this->request->data['Venta']['comuna_entrega_2'])) {
+						$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega_2']);
+					}
+	
+					$this->request->data['Venta']['direccion_entrega']	= $this->request->data['Venta']['direccion_entrega_2'];
+					$this->request->data['Venta']['numero_entrega'] 	= $this->request->data['Venta']['numero_entrega_2'];
+					$this->request->data['Venta']['otro_entrega'] 		= $this->request->data['Venta']['otro_entrega_2'];
+					$this->request->data['Venta']['comuna_entrega'] 	= $this->request->data['Venta']['comuna_entrega_2'];
+					$this->request->data['Venta']['metodo_envio_id'] 	= $this->request->data['Venta']['metodo_envio_id'];
+					$this->request->data['Venta']['rut_receptor'] 		= $this->request->data['Venta']['rut_receptor'];
+					$this->request->data['Venta']['nombre_receptor'] 	= $this->request->data['Venta']['nombre_receptor'];
+					$this->request->data['Venta']['fono_receptor'] 		= $this->request->data['Venta']['fono_receptor'];
+					$this->request->data['Venta']['ciudad_entrega'] 	= $this->request->data['Venta']['ciudad_entrega'];
+					$this->request->data['Venta']['costo_envio'] 		= $this->request->data['Venta']['costo_envio'];
+					$this->request->data['Venta']['comuna_id'] 			= $this->request->data['Venta']['comuna_id'];
+
+				}
+				
+
+			}
+		
 			if ($this->Venta->save($this->request->data)) {
+				if(isset($this->request->data['Venta']['opt'])){
+					if ($this->request->data['Venta']['metodo_envio_id_original'] != $this->request->data['Venta']['metodo_envio_id']){
+						$this->admin_generar_envio_externo_manual($this->request->data['Venta']['id'] );
+					}
+				}
 				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
 			}else{
 				$this->Session->setFlash('No fue posible actualizar la venta.', null, array(), 'danger');
@@ -4469,9 +4505,6 @@ class VentasController extends AppController {
 				break;
 		}
 
-		prx($venta);
-
-		
 	}
 
 
@@ -12051,5 +12084,6 @@ class VentasController extends AppController {
 		$this->redirect($this->referer('/', true));
 		
 	}
+
 
 }
