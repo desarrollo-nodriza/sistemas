@@ -2409,83 +2409,102 @@ class VentaDetalleProductosController extends AppController
 			)
 		);
 
-		# Subquery stock en bodega
-		$db = $this->VentaDetalleProducto->getDataSource();
-		
-		$subQueryStockFisico = $db->buildStatement(
-			array(
-				'fields'     => array('SUM(Bodega.cantidad)'),
-				'table'      => 'rp_bodegas_venta_detalle_productos',
-				'alias'      => 'Bodega',
-				'limit'      => null,
-				'offset'     => null,
-				'joins'      => array(),
-				'conditions' => array('Bodega.venta_detalle_producto_id = VentaDetalleProducto.id', 'Bodega.tipo !=' => 'GT'),
-				'order'      => null,
-				'group'      => array('Bodega.venta_detalle_producto_id'),
-				'having' 	 => array('SUM(Bodega.cantidad) >' => 0)
+		$ids_con_stock_fisico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
+			'fields'     => array(
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id',
+				'SUM(BodegasVentaDetalleProducto.cantidad) as stock'
 			),
-			$this->VentaDetalleProducto
-		);
-		$subQueryStockFisico = '(' . $subQueryStockFisico . ') as stock_fisico_real';
-		$subQueryStockFisicoExpression = $db->expression($subQueryStockFisico);
+			'conditions' => array(
+				'BodegasVentaDetalleProducto.tipo !=' => 'GT'
+			),
+			'group'      => array(
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id'
+			),
+			'having' 	 => array(
+				'SUM(BodegasVentaDetalleProducto.cantidad) > 0'
+			),
+			'order' => array(
+				'stock' => 'asc'
+			)
+		));
 
-		# Subquery stock reservado
-		$subQueryStockReservado = $db->buildStatement(
-			array(
-				'fields'     => array('SUM(VentaDetalle.cantidad_reservada)'),
-				'table'      => 'rp_venta_detalles',
-				'alias'      => 'VentaDetalle',
-				'limit'      => null,
-				'offset'     => null,
-				'joins'      => array(
-					array(
-						'table' => 'rp_ventas',
-						'alias' => 'Venta',
-						'type' => 'INNER',
-						'conditions' => array(
-							'Venta.id = VentaDetalle.venta_id'
-						)
-					),
-					array(
-						'table' => 'rp_venta_estados',
-						'alias' => 'VentaEstado',
-						'type' => 'INNER',
-						'conditions' => array(
-							'VentaEstado.id = Venta.venta_estado_id'
-						)
-					),
-					array(
-						'table' => 'rp_venta_estado_categorias',
-						'alias' => 'VentaEstadoCategoria',
-						'type' => 'INNER',
-						'conditions' => array(
-							'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
-							'VentaEstadoCategoria.venta = 1'
-						)
+		$ids_con_reserva = ClassRegistry::init('VentaDetalle')->find('all', array(
+			'fields'     => array(
+				'VentaDetalle.venta_detalle_producto_id',
+				'SUM(VentaDetalle.cantidad_reservada) as reservado'
+			),
+			'joins'      => array(
+				array(
+					'table' => 'rp_ventas',
+					'alias' => 'Venta',
+					'type' => 'INNER',
+					'conditions' => array(
+						'Venta.id = VentaDetalle.venta_id'
 					)
 				),
-				'conditions' => array('VentaDetalle.venta_detalle_producto_id = VentaDetalleProducto.id'),
-				'order'      => null,
-				'group'      => array('VentaDetalle.venta_detalle_producto_id')
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'VentaEstado',
+					'type' => 'INNER',
+					'conditions' => array(
+						'VentaEstado.id = Venta.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'VentaEstadoCategoria',
+					'type' => 'INNER',
+					'conditions' => array(
+						'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
+						'VentaEstadoCategoria.venta = 1'
+					)
+				)
 			),
-			$this->VentaDetalleProducto
-		);
-		$subQueryStockReservado = '(' . $subQueryStockReservado . ') as stock_reservado';
-		$subQueryStockReservadoExpression = $db->expression($subQueryStockReservado);
-	
+			'conditions' => array(
+				'VentaDetalle.venta_detalle_producto_id' => Hash::extract($ids_con_stock_fisico, '{n}.BodegasVentaDetalleProducto.venta_detalle_producto_id')
+			),
+			'having' => array('SUM(VentaDetalle.cantidad_reservada) > 0'),
+			'order'      => array('reservado' => 'asc'),
+			'group'      => array('VentaDetalle.venta_detalle_producto_id')
+		));
+
+		# Preparamos ids para usarlos en la actualización
+		$id_actualizar = array();
+		foreach ($ids_con_stock_fisico as $ids => $s) 
+		{	
+			$id_actualizar[$ids]['id'] = $s['BodegasVentaDetalleProducto']['venta_detalle_producto_id'];
+			$id_actualizar[$ids]['stock_disponible'] = $s[0]['stock'];
+			$id_actualizar[$ids]['stock_fisico'] = $s[0]['stock'];
+			$id_actualizar[$ids]['stock_reservado'] = 0;
+
+			foreach ($ids_con_reserva as $idr => $r) 
+			{	
+				if ($s['BodegasVentaDetalleProducto']['venta_detalle_producto_id'] ==  $r['VentaDetalle']['venta_detalle_producto_id'])
+				{	
+					# Descontamos las unidades reservadas
+					$id_actualizar[$ids]['stock_disponible'] = ($r[0]['reservado'] <= $s[0]['stock'] ) ? $s[0]['stock'] - $r[0]['reservado'] : 0;
+					$id_actualizar[$ids]['stock_reservado'] = $r[0]['reservado'];
+				}
+			}
+
+			# Quitamos los stock disponibles iguales a 0
+			if ($id_actualizar[$ids]['stock_disponible'] == 0)
+			{
+				unset($id_actualizar[$ids]);
+			}
+		}
+		
 		# Obtenemos los productos
 		$productos = $this->VentaDetalleProducto->find('all', array(
-			'order' => 'stock_fisico_real DESC',
 			'fields' => array(
 				'VentaDetalleProducto.id', 
 				'VentaDetalleProducto.id_externo',
-				'VentaDetalleProducto.activo',
-				$subQueryStockFisicoExpression->value,
-				$subQueryStockReservadoExpression->value
-				)
+				'VentaDetalleProducto.activo'
+			),
+			'conditions' => array(
+				'VentaDetalleProducto.id' => Hash::extract($id_actualizar, '{n}.id')
 			)
-		);
+		));
 		
 		# Obtenemos la tienda principal
 		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
@@ -2502,17 +2521,14 @@ class VentaDetalleProductosController extends AppController
 		# comenzamos a actualizar el canal prestashop
 		foreach ($productos as $i => $producto)
 		{	
-			$stock_final = $producto[0]['stock_fisico_real'] - $producto[0]['stock_reservado'];
-			
-			$productos[$i]['VentaDetalleProducto']['stock_fisico'] = $producto[0]['stock_fisico_real'];
-			$productos[$i]['VentaDetalleProducto']['stock_reservado'] = $producto[0]['stock_reservado'];
-			$productos[$i]['VentaDetalleProducto']['stock_fisico_disponible'] = $stock_final;
+
+			$stock = Hash::extract($id_actualizar, '{n}[id='.$producto['VentaDetalleProducto']['id'].']');
+	
+			$productos[$i]['VentaDetalleProducto']['stock_fisico'] = $stock[0]['stock_fisico'];
+			$productos[$i]['VentaDetalleProducto']['stock_reservado'] = $stock[0]['stock_reservado'];
+			$productos[$i]['VentaDetalleProducto']['stock_fisico_disponible'] = $stock[0]['stock_disponible'];
 			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = 0;
 			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = false;
-
-			# continua solo si el stock fisico es mayor a 0
-			if ($stock_final <= 0)
-				continue;
 			
 			$stockProductoPrestashop = $this->Prestashop->prestashop_obtener_stock_producto($producto['VentaDetalleProducto']['id_externo']);
 			$stockPresta = (isset($stockProductoPrestashop['stock_available']['quantity'])) ? $stockProductoPrestashop['stock_available']['quantity'] : 0;
@@ -2521,7 +2537,7 @@ class VentaDetalleProductosController extends AppController
 			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = $stockPresta;
 
 			# Igualamos el stock de prestashop al de bodega
-			if ($stockPresta < $stock_final)
+			if ($stockPresta < $stock[0]['stock_disponible'])
 			{	
 				if (Configure::read('ambiente') == 'dev') 
 				{
@@ -2529,11 +2545,11 @@ class VentaDetalleProductosController extends AppController
 				}
 				elseif (isset($stockProductoPrestashop['stock_available']['id']))
 				{
-					$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock_final);
+					$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock[0]['stock_disponible']);
 				}
 			}
 		}
-
+		
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Demonio',
