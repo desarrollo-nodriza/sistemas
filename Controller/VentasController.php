@@ -3458,14 +3458,6 @@ class VentasController extends AppController {
 
 		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
 
-		# Información de envíame
-		$Enviame = $this->Components->load('Enviame');
-		
-		# conectamos con enviame
-		$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
-
-		$enviame_info = $Enviame->obtener_envio($id);
-
 		$starken_info = array(); 
 		# Starken
 		if ($venta['MetodoEnvio']['dependencia'] == 'starken') {
@@ -8036,6 +8028,14 @@ class VentasController extends AppController {
 			$NuevaVenta['Venta']['estado_anterior'] = 1;
 		}
 
+		$NuevaVenta['VentaEstado2'] = array(
+			array(
+				'venta_estado_id' => $NuevaVenta['Venta']['venta_estado_id'],
+				'fecha'           => date('Y-m-d H:i:s'),
+				'responsable'     => 'origen'
+			)
+		);
+
 		$NuevaVenta['Venta']['metodo_envio_id']  = $this->Prestashop->prestashop_obtener_transportista($nwVenta['id_carrier']);
 
 		//se obtiene el medio de pago
@@ -8365,6 +8365,14 @@ class VentasController extends AppController {
 		$ActualizarVenta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
 		$ActualizarVenta['Venta']['venta_estado_id']          = $this->Prestashop->prestashop_obtener_venta_estado($nuevo_estado);
 		$ActualizarVenta['Venta']['venta_estado_responsable'] = 'Prestashop Webhook';
+
+		$ActualizarVenta['VentaEstado2'] = array(
+			array(
+				'venta_estado_id' => $ActualizarVenta['Venta']['venta_estado_id'],
+				'fecha'           => date('Y-m-d H:i:s'),
+				'responsable'     => 'origen'
+			)
+		);
 
 		$ActualizarVenta['Venta']['metodo_envio_id']  = $this->Prestashop->prestashop_obtener_transportista($nwVenta['id_carrier']);
 
