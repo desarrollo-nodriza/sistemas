@@ -38,6 +38,11 @@ Class Boosmap {
 			'leyenda' => 'El pedido fue creado en el sistema',
 			'tipo' => 'inicial'
 		),
+        'reasignado' => array(
+			'nombre' => 'Reasignado',
+			'leyenda' => '',
+			'tipo' => 'sin_especificar'
+		),
 		'asignacion_aceptada' => array(
 			'nombre' => 'Asignación aceptada',
 			'leyenda' => 'El repartido está llegando a nuestra bodega',
