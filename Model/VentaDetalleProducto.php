@@ -706,4 +706,137 @@ class VentaDetalleProducto extends AppModel
 
 		return false;
 	}
+
+	
+	/**
+	 * Retorna un arreglo con los ids de productos con stock disponible para vender.
+	 *
+	 * @return array
+	 */
+	public function obtener_productos_con_stock_disponible($bodega_id = null)
+	{	
+
+		$qry = array(
+			'fields'     => array(
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id',
+				'SUM(BodegasVentaDetalleProducto.cantidad) as stock'
+			),
+			'conditions' => array(
+				'BodegasVentaDetalleProducto.tipo !=' => 'GT'
+			),
+			'group'      => array(
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id'
+			),
+			'having' 	 => array(
+				'SUM(BodegasVentaDetalleProducto.cantidad) > 0'
+			),
+			'order' => array(
+				'stock' => 'asc'
+			)
+		);
+
+		if (!empty($bodega_id))
+		{
+			$qry = array_replace_recursive($qry, array(
+				'conditions' => array(
+					'BodegasVentaDetalleProducto.bodega_id' => $bodega_id
+				)
+			));
+		}
+
+		$ids_con_stock_fisico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', $qry);
+
+		$ids_con_reserva = ClassRegistry::init('VentaDetalle')->find('all', array(
+			'fields'     => array(
+				'VentaDetalle.venta_detalle_producto_id',
+				'SUM(VentaDetalle.cantidad_reservada) as reservado'
+			),
+			'joins'      => array(
+				array(
+					'table' => 'rp_ventas',
+					'alias' => 'Venta',
+					'type' => 'INNER',
+					'conditions' => array(
+						'Venta.id = VentaDetalle.venta_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'VentaEstado',
+					'type' => 'INNER',
+					'conditions' => array(
+						'VentaEstado.id = Venta.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'VentaEstadoCategoria',
+					'type' => 'INNER',
+					'conditions' => array(
+						'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
+						'VentaEstadoCategoria.venta = 1'
+					)
+				)
+			),
+			'conditions' => array(
+				'VentaDetalle.venta_detalle_producto_id' => Hash::extract($ids_con_stock_fisico, '{n}.BodegasVentaDetalleProducto.venta_detalle_producto_id')
+			),
+			'having' => array('SUM(VentaDetalle.cantidad_reservada) > 0'),
+			'order'      => array('reservado' => 'asc'),
+			'group'      => array('VentaDetalle.venta_detalle_producto_id')
+		));
+
+		# Preparamos ids para usarlos en la actualización
+		$id_stock_disponible = array();
+		foreach ($ids_con_stock_fisico as $ids => $s) 
+		{	
+			$id_stock_disponible[$ids]['id'] = $s['BodegasVentaDetalleProducto']['venta_detalle_producto_id'];
+			$id_stock_disponible[$ids]['stock_disponible'] = $s[0]['stock'];
+			$id_stock_disponible[$ids]['stock_fisico'] = $s[0]['stock'];
+			$id_stock_disponible[$ids]['stock_reservado'] = 0;
+
+			foreach ($ids_con_reserva as $idr => $r) 
+			{	
+				if ($s['BodegasVentaDetalleProducto']['venta_detalle_producto_id'] ==  $r['VentaDetalle']['venta_detalle_producto_id'])
+				{	
+					# Descontamos las unidades reservadas
+					$id_stock_disponible[$ids]['stock_disponible'] = ($r[0]['reservado'] <= $s[0]['stock'] ) ? $s[0]['stock'] - $r[0]['reservado'] : 0;
+					$id_stock_disponible[$ids]['stock_reservado'] = $r[0]['reservado'];
+				}
+			}
+
+			# Quitamos los stock disponibles iguales a 0
+			if ($id_stock_disponible[$ids]['stock_disponible'] == 0)
+			{
+				unset($id_stock_disponible[$ids]);
+			}
+		}
+
+		return $id_stock_disponible;
+	}
+
+	
+	/**
+	 * obtener_productos_con_stock_disponible_por_bodega
+	 *
+	 * @return void
+	 */
+	public function obtener_productos_con_stock_disponible_por_bodega()
+	{
+		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('activo' => 1)));
+
+		$respuesta =  array();
+		foreach ($bodegas as $id => $bodega) 
+		{	
+			$productos = $this->obtener_productos_con_stock_disponible($id);
+
+			$respuesta[] = array(
+				'bodega_id' => $id,
+				'bodega_nombre' => $bodega,
+				'productos' => $productos
+			);
+		}
+
+		return $respuesta;
+	}
 }
