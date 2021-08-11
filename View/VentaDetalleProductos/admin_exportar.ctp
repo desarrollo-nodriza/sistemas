@@ -14,8 +14,8 @@ foreach ( $campos as $campo )
 	array_push($cabeceras, array_merge(array('label' => Inflector::humanize($campo)), $opciones));
 }
 
-foreach ($bodegas as $ib => $bodega) {
-	array_push($cabeceras, array_merge(array('label' => 'Stock ' . $bodega), $opciones));
+foreach ($bodegas_stock as $ib => $bodega) {
+	array_push($cabeceras, array_merge(array('label' => 'Stock ' . $bodega['bodega_nombre']), $opciones));
 }
 
 array_push($cabeceras, array_merge(array('label' => 'Stock Total'), $opciones));
