@@ -114,7 +114,7 @@ class BoosmapComponent extends Component
     {	
     	# Usamos dev mode
     	if (Configure::read('ambiente') == 'dev') {
-    		$this->BoosmapCliente = new Boosmap($apitoken, false);
+    		$this->BoosmapCliente = new Boosmap($apitoken, true);
     	}else{
     		$this->BoosmapCliente = new Boosmap($apitoken);
     	}
