@@ -618,7 +618,7 @@ $(function() {
 		var obtener_metodo_envio_venta = function($id){
 
 			$.app.loader.mostrar();
-
+		
 			$.ajax({
 				url: webroot + 'metodoEnvios/ajax_obtener_metodo_envio/' + $id,
 				type: 'GET',
@@ -628,6 +628,7 @@ $(function() {
 				var $metodo_envio = JSON.parse(res);
 
 				if ($metodo_envio.MetodoEnvio.retiro_local) {
+				
 					$('#VentaDireccionEntrega').parents('div').eq(0).addClass('hidden');
 					$('#VentaComunaEntrega').parents('div').eq(0).addClass('hidden');
 					$('#VentaNumeroEntrega').parents('div').eq(0).addClass('hidden');
@@ -706,6 +707,113 @@ $(function() {
 				        	required: 'Campo requerido'
 				        }
 				    });
+				}
+
+			})
+			.fail(function() {
+				
+			})
+			.always(function(){
+				$.app.loader.ocultar();
+			});
+			
+		}
+
+		var obtener_metodo_envio_venta_v2 = function($id){
+
+			$.app.loader.mostrar();
+			$.ajax({
+				url: webroot + 'metodoEnvios/ajax_obtener_metodo_envio/' + $id,
+				type: 'GET',
+			})
+			.done(function(res) {
+				
+				var $metodo_envio = JSON.parse(res);
+
+				if ($metodo_envio.MetodoEnvio.retiro_local) {
+					$('#VentaDireccionEntrega2').parents('div').eq(0).addClass('hidden');
+					$('#VentaComunaEntrega2').parents('div').eq(0).addClass('hidden');
+					$('#VentaNumeroEntrega2').parents('div').eq(0).addClass('hidden');
+					$('#VentaOtroEntrega2').parents('div').eq(0).addClass('hidden');
+					$('#VentaCiudadEntrega').parents('div').eq(0).addClass('hidden');
+					$('#VentaRutReceptorEntrega').parents('div').eq(0).addClass('hidden');
+					$('#VentaNombreReceptor').parents('div').eq(0).addClass('hidden');
+					$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
+					$('#VentaCostoEnvio').parents('div').eq(0).addClass('hidden');
+
+					$('#VentaDireccionEntrega2').rules("remove", "required");
+					$('#VentaCiudadEntrega').rules("remove", "required");
+					$('#VentaRutReceptor').rules("remove", "required");
+					$('#VentaNombreReceptor').rules("remove", "required");
+					$('#VentaComunaEntrega2').rules("remove", "required");
+				    $('#VentaCostoEnvio').rules("remove", "required");
+				    $('#VentaNumeroEntrega2').rules("remove", "required");
+
+				}else{
+					
+					$('#VentaDireccionEntrega2').parents('div').eq(0).removeClass('hidden');
+					$('#VentaComunaEntrega2').parents('div').eq(0).removeClass('hidden');
+					$('#VentaNumeroEntrega2').parents('div').eq(0).removeClass('hidden');
+					$('#VentaOtroEntrega2').parents('div').eq(0).removeClass('hidden');
+					$('#VentaCiudadEntrega').parents('div').eq(0).removeClass('hidden');
+					$('#VentaRutReceptor').parents('div').eq(0).removeClass('hidden');
+					$('#VentaNombreReceptor').parents('div').eq(0).removeClass('hidden');
+					$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
+					$('#VentaCostoEnvio').parents('div').eq(0).removeClass('hidden');					
+					
+					setTimeout ( function ( )  { 
+
+						$('#VentaDireccionEntrega2').rules("add", {
+							required: true,
+							messages: {
+								required: 'Campo requerido'
+							}
+						});
+
+						$('#VentaNumeroEntrega2').rules("add", {
+							required: true,
+							messages: {
+								required: 'Campo requerido'
+							}
+						});
+	
+						$('#VentaCiudadEntrega').rules("add", {
+							required: true,
+							messages: {
+								required: 'Campo requerido'
+							}
+						});
+	
+						$('#VentaRutReceptor').rules("add", {
+							required: true,
+							rut: true,
+							messages: {
+								required: 'Campo requerido'
+							}
+						});
+	
+						$('#VentaNombreReceptor').rules("add", {
+							required: true,
+							messages: {
+								required: 'Campo requerido'
+							}
+						});
+	
+						$('#VentaComunaEntrega2').rules("add", {
+							required: true,
+							messages: {
+								required: 'Campo requerido'
+							}
+						});
+	
+						$('#VentaCostoEnvio').rules("add", {
+							required: true,
+							messages: {
+								required: 'Campo requerido'
+							}
+						});
+
+					 } ,  0 ) ;
 				}
 
 			})
@@ -1490,6 +1598,18 @@ $(function() {
 
 				});
 
+				$('.toggle-metodo-envio').on('click', function(e){
+					
+					$(this).find('.fa').toggle();
+					$(this).parents('td').eq(0).find('.metodo-envio-select').toggleClass('hide');
+
+					if ($(this).parents('td').eq(0).find('.metodo-envio-select').hasClass('hide')) {
+						$('.js-metodo-envio-entrega').val( $('.js-metodo-envio-entrega').data('value') );
+					}
+
+				});
+
+
 				$('.toggle-direccion').on('click', function(e){
 					
 					$(this).find('.fa').toggle();
@@ -1558,6 +1678,19 @@ $(function() {
 					if ($('.js-metodo-envios-ajax').val() != '') {
 						obtener_metodo_envio_venta($('.js-metodo-envios-ajax').val());
 					}
+
+				}
+
+				if ($('#VentaEditForm').length) {
+
+					$.app.formularios.bind('#VentaEditForm', objForm);
+
+					$('.js-metodo-envios-ajax').on('change', function(){
+						var $id = $(this).val();
+						if ($id != '') {
+							obtener_metodo_envio_venta_v2($id);
+						}
+					});
 
 				}
 

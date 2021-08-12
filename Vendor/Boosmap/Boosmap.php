@@ -33,6 +33,11 @@ Class Boosmap {
     );
 
     public  static $STATES = array(
+        'no_informado' => array(
+			'nombre' => 'No informado',
+			'leyenda' => '',
+			'tipo' => 'sin_especificar'
+		),
 		'ingresado' => array(
 			'nombre' => 'Ingresado',
 			'leyenda' => 'El pedido fue creado en el sistema',
@@ -140,6 +145,11 @@ Class Boosmap {
 		),
         'almacenaje' => array(
 			'nombre' => 'Almacenaje',
+			'leyenda' => '',
+			'tipo' => 'sin_especificar'
+		),
+        'fuera_de_tiempo' => array(
+			'nombre' => 'Fuera de tiempo',
 			'leyenda' => '',
 			'tipo' => 'sin_especificar'
 		)
