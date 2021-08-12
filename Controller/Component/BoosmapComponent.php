@@ -3,7 +3,6 @@
 App::uses('Component', 'Controller');
 App::import('Vendor', 'Boosmap', array('file' => 'Boosmap/Boosmap.php'));
 App::import('Vendor', 'PDFMerger', array('file' => 'PDFMerger/PDFMerger.php'));
-App::uses('CakeTime', 'Utility');
 
 class BoosmapComponent extends Component
 {
@@ -506,14 +505,14 @@ class BoosmapComponent extends Component
 	public function obtener_estados($id, $test = false, $n = '')
 	{	
 		$estados = array();
-
+		
 		if ($pedido = $this->obtener_ot($id))
 		{	
 			$i = 0;
-			foreach ($pedido['state'] as $i => $estado) {
+			foreach ($pedido['state'] as $i => $estado) 
+			{
 				$estados[$i] = $this->obtener_estado_nombre_map($estado['status']);
-				$estados[$i]['fecha'] = CakeTime::format($estado['date'], '%Y-%m-%d %H:%I:%S');
-	
+				$estados[$i]['fecha'] = date('Y-m-d H:i:s', strtotime($estado['date']));
 			}
 
 			if ($test)
@@ -524,7 +523,7 @@ class BoosmapComponent extends Component
 				$estados[$i]['fecha'] = date('Y-m-d H:i:s'); 
 			}
 		}
-
+		
 		return $estados;
 	}
 

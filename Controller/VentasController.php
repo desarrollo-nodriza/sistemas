@@ -3513,7 +3513,7 @@ class VentasController extends AppController {
 							)
 						)
 					),
-					'order' => array('EnvioHistorico.id' => 'ASC')
+					'order' => array('EnvioHistorico.created' => 'DESC')
 				)
 			);
 			
