@@ -1966,4 +1966,80 @@ class Venta extends AppModel
 			'group' => array('Venta.id')
 		));
 	}
+
+
+	public function obtener_ventas_con_envios_sin_historico()
+	{
+		return $this->find('all', array(
+			'joins' => array(
+				array(
+					'table' => 'rp_metodo_envios',
+					'alias' => 'MetodoEnvio',
+					'type' => 'INNER',
+					'conditions' => array(
+						'MetodoEnvio.id = Venta.metodo_envio_id',
+						'MetodoEnvio.dependencia' => 'boosmap',
+						'MetodoEnvio.generar_ot' => 1
+					)
+				),
+				array(
+					'table' => 'rp_venta_estados',
+					'alias' => 'VentaEstado',
+					'type' => 'INNER',
+					'conditions' => array(
+						'VentaEstado.id = Venta.venta_estado_id'
+					)
+				),
+				array(
+					'table' => 'rp_venta_estado_categorias',
+					'alias' => 'VentaEstadoCategoria',
+					'type' => 'INNER',
+					'conditions' => array(
+						'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
+						'VentaEstadoCategoria.venta' => 1,
+						'VentaEstadoCategoria.cancelado' => 0,
+						'VentaEstadoCategoria.rechazo' => 0,
+						'VentaEstadoCategoria.final' => 0
+					)
+				),
+				array(
+					'table' => 'rp_transportes_ventas',
+					'alias' => 'TransporteVenta',
+					'type' => 'INNER',
+					'conditions' => array(
+						'TransporteVenta.venta_id = Venta.id',
+						'TransporteVenta.cod_seguimiento !='  => ''
+					)
+				),
+				array(
+					'table' => 'rp_transportes',
+					'alias' => 't',
+					'type' => 'INNER',
+					'conditions' => array(
+						't.id = TransporteVenta.transporte_id',
+						't.codigo'  => 'BOOSMAP-WS'
+					)
+				),
+				array(
+					'table' => 'rp_envio_historicos',
+					'alias' => 'EnvioHistorico',
+					'type' => 'LEFT',
+					'conditions' => array(
+						'EnvioHistorico.transporte_venta_id = TransporteVenta.id',
+					)
+				)
+			),
+			'conditions' => array(
+				'EnvioHistorico.id' => NULL,
+				'Venta.fecha_venta >' => '2021-01-01 00:00:00'
+			),
+			'contain' => array(
+				'Transporte'
+			),	
+			'fields' => array(
+				'Venta.id', 'Venta.fecha_venta', 'Venta.venta_estado_id'
+			),
+			'group' => array('Venta.id')
+		));
+	}
 }
