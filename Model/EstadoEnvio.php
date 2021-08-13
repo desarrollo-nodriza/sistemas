@@ -71,7 +71,15 @@ class EstadoEnvio extends AppModel
 
         if ($this->save($estado))
         {
-            return $this->id;
+            return array(
+                'EstadoEnvio' => array(
+                    'id' => $this->id,
+                    'estado_envio_categoria_id' => $this->field('estado_envio_categoria_id'),
+                    'nombre' => $this->field('nombre'),
+                    'origen' => $this->field('origen'),
+                    'leyenda' => $this->field('leyenda'),
+                )
+            );
         }
 
         return false;
@@ -90,7 +98,14 @@ class EstadoEnvio extends AppModel
             )
         ));
     }
+    
 
+    /**
+     * obtener_id_por_nombre
+     *
+     * @param  mixed $nombre
+     * @return void
+     */
     public function obtener_id_por_nombre($nombre)
     {
         $res = $this->obtener_por_nombre($nombre);
@@ -101,6 +116,23 @@ class EstadoEnvio extends AppModel
         }
 
         return false;
+    }
+
+
+        
+    /**
+     * obtener_estado_envio
+     *
+     * @param  mixed $id
+     * @return void
+     */
+    public function obtener_estado_envio($id)
+    {
+        return $this->find('first', array(
+            'conditions' => array(
+                'id' => $id
+            )
+        ));
     }
 
 }
