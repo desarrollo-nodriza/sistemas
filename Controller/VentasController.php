@@ -4596,15 +4596,13 @@ class VentasController extends AppController {
 		if ( $estado_actual_nombre != $estado_nuevo_nombre && $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) 
 		{	
 			# Para la consola se carga el componente on the fly!
-			if ($this->shell) {
-				$this->Prestashop = $this->Components->load('Prestashop');
-			}
+			$this->Prestashop = $this->Components->load('Prestashop');
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $apiurlprestashop, $apikeyprestashop );
 
 			# OBtenemos el ID prestashop del estado
 			$estadoPrestashop = $this->Prestashop->prestashop_obtener_estado_por_nombre($estado_nuevo_nombre);
-
+			
 			if (empty($estadoPrestashop)) {
 				throw new Exception("Error al cambiar el estado. No fue posible obtener el estado de Prestashop", 505);
 			}
@@ -5661,7 +5659,8 @@ class VentasController extends AppController {
 			);
 
 			# Datos de facturación para compras por Prestashop
-			ToolmaniaComponent::$api_url = $venta['Tienda']['apiurl_prestashop'];
+			$this->Toolmania = $this->Components->load('Toolmania');
+			$this->Toolmania::$api_url = $venta['Tienda']['apiurl_prestashop'];
 			
 			#Obtener información webpay si es necesario
 			#$webpay                      = $this->Toolmania->obtenerWebpayInfo($this->request->data['Orden']['id_cart'], $this->Session->read('Tienda.apikey_prestashop'));
@@ -6830,7 +6829,8 @@ class VentasController extends AppController {
 			);
 
 			# Datos de facturación para compras por Prestashop
-			ToolmaniaComponent::$api_url = $venta['Tienda']['apiurl_prestashop'];
+			$this->Toolmania = $this->Components->load('Toolmania');
+			$this->Toolmania::$api_url = $venta['Tienda']['apiurl_prestashop'];
 			
 			#Obtener información webpay si es necesario
 			#$webpay                      = $this->Toolmania->obtenerWebpayInfo($this->request->data['Orden']['id_cart'], $this->Session->read('Tienda.apikey_prestashop'));
@@ -11517,7 +11517,7 @@ class VentasController extends AppController {
 
 	public function admin_actualizar_venta_por_envios($id)
 	{
-		if ($this->actualizar_venta_por_envios($id))
+		if ($this->actualizar_venta_por_envios($id, $this->Auth->user('email')))
 		{
 			$this->Session->setFlash('Venta gestionada y/o actualizada con éxito.', null, array(), 'success');
 		}
@@ -11537,7 +11537,7 @@ class VentasController extends AppController {
 	 * 
 	 * @return bool
 	 */
-	public function actualizar_venta_por_envios($id)
+	public function actualizar_venta_por_envios($id, $responsable = '')
 	{	
 		$log = array();
 
@@ -11559,7 +11559,7 @@ class VentasController extends AppController {
 				'Venta.marketplace_id'
 			)
 		));
-
+		
 		$historicos = array();
 
 		$log[] = array(
@@ -11571,8 +11571,8 @@ class VentasController extends AppController {
 		);
 
 		foreach ($venta['Transporte'] as $it => $t) 
-		{
-			$historicos = ClassRegistry::init('EnvioHistorico')->find('all', array(
+		{	
+			$ultimo_estado = ClassRegistry::init('EnvioHistorico')->find('first', array(
 				'conditions' => array(
 					'EnvioHistorico.transporte_venta_id' => $t['TransportesVenta']['id'],
 					'EnvioHistorico.notificado' => 0
@@ -11601,11 +11601,18 @@ class VentasController extends AppController {
 						)
 					)
 				),
-				'order' => array('EnvioHistorico.id' => 'desc')
+				'order' => array('EnvioHistorico.created' => 'desc')
 			));
 
+			if (!$ultimo_estado)
+			{
+				continue;
+			}
+
+			$historicos[] = $ultimo_estado;
+
 		}
-		
+
 		if (empty($historicos)){
 
 			$log[] = array(
@@ -11628,7 +11635,7 @@ class VentasController extends AppController {
 				$estado_actualizado = false;
 
 				try {
-					$estado_actualizado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $h['EstadoEnvio']['EstadoEnvioCategoria']['venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', '');
+					$estado_actualizado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $h['EstadoEnvio']['EstadoEnvioCategoria']['venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $responsable);
 				} catch (Exception $e) {
 					$log[] = array(
 						'Log' => array(
@@ -11707,7 +11714,7 @@ class VentasController extends AppController {
 			}
 
 			# Actualizamos las ventas por sus nuevos envios
-			if ($this->actualizar_venta_por_envios($venta['Venta']['id']))
+			if ($this->actualizar_venta_por_envios($venta['Venta']['id'], 'Demonio'))
 			{
 				$ventas_actualizadas[] = $venta;
 			}
@@ -11728,14 +11735,11 @@ class VentasController extends AppController {
 	public function actualizar_estados_envios($id)
 	{	
 		$venta = $this->Venta->obtener_venta_por_id($id);
-		
+	
 		# Registro de estados para Boosmap
 		if ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot'])
 		{	
-			if ($this->shell) {
-				$this->Boosmap = $this->Components->load('Boosmap');
-			}
-
+			$this->Boosmap = $this->Components->load('Boosmap');
 			# Creamos cliente boosmap
 			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
 			
