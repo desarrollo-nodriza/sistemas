@@ -498,10 +498,8 @@ class BoosmapComponent extends Component
 
 
 	public function obtener_estado_nombre_map($nombre)
-	{	
-		$estado = (!isset($this->BoosmapCliente::$STATES[Inflector::slug(strtolower($nombre), '_')])) ? $this->BoosmapCliente::$STATES['no_informado'] : $this->BoosmapCliente::$STATES[Inflector::slug(strtolower($nombre), '_')];
-
-		return $estado;
+	{
+		return $this->BoosmapCliente::$STATES[Inflector::slug(strtolower($nombre), '_')];
 	}
 
 	public function obtener_estados($id, $test = false, $n = '')
