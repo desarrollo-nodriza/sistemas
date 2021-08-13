@@ -32,79 +32,6 @@ class BoosmapComponent extends Component
 		'cancelado' => ''
 	);
 
-	private static $estadosDetalleMap = array(
-		'pre_recepcion_virtual' => array(
-			'nombre' => 'Pre Recepción Virtual',
-			'leyenda' => 'El pedido fue creado en el sistema',
-			'tipo' => 'inicial'
-		),
-		'ingresado' => array(
-			'nombre' => 'Ingresado',
-			'leyenda' => 'El pedido fue recibido por Boosmap',
-			'tipo' => 'inicial'
-		),
-		'aceptado' => array(
-			'nombre' => 'Aceptado',
-			'leyenda' => 'El repartido está llegando a nuestra bodega',
-			'tipo' => 'sin_especificar'
-		),
-		'en_punto_de_retiro' => array(
-			'nombre' => 'En punto de retiro',
-			'leyenda' => 'El repartido llegó a nuestra bodega',
-			'tipo' => 'sin_especificar'
-		),
-		'en_despacho' => array(
-			'nombre' => 'En despacho',
-			'leyenda' => 'El pedido está en reparto',
-			'tipo' => 'en_reparto'
-		),
-		'entregado' => array(
-			'nombre' => 'Entregado',
-			'leyenda' => 'El pedido fue entregado al destinatario',
-			'tipo' => 'entregado'
-		),
-		'sin_moradores' => array(
-			'nombre' => 'Sin moradores',
-			'leyenda' => 'El repartidor no encontró a nadie en el domicilio',
-			'tipo' => 'error'
-		),
-		'pedido_anulado_cliente' => array(
-			'nombre' => 'Pedido anulado por cliente',
-			'leyenda' => 'Se ha anulado el envio',
-			'tipo' => 'error'
-		),
-		'rechazado_cliente' => array(
-			'nombre' => 'Pedido rechazado por cliente',
-			'leyenda' => 'El destinatario rechazó el pedido',
-			'tipo' => 'error'
-		),
-		'error_direccion' => array(
-			'nombre' => 'Error con la dirección',
-			'leyenda' => 'No pudimos dar con la dirección proporcionada',
-			'tipo' => 'error'
-		),
-		'devolucion_exitosa' => array(
-			'nombre' => 'Devuelto a bodega',
-			'leyenda' => 'El pedido volvió a nuestra bodega pero no te preocupes. Buscaremos una solución.',
-			'tipo' => 'error'
-		),
-		'extraviado' => array(
-			'nombre' => 'Pedido extraviado',
-			'leyenda' => 'Lo sentimos pero el pedido se extravió en el camino a destino. Nos podremos en contacto con usted lo antes posible.',
-			'tipo' => 'error'
-		),
-		'pedido_anulado' => array(
-			'nombre' => 'Pedido anulado',
-			'leyenda' => 'El pedido fue anulado',
-			'tipo' => 'error'
-		),
-		'cancelado' => array(
-			'nombre' => 'Pedido cancelado',
-			'leyenda' => 'El pedido fue cancelado',
-			'tipo' => 'error'
-		)
-	);
-
     /**
      * [crearCliente description]
      * @param  string $apitoken [description]
@@ -498,7 +425,7 @@ class BoosmapComponent extends Component
 
 
 	public function obtener_estado_nombre_map($nombre)
-	{
+	{	
 		return $this->BoosmapCliente::$STATES[Inflector::slug(strtolower($nombre), '_')];
 	}
 
@@ -510,8 +437,8 @@ class BoosmapComponent extends Component
 		{	
 			$i = 0;
 			foreach ($pedido['state'] as $i => $estado) 
-			{
-				$estados[$i] = $this->obtener_estado_nombre_map($estado['status']);
+			{	
+				$estados[$i]['nombre'] = ucfirst($estado['status']);
 				$estados[$i]['fecha'] = date('Y-m-d H:i:s', strtotime($estado['date']));
 			}
 
@@ -523,8 +450,9 @@ class BoosmapComponent extends Component
 				$estados[$i]['fecha'] = date('Y-m-d H:i:s'); 
 			}
 		}
-		
+
 		return $estados;
+	
 	}
 
 	
@@ -572,7 +500,7 @@ class BoosmapComponent extends Component
 		{	
 			# Obtenemos los estados del bulto
 			$estados = $this->obtener_estados($trans['TransportesVenta']['cod_seguimiento']);
-			
+
 			$estadosHistoricosParcial = ClassRegistry::init('EnvioHistorico')->find('count', array(
 				'conditions' => array(
 					'EnvioHistorico.transporte_venta_id' => $trans['TransportesVenta']['id'],
@@ -622,20 +550,20 @@ class BoosmapComponent extends Component
 					continue;
 				}
 				
-				$estado_id = ClassRegistry::init('EstadoEnvio')->obtener_id_por_nombre($estado_nombre);
+				$estado_existe = ClassRegistry::init('EstadoEnvio')->obtener_por_nombre($estado_nombre);
 
-				if (empty($estado_id))
+				if (!$estado_existe)
 				{
-					$estado_id = ClassRegistry::init('EstadoEnvio')->crear($estado_nombre, null, 'Boosmap', $e['leyenda']);
+					$estado_existe = ClassRegistry::init('EstadoEnvio')->crear($estado_nombre, null, 'Boosmap');
 				}
 
 				# Sólo se crean los estados nuevos
 				$historicos[] = array(
 					'EnvioHistorico' => array(
 						'transporte_venta_id' => $trans['TransportesVenta']['id'],
-						'estado_envio_id' => $estado_id,
+						'estado_envio_id' => $estado_existe['EstadoEnvio']['id'],
 						'nombre' => $estado_nombre,
-						'leyenda' => $e['leyenda'],
+						'leyenda' => $estado_existe['EstadoEnvio']['leyenda'],
 						'canal' => 'Boosmap',
 						'created' => $e['fecha']
 					)
