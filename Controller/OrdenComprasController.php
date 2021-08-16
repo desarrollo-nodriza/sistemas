@@ -1994,7 +1994,13 @@ class OrdenComprasController extends AppController
 					'VentaDetalleProducto' => array(
 						'fields' => array(
 							'VentaDetalleProducto.id'
-						)
+						),
+						'conditions'=>[
+							'OR'=>[
+								'OrdenComprasVentaDetalleProducto.cantidad_recibida != OrdenComprasVentaDetalleProducto.cantidad_validada_proveedor',
+								'OrdenComprasVentaDetalleProducto.cantidad_validada_proveedor = 0',
+							]
+						]
 					)
 				), 
 				'fields' => array(
