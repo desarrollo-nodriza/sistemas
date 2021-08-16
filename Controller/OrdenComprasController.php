@@ -1996,7 +1996,10 @@ class OrdenComprasController extends AppController
 							'VentaDetalleProducto.id'
 						),
 						'conditions'=>[
-							'OrdenComprasVentaDetalleProducto.cantidad_recibida != OrdenComprasVentaDetalleProducto.cantidad_validada_proveedor' 
+							'OR'=>[
+								'OrdenComprasVentaDetalleProducto.cantidad_recibida != OrdenComprasVentaDetalleProducto.cantidad_validada_proveedor',
+								'OrdenComprasVentaDetalleProducto.cantidad_validada_proveedor = 0',
+							]
 						]
 					)
 				), 
