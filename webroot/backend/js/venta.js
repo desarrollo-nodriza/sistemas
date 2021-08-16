@@ -1609,7 +1609,6 @@ $(function() {
 
 				});
 
-
 				$('.toggle-direccion').on('click', function(e){
 					
 					$(this).find('.fa').toggle();
