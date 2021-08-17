@@ -945,7 +945,7 @@ class Venta extends AppModel
 			# Nuevo stock virtual
 			if ($detalle['reservado_virtual']) 
 			{ 
-				ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($detalle['venta_detalle_producto_id'], ($detalle['cantidad'] - $detalle['cantidad_anulada']), 'aumentar');
+				#ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($detalle['venta_detalle_producto_id'], ($detalle['cantidad'] - $detalle['cantidad_anulada']), 'aumentar');
 				$vDetalle->saveField('reservado_virtual', 0);
 			}
 		}
