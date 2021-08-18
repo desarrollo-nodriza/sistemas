@@ -1021,9 +1021,9 @@ class StarkenWebServices {
 				'exceptions' => true
 			);
 
-			$log = array();
 			
-			$log[] = array(
+			
+			$log = array(
 				'Log' => array(
 					'administrador' => 'Starken - Vendor request:',
 					'modulo' => 'Ventas',
@@ -1032,7 +1032,7 @@ class StarkenWebServices {
 			);
 
 			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
+			ClassRegistry::init('Log')->save($log);
 
 			$client  = new SoapClient($this->urlApiSoap);
 			$result = $client->Execute(array('Param_inco_item' => $dataRequest));
@@ -1045,8 +1045,6 @@ class StarkenWebServices {
 				$result->Param_out_item->Otros = $result->Param_out_item->Otros->OtrosItem;
 			}
 
-			//print_r($result->Param_out_item->Encargos->EncargosItem); exit;
-
 			$respuesta = array(
 				'code' => 'success',
 				'body' => $result->Param_out_item
@@ -1057,6 +1055,18 @@ class StarkenWebServices {
 		}
 
 		catch (Exception $e) {
+
+			$log = array(
+				'Log' => array(
+					'administrador' => 'Starken - Vendor request:',
+					'modulo' => 'Ventas',
+					'modulo_accion' =>  'Error en la ejecución del servicio: ' . $e->getMessage()
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->save($log);
+			
 			return json_encode(array(
 				'code' => 'error',
 				'body' => 'Error en la ejecución del servicio: ' . $e->getMessage()
