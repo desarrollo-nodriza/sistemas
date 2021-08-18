@@ -641,13 +641,14 @@ class LibreDteComponent extends Component
 		if (!empty($data['DteDetalle'])) {
 
 			$detalle = array();
-			foreach ($data['DteDetalle'] as $i => $item) {
+			foreach ($data['DteDetalle'] as $i => $item) {				
+				$d = 	Inflector::slug($item['NmbItem'], ' ');
 				$detalle[] = array(
 					'CdgItem' => array(
 			    		'TpoCodigo' => 'INT1',
 			            'VlrCodigo' => $item['VlrCodigo']
 			    	),
-			        'NmbItem' => substr($item['NmbItem'], 0, 80),
+			        'NmbItem' => substr($d, 0, 80),
 			        'QtyItem' => $item['QtyItem'],
 			        'PrcItem' => $item['PrcItem']
 			       );
@@ -658,7 +659,6 @@ class LibreDteComponent extends Component
 				)
 			);
 		}
-
 
 		# Incluye Receptor
 		if (!empty($data['Dte']['rut_receptor']) && $data['Dte']['rut_receptor'] != '66666666-6' ) {
