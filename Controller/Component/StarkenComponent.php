@@ -47,7 +47,7 @@ class StarkenComponent extends Component
 
 			$log[] = array(
 				'Log' => array(
-					'administrador' => 'Straken vid:' . $venta['Venta']['id'],
+					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
 					'modulo' => 'Ventas',
 					'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
 				)
@@ -82,7 +82,7 @@ class StarkenComponent extends Component
 		if ($peso_total > $peso_maximo_permitido) {
 			$log[] = array(
 				'Log' => array(
-					'administrador' => 'Straken vid:' . $venta['Venta']['id'],
+					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
 					'modulo' => 'Ventas',
 					'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
 				)
@@ -199,17 +199,31 @@ class StarkenComponent extends Component
 			
 			$log[] = array(
 				'Log' => array(
-					'administrador' => 'Straken vid:' . $venta['Venta']['id'],
+					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
 					'modulo' => 'Ventas',
 					'modulo_accion' => 'Request: ' . json_encode($data)
 				)
 			);
 			
-			$response = json_decode($this->StarkenConexion->generarOrden(json_encode($data)), true);
+			
+			try {
+				$response = json_decode($this->StarkenConexion->generarOrden(json_encode($data)), true);
+			} catch (\Throwable $th) {
+
+				$log_starken = array(
+					'Log' => array(
+						'administrador' => 'Starken vid:' . $venta['Venta']['id'],
+						'modulo' => 'Ventas',
+						'modulo_accion' => 'Response: ' . json_encode($th)
+					)
+				);
+				ClassRegistry::init('Log')->create();
+				ClassRegistry::init('Log')->save($log_starken);
+			}
 
 			$log[] = array(
 				'Log' => array(
-					'administrador' => 'Straken vid:' . $venta['Venta']['id'],
+					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
 					'modulo' => 'Ventas',
 					'modulo_accion' => 'Response: ' . json_encode($response)
 				)

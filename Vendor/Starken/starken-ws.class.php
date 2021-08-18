@@ -540,7 +540,7 @@ class StarkenWebServices {
 			$datosRequest['rutUsuario'] = $this->rutUsuarioEmisor;
 			$datosRequest['password'] = $this->claveUsuarioEmisor;
 
-			$request = json_encode($dataRequest);
+			$request = json_encode($datosRequest);
 
 		}
 
@@ -596,7 +596,7 @@ class StarkenWebServices {
 				}
 			}
 
-			$request = json_encode($dataRequest);
+			$request = json_encode($datosRequest);
 
 		}
 
@@ -1025,7 +1025,7 @@ class StarkenWebServices {
 			
 			$log[] = array(
 				'Log' => array(
-					'administrador' => 'Straken request:',
+					'administrador' => 'Starken - Vendor request:',
 					'modulo' => 'Ventas',
 					'modulo_accion' => json_encode($dataRequest)
 				)
