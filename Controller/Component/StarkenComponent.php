@@ -212,7 +212,7 @@ class StarkenComponent extends Component
 
 				$log_starken = array(
 					'Log' => array(
-						'administrador' => 'Starken vid:' . $venta['Venta']['id'],
+						'administrador' => 'Starken-Component vid:' . $venta['Venta']['id'].' '.json_encode($data),
 						'modulo' => 'Ventas',
 						'modulo_accion' => 'Response: ' . json_encode($th)
 					)
@@ -233,10 +233,34 @@ class StarkenComponent extends Component
 			ClassRegistry::init('Log')->saveMany($log);
 			
 			if ($response['code'] != 'success') {
+				
+				$log_error= array(
+					'Log' => array(
+						'administrador' => 'Starken-Component vid:' . $venta['Venta']['id'],
+						'modulo' => 'Ventas',
+						'modulo_accion' => 'Response: ' . json_encode($response).' '.json_encode($data)
+					)
+				);
+	
+				ClassRegistry::init('Log')->create();
+				ClassRegistry::init('Log')->save($log_error);
+				
 				return false;
 			}
 
 			if ($response['body']['codigoError'] != 0) {
+
+				$log_error= array(
+					'Log' => array(
+						'administrador' => 'Starken-Component vid:' . $venta['Venta']['id'],
+						'modulo' => 'Ventas',
+						'modulo_accion' => 'Response: ' . json_encode($response).' '.json_encode($data)
+					)
+				);
+	
+				ClassRegistry::init('Log')->create();
+				ClassRegistry::init('Log')->save($log_error);
+
 				return false;
 			}
 
@@ -303,6 +327,18 @@ class StarkenComponent extends Component
 		}
 
 		if (empty($transportes)) {
+
+			$log_error= array(
+				'Log' => array(
+					'administrador' => 'Starken-Component vid:' . $venta['Venta']['id'],
+					'modulo' => 'Ventas',
+					'modulo_accion' => 'Response: ' . json_encode($transportes).' '.json_encode($data)
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->save($log_error);
+
 			return false;
 		}
 
