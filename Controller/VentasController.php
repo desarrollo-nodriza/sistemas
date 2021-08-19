@@ -10086,6 +10086,9 @@ class VentasController extends AppController {
 		#$this->Venta->save($venta);
 		#$enviado = $this->notificar_cambio_estado($id, $plantillaEmail, $estado_nuevo);
 
+		# Validamos que sea venta parcial o ocmpleta
+		$total_agendado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
+
 		# Prestashop
 		if ( $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) {
 			# Para la consola se carga el componente on the fly!
@@ -10098,7 +10101,7 @@ class VentasController extends AppController {
 			switch ($tipoEstado) {
 				case 'despacho_interno':
 					# Obtenemos el estado de enviado
-					$estado_nuevo     = 'Enviado';
+					$estado_nuevo     = ($total_agendado) ? 'Parcialmente enviado' : 'Enviado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 
 					#  Necesita recibir un chofer
@@ -10120,7 +10123,7 @@ class VentasController extends AppController {
 					break;
 				case 'entrega_domicilio':
 					# Obtenemos el estado de entregado
-					$estado_nuevo     = 'Entregado';
+					$estado_nuevo     = ($total_agendado) ? 'Entregado Parcial' : 'Entregado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					
 					# Si se adjunta foto del carnet del receptor
@@ -10157,7 +10160,7 @@ class VentasController extends AppController {
 					break;
 				case 'retiro_en_tienda':
 					# Obtenemos estado de entregado
-					$estado_nuevo     = 'Entregado';
+					$estado_nuevo     = ($total_agendado) ? 'Entregado Parcial' : 'Entregado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 
 					# Si se adjunta foto del carnet del receptor
@@ -10194,7 +10197,7 @@ class VentasController extends AppController {
 					break;
 				case 'despacho_externo':
 					# Obtenemos el estado de enviado
-					$estado_nuevo     = 'Enviado';
+					$estado_nuevo     = ($total_agendado) ? 'Parcialmente enviado' : 'Enviado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 
 					if (!isset($this->request->data['carrier'])){
@@ -10265,7 +10268,7 @@ class VentasController extends AppController {
 				case 'entrega_agencia':
 
 					# Obtenemos el estado de enviado
-					$estado_nuevo     = 'Enviado';
+					$estado_nuevo     = ($total_agendado) ? 'Parcialmente enviado' : 'Enviado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					
 					break;
@@ -10276,12 +10279,12 @@ class VentasController extends AppController {
 					break;
 				case 'enviado':
 					# Obtenemos el estado de enviado
-					$estado_nuevo     = 'Enviado';
+					$estado_nuevo     = ($total_agendado) ? 'Parcialmente enviado' : 'Enviado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					break;
 				case 'delivered':
 					# Obtenemos estado de entregado
-					$estado_nuevo     = 'Entregado';
+					$estado_nuevo     = ($total_agendado) ? 'Entregado Parcial' : 'Entregado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					break;
 			}

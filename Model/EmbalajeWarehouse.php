@@ -331,7 +331,7 @@ Class EmbalajeWarehouse extends AppModel {
 						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
 						{	
 
-							if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado')
+							if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado' || $emp['EmbalajeWarehouse']['estado'] == 'finalizado')
 							{
 								continue;
 							}
