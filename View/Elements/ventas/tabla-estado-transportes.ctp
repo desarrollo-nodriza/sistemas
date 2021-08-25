@@ -16,11 +16,11 @@
                 <tr>
                     <td><?=$estado['EnvioHistorico']['id']; ?></td>
                     <td><?=$estado['EnvioHistorico']['created']; ?></td>
-                    <td><label class="label label-<?=$estado['EstadoEnvio']['EstadoEnvioCategoria']['clase'];?>"><?=$estado['EstadoEnvio']['nombre']; ?></label></td>
-                    <td><?=$estado['EnvioHistorico']['leyenda']; ?></td>
-                    <td><?=$estado['EstadoEnvio']['EstadoEnvioCategoria']['nombre'];?></td>
+                    <td><label class="label label-<?=$estado['EstadoEnvio']['EstadoEnvioCategoria']['clase']??'info';?>"><?=$estado['EstadoEnvio']['nombre']; ?></label></td>
+                    <td><?=$estado['EnvioHistorico']['leyenda']??'-'; ?></td>
+                    <td><?=$estado['EstadoEnvio']['EstadoEnvioCategoria']['nombre']??'-';?></td>
                     <td>
-                    <? if ($estado['EstadoEnvio']['EstadoEnvioCategoria']['venta_estado_id']) : ?>
+                    <? if ($estado['EstadoEnvio']['EstadoEnvioCategoria']['venta_estado_id']??false) : ?>
                         <span data-toggle="tooltip" data-placement="top" title="" data-original-title="<?=$estado['EstadoEnvio']['EstadoEnvioCategoria']['VentaEstado']['nombre'];?>" class="btn btn-xs btn-<?= $estado['EstadoEnvio']['EstadoEnvioCategoria']['VentaEstado']['VentaEstadoCategoria']['estilo']; ?>">
                             <?= $estado['EstadoEnvio']['EstadoEnvioCategoria']['VentaEstado']['VentaEstadoCategoria']['nombre']; ?>
                         </span>

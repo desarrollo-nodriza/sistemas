@@ -483,6 +483,38 @@ class StarkenComponent extends Component
 		return json_decode($this->StarkenConexion->getSeguimiento(json_encode($data)), true);
 	}
 
+	public function seguimientoNuevo($cod_seguimiento,$rut_api_rest,$clave_api_rest)
+	{	
+		$curl = curl_init();
+		
+		curl_setopt_array($curl, array(
+		CURLOPT_URL => ((Configure::read('ambiente')=='dev')?'http://cargaora.starken.cl':'http://serviciosdls.starken.cl').'/StarkenServicesRest/webresources/rest/getDetalleSeguimientoNuevo',
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_ENCODING => '',
+		CURLOPT_MAXREDIRS => 10,
+		CURLOPT_TIMEOUT => 0,
+		CURLOPT_FOLLOWLOCATION => true,
+		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		CURLOPT_CUSTOMREQUEST => 'POST',
+		CURLOPT_POSTFIELDS =>'{
+		"ordenFlete": '.$cod_seguimiento.'
+		}',
+		CURLOPT_HTTPHEADER => array(
+			"Rut: {$rut_api_rest}",
+			"Clave: {$clave_api_rest}",
+			'Content-Type: application/json',
+			'Cookie: cargadls2=2651067564.52507.0000'
+		),
+		));
+
+		$response = curl_exec($curl);
+		$http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		curl_close($curl);
+		
+		return ['code'=>$http_code,'response'=>json_decode($response,true)] ;
+	}
+
+
 	/**
 	 * Retorna los servicios disponibles y sus costos
 	 */
@@ -759,4 +791,172 @@ class StarkenComponent extends Component
  		
         return $etiqueta;
     }
+
+
+	public function registrar_estados($id)
+	{	
+
+		$log = [];
+
+		# Obtenemos los transportes de la venta
+		$v = ClassRegistry::init('Venta')->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $id
+			),
+			'contain' => array(
+				'Transporte' => array(
+					'fields' => array(
+						'Transporte.id'
+					)
+				),
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.id',
+						'VentaDetalle.cantidad_en_espera'
+					)
+					),
+				'MetodoEnvio' => array(
+					'fields' => array(
+						'MetodoEnvio.rut_api_rest',
+						'MetodoEnvio.clave_api_rest'
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id'
+			)
+		));
+
+		$log[] = array(
+			'Log' => array(
+				'administrador' => 'registrar_estados - vid ' . $id,
+				'modulo' => 'StarkenComponent',
+				'modulo_accion' => json_encode($v)
+			)
+		);
+		
+		$historicos = array();
+
+		$total_en_espera = array_sum(Hash::extract($v, 'VentaDetalle.{n}.cantidad_en_espera'));
+
+		# Registramos el estado de los bultos
+		foreach ($v['Transporte'] as $it => $trans) 
+		{	
+			# Obtenemos los estados del bulto
+		
+			$estados = $this->seguimientoNuevo($trans['TransportesVenta']['cod_seguimiento'], $v['MetodoEnvio']['rut_api_rest'], $v['MetodoEnvio']['clave_api_rest']);
+			
+			$estadosHistoricosParcial = ClassRegistry::init('EnvioHistorico')->find('count', array(
+				'conditions' => array(
+					'EnvioHistorico.transporte_venta_id' => $trans['TransportesVenta']['id'],
+					'EnvioHistorico.nombre LIKE' => '%parcial%' 
+				)
+			));
+			
+			$es_envio_parcial = false;
+			
+			# si la venta tiene productos en espera, quiere decir que es un envio parcial
+			# si tiene un registro de envio parcial, termina como envio parcial
+			if ($estadosHistoricosParcial > 0 || $total_en_espera > 0)
+			{
+				$es_envio_parcial = true;
+			}
+
+			if ($estados['code']!= 200) {
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'registrar_estados - vid ' . $id,
+						'modulo' => 'StarkenComponent',
+						'modulo_accion' => 'Problemas con seguimiento: ' . json_encode($estados)
+					)
+				);
+				
+				continue;
+
+			}
+			
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'registrar_estados - vid ' . $id,
+					'modulo' => 'StarkenComponent',
+					'modulo_accion' => 'Estados embalaje: ' . json_encode($estados)
+				)
+			);
+			
+			// foreach ($estados as $e) 
+			// {	
+			if ($es_envio_parcial)
+			{
+				$estado_nombre = $estados['response']['estadoHomologado'] . ' parcial';
+			}
+			else
+			{
+				$estado_nombre = $estados['response']['estadoHomologado'];
+			}
+
+			# Verificamos que el estado no exista en los registros
+			if (ClassRegistry::init('EnvioHistorico')->existe($estado_nombre, $trans['TransportesVenta']['id']))
+			{	
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'registrar_estados - vid ' . $id,
+						'modulo' => 'StarkenComponent',
+						'modulo_accion' => 'Estado ya registrado: ' . json_encode($estado_nombre)
+					)
+				);
+
+				continue;
+			}
+			
+			$estado_existe = ClassRegistry::init('EstadoEnvio')->obtener_por_nombre($estado_nombre);
+
+			if (!$estado_existe)
+			{
+				$estado_existe = ClassRegistry::init('EstadoEnvio')->crear($estado_nombre, null, 'Starken', $estados['response']['descEstadoHomologado']);
+			}
+
+			# Sólo se crean los estados nuevos
+			$historicos[] = array(
+				'EnvioHistorico' => array(
+					'transporte_venta_id' => $trans['TransportesVenta']['id'],
+					'estado_envio_id' => $estado_existe['EstadoEnvio']['id'],
+					'nombre' => $estado_nombre,
+					'leyenda' => $estado_existe['EstadoEnvio']['leyenda'],
+					'canal' => 'Starken',
+					'created' =>  date("Y-m-d H:i:s", strtotime($estados['response']['fechaEmision']))
+				)
+			);
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'registrar_estados - vid ' . $id,
+					'modulo' => 'StarkenComponent',
+					'modulo_accion' => 'Nuevo estado historico: ' . json_encode($historicos)
+				)
+			);
+				
+			// }
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'registrar_estados - vid ' . $id,
+					'modulo' => 'StarkenComponent',
+					'modulo_accion' => 'Finaliza estados transporte: ' . json_encode($trans)
+				)
+			);
+		}
+		
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
+		
+		if (empty($historicos))
+		{
+			return false;
+		}
+		
+		ClassRegistry::init('EnvioHistorico')->create();
+		
+		return ClassRegistry::init('EnvioHistorico')->saveMany($historicos);
+	}
 }
