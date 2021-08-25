@@ -978,6 +978,9 @@ class VentasController extends AppController {
 
 			# Creamos la OT
 			if($this->Starken->generar_ot($venta)){
+
+				$this->Starken->registrar_estados($venta['Venta']['id']);
+
 				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
 			}else{
 				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
@@ -1226,6 +1229,9 @@ class VentasController extends AppController {
 
 					# Creamos la OT
 					if($this->Starken->generar_ot($venta)){
+
+						$this->Starken->registrar_estados($venta['Venta']['id']);
+
 						$log[] = array(
 							'Log' => array(
 								'administrador' => 'Cambiar estado venta: Ingresa Starken',
@@ -3532,7 +3538,6 @@ class VentasController extends AppController {
 		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
-		
 		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios','total_venta'));
 
 	}
@@ -11816,6 +11821,15 @@ class VentasController extends AppController {
 
 		}
 
+		# Registro de estados para Starken
+		if ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot'])
+		{	
+			$this->Starken = $this->Components->load('Starken');
+			# Obtenemos y registramos los estados de los envios
+			return $this->Starken->registrar_estados($venta['Venta']['id']);
+
+		}
+
 		return false;
 	}
 
@@ -12130,6 +12144,61 @@ class VentasController extends AppController {
 		$this->Session->setFlash('No se pudo crear su etiqueta', null, array(), 'danger');
 		$this->redirect($this->referer('/', true));
 		
+	}
+
+	public function api_getSeguimiento($id)
+	{	
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$estados = ClassRegistry::init('TransportesVenta')->find('all', array(
+			'conditions' => array(
+				'TransportesVenta.venta_id' => $id
+			),
+			'contain' => array(
+				'EnvioHistorico'=>['order' => array('EnvioHistorico.created' => 'ASC'),],
+			),
+			
+		));
+
+		$respuesta = array(
+			'code' => 404,
+			'message' => 'No se encontraron resultados',
+			'body' => $estados
+		);
+
+		if ($estados) 
+		{
+			$respuesta = array(
+				'code' => 200,
+				'message' => 'Se encontraron resultados',
+				'body' => $estados
+			);
+		}
+
+		$this->set(array(
+            'response' => $respuesta,
+            '_serialize' => array('response')
+		));
 	}
 
 }
