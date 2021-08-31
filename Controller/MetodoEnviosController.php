@@ -274,6 +274,8 @@ class MetodoEnviosController extends AppController
 
 			# Creamos la OT
 			if($this->Starken->generar_ot($venta)){
+				
+				$this->Starken->registrar_estados($venta['Venta']['id']);
 				$resultado = true;
 
 				$logs[] = array(
