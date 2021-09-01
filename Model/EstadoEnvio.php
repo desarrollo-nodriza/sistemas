@@ -60,6 +60,7 @@ class EstadoEnvio extends AppModel
     public function crear($nombre, $categoria = '', $origen = 'No definido', $leyenda = '')
     {
         # No existe el estado, lo creamos
+        $this->create();
         $estado = array(
             'EstadoEnvio' => array(
                 'nombre' => $nombre,
@@ -68,7 +69,6 @@ class EstadoEnvio extends AppModel
                 'leyenda' => $leyenda
             )
         );
-
         if ($this->save($estado))
         {
             return array(
@@ -90,12 +90,15 @@ class EstadoEnvio extends AppModel
     /**
      * Obtiene un estado por el nombre
      */
-    public function obtener_por_nombre($nombre)
+    public function obtener_por_nombre($nombre, $origen = null)
     {
+        $conditions = [
+            'nombre' => $nombre,
+            'origen' => $origen
+        ];
+        $conditions = array_filter($conditions);
         return $this->find('first', array(
-            'conditions' => array(
-                'nombre' => $nombre
-            )
+            'conditions' => $conditions
         ));
     }
     
