@@ -175,7 +175,15 @@
 								<label>Monto Total (hasta)</label>
 								<input name="data[Venta][MontoHasta]" class="form-control" value="<?= $FiltroMontoHasta; ?>" id="MontoHasta" type="number" min="1" placeholder="90000, 100000" />
 							</div>
-						</div>						
+						</div>
+						
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
+							<div class="form-group">
+								<br />
+								<label>Combinación</label>
+								<?= $this->Form->select('atributo', $atributos, array('class' => 'form-control select', 'data-live-search' => true, 'multiple' => true, 'empty' => 'Combinación', 'required' => false, 'default' => $FiltroAtributo )); ?>
+							</div>
+						</div>
 
 					</div>
 
