@@ -62,18 +62,13 @@ class StarkenComponent extends Component
 		# Si los paquetes no tienen dimensiones se setean con el valor default
 		foreach ($paquetes as $ip => $paquete) {
 			
-			if($paquete['paquete']['length'] == 0)
-				$paquetes[$ip]['paquete']['length'] = $venta['MetodoEnvio']['largo_default'];
+			$paquetes[$ip]['paquete']['length'] = $venta['MetodoEnvio']['largo_default'];
 
-			if($paquete['paquete']['width'] == 0)
-				$paquetes[$ip]['paquete']['width']  = $venta['MetodoEnvio']['ancho_default'];
+			$paquetes[$ip]['paquete']['width']  = $venta['MetodoEnvio']['ancho_default'];
 
-			if($paquete['paquete']['height'] == 0)
-				$paquetes[$ip]['paquete']['height'] = $venta['MetodoEnvio']['alto_default'];
+			$paquetes[$ip]['paquete']['height'] = $venta['MetodoEnvio']['alto_default'];
 
-			# peso seteado al minimo para asegurar cobro por balanza
-			if($paquete['paquete']['weight'] == 0)
-				$paquetes[$ip]['paquete']['weight'] = $venta['MetodoEnvio']['peso_default'];
+			$paquetes[$ip]['paquete']['weight'] = $venta['MetodoEnvio']['peso_default'];
 		}
 
 		$peso_total            = array_sum(Hash::extract($paquetes, '{n}.paquete.weight'));
