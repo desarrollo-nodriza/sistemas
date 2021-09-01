@@ -42,6 +42,49 @@ class VentaDetalle extends AppModel
 		)
 	);
 
+	public $hasAndBelongsToMany = array(
+		'Atributo' => array(
+			'className'				=> 'Atributo',
+			'joinTable'				=> 'venta_detalles_atributos',
+			'foreignKey'			=> 'venta_detalle_id',
+			'associationForeignKey'	=> 'atributo_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
+		)
+    );
+
+
+	public function afterSave($created, $options = array())
+	{	
+		# Relacionamos el atributo con el detalle
+		if (isset($this->data['Atributo']))
+		{	
+			$atributos_detalles = array();
+
+			foreach ($this->data['Atributo'] as $atributo) 
+			{
+				$atributos_detalles[] = array(
+					'VentaDetallesAtributo' => array(
+						'venta_detalle_id' => $this->data['VentaDetalle']['id'],
+						'atributo_id' => $atributo['atributo_id'],
+						'valor' => $atributo['valor']
+					)
+				);
+			}
+
+			ClassRegistry::init('VentaDetallesAtributo')->create();
+			ClassRegistry::init('VentaDetallesAtributo')->saveMany($atributos_detalles);
+		}
+	}
+
+
 	public function recalcular_total_producto($id_detalle){
 
 		$detalle = $this->find('first', array(

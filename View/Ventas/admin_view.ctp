@@ -300,6 +300,9 @@
 														</td>
 														<td>
 															<p><?= h($detalle['VentaDetalleProducto']['nombre']); ?></p>
+															<? if (!empty($detalle['Atributo'])) : ?>
+															<p><?=$detalle['Atributo'][0]['VentaDetallesAtributo']['valor'];?></p>
+															<? endif; ?>
 															
 															<? if (!empty($detalle['VentaDetalleProducto']['imagenes'])) : ?>
 															<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-foto-producto-<?=$detalle['id'];?>"><i class="fa fa-eye"></i> Ver imagen</button>

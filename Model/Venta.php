@@ -421,6 +421,9 @@ class Venta extends AppModel
 								'VentaDetalleProducto.id', 'VentaDetalleProducto.id_externo', 'VentaDetalleProducto.nombre', 'VentaDetalleProducto.codigo_proveedor', 'VentaDetalleProducto.cantidad_virtual', 'VentaDetalleProducto.stock_automatico', 'VentaDetalleProducto.ancho', 'VentaDetalleProducto.alto', 'VentaDetalleProducto.largo', 'VentaDetalleProducto.peso',
 							)
 						),
+						'Atributo' => array(
+							'AtributoGrupo'
+						),
 						'conditions' => array(
 							'VentaDetalle.activo' => 1
 						),
