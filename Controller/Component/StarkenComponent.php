@@ -841,8 +841,8 @@ class StarkenComponent extends Component
 					),
 				'MetodoEnvio' => array(
 					'fields' => array(
-						'MetodoEnvio.rut_api_rest',
-						'MetodoEnvio.clave_api_rest'
+						'MetodoEnvio.api_key',
+						'MetodoEnvio.dependencia'
 					)
 				)
 			),
@@ -854,11 +854,39 @@ class StarkenComponent extends Component
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'registrar_estados - vid ' . $id,
-				'modulo' => 'StarkenComponent',
+				'modulo' 		=> 'StarkenComponent',
 				'modulo_accion' => json_encode($v)
 			)
 		);
-		
+
+		if ($v['MetodoEnvio']['dependencia'] != 'starken') {
+			
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "Venta {$id} no tiene dependencia con starken",
+					'modulo' 		=> 'StarkenComponent',
+					'modulo_accion' => json_encode($v['MetodoEnvio'])
+				)
+			);
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+			return false ;
+		}
+
+		if (is_null($v['MetodoEnvio']['api_key'])) {
+			
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "Metodo ".$v['MetodoEnvio']['id']." no posee api key",
+					'modulo' 		=> 'StarkenComponent',
+					'modulo_accion' => json_encode($v['MetodoEnvio'])
+				)
+			);
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+			return false ;
+		}
+
 		$historicos = array();
 
 		$total_en_espera = array_sum(Hash::extract($v, 'VentaDetalle.{n}.cantidad_en_espera'));
@@ -891,7 +919,7 @@ class StarkenComponent extends Component
 				$log[] = array(
 					'Log' => array(
 						'administrador' => 'registrar_estados - vid ' . $id,
-						'modulo' => 'StarkenComponent',
+						'modulo' 		=> 'StarkenComponent',
 						'modulo_accion' => 'Problemas con seguimiento: ' . json_encode($estados)
 					)
 				);
@@ -943,7 +971,7 @@ class StarkenComponent extends Component
 				{
 					$estado_existe = ClassRegistry::init('EstadoEnvio')->crear($estado_nombre, null, 'Starken', " Paso: ".$e['step'].', '.$e['status']);
 				}
-				
+
 				# Sólo se crean los estados nuevos
 				$historicos[] = array(
 					'EnvioHistorico' => array(
@@ -952,7 +980,7 @@ class StarkenComponent extends Component
 						'nombre' => $estado_nombre,
 						'leyenda' => $estado_existe['EstadoEnvio']['leyenda'],
 						'canal' => 'Starken',
-						'created' =>  date("Y-m-d H:i:s", strtotime($e['created_at']))
+						'created' =>  date("Y-m-d H:i", strtotime($e['created_at'])).":0".$e['step']
 					)
 				);
 
