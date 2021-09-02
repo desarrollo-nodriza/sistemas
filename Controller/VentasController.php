@@ -11612,9 +11612,7 @@ class VentasController extends AppController {
 		foreach ($ventas as $iv => $venta) {
 
 			# Actualizamos los envios de las ventas
-			if (!$this->actualizar_estados_envios($venta['Venta']['id'])){
-				continue;
-			}
+			$this->actualizar_estados_envios($venta['Venta']['id']);
 
 			# Actualizamos las ventas por sus nuevos envios
 			if ($this->actualizar_venta_por_envios($venta['Venta']['id']))
