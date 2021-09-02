@@ -4312,6 +4312,16 @@ class VentasController extends AppController {
 				$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 				$this->request->data['Venta']['estado_anterior'] = $this->request->data['Venta']['venta_estado_id'];
 				$this->request->data['Venta']['venta_estado_id'] = $estado_nuevo_arr['VentaEstado']['id'];
+				$this->request->data['Venta']['venta_estado_responsable'] = $this->Auth->user('email');
+				
+				# Guardamos el estado anterior en la tabla pivot
+				$this->request->data['VentaEstado2'] = array(
+					array(
+						'venta_estado_id' => $estado_nuevo_arr['VentaEstado']['id'],
+						'fecha'           => date('Y-m-d H:i:s'),
+						'responsable'     => $this->Auth->user('email')
+					)
+				);
 
 			}
 
@@ -4587,7 +4597,7 @@ class VentasController extends AppController {
 	 * @param  string $detalleCancelado [description]
 	 * @return [type]                   [description]
 	 */
-	public function cambiarEstado($id_venta, $id_externo, $estado_nuevo_id, $tienda_id, $marketplace_id = null, $razonCancelado = '', $detalleCancelado = '', $responsable = '')
+	public function cambiarEstado($id_venta, $id_externo, $estado_nuevo_id, $tienda_id, $marketplace_id = null, $razonCancelado = '', $detalleCancelado = '', $responsable = '', $fecha_cambio = '')
 	{
 		ClassRegistry::init('VentaEstado')->id = $estado_nuevo_id;
 		ClassRegistry::init('Tienda')->id      = $tienda_id;
@@ -4941,7 +4951,7 @@ class VentasController extends AppController {
 		$saveVenta['VentaEstado2'] = array(
 			array(
 				'venta_estado_id' => $estado_nuevo_id,
-				'fecha'           => date('Y-m-d H:i:s'),
+				'fecha'           => ($fecha_cambio) ? $fecha_cambio : date('Y-m-d H:i:s'),
 				'responsable'     => $saveVenta['Venta']['venta_estado_responsable']
 			)
 		);
@@ -11737,7 +11747,7 @@ class VentasController extends AppController {
 				$estado_actualizado = false;
 
 				try {
-					$estado_actualizado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $h['EstadoEnvio']['EstadoEnvioCategoria']['venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $responsable);
+					$estado_actualizado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $h['EstadoEnvio']['EstadoEnvioCategoria']['venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $h['EnvioHistorico']['canal'], $h['EnvioHistorico']['created']);
 				} catch (Exception $e) {
 					$log[] = array(
 						'Log' => array(
