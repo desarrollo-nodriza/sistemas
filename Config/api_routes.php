@@ -361,6 +361,20 @@ Router::connect(
 );
 
 
+Router::connect(
+    '/api/ventas/seguimiento/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'Ventas', 
+        'action'        => 'getSeguimiento',
+        'api'           => true,
+        'prefix'        => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
 /**
  * Transporte
  */
