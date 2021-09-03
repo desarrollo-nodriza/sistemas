@@ -4378,13 +4378,19 @@ class VentasController extends AppController {
 					]);
 					if ($metodo_envio) {
 						if($this->request->data['Venta']['costo_envio'] != $this->request->data['Venta']['costo_envio_old']){
-							$this->request->data['Venta']['total'] = $this->request->data['Venta']['total_venta'] + $this->request->data['Venta']['costo_envio'];
+							$TotalProductos = 0;
+							$venta = $this->preparar_venta($id);
+							foreach ($venta['VentaDetalle'] as $detalle) {
+								$TotalProductos 	= $TotalProductos + ($detalle['precio'] * $detalle['cantidad'] - $detalle['monto_anulado']);
+							}
+							// $this->request->data['Venta']['total'] = monto_bruto($TotalProductos,null,0) + $this->request->data['Venta']['costo_envio'] - $venta['Venta']['descuento']??0;
+							$this->request->data['Venta']['total'] = $TotalProductos + round($TotalProductos*(Configure::read('iva_clp') / 100)) + $this->request->data['Venta']['costo_envio'] - $venta['Venta']['descuento']??0;
+							
 						}
 					}
-					$this->request->data['Venta']['costo_envio'] 		= $this->request->data['Venta']['costo_envio']; 
-					$this->request->data['Venta']['comuna_id'] 			= $this->request->data['Venta']['comuna_id']; 
+					$this->request->data['Venta']['costo_envio'] 	= $this->request->data['Venta']['costo_envio'];
+					$this->request->data['Venta']['comuna_id'] 		= $this->request->data['Venta']['comuna_id'];
 				} 
-				 
  
 			} 
 			
@@ -4414,11 +4420,6 @@ class VentasController extends AppController {
 			}
 		
 			if ($this->Venta->save($this->request->data)) {
-				if(isset($this->request->data['Venta']['opt'])){
-					if ($this->request->data['Venta']['metodo_envio_id_original'] != $this->request->data['Venta']['metodo_envio_id']){
-						$this->admin_generar_envio_externo_manual($this->request->data['Venta']['id'] );
-					}
-				}
 				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
 			}else{
 				$this->Session->setFlash('No fue posible actualizar la venta.', null, array(), 'danger');
