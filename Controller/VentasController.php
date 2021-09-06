@@ -4378,14 +4378,32 @@ class VentasController extends AppController {
 					]);
 					if ($metodo_envio) {
 						if($this->request->data['Venta']['costo_envio'] != $this->request->data['Venta']['costo_envio_old']){
+
+							
 							$TotalProductos = 0;
-							$venta = $this->preparar_venta($id);
+							$venta = ClassRegistry::init('Venta')->find(
+								'first',
+								array(
+									'conditions' => array(
+										'Venta.id' => $id
+									),
+									'contain' => array(
+										'VentaDetalle' => array(
+											'fields' => array(
+												'VentaDetalle.precio', 'VentaDetalle.cantidad','VentaDetalle.monto_anulado'
+											)
+										)
+									),
+									'fields' => array(
+										'Venta.id',
+										'Venta.descuento'
+									)
+								)
+							);
 							foreach ($venta['VentaDetalle'] as $detalle) {
 								$TotalProductos 	= $TotalProductos + ($detalle['precio'] * $detalle['cantidad'] - $detalle['monto_anulado']);
 							}
-							// $this->request->data['Venta']['total'] = monto_bruto($TotalProductos,null,0) + $this->request->data['Venta']['costo_envio'] - $venta['Venta']['descuento']??0;
-							$this->request->data['Venta']['total'] = $TotalProductos + round($TotalProductos*(Configure::read('iva_clp') / 100)) + $this->request->data['Venta']['costo_envio'] - $venta['Venta']['descuento']??0;
-							
+							$this->request->data['Venta']['total'] = monto_bruto($TotalProductos,null,0) + $this->request->data['Venta']['costo_envio'] - $venta['Venta']['descuento']??0;
 						}
 					}
 					$this->request->data['Venta']['costo_envio'] 	= $this->request->data['Venta']['costo_envio'];
