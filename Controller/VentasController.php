@@ -4436,87 +4436,59 @@ class VentasController extends AppController {
 			}
 			if(isset($this->request->data['Venta']['opt'])){ 
  
-				if ($this->request->data['Venta']['metodo_envio_id_original'] != $this->request->data['Venta']['metodo_envio_id']){ 
- 
-					if (!empty($this->request->data['Venta']['comuna_entrega_2'])) { 
-						$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega_2']); 
-					} 
-					
-					$this->request->data['Venta']['direccion_entrega']	= $this->request->data['Venta']['direccion_entrega_2']; 
-					$this->request->data['Venta']['numero_entrega'] 	= $this->request->data['Venta']['numero_entrega_2']; 
-					$this->request->data['Venta']['otro_entrega'] 		= $this->request->data['Venta']['otro_entrega_2']; 
-					$this->request->data['Venta']['comuna_entrega'] 	= $this->request->data['Venta']['comuna_entrega_2']; 
-					$this->request->data['Venta']['metodo_envio_id'] 	= $this->request->data['Venta']['metodo_envio_id']; 
-					$this->request->data['Venta']['rut_receptor'] 		= $this->request->data['Venta']['rut_receptor']; 
-					$this->request->data['Venta']['nombre_receptor'] 	= $this->request->data['Venta']['nombre_receptor']; 
-					$this->request->data['Venta']['fono_receptor'] 		= $this->request->data['Venta']['fono_receptor']; 
-					$this->request->data['Venta']['ciudad_entrega'] 	= $this->request->data['Venta']['ciudad_entrega']; 
-
-					$metodo_envio =  ClassRegistry::init('MetodoEnvio')->find('first',[
-						'fields'=>[	'MetodoEnvio.retiro_local','MetodoEnvio.id'],
-						'conditions' =>['MetodoEnvio.id'=>$this->request->data['Venta']['metodo_envio_id']]
-					]);
-					if ($metodo_envio) {
-						if($this->request->data['Venta']['costo_envio'] != $this->request->data['Venta']['costo_envio_old']){
-
-							
-							$TotalProductos = 0;
-							$venta = ClassRegistry::init('Venta')->find(
-								'first',
-								array(
-									'conditions' => array(
-										'Venta.id' => $id
-									),
-									'contain' => array(
-										'VentaDetalle' => array(
-											'fields' => array(
-												'VentaDetalle.precio', 'VentaDetalle.cantidad','VentaDetalle.monto_anulado'
-											)
-										)
-									),
-									'fields' => array(
-										'Venta.id',
-										'Venta.descuento'
-									)
-								)
-							);
-							foreach ($venta['VentaDetalle'] as $detalle) {
-								$TotalProductos 	= $TotalProductos + ($detalle['precio'] * $detalle['cantidad'] - $detalle['monto_anulado']);
-							}
-							$this->request->data['Venta']['total'] = monto_bruto($TotalProductos,null,0) + $this->request->data['Venta']['costo_envio'] - $venta['Venta']['descuento']??0;
-						}
-					}
-					$this->request->data['Venta']['costo_envio'] 	= $this->request->data['Venta']['costo_envio'];
-					$this->request->data['Venta']['comuna_id'] 		= $this->request->data['Venta']['comuna_id'];
+				if (!empty($this->request->data['Venta']['comuna_entrega_2'])) { 
+					$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega_2']); 
 				} 
+				
+				$this->request->data['Venta']['direccion_entrega']	= $this->request->data['Venta']['direccion_entrega_2']; 
+				$this->request->data['Venta']['numero_entrega'] 	= $this->request->data['Venta']['numero_entrega_2']; 
+				$this->request->data['Venta']['otro_entrega'] 		= $this->request->data['Venta']['otro_entrega_2']; 
+				$this->request->data['Venta']['comuna_entrega'] 	= $this->request->data['Venta']['comuna_entrega_2']; 
+				$this->request->data['Venta']['metodo_envio_id'] 	= $this->request->data['Venta']['metodo_envio_id']; 
+				$this->request->data['Venta']['rut_receptor'] 		= $this->request->data['Venta']['rut_receptor']; 
+				$this->request->data['Venta']['nombre_receptor'] 	= $this->request->data['Venta']['nombre_receptor']; 
+				$this->request->data['Venta']['fono_receptor'] 		= $this->request->data['Venta']['fono_receptor']; 
+				$this->request->data['Venta']['ciudad_entrega'] 	= $this->request->data['Venta']['ciudad_entrega']; 
+
+				$metodo_envio =  ClassRegistry::init('MetodoEnvio')->find('first',[
+					'fields'=>[	'MetodoEnvio.retiro_local','MetodoEnvio.id'],
+					'conditions' =>['MetodoEnvio.id'=>$this->request->data['Venta']['metodo_envio_id']]
+				]);
+				if ($metodo_envio) {
+					if($this->request->data['Venta']['costo_envio'] != $this->request->data['Venta']['costo_envio_old']){
+
+						
+						$TotalProductos = 0;
+						$venta = ClassRegistry::init('Venta')->find(
+							'first',
+							array(
+								'conditions' => array(
+									'Venta.id' => $id
+								),
+								'contain' => array(
+									'VentaDetalle' => array(
+										'fields' => array(
+											'VentaDetalle.precio', 'VentaDetalle.cantidad','VentaDetalle.monto_anulado'
+										)
+									)
+								),
+								'fields' => array(
+									'Venta.id',
+									'Venta.descuento'
+								)
+							)
+						);
+						foreach ($venta['VentaDetalle'] as $detalle) {
+							$TotalProductos 	= $TotalProductos + ($detalle['precio'] * $detalle['cantidad'] - $detalle['monto_anulado']);
+						}
+						$this->request->data['Venta']['total'] = monto_bruto($TotalProductos,null,0) + $this->request->data['Venta']['costo_envio'] - $venta['Venta']['descuento']??0;
+					}
+				}
+				$this->request->data['Venta']['costo_envio'] 	= $this->request->data['Venta']['costo_envio'];
+				$this->request->data['Venta']['comuna_id'] 		= $this->request->data['Venta']['comuna_id'];
  
 			} 
 			
-			if(isset($this->request->data['Venta']['opt'])){
-
-				if ($this->request->data['Venta']['metodo_envio_id_original'] != $this->request->data['Venta']['metodo_envio_id']){
-
-					if (!empty($this->request->data['Venta']['comuna_entrega_2'])) {
-						$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega_2']);
-					}
-	
-					$this->request->data['Venta']['direccion_entrega']	= $this->request->data['Venta']['direccion_entrega_2'];
-					$this->request->data['Venta']['numero_entrega'] 	= $this->request->data['Venta']['numero_entrega_2'];
-					$this->request->data['Venta']['otro_entrega'] 		= $this->request->data['Venta']['otro_entrega_2'];
-					$this->request->data['Venta']['comuna_entrega'] 	= $this->request->data['Venta']['comuna_entrega_2'];
-					$this->request->data['Venta']['metodo_envio_id'] 	= $this->request->data['Venta']['metodo_envio_id'];
-					$this->request->data['Venta']['rut_receptor'] 		= $this->request->data['Venta']['rut_receptor'];
-					$this->request->data['Venta']['nombre_receptor'] 	= $this->request->data['Venta']['nombre_receptor'];
-					$this->request->data['Venta']['fono_receptor'] 		= $this->request->data['Venta']['fono_receptor'];
-					$this->request->data['Venta']['ciudad_entrega'] 	= $this->request->data['Venta']['ciudad_entrega'];
-					$this->request->data['Venta']['costo_envio'] 		= $this->request->data['Venta']['costo_envio'];
-					$this->request->data['Venta']['comuna_id'] 			= $this->request->data['Venta']['comuna_id'];
-
-				}
-				
-
-			}
-		
 			if ($this->Venta->save($this->request->data)) {
 				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
 			}else{
