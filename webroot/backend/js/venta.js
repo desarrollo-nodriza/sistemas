@@ -618,7 +618,7 @@ $(function() {
 		var obtener_metodo_envio_venta = function($id){
 
 			$.app.loader.mostrar();
-
+		
 			$.ajax({
 				url: webroot + 'metodoEnvios/ajax_obtener_metodo_envio/' + $id,
 				type: 'GET',
@@ -628,6 +628,7 @@ $(function() {
 				var $metodo_envio = JSON.parse(res);
 
 				if ($metodo_envio.MetodoEnvio.retiro_local) {
+				
 					$('#VentaDireccionEntrega').parents('div').eq(0).addClass('hidden');
 					$('#VentaComunaEntrega').parents('div').eq(0).addClass('hidden');
 					$('#VentaNumeroEntrega').parents('div').eq(0).addClass('hidden');

@@ -772,14 +772,13 @@
 							<?= $this->Form->end(); ?> 
 
 							<?= $this->Form->create('Venta', array('url' => array('action' => 'edit', $venta['Venta']['id']), 'id' => 'AgregarNota','class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-								<?=$this->Form->input('id');?>
-							
 								<div class="panel panel-danger">
 									<div class="panel-body">
 										<h4><i class="fa fa-bell" aria-hidden="true"></i> <?= __('Nota interna');?></h4>
 									</div>
 									<div class="panel-body">
 										<div class="form-group">
+											<?=$this->Form->input('id');?>
 											<?=$this->Form->label('nota_interna', 'Ingrese una nota o comentario a la venta'); ?>
 											<?=$this->Form->input('nota_interna', array('class' => 'form-control', 'placeholder' => 'Ingrese nota'));?>
 										</div>
@@ -790,6 +789,8 @@
 								</div>
 
 							<?= $this->Form->end(); ?>
+
+							
 							
 							<? if (isset($venta['VentaExterna']['facturacion'])) : ?>
 							<!-- Facturacion info -->
