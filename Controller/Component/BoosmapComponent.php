@@ -550,7 +550,7 @@ class BoosmapComponent extends Component
 					continue;
 				}
 				
-				$estado_existe = ClassRegistry::init('EstadoEnvio')->obtener_por_nombre($estado_nombre);
+				$estado_existe = ClassRegistry::init('EstadoEnvio')->obtener_por_nombre($estado_nombre,'Boosmap');
 
 				if (!$estado_existe)
 				{

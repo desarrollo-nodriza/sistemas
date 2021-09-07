@@ -84,7 +84,7 @@ class VentasController extends AppController {
 			'Venta.prioritario', 
 			'Venta.picking_estado', 
 			'Venta.venta_manual',
-			'Venta.total'
+			'Venta.total',
 		);
 
 		
@@ -96,6 +96,8 @@ class VentasController extends AppController {
 		$FiltroMarketplace          = '';
 		$FiltroMedioPago            = '';
 		$FiltroVentaEstadoCategoria = '';
+		$FiltroAtributoGrupo = '';
+		$FiltroAtributo = '';
 		$FiltroVentaOrigen 			= '';
 		$FiltroPrioritario          = '';
 		$FiltroPicking              = '';
@@ -199,6 +201,32 @@ class VentasController extends AppController {
 								'conditions' => array(
 									'ventas_estados.id = Venta.venta_estado_id',
 									"ventas_estados.venta_estado_categoria_id = " .$FiltroVentaEstadoCategoria
+								)
+							);
+
+						}
+						break;
+					case 'atributo':
+						$FiltroAtributo = $valor;
+
+						if ($FiltroAtributo != "") {
+
+							$joins[] = array(
+								'table' => 'rp_venta_detalles',
+								'alias' => 'venta_detalles',
+								'type' => 'INNER',
+								'conditions' => array(
+									'venta_detalles.venta_id= Venta.id'
+								)
+							);
+
+							$joins[] = array(
+								'table' => 'rp_venta_detalles_atributos',
+								'alias' => 'vd_atributos',
+								'type' => 'INNER',
+								'conditions' => array(
+									'vd_atributos.venta_detalle_id= venta_detalles.id',
+									'vd_atributos.atributo_id' =>  $FiltroAtributo
 								)
 							);
 
@@ -468,6 +496,13 @@ class VentasController extends AppController {
 			)
 		);
 
+		# Atributos
+		$atributos = ClassRegistry::init('Atributo')->find('list', array(
+			'fields' => array(
+				'Atributo.nombre'
+			),
+		));
+
 		$picking = ClassRegistry::init('Venta')->picking_estados_lista;
 		
 		# Mercadolibre conectar
@@ -481,6 +516,7 @@ class VentasController extends AppController {
 			'marketplaces', 
 			'ventaEstadoCategorias', 
 			'medioPagos',
+			'atributos',
 			'FiltroVenta', 
 			'FiltroCliente', 
 			'FiltroTienda', 
@@ -497,7 +533,8 @@ class VentasController extends AppController {
 			'FiltroVentaOrigen',
 			'FiltroMontoDesde',
 			'FiltroMontoHasta',
-			'FiltroVentaId'
+			'FiltroVentaId',
+			'FiltroAtributo'
 		));
 
 	}
@@ -3221,6 +3258,7 @@ class VentasController extends AppController {
 		$FiltroFechaDesde           = '';
 		$FiltroFechaHasta           = '';
 		$FiltroVentaId              = '';
+		$FiltroAtributo              = '';
 
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
@@ -3308,6 +3346,32 @@ class VentasController extends AppController {
 								'conditions' => array(
 									'ventas_estados.id = Venta.venta_estado_id',
 									"ventas_estados.venta_estado_categoria_id = " .$FiltroVentaEstadoCategoria
+								)
+							);
+
+						}
+						break;
+					case 'atributo':
+						$FiltroAtributo = $valor;
+
+						if ($FiltroAtributo != "") {
+
+							$joins[] = array(
+								'table' => 'rp_venta_detalles',
+								'alias' => 'venta_detalles',
+								'type' => 'INNER',
+								'conditions' => array(
+									'venta_detalles.venta_id= Venta.id'
+								)
+							);
+
+							$joins[] = array(
+								'table' => 'rp_venta_detalles_atributos',
+								'alias' => 'vd_atributos',
+								'type' => 'INNER',
+								'conditions' => array(
+									'vd_atributos.venta_detalle_id= venta_detalles.id',
+									'vd_atributos.atributo_id' =>  $FiltroAtributo
 								)
 							);
 
@@ -4263,6 +4327,16 @@ class VentasController extends AppController {
 				$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 				$this->request->data['Venta']['estado_anterior'] = $this->request->data['Venta']['venta_estado_id'];
 				$this->request->data['Venta']['venta_estado_id'] = $estado_nuevo_arr['VentaEstado']['id'];
+				$this->request->data['Venta']['venta_estado_responsable'] = $this->Auth->user('email');
+				
+				# Guardamos el estado anterior en la tabla pivot
+				$this->request->data['VentaEstado2'] = array(
+					array(
+						'venta_estado_id' => $estado_nuevo_arr['VentaEstado']['id'],
+						'fecha'           => date('Y-m-d H:i:s'),
+						'responsable'     => $this->Auth->user('email')
+					)
+				);
 
 			}
 
@@ -4573,7 +4647,7 @@ class VentasController extends AppController {
 	 * @param  string $detalleCancelado [description]
 	 * @return [type]                   [description]
 	 */
-	public function cambiarEstado($id_venta, $id_externo, $estado_nuevo_id, $tienda_id, $marketplace_id = null, $razonCancelado = '', $detalleCancelado = '', $responsable = '')
+	public function cambiarEstado($id_venta, $id_externo, $estado_nuevo_id, $tienda_id, $marketplace_id = null, $razonCancelado = '', $detalleCancelado = '', $responsable = '', $fecha_cambio = '')
 	{
 		ClassRegistry::init('VentaEstado')->id = $estado_nuevo_id;
 		ClassRegistry::init('Tienda')->id      = $tienda_id;
@@ -4927,7 +5001,7 @@ class VentasController extends AppController {
 		$saveVenta['VentaEstado2'] = array(
 			array(
 				'venta_estado_id' => $estado_nuevo_id,
-				'fecha'           => date('Y-m-d H:i:s'),
+				'fecha'           => ($fecha_cambio) ? $fecha_cambio : date('Y-m-d H:i:s'),
 				'responsable'     => $saveVenta['Venta']['venta_estado_responsable']
 			)
 		);
@@ -7902,7 +7976,7 @@ class VentasController extends AppController {
 		$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
 
 		$nwVenta = $this->Prestashop->prestashop_obtener_venta($id_externo); 
-
+		
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Prestashop Crear Venta - Obtener venta',
@@ -8109,6 +8183,24 @@ class VentasController extends AppController {
 					$NuevoDetalle['total_neto']              	= $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
 					$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 
+					# Atributos
+					if ($DetalleVenta['product_attribute_id'])
+					{
+						$atributo_producto = $this->Prestashop->prestashop_obtener_atributo_producto($DetalleVenta['product_attribute_id']);
+						$atributo = $this->Prestashop->prestashop_obtener_atributo($atributo_producto['combination']['associations']['product_option_values']['product_option_value']['id']);
+						$combinacion = $this->Prestashop->prestashop_obtener_atributo_grupo($atributo['product_option_value']['id_attribute_group']);
+						
+						# Obtenemos la combinación local
+						$combinacion_local = ClassRegistry::init('AtributoGrupo')->obtener_por_nombre($combinacion['product_option']['name']['language']);
+
+						# Obtenemos el atributo local
+						$atributo_local = ClassRegistry::init('Atributo')->obtener_por_nombre_grupo($atributo['product_option_value']['name']['language'], $combinacion_local['AtributoGrupo']['id']);
+						$NuevoDetalle['Atributo'][] = array(
+							'atributo_id' => $atributo_local['Atributo']['id'],
+							'valor' => sprintf('%s - %s', $combinacion_local['AtributoGrupo']['nombre'], $atributo_local['Atributo']['nombre'])
+						);
+					}
+
 					$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 
 					//se guarda el producto si no existe
@@ -8215,7 +8307,7 @@ class VentasController extends AppController {
 		$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
 
 		$nwVenta = $this->Prestashop->prestashop_obtener_venta($id_externo, $tienda); 
-		
+	
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Prestashop Crear Venta - Obtener venta',
@@ -8399,6 +8491,24 @@ class VentasController extends AppController {
 						$NuevoDetalle['total_neto']              	= $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
 						$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 
+						# Atributos
+						if ($DetalleVenta['product_attribute_id'])
+						{
+							$atributo_producto = $this->Prestashop->prestashop_obtener_atributo_producto($DetalleVenta['product_attribute_id']);
+							$atributo = $this->Prestashop->prestashop_obtener_atributo($atributo_producto['combination']['associations']['product_option_values']['product_option_value']['id']);
+							$combinacion = $this->Prestashop->prestashop_obtener_atributo_grupo($atributo['product_option_value']['id_attribute_group']);
+							
+							# Obtenemos la combinación local
+							$combinacion_local = ClassRegistry::init('AtributoGrupo')->obtener_por_nombre($combinacion['product_option']['name']['language']);
+
+							# Obtenemos el atributo local
+							$atributo_local = ClassRegistry::init('Atributo')->obtener_por_nombre_grupo($atributo['product_option_value']['name']['language'], $combinacion_local['AtributoGrupo']['id']);
+							$NuevoDetalle['Atributo'][] = array(
+								'atributo_id' => $atributo_local['Atributo']['id'],
+								'valor' => sprintf('%s - %s', $combinacion_local['AtributoGrupo']['nombre'], $atributo_local['Atributo']['nombre'])
+							);
+						}
+
 						$ActualizarVenta['VentaDetalle'][] = $NuevoDetalle;
 
 						//se guarda el producto si no existe
@@ -8445,7 +8555,7 @@ class VentasController extends AppController {
 		
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->saveMany($log);
-
+		prx($ActualizarVenta);
 		//se guarda la venta
 		if ( $this->Venta->saveAll($ActualizarVenta) ){
 
@@ -10135,6 +10245,9 @@ class VentasController extends AppController {
 		#$this->Venta->save($venta);
 		#$enviado = $this->notificar_cambio_estado($id, $plantillaEmail, $estado_nuevo);
 
+		# Validamos que sea venta parcial o ocmpleta
+		$total_agendado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
+
 		# Prestashop
 		if ( $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) {
 			# Para la consola se carga el componente on the fly!
@@ -10147,7 +10260,7 @@ class VentasController extends AppController {
 			switch ($tipoEstado) {
 				case 'despacho_interno':
 					# Obtenemos el estado de enviado
-					$estado_nuevo     = 'Enviado';
+					$estado_nuevo     = ($total_agendado) ? 'Parcialmente enviado' : 'Enviado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 
 					#  Necesita recibir un chofer
@@ -10169,7 +10282,7 @@ class VentasController extends AppController {
 					break;
 				case 'entrega_domicilio':
 					# Obtenemos el estado de entregado
-					$estado_nuevo     = 'Entregado';
+					$estado_nuevo     = ($total_agendado) ? 'Entregado Parcial' : 'Entregado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					
 					# Si se adjunta foto del carnet del receptor
@@ -10206,7 +10319,7 @@ class VentasController extends AppController {
 					break;
 				case 'retiro_en_tienda':
 					# Obtenemos estado de entregado
-					$estado_nuevo     = 'Entregado';
+					$estado_nuevo     = ($total_agendado) ? 'Entregado Parcial' : 'Entregado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 
 					# Si se adjunta foto del carnet del receptor
@@ -10243,7 +10356,7 @@ class VentasController extends AppController {
 					break;
 				case 'despacho_externo':
 					# Obtenemos el estado de enviado
-					$estado_nuevo     = 'Enviado';
+					$estado_nuevo     = ($total_agendado) ? 'Parcialmente enviado' : 'Enviado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 
 					if (!isset($this->request->data['carrier'])){
@@ -10314,7 +10427,7 @@ class VentasController extends AppController {
 				case 'entrega_agencia':
 
 					# Obtenemos el estado de enviado
-					$estado_nuevo     = 'Enviado';
+					$estado_nuevo     = ($total_agendado) ? 'Parcialmente enviado' : 'Enviado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					
 					break;
@@ -10325,12 +10438,12 @@ class VentasController extends AppController {
 					break;
 				case 'enviado':
 					# Obtenemos el estado de enviado
-					$estado_nuevo     = 'Enviado';
+					$estado_nuevo     = ($total_agendado) ? 'Parcialmente enviado' : 'Enviado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					break;
 				case 'delivered':
 					# Obtenemos estado de entregado
-					$estado_nuevo     = 'Entregado';
+					$estado_nuevo     = ($total_agendado) ? 'Entregado Parcial' : 'Entregado';
 					$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 					break;
 			}
@@ -11682,7 +11795,7 @@ class VentasController extends AppController {
 				$estado_actualizado = false;
 
 				try {
-					$estado_actualizado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $h['EstadoEnvio']['EstadoEnvioCategoria']['venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $responsable);
+					$estado_actualizado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $h['EstadoEnvio']['EstadoEnvioCategoria']['venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $h['EnvioHistorico']['canal'], $h['EnvioHistorico']['created']);
 				} catch (Exception $e) {
 					$log[] = array(
 						'Log' => array(
@@ -11782,9 +11895,7 @@ class VentasController extends AppController {
 		foreach ($ventas as $iv => $venta) {
 
 			# Actualizamos los envios de las ventas
-			if (!$this->actualizar_estados_envios($venta['Venta']['id'])){
-				continue;
-			}
+			$this->actualizar_estados_envios($venta['Venta']['id']);
 
 			# Actualizamos las ventas por sus nuevos envios
 			if ($this->actualizar_venta_por_envios($venta['Venta']['id'], 'Demonio'))

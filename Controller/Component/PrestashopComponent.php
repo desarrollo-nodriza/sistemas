@@ -196,7 +196,7 @@ class PrestashopComponent extends Component
 	{
 		$opt = array();
 		$opt['resource'] = 'order_details';
-		$opt['display'] = '[product_id,product_name,product_quantity,unit_price_tax_excl,unit_price_tax_incl]';
+		$opt['display'] = 'full';
 		$opt['filter[id_order]'] = '[' .$venta_id. ']';
 
 		$xml = $this->ConexionPrestashop->get($opt);
@@ -207,6 +207,56 @@ class PrestashopComponent extends Component
 
 		return $DataVentaDetalle;
 
+	}
+
+
+	public function prestashop_obtener_atributo_producto($id)
+	{	
+		$opt = array();
+		$opt['resource'] = 'combinations';
+		$opt['display'] = 'full';
+		$opt['filter[id]'] = '[' .$id. ']';
+
+		$xml = $this->ConexionPrestashop->get($opt);
+		$PrestashopResources = $xml->children()->children();
+
+		$DataVentaDetalle = to_array($PrestashopResources);
+
+		return $DataVentaDetalle;
+	}
+
+
+	public function prestashop_obtener_atributo($id)
+	{
+		$opt = array();
+		$opt['resource'] = 'product_option_values';
+		$opt['display'] = 'full';
+		$opt['filter[id]'] = '[' .$id. ']';
+
+		$xml = $this->ConexionPrestashop->get($opt);
+
+		$PrestashopResources = $xml->children()->children();
+
+		$DataVentaDetalle = to_array($PrestashopResources);
+
+		return $DataVentaDetalle;
+	}
+
+
+	public function prestashop_obtener_atributo_grupo($id)
+	{
+		$opt = array();
+		$opt['resource'] = 'product_options';
+		$opt['display'] = 'full';
+		$opt['filter[id]'] = '[' .$id. ']';
+
+		$xml = $this->ConexionPrestashop->get($opt);
+
+		$PrestashopResources = $xml->children()->children();
+
+		$DataVentaDetalle = to_array($PrestashopResources);
+
+		return $DataVentaDetalle;
 	}
 
 
