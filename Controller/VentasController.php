@@ -4468,11 +4468,6 @@ class VentasController extends AppController {
 			} 
 			
 			if ($this->Venta->save($this->request->data)) {
-				if(isset($this->request->data['Venta']['opt'])){ 
-					if ($this->request->data['Venta']['metodo_envio_id_original'] != $this->request->data['Venta']['metodo_envio_id']){ 
-						$this->admin_generar_envio_externo_manual($this->request->data['Venta']['id'] ); 
-					} 
-				} 
 				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
 			}else{
 				$this->Session->setFlash('No fue posible actualizar la venta.', null, array(), 'danger');

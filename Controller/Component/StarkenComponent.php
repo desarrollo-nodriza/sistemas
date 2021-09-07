@@ -1008,7 +1008,6 @@ class StarkenComponent extends Component
 				{
 					$estado_existe = ClassRegistry::init('EstadoEnvio')->crear($estado_nombre, null, 'Starken', " Paso: ".$e['step'].', '.$e['status']);
 				}
-
 				# Sólo se crean los estados nuevos
 				$historicos[] = array(
 					'EnvioHistorico' => array(
