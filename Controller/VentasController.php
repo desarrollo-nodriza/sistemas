@@ -3525,15 +3525,10 @@ class VentasController extends AppController {
 				), 
 			) 
 		);
-		$total_venta = 0;
-		foreach ($venta['VentaDetalle'] as $detalle) {
-			$total_venta = $total_venta + ($detalle['precio'] * $detalle['cantidad']);
-		}
-		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
-		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios','total_venta'));
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios'));
 
 	}
 
@@ -4350,6 +4345,40 @@ class VentasController extends AppController {
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 
+			$venta = ClassRegistry::init('Venta')->find(
+				'first',
+				array(
+					'conditions' => array(
+						'Venta.id' => $id
+					),
+					'contain' => array(
+						'VentaDetalle' => array(
+							'fields' => array(
+								'VentaDetalle.precio', 'VentaDetalle.cantidad','VentaDetalle.monto_anulado'
+							)
+						)
+					),
+					'fields' => array(
+						'Venta.id',
+						'Venta.descuento',
+						'Venta.direccion_entrega',
+						'Venta.numero_entrega',
+						'Venta.otro_entrega',
+						'Venta.comuna_entrega',
+						'Venta.metodo_envio_id',
+						'Venta.rut_receptor',
+						'Venta.nombre_receptor',
+						'Venta.fono_receptor',
+						'Venta.ciudad_entrega',	
+						'Venta.costo_envio',	
+						'Venta.comuna_id',
+						'Venta.total',
+						'Venta.referencia_despacho',
+						'Venta.nota_interna',
+					)
+				)
+			);
+
 			if(isset($this->request->data['Venta']['opt'])){ 
  
 				if (!empty($this->request->data['Venta']['comuna_entrega'])) { 
@@ -4361,41 +4390,37 @@ class VentasController extends AppController {
 					'conditions' =>['MetodoEnvio.id'=>$this->request->data['Venta']['metodo_envio_id']]
 				]);
 				if ($metodo_envio) {
-					if($this->request->data['Venta']['costo_envio'] != $this->request->data['Venta']['costo_envio_old']){
 
-						
-						$TotalProductos = 0;
-						$venta = ClassRegistry::init('Venta')->find(
-							'first',
-							array(
-								'conditions' => array(
-									'Venta.id' => $id
-								),
-								'contain' => array(
-									'VentaDetalle' => array(
-										'fields' => array(
-											'VentaDetalle.precio', 'VentaDetalle.cantidad','VentaDetalle.monto_anulado'
-										)
-									)
-								),
-								'fields' => array(
-									'Venta.id',
-									'Venta.descuento'
-								)
-							)
-						);
-						foreach ($venta['VentaDetalle'] as $detalle) {
-							$TotalProductos 	= $TotalProductos + ($detalle['precio'] * $detalle['cantidad'] - $detalle['monto_anulado']);
-						}
-						$this->request->data['Venta']['total'] = monto_bruto($TotalProductos,null,0) + $this->request->data['Venta']['costo_envio'] - $venta['Venta']['descuento']??0;
+					$TotalProductos = 0;
+					
+					foreach ($venta['VentaDetalle'] as $detalle) {
+						$TotalProductos 	= $TotalProductos + ($detalle['precio'] * $detalle['cantidad'] - $detalle['monto_anulado']);
 					}
+					$this->request->data['Venta']['total'] = monto_bruto($TotalProductos,null,0) + $this->request->data['Venta']['costo_envio'] - $venta['Venta']['descuento']??0;
+					
 				}
-				$this->request->data['Venta']['costo_envio'] 	= $this->request->data['Venta']['costo_envio'];
-				$this->request->data['Venta']['comuna_id'] 		= $this->request->data['Venta']['comuna_id'];
- 
 			} 
 			
 			if ($this->Venta->save($this->request->data)) {
+				ksort($venta['Venta']);
+				ksort($this->request->data['Venta']);
+				$log = array(
+					'Log' => array(
+						'administrador' => 'Cambio información despacho vid - ' . $id,
+						'modulo' => 'Ventas',
+						'modulo_accion' => json_encode(
+							[
+								"Usuario ".CakeSession::read('Auth.Administrador.id')." realizo siguiente cambios"=>
+									[
+										'original'	=> $venta['Venta'],
+										'cambios'	=> $this->request->data['Venta'],
+									]
+							])
+					)
+				);
+				ClassRegistry::init('Log')->create();
+				ClassRegistry::init('Log')->saveMany($log);
+
 				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
 			}else{
 				$this->Session->setFlash('No fue posible actualizar la venta.', null, array(), 'danger');

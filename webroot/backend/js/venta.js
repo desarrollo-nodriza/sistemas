@@ -1613,6 +1613,13 @@ $(function() {
 					}
 
 				}
+				$("#VentaEditButtom").on('click',function () {
+					let form = $( "#VentaEditForm" );
+					if (form.valid()) {
+						$.app.loader.mostrar()
+					}
+				
+				})
 
 				if ($('#obtener_cliente').length) {
 					venta.autocompletar_clientes();

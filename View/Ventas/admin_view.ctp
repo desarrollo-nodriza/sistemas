@@ -120,7 +120,6 @@
 																<label><?=__('Depto/oficina despacho');?></label> 
 																<?= $this->Form->input('otro_entrega', array('default'=> $venta['Venta']['otro_entrega'] ,'type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ejs: A, 123, 2203')); ?> 
 															</div> 
-															<?= $this->Form->input('metodo_envio_id_original', array('default' => $venta['MetodoEnvio']['id'],'type'=>"hidden")); ?> 
 															<div class="form-group hidden"> 
 																<label><?=__('Comuna despacho');?></label> 
 																<?=$this->Form->select('comuna_entrega', $comunas, array( 
@@ -138,11 +137,11 @@
 																<label><?=__('Costo despacho');?></label> 
 																<?= $this->Form->input('costo_envio', array('type' => 'number', 'class' => 'form-control in-number', 'placeholder' => 'Ingrese costo de envio')); ?> 
 															</div>
-															<?= $this->Form->input('costo_envio_old', array('type' => 'hidden','default'=> $this->request->data['Venta']['costo_envio'])); ?> 
-															<?= $this->Form->input('total_venta', array('type' => 'hidden','default'=> $total_venta)); ?> 
 															
-															 
-															<?=$this->Form->button('Guardar cambios', array('type' => 'submit', 'class' => 'btn btn-warning btn-block mt-5 start-loading-then-redirect' )); ?> 
+															<?=$this->Form->button('Guardar cambios', array(
+																'type' 	=> 'submit', 
+																'class' => 'btn btn-warning btn-block mt-5',
+																'id'	=> 'VentaEditButtom')); ?> 
 														</span>
 												<? else : ?>
 													<span class="btn btn-xs btn-warning"><?= __('No obtenido');?></span>
