@@ -75,93 +75,7 @@
 												<td><?= $venta['MedioPago']['nombre']; ?></td>
 											</tr>
 											<tr>
-												<th>Avenida/Calle/pasaje despacho</th>
-												<? if (!$venta['Venta']['paquete_generado']): ?>
-													<td>
-														<div class="input-group">
-		                                                    <?=$this->Form->input('direccion_entrega', array('value' => $venta['Venta']['direccion_entrega'], 'type' => 'text', 'class' => 'form-control js-direccion-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['direccion_entrega']));?>
-		                                                    <span class="input-group-btn">
-		                                                        <button class="btn btn-default toggle-direccion" type="button"><i class="fa fa-refresh"></i> <i class="fa fa-close" style="display: none;"></i></button>
-		                                                    </span>
-		                                                </div>
-		                                                <span class="direccion-select hide">
-		                                                	<?=$this->Form->button('Guardar cambios', array('type' => 'submit', 'class' => 'btn btn-warning btn-block mt-5')); ?>
-		                                                </span>		
-													</td>
-												<? else : ?>
-													<td>
-														<?=$venta['Venta']['direccion_entrega']; ?>
-													</td>
-												<? endif; ?>
-												
-											</tr>
-											<tr>
-												<th>Número de casa/block/edificio despacho</th>
-
-												<? if (!$venta['Venta']['paquete_generado']): ?>
-													<td>
-														<div class="input-group">
-		                                                    <?=$this->Form->input('numero_entrega', array('value' => $venta['Venta']['numero_entrega'], 'type' => 'text', 'class' => 'form-control js-numero-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['numero_entrega']));?>
-		                                                    <span class="input-group-btn">
-		                                                        <button class="btn btn-default toggle-numero-entrega" type="button"><i class="fa fa-refresh"></i> <i class="fa fa-close" style="display: none;"></i></button>
-		                                                    </span>
-		                                                </div>
-		                                                <span class="numero-entrega-select hide">
-		                                                	<?=$this->Form->button('Guardar cambios', array('type' => 'submit', 'class' => 'btn btn-warning btn-block mt-5')); ?>
-		                                                </span>		
-													</td>
-												<? else : ?>
-													<td>
-														<?=$venta['Venta']['numero_entrega']; ?>
-													</td>
-												<? endif; ?>
-												
-											</tr>
-											<tr>
-												<th>Dpto/oficina despacho</th>
-
-												<? if (!$venta['Venta']['paquete_generado']): ?>
-													<td>
-														<div class="input-group">
-		                                                    <?=$this->Form->input('otro_entrega', array('value' => $venta['Venta']['otro_entrega'], 'type' => 'text', 'class' => 'form-control js-otro-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['otro_entrega']));?>
-		                                                    <span class="input-group-btn">
-		                                                        <button class="btn btn-default toggle-otro-entrega" type="button"><i class="fa fa-refresh"></i> <i class="fa fa-close" style="display: none;"></i></button>
-		                                                    </span>
-		                                                </div>
-		                                                <span class="otro-entrega-select hide">
-		                                                	<?=$this->Form->button('Guardar cambios', array('type' => 'submit', 'class' => 'btn btn-warning btn-block mt-5')); ?>
-		                                                </span>		
-													</td>
-												<? else : ?>
-													<td>
-														<?=$venta['Venta']['otro_entrega']; ?>
-													</td>
-												<? endif; ?>
-												
-											</tr>
-											<tr>
-												<th>Comuna despacho</th>
-
-												<? if (!$venta['Venta']['paquete_generado']): ?>
-												<td>
-													<div class="input-group">
-	                                                    <?=$this->Form->input('comuna_entrega', array('value' => $venta['Venta']['comuna_entrega'], 'class' => 'form-control js-comuna-entrega', 'readonly' => true, 'style' => 'min-width: 250px;', 'data-value' => $venta['Venta']['comuna_entrega']));?>
-	                                                    <span class="input-group-btn">
-	                                                        <button class="btn btn-default toggle-comuna" type="button"><i class="fa fa-refresh"></i> <i class="fa fa-close" style="display: none;"></i></button>
-	                                                    </span>
-	                                                </div>
-	                                                <span class="comuna-select hide">
-														<?=$this->Form->label('comuna_entrega', 'Cambiar comuna entrega', array('class' => 'mt-5 pt-5')); ?>
-		                                                <?=$this->Form->select('comuna_entrega_select', $comunas, array('empty' => 'Seleccione', 'default' => $venta['Venta']['comuna_entrega'], 'class' => 'form-control js-comuna-select')); ?>
-	                                                	<?=$this->Form->button('Guardar cambios', array('type' => 'submit', 'class' => 'btn btn-warning btn-block mt-5')); ?>
-	                                                </span>    
-                                                </td>
-                                                <? else: ?>
-                                                	<td><?=$venta['Venta']['comuna_entrega']; ?></td>
-                                                <? endif; ?>
-											</tr>
-											<tr>
-												<th>Método de envio</th>
+												<th>Información despacho</th>
 												<td>
 												<? if (!empty($venta['MetodoEnvio'])) : ?>
 													<div class="input-group-btn"> 
@@ -178,6 +92,7 @@
 																[	'default'			=> $venta['MetodoEnvio']['id'], 
 																	'class' 			=> 'form-control select js-metodo-envios-ajax', 
 																	'data-live-search' 	=> true, 
+																	'id'				=> 'MetodoEnvio'
 																] 
 															);  
 															?> 
@@ -195,20 +110,20 @@
 															</div> 
 															<div class="form-group hidden"> 
 																<label><?=__('Avenida/Calle/Pasaje despacho');?></label> 
-																<?= $this->Form->input('direccion_entrega_2', array('default'=> $venta['Venta']['direccion_entrega'], 'type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ej: Vicuña MAckenna')); ?> 
+																<?= $this->Form->input('direccion_entrega', array('default'=> $venta['Venta']['direccion_entrega'], 'type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ej: Vicuña MAckenna')); ?> 
 															</div> 
 															<div class="form-group hidden"> 
 																<label><?=__('N° de casa/edificio/block despacho');?></label> 
-																<?= $this->Form->input('numero_entrega_2', array('default'=> $venta['Venta']['numero_entrega'] ,'type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ej: 1255')); ?> 
+																<?= $this->Form->input('numero_entrega', array('default'=> $venta['Venta']['numero_entrega'] ,'type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ej: 1255')); ?> 
 															</div> 
 															<div class="form-group hidden"> 
 																<label><?=__('Depto/oficina despacho');?></label> 
-																<?= $this->Form->input('otro_entrega_2', array('default'=> $venta['Venta']['otro_entrega'] ,'type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ejs: A, 123, 2203')); ?> 
+																<?= $this->Form->input('otro_entrega', array('default'=> $venta['Venta']['otro_entrega'] ,'type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ejs: A, 123, 2203')); ?> 
 															</div> 
 															<?= $this->Form->input('metodo_envio_id_original', array('default' => $venta['MetodoEnvio']['id'],'type'=>"hidden")); ?> 
 															<div class="form-group hidden"> 
 																<label><?=__('Comuna despacho');?></label> 
-																<?=$this->Form->select('comuna_entrega_2', $comunas, array( 
+																<?=$this->Form->select('comuna_entrega', $comunas, array( 
 																	'empty' => 'Seleccione',  
 																	'class' => 'form-control select',  
 																	'data-live-search' => true,  

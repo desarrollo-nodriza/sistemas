@@ -4350,25 +4350,11 @@ class VentasController extends AppController {
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 
-			# Viene comuna
-			if (!empty($this->request->data['Venta']['comuna_entrega'])) {
-				$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega']);
-			}
 			if(isset($this->request->data['Venta']['opt'])){ 
  
-				if (!empty($this->request->data['Venta']['comuna_entrega_2'])) { 
-					$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega_2']); 
+				if (!empty($this->request->data['Venta']['comuna_entrega'])) { 
+					$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega']); 
 				} 
-				
-				$this->request->data['Venta']['direccion_entrega']	= $this->request->data['Venta']['direccion_entrega_2']; 
-				$this->request->data['Venta']['numero_entrega'] 	= $this->request->data['Venta']['numero_entrega_2']; 
-				$this->request->data['Venta']['otro_entrega'] 		= $this->request->data['Venta']['otro_entrega_2']; 
-				$this->request->data['Venta']['comuna_entrega'] 	= $this->request->data['Venta']['comuna_entrega_2']; 
-				$this->request->data['Venta']['metodo_envio_id'] 	= $this->request->data['Venta']['metodo_envio_id']; 
-				$this->request->data['Venta']['rut_receptor'] 		= $this->request->data['Venta']['rut_receptor']; 
-				$this->request->data['Venta']['nombre_receptor'] 	= $this->request->data['Venta']['nombre_receptor']; 
-				$this->request->data['Venta']['fono_receptor'] 		= $this->request->data['Venta']['fono_receptor']; 
-				$this->request->data['Venta']['ciudad_entrega'] 	= $this->request->data['Venta']['ciudad_entrega']; 
 
 				$metodo_envio =  ClassRegistry::init('MetodoEnvio')->find('first',[
 					'fields'=>[	'MetodoEnvio.retiro_local','MetodoEnvio.id'],
