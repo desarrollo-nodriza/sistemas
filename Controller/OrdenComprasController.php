@@ -1988,13 +1988,19 @@ class OrdenComprasController extends AppController
 			$qry = array(
 				'conditions' => array(
 					'OrdenCompra.id' => $id,
-					'OrdenCompra.estado' => array('recepcion_incompleta', 'espera_recepcion')
+					'OrdenCompra.estado' => array('recepcion_incompleta', 'espera_recepcion'),
 				),
 				'contain' => array(
 					'VentaDetalleProducto' => array(
 						'fields' => array(
 							'VentaDetalleProducto.id'
-						)
+						),
+						'conditions'=>[
+							'OR'=>[
+								'OrdenComprasVentaDetalleProducto.cantidad_recibida != OrdenComprasVentaDetalleProducto.cantidad_validada_proveedor',
+								'OrdenComprasVentaDetalleProducto.cantidad_validada_proveedor = 0',
+							]
+						]
 					)
 				), 
 				'fields' => array(
@@ -2003,6 +2009,8 @@ class OrdenComprasController extends AppController
 			);
 
 			$this->request->data = $this->OrdenCompra->find('first', $qry);
+
+			
 		}
 
 		if ( empty($this->request->data) )

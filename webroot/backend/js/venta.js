@@ -618,95 +618,14 @@ $(function() {
 		var obtener_metodo_envio_venta = function($id){
 
 			$.app.loader.mostrar();
-
+		
 			$.ajax({
 				url: webroot + 'metodoEnvios/ajax_obtener_metodo_envio/' + $id,
 				type: 'GET',
 			})
 			.done(function(res) {
 				
-				var $metodo_envio = JSON.parse(res);
-
-				if ($metodo_envio.MetodoEnvio.retiro_local) {
-					$('#VentaDireccionEntrega').parents('div').eq(0).addClass('hidden');
-					$('#VentaComunaEntrega').parents('div').eq(0).addClass('hidden');
-					$('#VentaNumeroEntrega').parents('div').eq(0).addClass('hidden');
-					$('#VentaOtroEntrega').parents('div').eq(0).addClass('hidden');
-					$('#VentaCiudadEntrega').parents('div').eq(0).addClass('hidden');
-					$('#VentaRutReceptorEntrega').parents('div').eq(0).addClass('hidden');
-					$('#VentaNombreReceptor').parents('div').eq(0).addClass('hidden');
-					$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
-					$('#VentaCostoEnvio').parents('div').eq(0).addClass('hidden');
-
-					$('#VentaDireccionEntrega').rules("remove", "required");
-					$('#VentaNumeroEntrega').rules("remove", "required");
-					$('#VentaCiudadEntrega').rules("remove", "required");
-					$('#VentaRutReceptor').rules("remove", "required");
-					$('#VentaNombreReceptor').rules("remove", "required");
-				    $('#VentaComunaEntrega').rules("remove", "required");
-				    $('#VentaCostoEnvio').rules("remove", "required");
-
-				}else{
-					$('#VentaDireccionEntrega').parents('div').eq(0).removeClass('hidden');
-					$('#VentaComunaEntrega').parents('div').eq(0).removeClass('hidden');
-					$('#VentaNumeroEntrega').parents('div').eq(0).removeClass('hidden');
-					$('#VentaOtroEntrega').parents('div').eq(0).removeClass('hidden');
-					$('#VentaCiudadEntrega').parents('div').eq(0).removeClass('hidden');
-					$('#VentaRutReceptor').parents('div').eq(0).removeClass('hidden');
-					$('#VentaNombreReceptor').parents('div').eq(0).removeClass('hidden');
-					$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
-					$('#VentaCostoEnvio').parents('div').eq(0).removeClass('hidden');
-
-					$('#VentaDireccionEntrega').rules("add", {
-				        required: true,
-				        messages: {
-				        	required: 'Campo requerido'
-				        }
-				    });
-
-				    $('#VentaNumeroEntrega').rules("add", {
-				        required: true,
-				        messages: {
-				        	required: 'Campo requerido'
-				        }
-				    });
-
-				    $('#VentaCiudadEntrega').rules("add", {
-				        required: true,
-				        messages: {
-				        	required: 'Campo requerido'
-				        }
-				    });
-
-				    $('#VentaRutReceptor').rules("add", {
-				        required: true,
-				        rut: true,
-				        messages: {
-				        	required: 'Campo requerido'
-				        }
-				    });
-
-				    $('#VentaNombreReceptor').rules("add", {
-				        required: true,
-				        messages: {
-				        	required: 'Campo requerido'
-				        }
-				    });
-
-				    $('#VentaComunaEntrega').rules("add", {
-				        required: true,
-				        messages: {
-				        	required: 'Campo requerido'
-				        }
-				    });
-
-				    $('#VentaCostoEnvio').rules("add", {
-				        required: true,
-				        messages: {
-				        	required: 'Campo requerido'
-				        }
-				    });
-				}
+				habilitar_formulario(res);
 
 			})
 			.fail(function() {
@@ -716,6 +635,105 @@ $(function() {
 				$.app.loader.ocultar();
 			});
 			
+		}
+
+		var obtener_metodo_envio_venta_v2 = function($id){
+
+			$.ajax({
+				url: webroot + 'metodoEnvios/ajax_obtener_metodo_envio/' + $id,
+				type: 'GET',
+			})
+			.done(function(res) {
+				
+				habilitar_formulario(res);
+
+			});
+			
+		}
+		function habilitar_formulario(res) {
+			var $metodo_envio = JSON.parse(res);
+
+			if ($metodo_envio.MetodoEnvio.retiro_local) {
+			
+				$('#VentaDireccionEntrega').parents('div').eq(0).addClass('hidden');
+				$('#VentaComunaEntrega').parents('div').eq(0).addClass('hidden');
+				$('#VentaNumeroEntrega').parents('div').eq(0).addClass('hidden');
+				$('#VentaOtroEntrega').parents('div').eq(0).addClass('hidden');
+				$('#VentaCiudadEntrega').parents('div').eq(0).addClass('hidden');
+				$('#VentaRutReceptorEntrega').parents('div').eq(0).addClass('hidden');
+				$('#VentaNombreReceptor').parents('div').eq(0).addClass('hidden');
+				$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
+				$('#VentaCostoEnvio').parents('div').eq(0).addClass('hidden');
+
+				$('#VentaDireccionEntrega').rules("remove", "required");
+				$('#VentaNumeroEntrega').rules("remove", "required");
+				$('#VentaCiudadEntrega').rules("remove", "required");
+				$('#VentaRutReceptor').rules("remove", "required");
+				$('#VentaNombreReceptor').rules("remove", "required");
+				$('#VentaComunaEntrega').rules("remove", "required");
+				$('#VentaCostoEnvio').rules("remove", "required");
+
+			}else{
+				$('#VentaDireccionEntrega').parents('div').eq(0).removeClass('hidden');
+				$('#VentaComunaEntrega').parents('div').eq(0).removeClass('hidden');
+				$('#VentaNumeroEntrega').parents('div').eq(0).removeClass('hidden');
+				$('#VentaOtroEntrega').parents('div').eq(0).removeClass('hidden');
+				$('#VentaCiudadEntrega').parents('div').eq(0).removeClass('hidden');
+				$('#VentaRutReceptor').parents('div').eq(0).removeClass('hidden');
+				$('#VentaNombreReceptor').parents('div').eq(0).removeClass('hidden');
+				$('#VentaFonoReceptor').parents('div').eq(0).removeClass('hidden');
+				$('#VentaCostoEnvio').parents('div').eq(0).removeClass('hidden');
+
+				$('#VentaDireccionEntrega').rules("add", {
+					required: true,
+					messages: {
+						required: 'Campo requerido'
+					}
+				});
+
+				$('#VentaNumeroEntrega').rules("add", {
+					required: true,
+					messages: {
+						required: 'Campo requerido'
+					}
+				});
+
+				$('#VentaCiudadEntrega').rules("add", {
+					required: true,
+					messages: {
+						required: 'Campo requerido'
+					}
+				});
+
+				$('#VentaRutReceptor').rules("add", {
+					required: true,
+					rut: true,
+					messages: {
+						required: 'Campo requerido'
+					}
+				});
+
+				$('#VentaNombreReceptor').rules("add", {
+					required: true,
+					messages: {
+						required: 'Campo requerido'
+					}
+				});
+
+				$('#VentaComunaEntrega').rules("add", {
+					required: true,
+					messages: {
+						required: 'Campo requerido'
+					}
+				});
+
+				$('#VentaCostoEnvio').rules("add", {
+					required: true,
+					messages: {
+						required: 'Campo requerido'
+					}
+				});
+			}
 		}
 
 		// Start Smart Wizard
@@ -1490,6 +1508,17 @@ $(function() {
 
 				});
 
+				$('.toggle-metodo-envio').on('click', function(e){
+					
+					$(this).find('.fa').toggle();
+					$(this).parents('td').eq(0).find('.metodo-envio-select').toggleClass('hide');
+
+					if ($(this).parents('td').eq(0).find('.metodo-envio-select').hasClass('hide')) {
+						$('.js-metodo-envio-entrega').val( $('.js-metodo-envio-entrega').data('value') );
+					}
+
+				});
+
 				$('.toggle-direccion').on('click', function(e){
 					
 					$(this).find('.fa').toggle();
@@ -1560,6 +1589,37 @@ $(function() {
 					}
 
 				}
+				
+				let primera = true;
+
+				if ($('#VentaEditForm').length) {
+
+					$.app.formularios.bind('#VentaEditForm', objForm);
+
+					$('.js-metodo-envios-ajax').on('change', function(){
+						var $id = $(this).val();
+						if ($id != '') {
+							obtener_metodo_envio_venta($id);
+						}
+					});
+
+					if (primera) {
+					
+						let $id = document.querySelector('#MetodoEnvio').value;
+						if ($id != '') {
+							obtener_metodo_envio_venta_v2($id);
+						}
+						primera= false;
+					}
+
+				}
+				$("#VentaEditButtom").on('click',function () {
+					let form = $( "#VentaEditForm" );
+					if (form.valid()) {
+						$.app.loader.mostrar()
+					}
+				
+				})
 
 				if ($('#obtener_cliente').length) {
 					venta.autocompletar_clientes();
