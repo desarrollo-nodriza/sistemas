@@ -9781,6 +9781,9 @@ class VentasController extends AppController {
 					),
 					'EmbalajeProductoWarehouse' => array(
 						'EmbalajeWarehouse'
+					),
+					'Atributo' => array(
+						'AtributoGrupo'
 					)
 				),
 				'VentaMensaje',
@@ -9815,6 +9818,8 @@ class VentasController extends AppController {
 			}
 		}
 
+		# Cambiamos valor de la nota interna y le ponemos la referencia del despacho
+		$venta['Venta']['nota_interna'] = $venta['Venta']['referencia_despacho'];
 
 		# si es una venta parcial se indica en la nota interna
 		$total_agendado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
@@ -9967,9 +9972,15 @@ class VentasController extends AppController {
 			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($item['venta_detalle_producto_id'], $venta['Tienda']['apiurl_prestashop']);
 
 			foreach ($item['EmbalajeProductoWarehouse'] as $iemp => $emp) 
-			{
-				if ($emp['EmbalajeWarehouse']['estado'] == 'procesando')
+			{	
+				# Le concatenamos los atributos si corresponde
+				if (!empty($item['Atributo']))
 				{
+					$item['VentaDetalleProducto']['nombre'] = $item['VentaDetalleProducto']['nombre'] . ' - ' . $item['Atributo'][0]['VentaDetallesAtributo']['valor'];
+				}
+
+				if ($emp['EmbalajeWarehouse']['estado'] == 'procesando')
+				{	
 					$respuesta['body']['itemes'][] = array(
 						'id' => $item['id'],
 						'producto_id' => $item['venta_detalle_producto_id'],
@@ -9992,7 +10003,7 @@ class VentasController extends AppController {
 				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['largo'] = $pbodega['ProductoWarehouse']['largo'];
 			}
 		}
-
+	
 		if (empty($respuesta['body']['itemes']))
 		{
 			$response = array(
