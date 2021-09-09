@@ -33,12 +33,9 @@
 							<thead>
 								<? foreach ($this->Session->read('Cruxe.options') as $i => $cabecera) : ?>
 								<th>
-									<div class="radio">
-										<label>
-											<input type="radio" name="data[Cruzar][cabecera]" value="<?= $i; ?>" class="js-column">
-											<?=strtoupper($cabecera);?>
-										</label>
-									</div>
+								<?=$this->Form->select('Cruzar.cabecera.' . $i, $opciones, array('class' => 'form-control', 'empty' => 'Seleccione'));?><br>
+								<label>	<?=strtoupper($cabecera);?></label>
+									
 								</th>
 								<? endforeach; ?>
 							</thead>
