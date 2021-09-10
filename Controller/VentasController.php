@@ -6625,6 +6625,7 @@ class VentasController extends AppController {
 		$dte['Dte']['tienda_id']             = $venta['Tienda']['id'];
 		$dte['Dte']['externo']               = $venta['Venta']['id_externo'];
 		$dte['Dte']['administrador_id']      = $this->Auth->user('id');
+		$dte['Dte']['medio_de_pago']         = 1; // Contado por defecto
 
 		$dte['Dte']['glosa'] = __('Dte generado automáticamente para la venta # ') . $venta['Venta']['id'];
 
