@@ -15,17 +15,17 @@ class BlueExpressComponent extends Component
         $this->blue_express = new BlueExpress($BX_TOKEN, $BX_USERCODE, $BX_CLIENT_ACCOUNT);
     }
 
-    // public function prueba()
-    // {
-    //     set_time_limit(0);
-    //     // $this->crearCliente('823a23c8a5ae0efc91e1bd8b40a12a63', '14372', '96801150-11-8');
-    //     // return $this->blue_express->BXTrackingPull(74438);
-    //     // $venta = ClassRegistry::init('Venta')->obtener_venta_por_id(74438);
+     public function prueba()
+     {
+         set_time_limit(0);
+         // $this->crearCliente('823a23c8a5ae0efc91e1bd8b40a12a63', '14372', '96801150-11-8');
+         // return $this->blue_express->BXTrackingPull(74438);
+         // $venta = ClassRegistry::init('Venta')->obtener_venta_por_id(74438);
 
-    //     return $this->solicitar_etiqueta(7036661940);
+         return $this->solicitar_etiqueta(7036661940);
 
-    //     // return $this->registrar_estados(74438);
-    // }
+         // return $this->registrar_estados(74438);
+     }
 
     public function solicitar_etiqueta($trackingNumber)
     {
