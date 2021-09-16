@@ -18,11 +18,11 @@ class BlueExpressComponent extends Component
     // public function prueba()
     // {
     //     set_time_limit(0);
-    //     // $this->crearCliente('823a23c8a5ae0efc91e1bd8b40a12a63', '14372', '96801150-11-8');
+    //     $this->crearCliente('823a23c8a5ae0efc91e1bd8b40a12a63', '14372', '96801150-11-8');
     //     // return $this->blue_express->BXTrackingPull(74438);
-    //     // $venta = ClassRegistry::init('Venta')->obtener_venta_por_id(74438);
+    //     $venta = ClassRegistry::init('Venta')->obtener_venta_por_id(74438);
 
-    //     return $this->solicitar_etiqueta(7036661940);
+    //     return $this->generar_ot($venta);
 
     //     // return $this->registrar_estados(74438);
     // }
@@ -49,7 +49,7 @@ class BlueExpressComponent extends Component
             ],
             'fields' => ['TransportesVenta.id']
         ]);
-       
+
         $this->crearCliente($credenciales['Venta']['MetodoEnvio']['token_blue_express'], $credenciales['Venta']['MetodoEnvio']['cod_usuario_blue_express'], $credenciales['Venta']['MetodoEnvio']['cta_corriente_blue_express']);
         $response = $this->blue_express->BXLabel($trackingNumber);
         if ($response['code'] == 200) {
@@ -375,7 +375,7 @@ class BlueExpressComponent extends Component
                     'id'                    => $venta['Venta']['id'],
                     'referencia'            => $venta['Venta']['referencia'],
                     'referencia_despacho'   => $venta['Venta']['referencia_despacho'],
-                    'costo_envio'           => $obtener_costo_envio['response']['data']['tarifa']
+                    'costo_envio'           => $obtener_costo_envio['response']['data']['total']
                 ],
                 'pickup'    => [
                     'stateId'       => $venta['MetodoEnvio']['Bodega']['Comuna']['state_id_blue_express'],
@@ -425,7 +425,9 @@ class BlueExpressComponent extends Component
             );
 
             $nombreEtiqueta = $response['response']['data']['trackingNumber'] . date("Y-m-d H:i:s") . '.pdf';
-            $rutaPublica    = APP . 'webroot' . DS . 'img' . DS . 'BlueExpress' . DS . $venta['Venta']['id'] . DS;
+            $modulo_ruta = 'img' . DS . 'ModuloBlueExpress' . DS;
+            $rutaPublica    = APP . 'webroot' . DS . $modulo_ruta . $venta['Venta']['id'] . DS;
+
 
             if (!is_dir($rutaPublica)) {
                 @mkdir($rutaPublica, 0775, true);
@@ -435,8 +437,8 @@ class BlueExpressComponent extends Component
             fwrite($file, base64_decode($response['response']['data']['labels'][0]['contenido']));
             fclose($file);
 
-            $ruta_pdfs = $rutaPublica . $nombreEtiqueta;
-
+            $ruta_pdfs = 'https://' . $_SERVER['HTTP_HOST'] . DS. $modulo_ruta . $nombreEtiqueta;
+            
             # Guardamos el transportista y el/los numeros de seguimiento
             $carrier_name = 'BLUEXPRESS';
             $carrier_opt = array(
@@ -457,7 +459,7 @@ class BlueExpressComponent extends Component
             $transportes[] = [
                 'transporte_id'   => ClassRegistry::init('Transporte')->obtener_transporte_por_nombre($carrier_name, true, $carrier_opt),
                 'cod_seguimiento' => $response['response']['data']['trackingNumber'],
-                'etiqueta'        => $rutaPublica,
+                'etiqueta'        => $ruta_pdfs,
                 'entrega_aprox'   =>  date("Y-m-d", strtotime($obtener_costo_envio['response']['data']['fechaEstimadaEntrega']))
             ];
 
@@ -470,7 +472,7 @@ class BlueExpressComponent extends Component
                 'Venta' => array(
                     'id'                => $venta['Venta']['id'],
                     'paquete_generado'  => 1,
-                    'costo_envio'       => $obtener_costo_envio['response']['data']['tarifa'],
+                    'costo_envio'       => $obtener_costo_envio['response']['data']['total'],
                     'etiqueta_envio_externa' => $ruta_pdfs
                 ),
                 'Transporte' => $transportes
