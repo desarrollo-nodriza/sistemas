@@ -21,7 +21,7 @@ class BlueExpressComponent extends Component
     //     set_time_limit(0);
     //     $this->crearCliente('823a23c8a5ae0efc91e1bd8b40a12a63', '14372', '96801150-11-8');
     //     // return $this->blue_express->BXTrackingPull(74438);
-    //     $venta = ClassRegistry::init('Venta')->obtener_venta_por_id(74438);
+    //     $venta = ClassRegistry::init('Venta')->obtener_venta_por_id(74453);
 
     //     return $this->generar_ot($venta);
     // }
@@ -424,9 +424,8 @@ class BlueExpressComponent extends Component
             );
 
             $nombreEtiqueta = $response['response']['data']['trackingNumber'] . date("Y-m-d H:i:s") . '.pdf';
-            $modulo_ruta = 'img' . DS . 'ModuloBlueExpress' . DS;
-            $rutaPublica    = APP . 'webroot' . DS . $modulo_ruta . $venta['Venta']['id'] . DS;
-
+            $modulo_ruta = 'webroot' . DS . 'img' . DS . 'ModuloBlueExpress' . DS . $venta['Venta']['id'] . DS;
+            $rutaPublica    = APP .  $modulo_ruta;
 
             if (!is_dir($rutaPublica)) {
                 @mkdir($rutaPublica, 0775, true);
@@ -436,8 +435,8 @@ class BlueExpressComponent extends Component
             fwrite($file, base64_decode($response['response']['data']['labels'][0]['contenido']));
             fclose($file);
 
-            $ruta_pdfs = 'https://' . $_SERVER['HTTP_HOST'] . DS. $modulo_ruta . $nombreEtiqueta;
-            
+            $ruta_pdfs = 'https://' . $_SERVER['HTTP_HOST'] . DS . $modulo_ruta . $nombreEtiqueta;
+
             # Guardamos el transportista y el/los numeros de seguimiento
             $carrier_name = 'BLUEXPRESS';
             $carrier_opt = array(
