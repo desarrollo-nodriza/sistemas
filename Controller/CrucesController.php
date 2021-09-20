@@ -31,13 +31,25 @@ Class CrucesController extends AppController {
 
 			ini_set('max_execution_time', 0);
 			
-			if ($this->request->data['Cruzar']['archivo']['error'] != 0 
-				&& isset($this->request->data['Cruzar']['cabecera']) 
-				&& !empty($this->Session->read('Cruxe.data'))) {
+			if ($this->request->data['Cruzar']['archivo']['error'] != 0  
+				&& !empty($this->Session->read('Cruxe.data'))) 
+			{	
+				# Obtenemos las cabeceras seleccionadas
+				foreach ($this->request->data['Cruzar']['cabecera'] as $a => $i) {
+					if (empty($i)) {
+						unset($this->request->data['Cruzar']['cabecera'][$a]);
+					}
+				}
 				
-				// Obtenemos los valores de la columna seleccionada
-				$columnaValores = Hash::extract($this->Session->read('Cruxe.data'), '{n}.' . $this->request->data['Cruzar']['cabecera']);
+				# Se obtienen los índices para cada elemento
+				$columna_id_transaccion = array_search('id_transaccion', $this->request->data['Cruzar']['cabecera']); 
+				$columna_tipo_transaccion     = array_search('tipo_transaccion', $this->request->data['Cruzar']['cabecera']);
+				
 
+				// Obtenemos los valores de la columna seleccionada
+				$columnaValores = Hash::extract($this->Session->read('Cruxe.data'), '{n}.' . $columna_id_transaccion);
+				$columnaTipo = Hash::extract($this->Session->read('Cruxe.data'), '{n}.' . $columna_tipo_transaccion);
+				
 				if (count($columnaValores) < 2) {
 					$this->Session->setFlash('No se encontraron valores en ésta columna. Seleccione otra.', null, array(), 'warning');
 					$this->redirect(array('action' => 'cruces'));
@@ -49,6 +61,15 @@ Class CrucesController extends AppController {
 						unset($columnaValores[$i]);
 					}else{
 						$columnaValores[$i] = (string) $valor;
+					}
+				}
+
+				// Se quita la cabecera
+				foreach ($columnaTipo as $i => $tt) {
+					if ($i == 0) {
+						unset($columnaTipo[$i]);
+					}else{
+						$columnaTipo[$i] = (string) $tt;
 					}
 				}
 
@@ -82,7 +103,7 @@ Class CrucesController extends AppController {
 						)
 					)
 				);
-
+				
 				$qry['fields'] = array(
 					'VentaTransaccion.venta_id', 'VentaTransaccion.nombre', 'VentaTransaccion.monto', 'VentaTransaccion.fee'
 				);
@@ -96,7 +117,7 @@ Class CrucesController extends AppController {
 					$this->Session->setFlash('No se encontraron coincidencia.', null, array(), 'warning');
 					$this->redirect(array('action' => 'cruces'));
 				}
-
+				
 				$spreadsheet = new Spreadsheet();
 
 				// Crear cabeceras excel
@@ -125,7 +146,7 @@ Class CrucesController extends AppController {
 					->setCellValueByColumnAndRow($ultimaColumna+4, 1, 'Total documento');
 
 					foreach ($this->Session->read('Cruxe.options') as $i => $nombre) {
-
+						
 						$dt = (string) $valor[$i];
 						
 						if (empty($dt))
@@ -135,7 +156,12 @@ Class CrucesController extends AppController {
 						
 						if (empty($transaccion))
 							continue;
-						
+
+						$tipo_transaccion = $valor[$columna_tipo_transaccion];
+
+						if (empty($tipo_transaccion))
+							continue;
+
 						$dtes = Hash::extract($transacciones, '{n}.Venta[id='.(string) $transaccion[0]['venta_id'].'].Dte.{n}');
 
 						if (empty($dtes)) 
@@ -149,8 +175,16 @@ Class CrucesController extends AppController {
 						$tipo_documento = '';
 						$monto_documento = '';
 						foreach ($dtes as $ia => $d) {
-							// Sólo boletas y facturas
-							if ($d['tipo_documento'] == 33 || $d['tipo_documento'] == 39) {
+
+							# Si el tipo de movimiento es refund adjuntamos la nota de crédito de la venta
+							if ($tipo_transaccion == 'refund' && $d['tipo_documento'] == '61')
+							{
+								$folio           = $d['folio'];
+								$rut_receptor    = formato_rut($d['rut_receptor']);
+								$nombre_receptor = $d['razon_social_receptor'];
+								$tipo_documento  = $DtesController->tipoDocumento[$d['tipo_documento']];
+								$monto_documento = CakeNumber::currency($d['total'], 'CLP');
+							}else if ($d['tipo_documento'] == 33 || $d['tipo_documento'] == 39) {
 								$folio           = $d['folio'];
 								$rut_receptor    = formato_rut($d['rut_receptor']);
 								$nombre_receptor = $d['razon_social_receptor'];
@@ -222,10 +256,15 @@ Class CrucesController extends AppController {
 
 		$this->Session->write('Cruxe', $datos);
 
+		$opciones = array(
+			'id_transaccion' => 'ID transacción',
+			'tipo_transaccion' => 'Tipo de transacción'
+		);
+
 		BreadcrumbComponent::add('Listado de dte´s', '/dtes');
 		BreadcrumbComponent::add('Cruzar datos');
 
-		$this->set(compact('datos'));
+		$this->set(compact('datos', 'opciones'));
 	}
 
 

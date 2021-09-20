@@ -398,8 +398,6 @@ class VentasController extends AppController {
 			}
 		}
 
-		// prx($condiciones);
-
 		$paginate = array(
 			'recursive' => 0,
 			'contain' => array(
@@ -570,8 +568,6 @@ class VentasController extends AppController {
 			}
 		}
 
-		prx($total);
-		
 	}
 
 
@@ -3032,7 +3028,6 @@ class VentasController extends AppController {
 										obtener mensajes de la venta
 										$mensajes = $this->Linio->linio_obtener_venta_mensajes ($DataVenta['OrderId'], $ConexionLinio);
 										*/
-										#prx($DataVenta);
 										//se guarda la venta
 										$this->Venta->create();
 										$this->Venta->saveAll($NuevaVenta);
@@ -3489,6 +3484,8 @@ class VentasController extends AppController {
 	 */
 	public function admin_view ($id = null) 
 	{
+
+
 		if ( ! $this->Venta->exists($id) ) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
@@ -3551,7 +3548,6 @@ class VentasController extends AppController {
 				if (!empty($seguimientos)) {
 					# Consultamos por los envios
 					$res = $this->Starken->seguimiento($seguimientos);
-					#prx($res);
 				}
 			}
 			
@@ -3590,10 +3586,19 @@ class VentasController extends AppController {
 			$venta['Transporte'][$it]['TransportesVenta']['EnvioHistorico'] = $historico; 
 			
 		}
+
+		$metodos_de_envios = ClassRegistry::init('MetodoEnvio')->find( 
+			'list', 
+			array( 
+				'conditions' => array( 
+					'MetodoEnvio.activo' => true 
+				), 
+			) 
+		);
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
-		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas'));
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios'));
 
 	}
 
@@ -4420,12 +4425,82 @@ class VentasController extends AppController {
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 
-			# Viene comuna
-			if (!empty($this->request->data['Venta']['comuna_entrega'])) {
-				$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega']);
-			}
+			$venta = ClassRegistry::init('Venta')->find(
+				'first',
+				array(
+					'conditions' => array(
+						'Venta.id' => $id
+					),
+					'contain' => array(
+						'VentaDetalle' => array(
+							'fields' => array(
+								'VentaDetalle.precio', 'VentaDetalle.cantidad','VentaDetalle.monto_anulado'
+							)
+						)
+					),
+					'fields' => array(
+						'Venta.id',
+						'Venta.descuento',
+						'Venta.direccion_entrega',
+						'Venta.numero_entrega',
+						'Venta.otro_entrega',
+						'Venta.comuna_entrega',
+						'Venta.metodo_envio_id',
+						'Venta.rut_receptor',
+						'Venta.nombre_receptor',
+						'Venta.fono_receptor',
+						'Venta.ciudad_entrega',	
+						'Venta.costo_envio',	
+						'Venta.comuna_id',
+						'Venta.total',
+						'Venta.referencia_despacho',
+						'Venta.nota_interna',
+					)
+				)
+			);
+
+			if(isset($this->request->data['Venta']['opt'])){ 
+ 
+				if (!empty($this->request->data['Venta']['comuna_entrega'])) { 
+					$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega']); 
+				} 
+
+				$metodo_envio =  ClassRegistry::init('MetodoEnvio')->find('first',[
+					'fields'=>[	'MetodoEnvio.retiro_local','MetodoEnvio.id'],
+					'conditions' =>['MetodoEnvio.id'=>$this->request->data['Venta']['metodo_envio_id']]
+				]);
+				if ($metodo_envio) {
+
+					$TotalProductos = 0;
+					
+					foreach ($venta['VentaDetalle'] as $detalle) {
+						$TotalProductos 	= $TotalProductos + ($detalle['precio'] * $detalle['cantidad'] - $detalle['monto_anulado']);
+					}
+					$this->request->data['Venta']['total'] = monto_bruto($TotalProductos,null,0) + $this->request->data['Venta']['costo_envio'] - $venta['Venta']['descuento']??0;
+					
+				}
+			} 
 			
 			if ($this->Venta->save($this->request->data)) {
+				ksort($venta['Venta']);
+				ksort($this->request->data['Venta']);
+				$log = array(
+					'Log' => array(
+						'administrador' => 'Cambio información despacho vid - ' . $id,
+						'modulo' => 'Ventas',
+						'modulo_accion' => json_encode(
+							[
+								"Usuario ".CakeSession::read('Auth.Administrador.id')." realizo siguiente cambios"=>
+									[
+										'original'	=> $venta['Venta'],
+										'cambios'	=> $this->request->data['Venta'],
+									]
+							])
+					)
+				);
+				ClassRegistry::init('Log')->create();
+				ClassRegistry::init('Log')->saveMany($log);
+
 				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
 			}else{
 				$this->Session->setFlash('No fue posible actualizar la venta.', null, array(), 'danger');
@@ -4539,9 +4614,6 @@ class VentasController extends AppController {
 
 				break;
 		}
-
-		prx($venta);
-
 		
 	}
 
@@ -6536,6 +6608,7 @@ class VentasController extends AppController {
 		$dte['Dte']['tienda_id']             = $venta['Tienda']['id'];
 		$dte['Dte']['externo']               = $venta['Venta']['id_externo'];
 		$dte['Dte']['administrador_id']      = $this->Auth->user('id');
+		$dte['Dte']['medio_de_pago']         = 1; // Contado por defecto
 
 		$dte['Dte']['glosa'] = __('Dte generado automáticamente para la venta # ') . $venta['Venta']['id'];
 
@@ -9709,6 +9782,9 @@ class VentasController extends AppController {
 					),
 					'EmbalajeProductoWarehouse' => array(
 						'EmbalajeWarehouse'
+					),
+					'Atributo' => array(
+						'AtributoGrupo'
 					)
 				),
 				'VentaMensaje',
@@ -9743,6 +9819,8 @@ class VentasController extends AppController {
 			}
 		}
 
+		# Cambiamos valor de la nota interna y le ponemos la referencia del despacho
+		$venta['Venta']['nota_interna'] = $venta['Venta']['referencia_despacho'];
 
 		# si es una venta parcial se indica en la nota interna
 		$total_agendado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
@@ -9895,9 +9973,15 @@ class VentasController extends AppController {
 			$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($item['venta_detalle_producto_id'], $venta['Tienda']['apiurl_prestashop']);
 
 			foreach ($item['EmbalajeProductoWarehouse'] as $iemp => $emp) 
-			{
-				if ($emp['EmbalajeWarehouse']['estado'] == 'procesando')
+			{	
+				# Le concatenamos los atributos si corresponde
+				if (!empty($item['Atributo']))
 				{
+					$item['VentaDetalleProducto']['nombre'] = $item['VentaDetalleProducto']['nombre'] . ' - ' . $item['Atributo'][0]['VentaDetallesAtributo']['valor'];
+				}
+
+				if ($emp['EmbalajeWarehouse']['estado'] == 'procesando')
+				{	
 					$respuesta['body']['itemes'][] = array(
 						'id' => $item['id'],
 						'producto_id' => $item['venta_detalle_producto_id'],
@@ -9920,7 +10004,7 @@ class VentasController extends AppController {
 				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['largo'] = $pbodega['ProductoWarehouse']['largo'];
 			}
 		}
-
+	
 		if (empty($respuesta['body']['itemes']))
 		{
 			$response = array(
@@ -11617,8 +11701,6 @@ class VentasController extends AppController {
 
 			throw new CakeException($response);
 		}
-
-		prx($estado_nuevo_arr);
 
 		/*try {
 			$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id'], '', '', $this->Session->read('Auth.Administrador.nombre'));

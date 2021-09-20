@@ -123,7 +123,10 @@
                                           <!-- /Parrafo -->
 
                                            <!-- Parrafo -->
-                                          <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 0px; text-align: center; vertical-align: baseline;">Recuerda mostrar éste código y llevar tu cedula de identidad o pasaporte.</p>
+                                          <? if (strtotime(date("d-m-Y H:i:00",time())) < strtotime("16-09-2021 18:00:00")) : ?>
+                                          <p class="text-muted text-center" style="color: #d44848; font-size: 16px; font-weight: 600; line-height: 22px; margin-bottom: 10px; margin-top: 0px; text-align: center; vertical-align: baseline;">¡Importante! Este jueves 16 de septiembre el retiro en tienda está disponible sólo hasta las 14:00 hrs.</p>
+                                          <? endif; ?>
+                                          <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 0px; text-align: center; vertical-align: baseline;">Recuerda mostrar este código QR y llevar tu cedula de identidad o pasaporte, ya que de lo contrario no podemos entregar tu pedido.</p>
                                           <!-- /Parrafo -->
 
                                           <div class="qr" style="margin-top: 25px; margin-bottom: 15px; text-align: center;">
@@ -147,10 +150,13 @@
                                           </table>
 
                                           <!-- Titulo tus productos -->
-                                          <h5 class="text-center" style="color: inherit; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 20px; margin-top: 10px; text-align: center; vertical-align: baseline;">Horario de atención</h5>
+                                          <h5 class="text-center" style="color: inherit; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 20px; margin-top: 10px; text-align: center; vertical-align: baseline;">Nuestro horario de atención</h5>
                                           <!-- /titulo tus productos -->
 
                                           <!-- Parrafo -->
+                                          <? if (strtotime(date("d-m-Y H:i:00",time())) < strtotime("16-09-2021 18:00:00")) : ?>
+                                            <p class="text-muted text-center" style="color: #d44848; font-size: 16px; font-weight: 600; line-height: 22px; margin-bottom: 25px;; margin-top: 0px; text-align: center; vertical-align: baseline;">Jueves 16 de septiembre de 09:00-14:00 hrs.</p>
+                                          <? endif; ?>
                                           <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 25px;; margin-top: 0px; text-align: center; vertical-align: baseline;">Lunes a Viernes de 09:00-14:00 y de 15:00-18:30 hrs.</p>
                                           <!-- /Parrafo -->
 
