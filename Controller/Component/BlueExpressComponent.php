@@ -15,17 +15,6 @@ class BlueExpressComponent extends Component
         $this->blue_express = new BlueExpress($BX_TOKEN, $BX_USERCODE, $BX_CLIENT_ACCOUNT);
     }
 
-
-    // public function prueba()
-    // {
-    //     set_time_limit(0);
-    //     $this->crearCliente('823a23c8a5ae0efc91e1bd8b40a12a63', '14372', '96801150-11-8');
-    //     // return $this->blue_express->BXTrackingPull(74438);
-    //     $venta = ClassRegistry::init('Venta')->obtener_venta_por_id(74453);
-
-    //     return $this->generar_ot($venta);
-    // }
-
     public function solicitar_etiqueta($trackingNumber)
     {
         $credenciales = ClassRegistry::init('TransportesVenta')->find('first', [
@@ -502,85 +491,5 @@ class BlueExpressComponent extends Component
 
         return $exito;
     }
-
-    public function homologar_comunas()
-    {
-        set_time_limit(0);
-        $comunas = ClassRegistry::init("Comuna")->find('all', [
-            'conditions' => ['Comuna.district_id_blue_express' => null]
-        ]);
-
-        $this->crearCliente("1", "1", "1");
-        $comunas_blue_express = json_decode($this->blue_express::$STATE, true);
-        $contador = 0;
-        foreach ($comunas as $key => $comuna) {
-            $romper = false;
-            $nombre = trim(mb_strtoupper($comuna['Comuna']['nombre']));
-            $nombre = str_replace('Á', 'A', $nombre);
-            $nombre = str_replace('É', 'E', $nombre);
-            $nombre = str_replace('Í', 'I', $nombre);
-            $nombre = str_replace('Ó', 'O', $nombre);
-            $nombre = str_replace('Ú', 'U', $nombre);
-            $nombre = str_replace('Ü', 'U', $nombre);
-            $nombre = str_replace('Ñ', 'N', $nombre);
-            $NN[] = $nombre;
-            foreach ($comunas_blue_express['data'][0]['states'] as $region) {
-                $distritos = Hash::extract($region, 'ciudades.{*}.districts.{*}');
-
-                foreach ($distritos as $distrito) {
-
-                    if (trim($distrito['name']) == $nombre) {
-
-                        $comuna['Comuna']['district_id_blue_express'] = $distrito['code'];
-                        $comuna['Comuna']['state_id_blue_express']    = $region['code'];
-                        $comunas[$key] =  $comuna;
-                        $contador++;
-                        $romper = true;
-
-                        break;
-                    }
-                }
-
-                if ($romper) {
-                    break;
-                }
-            }
-        }
-        return ClassRegistry::init("Comuna")->saveAll($comunas) ? 'si' : 'no';
-    }
-
-    public function validar_comunas_con_blue_express()
-    {
-        set_time_limit(0);
-        $comunas = ClassRegistry::init("Comuna")->find('all');
-
-        $this->crearCliente("1", "1", "1");
-        $comunas_blue_express   = json_decode($this->blue_express::$STATE, true);
-        $comunas_blue_express_2 = [];
-
-        foreach ($comunas as $comuna) {
-            $romper = false;
-            foreach ($comunas_blue_express['data'][0]['states'] as $region) {
-                $distritos = Hash::extract($region, 'ciudades.{*}.districts.{*}');
-
-                foreach ($distritos as $distrito) {
-
-                    if (trim($distrito['code']) == $comuna['Comuna']['district_id_blue_express']) {
-
-                        $romper                     = true;
-                        if ($region['code'] != $comuna['Comuna']['state_id_blue_express']) {
-                            $distrito[]                 = $region['code'];
-                            $comunas_blue_express_2[]   = [$comuna['Comuna'], $distrito];
-                        }
-                        break;
-                    }
-                }
-
-                if ($romper) {
-                    break;
-                }
-            }
-        }
-        return $comunas_blue_express_2;
-    }
+    
 }
