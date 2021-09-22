@@ -701,7 +701,6 @@ class OrdenesController extends AppController
 						*/
 					}
 
-
 					# Si es NDC de anulación, anula los items sin devolverlos a bodega
 					if (!empty($this->request->data['DteDetalle']) 
 						&& $this->request->data['Dte']['tipo_documento'] == 61 
@@ -822,23 +821,24 @@ class OrdenesController extends AppController
 						}
 						
 						# Recalculamos los totales de la venta
-						$subtotal_neto  = (float) array_sum(Hash::extract($venta['VentaDetalle'], '{n}.total_neto')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.monto_anulado'));
+						$subtotal_neto  = (float) array_sum(Hash::extract($venta['VentaDetalle'], '{n}.total_neto'));
 						$subtotal_bruto = (float) monto_bruto($subtotal_neto);
 						$descuento      = (float) ($porcentaje_descuento > 0) ? round($subtotal_bruto * $porcentaje_descuento, 2) : 0;
 						
+						$venta['Venta']['descuento'] = $descuento;
 						# si se anulan todos los items el despacho se deja en 0
 						if ($subtotal_bruto == 0) 
 						{
 							$venta['Venta']['costo_envio'] = (float) 0;
+							$venta['Venta']['descuento'] = (float) 0;
 						}
 
-						$venta['Venta']['descuento'] = $descuento;
 						
 						# Guardamos los cambios
 						ClassRegistry::init('Venta')->saveAll($venta);
 
 					}
-
+					
 					# Preparamos los embalajes
 					ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id_orden, CakeSession::read('Auth.Administrador.id'));
 
