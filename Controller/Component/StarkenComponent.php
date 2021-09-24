@@ -41,14 +41,14 @@ class StarkenComponent extends Component
 		$paquetes = $this->obtener_bultos_venta($venta, $volumenMaximo);
 
 		$log = array();		
-
+		
 		# si no hay paquetes se retorna false
 		if (empty($paquetes)) {
 
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
+					'modulo' => 'Starken-Component',
 					'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
 				)
 			);
@@ -58,7 +58,7 @@ class StarkenComponent extends Component
 
 			return false;
 		}
-
+	
 		# Si los paquetes no tienen dimensiones se setean con el valor default
 		foreach ($paquetes as $ip => $paquete) {
 			
@@ -78,7 +78,7 @@ class StarkenComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
+					'modulo' => 'Starken-Component',
 					'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
 				)
 			);
@@ -88,7 +88,7 @@ class StarkenComponent extends Component
 
 			return false;
 		}
-
+		
 		$transportes = array();
 
 		# Mantenemos las ot ya generadas
@@ -104,8 +104,8 @@ class StarkenComponent extends Component
 		
 		$ruta_pdfs = array();
 
-		foreach ($paquetes as $id_venta => $paquete) {
-
+		foreach ($paquetes as $paquete) {
+			
 			# dimensiones de todos los paquetes unificado
 			$largoTotal = $paquete['paquete']['length'];
 			$anchoTotal = $paquete['paquete']['width'];
@@ -159,7 +159,7 @@ class StarkenComponent extends Component
 					)
 				)
 			);
-
+			
 			# Se agregan documentos de referencia
 			if (!empty($venta['Dte'])) {
 				foreach ($venta['Dte'] as $id => $dte) {
@@ -191,12 +191,12 @@ class StarkenComponent extends Component
 					}
 				}
 			}
-			
+		
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Request: ' . json_encode($data)
+					'modulo' => 'Starken-Component',
+					'modulo_accion' => 'Request para generar OT: ' . json_encode($data)
 				)
 			);
 			
@@ -205,58 +205,48 @@ class StarkenComponent extends Component
 				$response = json_decode($this->StarkenConexion->generarOrden(json_encode($data)), true);
 			} catch (\Throwable $th) {
 
-				$log_starken = array(
+				$log[] = array(
 					'Log' => array(
-						'administrador' => 'Starken-Component vid:' . $venta['Venta']['id'].' '.json_encode($data),
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Response: ' . json_encode($th)
+						'administrador' => 'Starken vid:' . $venta['Venta']['id'],
+						'modulo' => 'Starken-Component',
+						'modulo_accion' => 'Problemas al generar OT' . json_encode($th)
 					)
 				);
-				ClassRegistry::init('Log')->create();
-				ClassRegistry::init('Log')->save($log_starken);
+				continue;
 			}
-
+			
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Response: ' . json_encode($response)
+					'modulo' => 'Starken-Component',
+					'modulo_accion' => 'Se genero OT: ' . json_encode($response)
 				)
 			);
 
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
-			
 			if ($response['code'] != 'success') {
 				
-				$log_error= array(
+				$log[]= array(
 					'Log' => array(
-						'administrador' => 'Starken-Component vid:' . $venta['Venta']['id'],
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Response: ' . json_encode($response).' '.json_encode($data)
+						'administrador' => 'Starken vid:' . $venta['Venta']['id'],
+						'modulo' => 'Starken-Component',
+						'modulo_accion' => 'Problemas al generar OT: ' . json_encode($response)
 					)
 				);
 	
-				ClassRegistry::init('Log')->create();
-				ClassRegistry::init('Log')->save($log_error);
-				
-				return false;
+				continue;
 			}
 
 			if ($response['body']['codigoError'] != 0) {
 
-				$log_error= array(
+				$log[]= array(
 					'Log' => array(
-						'administrador' => 'Starken-Component vid:' . $venta['Venta']['id'],
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Response: ' . json_encode($response).' '.json_encode($data)
+						'administrador' => 'Starken vid:' . $venta['Venta']['id'],
+						'modulo' => 'Starken-Component',
+						'modulo_accion' => 'Problemas al generar OT: ' . json_encode($response)
 					)
 				);
 	
-				ClassRegistry::init('Log')->create();
-				ClassRegistry::init('Log')->save($log_error);
-
-				return false;
+				continue;
 			}
 
 			#Generamos la etiqueta
@@ -320,19 +310,19 @@ class StarkenComponent extends Component
 				'entrega_aprox'   => $response['body']['fechaEstimadaEntrega']
 			);
 		}
-
+		
 		if (empty($transportes)) {
 
-			$log_error= array(
+			$log[]= array(
 				'Log' => array(
-					'administrador' => 'Starken-Component vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Response: ' . json_encode($transportes).' '.json_encode($data)
+					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
+					'modulo' => 'Starken-Component',
+					'modulo_accion' => 'No se encontraron transportes: ' . json_encode($transportes)
 				)
 			);
 
 			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->save($log_error);
+			ClassRegistry::init('Log')->saveMany($log);
 
 			return false;
 		}
@@ -360,6 +350,9 @@ class StarkenComponent extends Component
 				));
 			}
 		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 
 		return ClassRegistry::init('Venta')->saveAll($nwVenta);
 

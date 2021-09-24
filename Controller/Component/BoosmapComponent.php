@@ -101,7 +101,7 @@ class BoosmapComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
+					'modulo' => 'BoosmapComponent',
 					'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
 				)
 			);
@@ -136,7 +136,7 @@ class BoosmapComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
+					'modulo' => 'BoosmapComponent',
 					'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
 				)
 			);
@@ -233,8 +233,8 @@ class BoosmapComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Request: ' . json_encode($boosmapArr)
+					'modulo' => 'BoosmapComponent',
+					'modulo_accion' => 'Request para generar OT: ' . json_encode($boosmapArr)
 				)
 			);
 			
@@ -243,13 +243,10 @@ class BoosmapComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Response: ' . json_encode($response)
+					'modulo' 		=> 'BoosmapComponent',
+					'modulo_accion' => 'Se genero OT: ' . json_encode($response)
 				)
 			);
-
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
 			
 			if ($response['httpCode'] > 299) {
 				return false;
@@ -333,17 +330,13 @@ class BoosmapComponent extends Component
 				));	
 			}else{
 
-				$log_1 = array(
+				$log[] = array(
 					'Log' => array(
 						'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Response(generar_ot): ' . json_encode($etiquetaArr)
+						'modulo' => 'BoosmapComponent',
+						'modulo_accion' => 'Problemas con la URL de la etiqueta: ' . json_encode($etiquetaArr)
 					)
 				);
-	
-				ClassRegistry::init('Log')->create();
-				ClassRegistry::init('Log')->save($log_1);
-
 			}
 
 			$transportes[] = array(
@@ -382,6 +375,9 @@ class BoosmapComponent extends Component
 				));
 			}
 		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 
 		if (ClassRegistry::init('Venta')->saveAll($nwVenta))
 		{	
