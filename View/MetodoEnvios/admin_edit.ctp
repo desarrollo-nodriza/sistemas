@@ -23,7 +23,7 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('retiro_local', 'Retiro en local'); ?></th>
-								<td><?= $this->Form->input('retiro_local', array('class' => ' js-check-retiro-local')); ?></td>
+								<td><?= $this->Form->input('retiro_local', array('class' => 'icheckbox js-check-retiro-local')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('dependencia', 'Dependencia o Plugin'); ?></th>
@@ -31,7 +31,11 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
-								<td><?= $this->Form->input('activo', array('class' => '')); ?></td>
+								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr id="generar_ot" class="">
+								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
+								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
 							</tr>
 							<tr id="peso_maximo" class="">
 								<th><?= $this->Form->label('peso_maximo', 'Peso Máximo'); ?></th>
@@ -125,10 +129,6 @@
 								<th><?= $this->Form->label('ciudad_origen', 'Ciudad de origen de la encomienda'); ?></th>
 								<td><?= $this->Form->select('ciudad_origen', $dependenciasVars['starken']['comunas'], array('empty' => 'Seleccione ciudad', 'class' => 'form-control select', 'data-live-search' => true)); ?></td>
 							</tr>
-							<tr>
-								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
-								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
-							</tr>
 							
 						</table>
 					</div>
@@ -192,10 +192,7 @@
 								<th><?= $this->Form->label('notification_type', 'Tipo de notificación'); ?></th>
 								<td><?= $this->Form->select('notification_type', $dependenciasVars['conexxion']['tipo_notificaciones'], array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
-							<tr>
-								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
-								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
-							</tr>
+							
 							
 						</table>
 					</div>
@@ -227,11 +224,7 @@
 								<th><?= $this->Form->label('boosmap_service', 'Típo de servicio'); ?></th>
 								<td><?= $this->Form->select('boosmap_service', $dependenciasVars['boosmap']['tipo_servicios'], array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
-							<tr>
-								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
-								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
-							</tr>
-						
+							
 						</table>
 					</div>
 				</div>

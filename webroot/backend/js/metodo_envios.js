@@ -191,7 +191,7 @@ let mostrar_solo_a_dependencias = function () {
 		});
 
 		$("#volumen_maximo").removeClass('hidden');
-		
+		$("#generar_ot").removeClass('hidden');
 	} else {
 
 		$("#MetodoEnvioPesoMaximo").attr("required", false);
@@ -207,6 +207,7 @@ let mostrar_solo_a_dependencias = function () {
 		$("#ancho_default").addClass('hidden');
 		$("#largo_default").addClass('hidden');
 		$("#volumen_maximo").addClass('hidden');
+		$("#generar_ot").addClass('hidden');
 	}
 
 }

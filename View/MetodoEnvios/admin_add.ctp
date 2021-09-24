@@ -32,6 +32,10 @@
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>
+							<tr id="generar_ot" class="hidden">
+								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
+								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
+							</tr>
 							<tr id="peso_maximo" class="hidden">
 								<th><?= $this->Form->label('peso_maximo', 'Peso Máximo'); ?></th>
 								<td><?= $this->Form->input('peso_maximo'); ?></td>
