@@ -9,9 +9,10 @@ class MetodoEnvio extends AppModel
 
 
 	private static $dependencia = array(
-		'starken' => 'Starken/Turbus',
-		'conexxion' => 'Conexxion Api',
-		'boosmap' => 'Boosmap Api'
+		'starken' 		=> 'Starken/Turbus',
+		'conexxion' 	=> 'Conexxion Api',
+		'boosmap' 		=> 'Boosmap Api',
+		'blueexpress' 	=> 'BlueExpress Api'
 	);
 
 

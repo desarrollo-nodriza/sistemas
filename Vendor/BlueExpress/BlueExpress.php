@@ -8,7 +8,7 @@ class BlueExpress
     protected static $BX_USERCODE;
     protected static $BX_CLIENT_ACCOUNT;
 
-    
+
     /**
      * __construct
      * Es necesario inicializar la clase para hacer uso de los metodos
@@ -19,12 +19,13 @@ class BlueExpress
      */
     public function __construct($BX_TOKEN, $BX_USERCODE, $BX_CLIENT_ACCOUNT)
     {
+        #Se debe configurar según ambiente la API_ROOT_URL
         self::$API_ROOT_URL = "https://bx-tracking.bluex.cl";
         self::$BX_TOKEN = $BX_TOKEN ?? '';
         self::$BX_USERCODE = $BX_USERCODE ?? '';
         self::$BX_CLIENT_ACCOUNT = $BX_CLIENT_ACCOUNT ?? '';
     }
-    
+
     /**
      * BXGeolocation
      * Por medio del endpoint se retorna todos las comunas que tienen cobertura
@@ -32,9 +33,9 @@ class BlueExpress
      */
     public function BXGeolocation()
     {
-        return $this->cURL_GET("https://bx-tracking.bluex.cl/bx-geo/state/all");
+        return $this->cURL_GET("/bx-geo/state/all");
     }
-    
+
     /**
      * FiltrarCiudadRegion
      * Por medio del endpoint se retorna las ciudades y distrito de determianda region
@@ -43,9 +44,9 @@ class BlueExpress
      */
     public function FiltrarCiudadRegion($REGION)
     {
-        $this->cURL_GET("https://bx-tracking.bluex.cl/bx-geo/state/cl/{$REGION}");
+        $this->cURL_GET("/bx-geo/state/cl/{$REGION}");
     }
-    
+
     /**
      * CentrosDistribucion
      * Por medio del endpoint se retorna los centros de distribucion de BlueExpress
@@ -53,9 +54,9 @@ class BlueExpress
      */
     public function CentrosDistribucion()
     {
-        return $this->cURL_GET("https://bx-tracking.bluex.cl/bx-geo/base/all");
+        return $this->cURL_GET("/bx-geo/base/all");
     }
-    
+
     /**
      * BXPricing
      * Por medio de este endpoint se obtiene el valor del la OT(orden de trasnporte) asi como la fecha de entrega aproximada
@@ -90,8 +91,8 @@ class BlueExpress
                 'unidades'          => $datosProducto['cantidadPiezas'] ?? ''
             ]
         ];
-        
-        return $this->cURL_POST('https://bx-tracking.bluex.cl/bx-pricing/v1', $POSTFIELDS);
+
+        return $this->cURL_POST('/bx-pricing/v1', $POSTFIELDS);
     }
 
     public function BXEmission($BULTO)
@@ -153,9 +154,9 @@ class BlueExpress
             "extras" => null
         ];
 
-        return $this->cURL_POST('https://bx-tracking.bluex.cl/bx-emission/v1', $OT);
+        return $this->cURL_POST('/bx-emission/v1', $OT);
     }
-    
+
     /**
      * BXLabel
      * Por medio de este enpoint se puede recuperar la etiqueta externa para BlueExpress en formato base64 el cual se decodifica con metodo base64_decode()
@@ -164,9 +165,9 @@ class BlueExpress
      */
     public function BXLabel($trackingNumber)
     {
-        return $this->cURL_GET('https://bx-tracking.bluex.cl/bx-label/v1/' . $trackingNumber ?? '');
+        return $this->cURL_GET('/bx-label/v1/' . $trackingNumber ?? '');
     }
-    
+
     /**
      * BXTrackingPull
      * Se conecta con endpoint para obtener estados de una OT(orden de trasnporte)
@@ -175,9 +176,14 @@ class BlueExpress
      */
     public function BXTrackingPull($trackingNumber)
     {
-        return $this->cURL_GET('https://bx-tracking.bluex.cl/bx-tracking/v1/tracking-pull/' . $trackingNumber ?? '',true);
+        return $this->cURL_GET('/bx-tracking/v1/tracking-pull/' . $trackingNumber ?? '', true);
     }
-    
+
+    public function DistributionBases()
+    {
+        return $this->cURL_GET('/bx-tracking/v1/tracking-pull/');
+    }
+
     /**
      * cURL_POST
      * Se estandariza cURL para peticiones POST
@@ -189,7 +195,7 @@ class BlueExpress
     {
         $curl = curl_init();
         curl_setopt_array($curl, array(
-            CURLOPT_URL => $URL,
+            CURLOPT_URL => self::$API_ROOT_URL . $URL,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -213,7 +219,7 @@ class BlueExpress
             "response" => json_decode($response, true)
         ];
     }
-    
+
     /**
      * cURL_GET
      * Se estandariza cURL para peticiones GET
@@ -223,13 +229,13 @@ class BlueExpress
      * la diferencia es el último -
      * @return void
      */
-    private function cURL_GET($URL,$CHANGE_CLIENT = false)
+    private function cURL_GET($URL, $CHANGE_CLIENT = false)
     {
 
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
-            CURLOPT_URL => $URL,
+            CURLOPT_URL => self::$API_ROOT_URL . $URL,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -240,7 +246,7 @@ class BlueExpress
             CURLOPT_HTTPHEADER => array(
                 "BX-TOKEN:" . self::$BX_TOKEN,
                 "BX-USERCODE:" . self::$BX_USERCODE,
-                ($CHANGE_CLIENT?"BX-CLIENT-ACCOUNT:":"BX-CLIENT_ACCOUNT:") . self::$BX_CLIENT_ACCOUNT
+                ($CHANGE_CLIENT ? "BX-CLIENT-ACCOUNT:" : "BX-CLIENT_ACCOUNT:") . self::$BX_CLIENT_ACCOUNT
             ),
         ));
 
@@ -253,5 +259,4 @@ class BlueExpress
             "response" => json_decode($response, true)
         ];
     }
-
 }

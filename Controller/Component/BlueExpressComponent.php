@@ -257,10 +257,10 @@ class BlueExpressComponent extends Component
     public function generar_ot($venta)
     {
 
-        $volumenMaximo = (float) 60;
+        $volumenMaximo = $venta['MetodoEnvio']['volumen_maximo'];
         # Algoritmo LAFF para ordenamiento de productos
         $paquetes = $this->LAFFPack->obtener_bultos_venta_dimension_decimal($venta, $volumenMaximo);
-
+        
         $log = array();
 
         # si no hay paquetes se retorna false
@@ -269,7 +269,7 @@ class BlueExpressComponent extends Component
             $log[] = array(
                 'Log' => array(
                     'administrador' => 'BlueExpress vid:' . $venta['Venta']['id'],
-                    'modulo' => 'Ventas',
+                    'modulo' => 'BlueExpressComponent',
                     'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
                 )
             );
@@ -299,7 +299,7 @@ class BlueExpressComponent extends Component
             $log[] = array(
                 'Log' => array(
                     'administrador' => 'BlueExpress vid:' . $venta['Venta']['id'],
-                    'modulo' => 'Ventas',
+                    'modulo' => 'BlueExpressComponent',
                     'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
                 )
             );
@@ -352,7 +352,7 @@ class BlueExpressComponent extends Component
             $log[] = array(
                 'Log' => array(
                     'administrador' => 'BlueExpress retorno costo de envio vid:' . $venta['Venta']['id'],
-                    'modulo' => 'Ventas',
+                    'modulo' => 'BlueExpressComponent',
                     'modulo_accion' => json_encode($obtener_costo_envio)
                 )
             );
@@ -396,7 +396,7 @@ class BlueExpressComponent extends Component
                 $log[] = array(
                     'Log' => array(
                         'administrador' => 'BlueExpress, problemas para generar ot para vid:' . $venta['Venta']['id'],
-                        'modulo' => 'Ventas',
+                        'modulo' => 'BlueExpressComponent',
                         'modulo_accion' => json_encode($response)
                     )
                 );
@@ -407,7 +407,7 @@ class BlueExpressComponent extends Component
             $log[] = array(
                 'Log' => array(
                     'administrador' => 'BlueExpress retorno ot vid:' . $venta['Venta']['id'],
-                    'modulo' => 'Ventas',
+                    'modulo' => 'BlueExpressComponent',
                     'modulo_accion' => json_encode($response)
                 )
             );
@@ -470,7 +470,7 @@ class BlueExpressComponent extends Component
                 $log[] = array(
                     'Log' => array(
                         'administrador' => 'BlueExpress, se registro ot vid:' . $venta['Venta']['id'],
-                        'modulo' => 'Ventas',
+                        'modulo' => 'BlueExpressComponent',
                         'modulo_accion' => json_encode($fin_proceso_ot)
                     )
                 );
@@ -479,7 +479,7 @@ class BlueExpressComponent extends Component
                 $log[] = array(
                     'Log' => array(
                         'administrador' => 'BlueExpress, dificultades para guardar información ot vid:' . $venta['Venta']['id'],
-                        'modulo' => 'Ventas',
+                        'modulo' => 'BlueExpressComponent',
                         'modulo_accion' => json_encode($$fin_proceso_ot)
                     )
                 );
