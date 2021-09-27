@@ -230,21 +230,16 @@ class BoosmapComponent extends Component
                 ));
             }
 			
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'BoosmapComponent',
-					'modulo_accion' => 'Request para generar OT: ' . json_encode($boosmapArr)
-				)
-			);
-			
 			$response = $this->BoosmapCliente->createOt($boosmapArr);
 	
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
 					'modulo' 		=> 'BoosmapComponent',
-					'modulo_accion' => 'Se genero OT: ' . json_encode($response)
+					'modulo_accion' => json_encode([
+						'Request para generar OT' => $boosmapArr,
+						'Se genero OT' => $response
+					])
 				)
 			);
 			
@@ -513,14 +508,6 @@ class BoosmapComponent extends Component
 				$es_envio_parcial = true;
 			}
 
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'registrar_estados - vid ' . $id,
-					'modulo' => 'BoosmapComponent',
-					'modulo_accion' => 'Estados embalaje: ' . json_encode($estados)
-				)
-			);
-			
 			foreach ($estados as $e) 
 			{	
 				if ($es_envio_parcial)
@@ -535,14 +522,6 @@ class BoosmapComponent extends Component
 				# Verificamos que el estado no exista en los registros
 				if (ClassRegistry::init('EnvioHistorico')->existe($estado_nombre, $trans['TransportesVenta']['id']))
 				{	
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'registrar_estados - vid ' . $id,
-							'modulo' => 'BoosmapComponent',
-							'modulo_accion' => 'Estado ya registrado: ' . json_encode($estado_nombre)
-						)
-					);
-
 					continue;
 				}
 				
@@ -565,23 +544,18 @@ class BoosmapComponent extends Component
 					)
 				);
 
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'registrar_estados - vid ' . $id,
-						'modulo' => 'BoosmapComponent',
-						'modulo_accion' => 'Nuevo estado historico: ' . json_encode($historicos)
-					)
-				);
+				
 				
 			}
-
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'registrar_estados - vid ' . $id,
-					'modulo' => 'BoosmapComponent',
-					'modulo_accion' => 'Finaliza estados transporte: ' . json_encode($trans)
-				)
-			);
+			if (count($historicos)>0) {
+				$log[] = array(
+					'Log' => array(
+						'administrador' => count($historicos) . 'nuevos historicos del vid - ' . $id,
+						'modulo' => 'BoosmapComponent',
+						'modulo_accion' => json_encode($historicos)
+					)
+				);
+			}
 		}
 		
 		ClassRegistry::init('Log')->create();
