@@ -20,8 +20,10 @@ class LibreDteComponent extends Component
 	public $tipoDocumento = array(
 		30 => 'factura',
 		32 => 'factura de venta bienes y servicios no afectos o exentos de IVA',
+		33 => 'Factura Electrónica',
 		35 => 'Boleta',
 		38 => 'Boleta exenta',
+		39 => 'Boleta Electrónica',
 		45 => 'factura de compra',
 		55 => 'nota de débito',
 		60 => 'nota de crédito',

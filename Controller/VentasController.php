@@ -6776,6 +6776,9 @@ class VentasController extends AppController {
 	{
 		# Toda la información de la venta
 		$venta = $this->Venta->obtener_venta_por_id($id);
+
+		$this->LibreDte = $this->Components->load('LibreDte');
+		$this->Prestashop = $this->Components->load('Prestashop');
 		
 		# Linio
 		if ($venta['Marketplace']['marketplace_tipo_id'] == 1) {
@@ -6908,10 +6911,7 @@ class VentasController extends AppController {
 
 		# Prestashop
 		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) {
-			# Para la consola se carga el componente on the fly!
-			if ($this->shell) {
-				$this->Prestashop = $this->Components->load('Prestashop');
-			}
+			
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
 
