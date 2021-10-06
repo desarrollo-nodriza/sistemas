@@ -8584,7 +8584,7 @@ class VentasController extends AppController {
 		
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->saveMany($log);
-		prx($ActualizarVenta);
+		
 		//se guarda la venta
 		if ( $this->Venta->saveAll($ActualizarVenta) ){
 
