@@ -1,183 +1,157 @@
 <?php
+class Onestock
+{
 
-Class Onestock {
-    
-	protected $API_DES_ONESTOCK;
-    protected $API_PRO_ONESTOCK;
-    protected $TOKEN;
+    private $API_ONESTOCK;
+    private $ID_CLIENTE;
+    private $CORREO;
+    private $CLAVE;
+    private $TOKEN;
+    private $REPETICIONES = 0;
 
-    public function __construct()
+    public function __construct($apiurl_onestock, $cliente_id_onestock, $onestock_correo, $onestock_clave, $token_onestock)
     {
 
-        $this->API_PRO_ONESTOCK = "https://onestock.nodriza.cl";
-        $this->API_DES_ONESTOCK = "https://dev-onestock.nodriza.cl";
-        $this->TOKEN = $this->obtenerTokenOnestock();
+        $this->API_ONESTOCK = $apiurl_onestock;
+        $this->ID_CLIENTE   = $cliente_id_onestock;
+        $this->CORREO       = $onestock_correo;
+        $this->CLAVE        = $onestock_clave;
+        $this->TOKEN        = $token_onestock;
+        $this->REPETICIONES = 0;
     }
-
+    
+    /**
+     * obtenerTokenOnestock
+     * Recupera el token valido
+     * @return void
+     */
     private function obtenerTokenOnestock()
     {
-        $curl = curl_init();
+        $response   = $this->cURL_POST("/api/v1/clientes/auth?email={$this->CORREO}&password={$this->CLAVE}", []);
 
-        curl_setopt_array($curl, array(
-        CURLOPT_URL => $this->API_PRO_ONESTOCK.'/api/v1/clientes/auth',
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => '',
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 1000,
-        CURLOPT_CONNECTTIMEOUT => 0,    
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => 'POST',
-        CURLOPT_POSTFIELDS => array('email' => 'gpolloni@nodriza.cl','password' => '12345'),
-        ));
-
-        $response = json_decode(curl_exec($curl),true);
-
-        curl_close($curl);
-
-        // $response = $this->curl('POST',$this->API_PRO_ONESTOCK.'/api/v1/clientes/auth');
-        
-        return 
-        [
-            "token"         => $response['respuesta']['token'] ??null,
-            "cliente_id"    => $response['cliente']  ['id']    ??null,
-            "response"=>$response
-        ];
-
+        if ($response['code'] != 200 && $this->REPETICIONES < 2) {
+            $this->REPETICIONES++;
+            $this->obtenerTokenOnestock();
+        }
+        $this->REPETICIONES = 0;
+        $this->TOKEN = $response['response']['respuesta']['token'] ?? $this->TOKEN;
+        return $this->TOKEN;
     }
-
+    
+    /**
+     * obtenerProductoOneStock
+     * Busca stock de un producto 
+     * @param  mixed $producto_id
+     * @return void
+     */
     public function obtenerProductoOneStock($producto_id)
     {
-        set_time_limit(0);
-        if(!is_int($producto_id))
-        {
-            return 'Debe enviar un valor númerico entero';
-        }
-
-        $credenciales = $this->obtenerTokenOnestock();
-
-        if (!isset($credenciales['token'])) {
-            
-            return 'Hay problemas con las credenciales para obtener token de Onestock, por favor informar';
-        }
-
-        $response = $this->curl('GET', $this->API_PRO_ONESTOCK.'/api/v1/clientes/'.$credenciales['cliente_id'].'/productos/'.$producto_id.'?token='.$credenciales['token']);
-
-
-        $hayStock = [];
-        if (isset($response['respuesta']['detalle_proveedores'])) {
-            foreach ($response['respuesta']['detalle_proveedores'] as $proveedor) {
-                $hayStock[]=
-                [   'proveedor_id'   => $proveedor['id'],
-                    'tipo_stock'            => $proveedor['tipo_stock'],
-                    'stock'                 => $proveedor['stock'],
-            ];
-            }
-        }
-
-        return (count($hayStock)>0)?$hayStock:$response;
-
-    }
-
-    public function obtenerProductosClienteOneStock()
-    {
-        set_time_limit(0);
-        $credenciales = $this->TOKEN;
-
-        if (!isset($credenciales['token'])) {
-            
-            return ['400','Hay problemas con las credenciales para obtener token de Onestock, por favor informar',$credenciales];
-        }
-        
-        $response = $this->curl('GET', $this->API_PRO_ONESTOCK.'/api/v1/clientes/'.$credenciales['cliente_id'].'/productos?token='.$credenciales['token']);
-        
-        $sinStock=[];
-        $conStock=[];
-        $ids_sin_stock=[];
-        $ids_con_stock=[];
-        $seguir = true;
+        $seguir     = true;
+        $intentos   = 0;
         while ($seguir) {
-            
-            if (!isset($response['productos'])) {
-                break;
-            }
-            foreach ($response['productos'] as $producto ) {
-                $stock = false;
-                if (isset($producto['producto_info']['mi_id'])) {
-                    foreach ($producto['detalle_proveedores'] as $proveedore) {
-    
-                        if ($proveedore['disponible']== true) {
-                            $stock = true;
-                        }
-                    }
-                   
-                    if (!$stock) {
-                        $sinStock []=
-                        [
-                            'id'                    => $producto['producto_info']['mi_id'],
-                            'fecha_modificacion'    => $proveedore['fecha_modificacion'],
-                            'proveedor_id'          => $proveedore['id'],
-                            'disponible'            => $proveedore['disponible']??false,
-                            'stock'                 => $proveedore['stock']??0,
-                        ];
-                        $ids_sin_stock[]= $producto['producto_info']['mi_id'];
-                    }else
-                    {
-                        $conStock []=
-                        [
-                            'id'                    => $producto['producto_info']['mi_id'],
-                            'fecha_modificacion'    => $proveedore['fecha_modificacion'],
-                            'proveedor_id'          => $proveedore['id'],
-                            'disponible'            => $proveedore['disponible']??false,
-                            'stock'                 => $proveedore['stock']??0,
-                            // 'tipo_stock'            => $proveedore['tipo_stock'],
-                        ];
-                        $ids_con_stock[]= $producto['producto_info']['mi_id'];
-
-                    }
-                    
-                }
-               
-            }
-           
-            if (!isset($response['next_page_url'])) {
+            $response = $this->cURL_GET("/api/v1/clientes/{$this->ID_CLIENTE}/productos/{$producto_id}?token={$this->TOKEN}");
+            if ($response['code'] != 200 && $intentos < 3) {
+                $this->obtenerTokenOnestock();
+                $intentos++;
+            } else {
                 $seguir = false;
-            }else
-            {
-                $response = $this->curl('GET',$response['next_page_url']);
             }
-            
         }
-        
-
-        return ['sinStock'=>$sinStock,'conStock'=>$conStock,'ids_con_stock'=>$ids_con_stock,'ids_sin_stock'=>$ids_sin_stock,'response'=>$response];
-       
-        
+        $response['token']=$this->TOKEN;
+        return $response;
     }
-
-    public function curl($metodo , $url)
+    
+    /**
+     * obtenerProductosClienteSinPaginacionOneStock
+     * Se utiliza endpoint de Onestock que trae todo los productos sin paginacion
+     * @return void
+     */
+    public function obtenerProductosClienteSinPaginacionOneStock()
     {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, array(
-        CURLOPT_URL =>  $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => '',
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 1000,
-        CURLOPT_CONNECTTIMEOUT => 0,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => $metodo,
-        ));
-
-        $response = json_decode(curl_exec($curl),true);
-        
-        curl_close($curl);
-
+        $seguir     = true;
+        $intentos   = 0;
+        while ($seguir) {
+            $response = $this->cURL_GET("/api/v1/clientes/{$this->ID_CLIENTE}/v2/productos?token={$this->TOKEN}");
+            if ($response['code'] != 200 && $intentos < 3) {
+                $this->obtenerTokenOnestock();
+                $intentos++;
+            } else {
+                $seguir = false;
+            }
+        }
+        $response['token']=$this->TOKEN;
         return $response;
     }
 
+    
+    /**
+     * cURL_POST
+     *
+     * @param  mixed $URL
+     * @param  mixed $POSTFIELDS
+     * @return void
+     */
+    private function cURL_POST($URL, $POSTFIELDS)
+    {
+        set_time_limit(0);
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL =>  $this->API_ONESTOCK . $URL,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 1000,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => json_encode($POSTFIELDS, true),
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSL_VERIFYPEER => 0
+        ));
+        $response = curl_exec($curl);
+        $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($curl);
+        curl_close($curl);
+        return [
+            "code"          => $http_code,
+            "response"      => json_decode($response, true),
+            "curl_error"    => $curl_error
+        ];
+    }
 
+    
+    /**
+     * cURL_GET
+     *
+     * @param  mixed $URL
+     * @return void
+     */
+    private function cURL_GET($URL)
+    {
+        set_time_limit(0);
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => $this->API_ONESTOCK . $URL,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSL_VERIFYPEER => 0
+        ));
 
+        $response   = curl_exec($curl);
+        $http_code  = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($curl);
+        curl_close($curl);
+
+        return [
+            "code"          => $http_code,
+            "response"      => json_decode($response, true),
+            "curl_error"    => $curl_error,
+        ];
+    }
 }
