@@ -101,7 +101,7 @@ class BoosmapComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
+					'modulo' => 'BoosmapComponent',
 					'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
 				)
 			);
@@ -136,7 +136,7 @@ class BoosmapComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
+					'modulo' => 'BoosmapComponent',
 					'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
 				)
 			);
@@ -230,26 +230,18 @@ class BoosmapComponent extends Component
                 ));
             }
 			
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Request: ' . json_encode($boosmapArr)
-				)
-			);
-			
 			$response = $this->BoosmapCliente->createOt($boosmapArr);
 	
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Response: ' . json_encode($response)
+					'modulo' 		=> 'BoosmapComponent',
+					'modulo_accion' => json_encode([
+						'Request para generar OT' => $boosmapArr,
+						'Se genero OT' => $response
+					])
 				)
 			);
-
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
 			
 			if ($response['httpCode'] > 299) {
 				return false;
@@ -333,17 +325,13 @@ class BoosmapComponent extends Component
 				));	
 			}else{
 
-				$log_1 = array(
+				$log[] = array(
 					'Log' => array(
 						'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Response(generar_ot): ' . json_encode($etiquetaArr)
+						'modulo' => 'BoosmapComponent',
+						'modulo_accion' => 'Problemas con la URL de la etiqueta: ' . json_encode($etiquetaArr)
 					)
 				);
-	
-				ClassRegistry::init('Log')->create();
-				ClassRegistry::init('Log')->save($log_1);
-
 			}
 
 			$transportes[] = array(
@@ -382,6 +370,9 @@ class BoosmapComponent extends Component
 				));
 			}
 		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 
 		if (ClassRegistry::init('Venta')->saveAll($nwVenta))
 		{	
@@ -517,14 +508,6 @@ class BoosmapComponent extends Component
 				$es_envio_parcial = true;
 			}
 
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'registrar_estados - vid ' . $id,
-					'modulo' => 'BoosmapComponent',
-					'modulo_accion' => 'Estados embalaje: ' . json_encode($estados)
-				)
-			);
-			
 			foreach ($estados as $e) 
 			{	
 				if ($es_envio_parcial)
@@ -539,14 +522,6 @@ class BoosmapComponent extends Component
 				# Verificamos que el estado no exista en los registros
 				if (ClassRegistry::init('EnvioHistorico')->existe($estado_nombre, $trans['TransportesVenta']['id']))
 				{	
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'registrar_estados - vid ' . $id,
-							'modulo' => 'BoosmapComponent',
-							'modulo_accion' => 'Estado ya registrado: ' . json_encode($estado_nombre)
-						)
-					);
-
 					continue;
 				}
 				
@@ -569,23 +544,18 @@ class BoosmapComponent extends Component
 					)
 				);
 
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'registrar_estados - vid ' . $id,
-						'modulo' => 'BoosmapComponent',
-						'modulo_accion' => 'Nuevo estado historico: ' . json_encode($historicos)
-					)
-				);
+				
 				
 			}
-
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'registrar_estados - vid ' . $id,
-					'modulo' => 'BoosmapComponent',
-					'modulo_accion' => 'Finaliza estados transporte: ' . json_encode($trans)
-				)
-			);
+			if (count($historicos)>0) {
+				$log[] = array(
+					'Log' => array(
+						'administrador' => count($historicos) . 'nuevos historicos del vid - ' . $id,
+						'modulo' => 'BoosmapComponent',
+						'modulo_accion' => json_encode($historicos)
+					)
+				);
+			}
 		}
 		
 		ClassRegistry::init('Log')->create();

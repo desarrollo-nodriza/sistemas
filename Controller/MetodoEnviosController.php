@@ -230,14 +230,6 @@ class MetodoEnviosController extends AppController
 		$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
 
 		$resultado = false;
-
-		$logs[] = array(
-			'Log' => array(
-				'administrador' => 'Crear etiqueta envio externa venta ' . $id_venta,
-				'modulo' => 'MetodoEnvio',
-				'modulo_accion' => json_encode($venta)
-			)
-		);
 		
 		# Creamos pedido en enviame si corresponde
 		if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) 
@@ -249,14 +241,6 @@ class MetodoEnviosController extends AppController
 			$this->Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
 
 			$resultadoEnviame = $this->Enviame->crearEnvio($venta);
-
-			$logs[] = array(
-				'Log' => array(
-					'administrador' => 'Crear etiqueta Enviame venta ' . $id_venta,
-					'modulo' => 'MetodoEnvio',
-					'modulo_accion' => json_encode($resultadoEnviame)
-				)
-			);
 
 			if ($resultadoEnviame) 
 			{
@@ -277,14 +261,6 @@ class MetodoEnviosController extends AppController
 				
 				$this->Starken->registrar_estados($venta['Venta']['id']);
 				$resultado = true;
-
-				$logs[] = array(
-					'Log' => array(
-						'administrador' => 'Crear etiqueta Starken venta ' . $id_venta,
-						'modulo' => 'MetodoEnvio',
-						'modulo_accion' => 'Generada con éxito'
-					)
-				);
 			}
 
 		}
@@ -299,15 +275,6 @@ class MetodoEnviosController extends AppController
 			# Creamos la OT
 			if($this->Conexxion->generar_ot($venta)){
 				$resultado = true;
-
-				$logs[] = array(
-					'Log' => array(
-						'administrador' => 'Crear etiqueta Conexxion venta ' . $id_venta,
-						'modulo' => 'MetodoEnvio',
-						'modulo_accion' => 'Generada con éxito'
-					)
-				);
-
 			}
 
 		}
@@ -325,23 +292,20 @@ class MetodoEnviosController extends AppController
 				$this->Boosmap->registrar_estados($venta['Venta']['id']);
 
 				$resultado = true;
-
-				$logs[] = array(
-					'Log' => array(
-						'administrador' => 'Crear etiqueta Boosmap venta ' . $id_venta,
-						'modulo' => 'MetodoEnvio',
-						'modulo_accion' => 'Generada con éxito'
-					)
-				);
 			}
 
 		}
 
 		$logs[] = array(
 			'Log' => array(
-				'administrador' => 'Finaliza generar etiqueta externa venta ' . $id_venta,
+				'administrador' => 'Proceso para generar etiqueta externa vid - ' . $id_venta,
 				'modulo' => 'MetodoEnvio',
-				'modulo_accion' => 'Resultado de la operación: ' . $resultado
+				'modulo_accion' => json_encode([
+					'Resultado de la operación' => $resultado ? 'Se genero con exito etiqueta' : 'Hubieron problemas para generar etiqueta',
+					'Información venta' 		=> $venta,
+					'Dependencia' 				=> $venta['MetodoEnvio']['dependencia']
+
+				])
 			)
 		);
 
