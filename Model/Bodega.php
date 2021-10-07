@@ -12,12 +12,12 @@ class Bodega extends AppModel
 
 	public $tipoMovimientos = array(
 		'MV' => array(
-			'IN' => 'Movimiento de bodega: Ingresar', 
+			'IN' => 'Movimiento de bodega: Ingresar',
 			'ED' => 'Movimiento de bodega: Salida',
 			'NOMBRE' => 'Movimiento entre bodegas'
 		),
 		'AJ' => array(
-			'IN' => 'Ajuste de inventario: Ingresar', 
+			'IN' => 'Ajuste de inventario: Ingresar',
 			'ED' => 'Ajuste de inventario: Salida',
 			'NOMBRE' => 'Ajuste de inventario'
 		),
@@ -46,12 +46,24 @@ class Bodega extends AppModel
 			'ED' => 'Salida por Nota de crédito', // No se debería usar,
 			'NOMBRE' => 'Garantia'
 		)
-	); 
+	);
 
 
 	/**
 	 * ASOCIACIONES
 	 */
+
+	public $belongsTo = array(
+		'Comuna' => array(
+			'className'				=> 'Comuna',
+			'foreignKey'			=> 'comuna_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		),
+	);
+
 	public $hasAndBelongsToMany = array(
 		'VentaDetalleProducto' => array(
 			'className'				=> 'VentaDetalleProducto',
@@ -151,9 +163,9 @@ class Bodega extends AppModel
 	public function obtener_pmp_por_id($id_producto = null)
 	{
 		$pmp = ClassRegistry::init('Pmp')->obtener_pmp($id_producto);
-	
+
 		return $pmp;
-	} 
+	}
 
 
 	/**
@@ -167,8 +179,7 @@ class Bodega extends AppModel
 		$pmp = ClassRegistry::init('Pmp')->obtener_pmp($id_producto, $bodega_id);
 
 		return $pmp;
-
-	} 
+	}
 
 
 	/**
@@ -179,7 +190,7 @@ class Bodega extends AppModel
 	 * @return int 	
 	 */
 	public function obtenerCantidadProductoBodega($id_producto, $id_bodega = null, $sin_reserva = false)
-	{	
+	{
 		# Bodega principal
 		if (empty($id_bodega)) {
 			$id_bodega = ClassRegistry::init('Bodega')->find('first', array('conditions' => array('Bodega.principal' => 1), 'limit' => 1, 'fields' => array('Bodega.id')))['Bodega']['id'];
@@ -200,7 +211,7 @@ class Bodega extends AppModel
 			$inCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=IN].cantidad'));
 			$edCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=ED].cantidad'));
 
-			$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));	
+			$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));
 		}
 
 		if ($sin_reserva)
@@ -233,7 +244,7 @@ class Bodega extends AppModel
 				'BodegasVentaDetalleProducto.tipo <>' => 'GT'
 			)
 		));
-		
+
 		$total = 0;
 
 		if (!empty($historico)) {
@@ -241,7 +252,7 @@ class Bodega extends AppModel
 			$inCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=IN].cantidad'));
 			$edCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=ED].cantidad'));
 
-			$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));		
+			$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));
 		}
 
 		if ($sin_reserva)
@@ -283,9 +294,9 @@ class Bodega extends AppModel
 	{
 		$historico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
 			'conditions' => array(
-				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto, 
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id' => $id_producto,
 				'BodegasVentaDetalleProducto.bodega_id' => $bodega_id,
-				'BodegasVentaDetalleProducto.tipo' => array('II', 'MV', 'OC') 
+				'BodegasVentaDetalleProducto.tipo' => array('II', 'MV', 'OC')
 			)
 		));
 
@@ -308,7 +319,7 @@ class Bodega extends AppModel
 	 * @return [type]               [description]
 	 */
 	public function crearEntradaBodega($id_producto, $bodega_id = null, $cantidad, $precio_costo, $tipo, $id_oc = null, $id_venta = null, $glosa = '', $responsable = '')
-	{	
+	{
 		if ($cantidad <= 0) {
 			return false;
 		}
@@ -322,8 +333,8 @@ class Bodega extends AppModel
 			'BodegasVentaDetalleProducto' => array(
 				'bodega_id'                 => $bodega_id,
 				'venta_detalle_producto_id' => $id_producto,
-				'bodega'					=> $this->field('nombre', array('id' => $bodega_id) ),
-				'sku'                       => ClassRegistry::init('VentaDetalleProducto')->field('codigo_proveedor', array('id' => $id_producto) ),
+				'bodega'					=> $this->field('nombre', array('id' => $bodega_id)),
+				'sku'                       => ClassRegistry::init('VentaDetalleProducto')->field('codigo_proveedor', array('id' => $id_producto)),
 				'cantidad'                  => $cantidad,
 				'io'                        => 'IN',
 				'tipo' 						=> $tipo,
@@ -357,7 +368,7 @@ class Bodega extends AppModel
 	 * @return [type]              [description]
 	 */
 	public function crearSalidaBodega($id_producto, $bodega_id = null, $cantidad, $valor = 0, $tipo, $id_oc = null, $id_venta = null, $glosa = '')
-	{	
+	{
 		if ($cantidad <= 0) {
 			return false;
 		}
@@ -370,13 +381,13 @@ class Bodega extends AppModel
 		if ($valor == 0) {
 			$valor = $this->obtener_pmp_por_producto_bodega($id_producto, $bodega_id);
 		}
-		
+
 		$data = array(
 			'BodegasVentaDetalleProducto' => array(
 				'bodega_id'                 => $bodega_id,
 				'venta_detalle_producto_id' => $id_producto,
-				'bodega'					=> $this->field('nombre', array('id' => $bodega_id) ),
-				'sku'                       => ClassRegistry::init('VentaDetalleProducto')->field('codigo_proveedor', array('id' => $id_producto) ),
+				'bodega'					=> $this->field('nombre', array('id' => $bodega_id)),
+				'sku'                       => ClassRegistry::init('VentaDetalleProducto')->field('codigo_proveedor', array('id' => $id_producto)),
 				'cantidad'                  => -$cantidad,
 				'io'                        => 'ED',
 				'tipo'						=> $tipo,
@@ -408,32 +419,32 @@ class Bodega extends AppModel
 	 * @return [type]              [description]
 	 */
 	public function ajustarInventario($id_producto, $bodega_id, $cantidad, $precio_costo = null, $glosa = '')
-	{	
+	{
 
 		$enBodega = $this->obtenerCantidadProductoBodega($id_producto, $bodega_id, true);
-		
+
 		if (empty($precio_costo) || $precio_costo == 0) {
-			$precio_costo = $this->obtener_pmp_por_producto_bodega($id_producto, $bodega_id);			
+			$precio_costo = $this->obtener_pmp_por_producto_bodega($id_producto, $bodega_id);
 		}
 
-		if($precio_costo <= 0)
+		if ($precio_costo <= 0)
 			return false;
 
 		$result = false;
 
 		// Se crea una entrada con la diferencia
 		if ($cantidad > $enBodega) {
-			$result = $this->crearEntradaBodega($id_producto, $bodega_id, ($cantidad-$enBodega), $precio_costo, 'AJ', null, null, $glosa );
+			$result = $this->crearEntradaBodega($id_producto, $bodega_id, ($cantidad - $enBodega), $precio_costo, 'AJ', null, null, $glosa);
 		}
-		
+
 		// Se crea una salida del total que hay en bodega
 		if ($cantidad == 0 && $cantidad < $enBodega) {
-			$result = $this->crearSalidaBodega($id_producto, $bodega_id, $enBodega, $precio_costo, 'AJ', null, null, $glosa );
+			$result = $this->crearSalidaBodega($id_producto, $bodega_id, $enBodega, $precio_costo, 'AJ', null, null, $glosa);
 		}
 
 		// Se crea una salida con la diferencia
 		if ($cantidad < $enBodega && $cantidad > 0) {
-			$result = $this->crearSalidaBodega($id_producto, $bodega_id, ($enBodega-$cantidad), $precio_costo, 'AJ', null, null, $glosa );
+			$result = $this->crearSalidaBodega($id_producto, $bodega_id, ($enBodega - $cantidad), $precio_costo, 'AJ', null, null, $glosa);
 		}
 
 		if ($cantidad == 0 && $enBodega == 0) {
@@ -464,10 +475,9 @@ class Bodega extends AppModel
 
 		if ($result1 && $result2) {
 			return true;
-		}else{
+		} else {
 			return false;
 		}
-
 	}
 
 
@@ -477,7 +487,7 @@ class Bodega extends AppModel
 	 * @return [type]       [description]
 	 */
 	public function cargaInicialBodega($data = array())
-	{	
+	{
 
 		if (empty($data)) {
 			throw new Exception("Empty data", 310);
@@ -486,19 +496,20 @@ class Bodega extends AppModel
 		$result = array();
 
 		foreach ($data as $key => $value) {
-			
-			if (!isset($value['id_producto'])
+
+			if (
+				!isset($value['id_producto'])
 				|| !isset($value['bodega_id'])
 				|| !isset($value['cantidad'])
 				|| !isset($value['precio_costo'])
-				) {
+			) {
 				$result['errores'][] = __('Existen items sin los datos correspondientes, verifique los campos e intente nuevamente.');
 				continue;
 			}
 
 
 			if (!ClassRegistry::init('VentaDetalleProducto')->exists($value['id_producto'])) {
-				$result['errores'][] = __('Item id #'.$value['id_producto'].' no existe en los registros, verifique los campos e intente nuevamente.');
+				$result['errores'][] = __('Item id #' . $value['id_producto'] . ' no existe en los registros, verifique los campos e intente nuevamente.');
 				continue;
 			}
 
@@ -513,15 +524,13 @@ class Bodega extends AppModel
 			$ii = $this->crearEntradaBodega($value['id_producto'], $value['bodega_id'], $value['cantidad'], $value['precio_costo'], 'II');
 
 			if ($ii) {
-				$result['procesados'] = (isset($result['procesados'])) ? $result['procesados']+1 : 1;
-			}else{
+				$result['procesados'] = (isset($result['procesados'])) ? $result['procesados'] + 1 : 1;
+			} else {
 				$result['errores'][] = sprintf('Item %d no pudo ser ingresado, verifique los campos e intente nuevamente.', $value['id_producto']);
 			}
-
 		}
 
 		return $result;
-
 	}
 
 
@@ -532,7 +541,7 @@ class Bodega extends AppModel
 	 * @return [type]       [description]
 	 */
 	public function ajustarInventarioMasivo($data = array())
-	{	
+	{
 
 		if (empty($data)) {
 			throw new Exception("Empty data", 310);
@@ -541,46 +550,44 @@ class Bodega extends AppModel
 		$result = array();
 
 		foreach ($data as $key => $value) {
-			
-			if (!isset($value['id_producto'])
+
+			if (
+				!isset($value['id_producto'])
 				|| !isset($value['bodega_id'])
 				|| !isset($value['cantidad'])
-				) {
+			) {
 				$result['errores'][] = __('Existen items sin los datos correspondientes, verifique los campos e intente nuevamente.');
 				continue;
 			}
 
 
 			if (!ClassRegistry::init('VentaDetalleProducto')->exists($value['id_producto'])) {
-				$result['errores'][] = __('Item id #'.$value['id_producto'].' no existe en los registros, verifique los campos e intente nuevamente.');
+				$result['errores'][] = __('Item id #' . $value['id_producto'] . ' no existe en los registros, verifique los campos e intente nuevamente.');
 				continue;
 			}
 
 			if (!$this->permite_ajuste($value['id_producto'], $value['bodega_id'])) {
 				#$result['errores'][] = 'Item #' . $value['id_producto'] . ' No puede ser ajustado en la bodega seleccionada, ya que la bodega no tiene registros de ingreso.';
 				#continue;
-				
-				
+
+
 
 			}
 			if (isset($value['glosa'])) {
 				$ii = $this->ajustarInventario($value['id_producto'], $value['bodega_id'], $value['cantidad'], $value['precio'], $value['glosa']);
-			}else
-			{
+			} else {
 				$ii = $this->ajustarInventario($value['id_producto'], $value['bodega_id'], $value['cantidad'], $value['precio']);
 			}
-			
+
 
 			if ($ii) {
-				$result['procesados'] = (isset($result['procesados'])) ? $result['procesados']+1 : 1;
-			}else{
+				$result['procesados'] = (isset($result['procesados'])) ? $result['procesados'] + 1 : 1;
+			} else {
 				$result['errores'][] = sprintf('Item %d no pudo ser ajustado, o no es necesario ajustarlo.', $value['id_producto']);
 			}
-
 		}
 
 		return $result;
-
 	}
 
 
@@ -590,7 +597,7 @@ class Bodega extends AppModel
 	 * @return [type]       [description]
 	 */
 	public function moverProductoBodegaMasivo($data = array())
-	{	
+	{
 
 		if (empty($data)) {
 			throw new Exception("Empty data", 310);
@@ -599,19 +606,20 @@ class Bodega extends AppModel
 		$result = array();
 
 		foreach ($data as $key => $value) {
-			
-			if (!isset($value['id_producto'])
+
+			if (
+				!isset($value['id_producto'])
 				|| !isset($value['bodega_id_origen'])
 				|| !isset($value['bodega_id_destino'])
 				|| !isset($value['cantidad'])
-				) {
+			) {
 				$result['errores'][] = __('Existen items sin los datos correspondientes, verifique los campos e intente nuevamente.');
 				continue;
 			}
 
 
 			if (!ClassRegistry::init('VentaDetalleProducto')->exists($value['id_producto'])) {
-				$result['errores'][] = __('Item id #'.$value['id_producto'].' no existe en los registros, verifique los campos e intente nuevamente.');
+				$result['errores'][] = __('Item id #' . $value['id_producto'] . ' no existe en los registros, verifique los campos e intente nuevamente.');
 				continue;
 			}
 
@@ -619,15 +627,13 @@ class Bodega extends AppModel
 			$ii = $this->moverProductoBodega($value['id_producto'], $value['bodega_id_origen'], $value['bodega_id_destino'], $value['cantidad']);
 
 			if ($ii) {
-				$result['procesados'] = (isset($result['procesados'])) ? $result['procesados']+1 : 1;
-			}else{
+				$result['procesados'] = (isset($result['procesados'])) ? $result['procesados'] + 1 : 1;
+			} else {
 				$result['errores'][] = sprintf('Item %d no pudo ser movido, verifique los campos e intente nuevamente.', $value['id_producto']);
 			}
-
 		}
 
 		return $result;
-
 	}
 
 
@@ -639,7 +645,7 @@ class Bodega extends AppModel
 	 * @return bool                   [description]
 	 */
 	public function calcular_reserva_stock($id, $cantidad)
-	{	
+	{
 		$enBodega   = $this->obtenerCantidadProductoBodegas($id);
 		$nwcantidad = 0;
 
@@ -654,7 +660,6 @@ class Bodega extends AppModel
 		}
 
 		return $nwcantidad;
-
 	}
 
 
@@ -684,7 +689,7 @@ class Bodega extends AppModel
 		return $costo;
 	}
 
-	
+
 	/**
 	 * Obtiene el total de unidades movidas para una venta dada
 	 * Tambien se puede usar por bodega
@@ -696,7 +701,7 @@ class Bodega extends AppModel
 	 * @return int
 	 */
 	public function obtener_total_mv_por_venta($id_venta, $id_producto, $id_bodega = '')
-	{	
+	{
 		$qry = array(
 			'conditions' => array(
 				'BodegasVentaDetalleProducto.venta_id' => $id_venta,
@@ -706,8 +711,7 @@ class Bodega extends AppModel
 			'fields' => array('BodegasVentaDetalleProducto.cantidad')
 		);
 
-		if (!empty($id_bodega))
-		{
+		if (!empty($id_bodega)) {
 			$qry =  array_replace_recursive($qry, array(
 				'conditions' => array(
 					'BodegasVentaDetalleProducto.bodega_id' => $id_bodega
@@ -718,10 +722,9 @@ class Bodega extends AppModel
 		$mvs = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', $qry);
 
 		return array_sum(Hash::extract($mvs, '{n}.BodegasVentaDetalleProducto.cantidad'));
-
 	}
 
-	
+
 	/**
 	 * obtener_bodega_principal
 	 *
