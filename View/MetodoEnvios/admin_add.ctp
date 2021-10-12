@@ -26,40 +26,11 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('dependencia', 'Dependencia o Plugin'); ?></th>
-								<td><?= $this->Form->select('dependencia', $dependencias, array('class' => 'form-control js-select-dependencia', 'empty' => 'Sin dependencia')); ?></td>
+								<td><?= $this->Form->select('dependencia', $dependencias, array('class' => 'form-control', 'empty' => 'Sin dependencia')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
-							</tr>
-							<tr id="generar_ot" class="hidden">
-								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
-								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
-							</tr>
-							<tr id="peso_maximo" class="hidden">
-								<th><?= $this->Form->label('peso_maximo', 'Peso Máximo'); ?></th>
-								<td><?= $this->Form->input('peso_maximo'); ?></td>
-							</tr>
-							<tr id="peso_default" class="hidden">
-								<th><?= $this->Form->label('peso_default', 'Peso por defecto'); ?></th>
-								<td><?= $this->Form->input('peso_default'); ?></td>
-							</tr>
-							<tr id="alto_default" class="hidden">
-								<th><?= $this->Form->label('alto_default', 'Alto por defecto'); ?></th>
-								<td><?= $this->Form->input('alto_default'); ?></td>
-							</tr>
-							<tr id="ancho_default" class="hidden">
-								<th><?= $this->Form->label('ancho_default', 'Ancho por defecto'); ?></th>
-								<td><?= $this->Form->input('ancho_default'); ?></td>
-							</tr>
-							<tr id="largo_default" class="hidden">
-								<th><?= $this->Form->label('largo_default', 'Largo por defecto'); ?></th>
-								<td><?= $this->Form->input('largo_default'); ?></td>
-							</tr>
-							
-							<tr id="volumen_maximo" class="hidden">
-								<th><?= $this->Form->label('volumen_maximo', 'Volumen Máximo'); ?></th>
-								<td><?= $this->Form->input('volumen_maximo'); ?></td>
 							</tr>
 						</table>
 					</div>
@@ -75,7 +46,3 @@
 	</div> <!-- end row -->
 </div>
 <?= $this->Form->end(); ?>
-
-<?= $this->Html->script(array(
-	'/backend/js/metodo_envios_add.js?v=' . rand())); ?>
-<?= $this->fetch('script'); ?>
