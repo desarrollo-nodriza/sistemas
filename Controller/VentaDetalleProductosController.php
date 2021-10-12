@@ -2346,7 +2346,7 @@ class VentaDetalleProductosController extends AppController
 	 * @return array
 	 */
 	public function actualizar_canales_stock_fisico()
-	{	
+	{
 		$log = array();
 
 		$log[] = array(
@@ -2356,66 +2356,114 @@ class VentaDetalleProductosController extends AppController
 				'modulo_accion' => 'Inicia actualización de stock fisico con prestashop: ' . date('Y-m-d H:i:s')
 			)
 		);
-
+	
 		# Preparamos ids para usarlos en la actualización
 		$id_actualizar = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible();
-		
-		# Obtenemos los productos
-		$productos = $this->VentaDetalleProducto->find('all', array(
-			'fields' => array(
-				'VentaDetalleProducto.id', 
-				'VentaDetalleProducto.id_externo',
-				'VentaDetalleProducto.activo'
-			),
-			'conditions' => array(
-				'VentaDetalleProducto.id' => Hash::extract($id_actualizar, '{n}.id')
-			)
-		));
-		
+
 		# Obtenemos la tienda principal
 		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+			'id',
 			'apiurl_prestashop',
-			'apikey_prestashop'
+			'apikey_prestashop',
+			'apiurl_onestock',
+			'cliente_id_onestock',
+			'onestock_correo',
+			'onestock_clave',
+			'token_onestock',
+			'stock_default'
 		));
+		
+		$this->Onestock = $this->Components->load('Onestock');
+		$this->Onestock->crearCliente($tienda['Tienda']['apiurl_onestock'], $tienda['Tienda']['cliente_id_onestock'], $tienda['Tienda']['onestock_correo'],	$tienda['Tienda']['onestock_clave'], $tienda['Tienda']['token_onestock']);
+		$productos_onestock = $this->Onestock->obtenerProductosClienteOneStock();
+		$token				= $productos_onestock['token'];
+	
+		if(isset($token))
+		{
+			ClassRegistry::init('Tienda')->save(
+				[
+				'id'				=> $tienda['Tienda']['id'],
+				'token_onestock'	=> $token
+				]
+			);
+		}
+		
+		$ids 				= Hash::extract($id_actualizar, '{n}.id');
+		$ids 				= array_merge($ids, $productos_onestock['ids_con_stock']);
+		
+		# Obtenemos los productos
+		$productos = $this->VentaDetalleProducto->find(
+			'all',
+			array(
+				'fields' => array(
+					'VentaDetalleProducto.id',
+					'VentaDetalleProducto.id_externo',
+					'VentaDetalleProducto.activo'
+				),
+				'conditions' => array(
+					'VentaDetalleProducto.id' => $ids
+				)
+			)
+		);
+		
+		
 
 		# Inicializamos prestashop
 		$this->Prestashop = $this->Components->load('Prestashop');
 
 		# Cliente Prestashop
-		$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
-
+		$this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
+		$HistorialOnestock = [];
 		# comenzamos a actualizar el canal prestashop
-		foreach ($productos as $i => $producto)
-		{	
-
-			$stock = Hash::extract($id_actualizar, '{n}[id='.$producto['VentaDetalleProducto']['id'].']');
-	
-			$productos[$i]['VentaDetalleProducto']['stock_fisico'] = $stock[0]['stock_fisico'];
-			$productos[$i]['VentaDetalleProducto']['stock_reservado'] = $stock[0]['stock_reservado'];
-			$productos[$i]['VentaDetalleProducto']['stock_fisico_disponible'] = $stock[0]['stock_disponible'];
-			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = 0;
-			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = false;
+		foreach ($productos as $i => $producto) {
 			
+			$stock 																		= Hash::extract($id_actualizar, '{n}[id=' . $producto['VentaDetalleProducto']['id'] . ']');
+			$productos[$i]['VentaDetalleProducto']['canal'] 							= 'sistemas';
+			if (empty($stock)) {
+				$productos[$i]['VentaDetalleProducto']['canal'] 						= 'onestock';
+				$binario 																= Hash::extract($productos_onestock, "conStock.{*}[id={$producto['VentaDetalleProducto']['id']}][binario=true]");
+				$stock[0]['stock_disponible']											= $binario ? $tienda['Tienda']['stock_default'] :array_sum(Hash::extract($productos_onestock, "conStock.{*}[id={$producto['VentaDetalleProducto']['id']}].stock"));
+				$stock[0]['stock_fisico']												= $stock[0]['stock_disponible'];
+				$onestock																= Hash::extract($productos_onestock, "conStock.{*}[id={$producto['VentaDetalleProducto']['id']}]");
+				$HistorialOnestock []													=
+				[
+					'producto_id'			=> $onestock[0]['id'],
+					'proveedor_id'			=> $onestock[0]['proveedor_id'],
+					'stock'					=> $stock[0]['stock_fisico'],
+					'disponible'			=> true,
+					'fecha_modificacion'	=> $onestock[0]['fecha_modificacion'],
+				];
+				
+			}
+		
+			$productos[$i]['VentaDetalleProducto']['stock_fisico'] 						= $stock[0]['stock_fisico'];
+			$productos[$i]['VentaDetalleProducto']['stock_reservado'] 					= $stock[0]['stock_reservado'] ?? 0;
+			$productos[$i]['VentaDetalleProducto']['stock_fisico_disponible'] 			= $stock[0]['stock_disponible'];
+			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] 				= 0;
+			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] 	= false;
+
 			$stockProductoPrestashop = $this->Prestashop->prestashop_obtener_stock_producto($producto['VentaDetalleProducto']['id_externo']);
 			$stockPresta = (isset($stockProductoPrestashop['stock_available']['quantity'])) ? $stockProductoPrestashop['stock_available']['quantity'] : 0;
-			
+
 			# Volvemos a setear el stock de prestashop
 			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = $stockPresta;
 
 			# Igualamos el stock de prestashop al de bodega
-			if ($stockPresta < $stock[0]['stock_disponible'])
-			{	
-				if (Configure::read('ambiente') == 'dev') 
-				{
+			if ($stockPresta < $stock[0]['stock_disponible']) {
+				if (Configure::read('ambiente') == 'dev') {
 					$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = true;
-				}
-				elseif (isset($stockProductoPrestashop['stock_available']['id']))
-				{
+				} elseif (isset($stockProductoPrestashop['stock_available']['id'])) {
 					$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock[0]['stock_disponible']);
 				}
 			}
 		}
+	
+		if ($HistorialOnestock) {
+			ClassRegistry::init('HistorialOnestock')->create();
+			ClassRegistry::init('HistorialOnestock')->saveMany($HistorialOnestock);
+		}
 		
+
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Demonio',
@@ -2444,7 +2492,6 @@ class VentaDetalleProductosController extends AppController
 		ClassRegistry::init('Log')->saveMany($log);
 
 		return $productos;
-		
 	}
 
 	/**
@@ -3691,22 +3738,57 @@ class VentaDetalleProductosController extends AppController
 
 	public function actualizar_canal_de_venta()
 	{
-		
+
 		#Obtengo productos desde onestock asociandos a nosotros como cliente
-		$onestock = $this->Components->load('Onestock');
-		$productos = $onestock->obtenerProductosClienteOneStock();
-		
-		if (!isset($productos['ids_con_stock'])) 
-		{
-			return $productos;
+		$this->Onestock = $this->Components->load('Onestock');
+		$conexion_api = $this->Onestock->conexion_api_onestock();
+
+		$noTieneStock = [];
+		$siTieneStock = [];
+		if (empty($conexion_api)) {
+			$log =
+				[
+					'Log' =>
+					[
+						'administrador' => 'Metodo actualizar_canal_de_venta',
+						'modulo' 		=> 'Productos',
+						'modulo_accion' => 'No hay credenciales para onestock en la tabla tienda'
+					]
+
+				];
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->save($log);
+			
+			return ['noTieneStock' => $noTieneStock, 'siTieneStock' => $siTieneStock];
 		}
 
+		$conexion_api = $conexion_api['Tienda'];
+		$this->Onestock->crearCliente($conexion_api['apiurl_onestock'], $conexion_api['cliente_id_onestock'], $conexion_api['onestock_correo'],	$conexion_api['onestock_clave'], $conexion_api['token_onestock']);
 
+		$productos = $this->Onestock->obtenerProductosClienteOneStock();
+
+		$token		= $productos['token'];
+		
+		if(isset($token))
+		{
+			ClassRegistry::init('Tienda')->save(
+				[
+				'id'				=> $conexion_api['id'],
+				'token_onestock'	=> $token
+				]
+			);
+		}
+		
 		#valido que existan id de productos sin stock
-		$noTieneStock = $this->SinStock($productos);
-		$siTieneStock = $this->ConStock($productos);
-		return ['noTieneStock'=>$noTieneStock,'siTieneStock'=>$siTieneStock];
+		if ($productos['ids_con_stock']) {
+			$siTieneStock = $this->ConStock($productos);
+		}
 
+		if ($productos['ids_sin_stock']) {
+			$noTieneStock = $this->SinStock($productos);
+		}
+
+		return ['noTieneStock' => $noTieneStock, 'siTieneStock' => $siTieneStock];
 	}
 
 	public function ConStock($productos)
@@ -3955,4 +4037,255 @@ class VentaDetalleProductosController extends AppController
 		
 	}
 
+	public function api_recuperar_stock($id)
+	{
+	
+		# Solo método POST
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    	=> 501,
+				'name' 		=> 'error',
+				'message' 	=> 'Método no permitido'
+			);
+
+			throw new CakeException($response);
+		}
+
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+	
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+	
+		if ($this->VentaDetalleProducto->exists($id))
+		{
+			$proveedor_id 	= $this->request->query['proveedor_id']??null;
+		
+			$stock			= $this->RecuperarStock($id, $proveedor_id );
+		}else{
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Not found'
+			);
+			throw new CakeException($response);
+			
+			
+		}
+
+        $this->set(array(
+			'stock' 		=> $stock,
+			'_serialize' 	=> array('stock')
+		));
+	}
+
+	public function RecuperarStock($producto_id, $proveedor_id = null)
+	{
+		$log = [];
+		$zonificacion = ClassRegistry::init('Zonificacion')->find('all', [
+			'fields' => 'SUM(Zonificacion.cantidad) as cantidad',
+			'conditions' => array(
+				'producto_id' 	=> $producto_id,
+				'movimiento !='	=> 'garantia'
+
+			),
+		]);
+
+		$cantidad_reservada = ClassRegistry::init('VentaDetalle')->find('all', [
+			'fields' => 'SUM(VentaDetalle.cantidad_reservada) as cantidad_reservada',
+			'conditions' => array(
+				'venta_detalle_producto_id' 	=> $producto_id,
+
+
+			),
+		]);
+
+		$proveedor_onestock = null;
+		$nombre_proveedor  	= null;
+		if (isset($proveedor_id)) {
+
+			if (!ClassRegistry::init('Proveedor')->exists($proveedor_id))
+			{
+				$log[] =
+					[
+						'Log' =>
+						[
+							'administrador' => 'Metodo RecuperarStock',
+							'modulo' 		=> 'Productos',
+							'modulo_accion' => "El proveedor {{$proveedor_id}} no existe en sistemas al momento de querer consultar onestock"
+						]
+
+					];
+			}else{
+
+				$proveedor_onestock = ClassRegistry::init('Proveedor')->find(
+					'first',
+					[
+						'fields' => ['Proveedor.proveedor_onestock','Proveedor.nombre'],
+						'conditions' =>
+						[
+							['Proveedor.id' => $proveedor_id]
+						]
+					]
+				);
+				$nombre_proveedor 	= $proveedor_onestock['Proveedor']['nombre']??null;
+				$proveedor_onestock = $proveedor_onestock['Proveedor']['proveedor_onestock']??null;
+			
+				if (is_null($proveedor_onestock)) {
+					$log[] =
+						[
+							'Log' =>
+							[
+								'administrador' => 'Metodo RecuperarStock',
+								'modulo' 		=> 'Productos',
+								'modulo_accion' => "El proveedor {{$proveedor_id}} de sistemas no se encuentra homologado con onestock"
+							]
+	
+						];
+				}
+			}
+
+			
+		}
+
+		$zonificacion 		= Hash::extract($zonificacion, '{*}.{*}.cantidad');
+		$cantidad_reservada = Hash::extract($cantidad_reservada, '{*}.{*}.cantidad_reservada');
+		$zonificacion		= $zonificacion[0] ?? 0;
+		$cantidad_reservada	= $cantidad_reservada[0] ?? 0;
+		$stock 				= $zonificacion - $cantidad_reservada;
+		$onestock			= [];
+		$canal 				= 'sistemas';
+		if ($stock <= 0) {
+			
+			$onestock	= $this->VerProductoOnestock($producto_id, $proveedor_onestock);
+			if ($onestock['code'] == 200) {
+				$canal		= 'onestock';
+			}
+			$stock		= $onestock['total_disponible'];
+		}
+
+		if ($log) {
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+		}
+		
+
+		return ['canal' => $canal, 'stock' => $stock, 'producto_id' => $producto_id,'proveedor'=> $nombre_proveedor];
+	}
+	
+	
+	public function VerProductoOnestock($producto_id, $proveedor_onestock_id = null)
+	{
+		$this->Onestock = $this->Components->load('Onestock');
+		$conexion_api 	= $this->Onestock->conexion_api_onestock();
+
+		if (empty($conexion_api)) {
+			$log =
+				[
+					'Log' =>
+					[
+						'administrador' => 'Metodo VerProductoOnestock',
+						'modulo' 		=> 'Productos',
+						'modulo_accion' => 'No hay credenciales para onestock en la tabla tienda'
+					]
+
+				];
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->save($log);
+			return ['code' => 404, 'total_disponible' => 0, 'mensaje' => 'No hay credenciales'];
+		}
+		$conexion_api = $conexion_api['Tienda'];
+		$this->Onestock->crearCliente($conexion_api['apiurl_onestock'],$conexion_api['cliente_id_onestock'],$conexion_api['onestock_correo'],	$conexion_api['onestock_clave'], $conexion_api['token_onestock']);
+		$response 	= $this->Onestock->obtenerProductoOneStock($producto_id);
+		$token		= $response['token'];
+		if(isset($token))
+		{
+			ClassRegistry::init('Tienda')->save(
+				[
+				'id'	=> $conexion_api['id'],
+				'token_onestock'	=> $token
+				]
+			);
+		}
+		
+		if ($response['code'] != 200) {
+			$log =
+				[
+					'Log' =>
+					[
+						'administrador' => 'Metodo VerProductoOnestock',
+						'modulo' 		=> 'Productos',
+						'modulo_accion' => json_encode([
+							'curl_error' => $response['curl_error'],
+							'http_code'  => $response['code'],
+							'response'	 => $response['response']
+
+						], true)
+					]
+
+				];
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->save($log);
+
+			return ['code' => $response['code'], 'total_disponible' => 0];
+		}
+
+		$code 		= $response['code'];
+		$response 	= $response['response']['respuesta'];
+
+		if (!$response['disponible']) {
+			return ['code' =>$code, 'total_disponible' => 0];
+		}
+		
+		$stock_binario 		= false;
+		$total_disponible 	= $response['total_disponible'];
+
+		foreach ($response['detalle_proveedores'] as $proveedor) {
+
+			if (isset($proveedor_onestock_id)) {
+				$found_key = array_search($proveedor_onestock_id, array_column($response['detalle_proveedores'], 'id'));
+				if (empty($found_key)) {
+					break;
+				}
+				$proveedor 			= $response['detalle_proveedores'][$found_key];
+				$total_disponible 	= $proveedor['stock'];
+				$stock_binario		= $proveedor['tipo_stock'] == 'binario' ? true : false;
+
+				break;
+			}
+
+			if ($proveedor['tipo_stock'] == 'binario') {
+				$stock_binario = true;
+			}
+		}
+		if ($stock_binario && $total_disponible >= 1) {
+			$total_disponible = $conexion_api['stock_default'];
+		}
+
+		return ['code' => $code , 'total_disponible' => $total_disponible];
+	}
+
+	
+
+
+	
 }

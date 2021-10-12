@@ -500,6 +500,50 @@
 					</div>
 				</div>
 			</div>
+
+			<div class="panel panel-default panel-toggled">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-refresh"></i> Api Onestock</h3>
+					<ul class="panel-controls">
+                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+                    </ul>
+				</div>
+				<div class="panel-body">
+					<p>Conexión para consultar stock de productos.</p>
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<tr>
+								<td><?= $this->Form->label('apiurl_onestock', 'URL de Api Onestock'); ?></td>
+								<td><?= $this->Form->input('apiurl_onestock', array('placeholder' => 'Ingrese URL')); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('token_onestock', 'Token de acceso'); ?></td>
+								<td><?= $this->Form->input('token_onestock', array('placeholder' => 'Ingrese su token valido')); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('cliente_id_onestock', 'Identificador del cliente'); ?></td>
+								<td><?= $this->Form->input('cliente_id_onestock', array('placeholder' => 'Ingrese su identifacodor')); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('onestock_correo', 'Correo asociado a Onestock'); ?></td>
+								<td><?= $this->Form->input('onestock_correo', array('placeholder' => 'Ingrese correo')); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('onestock_clave', 'Clave asociado a Onestock'); ?></td>
+								<td><?= $this->Form->input('onestock_clave', array('placeholder' => 'Ingrese clave')); ?></td>
+							</tr>
+							<tr>
+								<td><?= $this->Form->label('stock_default', 'Stock por defecto cuando proveedor entrega información binaria'); ?></td>
+								<td><?= $this->Form->input('stock_default', array('placeholder' => 'Ingrese un número')); ?></td>
+							</tr>
+						</table>
+					</div>
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
