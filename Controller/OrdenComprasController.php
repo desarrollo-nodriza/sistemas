@@ -1928,7 +1928,6 @@ class OrdenComprasController extends AppController
 				}
 
 			}
-			
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 
 				# Flujo para cuando un producto no tenga stock
@@ -1994,13 +1993,7 @@ class OrdenComprasController extends AppController
 					'VentaDetalleProducto' => array(
 						'fields' => array(
 							'VentaDetalleProducto.id'
-						),
-						'conditions'=>[
-							'OR'=>[
-								'OrdenComprasVentaDetalleProducto.cantidad_recibida != OrdenComprasVentaDetalleProducto.cantidad_validada_proveedor',
-								'OrdenComprasVentaDetalleProducto.cantidad_validada_proveedor = 0',
-							]
-						]
+						)
 					)
 				), 
 				'fields' => array(
