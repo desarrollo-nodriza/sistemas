@@ -33,10 +33,6 @@ class VentasController extends AppController {
 		'Etiquetas',
 		'LAFFPack'
 	);
-
-	private $tipo_venta = [
-		'pago_total'  	=> 'Pagado',
-		'pago_parcial'	=> 'Transacción en curso'];
 	
 
 	/**
@@ -4415,9 +4411,7 @@ class VentasController extends AppController {
 
 		$origen_venta = $this->Venta->canal_venta_manual;
 		
-		$tipo_venta   =	$this->tipo_venta;
-
-		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios', 'origen_venta','tipo_venta'));
+		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios', 'origen_venta'));
 		
 	}
 
