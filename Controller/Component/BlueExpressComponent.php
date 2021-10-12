@@ -15,7 +15,7 @@ class BlueExpressComponent extends Component
         $this->blue_express = new BlueExpress($BX_TOKEN, $BX_USERCODE, $BX_CLIENT_ACCOUNT);
     }
 
-    public function solicitar_etiqueta($trackingNumber)
+    public function regenerar_etiqueta($trackingNumber, $venta_id)
     {
         $credenciales = ClassRegistry::init('TransportesVenta')->find('first', [
             'conditions' =>
@@ -39,10 +39,28 @@ class BlueExpressComponent extends Component
         ]);
 
         $this->crearCliente($credenciales['Venta']['MetodoEnvio']['token_blue_express'], $credenciales['Venta']['MetodoEnvio']['cod_usuario_blue_express'], $credenciales['Venta']['MetodoEnvio']['cta_corriente_blue_express']);
-        $response = $this->blue_express->BXLabel($trackingNumber);
+        $response           = $this->blue_express->BXLabel($trackingNumber);
+        $response['url']    = null;
+
         if ($response['code'] == 200) {
+            
             $response['response'] = base64_decode($response['response']['data'][0]['base64']);
+
+            $nombreEtiqueta = $trackingNumber . date("Y-m-d H:i:s") . '.pdf';
+            $modulo_ruta    = 'webroot' . DS . 'img' . DS . 'ModuloBlueExpress' . DS . $venta_id . DS;
+            $rutaPublica    = APP .  $modulo_ruta;
+
+            if (!is_dir($rutaPublica)) {
+                @mkdir($rutaPublica, 0775, true);
+            }
+
+            $file = fopen($rutaPublica . $nombreEtiqueta, "w");
+            fwrite($file, $response['response']);
+            fclose($file);
+            $ruta_pdfs          = 'https://' . $_SERVER['HTTP_HOST'] . DS . $modulo_ruta . $nombreEtiqueta;
+            $response['url']    = $ruta_pdfs;
         }
+        
         return $response;
     }
 
@@ -260,7 +278,7 @@ class BlueExpressComponent extends Component
         $volumenMaximo = $venta['MetodoEnvio']['volumen_maximo'];
         # Algoritmo LAFF para ordenamiento de productos
         $paquetes = $this->LAFFPack->obtener_bultos_venta_dimension_decimal($venta, $volumenMaximo);
-        
+
         $log = array();
 
         # si no hay paquetes se retorna false
@@ -412,6 +430,8 @@ class BlueExpressComponent extends Component
                 )
             );
 
+
+
             $nombreEtiqueta = $response['response']['data']['trackingNumber'] . date("Y-m-d H:i:s") . '.pdf';
             $modulo_ruta = 'webroot' . DS . 'img' . DS . 'ModuloBlueExpress' . DS . $venta['Venta']['id'] . DS;
             $rutaPublica    = APP .  $modulo_ruta;
@@ -420,11 +440,19 @@ class BlueExpressComponent extends Component
                 @mkdir($rutaPublica, 0775, true);
             }
 
-            $file = fopen($rutaPublica . $nombreEtiqueta, "w");
-            fwrite($file, base64_decode($response['response']['data']['labels'][0]['contenido']));
-            fclose($file);
+            $etiqueta = $this->Etiquetas->generarEtiquetaExternaTransporte($response['response']['data']['labels'][0]['contenido']);
 
-            $ruta_pdfs = 'https://' . $_SERVER['HTTP_HOST'] . DS . $modulo_ruta . $nombreEtiqueta;
+            if ($etiqueta['curl_getinfo'] == 200) {
+
+                $file = fopen($rutaPublica . $nombreEtiqueta, "w");
+                fwrite($file, $etiqueta['etiquetaPdf']);
+                fclose($file);
+
+                $ruta_pdfs = 'https://' . $_SERVER['HTTP_HOST'] . DS . $modulo_ruta . $nombreEtiqueta;
+            } else {
+                $ruta_pdfs = null;
+            }
+
 
             # Guardamos el transportista y el/los numeros de seguimiento
             $carrier_name = 'BLUEXPRESS';
@@ -491,5 +519,4 @@ class BlueExpressComponent extends Component
 
         return $exito;
     }
-    
 }

@@ -98,7 +98,7 @@ class BlueExpress
     public function BXEmission($BULTO)
     {
         $OT = [
-            "printFormatCode" => 4,
+            "printFormatCode" => 2,
             "orderNumber" =>  $BULTO['venta']['id'],
             "references" => [
                 $BULTO['venta']['referencia'],
