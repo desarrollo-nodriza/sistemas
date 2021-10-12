@@ -1,6 +1,5 @@
 $(function() {
 
-	
 	var venta = function(){
 
 		var ejecutando = false;
@@ -24,10 +23,6 @@ $(function() {
 		var cerrar_modal = function() {
 			$('#modal_alertas').removeClass('show');
 		}
-
-		
-		
-
 
 		var generar_documento = function($ths){
 
@@ -896,37 +891,6 @@ $(function() {
 
         }// End Smart Wizard
 
-		$(document).on('change', '.js-monto-pago', function(){
-			validar_tipo_venta();
-		});
-
-		$(document).on('change', '#VentaTipoVenta', function(){
-			validar_tipo_venta();
-		});
-		var validar_tipo_venta = function () {
-
-			$.app.formularios.bind('#VentaAdminAddForm');
-			let pagado = 0;
-			$('.js-monto-pago').each(function(){
-				if($(this).val())
-				{
-					pagado = parseFloat(pagado) + parseFloat($(this).val());
-				}
-			});
-			
-			if ($('#VentaTipoVenta').val() == 'pago_total') {
-
-				if ($('#VentaTotal').val() != pagado) {
-					$('#buy-steps').find(".actionBar .btn-primary").addClass('disabled');
-					noty({text: 'El pago debe ser igual al total de la venta.', layout: 'topRight', type: 'error'});
-					return ;
-				}
-			}
-
-			$('#buy-steps').find(".actionBar .btn-primary").removeClass('disabled');
-			
-		}
-
         var recalcular_monto_pagar = function(){
 
         	var subtotal_pagar     = $('#subtotal').data('value'),
@@ -1716,10 +1680,9 @@ $(function() {
 					$(this).parents('tr').eq(0).next().toggleClass('expanded-div');
 				});
 
+
 			}
 		}	
-
-		
 
 	}();
 
