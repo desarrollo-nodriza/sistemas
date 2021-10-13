@@ -895,12 +895,12 @@ $(function() {
             }
 
         }// End Smart Wizard
-
+		
 		$(document).on('change', '.js-monto-pago', function(){
 			validar_tipo_venta();
 		});
 
-		$(document).on('change', '#VentaTipoVenta', function(){
+		$(document).on('change', '.venta_estado_id', function(){
 			validar_tipo_venta();
 		});
 		var validar_tipo_venta = function () {
@@ -914,7 +914,7 @@ $(function() {
 				}
 			});
 			
-			if ($('#VentaTipoVenta').val() == 'pago_total') {
+			if ($('.venta_estado_id').val() == 13) {
 
 				if ($('#VentaTotal').val() != pagado) {
 					$('#buy-steps').find(".actionBar .btn-primary").addClass('disabled');

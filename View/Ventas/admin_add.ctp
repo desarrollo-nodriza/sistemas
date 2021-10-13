@@ -293,7 +293,7 @@
 								<div class="panel-body">
 									<div class="form-group">
 										<label><?=__('Tipo de venta');?></label>
-										<?= $this->Form->select('tipo_venta', $tipo_venta, array('empty' => 'Seleccione',' class' => 'form-control not-blank','required')); ?>
+										<?= $this->Form->select('venta_estado_id', $tipo_venta, array('empty' => 'Seleccione',' class' => 'venta_estado_id form-control ','required')); ?>
 									</div>
 								</div>
 							</div>

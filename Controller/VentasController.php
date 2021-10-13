@@ -35,8 +35,9 @@ class VentasController extends AppController {
 	);
 
 	private $tipo_venta = [
-		'pago_total'  	=> 'Pagado',
-		'pago_parcial'	=> 'Transacción en curso'];
+		'Pago aceptado',
+		'Transacción en curso'
+	];
 	
 
 	/**
@@ -4311,28 +4312,20 @@ class VentasController extends AppController {
 				$total_pagado = $total_pagado + (float) $p['monto'];
 			}
 
-			if ($total_pagado == 0) {
-				$this->Session->setFlash('El total pagado no pude ser $0.', null, array(), 'warning');
-				$this->redirect(array('action' => 'add', $id));
-			}
-
-			$estado_nuevo = '';
-
+			$estado_nuevo = ClassRegistry::init('VentaEstado')->obtener_estado_por_id($this->request->data['Venta']['venta_estado_id']);
+			$estado_nuevo = $estado_nuevo['VentaEstado']['nombre'];
+			
+			
 			# si el monto pagado >= al monto vendido se cambia a pago aceptado.
 			if ($this->request->data['Venta']['total'] <= $total_pagado) {
 				
-				$estado_nuevo = 'Pago aceptado';
-
-				# Validamos la venta
-				$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
 				$this->request->data['Venta']['estado_anterior'] = $this->request->data['Venta']['venta_estado_id'];
-				$this->request->data['Venta']['venta_estado_id'] = $estado_nuevo_arr['VentaEstado']['id'];
 				$this->request->data['Venta']['venta_estado_responsable'] = $this->Auth->user('email');
 				
 				# Guardamos el estado anterior en la tabla pivot
 				$this->request->data['VentaEstado2'] = array(
 					array(
-						'venta_estado_id' => $estado_nuevo_arr['VentaEstado']['id'],
+						'venta_estado_id' => $this->request->data['Venta']['venta_estado_id'],
 						'fecha'           => date('Y-m-d H:i:s'),
 						'responsable'     => $this->Auth->user('email')
 					)
@@ -4415,7 +4408,9 @@ class VentasController extends AppController {
 
 		$origen_venta = $this->Venta->canal_venta_manual;
 		
-		$tipo_venta   =	$this->tipo_venta;
+		$tipo_venta   =	ClassRegistry::init('VentaEstado')->find('list',['conditions'=>
+		[['VentaEstado.nombre '=>$this->tipo_venta]]
+		]);
 
 		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios', 'origen_venta','tipo_venta'));
 		
