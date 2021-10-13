@@ -1415,7 +1415,7 @@ class VentaDetalleProductosController extends AppController
 		$zonificacionBodegas = [];
 		
 		foreach ($bodegas as $ib => $b) {
-			$zonificacionBodegas [] = ClassRegistry::init('Zonificacion')->find('all', array(
+			$zonificacionBodegas [$ib] = ClassRegistry::init('Zonificacion')->find('all', array(
 				'fields'		=>['SUM(Zonificacion.cantidad) as cantidad'],
 				'conditions' 	=> array(
 					'producto_id' 	=> $id,
@@ -1467,10 +1467,8 @@ class VentaDetalleProductosController extends AppController
 		
 		$totalBodegasZonificadas = [];
 		foreach ($zonificacionBodegas as $key => $value) {
-			
-			$totalBodegasZonificadas [$bodegas[($key+1)] ]= $value[0][0]['cantidad']??0;
+			$totalBodegasZonificadas [$bodegas[($key)] ]= $value[0][0]['cantidad']??0;
 		}
-
 		$totalZonificado = ClassRegistry::init('Zonificacion')->find('all', array(
 			'fields'		=>['SUM(Zonificacion.cantidad) as cantidad'],
 			'conditions' 	=> array(
@@ -4101,21 +4099,20 @@ class VentaDetalleProductosController extends AppController
 	public function RecuperarStock($producto_id, $proveedor_id = null)
 	{
 		$log = [];
-		$zonificacion = ClassRegistry::init('Zonificacion')->find('all', [
-			'fields' => 'SUM(Zonificacion.cantidad) as cantidad',
-			'conditions' => array(
-				'producto_id' 	=> $producto_id,
-				'movimiento !='	=> 'garantia'
 
-			),
+		$bodega = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', [
+			'fields' => 'SUM(BodegasVentaDetalleProducto.cantidad) as cantidad',
+			'conditions' =>
+			[
+				['BodegasVentaDetalleProducto.tipo !=' => 'GT'],
+				['BodegasVentaDetalleProducto.venta_detalle_producto_id' => $producto_id]
+			]
 		]);
 
 		$cantidad_reservada = ClassRegistry::init('VentaDetalle')->find('all', [
 			'fields' => 'SUM(VentaDetalle.cantidad_reservada) as cantidad_reservada',
 			'conditions' => array(
 				'venta_detalle_producto_id' 	=> $producto_id,
-
-
 			),
 		]);
 
@@ -4123,8 +4120,7 @@ class VentaDetalleProductosController extends AppController
 		$nombre_proveedor  	= null;
 		if (isset($proveedor_id)) {
 
-			if (!ClassRegistry::init('Proveedor')->exists($proveedor_id))
-			{
+			if (!ClassRegistry::init('Proveedor')->exists($proveedor_id)) {
 				$log[] =
 					[
 						'Log' =>
@@ -4135,21 +4131,21 @@ class VentaDetalleProductosController extends AppController
 						]
 
 					];
-			}else{
+			} else {
 
 				$proveedor_onestock = ClassRegistry::init('Proveedor')->find(
 					'first',
 					[
-						'fields' => ['Proveedor.proveedor_onestock','Proveedor.nombre'],
+						'fields' => ['Proveedor.proveedor_onestock', 'Proveedor.nombre'],
 						'conditions' =>
 						[
 							['Proveedor.id' => $proveedor_id]
 						]
 					]
 				);
-				$nombre_proveedor 	= $proveedor_onestock['Proveedor']['nombre']??null;
-				$proveedor_onestock = $proveedor_onestock['Proveedor']['proveedor_onestock']??null;
-			
+				$nombre_proveedor 	= $proveedor_onestock['Proveedor']['nombre'] ?? null;
+				$proveedor_onestock = $proveedor_onestock['Proveedor']['proveedor_onestock'] ?? null;
+
 				if (is_null($proveedor_onestock)) {
 					$log[] =
 						[
@@ -4159,23 +4155,21 @@ class VentaDetalleProductosController extends AppController
 								'modulo' 		=> 'Productos',
 								'modulo_accion' => "El proveedor {{$proveedor_id}} de sistemas no se encuentra homologado con onestock"
 							]
-	
+
 						];
 				}
 			}
-
-			
 		}
 
-		$zonificacion 		= Hash::extract($zonificacion, '{*}.{*}.cantidad');
+		$bodega 			= Hash::extract($bodega, '{*}.{*}.cantidad');
 		$cantidad_reservada = Hash::extract($cantidad_reservada, '{*}.{*}.cantidad_reservada');
-		$zonificacion		= $zonificacion[0] ?? 0;
+		$bodega				= $bodega[0] ?? 0;
 		$cantidad_reservada	= $cantidad_reservada[0] ?? 0;
-		$stock 				= $zonificacion - $cantidad_reservada;
+		$stock 				= $bodega - $cantidad_reservada;
 		$onestock			= [];
 		$canal 				= 'sistemas';
 		if ($stock <= 0) {
-			
+
 			$onestock	= $this->VerProductoOnestock($producto_id, $proveedor_onestock);
 			if ($onestock['code'] == 200) {
 				$canal		= 'onestock';
@@ -4187,9 +4181,9 @@ class VentaDetalleProductosController extends AppController
 			ClassRegistry::init('Log')->create();
 			ClassRegistry::init('Log')->saveMany($log);
 		}
-		
 
-		return ['canal' => $canal, 'stock' => $stock, 'producto_id' => $producto_id,'proveedor'=> $nombre_proveedor];
+
+		return ['canal' => $canal, 'stock' => $stock, 'producto_id' => $producto_id, 'proveedor_onestock' => $canal=='sistemas'? null:$nombre_proveedor];
 	}
 	
 	
