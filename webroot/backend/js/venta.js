@@ -1,6 +1,5 @@
 $(function() {
 
-	
 	var venta = function(){
 
 		var ejecutando = false;
@@ -24,10 +23,6 @@ $(function() {
 		var cerrar_modal = function() {
 			$('#modal_alertas').removeClass('show');
 		}
-
-		
-		
-
 
 		var generar_documento = function($ths){
 
@@ -1716,10 +1711,9 @@ $(function() {
 					$(this).parents('tr').eq(0).next().toggleClass('expanded-div');
 				});
 
+
 			}
 		}	
-
-		
 
 	}();
 

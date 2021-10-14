@@ -32,7 +32,7 @@
                             <li>
                                 <a href="#step-2">
                                     <span class="stepNumber">2</span>
-                                    <span class="stepDesc">Detalles<br /><small>Productos y pago</small></span>
+                                    <span class="stepDesc">Detalles<br /><small>Prouctos y pago</small></span>
                                 </a>
                             </li>                          
                         </ul>
@@ -63,7 +63,6 @@
 												<label><?=__('Marketplace (opcional)');?></label>
 												<?= $this->Form->input('marketplace_id', array('empty' => 'Seleccione')); ?>
 											</div>
-											
 											<div class="form-group">
 												<label class="col-md-2"><?=__('Venta Prioritaria');?></label>
 												<div class="col-md-10">

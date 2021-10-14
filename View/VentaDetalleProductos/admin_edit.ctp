@@ -454,7 +454,7 @@
 	<div class="row">		
 		<? if (isset($this->request->data['VentaDetalleProducto']['Inventario'])) : ?>
 			<? foreach ($this->request->data['VentaDetalleProducto']['Inventario'] as $i => $inventario) : ?>
-			<div class="col-xs-12 col-md-2">
+			<div class="col-xs-12 col-md-<?echo 12/(count($totalBodegasZonificadas)*2)?>">
 				<div class="widget small-widget" style="background-color: #<?=random_color();?>;">
 	                <div class="owl-carousel">
 	                	<div>                                    
@@ -465,7 +465,7 @@
 	            </div>
 			</div>
 
-			<div class="col-xs-12 col-md-2">
+			<div class="col-xs-12 col-md-<?echo 12/(count($totalBodegasZonificadas)*2)?>">
 				<div class="widget small-widget" style="background-color: #<?=random_color();?>;">
 	                <div class="owl-carousel">
 	                	<div>                                    
@@ -481,7 +481,7 @@
 	<div class="row">		
 		<? if (isset($totalBodegasZonificadas)) : ?>
 			<? foreach ($totalBodegasZonificadas as $nombre => $stock) : ?>
-			<div class="col-xs-12 col-md-4">
+			<div class="col-xs-12 col-md-<?echo 12/count($totalBodegasZonificadas)?>">
 				<div class="widget small-widget" style="background-color: #<?=random_color();?>;">
 	                <div class="owl-carousel">
 	                	<div>                                    
