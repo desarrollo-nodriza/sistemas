@@ -1348,7 +1348,7 @@ class Venta extends AppModel
 		$reservado  = $cant_reservada + $disponible;
 		
 		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente
-		if ($cant_reservada != $cant_vendida ) 
+		if ($cant_reservada != $cant_vendida) 
 		{
 			$cant_vendida = $cant_vendida - $cant_entregada;
 			$ventaDetalle['VentaDetalle']['cantidad_reservada'] = $reservado;
@@ -1372,6 +1372,13 @@ class Venta extends AppModel
 			{
 				unset($ventaDetalle['VentaDetalle']['cantidad_en_espera']);
 			}
+
+			# El agendamiento se elimina si esta todo reservado
+			if ($cant_reservada == $cant_vendida)
+			{
+				$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = 0;
+				$ventaDetalle['VentaDetalle']['fecha_llegada_en_espera'] = '';
+			}
 			
 			$log[] = array(
 				'Log' => array(
@@ -1389,13 +1396,28 @@ class Venta extends AppModel
 				return 0;
 		}
 
-		# El agendamiento se elimina si esta todo reservado
-		if ($cant_reservada == $cant_vendida)
-		{
-			$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = 0;
-			$ventaDetalle['VentaDetalle']['fecha_llegada_en_espera'] = '';
-		}
-	
+		$venta = $this->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $ventaDetalle['VentaDetalle']['venta_id']
+			),
+			'contain' => array(
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.cantidad',
+						'VentaDetalle.cantidad_anulada',
+						'VentaDetalle.cantidad_entregada',
+						'VentaDetalle.cantidad_en_espera',
+						'VentaDetalle.cantidad_reservada'
+					)
+				)
+			),
+			'fields' => array(
+				'Venta.id',
+				'Venta.picking_estado',
+				'Venta.venta_estado_id'
+			)
+		));
+		
 		$total_cantidad = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
 		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 		
