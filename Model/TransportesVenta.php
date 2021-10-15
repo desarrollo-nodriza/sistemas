@@ -1,7 +1,7 @@
 <?php
 App::uses('AppModel', 'Model');
 class TransportesVenta extends AppModel
-{	
+{
 	public $hasMany = array(
 		'EnvioHistorico' => array(
 			'className'				=> 'EnvioHistorico',
@@ -16,5 +16,17 @@ class TransportesVenta extends AppModel
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
 		)
+	);
+
+	public $belongsTo = array(
+		'Venta' => array(
+			'className'				=> 'Venta',
+			'foreignKey'			=> 'venta_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Tienda')
+		),
 	);
 }

@@ -9,15 +9,27 @@ class MetodoEnvio extends AppModel
 
 
 	private static $dependencia = array(
-		'starken' => 'Starken/Turbus',
-		'conexxion' => 'Conexxion Api',
-		'boosmap' => 'Boosmap Api'
+		'starken' 		=> 'Starken/Turbus',
+		'conexxion' 	=> 'Conexxion Api',
+		'boosmap' 		=> 'Boosmap Api',
+		'blueexpress' 	=> 'BlueExpress Api'
 	);
 
 
 	/**
 	 * ASOCIACIONES
 	 */
+	public $belongsTo = array(
+		'Bodega' => array(
+			'className'				=> 'Bodega',
+			'foreignKey'			=> 'bodega_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		),
+	);
+
 	public $hasMany = array(
 		'Venta' => array(
 			'className'				=> 'Venta',
