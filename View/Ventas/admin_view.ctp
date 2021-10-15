@@ -500,11 +500,7 @@
 																	<? if (is_null( $transporte['TransportesVenta']['cod_seguimiento'])) : ?>
 																		No aplica
 																	<? else : ?>	
-																		<? if ( $transporte['id']!=18) : ?>
-																			No aplica
-																		<? else : ?>	
 																			<?= $this->Html->link('<i class="fa fa-file-pdf-o" aria-hidden="true"></i>Generar etiqueta', array('action' => 'admin_regenerar_etiqueta',$transporte['TransportesVenta']['id']), array('class' => 'btn btn-primary', 'escape' => false)); ?>
-																		<? endif; ?>
 																	<? endif; ?>
 																<? endif; ?>
 															</td>

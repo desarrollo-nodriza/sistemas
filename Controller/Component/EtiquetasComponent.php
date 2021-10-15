@@ -499,4 +499,22 @@ class EtiquetasComponent extends Component
         return $text;
     }
 
+    public function generarEtiquetaExternaTransporte($etiquetaZpl)
+    {   
+        
+        $curl = curl_init();
+        // adjust print density (8dpmm), label width (4 inches), label height (6 inches), and label index (0) as necessary
+        curl_setopt($curl, CURLOPT_URL, "http://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/");
+        curl_setopt($curl, CURLOPT_POST, TRUE);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $etiquetaZpl);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array("Accept: application/pdf")); // omit this line to get PNG images back
+        
+        $etiquetaPdf = curl_exec($curl);
+        $curl_getinfo = curl_getinfo ($curl, CURLINFO_HTTP_CODE );
+        # Creamos el directorio
+        curl_close($curl);
+        return ['curl_getinfo' => $curl_getinfo ,'etiquetaPdf' =>$etiquetaPdf];
+    }
+
 }

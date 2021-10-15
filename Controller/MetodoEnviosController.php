@@ -112,6 +112,9 @@ class MetodoEnviosController extends AppController
 		
 		BreadcrumbComponent::add('Métodos de envio');
 		BreadcrumbComponent::add('Editar Método de envio');
+		$bodegas = ClassRegistry::init('Bodega')->find('list',[
+			'conditions'=>['Bodega.activo'=>true]
+		]);
 
 		$this->set(compact('dependencias', 'dependenciasVars'));
 
