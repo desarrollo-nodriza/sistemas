@@ -637,19 +637,6 @@ $(function() {
 			
 		}
 
-		var obtener_metodo_envio_venta_v2 = function($id){
-
-			$.ajax({
-				url: webroot + 'metodoEnvios/ajax_obtener_metodo_envio/' + $id,
-				type: 'GET',
-			})
-			.done(function(res) {
-				
-				habilitar_formulario(res);
-
-			});
-			
-		}
 		function habilitar_formulario(res) {
 			var $metodo_envio = JSON.parse(res);
 
@@ -1638,7 +1625,7 @@ $(function() {
 					
 						let $id = document.querySelector('#MetodoEnvio').value;
 						if ($id != '') {
-							obtener_metodo_envio_venta_v2($id);
+							obtener_metodo_envio_venta($id);
 						}
 						primera= false;
 					}

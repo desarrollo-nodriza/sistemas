@@ -23,7 +23,7 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('retiro_local', 'Retiro en local'); ?></th>
-								<td><?= $this->Form->input('retiro_local', array('class' => 'icheckbox')); ?></td>
+								<td><?= $this->Form->input('retiro_local', array('class' => 'icheckbox js-check-retiro-local')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('dependencia', 'Dependencia o Plugin'); ?></th>
@@ -32,6 +32,35 @@
 							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr id="generar_ot" class="">
+								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
+								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr id="peso_maximo" class="">
+								<th><?= $this->Form->label('peso_maximo', 'Peso Máximo'); ?></th>
+								<td><?= $this->Form->input('peso_maximo'); ?></td>
+							</tr>
+							<tr id="peso_default" class="">
+								<th><?= $this->Form->label('peso_default', 'Peso por defecto'); ?></th>
+								<td><?= $this->Form->input('peso_default'); ?></td>
+							</tr>
+							<tr id="alto_default" class="">
+								<th><?= $this->Form->label('alto_default', 'Alto por defecto'); ?></th>
+								<td><?= $this->Form->input('alto_default'); ?></td>
+							</tr>
+							<tr id="ancho_default" class="">
+								<th><?= $this->Form->label('ancho_default', 'Ancho por defecto'); ?></th>
+								<td><?= $this->Form->input('ancho_default'); ?></td>
+							</tr>
+							<tr id="largo_default" class="">
+								<th><?= $this->Form->label('largo_default', 'Largo por defecto'); ?></th>
+								<td><?= $this->Form->input('largo_default'); ?></td>
+							</tr>
+							
+							<tr id="volumen_maximo" class="">
+								<th><?= $this->Form->label('volumen_maximo', 'Volumen Máximo'); ?></th>
+								<td><?= $this->Form->input('volumen_maximo'); ?></td>
 							</tr>
 						</table>
 					</div>
@@ -100,30 +129,7 @@
 								<th><?= $this->Form->label('ciudad_origen', 'Ciudad de origen de la encomienda'); ?></th>
 								<td><?= $this->Form->select('ciudad_origen', $dependenciasVars['starken']['comunas'], array('empty' => 'Seleccione ciudad', 'class' => 'form-control select', 'data-live-search' => true)); ?></td>
 							</tr>
-							<tr>
-								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
-								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('peso_maximo', 'Peso máximo del bulto'); ?></th>
-								<td><?= $this->Form->input('peso_maximo', array('type' => 'text', 'class' => 'form-control')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('peso_default', 'Peso por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('peso_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('alto_default', 'Alto por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('alto_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('ancho_default', 'Ancho por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('ancho_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('largo_default', 'Largo por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('largo_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
-							</tr>
+							
 						</table>
 					</div>
 				</div>
@@ -186,30 +192,8 @@
 								<th><?= $this->Form->label('notification_type', 'Tipo de notificación'); ?></th>
 								<td><?= $this->Form->select('notification_type', $dependenciasVars['conexxion']['tipo_notificaciones'], array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
-							<tr>
-								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
-								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('peso_maximo', 'Peso máximo del bulto'); ?></th>
-								<td><?= $this->Form->input('peso_maximo', array('type' => 'text', 'class' => 'form-control')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('peso_default', 'Peso por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('peso_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('alto_default', 'Alto por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('alto_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('ancho_default', 'Ancho por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('ancho_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('largo_default', 'Largo por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('largo_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
-							</tr>
+							
+							
 						</table>
 					</div>
 				</div>
@@ -240,30 +224,50 @@
 								<th><?= $this->Form->label('boosmap_service', 'Típo de servicio'); ?></th>
 								<td><?= $this->Form->select('boosmap_service', $dependenciasVars['boosmap']['tipo_servicios'], array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
+							
+						</table>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel panel-default js-panel-blueexpress <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'blueexpress') ? '' : 'hidden' ;?>">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-truck"></i> Configuración de BlueExpress</h3>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered">
 							<tr>
-								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
-								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
+								<th><?= $this->Form->label('token_blue_express', 'Token de BlueExpress'); ?></th>
+								<td><?= $this->Form->input('token_blue_express', array('placeholder' => 'Ingrese su token', 'required')); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('peso_maximo', 'Peso máximo del bulto'); ?></th>
-								<td><?= $this->Form->input('peso_maximo', array('type' => 'text', 'class' => 'form-control')); ?></td>
+								<th><?= $this->Form->label('clave_blue_express', 'Clave de BlueExpress'); ?></th>
+								<td><?= $this->Form->input('clave_blue_express', array('placeholder' => 'Ingrese su Clave', 'required')); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('peso_default', 'Peso por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('peso_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+								<th><?= $this->Form->label('usuario_blue_express', 'Usuario de BlueExpress'); ?></th>
+								<td><?= $this->Form->input('usuario_blue_express', array('placeholder' => 'Ingrese su Usuario', 'required')); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('alto_default', 'Alto por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('alto_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+								<th><?= $this->Form->label('cod_usuario_blue_express', 'Código Usuario en BlueExpress'); ?></th>
+								<td><?= $this->Form->input('cod_usuario_blue_express', array('placeholder' => 'Ingrese su Código Usuario', 'required')); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('ancho_default', 'Ancho por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('ancho_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+								<th><?= $this->Form->label('cta_corriente_blue_express', 'Cuenta Corriente en BlueExpress'); ?></th>
+								<td><?= $this->Form->input('cta_corriente_blue_express', array('placeholder' => 'Ingrese su Cuenta Corriente', 'required')); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('largo_default', 'Largo por defecto del paquete (En caso de que no se logre calcular)'); ?></th>
-								<td><?= $this->Form->input('largo_default', array('type' => 'text', 'class' => 'form-control')); ?></td>
+								<th><?= $this->Form->label('bodega_id', 'Bodega para despachar'); ?></th>
+								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control')); ?></td>
 							</tr>
+
 						</table>
 					</div>
 				</div>

@@ -165,6 +165,14 @@ class Venta extends AppModel
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'VentaEstado')
 		),
+		'Bodega' => array(
+			'className'				=> 'Bodega',
+			'foreignKey'			=> 'bodega_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		),
 	);
 	public $hasMany = array(
 		'VentaDetalle' => array(
@@ -467,7 +475,22 @@ class Venta extends AppModel
 					'MetodoEnvio' => array(
 						'fields' => array(
 							'MetodoEnvio.*'
-						)
+						),
+						'Bodega' => [
+							'Comuna' => [
+								'fields' => [
+									'Comuna.district_id_blue_express',
+									'Comuna.state_id_blue_express'
+								],
+							],
+							'fields' => [
+								'Bodega.nombre',
+								'Bodega.nombre_contacto',
+								'Bodega.fono',
+								'Bodega.direccion',
+								'Bodega.comuna_id'
+							],
+						]
 					),
 					'Mensaje' => array(
 						'conditions' => array(
@@ -560,7 +583,13 @@ class Venta extends AppModel
 								)
 							)
 						)
-					)
+					),
+					'Comuna' => [
+						'fields' => [
+							'Comuna.district_id_blue_express',
+							'Comuna.state_id_blue_express'
+						]
+					]
 				),
 				'fields' => array(
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',

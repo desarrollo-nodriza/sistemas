@@ -31,7 +31,8 @@ class VentasController extends AppController {
 		'Conexxion',
 		'Boosmap',
 		'Etiquetas',
-		'LAFFPack'
+		'LAFFPack',
+		'BlueExpress'
 	);
 
 	private $tipo_venta = [
@@ -983,9 +984,9 @@ class VentasController extends AppController {
 
 
 	public function admin_generar_envio_externo_manual($id)
-	{	
+	{
 
-		if ( ! $this->Venta->exists($id) ) {
+		if (!$this->Venta->exists($id)) {
 			$this->Session->setFlash('El registro no es válido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
@@ -996,7 +997,7 @@ class VentasController extends AppController {
 
 		# Creamos pedido en enviame si corresponde
 		if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) {
-			
+
 			$Enviame = $this->Components->load('Enviame');
 
 			# conectamos con enviame
@@ -1006,61 +1007,71 @@ class VentasController extends AppController {
 
 			if ($resultadoEnviame) {
 				$this->Session->setFlash('Envío creado con éxito en Starken.', null, array(), 'success');
-			}else{
+			} else {
 				$this->Session->setFlash('No fue posible crear el envío Starken.', null, array(), 'danger');
 			}
-
-		}elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
 			# Es una venta para starken
-			
+
 			# Creamos cliente starken
 			$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
 
 			# Creamos la OT
-			if($this->Starken->generar_ot($venta)){
+			if ($this->Starken->generar_ot($venta)) {
 
 				$this->Starken->registrar_estados($venta['Venta']['id']);
 
 				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
-			}else{
+			} else {
 				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
 			}
-
-		}elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot']) {
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot']) {
 			# Es una venta para conexxion
-			
+
 			# Creamos cliente conexxion
 			$this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
 
 			# Creamos la OT
-			if($this->Conexxion->generar_ot($venta)){
+			if ($this->Conexxion->generar_ot($venta)) {
 				$this->Session->setFlash('Envío creado con éxito en Conexxion.', null, array(), 'success');
-			}else{
+			} else {
 				$this->Session->setFlash('No fue posible crear el envío Conexxion.', null, array(), 'danger');
 			}
-
-		}elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
 			# Es una venta para boosmap
-			
+
 			# Creamos cliente boosmap
 			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
-			
+
 			# Creamos la OT
-			if($this->Boosmap->generar_ot($venta)){
+			if ($this->Boosmap->generar_ot($venta)) {
 
 				$this->Boosmap->registrar_estados($venta['Venta']['id']);
 
 				$this->Session->setFlash('Envío creado con éxito en Boosmap.', null, array(), 'success');
-			}else{
+			} else {
 				$this->Session->setFlash('No fue posible crear el envío Boosmap.', null, array(), 'danger');
 			}
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot']) {
+			# Es una venta para blueexpress
 
-		}else{
+			# Creamos cliente blueexpress
+			$this->BlueExpress->crearCliente($venta['MetodoEnvio']['token_blue_express'], $venta['MetodoEnvio']['cod_usuario_blue_express'], $venta['MetodoEnvio']['cta_corriente_blue_express']);
+
+			# Creamos la OT
+			if ($this->BlueExpress->generar_ot($venta)) {
+
+				$this->BlueExpress->registrar_estados($venta['Venta']['id']);
+
+				$this->Session->setFlash('Envío creado con éxito en BlueExpress.', null, array(), 'success');
+			} else {
+				$this->Session->setFlash('No fue posible crear el envío BlueExpress.', null, array(), 'danger');
+			}
+		} else {
 			$this->Session->setFlash('La venta no aplica para usar un currier externo.', null, array(), 'danger');
 		}
 
 		$this->redirect($this->referer('/', true));
-
 	}
 
 
@@ -1071,14 +1082,14 @@ class VentasController extends AppController {
 	 * @return [type]     [description]
 	 */
 	public function admin_cambiar_estado($id)
-	{	
+	{
 
 		$respuesta = array(
 			'code' => 501,
 			'message' => 'Error inexplicable'
 		);
 
-		if ( ! $this->Venta->exists($id) ) {
+		if (!$this->Venta->exists($id)) {
 			$respuesta['code'] = 404;
 			$respuesta['message'] = 'No se encontró la venta en nuestros registros.';
 			echo json_encode($respuesta);
@@ -1101,13 +1112,13 @@ class VentasController extends AppController {
 			)
 		));
 
-		if (array_sum(Hash::extract($detalles, '{n}.VentaDetalle.confirmado_app')) != count(Hash::extract($detalles, '{n}.VentaDetalle.id')) ) {
+		if (array_sum(Hash::extract($detalles, '{n}.VentaDetalle.confirmado_app')) != count(Hash::extract($detalles, '{n}.VentaDetalle.id'))) {
 			$respuesta['code'] = 503;
 			$respuesta['message'] = 'Debes confirmar los productos de la venta';
 			echo json_encode($respuesta);
 			exit;
 		}
-		
+
 		try {
 			$cambiar_estado = $this->cambiarEstado($id, $this->request->data['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id'], '', '', $this->Session->read('Auth.Administrador.nombre'));
 		} catch (Exception $e) {
@@ -1131,11 +1142,11 @@ class VentasController extends AppController {
 				$this->Venta->saveField('prioritario', 0);
 
 				# Sub estados OC de la venta
-				if (array_sum(Hash::extract($detalles, '{n}VentaDetalle.cantidad_pendiente_entrega')) > 0 ) {
+				if (array_sum(Hash::extract($detalles, '{n}VentaDetalle.cantidad_pendiente_entrega')) > 0) {
 					$this->Venta->saveField('subestado_oc', 'parcialmente_entregado');
-				}else{
+				} else {
 					$this->Venta->saveField('subestado_oc', 'entregado');
-				}	
+				}
 			}
 
 			$respuesta['code'] = 200;
@@ -1318,6 +1329,25 @@ class VentasController extends AppController {
 						);
 					}
 		
+				}elseif ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot'] && !$venta['Venta']['paquete_generado']) {
+					# Es una venta para blueexpress
+
+					# Creamos cliente blueexpress
+					$this->BlueExpress->crearCliente($venta['MetodoEnvio']['token_blue_express'], $venta['MetodoEnvio']['cod_usuario_blue_express'], $venta['MetodoEnvio']['cta_corriente_blue_express']);
+
+					# Creamos la OT
+					if ($this->BlueExpress->generar_ot($venta)) {
+
+						$this->BlueExpress->registrar_estados($venta['Venta']['id']);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Cambiar estado venta: Ingresa BlueExpress',
+								'modulo' => 'Ventas',
+								'modulo_accion' => 'creado: OT generada'
+							)
+						);
+					}
 				}
 
 				ClassRegistry::init('Log')->create();
@@ -11958,28 +11988,32 @@ class VentasController extends AppController {
 	 * @return bool
 	 */
 	public function actualizar_estados_envios($id)
-	{	
+	{
 		$venta = $this->Venta->obtener_venta_por_id($id);
-	
+
 		# Registro de estados para Boosmap
-		if ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot'])
-		{	
+		if ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
 			$this->Boosmap = $this->Components->load('Boosmap');
 			# Creamos cliente boosmap
 			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
-			
+
 			# Obtenemos y registramos los estados de los envios
 			return $this->Boosmap->registrar_estados($venta['Venta']['id']);
-
 		}
 
 		# Registro de estados para Starken
-		if ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot'])
-		{	
+		if ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
 			$this->Starken = $this->Components->load('Starken');
 			# Obtenemos y registramos los estados de los envios
 			return $this->Starken->registrar_estados($venta['Venta']['id']);
+		}
 
+		# Registro de estados para BlueExpress
+		if ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot']) {
+			
+			$this->BlueExpress = $this->Components->load('BlueExpress');
+			# Obtenemos y registramos los estados de los envios
+			return $this->BlueExpress->registrar_estados($venta['Venta']['id']);
 		}
 
 		return false;
