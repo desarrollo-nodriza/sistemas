@@ -10,6 +10,12 @@ class MetodoEnviosController extends AppController
 		'BlueExpress'
 	);
 
+	public $tipo_servicio=[
+		"EX" => "Express.",
+		"PR" => "Premium.",
+		"PY" => "Prioritario."
+	];
+
 	public function admin_index () {
 
 		$this->paginate = array(
@@ -117,8 +123,8 @@ class MetodoEnviosController extends AppController
 		$bodegas = ClassRegistry::init('Bodega')->find('list',[
 			'conditions'=>['Bodega.activo'=>true]
 		]);
-
-		$this->set(compact('dependencias', 'dependenciasVars','bodegas'));
+		$tipo_servicio = $this->tipo_servicio;
+		$this->set(compact('dependencias', 'dependenciasVars','bodegas','tipo_servicio'));
 
 	}
 

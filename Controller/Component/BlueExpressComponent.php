@@ -43,7 +43,7 @@ class BlueExpressComponent extends Component
         $response['url']    = null;
 
         if ($response['code'] == 200) {
-            
+
             $response['response'] = base64_decode($response['response']['data'][0]['base64']);
 
             $nombreEtiqueta = $trackingNumber . date("Y-m-d H:i:s") . '.pdf';
@@ -60,7 +60,7 @@ class BlueExpressComponent extends Component
             $ruta_pdfs          = 'https://' . $_SERVER['HTTP_HOST'] . DS . $modulo_ruta . $nombreEtiqueta;
             $response['url']    = $ruta_pdfs;
         }
-        
+
         return $response;
     }
 
@@ -92,7 +92,7 @@ class BlueExpressComponent extends Component
                         'MetodoEnvio.dependencia',
                         'MetodoEnvio.token_blue_express',
                         'MetodoEnvio.cod_usuario_blue_express',
-                        'MetodoEnvio.cta_corriente_blue_express',
+                        'MetodoEnvio.cta_corriente_blue_express'
                     )
                 )
 
@@ -145,7 +145,7 @@ class BlueExpressComponent extends Component
         $total_en_espera = array_sum(Hash::extract($v, 'VentaDetalle.{n}.cantidad_en_espera'));
 
         # Registramos el estado de los bultos
-        foreach ($v['Transporte'] as $it => $trans) {
+        foreach ($v['Transporte'] as $trans) {
             # Obtenemos los estados del bulto
 
             $estados = $this->blue_express->BXTrackingPull($trans['TransportesVenta']['cod_seguimiento']);
@@ -177,14 +177,6 @@ class BlueExpressComponent extends Component
                 $es_envio_parcial = true;
             }
 
-            $log[] = array(
-                'Log' => array(
-                    'administrador'     => "Estados de BlueExpress, Seguimiento n° " . $trans['TransportesVenta']['cod_seguimiento'] . " vid {$id}",
-                    'modulo'            => 'BlueExpressComponent',
-                    'modulo_accion'     => 'Estados embalaje: ' . json_encode($estados)
-                )
-            );
-
             foreach ($estados['response']['data']['pinchazos'] as $e) {
                 try {
                     if ($es_envio_parcial) {
@@ -215,14 +207,6 @@ class BlueExpressComponent extends Component
                             'created' => $e['fechaHora'] ?? date("Y-m-d H:m:s")
                         )
                     );
-
-                    $log[] = array(
-                        'Log' => array(
-                            'administrador'     => "Nuevo estado del vid - {$id}",
-                            'modulo'            => 'BlueExpressComponent',
-                            'modulo_accion'     => json_encode($historicos)
-                        )
-                    );
                 } catch (\Throwable $th) {
 
                     $log[] = array(
@@ -234,6 +218,16 @@ class BlueExpressComponent extends Component
                     );
                 }
             }
+        }
+
+        if ($historicos) {
+            $log[] = array(
+                'Log' => array(
+                    'administrador'     => count($historicos) . " nuevos estados del vid - {$id}",
+                    'modulo'            => 'BlueExpressComponent',
+                    'modulo_accion'     => json_encode($historicos)
+                )
+            );
         }
 
         ClassRegistry::init('Log')->create();
@@ -251,25 +245,28 @@ class BlueExpressComponent extends Component
     public function obtener_costo_envio($venta, $largoTotal, $anchoTotal, $altoTotal, $pesoTotal)
     {
 
-        $from = [
-            "district"   =>  $venta['MetodoEnvio']['Bodega']['Comuna']['district_id_blue_express']
-        ];
-        $to = [
-            "state"     => $venta['Comuna']['state_id_blue_express'],
-            "district"  => $venta['Comuna']['district_id_blue_express'],
-        ];
-        $datosProducto = [
-            "producto"          => "P",
-            "familiaProducto"   => "PAQU",
-            "largo"             => $largoTotal * 1,
-            "ancho"             => $anchoTotal * 1,
-            "alto"              => $altoTotal * 1,
-            "pesoFisico"        => $pesoTotal * 1,
-            "cantidadPiezas"    => 1,
-            "unidades"          => 1
+        $data = [
+            'from' => [
+                "district"   =>  $venta['MetodoEnvio']['Bodega']['Comuna']['district_id_blue_express']
+            ],
+            'to' => [
+                "state"     => $venta['Comuna']['state_id_blue_express'],
+                "district"  => $venta['Comuna']['district_id_blue_express'],
+            ],
+            'serviceType' => $venta['MetodoEnvio']['tipo_servicio_blue_express'],
+            'datosProducto' => [
+                "producto"          => "P",
+                "familiaProducto"   => "PAQU",
+                "largo"             => $largoTotal * 1,
+                "ancho"             => $anchoTotal * 1,
+                "alto"              => $altoTotal * 1,
+                "pesoFisico"        => $pesoTotal * 1,
+                "cantidadPiezas"    => 1,
+                "unidades"          => 1
+            ]
         ];
 
-        return $this->blue_express->BXPricing($from, $to, $datosProducto);
+        return $this->blue_express->BXPricing($data);
     }
 
     public function generar_ot($venta)
@@ -330,8 +327,7 @@ class BlueExpressComponent extends Component
 
         $transportes = array();
 
-        $ruta_pdfs = array();
-        $nwVenta = [];
+        $ruta_pdfs = null;
         $exito = true;
 
         # Mantenemos las ot ya generadas
@@ -345,8 +341,11 @@ class BlueExpressComponent extends Component
             );
         }
 
-        foreach ($paquetes as $paquete) {
+        $costo_envio = 0;
+        $numero_paquete = 0;
 
+        foreach ($paquetes as $paquete) {
+            $numero_paquete++;
             # dimensiones de todos los paquetes unificado
             $largoTotal             = $paquete['paquete']['length'] * 1;
             $anchoTotal             = $paquete['paquete']['width'] * 1;
@@ -360,7 +359,7 @@ class BlueExpressComponent extends Component
                     'Log' => array(
                         'administrador' => 'BlueExpress, dificultades para obtener costo de envio vid:' . $venta['Venta']['id'],
                         'modulo'        => 'Ventas',
-                        'modulo_accion' => json_encode(($obtener_costo_envio))
+                        'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $obtener_costo_envio])
                     )
                 );
                 $exito = false;
@@ -370,13 +369,14 @@ class BlueExpressComponent extends Component
             $log[] = array(
                 'Log' => array(
                     'administrador' => 'BlueExpress retorno costo de envio vid:' . $venta['Venta']['id'],
-                    'modulo' => 'BlueExpressComponent',
-                    'modulo_accion' => json_encode($obtener_costo_envio)
+                    'modulo'        => 'BlueExpressComponent',
+                    'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $obtener_costo_envio])
                 )
             );
 
             # creamos el arreglo para generar la OT
             $data = [
+                'serviceType' => $venta['MetodoEnvio']['tipo_servicio_blue_express'],
                 'venta'     => [
                     'id'                    => $venta['Venta']['id'],
                     'referencia'            => $venta['Venta']['referencia'],
@@ -396,7 +396,7 @@ class BlueExpressComponent extends Component
                     'fono_receptor'     => $venta['Venta']['fono_receptor'],
                     'stateId'           => $venta['Comuna']['state_id_blue_express'],
                     'districtId'        => $venta['Comuna']['district_id_blue_express'],
-                    'direccion'         => $venta['Venta']['direccion_entrega'],
+                    'direccion'         => "{$venta['Venta']['direccion_entrega']} {$venta['Venta']['numero_entrega']}, {$venta['Venta']['otro_entrega']} ",
                     'name'              => $venta['Venta']['nombre_receptor'],
                 ],
                 'packages'  => [
@@ -414,8 +414,8 @@ class BlueExpressComponent extends Component
                 $log[] = array(
                     'Log' => array(
                         'administrador' => 'BlueExpress, problemas para generar ot para vid:' . $venta['Venta']['id'],
-                        'modulo' => 'BlueExpressComponent',
-                        'modulo_accion' => json_encode($response)
+                        'modulo'        => 'BlueExpressComponent',
+                        'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $response])
                     )
                 );
                 $exito = false;
@@ -425,8 +425,8 @@ class BlueExpressComponent extends Component
             $log[] = array(
                 'Log' => array(
                     'administrador' => 'BlueExpress retorno ot vid:' . $venta['Venta']['id'],
-                    'modulo' => 'BlueExpressComponent',
-                    'modulo_accion' => json_encode($response)
+                    'modulo'        => 'BlueExpressComponent',
+                    'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $response])
                 )
             );
 
@@ -465,8 +465,8 @@ class BlueExpressComponent extends Component
 
             if (!empty($rutaPublica)) {
                 $carrier_opt = array_replace_recursive($carrier_opt, array(
-                    'Transporte' => array(
-                        'etiqueta' => $rutaPublica
+                    'Transporte'    => array(
+                        'etiqueta'  => $rutaPublica
                     )
                 ));
             }
@@ -483,22 +483,26 @@ class BlueExpressComponent extends Component
                 $exito = false;
             }
 
+            $costo_envio = $costo_envio + $obtener_costo_envio['response']['data']['total'];
+        }
+
+        if ($transportes) {
             $fin_proceso_ot = array(
                 'Venta' => array(
-                    'id'                => $venta['Venta']['id'],
-                    'paquete_generado'  => 1,
-                    'costo_envio'       => $obtener_costo_envio['response']['data']['total'],
-                    'etiqueta_envio_externa' => $ruta_pdfs
+                    'id'                        => $venta['Venta']['id'],
+                    'paquete_generado'          => count($paquetes),
+                    'costo_envio'               => $costo_envio,
+                    'etiqueta_envio_externa'    => $ruta_pdfs
                 ),
                 'Transporte' => $transportes
             );
-            $nwVenta[] = $fin_proceso_ot;
+
             # Se guarda la información del tracking en la venta
             if (ClassRegistry::init('Venta')->saveAll($fin_proceso_ot)) {
                 $log[] = array(
                     'Log' => array(
                         'administrador' => 'BlueExpress, se registro ot vid:' . $venta['Venta']['id'],
-                        'modulo' => 'BlueExpressComponent',
+                        'modulo'        => 'BlueExpressComponent',
                         'modulo_accion' => json_encode($fin_proceso_ot)
                     )
                 );
@@ -507,12 +511,13 @@ class BlueExpressComponent extends Component
                 $log[] = array(
                     'Log' => array(
                         'administrador' => 'BlueExpress, dificultades para guardar información ot vid:' . $venta['Venta']['id'],
-                        'modulo' => 'BlueExpressComponent',
-                        'modulo_accion' => json_encode($$fin_proceso_ot)
+                        'modulo'        => 'BlueExpressComponent',
+                        'modulo_accion' => json_encode($fin_proceso_ot)
                     )
                 );
             }
         }
+
 
         ClassRegistry::init('Log')->create();
         ClassRegistry::init('Log')->saveMany($log);
