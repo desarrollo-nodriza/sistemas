@@ -65,30 +65,30 @@ class BlueExpress
      * @param  mixed $datosProducto
      * @return void
      */
-    public function BXPricing($from, $to, $datosProducto)
+    public function BXPricing($data)
     {
         $POSTFIELDS = [
             'from' => [
                 'country'   => 'CL',
-                'district'  => $from['district'] ?? ''
+                'district'  => $data['from']['district'] ?? ''
             ],
             'to' => [
                 'country'   => 'CL',
-                'state'     => $to['state'] ?? '',
-                'district'  => $to['district'] ?? ''
+                'state'     => $data['to']['state'] ?? '',
+                'district'  => $data['to']['district'] ?? ''
             ],
-            'serviceType'               => 'EX',
+            'serviceType'               => $data['serviceType'],
             'serviciosComplementarios'  => null,
             'datosProducto' =>
             [
-                'producto'          => $datosProducto['producto'] ?? '',
+                'producto'          => $data['datosProducto']['producto'] ?? '',
                 'familiaProducto'   => 'PAQU',
-                'largo'             => $datosProducto['largo'] ?? '',
-                'ancho'             => $datosProducto['ancho'] ?? '',
-                'alto'              => $datosProducto['alto'] ?? '',
-                'pesoFisico'        => $datosProducto['pesoFisico'] ?? '',
-                'cantidadPiezas'    => $datosProducto['cantidadPiezas'] ?? '',
-                'unidades'          => $datosProducto['cantidadPiezas'] ?? ''
+                'largo'             => $data['datosProducto']['largo'] ?? '',
+                'ancho'             => $data['datosProducto']['ancho'] ?? '',
+                'alto'              => $data['datosProducto']['alto'] ?? '',
+                'pesoFisico'        => $data['datosProducto']['pesoFisico'] ?? '',
+                'cantidadPiezas'    => $data['datosProducto']['cantidadPiezas'] ?? '',
+                'unidades'          => $data['datosProducto']['cantidadPiezas'] ?? ''
             ]
         ];
 
@@ -103,7 +103,7 @@ class BlueExpress
             "references" => [
                 $BULTO['venta']['referencia'],
             ],
-            "serviceType" => "EX",
+            "serviceType" => $BULTO['serviceType'],
             "productType" => "P",
             "productCategory" => "PAQU",
             "currency" => "CLP",
@@ -216,7 +216,9 @@ class BlueExpress
         curl_close($curl);
         return [
             "code"     => $http_code,
+            "request"  => $POSTFIELDS,
             "response" => json_decode($response, true)
+            
         ];
     }
 

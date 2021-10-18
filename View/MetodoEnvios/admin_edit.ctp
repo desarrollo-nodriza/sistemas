@@ -265,7 +265,11 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('bodega_id', 'Bodega para despachar'); ?></th>
-								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control')); ?></td>
+								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control','required')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('tipo_servicio_blue_express', 'Tipo de Servicio'); ?></th>
+								<td><?= $this->Form->select('tipo_servicio_blue_express', $tipo_servicio, array('empty' => 'Seleccione Servicio', 'class' => 'form-control','required')); ?></td>
 							</tr>
 
 						</table>

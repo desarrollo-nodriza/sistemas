@@ -71,6 +71,13 @@ var campos_requeridos_blue_express = function (opcion) {
 			}
 		});
 
+		$('#MetodoEnvioTipoServicioBlueExpress').rules("add", {
+			required: true,
+			messages: {
+				required: 'Campo requerido'
+			}
+		});
+
 	} else {
 		$("#MetodoEnvioTokenBlueExpress").attr("required", false);
 		$("#MetodoEnvioClaveBlueExpress").attr("required", false);
@@ -78,6 +85,8 @@ var campos_requeridos_blue_express = function (opcion) {
 		$("#MetodoEnvioCodUsuarioBlueExpress").attr("required", false);
 		$("#MetodoEnvioCtaCorrienteBlueExpress").attr("required", false);
 		$("#MetodoEnvioBodegaId").attr("required", false);
+		$("#MetodoEnvioTipoServicioBlueExpress").attr("required", false);
+		
 	}
 
 }
