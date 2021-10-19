@@ -674,9 +674,9 @@ class OrdenesController extends AppController
 								switch($this->request->data['Dte']['tipo_ntc'])
 								{	
 									case 'stockout': 
-										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $d['cantidad_entregada_anulada'], 'aumentar');
-										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
-										ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'devolucion',$d['cantidad_entregada_anulada']);
+										// ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $d['cantidad_entregada_anulada'], 'aumentar');
+										// ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
+										// ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'devolucion',$d['cantidad_entregada_anulada']);
 										break;
 
 									case 'devolucion':
