@@ -4071,7 +4071,7 @@ class OrdenComprasController extends AppController
 			$response = array(
 				'code'    => 400, 
 				'name' => 'error',
-				'message' => 'La cantidad a zonificar es debe ser mayor 0'
+				'message' => 'La cantidad a zonificar debe ser mayor 0'
 			);
 
 			throw new CakeException($response);
@@ -4079,7 +4079,7 @@ class OrdenComprasController extends AppController
 
 		$cantidad_zonificar = $ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'] + $this->request->data['cantidad_zonificada'];
 
-		if ($cantidad_pendiente_zonificar == $cantidad_zonificar)
+		if ($ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] == $cantidad_zonificar)
 		{
 			$ocp['OrdenComprasVentaDetalleProducto']['zonificado'] = 1;
 		}
