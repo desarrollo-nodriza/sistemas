@@ -74,6 +74,7 @@ Class CrucesController extends AppController {
 				}
 
 				// Se buscan las ventas con dichos identificadores
+				$ids_transacciones = [];
 
 				$qry = array(
 					'conditions' => array(),
@@ -84,9 +85,21 @@ Class CrucesController extends AppController {
 				foreach ($columnaValores as $cd) {
 					if (empty($cd))
 						continue;
+					
+					$ids_transacciones[] = trim($cd);
 
 					$qry['conditions']['OR'][] = 'VentaTransaccion.nombre LIKE "' . $cd . '"';
+
 				}
+
+				if (empty($ids_transacciones))
+				{
+					$this->Session->setFlash('No se encontraron coincidencia ids de transacciones en el documento.', null, array(), 'warning');
+					$this->redirect(array('action' => 'cruces'));
+				}	
+
+				# Actualizamos los ids de transaccion para verificar que existan todos
+				$this->preparar_transacciones($ids_transacciones);
 
 				$qry['contain'] = array(
 					'Venta' => array(
@@ -107,7 +120,7 @@ Class CrucesController extends AppController {
 				$qry['fields'] = array(
 					'VentaTransaccion.venta_id', 'VentaTransaccion.nombre', 'VentaTransaccion.monto', 'VentaTransaccion.fee'
 				);
-				
+
 				// Activar en versión 2
 				$transacciones = ClassRegistry::init('VentaTransaccion')->find('all', $qry);
 				
@@ -117,6 +130,7 @@ Class CrucesController extends AppController {
 					$this->Session->setFlash('No se encontraron coincidencia.', null, array(), 'warning');
 					$this->redirect(array('action' => 'cruces'));
 				}
+				
 				
 				$spreadsheet = new Spreadsheet();
 
@@ -151,7 +165,7 @@ Class CrucesController extends AppController {
 						
 						if (empty($dt))
 							continue;
-						
+
 						$transaccion = array_unique(Hash::extract($transacciones, '{n}.VentaTransaccion[nombre='.$dt.']'));
 						
 						if (empty($transaccion))
@@ -343,5 +357,82 @@ Class CrucesController extends AppController {
 
 		return $final;
 	}
+
+	public function preparar_transacciones($ids_transacciones)
+	{
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+			'Tienda.apiurl_prestashop', 
+			'Tienda.apikey_prestashop'
+		));
+
+		if (empty($tienda['Tienda']['apiurl_prestashop']) || empty($tienda['Tienda']['apikey_prestashop']))
+		{
+			return false;
+		}
+
+		# componente on the fly!
+		$this->Prestashop = $this->Components->load('Prestashop');
+
+		# Cliente Prestashop
+		$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
+
+		$transacciones = $this->Prestashop->prestashop_obtener_venta_transaccionesv2($ids_transacciones);
+		
+		if (empty($transacciones))
+			return false;
+		
+		$ventas = ClassRegistry::init('Venta')->find('all', array(
+			'conditions' => array(
+				'Venta.referencia IN' => Hash::extract($transacciones, 'order_payment.{n}.order_reference')
+			),
+			'contain' => array(
+				'VentaTransaccion'
+			),
+			'fields' => array(
+				'Venta.id', 'Venta.referencia'
+			)
+		));
+
+		if (empty($ventas))
+			return false;
+
+		$VentaTransaccion = [];
+
+		foreach ($ventas as $v)
+		{	
+			$nwTransacciones = Hash::extract($transacciones, 'order_payment.{n}[order_reference='.$v['Venta']['referencia'].']');
+
+			if (empty($nwTransacciones))
+				continue;
+
+			foreach ($nwTransacciones as $nt)
+			{
+				# Verificamos si la transaccion ya no existe
+				if (!Hash::check($v['VentaTransaccion'], '{n}[nombre='.$nt['transaction_id'].']'))
+				{	
+					# La creamos
+					$VentaTransaccion[] = array(
+						'VentaTransaccion' => array(
+							'venta_id' => $v['Venta']['id'],
+							'monto' => (!empty($nt['amount'])) ? $nt['amount'] : 0,
+							'nombre' => $nt['transaction_id'],
+							'created' => $nt['date_add']
+						)
+					);
+				}
+			}
+		}
+		
+		if (empty($VentaTransaccion))
+			return false;
+
+		if (!ClassRegistry::init('VentaTransaccion')->saveMany($VentaTransaccion))
+		{
+			return false;
+		}
+
+		return true;
+
+	}	
 
 }

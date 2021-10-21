@@ -266,7 +266,7 @@ class PrestashopComponent extends Component
 	{
 		$opt = array();
 		$opt['resource'] = 'order_payments';
-		$opt['display'] = '[transaction_id,amount]';
+		$opt['display'] = '[id,transaction_id,amount]';
 		$opt['filter[order_reference]'] = '[' .$referencia. ']';
 
 		$xml = $this->ConexionPrestashop->get($opt);
@@ -277,6 +277,43 @@ class PrestashopComponent extends Component
 
 		return $DataVentaDetalle;
 
+	}
+
+
+	public function prestashop_obtener_venta_transaccionesv2 ($transacciones_ids = []) 
+	{
+		$opt = array();
+		$opt['resource'] = 'order_payments';
+		$opt['display'] = '[id,transaction_id,amount,order_reference,date_add]';
+		$opt['filter[transaction_id]'] = '[' .implode('|', $transacciones_ids). ']';
+
+		$xml = $this->ConexionPrestashop->get($opt);
+		
+		$PrestashopResources = $xml->children()->children();
+
+		$DataVentaDetalle = to_array($PrestashopResources);
+
+		return $DataVentaDetalle;
+
+	}
+
+	/**
+	 * Obtiene una transacción por medio de su id
+	 */
+	public function prestashop_obtener_transaccion($id)
+	{
+		$opt = array();
+		$opt['resource'] = 'order_payments';
+		$opt['display'] = 'full';
+		$opt['filter[id]'] = '[' .$id. ']';
+
+		$xml = $this->ConexionPrestashop->get($opt);
+
+		$PrestashopResources = $xml->children()->children();
+
+		$DataVentaDetalle = to_array($PrestashopResources);
+
+		return $DataVentaDetalle;
 	}
 
 
