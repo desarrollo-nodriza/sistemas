@@ -8062,7 +8062,7 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['descuento']   = round($nwVenta['total_discounts_tax_incl'], 2);
 		$NuevaVenta['Venta']['costo_envio'] = round($nwVenta['total_shipping_tax_incl'], 2);
 		$NuevaVenta['Venta']['total']       = round($nwVenta['total_paid'], 2);
-
+		
 		//se obtienen las transacciones de una venta
 		//si la venta tiene transacciones asociadas
 		if ($VentaTransacciones = $this->Prestashop->prestashop_obtener_venta_transacciones($nwVenta['reference'])) {
@@ -8082,8 +8082,15 @@ class VentasController extends AppController {
 				if (!empty($transaccion['transaction_id'])) {
 					$NuevaTransaccion['nombre'] = $transaccion['transaction_id'];
 				}else{
-					$transaccion['transaction_id'] = 'undefined';
-					$NuevaTransaccion['nombre'] = $transaccion['transaction_id'];
+					# Intenta volver a obtener el nombre
+					$trans2 = $this->Prestashop->prestashop_obtener_transaccion($transaccion['id']);
+
+					if (empty($trans2))
+					{
+						$trans2['order_payment']['transaction_id'] = 'undefined';
+					}
+
+					$NuevaTransaccion['nombre'] = $trans2['order_payment']['transaction_id'];
 				}
 
 				$NuevaTransaccion['monto'] = (!empty($transaccion['amount'])) ? $transaccion['amount'] : 0;
