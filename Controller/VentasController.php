@@ -4297,7 +4297,7 @@ class VentasController extends AppController {
 				'Venta' => array(
 					'referencia'       => $referencia,
 					'tienda_id'        => $this->Session->read('Tienda.id'),
-					'venta_stado_id'   => 1,
+					'venta_estado_id'  => 1,
 					'administrador_id' => $this->Auth->user('id'),
 					'venta_manual'     => 1,
 					'fecha_venta'      => date('Y-m-d H:i:s')
@@ -4349,8 +4349,8 @@ class VentasController extends AppController {
 			# si el monto pagado >= al monto vendido se cambia a pago aceptado.
 			if ($this->request->data['Venta']['total'] <= $total_pagado) {
 				
-				$this->request->data['Venta']['estado_anterior'] = $this->request->data['Venta']['venta_estado_id'];
-				$this->request->data['Venta']['venta_estado_responsable'] = $this->Auth->user('email');
+				$this->request->data['Venta']['estado_anterior'] 			= 1;
+				$this->request->data['Venta']['venta_estado_responsable'] 	= $this->Auth->user('email');
 				
 				# Guardamos el estado anterior en la tabla pivot
 				$this->request->data['VentaEstado2'] = array(
