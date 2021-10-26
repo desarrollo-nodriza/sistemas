@@ -12243,6 +12243,12 @@ class VentasController extends AppController {
 		$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
 	}
 
+
+	/**	
+	 * Obtiene los estados de despacho de la venta
+	 * @param int $id Identificador de la venta
+	 * @return json
+	 */
 	public function api_getSeguimiento($id)
 	{	
 		# Existe token
@@ -12273,6 +12279,80 @@ class VentasController extends AppController {
 			),
 			'contain' => array(
 				'EnvioHistorico'=>['order' => array('EnvioHistorico.created' => 'ASC'),],
+			),
+			
+		));
+
+		$respuesta = array(
+			'code' => 404,
+			'message' => 'No se encontraron resultados',
+			'body' => $estados
+		);
+
+		if ($estados) 
+		{
+			$respuesta = array(
+				'code' => 200,
+				'message' => 'Se encontraron resultados',
+				'body' => $estados
+			);
+		}
+
+		$this->set(array(
+            'response' => $respuesta,
+            '_serialize' => array('response')
+		));
+	}
+
+	/**	
+	 * Obtiene los estados de despacho de la venta
+	 * @param text $red Referencia de la venta
+	 * @return json
+	 */
+	public function api_getSeguimientoByRef($ref)
+	{	
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.referencia' => trim($ref)
+			),
+			'fields' => array(
+				'Venta.id'
+			)
+		));
+
+		$estados = ClassRegistry::init('TransportesVenta')->find('all', array(
+			'conditions' => array(
+				'TransportesVenta.venta_id' => $venta['Venta']['id']
+			),
+			'contain' => array(
+				'EnvioHistorico'=>[
+					'EstadoEnvio' => array(
+						'EstadoEnvioCategoria'
+					),
+					'order' => array('EnvioHistorico.created' => 'ASC')
+				],
 			),
 			
 		));
