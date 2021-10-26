@@ -387,6 +387,19 @@ Router::connect(
     )
 );
 
+Router::connect(
+    '/api/ventas/seguimiento/ref/:referencia', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'Ventas', 
+        'action'        => 'getSeguimientoByRef',
+        'api'           => true,
+        'prefix'        => 'api'),
+    array(
+        'pass' => array('referencia'),
+        'id' => '[0-9-a-Z]+'
+    )
+);
+
 
 /**
  * Transporte
