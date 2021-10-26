@@ -12347,6 +12347,11 @@ class VentasController extends AppController {
 				'TransportesVenta.venta_id' => $venta['Venta']['id']
 			),
 			'contain' => array(
+				'Transporte' => array(
+					'fields' => array(
+						'Transporte.nombre'
+					)
+				),
 				'EnvioHistorico'=>[
 					'EstadoEnvio' => array(
 						'EstadoEnvioCategoria'

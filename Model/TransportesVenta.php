@@ -28,5 +28,14 @@ class TransportesVenta extends AppModel
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Tienda')
 		),
+		'Transporte' => array(
+			'className'				=> 'Transporte',
+			'foreignKey'			=> 'transporte_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Tienda')
+		),
 	);
 }
