@@ -9166,7 +9166,7 @@ class VentasController extends AppController {
 						'VentaDetalle.cantidad'
 					)
 				),
-				'TransporteVentas' => array(
+				'TransportesVenta' => array(
 					'Transporte' => array(
 						'fields' => array(
 							'Transporte.nombre'
@@ -9206,7 +9206,7 @@ class VentasController extends AppController {
 
 		# Buscamos la venta
 		$venta = $this->Venta->find('first', $qry);
-
+		
 		$respuesta = array(
 			'code'    => 404, 
 			'name' => 'error',
