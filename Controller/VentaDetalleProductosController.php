@@ -2344,154 +2344,172 @@ class VentaDetalleProductosController extends AppController
 	 * @return array
 	 */
 	public function actualizar_canales_stock_fisico()
-	{
-		$log = array();
+    {
+        $log = array();
 
-		$log[] = array(
-			'Log' => array(
-				'administrador' => 'Demonio',
-				'modulo' => 'Productos',
-				'modulo_accion' => 'Inicia actualización de stock fisico con prestashop: ' . date('Y-m-d H:i:s')
-			)
-		);
-	
-		# Preparamos ids para usarlos en la actualización
-		$id_actualizar = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible();
+        $log[] = array(
+            'Log' => array(
+                'administrador' => 'Demonio',
+                'modulo' => 'Productos',
+                'modulo_accion' => 'Inicia actualización de stock fisico con prestashop: ' . date('Y-m-d H:i:s')
+            )
+        );
 
-		# Obtenemos la tienda principal
-		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
-			'id',
-			'apiurl_prestashop',
-			'apikey_prestashop',
-			'apiurl_onestock',
-			'cliente_id_onestock',
-			'onestock_correo',
-			'onestock_clave',
-			'token_onestock',
-			'stock_default'
-		));
-		
-		$this->Onestock = $this->Components->load('Onestock');
-		$this->Onestock->crearCliente($tienda['Tienda']['apiurl_onestock'], $tienda['Tienda']['cliente_id_onestock'], $tienda['Tienda']['onestock_correo'],	$tienda['Tienda']['onestock_clave'], $tienda['Tienda']['token_onestock']);
-		$productos_onestock = $this->Onestock->obtenerProductosClienteOneStock();
-		$token				= $productos_onestock['token'];
-	
-		if(isset($token))
-		{
-			ClassRegistry::init('Tienda')->save(
-				[
-				'id'				=> $tienda['Tienda']['id'],
-				'token_onestock'	=> $token
-				]
-			);
-		}
-		
-		$ids 				= Hash::extract($id_actualizar, '{n}.id');
-		$ids 				= array_merge($ids, $productos_onestock['ids_con_stock']);
-		
-		# Obtenemos los productos
-		$productos = $this->VentaDetalleProducto->find(
-			'all',
-			array(
-				'fields' => array(
-					'VentaDetalleProducto.id',
-					'VentaDetalleProducto.id_externo',
-					'VentaDetalleProducto.activo'
-				),
-				'conditions' => array(
-					'VentaDetalleProducto.id' => $ids
-				)
-			)
-		);
-		
-		
+        # Preparamos ids para usarlos en la actualización
+        $id_actualizar = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible();
 
-		# Inicializamos prestashop
-		$this->Prestashop = $this->Components->load('Prestashop');
+        # Obtenemos la tienda principal
+        $tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+            'id',
+            'apiurl_prestashop',
+            'apikey_prestashop',
+            'apiurl_onestock',
+            'cliente_id_onestock',
+            'onestock_correo',
+            'onestock_clave',
+            'token_onestock',
+            'stock_default'
+        ));
 
-		# Cliente Prestashop
-		$this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
-		$HistorialOnestock = [];
-		# comenzamos a actualizar el canal prestashop
-		foreach ($productos as $i => $producto) {
-			
-			$stock 																		= Hash::extract($id_actualizar, '{n}[id=' . $producto['VentaDetalleProducto']['id'] . ']');
-			$productos[$i]['VentaDetalleProducto']['canal'] 							= 'sistemas';
-			if (empty($stock)) {
-				$productos[$i]['VentaDetalleProducto']['canal'] 						= 'onestock';
-				$binario 																= Hash::extract($productos_onestock, "conStock.{*}[id={$producto['VentaDetalleProducto']['id']}][binario=true]");
-				$stock[0]['stock_disponible']											= $binario ? $tienda['Tienda']['stock_default'] :array_sum(Hash::extract($productos_onestock, "conStock.{*}[id={$producto['VentaDetalleProducto']['id']}].stock"));
-				$stock[0]['stock_fisico']												= $stock[0]['stock_disponible'];
-				$onestock																= Hash::extract($productos_onestock, "conStock.{*}[id={$producto['VentaDetalleProducto']['id']}]");
-				$HistorialOnestock []													=
-				[
-					'producto_id'			=> $onestock[0]['id'],
-					'proveedor_id'			=> $onestock[0]['proveedor_id'],
-					'stock'					=> $stock[0]['stock_fisico'],
-					'disponible'			=> true,
-					'fecha_modificacion'	=> $onestock[0]['fecha_modificacion'],
-				];
-				
-			}
-		
-			$productos[$i]['VentaDetalleProducto']['stock_fisico'] 						= $stock[0]['stock_fisico'];
-			$productos[$i]['VentaDetalleProducto']['stock_reservado'] 					= $stock[0]['stock_reservado'] ?? 0;
-			$productos[$i]['VentaDetalleProducto']['stock_fisico_disponible'] 			= $stock[0]['stock_disponible'];
-			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] 				= 0;
-			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] 	= false;
+        $this->Onestock 	= $this->Components->load('Onestock');
+        $this->Onestock->crearCliente($tienda['Tienda']['apiurl_onestock'], $tienda['Tienda']['cliente_id_onestock'], $tienda['Tienda']['onestock_correo'],    $tienda['Tienda']['onestock_clave'], $tienda['Tienda']['token_onestock']);
+        $productos_onestock = $this->Onestock->obtenerProductosClienteOneStock();
+        $token              = $productos_onestock['token'];
 
-			$stockProductoPrestashop = $this->Prestashop->prestashop_obtener_stock_producto($producto['VentaDetalleProducto']['id_externo']);
-			$stockPresta = (isset($stockProductoPrestashop['stock_available']['quantity'])) ? $stockProductoPrestashop['stock_available']['quantity'] : 0;
+        if (isset($token)) {
+            ClassRegistry::init('Tienda')->save(
+                [
+                    'id'             => $tienda['Tienda']['id'],
+                    'token_onestock' => $token
+                ]
+            );
+        }
 
-			# Volvemos a setear el stock de prestashop
-			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = $stockPresta;
+        $ids = Hash::extract($id_actualizar, '{n}.id');
+        $ids = array_merge($ids, $productos_onestock['ids_con_stock']);
+        $ids = array_merge($ids, $productos_onestock['ids_sin_stock']);
+        # Obtenemos los productos
+        $productos = $this->VentaDetalleProducto->find(
+            'all',
+            array(
+                'fields' => array(
+                    'VentaDetalleProducto.id',
+                    'VentaDetalleProducto.id_externo',
+                    'VentaDetalleProducto.activo',
+                    'VentaDetalleProducto.cantidad_virtual'
+                ),
+                'conditions' => array(
+                    'VentaDetalleProducto.id' => $ids
+                )
+            )
+        );
 
-			# Igualamos el stock de prestashop al de bodega
-			if ($stockPresta < $stock[0]['stock_disponible']) {
-				if (Configure::read('ambiente') == 'dev') {
-					$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = true;
-				} elseif (isset($stockProductoPrestashop['stock_available']['id'])) {
-					$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock[0]['stock_disponible']);
-				}
-			}
-		}
-	
-		if ($HistorialOnestock) {
-			ClassRegistry::init('HistorialOnestock')->create();
-			ClassRegistry::init('HistorialOnestock')->saveMany($HistorialOnestock);
-		}
-		
+        # Inicializamos prestashop
+        $this->Prestashop = $this->Components->load('Prestashop');
 
-		$log[] = array(
-			'Log' => array(
-				'administrador' => 'Demonio',
-				'modulo' => 'Productos',
-				'modulo_accion' => 'Total producto actualización de stock fisico con prestashop: ' . count(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]'))
-			)
-		);
+        # Cliente Prestashop
+        $this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
+        $HistorialOnestock = [];
+        $stock_virtual     = [];
+        # comenzamos a actualizar el canal prestashop
+        foreach ($productos as $i => $producto) {
 
-		$log[] = array(
-			'Log' => array(
-				'administrador' => 'Demonio',
-				'modulo' => 'Productos',
-				'modulo_accion' => 'Productos actualización de stock fisico con prestashop: ' . json_encode(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]'))
-			)
-		);
+            $stock                                          = Hash::extract($id_actualizar, '{n}[id=' . $producto['VentaDetalleProducto']['id'] . ']');
+            $productos[$i]['VentaDetalleProducto']['canal'] = 'sistemas';
 
-		$log[] = array(
-			'Log' => array(
-				'administrador' => 'Demonio',
-				'modulo' => 'Productos',
-				'modulo_accion' => 'Finaliza actualización de stock fisico con prestashop: ' . date('Y-m-d H:i:s')
-			)
-		);
+            if (empty($stock)) {
 
-		# Guardamos el log
-		ClassRegistry::init('Log')->saveMany($log);
+                $tiene_stock                                     = in_array($producto['VentaDetalleProducto']['id'], $productos_onestock['ids_con_stock']) ? 1 : 0;
+                $productos[$i]['VentaDetalleProducto']['canal']  = 'onestock';
+                $binario                                         = Hash::extract($productos_onestock, $tiene_stock ? "conStock" : "sinStock" . ".{*}[id={$producto['VentaDetalleProducto']['id']}][binario=true]");
+                $stock[0]['stock_disponible']                    = $binario ? $tienda['Tienda']['stock_default'] : array_sum(Hash::extract($productos_onestock, $tiene_stock ? "conStock" : "sinStock" . ".{*}[id={$producto['VentaDetalleProducto']['id']}].stock"));
 
-		return $productos;
-	}
+                $stock[0]['stock_disponible']                    = $stock[0]['stock_disponible'] < 0 ? 0 : $stock[0]['stock_disponible'];
+                $stock[0]['stock_fisico']                        = $stock[0]['stock_disponible'];
 
+                if ($productos[$i]['VentaDetalleProducto']['cantidad_virtual'] != $stock[0]['stock_fisico']) {
+
+                    $onestock            = Hash::extract($productos_onestock, $tiene_stock ? "conStock" : "sinStock" . ".{*}[id={$producto['VentaDetalleProducto']['id']}]");
+                    $HistorialOnestock[] =
+                        [
+                            'producto_id'        => $onestock[0]['id'],
+                            'proveedor_id'       => $onestock[0]['proveedor_id'],
+                            'stock'              => $stock[0]['stock_fisico'],
+                            'disponible'         => $tiene_stock,
+                            'fecha_modificacion' => $onestock[0]['fecha_modificacion'],
+                        ];
+
+                    $stock_virtual[] = ['VentaDetalleProducto' => [
+                        "id"               => $producto['VentaDetalleProducto']['id'],
+                        "cantidad_virtual" => $stock[0]['stock_fisico']
+                    ]];
+                }
+            }
+
+            $productos[$i]['VentaDetalleProducto']['stock_fisico']                     = $stock[0]['stock_fisico'];
+            $productos[$i]['VentaDetalleProducto']['stock_reservado']                  = $stock[0]['stock_reservado'] ?? 0;
+            $productos[$i]['VentaDetalleProducto']['stock_fisico_disponible']          = $stock[0]['stock_disponible'];
+            $productos[$i]['VentaDetalleProducto']['stock_virtual_presta']             = 0;
+            $productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = false;
+
+            $stockProductoPrestashop = $this->Prestashop->prestashop_obtener_stock_producto($producto['VentaDetalleProducto']['id_externo']);
+            $stockPresta = (isset($stockProductoPrestashop['stock_available']['quantity'])) ? $stockProductoPrestashop['stock_available']['quantity'] : 0;
+
+            # Volvemos a setear el stock de prestashop
+            $productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = $stockPresta;
+
+            # Igualamos el stock de prestashop al de bodega
+            if ($stockPresta < $stock[0]['stock_disponible']) {
+                if (Configure::read('ambiente') == 'dev') {
+                    $productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = true;
+                } elseif (isset($stockProductoPrestashop['stock_available']['id'])) {
+                    $productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock[0]['stock_disponible']);
+                }
+            }
+        }
+
+        if ($stock_virtual) {
+
+            foreach (array_chunk($HistorialOnestock, 100) as $Historial) {
+                ClassRegistry::init('HistorialOnestock')->create();
+                ClassRegistry::init('HistorialOnestock')->saveMany($Historial, array('validate' => false, 'atomic' => true, 'callbacks' => false));
+            }
+
+            foreach (array_chunk($stock_virtual, 100) as $actualizar_stock) {
+                ClassRegistry::init('VentaDetalleProducto')->create();
+                ClassRegistry::init('VentaDetalleProducto')->saveMany($actualizar_stock, array('validate' => false, 'atomic' => true, 'callbacks' => false));
+            }
+        }
+
+        $log[] = array(
+            'Log' => array(
+                'administrador' => 'Demonio',
+                'modulo' => 'Productos',
+                'modulo_accion' => 'Total producto actualización de stock fisico con prestashop: ' . count(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]'))
+            )
+        );
+
+        $log[] = array(
+            'Log' => array(
+                'administrador' => 'Demonio',
+                'modulo' => 'Productos',
+                'modulo_accion' => 'Productos actualización de stock fisico con prestashop: ' . json_encode(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]'))
+            )
+        );
+
+        $log[] = array(
+            'Log' => array(
+                'administrador' => 'Demonio',
+                'modulo' => 'Productos',
+                'modulo_accion' => 'Finaliza actualización de stock fisico con prestashop: ' . date('Y-m-d H:i:s')
+            )
+        );
+
+        # Guardamos el log
+        ClassRegistry::init('Log')->saveMany($log);
+
+        return $productos;
+    }
 	/**
 	 * Ejecuta la actualización de stock según stock físico disponible desde el administrador.
 	 * 

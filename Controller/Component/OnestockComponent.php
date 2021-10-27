@@ -20,10 +20,12 @@ class OnestockComponent extends Component
 			"Tienda.id" => $tienda_id
 		];
 		$conditions = array_filter($conditions);
-		$conditions = array_merge($conditions,["Tienda.apiurl_onestock !=" => '',
-		"Tienda.cliente_id_onestock !=" => '',
-		"Tienda.onestock_correo !=" => '',
-		"Tienda.onestock_clave !=" => '',]);
+		$conditions = array_merge($conditions, [
+			"Tienda.apiurl_onestock !="     => '',
+			"Tienda.cliente_id_onestock !=" => '',
+			"Tienda.onestock_correo !="     => '',
+			"Tienda.onestock_clave !="      => '',
+		]);
 
 		return ClassRegistry::init('Tienda')->find('first', [
 			'fields' => [
@@ -59,30 +61,31 @@ class OnestockComponent extends Component
 			foreach ($response['response']['productos'] as $producto) {
 
 				if (isset($producto['producto_info']['mi_id'])) {
+
+
 					foreach ($producto['detalle_proveedores'] as $proveedore) {
 
+						$info = [
+							'id'                    => $producto['producto_info']['mi_id'],
+							'fecha_modificacion'    => $proveedore['fecha_modificacion'],
+							'proveedor_id'          => $proveedore['id'],
+							'disponible'            => $proveedore['disponible'] ?? false,
+							'stock'                 => $proveedore['stock'] ?? 0,
+							'binario'				=> $proveedore['tipo_stock'] == 'binario' ? true : false
+						];
+
 						if ($proveedore['disponible']) {
-							$conStock[] =
-								[
-									'id'                    => $producto['producto_info']['mi_id'],
-									'fecha_modificacion'    => $proveedore['fecha_modificacion'],
-									'proveedor_id'          => $proveedore['id'],
-									'disponible'            => $proveedore['disponible'] ?? false,
-									'stock'                 => $proveedore['stock'] ?? 0,
-									'binario'				=> $proveedore['tipo_stock'] == 'binario' ? true : false
-								];
-							$ids_con_stock[] = $producto['producto_info']['mi_id'];
+
+							$conStock[] 		=	$info;
+							$ids_con_stock[] 	= $producto['producto_info']['mi_id'];
+							continue;
 						} else {
-							$sinStock[] =
-								[
-									'id'                    => $producto['producto_info']['mi_id'],
-									'fecha_modificacion'    => $proveedore['fecha_modificacion'],
-									'proveedor_id'          => $proveedore['id'],
-									'disponible'            => $proveedore['disponible'] ?? false,
-									'stock'                 => $proveedore['stock'] ?? 0,
-									'binario'				=> $proveedore['tipo_stock'] == 'binario' ? true : false
-								];
-							$ids_sin_stock[] = $producto['producto_info']['mi_id'];
+
+							if (!$producto['disponible']) {
+
+								$sinStock[] 		= $info;
+								$ids_sin_stock[] 	= $producto['producto_info']['mi_id'];
+							}
 						}
 					}
 				}
