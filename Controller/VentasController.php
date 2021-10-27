@@ -8667,6 +8667,13 @@ class VentasController extends AppController {
 	}
 
 
+	/**
+	 * Prepara la información para mostrar de forma ordenada
+	 * los estados de venta y envio
+	 * 
+	 * @param $venta
+	 * @return array
+	 */
 	public function preparar_estados($venta)
 	{
 		$estados = array(
@@ -9158,7 +9165,33 @@ class VentasController extends AppController {
 						'VentaDetalle.precio',
 						'VentaDetalle.cantidad'
 					)
+				),
+				'TransporteVentas' => array(
+					'Transporte' => array(
+						'fields' => array(
+							'Transporte.nombre'
+						)
+					),
+					'EnvioHistorico' => array(
+						'EstadoEnvio' => array(
+							'EstadoEnvioCategoria' => array(
+								'fields' => array(
+									'EstadoEnvioCategoria.nombre',
+									'EstadoEnvioCategoria.clase'
+								)
+							),
+							'fields' => array(
+								'EstadoEnvio.nombre',
+								'EstadoEnvio.origen',
+								'EstadoEnvio.leyenda'
+							)
+						),
+						'fields' => array(
+							'EnvioHistorico.created'
+						)
+					)
 				)
+
 			),
 			'fields' => array(
 				'Venta.id',
