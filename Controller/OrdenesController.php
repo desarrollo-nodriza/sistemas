@@ -792,7 +792,7 @@ class OrdenesController extends AppController
 									if ($d['reservado_virtual'] > 0)
 									{
 										# Nuevo stock virtual
-										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $detalle['QtyItem'], 'aumentar');
+										#ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $detalle['QtyItem'], 'aumentar');
 										$venta['VentaDetalle'][$ip]['reservado_virtual'] = $d['reservado_virtual'] - $detalle['QtyItem'];
 									}
 
