@@ -2477,10 +2477,10 @@ class VentaDetalleProductosController extends AppController
             $productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = false;
 
 			# Actualizamos el stock virtual
-			if ($productos[$i]['VentaDetalleProducto']['cantidad_virtual'] != $stock[0]['stock_fisico']) {
+			if ($productos[$i]['VentaDetalleProducto']['cantidad_virtual'] != $productos[$i]['VentaDetalleProducto']['stock_fisico_disponible']) {
 				$stock_virtual[] = ['VentaDetalleProducto' => [
 					"id"               => $producto['VentaDetalleProducto']['id'],
-					"cantidad_virtual" => $stock[0]['stock_fisico']
+					"cantidad_virtual" => $productos[$i]['VentaDetalleProducto']['stock_fisico_disponible']
 				]];
 			}
 
