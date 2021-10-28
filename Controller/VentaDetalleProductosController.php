@@ -1491,6 +1491,30 @@ class VentaDetalleProductosController extends AppController
 		}
 
 		$totalZonificado = $totalZonificado[0][0]['cantidad']??0;
+
+		# Obtenemos la tienda principal
+        $tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+            'id',
+            'apiurl_prestashop',
+            'apikey_prestashop',
+            'apiurl_onestock',
+            'cliente_id_onestock',
+            'onestock_correo',
+            'onestock_clave',
+            'token_onestock',
+            'stock_default'
+        ));
+
+		# Stock onestock
+		$this->Onestock 	= $this->Components->load('Onestock');
+        $this->Onestock->crearCliente($tienda['Tienda']['apiurl_onestock'], $tienda['Tienda']['cliente_id_onestock'], $tienda['Tienda']['onestock_correo'], $tienda['Tienda']['onestock_clave'], $tienda['Tienda']['token_onestock']);
+        $producto_onestock = $this->Onestock->obtener_producto($id);
+
+		if ($producto_onestock['code'] == 200)
+		{	
+			$this->request->data['Onestock'] = $producto_onestock['response']['respuesta'];
+		}
+
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos');
 		BreadcrumbComponent::add('Editar');
 
@@ -2375,7 +2399,7 @@ class VentaDetalleProductosController extends AppController
         $this->Onestock->crearCliente($tienda['Tienda']['apiurl_onestock'], $tienda['Tienda']['cliente_id_onestock'], $tienda['Tienda']['onestock_correo'],    $tienda['Tienda']['onestock_clave'], $tienda['Tienda']['token_onestock']);
         $productos_onestock = $this->Onestock->obtenerProductosClienteOneStock();
         $token              = $productos_onestock['token'];
-
+	
         if (isset($token)) {
             ClassRegistry::init('Tienda')->save(
                 [
@@ -2411,6 +2435,7 @@ class VentaDetalleProductosController extends AppController
         $this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
         $HistorialOnestock = [];
         $stock_virtual     = [];
+
         # comenzamos a actualizar el canal prestashop
         foreach ($productos as $i => $producto) {
 
@@ -2421,16 +2446,21 @@ class VentaDetalleProductosController extends AppController
 
                 $tiene_stock                                     = in_array($producto['VentaDetalleProducto']['id'], $productos_onestock['ids_con_stock']) ? 1 : 0;
                 $productos[$i]['VentaDetalleProducto']['canal']  = 'onestock';
-                $binario                                         = Hash::extract($productos_onestock, $tiene_stock ? "conStock" : "sinStock" . ".{*}[id={$producto['VentaDetalleProducto']['id']}][binario=true]");
-                $stock[0]['stock_disponible']                    = $binario ? $tienda['Tienda']['stock_default'] : array_sum(Hash::extract($productos_onestock, $tiene_stock ? "conStock" : "sinStock" . ".{*}[id={$producto['VentaDetalleProducto']['id']}].stock"));
-
+                $binario                                         = Hash::extract($productos_onestock, ($tiene_stock ? "conStock" : "sinStock") . ".{*}[id={$producto['VentaDetalleProducto']['id']}][binario=true]");
+				$total_stock 									 = array_sum(Hash::extract($productos_onestock, ($tiene_stock ? "conStock" : "sinStock") . ".{*}[id={$producto['VentaDetalleProducto']['id']}].stock"));
+                
+				$stock[0]['stock_disponible']                    = $binario ? (($total_stock <= 0) ? 0 : $tienda['Tienda']['stock_default']) : $total_stock;
                 $stock[0]['stock_disponible']                    = $stock[0]['stock_disponible'] < 0 ? 0 : $stock[0]['stock_disponible'];
-                $stock[0]['stock_fisico']                        = $stock[0]['stock_disponible'];
-
+                $stock[0]['stock_disponible'] 					 = ($stock[0]['stock_disponible'] > 100) ? 100 : $stock[0]['stock_disponible'];
+				$stock[0]['stock_fisico']                        = $stock[0]['stock_disponible'];
+				
+				$productos[$i]['VentaDetalleProducto']['stock_onestock'] = $total_stock;
+				
                 if ($productos[$i]['VentaDetalleProducto']['cantidad_virtual'] != $stock[0]['stock_fisico']) {
 
-                    $onestock            = Hash::extract($productos_onestock, $tiene_stock ? "conStock" : "sinStock" . ".{*}[id={$producto['VentaDetalleProducto']['id']}]");
-                    $HistorialOnestock[] =
+                    $onestock            = Hash::extract($productos_onestock, ($tiene_stock ? "conStock" : "sinStock") . ".{*}[id={$producto['VentaDetalleProducto']['id']}]");
+					
+					$HistorialOnestock[] =
                         [
                             'producto_id'        => $onestock[0]['id'],
                             'proveedor_id'       => $onestock[0]['proveedor_id'],
@@ -2438,34 +2468,28 @@ class VentaDetalleProductosController extends AppController
                             'disponible'         => $tiene_stock,
                             'fecha_modificacion' => $onestock[0]['fecha_modificacion'],
                         ];
-
-                    $stock_virtual[] = ['VentaDetalleProducto' => [
-                        "id"               => $producto['VentaDetalleProducto']['id'],
-                        "cantidad_virtual" => $stock[0]['stock_fisico']
-                    ]];
                 }
             }
 
             $productos[$i]['VentaDetalleProducto']['stock_fisico']                     = $stock[0]['stock_fisico'];
             $productos[$i]['VentaDetalleProducto']['stock_reservado']                  = $stock[0]['stock_reservado'] ?? 0;
             $productos[$i]['VentaDetalleProducto']['stock_fisico_disponible']          = $stock[0]['stock_disponible'];
-            $productos[$i]['VentaDetalleProducto']['stock_virtual_presta']             = 0;
             $productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = false;
 
-            $stockProductoPrestashop = $this->Prestashop->prestashop_obtener_stock_producto($producto['VentaDetalleProducto']['id_externo']);
-            $stockPresta = (isset($stockProductoPrestashop['stock_available']['quantity'])) ? $stockProductoPrestashop['stock_available']['quantity'] : 0;
+			# Actualizamos el stock virtual
+			if ($productos[$i]['VentaDetalleProducto']['cantidad_virtual'] != $stock[0]['stock_fisico']) {
+				$stock_virtual[] = ['VentaDetalleProducto' => [
+					"id"               => $producto['VentaDetalleProducto']['id'],
+					"cantidad_virtual" => $stock[0]['stock_fisico']
+				]];
+			}
 
-            # Volvemos a setear el stock de prestashop
-            $productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = $stockPresta;
 
-            # Igualamos el stock de prestashop al de bodega
-            if ($stockPresta < $stock[0]['stock_disponible']) {
-                if (Configure::read('ambiente') == 'dev') {
-                    $productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = true;
-                } elseif (isset($stockProductoPrestashop['stock_available']['id'])) {
-                    $productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock[0]['stock_disponible']);
-                }
-            }
+            if (Configure::read('ambiente') == 'dev') {
+				$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = true;
+			} elseif (isset($stockProductoPrestashop['stock_available']['id'])) {
+				$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock[0]['stock_disponible']);
+			}
         }
 
         if ($stock_virtual) {
@@ -2481,29 +2505,14 @@ class VentaDetalleProductosController extends AppController
             }
         }
 
-        $log[] = array(
-            'Log' => array(
-                'administrador' => 'Demonio',
-                'modulo' => 'Productos',
-                'modulo_accion' => 'Total producto actualización de stock fisico con prestashop: ' . count(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]'))
-            )
-        );
 
         $log[] = array(
             'Log' => array(
                 'administrador' => 'Demonio',
                 'modulo' => 'Productos',
-                'modulo_accion' => 'Productos actualización de stock fisico con prestashop: ' . json_encode(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]'))
+                'modulo_accion' => 'Total actualizados: ' . count(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]')) . ' - Productos actualización de stock fisico con prestashop: ' . json_encode(Hash::extract($productos, '{n}.VentaDetalleProducto[stock_virtual_presta_actualizado=true]'))
             )
-        );
-
-        $log[] = array(
-            'Log' => array(
-                'administrador' => 'Demonio',
-                'modulo' => 'Productos',
-                'modulo_accion' => 'Finaliza actualización de stock fisico con prestashop: ' . date('Y-m-d H:i:s')
-            )
-        );
+		);
 
         # Guardamos el log
         ClassRegistry::init('Log')->saveMany($log);
