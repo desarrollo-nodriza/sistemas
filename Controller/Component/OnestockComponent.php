@@ -62,6 +62,9 @@ class OnestockComponent extends Component
 
 				if (isset($producto['producto_info']['mi_id'])) {
 
+					# Ordenamos los proveedores desde el con mayor stock al menor
+					$cStock = array_column($producto['detalle_proveedores'], 'stock');
+					array_multisort($cStock, SORT_DESC, $producto['detalle_proveedores']);
 
 					foreach ($producto['detalle_proveedores'] as $proveedore) {
 
@@ -78,7 +81,7 @@ class OnestockComponent extends Component
 
 							$conStock[] 		=	$info;
 							$ids_con_stock[] 	= $producto['producto_info']['mi_id'];
-							continue;
+							break;
 						} else {
 
 							if (!$producto['disponible']) {
@@ -97,5 +100,36 @@ class OnestockComponent extends Component
 	public function obtenerProductosClienteSinPaginacionOneStock()
 	{
 		return $this->onestock->obtenerProductosClienteSinPaginacionOneStock();
+	}
+
+
+	public function obtener_producto($id, $stock_default = 10)
+	{	
+		$result = $this->onestock->obtenerProductoOneStock($id);
+		return $result;
+		if ($result['code'] != 200)
+		{
+			return array();
+		}
+
+		$item = $result['respuesta'];
+
+		$stock_global = 0;
+
+		foreach($result['detalle_proveedores'] as $i => $prov)
+		{	
+			$stock = $prov['stock'];
+
+			if ($prov['tipo_stock'] == 'binario')
+			{
+				$stock = ($prov['stock'] > 0) ? $stock_default : 0;
+			}
+
+			$stock_global = $stock_global + $stock;
+		}
+
+		$item['stock_global'] = $stock_global;
+
+		return $item;
 	}
 }
