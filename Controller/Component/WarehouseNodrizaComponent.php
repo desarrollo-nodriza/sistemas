@@ -214,12 +214,12 @@ class WarehouseNodrizaComponent extends Component
     public function OrdenTransporteEmbalajes($orden_transporte)
     {
         $this->crearCliente();
-        $this->WarehouseNodriza->OrdenTransporteEmbalajes($orden_transporte);
+        return $this->WarehouseNodriza->OrdenTransporteEmbalajes($orden_transporte);
     }
 
     public function CrearPedido($embalaje)
     {
         $this->crearCliente();
-        $this->WarehouseNodriza->CrearPedido($embalaje);
+        return $this->WarehouseNodriza->CrearPedido($embalaje);
     }
 }

@@ -95,14 +95,13 @@ class WarehouseNodriza
         //     ]
         // ]
         return $this->cURL_POST(
-            '/api/v1/orden_transporte_embalajes/crear',
+            '/api/v2/embalaje/crear-pedido',
             $embalaje
         );
     }
 
     private function cURL_POST($URL, $POSTFIELDS)
     {
-        // prx([self::$API_ROOT_URL . $URL,$POSTFIELDS]);
         $curl = curl_init();
         curl_setopt_array($curl, array(
             CURLOPT_URL => self::$API_ROOT_URL . $URL,
