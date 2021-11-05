@@ -11637,7 +11637,6 @@ class VentasController extends AppController {
 
 			throw new CakeException($response);
 		}
-
 	
 		# Existe token
 		if (!isset($this->request->query['token'])) {
@@ -11723,8 +11722,8 @@ class VentasController extends AppController {
 			$log[] = array(
 				'Log' => array(
 					'administrador' => $usuario,
-					'modulo' => 'Ventas',
-					'modulo_accion' => sprintf('Se cambia estado picking venta id %d: ', $id, json_encode($this->request->data))
+					'modulo'        => 'Ventas',
+					'modulo_accion' => "Se cambia estado picking venta id {$id} : ".json_encode($this->request->data,true)
 				)
 			);
 

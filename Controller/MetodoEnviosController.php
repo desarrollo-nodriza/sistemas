@@ -261,8 +261,8 @@ class MetodoEnviosController extends AppController
 
 		$logs[] = array(
 			'Log' => array(
-				'administrador' => 'Crear etiqueta envio externa venta ' . $id_venta,
-				'modulo' => 'MetodoEnvio',
+				'administrador' => 'Crear etiqueta envio externa venta ' . $id_venta.(isset($embalaje_id)?" - Embalaje {$embalaje_id}":""),
+				'modulo'        => 'MetodoEnvio',
 				'modulo_accion' => json_encode($venta)
 			)
 		);

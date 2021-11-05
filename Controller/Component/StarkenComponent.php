@@ -77,7 +77,7 @@ class StarkenComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
-					'modulo' => 'Starken-Component',
+					'modulo' 	    => 'Starken-Component',
 					'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
 				)
 			);
@@ -247,7 +247,7 @@ class StarkenComponent extends Component
 				$log[] = array(
 					'Log' => array(
 						'administrador' => 'Starken vid:' . $venta['Venta']['id'],
-						'modulo' => 'Starken-Component',
+						'modulo' 		=> 'Starken-Component',
 						'modulo_accion' => 'Problemas al generar OT: ' . json_encode($response)
 					)
 				);
@@ -326,23 +326,12 @@ class StarkenComponent extends Component
 			
 		}
 
-		if($embalaje_orden_transporte){
-			$response_OrdenTransporteEmbalajes = $this->WarehouseNodriza->OrdenTransporteEmbalajes($embalaje_orden_transporte);
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
-					'modulo' 		=> 'Starken-Component',
-					'modulo_accion' => 'Resultados de registrar OrdenTransporteEmbalajes : ' . json_encode($response_OrdenTransporteEmbalajes )
-				)
-			);
-		}
-
 		if (empty($transportes)) {
 
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
-					'modulo' => 'Starken-Component',
+					'modulo' 		=> 'Starken-Component',
 					'modulo_accion' => 'No se encontraron transportes: ' . json_encode($transportes)
 				)
 			);
@@ -352,6 +341,16 @@ class StarkenComponent extends Component
 
 			return false;
 		}
+
+		$response_OrdenTransporteEmbalajes = $this->WarehouseNodriza->OrdenTransporteEmbalajes($embalaje_orden_transporte);
+		
+		$log[] = array(
+			'Log' => array(
+				'administrador' => "Starken vid: {$venta['Venta']['id']} ".(isset($embalaje_id)?" - Embalaje {$embalaje_id}":""),
+				'modulo' 		=> 'Starken-Component',
+				'modulo_accion' => 'Resultados de registrar OrdenTransporteEmbalajes : ' . json_encode($response_OrdenTransporteEmbalajes ,true)
+			)
+		);
 
 
 		# Se guarda la información del tracking en la venta
