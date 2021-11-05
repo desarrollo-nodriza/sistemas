@@ -147,7 +147,6 @@ class WarehouseNodrizaComponent extends Component
                     'venta_id'         => $venta['Venta']['id'],
                     'bodega_id'        => $bodega['Bodega']['id'],
                     'metodo_envio_id'  => $venta['Venta']['metodo_envio_id'],
-                    'marketplace_id'   => $venta['Venta']['marketplace_id'],
                     'comuna_id'        => $venta['Venta']['comuna_id'],
                     'prioritario'      => ($venta['Venta']['prioritario']) ? 1 : 0,
                     'fecha_venta'      => $venta['Venta']['fecha_venta'],
@@ -155,7 +154,10 @@ class WarehouseNodrizaComponent extends Component
                     'productos'        => []
 
                 ];
-               
+                if (isset($venta['Venta']['marketplace_id'])) {
+                    $embalaje['marketplace_id'] = $venta['Venta']['marketplace_id'];
+                }
+
                 # Asignamos los productos al embalaje
                 foreach ($venta['VentaDetalle'] as $d) {
 
