@@ -5244,6 +5244,22 @@ class VentasController extends AppController {
 				continue;
 			
 			$liberar = $this->Venta->liberar_reserva_stock_producto($id_detalle, $cant_liberar);
+			$venta     = ClassRegistry::init('VentaDetalle')->find('first', array(
+				'conditions' => array(
+					'VentaDetalle.id' => $id_detalle
+				),
+				'fields' => array(
+					'VentaDetalle.id'
+				),
+				'contain' => array(
+					'Venta' => array(
+						'fields' => array(
+							'Venta.id'
+						)
+					)
+				)
+			));
+			$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
 
 			if ($liberar == 1) {
 				$result['success'][]  = $value['VentaDetalleProducto']['codigo_proveedor'] . ' - Cant liberada: ' . $liberar  . ' unidad.';
