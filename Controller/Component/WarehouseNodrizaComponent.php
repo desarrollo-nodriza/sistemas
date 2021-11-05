@@ -110,7 +110,7 @@ class WarehouseNodrizaComponent extends Component
         $logs[] = array(
             'Log' => array(
                 'administrador' => 'Inicia embalaje venta ' . $id,
-                'modulo' => 'EmbalajeWarehouse',
+                'modulo'        => 'WarehouseNodrizaComponent',
                 'modulo_accion' => json_encode($venta)
             )
         );
@@ -185,7 +185,7 @@ class WarehouseNodrizaComponent extends Component
                 # si hay productos para embalar y tiene dte válido pasa a embalaje
                 if (!empty($embalaje['productos']) && $dte_valido) {
 
-                    $response = $this->WarehouseNodriza->CrearPedido($embalaje);
+                    $response = $this->CrearPedido($embalaje);
 
                     $logs[] = array(
                         'Log' => array(

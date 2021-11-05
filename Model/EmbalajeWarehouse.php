@@ -285,7 +285,7 @@ Class EmbalajeWarehouse extends AppModel {
 								continue;
 							}
 
-							$this->cancelar_embalaje($emp['embalaje_id']);
+							// $this->cancelar_embalaje($emp['embalaje_id']);
 							
 							
 						}

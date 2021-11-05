@@ -1577,7 +1577,7 @@ class Venta extends AppModel
 			}
 
 			# Preparamos los embalajes
-			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($this->id);
+			// ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($this->id);
 
 			return $liberar;
 		}else{
