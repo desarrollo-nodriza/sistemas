@@ -401,8 +401,19 @@ class EmbalajeWarehousesController extends AppController
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
+		$response = $this->WarehouseNodriza->CambiarCancelado($id, '$razonCancelado');
 
-		if ( $this->EmbalajeWarehouse->cancelar_embalaje($id, $this->Auth->user('id')) )
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save(array(
+			'Log' => array(
+				'administrador' => "Embalaje cancelado {$id}",
+				'modulo' 		=> 'EmbalajeWarehouse',
+				'modulo_accion' => json_encode($response)
+			)
+		));
+
+		// if ( $this->EmbalajeWarehouse->cancelar_embalaje($id, $this->Auth->user('id')) )
+		if ( $response['code'] == 200 )
 		{
 			$this->Session->setFlash('Embalaje cancelado con éxito.', null, array(), 'success');
 		}

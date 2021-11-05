@@ -249,7 +249,7 @@ class MetodoEnviosController extends AppController
 	 * @param  mixed $id_venta
 	 * @return void
 	 */
-	public function generar_etiqueta_envio_externo($id_venta)
+	public function generar_etiqueta_envio_externo($id_venta , $embalaje_id= null)
 	{
 		$venta = ClassRegistry::init('Venta')->obtener_venta_por_id($id_venta);
 
@@ -296,7 +296,7 @@ class MetodoEnviosController extends AppController
 			$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
 
 			# Creamos la OT
-			if ($this->Starken->generar_ot($venta)) {
+			if ($this->Starken->generar_ot($venta,$embalaje_id)) {
 
 				$this->Starken->registrar_estados($venta['Venta']['id']);
 				$resultado = true;
@@ -317,7 +317,7 @@ class MetodoEnviosController extends AppController
 			$this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
 
 			# Creamos la OT
-			if ($this->Conexxion->generar_ot($venta)) {
+			if ($this->Conexxion->generar_ot($venta,$embalaje_id)) {
 				$resultado = true;
 
 				$logs[] = array(
@@ -336,7 +336,7 @@ class MetodoEnviosController extends AppController
 			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
 
 			# Creamos la OT
-			if ($this->Boosmap->generar_ot($venta)) {
+			if ($this->Boosmap->generar_ot($venta,$embalaje_id)) {
 
 				$this->Boosmap->registrar_estados($venta['Venta']['id']);
 
@@ -358,7 +358,7 @@ class MetodoEnviosController extends AppController
 			$this->BlueExpress->crearCliente($venta['MetodoEnvio']['token_blue_express'], $venta['MetodoEnvio']['cod_usuario_blue_express'], $venta['MetodoEnvio']['cta_corriente_blue_express']);
 
 			# Creamos la OT
-			if ($this->BlueExpress->generar_ot($venta)) {
+			if ($this->BlueExpress->generar_ot($venta,$embalaje_id)) {
 
 				$this->BlueExpress->registrar_estados($venta['Venta']['id']);
 

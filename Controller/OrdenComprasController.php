@@ -6,6 +6,10 @@ App::uses('PagosController', 'Controller');
 class OrdenComprasController extends AppController
 {	
 
+	public $components = array(		
+		'WarehouseNodriza'
+	);
+
 	/**
      * Crea un redirect y agrega a la URL los parámetros del filtro
      * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
@@ -360,7 +364,9 @@ class OrdenComprasController extends AppController
 				foreach ($ventasSinReserva as $venta) {
 					foreach ($venta['VentaDetalle'] as $detalle) {
 						ClassRegistry::init('Venta')->reservar_stock_producto($detalle['id']);
+						
 					}	
+					$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
 				}
 			}
 			

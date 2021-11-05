@@ -7,7 +7,7 @@ App::import('Vendor', 'PDFMerger', array('file' => 'PDFMerger/PDFMerger.php'));
 class ConexxionComponent extends Component
 {
 	// Usamos laffpack para armar los bultos
-    public $components = array('LAFFPack');
+    public $components = array('LAFFPack','WarehouseNodriza');
 
     /**
      * @var obj
@@ -70,7 +70,7 @@ class ConexxionComponent extends Component
     }
 
 
-    public function generar_ot($venta)
+    public function generar_ot($venta,$embalaje_id)
 	{	
 		$volumenMaximo = (float) 60;
 		
@@ -145,7 +145,7 @@ class ConexxionComponent extends Component
 		}
 		
 		$ruta_pdfs = array();
-
+		$embalaje_orden_transporte=[];
 		foreach ($paquetes as $id_venta => $paquete) {
 
 			# dimensiones de todos los paquetes unificado
@@ -274,6 +274,17 @@ class ConexxionComponent extends Component
 				'etiqueta'        => $rutaPublica,
 				'entrega_aprox'   => null
 			);
+
+			if (isset($embalaje_id)) {
+                $embalaje_orden_transporte[]=[
+                    'embalaje_id'      => $embalaje_id,
+                    'orden_transporte' => $response['body']['barcode']
+                 ];
+            }
+		}
+		
+		if($embalaje_orden_transporte){
+			$this->WarehouseNodriza->OrdenTransporteEmbalajes($embalaje_orden_transporte);
 		}
 
 		if (empty($transportes)) {

@@ -984,9 +984,6 @@ class Venta extends AppModel
 
 		$this->cambiar_estado_picking($id, 'no_definido');
 		
-		# Preparamos los embalajes
-		ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id);
-
 		$this->saveField('subestado_oc', 'no_entregado');
 
 		return;
@@ -1464,8 +1461,6 @@ class Venta extends AppModel
 			$this->cambiar_estado_picking($venta['Venta']['id'], 'no_definido');
 		}
 		
-		# Preparamos los embalajes
-		ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($venta['Venta']['id']);
 
 		return $reservado;
 	}

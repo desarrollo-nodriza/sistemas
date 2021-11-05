@@ -1,210 +1,174 @@
 <?php
-/**
- * @author Nodriza Spa <cristian.rojas@nodriza.cl>
- * @version 1.0
- */
+class WarehouseNodriza
+{
 
-Class WarehouseNodriza {
-    
-	protected $API_DES_WAREHOUSE = 'https://dev-onestock.nodriza.cl';
-    protected $API_PRO_WAREHOUSE = 'https://warehouse.nodriza.cl';
-    protected $API_HOST;
-    protected $API_KEY;
+    protected static $API_ROOT_URL;
+    private $URLs =  [
+        'local' => 'https://warehouse-api-nodriza.herokuapp.com',
+        'dev'   => 'https://dev-warehouse.nodriza.cl',
+        'prod'  => 'https://warehouse.nodriza.cl',
+    ];
 
+    protected static $BX_TOKEN;
 
-    /**
-     * Configuration for CURL
-     */
-    private static $CURL_OPTS = array(
-        CURLOPT_USERAGENT      => "NODRIZA-SPA", 
-        CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_CONNECTTIMEOUT => 10, 
-        CURLOPT_RETURNTRANSFER => 1,
-        CURLOPT_ENCODING       => "",
-        CURLOPT_MAXREDIRS      => 10,
-        CURLOPT_FOLLOWLOCATION => 0,
-        CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-        CURLOPT_TIMEOUT        => 0
-    );
-        
     /**
      * __construct
-     *
-     * @param  mixed $develop
+     * Es necesario inicializar la clase para hacer uso de los metodos
+     * @param  mixed $BX_TOKEN
+     * @param  mixed $BX_USERCODE
+     * @param  mixed $BX_CLIENT_ACCOUNT
      * @return void
      */
-    public function __construct($key, $develop = true)
-    {   
-        $this->API_KEY = $key;
-        $this->API_HOST = $this->API_DES_WAREHOUSE;
-
-        if (!$develop)
-        {
-            $this->API_HOST = $this->API_PRO_WAREHOUSE;
-        }
-    }
-
-        
-    /**
-     * ubicar_productos_embalaje
-     *
-     * @param  mixed $id
-     * @return void
-     */
-    public function ubicar_productos_embalaje($id)
+    public function __construct($BX_TOKEN, $API_ROOT_URL = 'local')
     {
-        $data = array(
+        self::$API_ROOT_URL = $this->URLs[$API_ROOT_URL] ?? 'https://dev-warehouse.nodriza.cl';
+        self::$BX_TOKEN = $BX_TOKEN ?? '';
+    }
 
+    public function CambiarCancelado($embalajes)
+    {
+        return $this->cURL_POST('/api/v1/embalaje/cambiar-estado-a-cancelado', $embalajes);
+    }
+
+
+    public function CambiarCancelado_V2($venta_id, $responsable_id_cancelado, $devolucion, $motivo_cancelado = null)
+    {
+        return $this->cURL_POST(
+            '/api/v2/embalaje/cambiar-estado-a-cancelado',
+            [
+                "venta_id"                  => $venta_id,
+                "responsable_id_cancelado"  => $responsable_id_cancelado,
+                "devolucion"                => $devolucion,
+                "motivo_cancelado"          => $motivo_cancelado,
+            ]
+        );
+    }
+    public function RecrearEmbalajesPorItemAnulados($venta)
+    {
+        return $this->cURL_POST(
+            '/api/v1/embalaje/recrear-embalajes-por-item-anulados',
+            $venta
         );
     }
 
+    public function OrdenTransporteEmbalajes($orden_transporte)
+    {
+        // $ejemplo = [
+        //     [
+        //         "embalaje_id"       => 218,
+        //         "orden_transporte"  => 12312312323
+        //     ],
+        //     [
+        //         "embalaje_id"       => 218,
+        //         "orden_transporte"  => 12312312323
+        //     ]
+        // ];
 
-    /**
-     * Execute a GET Request
-     * 
-     * @param string $path
-     * @param array $params
-     * @param boolean $assoc
-     * @return mixed
-     */
-    public function get($path, $params = null, $assoc = false) {
-        $exec = $this->execute($path, null, $params, $assoc);
-
-        return $exec;
-    }
-
-    /**
-     * Execute a POST Request
-     * 
-     * @param string $body
-     * @param array $params
-     * @return mixed
-     */
-    public function post($path, $body = null, $params = array()) {
-        $body = json_encode($body);
-        $opts = array(
-            CURLOPT_POST => true, 
-            CURLOPT_POSTFIELDS => $body
+        return $this->cURL_POST(
+            '/api/v1/orden_transporte_embalajes/crear',
+            $orden_transporte
         );
-        
-        $exec = $this->execute($path, $opts, $params);
-
-        return $exec;
     }
 
-    /**
-     * Execute a PUT Request
-     * 
-     * @param string $path
-     * @param string $body
-     * @param array $params
-     * @return mixed
-     */
-    public function put($path, $body = null, $params = array()) {
-        $body = json_encode($body);
-        $opts = array(
-            CURLOPT_CUSTOMREQUEST => "PUT",
-            CURLOPT_POSTFIELDS => $body
+    public function CrearPedido($embalaje)
+    {
+        // [
+        //     "venta_id"=> 52624,
+        //     "bodega_id"=> 1,
+        //     "marketplace_id"=> 2,
+        //     "metodo_envio_id"=> 2,
+        //     "comuna_id"=> 1,
+        //     "prioritario"=> 1,
+        //     "fecha_venta"=> "2020-05-05",
+        //     "responsable"=>232,
+        //     "productos"=> [
+        //         [
+        //             "producto_id"=> 10121,
+        //             "detalle_id"=> 74466,
+        //             "cantidad_a_embalar"=> 2
+        //         ],
+        //         [
+        //             "producto_id"=> 15727,
+        //             "detalle_id"=> 74466,
+        //             "cantidad_a_embalar"=> 1
+        //         ]
+        //     ]
+        // ]
+        return $this->cURL_POST(
+            '/api/v1/orden_transporte_embalajes/crear',
+            $embalaje
         );
-        
-        $exec = $this->execute($path, $opts, $params);
-
-        return $exec;
     }
 
-    /**
-     * Execute a DELETE Request
-     * 
-     * @param string $path
-     * @param array $params
-     * @return mixed
-     */
-    public function delete($path, $params) {
-        $opts = array(
-            CURLOPT_CUSTOMREQUEST => "DELETE"
-        );
-        
-        $exec = $this->execute($path, $opts, $params);
-        
-        return $exec;
+    private function cURL_POST($URL, $POSTFIELDS)
+    {
+        // prx([self::$API_ROOT_URL . $URL,$POSTFIELDS]);
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => self::$API_ROOT_URL . $URL,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_HEADER => false,
+            CURLOPT_POSTFIELDS => json_encode($POSTFIELDS, true),
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . self::$BX_TOKEN
+            ),
+        ));
+
+        $response   = curl_exec($curl);
+        $http_code  = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curl_error     = curl_error($curl);
+        curl_close($curl);
+        return [
+            "code"        => $http_code,
+            "request"     => $POSTFIELDS,
+            "response"    => json_decode($response, true),
+            "curl_error"  => $curl_error,
+            'url'         => self::$API_ROOT_URL . $URL
+        ];
     }
 
-    /**
-     * Execute a OPTION Request
-     * 
-     * @param string $path
-     * @param array $params
-     * @return mixed
-     */
-    public function options($path, $params = null) {
-        $opts = array(
-            CURLOPT_CUSTOMREQUEST => "OPTIONS"
-        );
-        
-        $exec = $this->execute($path, $opts, $params);
+    private function cURL_GET($URL)
+    {
 
-        return $exec;
-    }
+        $curl = curl_init();
 
-    /**
-     * Execute all requests and returns the json body and headers
-     * 
-     * @param string $path
-     * @param array $opts
-     * @param array $params
-     * @param boolean $assoc
-     * @return mixed
-     */
-    public function execute($path, $opts = array(), $params = array(), $assoc = true) {
-        
-        $opts[CURLOPT_HTTPHEADER] = array(
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $this->API_KEY
-        );
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => self::$API_ROOT_URL . $URL,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 1000,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . self::$BX_TOKEN
+            ),
+        ));
 
-        $uri = $this->make_path($path, $params);
-        
-        $ch = curl_init($uri);
-        curl_setopt_array($ch, self::$CURL_OPTS);
+        $response       = curl_exec($curl);
+        $http_code      = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curl_error     = curl_error($curl);
 
-        if(!empty($opts))
-            curl_setopt_array($ch, $opts);
+        curl_close($curl);
 
-        $return["body"] = json_decode(curl_exec($ch), $assoc);
-        $return["httpCode"] = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        curl_close($ch);
-  
-        return $return;
-    }
-
-    /**
-     * Check and construct an real URL to make request
-     * 
-     * @param string $path
-     * @param array $params
-     * @return string
-     */
-    public function make_path($path, $params = array()) {
-        if (!preg_match("/^http/", $path)) {
-            if (!preg_match("/^\//", $path)) {
-                $path = '/'.$path;
-            }
-            $uri = $this->API_HOST.$path;
-        } else {
-            $uri = $path;
-        }
-
-        if(!empty($params)) {
-            $paramsJoined = array();
-
-            foreach($params as $param => $value) {
-               $paramsJoined[] = "$param=$value";
-            }
-            $params = '?'.implode('&', $paramsJoined);
-            $uri = $uri.$params;
-        }
-
-        return $uri;
+        return [
+            "code"       => $http_code,
+            "response"   => json_decode($response, true),
+            "curl_error" => $curl_error,
+            'url'        => self::$API_ROOT_URL . $URL
+        ];
     }
 }

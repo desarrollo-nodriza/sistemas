@@ -1274,14 +1274,18 @@
 														<th>Producto</th>
 														<th>Cantidad para embalar</th>
 														<th>Cantidad embalada</th>
+														<th>Cantidad anulada</th>
 														<th>Última modificación</th>
+														<th>Estado anterior</th>
 														<tbody>
 														<? foreach ($em['EmbalajeProductoWarehouse'] as $iemp => $emp) : ?>
 														<tr>
 															<td><?= $emp['VentaDetalleProducto']['nombre'];?></td>
 															<td><?= $emp['cantidad_a_embalar']; ?></td>
 															<td><?= $emp['cantidad_embalada']; ?></td>
+															<td><?= $emp['cantidad_anulada']; ?></td>
 															<td><?= $emp['ultima_modifacion']; ?></td>
+															<td><?= $emp['embalajeProducto_old']??'-'; ?></td>
 														</tr>
 														<? endforeach; ?>
 														</tbody>
@@ -1367,7 +1371,7 @@
 
 
 				<div class="panel-footer">
-					<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Actualizar Estado">
+					<input type="submit" class="btn btn-primary esperar-carga start-loading-then-redirect" autocomplete="off" data-loading-text="Espera un momento..." value="Actualizar Estado">
 					<?=$this->Html->link('<i class="fa fa-send"></i> Re-enviar email', array('controller' => 'ventas', 'action' => 'enviar_email_estado', $venta['Venta']['id']), array('class' => 'btn btn-success', 'escape' => false) );?>
 				</div>
 				<?= $this->Form->end(); ?>

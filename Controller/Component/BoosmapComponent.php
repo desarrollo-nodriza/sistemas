@@ -7,7 +7,7 @@ App::import('Vendor', 'PDFMerger', array('file' => 'PDFMerger/PDFMerger.php'));
 class BoosmapComponent extends Component
 {
 	// Usamos laffpack para armar los bultos
-    public $components = array('LAFFPack', 'LibreDte', 'Etiquetas');
+    public $components = array('LAFFPack', 'LibreDte', 'Etiquetas','WarehouseNodriza');
 
     /**
      * @var obj
@@ -86,7 +86,7 @@ class BoosmapComponent extends Component
      * 
      * @return bool
      */
-    public function generar_ot($venta)
+    public function generar_ot($venta,$embalaje_id=null)
 	{	
 		$volumenMaximo = (float) 5832000;
 		
@@ -161,7 +161,7 @@ class BoosmapComponent extends Component
 		}
 		
 		$ruta_pdfs = array();
-        
+		$embalaje_orden_transporte = [];
 		foreach ($paquetes as $paquete) {
 			
 			$tramo = $paquete['paquete'];
@@ -341,6 +341,16 @@ class BoosmapComponent extends Component
 				'entrega_aprox'   => ''
 			);
 			
+			if (isset($embalaje_id)) {
+				$embalaje_orden_transporte[]=[
+					'embalaje_id'      => $embalaje_id,
+					'orden_transporte' => $response['body'][0]['orderNumber'],
+				 ];
+            }
+		}
+
+		if($embalaje_orden_transporte){
+			$this->WarehouseNodriza->OrdenTransporteEmbalajes($embalaje_orden_transporte);
 		}
 
 		if (empty($transportes)) {

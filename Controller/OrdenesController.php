@@ -21,7 +21,8 @@ class OrdenesController extends AppController
     	'Toolmania',
     	'MeliMarketplace',
     	'LibreDte',
-    	'Prestashop'
+    	'Prestashop',
+		'WarehouseNodriza'
     );
     /**
      * Obtiene y lista los medios de pago disponibles en u array único
@@ -452,7 +453,7 @@ class OrdenesController extends AppController
 				try 
 				{
 					# Enviar DTE a LibreDTE
-					$this->generarDte();
+					// $this->generarDte();
 				} catch (Exception $e) 
 				{
 
@@ -482,6 +483,7 @@ class OrdenesController extends AppController
 						)
 					);
 				}
+				
 
 				if (!empty($id_dte)) 
 				{
@@ -491,7 +493,7 @@ class OrdenesController extends AppController
 						'garantia',
 						'stockout'
 					);
-
+					$id_dte['Dte']['estado'] = 'dte_real_emitido' ;
 					# Si es NDC se anulan los items en la venta, se recalculan los montos de la venta y se devuelven a bodega los itmes cancelados si corresponde.
 					if (!empty($this->request->data['DteDetalle']) 
 						&& $this->request->data['Dte']['tipo_documento'] == 61 
@@ -499,7 +501,6 @@ class OrdenesController extends AppController
 						&& in_array($this->request->data['Dte']['tipo_ntc'], $tipos_ndc_devloucion)
 					) 
 					{
-						
 						$venta = ClassRegistry::init('Venta')->find('first', array(
 							'conditions' => array(
 								'Venta.id' => $this->request->data['Dte']['venta_id']
@@ -660,7 +661,7 @@ class OrdenesController extends AppController
 					
 						# Guardamos los cambios
 						ClassRegistry::init('Venta')->saveAll($venta);
-
+						
 						# Re ingresamos los itemes devueltos
 						if (!empty($itemsDevuletos)) 
 						{
@@ -682,12 +683,12 @@ class OrdenesController extends AppController
 									case 'devolucion':
 										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $d['cantidad_entregada_anulada'], 'aumentar');
 										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
-										ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'devolucion',$d['cantidad_entregada_anulada']);
+										// ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'devolucion',$d['cantidad_entregada_anulada']);
 									
 										break;
 									case 'garantia':
 										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'GT', null, $d['venta_id']);
-										ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'garantia',$d['cantidad_entregada_anulada']);
+										// ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'garantia',$d['cantidad_entregada_anulada']);
 									
 										break;
 								}
@@ -700,7 +701,7 @@ class OrdenesController extends AppController
 						$ventasController->admin_reservar_stock_venta($venta['Venta']['id']);
 						*/
 					}
-
+					$id_dte['Dte']['estado'] = 'dte_real_emitido' ;
 					# Si es NDC de anulación, anula los items sin devolverlos a bodega
 					if (!empty($this->request->data['DteDetalle']) 
 						&& $this->request->data['Dte']['tipo_documento'] == 61 
@@ -708,6 +709,7 @@ class OrdenesController extends AppController
 						&& $this->request->data['Dte']['tipo_ntc'] == 'anulacion'
 					)
 					{
+
 						$venta = ClassRegistry::init('Venta')->find('first', array(
 							'conditions' => array(
 								'Venta.id' => $this->request->data['Dte']['venta_id']
@@ -836,12 +838,20 @@ class OrdenesController extends AppController
 						
 						# Guardamos los cambios
 						ClassRegistry::init('Venta')->saveAll($venta);
-
+						
 					}
 					
 					# Preparamos los embalajes
-					ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id_orden, CakeSession::read('Auth.Administrador.id'));
-
+					$response = $this->WarehouseNodriza->RecrearEmbalajesPorItemAnulados($id_orden);
+					ClassRegistry::init('Log')->create();
+					ClassRegistry::init('Log')->save(array(
+						'Log' => array(
+							'administrador' => "Consumo Api Warehouse(RecrearEmbalajesPorItemAnulados) Notas de Credito ({$this->request->data['Dte']['tipo_ntc']}) venta {$id_orden}",
+							'modulo' => 'Ordenes',
+							'modulo_accion' => json_encode($response)
+						)
+					));
+					$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
 					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte['Dte']['id'], $id_orden));
 				}
 

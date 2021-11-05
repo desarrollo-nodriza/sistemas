@@ -15,7 +15,8 @@ class VentaDetalleProductosController extends AppController
 		'Prestashop',
 		'MeliMarketplace',
 		'RequestHandler',
-		'Onestock'
+		'Onestock',
+		'WarehouseNodriza'
 	);
 
 	/**
@@ -1502,6 +1503,22 @@ class VentaDetalleProductosController extends AppController
 	{	
 
 		$cant = ClassRegistry::init('Venta')->reservar_stock_producto($id_detalle);
+		$venta     = ClassRegistry::init('VentaDetalle')->find('first', array(
+			'conditions' => array(
+				'VentaDetalle.id' => $id_detalle
+			),
+			'fields' => array(
+				'VentaDetalle.id'
+			),
+			'contain' => array(
+				'Venta' => array(
+					'fields' => array(
+						'Venta.id'
+					)
+				)
+			)
+		));
+		$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
 
 		if ($cant == 1) {
 			$this->Session->setFlash('Cantidad reservada: ' . $cant . ' unidad.', null, array(), 'success');

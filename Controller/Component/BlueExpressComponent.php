@@ -8,7 +8,7 @@ class BlueExpressComponent extends Component
 {
 
     private $blue_express;
-    public $components = array('LAFFPack', 'LibreDte', 'Etiquetas');
+    public $components = array('LAFFPack', 'LibreDte', 'Etiquetas','WarehouseNodriza');
 
     public function crearCliente($BX_TOKEN, $BX_USERCODE, $BX_CLIENT_ACCOUNT)
     {
@@ -269,7 +269,7 @@ class BlueExpressComponent extends Component
         return $this->blue_express->BXPricing($data);
     }
 
-    public function generar_ot($venta)
+    public function generar_ot($venta, $embalaje_id= null)
     {
 
         $volumenMaximo = $venta['MetodoEnvio']['volumen_maximo'];
@@ -343,7 +343,7 @@ class BlueExpressComponent extends Component
 
         $costo_envio = 0;
         $numero_paquete = 0;
-
+        $embalaje_orden_transporte= [];
         foreach ($paquetes as $paquete) {
             $numero_paquete++;
             # dimensiones de todos los paquetes unificado
@@ -482,9 +482,20 @@ class BlueExpressComponent extends Component
                 continue;
                 $exito = false;
             }
+            if (isset($embalaje_id)) {
+                $embalaje_orden_transporte[]=[
+                    'embalaje_id'      => $embalaje_id,
+                    'orden_transporte' => $response['response']['data']['trackingNumber']
+                 ];
+            }
+            
 
             $costo_envio = $costo_envio + $obtener_costo_envio['response']['data']['total'];
         }
+
+        if($embalaje_orden_transporte){
+			$this->WarehouseNodriza->OrdenTransporteEmbalajes($embalaje_orden_transporte);
+		}
 
         if ($transportes) {
             $fin_proceso_ot = array(

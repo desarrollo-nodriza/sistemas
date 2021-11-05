@@ -10,7 +10,7 @@ class StarkenComponent extends Component
 	private $StarkenConexion;
 
 	// Usamos laffpack para armar los bultos
-	public $components = array('LAFFPack');
+	public $components = array('LAFFPack','WarehouseNodriza');
 
 	private $tipoEntrega = array(
 		1 => 'AGENCIA',
@@ -32,7 +32,7 @@ class StarkenComponent extends Component
 	}
 
 
-	public function generar_ot($venta)
+	public function generar_ot($venta , $embalaje_id = null)
 	{
 		$volumenMaximo = (float) 60;
 
@@ -101,7 +101,8 @@ class StarkenComponent extends Component
 			);
 		}
 
-		$ruta_pdfs = array();
+		$ruta_pdfs 				   = array();
+		$embalaje_orden_transporte = [];
 
 		foreach ($paquetes as $paquete) {
 
@@ -312,6 +313,27 @@ class StarkenComponent extends Component
 				'cod_seguimiento' => $response['body']['nroOrdenFlete'],
 				'etiqueta'        => $rutaPublica,
 				'entrega_aprox'   => $response['body']['fechaEstimadaEntrega']
+			);
+
+			if (isset($embalaje_id)) {
+				$embalaje_orden_transporte[]=[
+					'embalaje_id'      => $embalaje_id,
+					'orden_transporte' => $response['body']['nroOrdenFlete']
+				 ];
+            }
+			
+
+			
+		}
+
+		if($embalaje_orden_transporte){
+			$response_OrdenTransporteEmbalajes = $this->WarehouseNodriza->OrdenTransporteEmbalajes($embalaje_orden_transporte);
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
+					'modulo' 		=> 'Starken-Component',
+					'modulo_accion' => 'Resultados de registrar OrdenTransporteEmbalajes : ' . json_encode($response_OrdenTransporteEmbalajes )
+				)
 			);
 		}
 
