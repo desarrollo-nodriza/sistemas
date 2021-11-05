@@ -118,7 +118,7 @@ class WarehouseNodrizaComponent extends Component
         $bodega = ClassRegistry::init('Bodega')->obtener_bodega_principal();
 
         $dte_valido = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
-
+        // prx([$venta, $dte_valido]);
         switch ($venta['Venta']['picking_estado']) {
             case 'no_definido':
 
@@ -155,7 +155,7 @@ class WarehouseNodrizaComponent extends Component
                     'productos'        => []
 
                 ];
-
+               
                 # Asignamos los productos al embalaje
                 foreach ($venta['VentaDetalle'] as $d) {
 
@@ -181,6 +181,7 @@ class WarehouseNodrizaComponent extends Component
                         );
                     }
                 }
+                // prx([$embalaje, $dte_valido]);
 
                 # si hay productos para embalar y tiene dte válido pasa a embalaje
                 if (!empty($embalaje['productos']) && $dte_valido) {
