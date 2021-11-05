@@ -115,8 +115,12 @@
 
 
                                           <!-- Venta ID -->
-                                          <h4 class="text-center" style="color: inherit; font-size: 33px; font-weight: 700; line-height: 36px; margin-top: 30px; margin-bottom: 30px; text-align: center; vertical-align: baseline;">N° Venta #<?=$venta['Venta']['id'];?></h4>
+                                          <h4 class="text-center" style="color: inherit; font-size: 33px; font-weight: 700; line-height: 36px; margin-top: 30px; margin-bottom: 15px; text-align: center; vertical-align: baseline;">Referencia #<?=$venta['Venta']['referencia'];?></h4>
                                           <!-- /Venta ID -->
+
+                                          <!-- Sub titulo -->
+                                          <h5 class="text-muted text-center" style="color: #636c72; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 30px; margin-top: 0px; text-align: center; vertical-align: baseline;">N° de venta #<?=$venta['Venta']['id']?></h5>
+                                          <!-- /Sub titulo -->
                                           
                                           <!-- Sub titulo -->
                                           <h5 class="text-muted text-center" style="color: #636c72; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 0px; margin-top: 0px; text-align: center; vertical-align: baseline;">¿Por qué cancelamos tu compra?</h5>
