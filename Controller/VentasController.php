@@ -4719,6 +4719,7 @@ class VentasController extends AppController {
 	 */
 	public function cambiarEstado($id_venta, $id_externo, $estado_nuevo_id, $tienda_id, $marketplace_id = null, $razonCancelado = '', $detalleCancelado = '', $responsable = '', $fecha_cambio = '')
 	{
+
 		ClassRegistry::init('VentaEstado')->id = $estado_nuevo_id;
 		ClassRegistry::init('Tienda')->id      = $tienda_id;
 
@@ -4989,7 +4990,7 @@ class VentasController extends AppController {
 					ClassRegistry::init('Log')->create();
 					ClassRegistry::init('Log')->save(array(
 						'Log' => array(
-							'administrador' => "Se cancela vid {$id_venta}}",
+							'administrador' => "Se cancela vid {$id_venta}",
 							'modulo' 		=> 'Ventas',
 							'modulo_accion' => json_encode($response)
 						)
@@ -5106,6 +5107,10 @@ class VentasController extends AppController {
 						))
 					)
 				);
+			}
+
+			if (!ClassRegistry::init('VentaEstado')->es_un_estado_de_una_venta($estado_nuevo_id)) {
+				$response = $this->WarehouseNodriza->CambiarCancelado_V2($id_venta,CakeSession::read('Auth.Administrador.id')??1,true,"Se cancela por estado no perteneciente a venta");
 			}
 		}
 		else
@@ -5259,8 +5264,15 @@ class VentasController extends AppController {
 					)
 				)
 			));
-			$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
-
+			$response = $this->WarehouseNodriza->CambiarCancelado_V2($venta['Venta']['id'],CakeSession::read('Auth.Administrador.id')??1,true,"Se liberan reservas productos.");
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->save(array(
+				'Log' => array(
+					'administrador' => "Se cancela vid {$venta['Venta']['id']}",
+					'modulo' 		=> 'Ventas',
+					'modulo_accion' => json_encode($response)
+				)
+			));
 			if ($liberar == 1) {
 				$result['success'][]  = $value['VentaDetalleProducto']['codigo_proveedor'] . ' - Cant liberada: ' . $liberar  . ' unidad.';
 			}elseif($liberar > 1) {

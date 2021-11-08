@@ -54,4 +54,20 @@ Class EmbalajeProductoWarehouse extends AppModel {
 		)
 	);
 
+	public $hasMany = array(
+		'HistorialEmbalajeProductoWarehouse' => array(
+			'className'				=> 'HistorialEmbalajeProductoWarehouse',
+			'foreignKey'			=> 'embalaje_productos_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		)
+	);
+
 }

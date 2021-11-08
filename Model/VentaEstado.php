@@ -190,6 +190,29 @@ class VentaEstado extends AppModel
 		return $est['VentaEstadoCategoria']['cancelado'];
 	}
 
+	public function es_un_estado_de_una_venta($estado_id)
+	{
+		$est = $this->find('first', array(
+			'conditions' => array(
+				'VentaEstado.id' => $estado_id
+			),
+			'contain' => array(
+				'VentaEstadoCategoria' => array(
+					'fields' => array(
+						'VentaEstadoCategoria.id'
+					)
+					,'conditions' => array(
+						'VentaEstadoCategoria.venta' => true
+					)
+				)
+			),
+			'fields' => array(
+				'VentaEstado.id'
+			)
+		));		
+		return ($est['VentaEstadoCategoria']['id'])?true:false;
+	}
+
 
 	public function estado_mueve_bodega($estado_id)
 	{

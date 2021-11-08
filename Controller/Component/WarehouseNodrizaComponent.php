@@ -6,18 +6,12 @@ App::import('Vendor', 'WarehouseNodriza', array('file' => 'WarehouseNodriza/Ware
 class WarehouseNodrizaComponent extends Component
 {
     private $WarehouseNodriza;
-    public $API_ROOT_URL;
-
-    public function __construct()
-    {
-        $this->API_ROOT_URL = Configure::read('ambiente') == 'dev' ? 'https://dev-warehouse.nodriza.cl' : 'https://warehouse.nodriza.cl';
-    }
+   
 
     public function crearCliente()
     {
         $BX_TOKEN = ClassRegistry::init('Token')->crear_token(CakeSession::read('Auth.Administrador.id') ?? 1);
-        // $this->WarehouseNodriza = new WarehouseNodriza($BX_TOKEN, $this->API_ROOT_URL);
-        $this->WarehouseNodriza = new WarehouseNodriza($BX_TOKEN['token'] ?? '', 'local');
+        $this->WarehouseNodriza = new WarehouseNodriza($BX_TOKEN['token'] ?? '', Configure::read('ambiente'));
     }
 
     public function CambiarCancelado_V2($venta_id, $responsable_id_cancelado, $devolucion, $motivo_cancelado)

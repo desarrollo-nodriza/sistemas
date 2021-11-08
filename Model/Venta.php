@@ -581,7 +581,8 @@ class Venta extends AppModel
 								'fields' => array(
 									'VentaDetalleProducto.nombre'
 								)
-							)
+							),
+							'HistorialEmbalajeProductoWarehouse'
 						)
 					),
 					'Comuna' => [

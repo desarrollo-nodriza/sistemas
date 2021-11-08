@@ -1276,7 +1276,6 @@
 														<th>Cantidad embalada</th>
 														<th>Cantidad anulada</th>
 														<th>Última modificación</th>
-														<th>Estado anterior</th>
 														<tbody>
 														<? foreach ($em['EmbalajeProductoWarehouse'] as $iemp => $emp) : ?>
 														<tr>
@@ -1285,7 +1284,6 @@
 															<td><?= $emp['cantidad_embalada']; ?></td>
 															<td><?= $emp['cantidad_anulada']; ?></td>
 															<td><?= $emp['ultima_modifacion']; ?></td>
-															<td><?= $emp['embalajeProducto_old']??'-'; ?></td>
 														</tr>
 														<? endforeach; ?>
 														</tbody>
