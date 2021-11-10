@@ -66,6 +66,13 @@
 									<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 									<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 								</tr>
+								<tr>
+									<th><?= $this->Form->label('reserva_stock', 'Permitir reservar stock'); ?></th>
+									<td>
+										<?= $this->Form->input('reserva_stock', array('class' => 'icheckbox')); ?>
+										<span class="help-block">Las ventas que tengan esta categoría se les permitira reservar stock.</span>
+									</td>
+								</tr>
 							</table>
 
 							<div class="pull-right">

@@ -26,21 +26,21 @@
 									<th><?= $this->Form->label('venta', '¿Es Venta?'); ?></th>
 									<td>
 										<?= $this->Form->input('venta', array('class' => 'icheckbox')); ?>
-										<span class="help-block">Las ventas que tengan ésta categoria se marcarán como una venta válida.</span>
+										<span class="help-block">Las ventas que tengan esta categoría se marcarán como una venta válida.</span>
 									</td>
 								</tr>
 								<tr>
 									<th><?= $this->Form->label('rechazo', '¿Es Venta rechazada?'); ?></th>
 									<td>
 										<?= $this->Form->input('rechazo', array('class' => 'icheckbox')); ?>
-										<span class="help-block">Las ventas que tengan ésta categoria se marcarán como una venta cancelada o rechazada.</span>
+										<span class="help-block">Las ventas que tengan esta categoría se marcarán como una venta cancelada o rechazada.</span>
 									</td>
 								</tr>
 								<tr>
 									<th><?= $this->Form->label('excluir_preparacion', '¿Excluir de la preparación de pedidos?'); ?></th>
 									<td>
 										<?= $this->Form->input('excluir_preparacion', array('class' => 'icheckbox')); ?>
-										<span class="help-block">Las ventas que tengan ésta categoria no se mostrarán en el visor de preparación de pedidos.</span>
+										<span class="help-block">Las ventas que tengan esta categoría no se mostrarán en el visor de preparación de pedidos.</span>
 									</td>
 								</tr>
 								<tr>
@@ -66,6 +66,13 @@
 								<tr>
 									<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 									<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
+								</tr>
+								<tr>
+									<th><?= $this->Form->label('reserva_stock', 'Permitir reservar stock'); ?></th>
+									<td>
+										<?= $this->Form->input('reserva_stock', array('class' => 'icheckbox')); ?>
+										<span class="help-block">Las ventas que tengan esta categoría se les permitira reservar stock.</span>
+									</td>
 								</tr>
 							</table>
 

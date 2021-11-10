@@ -363,7 +363,7 @@ class VentaDetalleProducto extends AppModel
 					'type' => 'INNER',
 					'conditions' => array(
 						'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
-						'VentaEstadoCategoria.venta = 1'
+						'VentaEstadoCategoria.reserva_stock = 1'
 					)
 				)
 			),
@@ -774,7 +774,7 @@ class VentaDetalleProducto extends AppModel
 					'type' => 'INNER',
 					'conditions' => array(
 						'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
-						'VentaEstadoCategoria.venta = 1'
+						'VentaEstadoCategoria.reserva_stock = 1'
 					)
 				)
 			),
