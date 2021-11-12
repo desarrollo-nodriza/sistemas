@@ -52,6 +52,18 @@ class Bodega extends AppModel
 	/**
 	 * ASOCIACIONES
 	 */
+
+	public $belongsTo = array(
+		'Comuna' => array(
+			'className'				=> 'Comuna',
+			'foreignKey'			=> 'comuna_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		),
+	);
+	
 	public $hasAndBelongsToMany = array(
 		'VentaDetalleProducto' => array(
 			'className'				=> 'VentaDetalleProducto',

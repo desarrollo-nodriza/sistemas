@@ -111,6 +111,19 @@ Router::connect(
     )
 );
 
+Router::connect(
+    '/api/producto/stock_disponible/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'VentaDetalleProductos', 
+        'action' => 'recuperar_stock',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
 
 /**
  * Marcas
@@ -371,6 +384,19 @@ Router::connect(
     array(
         'pass' => array('id'),
         'id' => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/api/ventas/seguimiento/ref/:referencia', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'Ventas', 
+        'action'        => 'getSeguimientoByRef',
+        'api'           => true,
+        'prefix'        => 'api'),
+    array(
+        'pass' => array('referencia'),
+        'id' => '[0-9-a-Z]+'
     )
 );
 

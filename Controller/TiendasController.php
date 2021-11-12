@@ -54,9 +54,11 @@ class TiendasController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-
-			$this->request->data['Tienda']['meta_ids_enviame'] = implode(',', $this->request->data['Tienda']['meta_ids_enviame']);
 			
+			if ($this->request->data['Tienda']['meta_ids_enviame']) {
+				$this->request->data['Tienda']['meta_ids_enviame'] = implode(',', $this->request->data['Tienda']['meta_ids_enviame']);
+			}
+					
 			if ( $this->Tienda->save($this->request->data) )
 			{
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');

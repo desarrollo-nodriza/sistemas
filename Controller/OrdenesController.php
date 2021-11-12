@@ -674,9 +674,9 @@ class OrdenesController extends AppController
 								switch($this->request->data['Dte']['tipo_ntc'])
 								{	
 									case 'stockout': 
-										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $d['cantidad_entregada_anulada'], 'aumentar');
-										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
-										ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'devolucion',$d['cantidad_entregada_anulada']);
+										// ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $d['cantidad_entregada_anulada'], 'aumentar');
+										// ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
+										// ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'devolucion',$d['cantidad_entregada_anulada']);
 										break;
 
 									case 'devolucion':
@@ -700,7 +700,6 @@ class OrdenesController extends AppController
 						$ventasController->admin_reservar_stock_venta($venta['Venta']['id']);
 						*/
 					}
-
 
 					# Si es NDC de anulación, anula los items sin devolverlos a bodega
 					if (!empty($this->request->data['DteDetalle']) 
@@ -793,7 +792,7 @@ class OrdenesController extends AppController
 									if ($d['reservado_virtual'] > 0)
 									{
 										# Nuevo stock virtual
-										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $detalle['QtyItem'], 'aumentar');
+										#ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $detalle['QtyItem'], 'aumentar');
 										$venta['VentaDetalle'][$ip]['reservado_virtual'] = $d['reservado_virtual'] - $detalle['QtyItem'];
 									}
 
@@ -822,23 +821,24 @@ class OrdenesController extends AppController
 						}
 						
 						# Recalculamos los totales de la venta
-						$subtotal_neto  = (float) array_sum(Hash::extract($venta['VentaDetalle'], '{n}.total_neto')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.monto_anulado'));
+						$subtotal_neto  = (float) array_sum(Hash::extract($venta['VentaDetalle'], '{n}.total_neto'));
 						$subtotal_bruto = (float) monto_bruto($subtotal_neto);
 						$descuento      = (float) ($porcentaje_descuento > 0) ? round($subtotal_bruto * $porcentaje_descuento, 2) : 0;
 						
+						$venta['Venta']['descuento'] = $descuento;
 						# si se anulan todos los items el despacho se deja en 0
 						if ($subtotal_bruto == 0) 
 						{
 							$venta['Venta']['costo_envio'] = (float) 0;
+							$venta['Venta']['descuento'] = (float) 0;
 						}
 
-						$venta['Venta']['descuento'] = $descuento;
 						
 						# Guardamos los cambios
 						ClassRegistry::init('Venta')->saveAll($venta);
 
 					}
-
+					
 					# Preparamos los embalajes
 					ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id_orden, CakeSession::read('Auth.Administrador.id'));
 

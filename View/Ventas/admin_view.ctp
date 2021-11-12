@@ -255,6 +255,7 @@
 												<th>Precio<br/> Neto</th>
 												<th>Precio<br/> Bruto</th>
 												<th>Cantidad</th>
+												<th>Cantidad<br/> Entregada</th>
 												<th>Stock<br/> reservado</th>
 												<th>Cant<br/> anulada</th>
 												<th>Subtotal</th>
@@ -313,6 +314,9 @@
 														</td>
 														<td>
 															<?= number_format($detalle['cantidad'], 0, ".", "."); ?>
+														</td>
+														<td>
+															<?= number_format($detalle['cantidad_entregada'], 0, ".", "."); ?>
 														</td>
 														<td>
 															<?=$detalle['cantidad_reservada'];?>
@@ -422,29 +426,29 @@
 											</tbody>
 											<tfoot>
 												<tr>
-													<th colspan="9" class="text-right">Total Productos</th>
+													<th colspan="10" class="text-right">Total Productos</th>
 													<td><?=CakeNumber::currency($TotalProductos, 'CLP');?></td>
 												</tr>
 												<tr>
-													<th colspan="9" class="text-right">IVA <small>(19%)</small></th>
+													<th colspan="10" class="text-right">IVA <small>(19%)</small></th>
 													<td><?=CakeNumber::currency(round($TotalProductos * 0.19), 'CLP');?></td>
 												</tr>
 												<tr>
-													<th colspan="9" class="text-right">Descuento</th>
+													<th colspan="10" class="text-right">Descuento</th>
 													<td>
 														<?php if (!empty($venta['Venta']['descuento'])) {echo CakeNumber::currency($venta['Venta']['descuento'], 'CLP');} ?>
 														<?= $this->Form->input('DscRcgGlobal.ValorDR', array('type' => 'hidden', 'value' => round($this->request->data['Venta']['descuento']))); ?>
 													</td>
 												</tr>
 												<tr>
-													<th colspan="9" class="text-right">Transporte</th>
+													<th colspan="10" class="text-right">Transporte</th>
 													<td>
 														<?=$this->Form->hidden('Dte.Transporte', array('value' => $venta['Venta']['costo_envio'] ));?>
 														<?php if (!empty($venta['Venta']['costo_envio'])) {echo CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP');} ?>
 													</td>
 												</tr>
 												<tr class="success">
-													<th colspan="9" class="text-right" style="font-size: 22px;">Total</th>
+													<th colspan="10" class="text-right" style="font-size: 22px;">Total</th>
 													<td style="font-size: 22px;"><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></td>
 												</tr>
 											</tfoot>
@@ -500,11 +504,7 @@
 																	<? if (is_null( $transporte['TransportesVenta']['cod_seguimiento'])) : ?>
 																		No aplica
 																	<? else : ?>	
-																		<? if ( $transporte['id']!=18) : ?>
-																			No aplica
-																		<? else : ?>	
 																			<?= $this->Html->link('<i class="fa fa-file-pdf-o" aria-hidden="true"></i>Generar etiqueta', array('action' => 'admin_regenerar_etiqueta',$transporte['TransportesVenta']['id']), array('class' => 'btn btn-primary', 'escape' => false)); ?>
-																		<? endif; ?>
 																	<? endif; ?>
 																<? endif; ?>
 															</td>

@@ -391,7 +391,7 @@ class VentaDetalleProducto extends AppModel
 			if ($vendido['VentaDetalle']['cantidad_reservada'] == 0)
 				continue;
 
-			$total = $total + ( $vendido['VentaDetalle']['cantidad_reservada'] - $vendido['VentaDetalle']['cantidad_entregada'] );
+			$total = $total + ( $vendido['VentaDetalle']['cantidad_reservada']);
 		}
 
 		return $total;

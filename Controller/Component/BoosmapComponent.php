@@ -101,7 +101,7 @@ class BoosmapComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
+					'modulo' => 'BoosmapComponent',
 					'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
 				)
 			);
@@ -136,7 +136,7 @@ class BoosmapComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
+					'modulo' => 'BoosmapComponent',
 					'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
 				)
 			);
@@ -230,26 +230,18 @@ class BoosmapComponent extends Component
                 ));
             }
 			
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Request: ' . json_encode($boosmapArr)
-				)
-			);
-			
 			$response = $this->BoosmapCliente->createOt($boosmapArr);
 	
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Response: ' . json_encode($response)
+					'modulo' 		=> 'BoosmapComponent',
+					'modulo_accion' => json_encode([
+						'Request para generar OT' => $boosmapArr,
+						'Se genero OT' => $response
+					])
 				)
 			);
-
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
 			
 			if ($response['httpCode'] > 299) {
 				return false;
@@ -333,17 +325,13 @@ class BoosmapComponent extends Component
 				));	
 			}else{
 
-				$log_1 = array(
+				$log[] = array(
 					'Log' => array(
 						'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Response(generar_ot): ' . json_encode($etiquetaArr)
+						'modulo' => 'BoosmapComponent',
+						'modulo_accion' => 'Problemas con la URL de la etiqueta: ' . json_encode($etiquetaArr)
 					)
 				);
-	
-				ClassRegistry::init('Log')->create();
-				ClassRegistry::init('Log')->save($log_1);
-
 			}
 
 			$transportes[] = array(
@@ -382,6 +370,9 @@ class BoosmapComponent extends Component
 				));
 			}
 		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 
 		if (ClassRegistry::init('Venta')->saveAll($nwVenta))
 		{	
@@ -517,14 +508,6 @@ class BoosmapComponent extends Component
 				$es_envio_parcial = true;
 			}
 
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'registrar_estados - vid ' . $id,
-					'modulo' => 'BoosmapComponent',
-					'modulo_accion' => 'Estados embalaje: ' . json_encode($estados)
-				)
-			);
-			
 			foreach ($estados as $e) 
 			{	
 				if ($es_envio_parcial)
@@ -539,14 +522,6 @@ class BoosmapComponent extends Component
 				# Verificamos que el estado no exista en los registros
 				if (ClassRegistry::init('EnvioHistorico')->existe($estado_nombre, $trans['TransportesVenta']['id']))
 				{	
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'registrar_estados - vid ' . $id,
-							'modulo' => 'BoosmapComponent',
-							'modulo_accion' => 'Estado ya registrado: ' . json_encode($estado_nombre)
-						)
-					);
-
 					continue;
 				}
 				
@@ -569,23 +544,18 @@ class BoosmapComponent extends Component
 					)
 				);
 
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'registrar_estados - vid ' . $id,
-						'modulo' => 'BoosmapComponent',
-						'modulo_accion' => 'Nuevo estado historico: ' . json_encode($historicos)
-					)
-				);
+				
 				
 			}
-
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'registrar_estados - vid ' . $id,
-					'modulo' => 'BoosmapComponent',
-					'modulo_accion' => 'Finaliza estados transporte: ' . json_encode($trans)
-				)
-			);
+			if (count($historicos)>0) {
+				$log[] = array(
+					'Log' => array(
+						'administrador' => count($historicos) . 'nuevos historicos del vid - ' . $id,
+						'modulo' => 'BoosmapComponent',
+						'modulo_accion' => json_encode($historicos)
+					)
+				);
+			}
 		}
 		
 		ClassRegistry::init('Log')->create();
@@ -598,6 +568,139 @@ class BoosmapComponent extends Component
 		
 		ClassRegistry::init('EnvioHistorico')->create();
 		return ClassRegistry::init('EnvioHistorico')->saveMany($historicos);
+	}
+
+	public function regenerar_etiqueta($transportes_venta,$venta_id)
+	{
+
+	
+		$venta = $this->Venta->find('first',  [
+			'conditions' => ['Venta.id' => $venta_id],
+			'contain' => [
+				'MedioPago' => [
+					'fields' => ['MedioPago.nombre']
+				],
+				'MetodoEnvio' => [
+					'fields' => [
+						'MetodoEnvio.nombre',
+						'MetodoEnvio.boosmap_service'
+					]
+				],
+				'Tienda' => [
+					'fields' => [
+						'Tienda.nombre',
+						'Tienda.rut',
+						'Tienda.fono',
+						'Tienda.url',
+						'Tienda.direccion',
+					]
+				],
+				'VentaCliente' => [
+					'fields' => [
+						'VentaCliente.email',
+					]
+				],
+			],
+		]);
+
+		$venta_detalle =  ClassRegistry::init('VentaDetalle')->find(
+			'all',
+			[
+				'conditions' => ['VentaDetalle.venta_id' => $venta_id],
+				'contain' => [
+					'VentaDetalleProducto' => [
+						'fields' => [
+							'VentaDetalleProducto.id',
+							'VentaDetalleProducto.alto',
+							'VentaDetalleProducto.ancho',
+							'VentaDetalleProducto.largo',
+							'VentaDetalleProducto.peso',
+						]
+					],
+				],
+				'fields' => [
+					'VentaDetalle.venta_id',
+					'VentaDetalle.cantidad_reservada',
+				]
+			]
+		);
+		$venta_detalle_filtrado 			= Hash::extract($venta_detalle, '{n}.VentaDetalle');
+		$Venta_detalle_producto_filtrado 	= Hash::extract($venta_detalle, '{n}.VentaDetalleProducto');
+		$venta_detalle_final 				= [];
+
+		foreach ($venta_detalle_filtrado as $key => $value) {
+			$value['VentaDetalleProducto']	= $Venta_detalle_producto_filtrado[$key];
+			$venta_detalle_final[]			= $value;
+		}
+
+		$volumenMaximo = (float) 5832000;
+		$bulto = $this->LAFFPack->obtener_bultos_venta(['VentaDetalle' => $venta_detalle_final], $volumenMaximo);
+
+		$canal_venta = '';
+
+		if ($venta['Venta']['venta_manual']) {
+			$canal_venta = 'POS de venta';
+		} else if ($venta['Venta']['marketplace_id']) {
+			$canal_venta = $venta['Marketplace']['nombre'];
+		} else {
+			$canal_venta = $venta['Tienda']['nombre'];
+		}
+
+		$etiquetaArr = array(
+			'venta' => array(
+				'id' 			=> $venta['Venta']['id'],
+				'metodo_envio' 	=> $venta['MetodoEnvio']['nombre'],
+				'canal' 		=> $canal_venta,
+				'medio_de_pago' => $venta['MedioPago']['nombre'],
+				'fecha_venta' 	=> $venta['Venta']['fecha_venta']
+			),
+			'transportista' => array(
+				'nombre' 		=> 'BOOSMAP',
+				'tipo_servicio' => $venta['MetodoEnvio']['boosmap_service'],
+				'codigo_barra' 	=> $transportes_venta['TransportesVenta']['cod_seguimiento'],
+			),
+			'remitente' => array(
+				'nombre' 	=> $venta['Tienda']['nombre'],
+				'rut' 		=> $venta['Tienda']['rut'],
+				'fono' 		=> $venta['Tienda']['fono'],
+				'url' 		=> $venta['Tienda']['url'],
+				'email' 	=> 'ventas@toolmania.cl',
+				'direccion' => $venta['Tienda']['direccion']
+			),
+			'destinatario' => array(
+				'nombre' 	=> $venta['Venta']['nombre_receptor'],
+				'rut'		=> $venta['Venta']['rut_receptor'],
+				'fono' 		=> $venta['Venta']['fono_receptor'],
+				'email' 	=> $venta['VentaCliente']['email'],
+				'direccion' => $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega'],
+				'comuna' 	=> $venta['Venta']['comuna_entrega']
+			),
+			'bulto' => array(
+				'referencia' 	=> $transportes_venta['TransportesVenta']['cod_seguimiento'],
+				'peso' 			=> $bulto[$venta_id]['paquete']['weight'],
+				'ancho' 		=> $bulto[$venta_id]['paquete']['width'],
+				'alto' 			=> $bulto[$venta_id]['paquete']['height'],
+				'largo' 		=> $bulto[$venta_id]['paquete']['length']
+			),
+			'pdf' => array(
+				'dir' => 'ModuloBoosmap'
+			)
+		);
+
+		$log = array(
+			'Log' => array(
+				'administrador' => 'Se regenera etiqueta Boosmap vid:' . $venta_id,
+				'modulo' 		=> 'Ventas',
+				'modulo_accion' => 'Response(regenerar_etiqueta): ' . json_encode($etiquetaArr)
+			)
+		);
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->save($log);
+
+		return  $this->Etiquetas->generarEtiquetaTransporte($etiquetaArr);
+
+		
 	}
 
 }

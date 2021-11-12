@@ -285,6 +285,19 @@
 									</div>
 								</div>
 							</div>
+							<div class="panel panel-danger">
+								<div class="panel-body">
+									<h4><i class="fa fa-exclamation" aria-hidden="true"></i> <?= __('Indique tipo de venta para finalizar');?></h4>
+								</div>
+								<div class="panel-body">
+									<div class="form-group">
+										<label><?=__('Tipo de venta');?></label>
+										<?= $this->Form->select('venta_estado_id', $tipo_venta, array('empty' => 'Seleccione',' class' => 'venta_estado_id form-control ','required')); ?>
+									</div>
+								</div>
+							</div>
+
+							
 
                         </div>
                                                                           

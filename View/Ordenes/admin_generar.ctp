@@ -447,7 +447,7 @@
 											<td colspan="2" class="total_iva"><?=CakeNumber::currency(round($TotalProductos * 0.19), 'CLP');?></td>
 										</tr>
 										<tr>
-											<th colspan="5" class="text-right">Descuento <small>(Bruto)</small></th>
+											<th colspan="5" class="text-right">Descuento <small>(Sin IVA)</small></th>
 											<td colspan="2" class="permitido_modificar">
 												<input type="text" class="form-control mask_money editable required editDiscount" name="editDiscount" value="<?= round( ($this->request->data['Venta']['descuento'] / 1.19)); ?>" data-original="<?= round(($this->request->data['Venta']['descuento'] / 1.19));?>" required>
 												<?= $this->Form->input('DscRcgGlobal.ValorDR', array('type' => 'hidden' ,'class'=> 'editable_hidden', 'value' => round( ($this->request->data['Venta']['descuento'] / 1.19) ))); ?>

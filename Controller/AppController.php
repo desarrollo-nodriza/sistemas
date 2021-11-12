@@ -718,7 +718,13 @@ class AppController extends Controller
 				'sincronizar_compras',
 				'starken_rut',
 				'starken_clave',
-				'notificacion_retraso_venta'
+				'notificacion_retraso_venta',
+				'apiurl_onestock',
+				'token_onestock',
+				'cliente_id_onestock',
+				'onestock_correo',
+				'onestock_clave',
+				'stock_default',
 			); 
 			
 			# Verificar que la tienda esté configurada

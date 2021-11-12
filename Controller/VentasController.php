@@ -31,8 +31,14 @@ class VentasController extends AppController {
 		'Conexxion',
 		'Boosmap',
 		'Etiquetas',
-		'LAFFPack'
+		'LAFFPack',
+		'BlueExpress'
 	);
+
+	private $tipo_venta = [
+		'Pago aceptado',
+		'Transacción en curso'
+	];
 	
 
 	/**
@@ -978,9 +984,9 @@ class VentasController extends AppController {
 
 
 	public function admin_generar_envio_externo_manual($id)
-	{	
+	{
 
-		if ( ! $this->Venta->exists($id) ) {
+		if (!$this->Venta->exists($id)) {
 			$this->Session->setFlash('El registro no es válido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
@@ -991,7 +997,7 @@ class VentasController extends AppController {
 
 		# Creamos pedido en enviame si corresponde
 		if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) {
-			
+
 			$Enviame = $this->Components->load('Enviame');
 
 			# conectamos con enviame
@@ -1001,61 +1007,71 @@ class VentasController extends AppController {
 
 			if ($resultadoEnviame) {
 				$this->Session->setFlash('Envío creado con éxito en Starken.', null, array(), 'success');
-			}else{
+			} else {
 				$this->Session->setFlash('No fue posible crear el envío Starken.', null, array(), 'danger');
 			}
-
-		}elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
 			# Es una venta para starken
-			
+
 			# Creamos cliente starken
 			$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
 
 			# Creamos la OT
-			if($this->Starken->generar_ot($venta)){
+			if ($this->Starken->generar_ot($venta)) {
 
 				$this->Starken->registrar_estados($venta['Venta']['id']);
 
 				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
-			}else{
+			} else {
 				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
 			}
-
-		}elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot']) {
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot']) {
 			# Es una venta para conexxion
-			
+
 			# Creamos cliente conexxion
 			$this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
 
 			# Creamos la OT
-			if($this->Conexxion->generar_ot($venta)){
+			if ($this->Conexxion->generar_ot($venta)) {
 				$this->Session->setFlash('Envío creado con éxito en Conexxion.', null, array(), 'success');
-			}else{
+			} else {
 				$this->Session->setFlash('No fue posible crear el envío Conexxion.', null, array(), 'danger');
 			}
-
-		}elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
 			# Es una venta para boosmap
-			
+
 			# Creamos cliente boosmap
 			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
-			
+
 			# Creamos la OT
-			if($this->Boosmap->generar_ot($venta)){
+			if ($this->Boosmap->generar_ot($venta)) {
 
 				$this->Boosmap->registrar_estados($venta['Venta']['id']);
 
 				$this->Session->setFlash('Envío creado con éxito en Boosmap.', null, array(), 'success');
-			}else{
+			} else {
 				$this->Session->setFlash('No fue posible crear el envío Boosmap.', null, array(), 'danger');
 			}
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot']) {
+			# Es una venta para blueexpress
 
-		}else{
+			# Creamos cliente blueexpress
+			$this->BlueExpress->crearCliente($venta['MetodoEnvio']['token_blue_express'], $venta['MetodoEnvio']['cod_usuario_blue_express'], $venta['MetodoEnvio']['cta_corriente_blue_express']);
+
+			# Creamos la OT
+			if ($this->BlueExpress->generar_ot($venta)) {
+
+				$this->BlueExpress->registrar_estados($venta['Venta']['id']);
+
+				$this->Session->setFlash('Envío creado con éxito en BlueExpress.', null, array(), 'success');
+			} else {
+				$this->Session->setFlash('No fue posible crear el envío BlueExpress.', null, array(), 'danger');
+			}
+		} else {
 			$this->Session->setFlash('La venta no aplica para usar un currier externo.', null, array(), 'danger');
 		}
 
 		$this->redirect($this->referer('/', true));
-
 	}
 
 
@@ -1066,14 +1082,14 @@ class VentasController extends AppController {
 	 * @return [type]     [description]
 	 */
 	public function admin_cambiar_estado($id)
-	{	
+	{
 
 		$respuesta = array(
 			'code' => 501,
 			'message' => 'Error inexplicable'
 		);
 
-		if ( ! $this->Venta->exists($id) ) {
+		if (!$this->Venta->exists($id)) {
 			$respuesta['code'] = 404;
 			$respuesta['message'] = 'No se encontró la venta en nuestros registros.';
 			echo json_encode($respuesta);
@@ -1096,13 +1112,13 @@ class VentasController extends AppController {
 			)
 		));
 
-		if (array_sum(Hash::extract($detalles, '{n}.VentaDetalle.confirmado_app')) != count(Hash::extract($detalles, '{n}.VentaDetalle.id')) ) {
+		if (array_sum(Hash::extract($detalles, '{n}.VentaDetalle.confirmado_app')) != count(Hash::extract($detalles, '{n}.VentaDetalle.id'))) {
 			$respuesta['code'] = 503;
 			$respuesta['message'] = 'Debes confirmar los productos de la venta';
 			echo json_encode($respuesta);
 			exit;
 		}
-		
+
 		try {
 			$cambiar_estado = $this->cambiarEstado($id, $this->request->data['Venta']['id_externo'], $this->request->data['Venta']['venta_estado_id'], $this->request->data['Venta']['tienda_id'], $this->request->data['Venta']['marketplace_id'], '', '', $this->Session->read('Auth.Administrador.nombre'));
 		} catch (Exception $e) {
@@ -1126,11 +1142,11 @@ class VentasController extends AppController {
 				$this->Venta->saveField('prioritario', 0);
 
 				# Sub estados OC de la venta
-				if (array_sum(Hash::extract($detalles, '{n}VentaDetalle.cantidad_pendiente_entrega')) > 0 ) {
+				if (array_sum(Hash::extract($detalles, '{n}VentaDetalle.cantidad_pendiente_entrega')) > 0) {
 					$this->Venta->saveField('subestado_oc', 'parcialmente_entregado');
-				}else{
+				} else {
 					$this->Venta->saveField('subestado_oc', 'entregado');
-				}	
+				}
 			}
 
 			$respuesta['code'] = 200;
@@ -1313,6 +1329,25 @@ class VentasController extends AppController {
 						);
 					}
 		
+				}elseif ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot'] && !$venta['Venta']['paquete_generado']) {
+					# Es una venta para blueexpress
+
+					# Creamos cliente blueexpress
+					$this->BlueExpress->crearCliente($venta['MetodoEnvio']['token_blue_express'], $venta['MetodoEnvio']['cod_usuario_blue_express'], $venta['MetodoEnvio']['cta_corriente_blue_express']);
+
+					# Creamos la OT
+					if ($this->BlueExpress->generar_ot($venta)) {
+
+						$this->BlueExpress->registrar_estados($venta['Venta']['id']);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Cambiar estado venta: Ingresa BlueExpress',
+								'modulo' => 'Ventas',
+								'modulo_accion' => 'creado: OT generada'
+							)
+						);
+					}
 				}
 
 				ClassRegistry::init('Log')->create();
@@ -4262,7 +4297,7 @@ class VentasController extends AppController {
 				'Venta' => array(
 					'referencia'       => $referencia,
 					'tienda_id'        => $this->Session->read('Tienda.id'),
-					'venta_stado_id'   => 1,
+					'venta_estado_id'  => 1,
 					'administrador_id' => $this->Auth->user('id'),
 					'venta_manual'     => 1,
 					'fecha_venta'      => date('Y-m-d H:i:s')
@@ -4307,28 +4342,20 @@ class VentasController extends AppController {
 				$total_pagado = $total_pagado + (float) $p['monto'];
 			}
 
-			if ($total_pagado == 0) {
-				$this->Session->setFlash('El total pagado no pude ser $0.', null, array(), 'warning');
-				$this->redirect(array('action' => 'add', $id));
-			}
-
-			$estado_nuevo = '';
-
+			$estado_nuevo = ClassRegistry::init('VentaEstado')->obtener_estado_por_id($this->request->data['Venta']['venta_estado_id']);
+			$estado_nuevo = $estado_nuevo['VentaEstado']['nombre'];
+			
+			
 			# si el monto pagado >= al monto vendido se cambia a pago aceptado.
 			if ($this->request->data['Venta']['total'] <= $total_pagado) {
 				
-				$estado_nuevo = 'Pago aceptado';
-
-				# Validamos la venta
-				$estado_nuevo_arr = ClassRegistry::init('VentaEstado')->obtener_estado_por_nombre($estado_nuevo);
-				$this->request->data['Venta']['estado_anterior'] = $this->request->data['Venta']['venta_estado_id'];
-				$this->request->data['Venta']['venta_estado_id'] = $estado_nuevo_arr['VentaEstado']['id'];
-				$this->request->data['Venta']['venta_estado_responsable'] = $this->Auth->user('email');
+				$this->request->data['Venta']['estado_anterior'] 			= 1;
+				$this->request->data['Venta']['venta_estado_responsable'] 	= $this->Auth->user('email');
 				
 				# Guardamos el estado anterior en la tabla pivot
 				$this->request->data['VentaEstado2'] = array(
 					array(
-						'venta_estado_id' => $estado_nuevo_arr['VentaEstado']['id'],
+						'venta_estado_id' => $this->request->data['Venta']['venta_estado_id'],
 						'fecha'           => date('Y-m-d H:i:s'),
 						'responsable'     => $this->Auth->user('email')
 					)
@@ -4411,7 +4438,11 @@ class VentasController extends AppController {
 
 		$origen_venta = $this->Venta->canal_venta_manual;
 		
-		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios', 'origen_venta'));
+		$tipo_venta   =	ClassRegistry::init('VentaEstado')->find('list',['conditions'=>
+		[['VentaEstado.nombre '=>$this->tipo_venta]]
+		]);
+
+		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios', 'origen_venta','tipo_venta'));
 		
 	}
 
@@ -6776,6 +6807,9 @@ class VentasController extends AppController {
 	{
 		# Toda la información de la venta
 		$venta = $this->Venta->obtener_venta_por_id($id);
+
+		$this->LibreDte = $this->Components->load('LibreDte');
+		$this->Prestashop = $this->Components->load('Prestashop');
 		
 		# Linio
 		if ($venta['Marketplace']['marketplace_tipo_id'] == 1) {
@@ -6908,10 +6942,7 @@ class VentasController extends AppController {
 
 		# Prestashop
 		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) {
-			# Para la consola se carga el componente on the fly!
-			if ($this->shell) {
-				$this->Prestashop = $this->Components->load('Prestashop');
-			}
+			
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
 
@@ -8031,7 +8062,7 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['descuento']   = round($nwVenta['total_discounts_tax_incl'], 2);
 		$NuevaVenta['Venta']['costo_envio'] = round($nwVenta['total_shipping_tax_incl'], 2);
 		$NuevaVenta['Venta']['total']       = round($nwVenta['total_paid'], 2);
-
+		
 		//se obtienen las transacciones de una venta
 		//si la venta tiene transacciones asociadas
 		if ($VentaTransacciones = $this->Prestashop->prestashop_obtener_venta_transacciones($nwVenta['reference'])) {
@@ -8051,8 +8082,15 @@ class VentasController extends AppController {
 				if (!empty($transaccion['transaction_id'])) {
 					$NuevaTransaccion['nombre'] = $transaccion['transaction_id'];
 				}else{
-					$transaccion['transaction_id'] = 'undefined';
-					$NuevaTransaccion['nombre'] = $transaccion['transaction_id'];
+					# Intenta volver a obtener el nombre
+					$trans2 = $this->Prestashop->prestashop_obtener_transaccion($transaccion['id']);
+
+					if (empty($trans2))
+					{
+						$trans2['order_payment']['transaction_id'] = 'undefined';
+					}
+
+					$NuevaTransaccion['nombre'] = $trans2['order_payment']['transaction_id'];
 				}
 
 				$NuevaTransaccion['monto'] = (!empty($transaccion['amount'])) ? $transaccion['amount'] : 0;
@@ -8629,6 +8667,13 @@ class VentasController extends AppController {
 	}
 
 
+	/**
+	 * Prepara la información para mostrar de forma ordenada
+	 * los estados de venta y envio
+	 * 
+	 * @param $venta
+	 * @return array
+	 */
 	public function preparar_estados($venta)
 	{
 		$estados = array(
@@ -9120,7 +9165,33 @@ class VentasController extends AppController {
 						'VentaDetalle.precio',
 						'VentaDetalle.cantidad'
 					)
+				),
+				'TransportesVenta' => array(
+					'Transporte' => array(
+						'fields' => array(
+							'Transporte.nombre'
+						)
+					),
+					'EnvioHistorico' => array(
+						'EstadoEnvio' => array(
+							'EstadoEnvioCategoria' => array(
+								'fields' => array(
+									'EstadoEnvioCategoria.nombre',
+									'EstadoEnvioCategoria.clase'
+								)
+							),
+							'fields' => array(
+								'EstadoEnvio.nombre',
+								'EstadoEnvio.origen',
+								'EstadoEnvio.leyenda'
+							)
+						),
+						'fields' => array(
+							'EnvioHistorico.created'
+						)
+					)
 				)
+
 			),
 			'fields' => array(
 				'Venta.id',
@@ -9135,7 +9206,7 @@ class VentasController extends AppController {
 
 		# Buscamos la venta
 		$venta = $this->Venta->find('first', $qry);
-
+		
 		$respuesta = array(
 			'code'    => 404, 
 			'name' => 'error',
@@ -11957,28 +12028,32 @@ class VentasController extends AppController {
 	 * @return bool
 	 */
 	public function actualizar_estados_envios($id)
-	{	
+	{
 		$venta = $this->Venta->obtener_venta_por_id($id);
-	
+
 		# Registro de estados para Boosmap
-		if ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot'])
-		{	
+		if ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
 			$this->Boosmap = $this->Components->load('Boosmap');
 			# Creamos cliente boosmap
 			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
-			
+
 			# Obtenemos y registramos los estados de los envios
 			return $this->Boosmap->registrar_estados($venta['Venta']['id']);
-
 		}
 
 		# Registro de estados para Starken
-		if ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot'])
-		{	
+		if ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
 			$this->Starken = $this->Components->load('Starken');
 			# Obtenemos y registramos los estados de los envios
 			return $this->Starken->registrar_estados($venta['Venta']['id']);
+		}
 
+		# Registro de estados para BlueExpress
+		if ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot']) {
+			
+			$this->BlueExpress = $this->Components->load('BlueExpress');
+			# Obtenemos y registramos los estados de los envios
+			return $this->BlueExpress->registrar_estados($venta['Venta']['id']);
 		}
 
 		return false;
@@ -12150,120 +12225,36 @@ class VentasController extends AppController {
 		
 		$venta_id= $transportes_venta['TransportesVenta']['venta_id'];
 
-		$venta = $this->Venta->find('first',  [
-			'conditions' => ['Venta.id' => $venta_id],
-			'contain' => [	
-				'MedioPago' => [
-					'fields' => ['MedioPago.nombre']],
-				'MetodoEnvio' => [
-					'fields' => [
-						'MetodoEnvio.nombre',
-						'MetodoEnvio.boosmap_service']],
-				'Tienda' => [
-					'fields' => [
-						'Tienda.nombre',
-						'Tienda.rut',
-						'Tienda.fono',
-						'Tienda.url',
-						'Tienda.direccion',
-						]
-					],
-				'VentaCliente' => [
-					'fields' => [
-						'VentaCliente.email',
-						]
-					],
-				],
-		]);
-
-		$venta_detalle =  ClassRegistry::init('VentaDetalle')->find('all',
-		[
-			'conditions' => ['VentaDetalle.venta_id' => $venta_id],
-			'contain' => [	
-				'VentaDetalleProducto' => [
-					'fields' => [
-						'VentaDetalleProducto.id',
-						'VentaDetalleProducto.alto',
-						'VentaDetalleProducto.ancho',
-						'VentaDetalleProducto.largo',
-						'VentaDetalleProducto.peso',
-						]],
-					],
-			'fields' => [
-				'VentaDetalle.venta_id',
-				'VentaDetalle.cantidad_reservada',
-			]
-		]);
-		$venta_detalle_filtrado 			= Hash::extract($venta_detalle,'{n}.VentaDetalle');
-		$Venta_detalle_producto_filtrado 	= Hash::extract($venta_detalle,'{n}.VentaDetalleProducto');
-		$venta_detalle_final 				= [];
-
-		foreach ($venta_detalle_filtrado as $key => $value) {
-			$value['VentaDetalleProducto']	= $Venta_detalle_producto_filtrado[$key];
-			$venta_detalle_final []			= $value;
-		}
-
-		$volumenMaximo = (float) 5832000;
-		$bulto = $this->LAFFPack->obtener_bultos_venta(['VentaDetalle'=>$venta_detalle_final ],$volumenMaximo);
-	
-		$canal_venta = '';
-
-		if ($venta['Venta']['venta_manual'])
-		{
-			$canal_venta = 'POS de venta';
-		}
-		else if ($venta['Venta']['marketplace_id'])
-		{
-			$canal_venta = $venta['Marketplace']['nombre'];
-		}
-		else
-		{
-			$canal_venta = $venta['Tienda']['nombre'];
-		}
-
-		$etiquetaArr = array(
-			'venta' => array(
-				'id' 			=> $venta['Venta']['id'],
-				'metodo_envio' 	=> $venta['MetodoEnvio']['nombre'],
-				'canal' 		=> $canal_venta,
-				'medio_de_pago' => $venta['MedioPago']['nombre'],
-				'fecha_venta' 	=> $venta['Venta']['fecha_venta']
-			),
-			'transportista' => array(
-				'nombre' 		=> 'BOOSMAP',
-				'tipo_servicio' => $venta['MetodoEnvio']['boosmap_service'],
-				'codigo_barra' 	=> $transportes_venta['TransportesVenta']['cod_seguimiento'],
-			),
-			'remitente' => array(
-				'nombre' 	=> $venta['Tienda']['nombre'],
-				'rut' 		=> $venta['Tienda']['rut'],
-				'fono' 		=> $venta['Tienda']['fono'],
-				'url' 		=> $venta['Tienda']['url'],
-				'email' 	=> 'ventas@toolmania.cl',
-				'direccion' => $venta['Tienda']['direccion']
-			),
-			'destinatario' => array(
-				'nombre' 	=> $venta['Venta']['nombre_receptor'],
-				'rut'		=> $venta['Venta']['rut_receptor'],
-				'fono' 		=> $venta['Venta']['fono_receptor'],
-				'email' 	=> $venta['VentaCliente']['email'],
-				'direccion' => $venta['Venta']['direccion_entrega'].' '.$venta['Venta']['numero_entrega'],
-				'comuna' 	=> $venta['Venta']['comuna_entrega']
-			),
-			'bulto' => array(
-				'referencia' 	=> $transportes_venta['TransportesVenta']['cod_seguimiento'],
-				'peso' 			=> $bulto[$venta_id]['paquete']['weight'],
-				'ancho' 		=> $bulto[$venta_id]['paquete']['width'],
-				'alto' 			=> $bulto[$venta_id]['paquete']['height'],
-				'largo' 		=> $bulto[$venta_id]['paquete']['length']
-			),
-			'pdf' => array(
-				'dir' => 'ModuloBoosmap'
+		$venta = ClassRegistry::init('Venta')->find('first',[
+			'conditions'=>[
+				'Venta.id' => $venta_id
+			],
+			'fields'=>['id'],
+			'contain' => array(
+				'MetodoEnvio' => array(
+					'fields' => array(
+						'MetodoEnvio.dependencia'
+					)
+				)
+				
 			)
-		);
+		]);
 		
-		$etiqueta = $this->Etiquetas->generarEtiquetaTransporte($etiquetaArr);
-		
+		switch ($venta['MetodoEnvio']['dependencia']) {
+			case 'blueexpress':
+				$etiqueta = $this->BlueExpress->regenerar_etiqueta($transportes_venta['TransportesVenta']['cod_seguimiento'],$venta_id);
+				break;
+			case 'boosmap':
+				$etiqueta = $this->Boosmap->regenerar_etiqueta($transportes_venta,$venta_id);
+				break;
+			default:
+
+				$this->Session->setFlash("La dependencia {$venta['MetodoEnvio']['dependencia']} no tiene configurada regenerar etiqueta", null, array(), 'danger');
+				$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
+
+				break;
+		}
+
 		if (!empty($etiqueta['url'])) {
 
 			$url_etiqueta = $etiqueta['url'];
@@ -12279,24 +12270,18 @@ class VentasController extends AppController {
 					$this->redirect(array('action' => 'view', $venta_id ,'controller' => 'ventas'));
 				}
 			}
-			
-		}{
-			$log= array(
-				'Log' => array(
-					'administrador' => 'Boosmap vid:' . $venta_id,
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Response(admin_regenerar_etiqueta): ' . json_encode($etiquetaArr)
-				)
-			);
-
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->save($log);
 		}
+
 		$this->Session->setFlash('No se pudo crear su etiqueta', null, array(), 'danger');
-		$this->redirect($this->referer('/', true));
-		
+		$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
 	}
 
+
+	/**	
+	 * Obtiene los estados de despacho de la venta
+	 * @param int $id Identificador de la venta
+	 * @return json
+	 */
 	public function api_getSeguimiento($id)
 	{	
 		# Existe token
@@ -12327,6 +12312,85 @@ class VentasController extends AppController {
 			),
 			'contain' => array(
 				'EnvioHistorico'=>['order' => array('EnvioHistorico.created' => 'ASC'),],
+			),
+			
+		));
+
+		$respuesta = array(
+			'code' => 404,
+			'message' => 'No se encontraron resultados',
+			'body' => $estados
+		);
+
+		if ($estados) 
+		{
+			$respuesta = array(
+				'code' => 200,
+				'message' => 'Se encontraron resultados',
+				'body' => $estados
+			);
+		}
+
+		$this->set(array(
+            'response' => $respuesta,
+            '_serialize' => array('response')
+		));
+	}
+
+	/**	
+	 * Obtiene los estados de despacho de la venta
+	 * @param text $red Referencia de la venta
+	 * @return json
+	 */
+	public function api_getSeguimientoByRef($ref)
+	{	
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.referencia' => trim($ref)
+			),
+			'fields' => array(
+				'Venta.id'
+			)
+		));
+
+		$estados = ClassRegistry::init('TransportesVenta')->find('all', array(
+			'conditions' => array(
+				'TransportesVenta.venta_id' => $venta['Venta']['id']
+			),
+			'contain' => array(
+				'Transporte' => array(
+					'fields' => array(
+						'Transporte.nombre'
+					)
+				),
+				'EnvioHistorico'=>[
+					'EstadoEnvio' => array(
+						'EstadoEnvioCategoria'
+					),
+					'order' => array('EnvioHistorico.created' => 'ASC')
+				],
 			),
 			
 		));

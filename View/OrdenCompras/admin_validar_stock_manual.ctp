@@ -25,7 +25,7 @@
 							<tboby>
 							<? foreach ($this->request->data['VentaDetalleProducto'] as $ipp => $ocp) : ?>	
 
-								<tr class="<?=($ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] == $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] || $ocp['OrdenComprasVentaDetalleProducto']['cantidad'] == $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida']) ? '' : ''; ?>" data-cantidad="<?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad'];?>">
+								<tr class="<?=($ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida']!= $ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] ||$ocp['OrdenComprasVentaDetalleProducto']['cantidad_validada_proveedor'] == 0) ? '' : 'hidden'; ?>" data-cantidad="<?=$ocp['OrdenComprasVentaDetalleProducto']['cantidad'];?>">
 									<td>
 										
 										<?=$this->Form->hidden(sprintf('VentaDetalleProducto.%d.venta_detalle_producto_id', $ipp), array('value' => $ocp['id'])); ?>

@@ -6,8 +6,15 @@ class MetodoEnviosController extends AppController
 	public $components = array(
 		'Starken',
 		'Conexxion',
-		'Boosmap'
+		'Boosmap',
+		'BlueExpress'
 	);
+
+	public $tipo_servicio=[
+		"EX" => "Express.",
+		"PR" => "Premium.",
+		"PY" => "Prioritario."
+	];
 
 	public function admin_index () {
 
@@ -28,28 +35,29 @@ class MetodoEnviosController extends AppController
 
 	public function admin_add()
 	{
-		if ( $this->request->is('post') || $this->request->is('put') )
-		{
+		if ($this->request->is('post') || $this->request->is('put')) {
+			
+			$saved_metodo = $this->MetodoEnvio->save($this->request->data);
+			if ($saved_metodo) {
 
-			if ( $this->MetodoEnvio->save($this->request->data) )
-			{
-				$this->Session->setFlash('Registro creado correctamente', null, array(), 'success');
-				$this->redirect(array('action' => 'index'));
-			}
-			else
-			{
+				$mensaje = empty($saved_metodo['MetodoEnvio']['dependencia']) ? 'Se creo correctamente' : 'Se creo correctamente, favor completar Configuración para el correcto funcionamiento';
+
+				$this->Session->setFlash($mensaje, null, array(), 'success');
+
+				$this->redirect(array('action' => 'edit', $saved_metodo['MetodoEnvio']['id']));
+			} else {
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
-		}		
+		}
 
 		$dependencias = $this->MetodoEnvio->dependencias();
-		
+
 		BreadcrumbComponent::add('Métodos de envio');
 		BreadcrumbComponent::add('Editar Método de envio');
 
 		$this->set(compact('dependencias'));
-
 	}
+
 
 
 	public function admin_edit($id = null)
@@ -112,9 +120,29 @@ class MetodoEnviosController extends AppController
 		
 		BreadcrumbComponent::add('Métodos de envio');
 		BreadcrumbComponent::add('Editar Método de envio');
+		$bodegas = ClassRegistry::init('Bodega')->find('list',[
+			'conditions'=>['Bodega.activo'=>true]
+		]);
+		$tipo_servicio = $this->tipo_servicio;
+		$this->set(compact('dependencias', 'dependenciasVars','bodegas','tipo_servicio'));
 
-		$this->set(compact('dependencias', 'dependenciasVars'));
+	}
 
+	public function admin_delete($id = null)
+	{
+		$this->MetodoEnvio->id = $id;
+		if (!$this->MetodoEnvio->exists()) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$this->request->onlyAllow('post', 'delete');
+		if ($this->MetodoEnvio->delete()) {
+			$this->Session->setFlash('Registro eliminado correctamente.', null, array(), 'success');
+			$this->redirect(array('action' => 'index'));
+		}
+		$this->Session->setFlash('Error al eliminar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
+		$this->redirect(array('action' => 'index'));
 	}
 
 	public function admin_activar($id = null) {
@@ -224,7 +252,7 @@ class MetodoEnviosController extends AppController
 	public function generar_etiqueta_envio_externo($id_venta)
 	{
 		$venta = ClassRegistry::init('Venta')->obtener_venta_por_id($id_venta);
-		
+
 		$logs = array();
 
 		$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
@@ -238,10 +266,9 @@ class MetodoEnviosController extends AppController
 				'modulo_accion' => json_encode($venta)
 			)
 		);
-		
+
 		# Creamos pedido en enviame si corresponde
-		if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) 
-		{	
+		if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) {
 			$this->Enviame = $this->Components->load('Enviame');
 			$this->Enviame = $this->Components->load('Enviame');
 
@@ -258,23 +285,19 @@ class MetodoEnviosController extends AppController
 				)
 			);
 
-			if ($resultadoEnviame) 
-			{
+			if ($resultadoEnviame) {
 				$resultado = true;
 			}
-
-		}
-		elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) 
-		{
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
 			# Es una venta para starken
-			
+
 			# Creamos cliente starken
 			$this->Starken = $this->Components->load('Starken');
 			$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
 
 			# Creamos la OT
-			if($this->Starken->generar_ot($venta)){
-				
+			if ($this->Starken->generar_ot($venta)) {
+
 				$this->Starken->registrar_estados($venta['Venta']['id']);
 				$resultado = true;
 
@@ -286,18 +309,15 @@ class MetodoEnviosController extends AppController
 					)
 				);
 			}
-
-		}
-		elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot']) 
-		{
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot']) {
 			# Es una venta para conexxion
-			
+
 			# Creamos cliente conexxion
 			$this->Conexxion = $this->Components->load('Conexxion');
 			$this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
 
 			# Creamos la OT
-			if($this->Conexxion->generar_ot($venta)){
+			if ($this->Conexxion->generar_ot($venta)) {
 				$resultado = true;
 
 				$logs[] = array(
@@ -307,20 +327,16 @@ class MetodoEnviosController extends AppController
 						'modulo_accion' => 'Generada con éxito'
 					)
 				);
-
 			}
-
-		}
-		elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) 
-		{
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
 			# Es una venta para boosmap
-			
+
 			# Creamos cliente boosmap
 			$this->Boosmap = $this->Components->load('Boosmap');
 			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
-			
+
 			# Creamos la OT
-			if($this->Boosmap->generar_ot($venta)){
+			if ($this->Boosmap->generar_ot($venta)) {
 
 				$this->Boosmap->registrar_estados($venta['Venta']['id']);
 
@@ -334,7 +350,28 @@ class MetodoEnviosController extends AppController
 					)
 				);
 			}
+		} elseif ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot']) {
+			# Es una venta para boosmblueexpressp
 
+			# Creamos cliente blueexpress
+			$this->BlueExpress = $this->Components->load('BlueExpress');
+			$this->BlueExpress->crearCliente($venta['MetodoEnvio']['token_blue_express'], $venta['MetodoEnvio']['cod_usuario_blue_express'], $venta['MetodoEnvio']['cta_corriente_blue_express']);
+
+			# Creamos la OT
+			if ($this->BlueExpress->generar_ot($venta)) {
+
+				$this->BlueExpress->registrar_estados($venta['Venta']['id']);
+
+				$resultado = true;
+
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => 'Crear etiqueta BlueExpress venta ' . $id_venta,
+						'modulo' => 'MetodoEnvio',
+						'modulo_accion' => 'Generada con éxito'
+					)
+				);
+			}
 		}
 
 		$logs[] = array(
