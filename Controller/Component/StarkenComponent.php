@@ -1,7 +1,6 @@
 <?php
 App::uses('Component', 'Controller');
 App::import('Vendor', 'Starken', array('file' => 'Starken/starken-ws.class.php'));
-#App::import('Vendor', 'LAFFPack', array('file' => 'Starken/LAFFPack.php'));
 App::import('Vendor', 'PDFMerger', array('file' => 'PDFMerger/PDFMerger.php'));
 
 class StarkenComponent extends Component
@@ -37,9 +36,9 @@ class StarkenComponent extends Component
 		$volumenMaximo = (float) 60;
 
 		# Algoritmo LAFF para ordenamiento de productos
-		$paquetes = $this->obtener_bultos_venta($venta, $volumenMaximo);
-
-		$log = array();
+		$paquetes = $this->LAFFPack->obtener_bultos_venta($venta, $volumenMaximo);
+		
+		$log = array();		
 
 		# si no hay paquetes se retorna false
 		if (empty($paquetes)) {
@@ -427,66 +426,7 @@ class StarkenComponent extends Component
 	{
 		return $this->tipoServicio;
 	}
-
-
-	/**
-	 * Calcula a aproximacion de bltos que se deberían armar en base a los itemes
-	 * @param  array $venta         Detalle de la venta
-	 * @param  float $volumenMaximo volumen máximo para cada paquete
-	 * @return array
-	 */
-	public function obtener_bultos_venta($venta, $volumenMaximo)
-	{
-		$bultos = array();
-
-		foreach ($venta['VentaDetalle'] as $ivd => $d) {
-
-			if ($d['cantidad_reservada'] <= 0) {
-				continue;
-			}
-
-			for ($i = 0; $i < $d['cantidad_reservada']; $i++) {
-
-				$alto  = $d['VentaDetalleProducto']['alto'];
-				$ancho = $d['VentaDetalleProducto']['ancho'];
-				$largo = $d['VentaDetalleProducto']['largo'];
-				$peso  = $d['VentaDetalleProducto']['peso'];
-
-				$volumen = $this->calcular_volumen($alto, $ancho, $largo);
-
-				$caja = array(
-					'id'     => $d['VentaDetalleProducto']['id'],
-					'width'  => $ancho,
-					'height' => $alto,
-					'length' => $largo,
-					'weight' => $peso
-				);
-
-				$unico = rand(1000, 100000);
-
-				if ($volumen > $volumenMaximo) {
-					$bultos[$d['venta_id'] . $unico]['venta_id']    = $d['venta_id'];
-					$bultos[$d['venta_id'] . $unico]['cajas'][]     = $caja;
-				} else {
-					$bultos[$d['venta_id']]['venta_id']    = $d['venta_id'];
-					$bultos[$d['venta_id']]['cajas'][]     = $caja;
-				}
-			}
-		}
-
-		$resultado = array();
-
-		foreach ($bultos as $ib => $b) {
-			$resultado[$ib]['paquete']             = $this->obtenerDimensionesPaquete($b['cajas']);
-			$resultado[$ib]['paquete']['weight']   = array_sum(Hash::extract($b['cajas'], '{n}.weight'));
-			$resultado[$ib]['paquete']['venta_id'] = $b['venta_id'];
-			$resultado[$ib]['items']               = $b['cajas'];
-		}
-
-		return $resultado;
-	}
-
-
+	
 	/**
 	 * [calcular_volumen description]
 	 * @param  float $largo cm
