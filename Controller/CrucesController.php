@@ -378,8 +378,23 @@ Class CrucesController extends AppController {
 
 		$transacciones = $this->Prestashop->prestashop_obtener_venta_transaccionesv2($ids_transacciones);
 		
-		if (empty($transacciones))
-			return false;
+		$carritos = $this->Prestashop->prestashop_obtener_ventas_por_carros($ids_transacciones);
+		
+		$transacciones2 = [];
+
+		if (!empty($carritos))
+		{
+			$transacciones2 = $this->Prestashop->prestashop_obtener_venta_transacciones_por_referencia(Hash::extract($carritos, 'order.{n}.reference'));
+		}		
+	
+		$trx = Hash::merge($transacciones, $transacciones2);
+		
+		$trx = unique_multidim_array($trx, 'id');
+
+		if (empty($trx))
+		{
+			return false;	
+		}
 		
 		$ventas = ClassRegistry::init('Venta')->find('all', array(
 			'conditions' => array(
@@ -407,7 +422,7 @@ Class CrucesController extends AppController {
 
 			foreach ($nwTransacciones as $nt)
 			{
-				# Verificamos si la transaccion ya no existe
+				# Verificamos si la transaccion no existe
 				if (!Hash::check($v['VentaTransaccion'], '{n}[nombre='.$nt['transaction_id'].']'))
 				{	
 					# La creamos
