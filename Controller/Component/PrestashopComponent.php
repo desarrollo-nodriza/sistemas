@@ -279,7 +279,13 @@ class PrestashopComponent extends Component
 
 	}
 
-
+	
+	/**
+	 * Obtiene el detalle de las transacciones dado sus transaction_id
+	 *
+	 * @param  mixed $transacciones_ids
+	 * @return array Transacciones
+	 */
 	public function prestashop_obtener_venta_transaccionesv2 ($transacciones_ids = []) 
 	{
 		$opt = array();
@@ -291,10 +297,75 @@ class PrestashopComponent extends Component
 		
 		$PrestashopResources = $xml->children()->children();
 
-		$DataVentaDetalle = to_array($PrestashopResources);
+		$result = to_array($PrestashopResources);
+		
+		if (!isset($result['order_payment'][0]))
+		{
+			$res['order_payment'][] = $result['order_payment'];
+			$result = $res;
+		}
 
-		return $DataVentaDetalle;
+		return $result;
 
+	}
+
+	
+	/**
+	 * prestashop_obtener_venta_transacciones_por_referencia
+	 *
+	 * @param  mixed $transacciones_ref
+	 * @return void
+	 */
+	public function prestashop_obtener_venta_transacciones_por_referencia ($transacciones_ref = []) 
+	{
+		$opt = array();
+		$opt['resource'] = 'order_payments';
+		$opt['display'] = '[id,transaction_id,amount,order_reference,date_add]';
+		$opt['filter[order_reference]'] = '[' .implode('|', $transacciones_ref). ']';
+
+		$xml = $this->ConexionPrestashop->get($opt);
+		
+		$PrestashopResources = $xml->children()->children();
+
+		$result = to_array($PrestashopResources);
+		
+		if (!isset($result['order_payment'][0]))
+		{
+			$res['order_payment'][] = $result['order_payment'];
+			$result = $res;
+		}
+
+		return $result;
+
+	}
+
+		
+	/**
+	 * prestashop_obtener_ventas_por_carros
+	 *
+	 * @param  mixed $carritos_ids
+	 * @return void
+	 */
+	public function prestashop_obtener_ventas_por_carros($carritos_ids = [])
+	{
+		$opt = array();
+		$opt['resource'] = 'orders';
+		$opt['display'] = '[id,reference,id_cart]';
+		$opt['filter[id_cart]'] = '[' .implode('|', $carritos_ids). ']';
+
+		$xml = $this->ConexionPrestashop->get($opt);
+		
+		$PrestashopResources = $xml->children()->children();
+
+		$result = to_array($PrestashopResources);
+		
+		if (!isset($result['order'][0]))
+		{
+			$res['order'][] = $result['order'];
+			$result = $res;
+		}
+
+		return $result;
 	}
 
 	/**
