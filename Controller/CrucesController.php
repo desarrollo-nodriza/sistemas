@@ -98,9 +98,11 @@ Class CrucesController extends AppController {
 					$this->redirect(array('action' => 'cruces'));
 				}	
 
-				# Actualizamos los ids de transaccion para verificar que existan todos
-				$this->preparar_transacciones($ids_transacciones);
+				$datosExcel = $this->Session->read('Cruxe.data');
 
+				# Actualizamos los ids de transaccion para verificar que existan todos
+				$this->preparar_transacciones($ids_transacciones, $qry);
+				
 				$qry['contain'] = array(
 					'Venta' => array(
 						'Dte' => array(
@@ -123,7 +125,6 @@ Class CrucesController extends AppController {
 
 				// Activar en versión 2
 				$transacciones = ClassRegistry::init('VentaTransaccion')->find('all', $qry);
-				
 				//$transacciones = $this->metodoAntiguo($columnaValores);
 				
 				if (empty($transacciones)) {
@@ -142,7 +143,7 @@ Class CrucesController extends AppController {
 				
 				$ultimaFila = 1;
 				// Agregamos la data
-				foreach ($this->Session->read('Cruxe.data') as $indice => $valor) {
+				foreach ($datosExcel as $indice => $valor) {
 					$ultimaColumna = 1;
 					foreach ($this->Session->read('Cruxe.options') as $i => $nombre) {
 						$spreadsheet->setActiveSheetIndex(0)
@@ -358,7 +359,7 @@ Class CrucesController extends AppController {
 		return $final;
 	}
 
-	public function preparar_transacciones($ids_transacciones)
+	public function preparar_transacciones($ids_transacciones, &$qry)
 	{
 		$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
 			'Tienda.apiurl_prestashop', 
@@ -384,12 +385,15 @@ Class CrucesController extends AppController {
 
 		if (!empty($carritos))
 		{
-			$transacciones2 = $this->Prestashop->prestashop_obtener_venta_transacciones_por_referencia(Hash::extract($carritos, 'order.{n}.reference'));
+			foreach($carritos['order'] as $ic => $c)
+			{	
+				$tr = $this->Prestashop->prestashop_obtener_venta_transacciones_por_referencia([$c['reference']]);	
+				$transacciones2['order_payment'][$ic] = $tr['order_payment'][0];
+				$transacciones2['order_payment'][$ic]['transaction_id'] = $c['id_cart'];
+			}
 		}		
 	
 		$trx = Hash::merge($transacciones, $transacciones2);
-		
-		$trx = unique_multidim_array($trx, 'id');
 
 		if (empty($trx))
 		{
@@ -398,7 +402,7 @@ Class CrucesController extends AppController {
 		
 		$ventas = ClassRegistry::init('Venta')->find('all', array(
 			'conditions' => array(
-				'Venta.referencia IN' => Hash::extract($transacciones, 'order_payment.{n}.order_reference')
+				'Venta.referencia IN' => Hash::extract($trx, 'order_payment.{n}.order_reference')
 			),
 			'contain' => array(
 				'VentaTransaccion'
@@ -415,13 +419,17 @@ Class CrucesController extends AppController {
 
 		foreach ($ventas as $v)
 		{	
-			$nwTransacciones = Hash::extract($transacciones, 'order_payment.{n}[order_reference='.$v['Venta']['referencia'].']');
+			$nwTransacciones = Hash::extract($trx, 'order_payment.{n}[order_reference='.$v['Venta']['referencia'].']');
 
 			if (empty($nwTransacciones))
 				continue;
 
 			foreach ($nwTransacciones as $nt)
-			{
+			{	
+
+				# Actualizamos la query
+				$qry['conditions']['OR'][] = 'VentaTransaccion.nombre LIKE "' . $nt['transaction_id'] . '"';
+
 				# Verificamos si la transaccion no existe
 				if (!Hash::check($v['VentaTransaccion'], '{n}[nombre='.$nt['transaction_id'].']'))
 				{	
