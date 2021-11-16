@@ -36,7 +36,8 @@
 						<div class="form-group">
 							<label>Zona</label>
 							<?=$this->Form->select('zona_id', $zonas, array(
-								'class' => 'form-control',
+								'class' => 'form-control select',
+								'data-live-search' => true,
 								'empty' => 'Seleccione',
 								'default' => $zona
 								));?>
@@ -110,17 +111,37 @@
 							<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Ubicacion', array('action' => 'add'), array('class' => 'btn btn-success', 'escape' => false)); ?>
 							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Creación masiva', array('action' => 'creacion_masiva'), array('class' => 'btn btn-danger', 'escape' => false)); ?>
 						<? endif; ?>
-							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', array('action' => 'exportar'), array('class' => 'btn btn-primary', 'escape' => false)); ?>
-							
-							<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Generar QRs', array('action' => 'crear_etiqueta_qr'), array('class' => 'btn btn-info', 'escape' => false)); ?>
+
+						<?  
+						$exportar = array(
+							'action' => 'exportar'
+						);
+
+						$generar_qrs = array(
+							'action' => 'crear_etiqueta_qr'
+						);
+
+						if (isset($this->request->params['named'])) 
+						{
+							$exportar 		= array_replace_recursive($exportar, $this->request->params['named']);
+							$generar_qrs = array_replace_recursive($generar_qrs, $this->request->params['named']);
+						}
+						
+						?>
+							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $exportar, array('class' => 'btn btn-primary', 'escape' => false)); ?>
+							<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Generar QRs', $generar_qrs, array('class' => 'btn btn-info', 'escape' => false)); ?>
 						</div>
 					</div>
 					<div class="panel-body">
+
+						<?= $this->element('contador_resultados', array('col' => false)); ?>
+
 						<div class="table-responsive">
 							<table class="table">
 								<thead>
 									<tr class="sort">
                                         <th><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+										<th><?= $this->Paginator->sort('bodega_id', 'Bodega', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('zona', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('columna', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 										<th><?= $this->Paginator->sort('fila', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
@@ -134,7 +155,8 @@
 									<?php foreach ( $ubicaciones as $ubicacion ) : ?>
 									<tr>
 										<td><?= h($ubicacion['Ubicacion']['id']); ?>&nbsp;</td>
-                                        <td><?= h($ubicacion['Zona']['nombre']); ?>&nbsp;</td>
+                                        <td><?= h($ubicacion['Zona']['Bodega']['nombre']); ?>&nbsp;</td>
+										<td><?= h($ubicacion['Zona']['nombre']); ?>&nbsp;</td>
 										<td><?= h($ubicacion['Ubicacion']['columna']); ?>&nbsp;</td>
                                         <td><?= h($ubicacion['Ubicacion']['fila']); ?>&nbsp;</td>
                                       
