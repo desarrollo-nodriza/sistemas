@@ -1494,6 +1494,17 @@ class Venta extends AppModel
 						'VentaDetalle.cantidad_en_espera',
 						'VentaDetalle.cantidad_reservada'
 					)
+				),
+				'VentaEstado' => array(
+					'fields' => array(
+						'VentaEstado.id',
+						'VentaEstado.venta_estado_categoria_id'
+					),
+					'VentaEstadoCategoria' => array(
+						'fields' => array(
+							'VentaEstadoCategoria.venta'
+						)
+					)
 				)
 			),
 			'fields' => array(
@@ -1506,8 +1517,10 @@ class Venta extends AppModel
 		$total_cantidad = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
 		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 		
-		if ( $total_reservado == $total_cantidad && $total_reservado > 0) 
-		{
+		# Debe ser una venta de tipo venta para pasar a picking
+		if ( $total_reservado == $total_cantidad && $total_reservado > 0 && $venta['VentaEstado']['VentaEstadoCategoria']['venta']) 
+		{	
+			# Condiciones para pasar a picking
 			if (empty($venta['Venta']['picking_estado']) || $venta['Venta']['picking_estado'] == 'no_definido' || $venta['Venta']['picking_estado'] == 'en_revision' || $venta['Venta']['picking_estado'] == 'empaquetado' ) 
 			{
 				# Pasa a picking
