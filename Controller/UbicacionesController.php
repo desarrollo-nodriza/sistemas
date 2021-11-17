@@ -57,11 +57,35 @@ class UbicacionesController extends AppController
 			'recursive'	=> 0,
             'limit' => 20,
 			'order' => array('id' => 'DESC'),
+			'contain' => array(
+				'Zona' => array(
+					'Bodega'
+				)
+			),
 			'conditions'=> $filtro
 		);
 
-		$zonas = ClassRegistry::init('Zona')->find('list');
+		$zonasAll = ClassRegistry::init('Zona')->find('all', array(
+			'contain' => array(
+				'Bodega' => array(
+					'fields' => array(
+						'Bodega.id',
+						'Bodega.nombre'
+					) 
+				)
+			),
+			'fields' => array(
+				'Zona.id',
+				'Zona.nombre',
+				'Zona.bodega_id'
+			)
+		));
 
+		foreach ($zonasAll as $zona)
+		{
+			$zonas[$zona['Zona']['id']] = $zona['Bodega']['nombre'] . ' - ' . $zona['Zona']['nombre'];
+		}
+		
 		BreadcrumbComponent::add('Ubicaciones');
 
 		$ubicaciones	= $this->paginate();
@@ -195,14 +219,14 @@ class UbicacionesController extends AppController
 				# Reconocer cabecera e idenitficador
 				if ($this->request->data['Ubicacion']['archivo']['error'] != 0) {
 					$this->Session->setFlash('El archivo contiene errores o está dañado.', null, array(), 'danger');
-					$this->redirect(array('action' => 'creacionMasivaUbicaciones'));
+					$this->redirect(array('action' => 'creacion_masiva'));
 				}
 
 				$ext = pathinfo($this->request->data['Ubicacion']['archivo']['name'], PATHINFO_EXTENSION);
 
 				if (!in_array($ext, $tipoPermitido)) {
 					$this->Session->setFlash('El formato '.$ext.' no es válido. Los formatos permitidos son: ' . implode($tipoPermitido, ','), null, array(), 'danger');
-					$this->redirect(array('action' => 'creacionMasivaUbicaciones'));
+					$this->redirect(array('action' => 'creacion_masiva'));
 				}
 
 
@@ -245,7 +269,7 @@ class UbicacionesController extends AppController
 				if (empty($columna_zona_nombre) || empty($columna_zona_bodega) || empty($columna_ubicacion_fila) || empty($columna_ubicacion_columna)) 
 				{
 					$this->Session->setFlash('Falta indicar la columna de zona, bodega, ubicacion_fila, ubicacion_columna.', null, array(), 'danger');
-					$this->redirect(array('action' => 'creacionMasivaUbicaciones'));
+					$this->redirect(array('action' => 'creacion_masiva'));
 				}
 
 				$data = $this->Session->read('creacionMasivaUbicaciones.data');
@@ -260,7 +284,7 @@ class UbicacionesController extends AppController
 						{
 							continue;
 						}
-
+						
 						if (!ClassRegistry::init('Bodega')->exists($valor[$columna_zona_bodega])) 
 						{
 							continue;
@@ -338,7 +362,7 @@ class UbicacionesController extends AppController
 				if (empty($result)) 
 				{
 					$this->Session->setFlash('No se encontraron valores para crear.', null, array(), 'warning');
-					$this->redirect(array('action' => 'creacionMasivaUbicaciones'));
+					$this->redirect(array('action' => 'creacion_masiva'));
 				}
 				
 				if (isset($result['errores'])) 
@@ -380,7 +404,27 @@ class UbicacionesController extends AppController
 
 	public function admin_exportar()
 	{	
-		$datos = $this->Ubicacion->find('all');
+		$filtro = [];
+
+		if ( isset($this->request->params['named']) ) {
+
+			$inputs = $this->request->params['named'];
+			
+			$filtro = [
+				'Ubicacion.id' 		=> $inputs['id']		?? null,
+				'zona_id' 			=> $inputs['zona_id']	?? null,
+				'fila LIKE' 		=> ($inputs['fila']??null )  ? '%'.$inputs['fila'].'%': null,
+				'columna LIKE' 		=> ($inputs['columna']??null )  ? '%'.$inputs['columna'].'%': null,
+				'Ubicacion.activo' 	=> $inputs['activo']	?? null,
+			];
+			$filtro = array_filter($filtro,function($v, $k) {
+				return $v === false || $v === true  || $v != ''  || $v != null ;
+			}, ARRAY_FILTER_USE_BOTH);
+		}
+
+		$datos = $this->Ubicacion->find('all', array(
+			'conditions' => $filtro
+		));
 
 		$campos			= array_keys($this->Ubicacion->_schema);
 
@@ -392,10 +436,26 @@ class UbicacionesController extends AppController
 		ini_set('max_execution_time', 0);
 		ini_set('memory_limit', -1);
 
+		$filtro = ['Ubicacion.activo' => 1];
+
+		if ( isset($this->request->params['named']) ) {
+
+			$inputs = $this->request->params['named'];
+			
+			$filtro = [
+				'Ubicacion.id' 		=> $inputs['id']		?? null,
+				'zona_id' 			=> $inputs['zona_id']	?? null,
+				'fila LIKE' 		=> ($inputs['fila']??null )  ? '%'.$inputs['fila'].'%': null,
+				'columna LIKE' 		=> ($inputs['columna']??null )  ? '%'.$inputs['columna'].'%': null,
+				'Ubicacion.activo' 	=> $inputs['activo']	?? null,
+			];
+			$filtro = array_filter($filtro,function($v, $k) {
+				return $v === false || $v === true  || $v != ''  || $v != null ;
+			}, ARRAY_FILTER_USE_BOTH);
+		}
+
 		$ubicaciones = $this->Ubicacion->find('all', array(
-			'conditions' => array(
-				'Ubicacion.activo' => 1
-			),
+			'conditions' => $filtro,
 			'joins' => array(
 				array(
 					'table' => 'zonas',

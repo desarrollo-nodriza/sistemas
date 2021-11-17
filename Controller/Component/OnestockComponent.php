@@ -93,6 +93,40 @@ class OnestockComponent extends Component
 					}
 				}
 			}
+		}else{
+
+			$tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
+				'mandrill_apikey', 'nombre'
+			));
+
+			$mandrill_apikey = $tienda['Tienda']['mandrill_apikey'];
+
+			if (!empty($mandrill_apikey)) 
+			{
+				$mandrill = $this->Components->load('Mandrill');
+				$mandrill->conectar($mandrill_apikey);	
+
+				$asunto = '[Nodriza Spa-'.rand(100,10000).'] Onestock dejó de actualizar';
+			
+				if (Configure::read('ambiente') == 'dev') 
+				{
+					$asunto = '[Nodriza Spa-'.rand(100,10000).'-DEV] Onestock dejó de actualizar';
+				}
+
+				$remitente = array(
+					'email' => 'no-reply@nodriza.cl',
+					'nombre' => 'Nodriza Spa'
+				);
+
+				$destinatarios = array(
+					array('email' => 'cristian.rojas@nodriza.cl')
+				);
+
+				$html = '<h1>Sistema dejó de actualizar con onestock</h1>';
+
+				$mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+			}
+
 		}
 
 		return ['sinStock' => $sinStock, 'conStock' => $conStock, 'ids_con_stock' => $ids_con_stock, 'ids_sin_stock' => $ids_sin_stock, 'token' => $response['token'], 'response' => $response];
