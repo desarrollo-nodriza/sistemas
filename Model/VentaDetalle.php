@@ -141,6 +141,44 @@ class VentaDetalle extends AppModel
 			return 0;
 		}
 
+		$venta = $this->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $ventaDetalle['VentaDetalle']['venta_id']
+			),
+			'contain' => array(				
+				'VentaEstado' => array(
+					'VentaEstadoCategoria' => array(
+						'fields' => array(
+							'VentaEstadoCategoria.id','VentaEstadoCategoria.reserva_stock'
+						)
+					),
+					'fields' => array(
+						'VentaEstado.id'
+					)
+				),
+			),
+			'fields' => array(
+				'Venta.id'				
+			)
+		));
+
+		if ($venta['VentaEstado']['VentaEstadoCategoria']['reserva_stock'] == false) {
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "No se han realizado reservas debido a la categoría ({$venta['VentaEstado']['venta_estado_categoria_id']}) del estado ({$venta['VentaEstado']['id']}) de la venta {$ventaDetalle['VentaDetalle']['venta_id']}" ,
+					'modulo'        => 'Ventas',
+					'modulo_accion' => json_encode($venta)
+				)
+			);
+
+			# Guardamos el log
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+			return 0;
+		
+		}
+
 		$cant_reservada = $ventaDetalle['VentaDetalle']['cantidad_reservada'];
 		$cant_vendida   = $ventaDetalle['VentaDetalle']['cantidad'] - $ventaDetalle['VentaDetalle']['cantidad_anulada'];
 		$cant_entregada = $ventaDetalle['VentaDetalle']['cantidad_entregada'];
@@ -272,7 +310,7 @@ class VentaDetalle extends AppModel
 					'type' => 'INNER',
 					'conditions' => array(
 						'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
-						'VentaEstadoCategoria.venta = 1'
+						'VentaEstadoCategoria.reserva_stock = 1'
 					)
 				)
 			),

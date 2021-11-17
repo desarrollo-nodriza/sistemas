@@ -1419,7 +1419,7 @@ class VentasController extends AppController {
 						$detalles[$idd]['VentaDetalle']['cantidad_en_espera'] = ($d['VentaDetalle']['cantidad'] - $d['VentaDetalle']['cantidad_anulada']) - $d['VentaDetalle']['cantidad_reservada'];
 					}
 
-					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], nul, 'VT', null, $id);
+					ClassRegistry::init('Bodega')->crearSalidaBodega($d['VentaDetalle']['venta_detalle_producto_id'], null, $d['VentaDetalle']['cantidad_reservada'], null, 'VT', null, $id);
 						
 				}
 
@@ -5094,34 +5094,39 @@ class VentasController extends AppController {
 	{
 		$venta = $this->Venta->obtener_venta_por_id($id);
 		$result = array();
-		
-		foreach ($venta['VentaDetalle'] as $key => $value) {
+		if ($venta['VentaEstado']['VentaEstadoCategoria']['reserva_stock'] == true) {
 
-			$cant = $this->Venta->reservar_stock_producto($value['id']);
+			foreach ($venta['VentaDetalle'] as $key => $value) {
 
-			if ($cant == 1) {
-				$result['success'][]  = $value['VentaDetalleProducto']['nombre'] . ' - Cant reservada: ' . $cant  . ' unidad.';
-			}elseif($cant > 1) {
-				$result['success'][]  = $value['VentaDetalleProducto']['nombre'] . ' - Cant reservada: ' . $cant  . ' unidades.';
-			}elseif ($cant == 0) {
-				$result['warning'][]  = $value['VentaDetalleProducto']['nombre'] . ' - Cant reservada: ' . $cant  . ' unidades.';
+				$cant = $this->Venta->reservar_stock_producto($value['id']);
+	
+				if ($cant == 1) {
+					$result['success'][]  = $value['VentaDetalleProducto']['nombre'] . ' - Cant reservada: ' . $cant  . ' unidad.';
+				}elseif($cant > 1) {
+					$result['success'][]  = $value['VentaDetalleProducto']['nombre'] . ' - Cant reservada: ' . $cant  . ' unidades.';
+				}elseif ($cant == 0) {
+					$result['warning'][]  = $value['VentaDetalleProducto']['nombre'] . ' - Cant reservada: ' . $cant  . ' unidades.';
+				}
+			}
+
+			if (!empty($result['success']) && !$this->shell) {
+				$this->Session->setFlash($this->crearAlertaUl($result['success'], 'Resultados'), null, array(), 'success');
+			}
+	
+			if (!empty($result['warning']) && !$this->shell) {
+				$this->Session->setFlash($this->crearAlertaUl($result['warning'], 'Resultados'), null, array(), 'warning');
+			}
+	
+			if ($this->shell) {
+				return $result;
+			}else{
+				$this->redirect($this->referer('/', true));
 			}
 		}
-
-		if (!empty($result['success']) && !$this->shell) {
-			$this->Session->setFlash($this->crearAlertaUl($result['success'], 'Resultados'), null, array(), 'success');
-		}
-
-		if (!empty($result['warning']) && !$this->shell) {
-			$this->Session->setFlash($this->crearAlertaUl($result['warning'], 'Resultados'), null, array(), 'warning');
-		}
-
-		if ($this->shell) {
-			return $result;
-		}else{
-			$this->redirect($this->referer('/', true));
-		}
-
+		
+		$this->Session->setFlash('No se han realizados reserva ya que la categoría del estado no lo permite', null, array(), 'warning');
+		
+		$this->redirect($this->referer('/', true));
 	}
 
 

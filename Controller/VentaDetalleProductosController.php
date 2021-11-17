@@ -1532,7 +1532,7 @@ class VentaDetalleProductosController extends AppController
 		}elseif($cant > 1) {
 			$this->Session->setFlash('Cantidad reservada: ' . $cant . ' unidades.', null, array(), 'success');
 		}elseif ($cant == 0) {
-			$this->Session->setFlash('No fue posible reservar el stock. Cantidad reservada: ' . $cant . '.', null, array(), 'warning');
+			$this->Session->setFlash("No fue posible reservar el stock. Cantidad reservada: {$cant}. Esposible que la categoría asociada al estado de la venta no permita reservar stock" , null, array(), 'warning');
 		}
 
 		$this->redirect($this->referer('/', true));

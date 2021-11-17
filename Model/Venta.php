@@ -455,7 +455,7 @@ class Venta extends AppModel
 					'VentaEstado' => array(
 						'VentaEstadoCategoria' => array(
 							'fields' => array(
-								'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.plantilla'
+								'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.plantilla', 'VentaEstadoCategoria.reserva_stock'
 							)
 						),
 						'fields' => array(
@@ -643,7 +643,7 @@ class Venta extends AppModel
 				'OrdenCompra.id'
 			)
 		));
-
+		
 		if (empty($ocVentas['Venta'])) {
 			return;
 		}
@@ -1030,6 +1030,23 @@ class Venta extends AppModel
 			)
 		);
 		
+		if ($venta['VentaEstado']['VentaEstadoCategoria']['reserva_stock'] == false) {
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "No se han realizado reservas debido a la categoría ({$venta['VentaEstado']['venta_estado_categoria_id']}) del estado ({$venta['VentaEstado']['id']}) de la venta {$id}" ,
+					'modulo'        => 'Ventas',
+					'modulo_accion' => json_encode($venta)
+				)
+			);
+
+			# Guardamos el log
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+			
+			return;
+		}
+
 		foreach ($venta['VentaDetalle'] as $ip => $producto) 
 		{
 			
@@ -1365,7 +1382,17 @@ class Venta extends AppModel
 						'VentaDetalle.cantidad_en_espera',
 						'VentaDetalle.cantidad_reservada'
 					)
-				)
+					),
+				'VentaEstado' => array(
+					'VentaEstadoCategoria' => array(
+						'fields' => array(
+							'VentaEstadoCategoria.id','VentaEstadoCategoria.reserva_stock'
+						)
+					),
+					'fields' => array(
+						'VentaEstado.id'
+					)
+				),
 			),
 			'fields' => array(
 				'Venta.id',
@@ -1374,6 +1401,22 @@ class Venta extends AppModel
 			)
 		));
 
+		if ($venta['VentaEstado']['VentaEstadoCategoria']['reserva_stock'] == false) {
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "No se han realizado reservas debido a la categoría ({$venta['VentaEstado']['venta_estado_categoria_id']}) del estado ({$venta['VentaEstado']['id']}) de la venta {$ventaDetalle['VentaDetalle']['venta_id']}" ,
+					'modulo'        => 'Ventas',
+					'modulo_accion' => json_encode($venta)
+				)
+			);
+
+			# Guardamos el log
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+			return 0;
+		
+		}
 		$cant_reservada = $ventaDetalle['VentaDetalle']['cantidad_reservada'];
 		$cant_vendida   = $ventaDetalle['VentaDetalle']['cantidad'] - $ventaDetalle['VentaDetalle']['cantidad_anulada'];
 		$cant_entregada = $ventaDetalle['VentaDetalle']['cantidad_entregada'];
@@ -1451,6 +1494,17 @@ class Venta extends AppModel
 						'VentaDetalle.cantidad_en_espera',
 						'VentaDetalle.cantidad_reservada'
 					)
+				),
+				'VentaEstado' => array(
+					'fields' => array(
+						'VentaEstado.id',
+						'VentaEstado.venta_estado_categoria_id'
+					),
+					'VentaEstadoCategoria' => array(
+						'fields' => array(
+							'VentaEstadoCategoria.venta'
+						)
+					)
 				)
 			),
 			'fields' => array(
@@ -1463,8 +1517,10 @@ class Venta extends AppModel
 		$total_cantidad = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
 		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
 		
-		if ( $total_reservado == $total_cantidad && $total_reservado > 0) 
-		{
+		# Debe ser una venta de tipo venta para pasar a picking
+		if ( $total_reservado == $total_cantidad && $total_reservado > 0 && $venta['VentaEstado']['VentaEstadoCategoria']['venta']) 
+		{	
+			# Condiciones para pasar a picking
 			if (empty($venta['Venta']['picking_estado']) || $venta['Venta']['picking_estado'] == 'no_definido' || $venta['Venta']['picking_estado'] == 'en_revision' || $venta['Venta']['picking_estado'] == 'empaquetado' ) 
 			{
 				# Pasa a picking
@@ -1798,7 +1854,7 @@ class Venta extends AppModel
 					'type' => 'INNER',
 					'conditions' => array(
 						'estado_categoria.id = estado.venta_estado_categoria_id',
-						'estado_categoria.venta = 1',
+						'estado_categoria.reserva_stock = 1',
 						'estado_categoria.final = 0'
 					)
 				)
