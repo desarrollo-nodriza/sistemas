@@ -50,20 +50,42 @@ class UbicacionesController extends AppController
 			$filtro = array_filter($filtro,function($v, $k) {
 				return $v === false || $v === true  || $v != ''  || $v != null ;
 			}, ARRAY_FILTER_USE_BOTH);
-		}
 
+
+			$qry = array(
+				'recursive'	=> 0,
+				'limit' => 20,
+				'order' => array('id' => 'DESC'),
+				'contain' => array(
+					'Zona' => array(
+						'Bodega'
+					)
+				),
+				'conditions'=> $filtro
+			);
+
+
+			if (isset($inputs['bodega_id']))
+			{
+				$qry = array_replace_recursive($qry, array(
+					'joins' => array(
+						array(
+							'table' => 'zonas',
+							'alias' => 'z',
+							'type' => 'INNER',
+							'conditions' => array(
+								'z.id = Ubicacion.zona_id',
+								'z.bodega_id' => $inputs['bodega_id']
+							)
+						)
+					)
+				));
+			}
+
+
+		}
 		
-        $this->paginate		= array(
-			'recursive'	=> 0,
-            'limit' => 20,
-			'order' => array('id' => 'DESC'),
-			'contain' => array(
-				'Zona' => array(
-					'Bodega'
-				)
-			),
-			'conditions'=> $filtro
-		);
+        $this->paginate = $qry;
 
 		$zonasAll = ClassRegistry::init('Zona')->find('all', array(
 			'contain' => array(
@@ -89,7 +111,9 @@ class UbicacionesController extends AppController
 		BreadcrumbComponent::add('Ubicaciones');
 
 		$ubicaciones	= $this->paginate();
-		$this->set(compact('ubicaciones', 'zonas'));
+		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('activo' => 1)));
+		
+		$this->set(compact('ubicaciones', 'zonas', 'bodegas'));
     }
 
     public function admin_add()
@@ -405,6 +429,7 @@ class UbicacionesController extends AppController
 	public function admin_exportar()
 	{	
 		$filtro = [];
+		$qry = ['recursive' => -1];
 
 		if ( isset($this->request->params['named']) ) {
 
@@ -420,42 +445,54 @@ class UbicacionesController extends AppController
 			$filtro = array_filter($filtro,function($v, $k) {
 				return $v === false || $v === true  || $v != ''  || $v != null ;
 			}, ARRAY_FILTER_USE_BOTH);
+
+
+			$qry = array_replace_recursive($qry, array(
+				'conditions' => $filtro
+			));
+
+			if (isset($inputs['bodega_id']))
+			{
+				$qry = array_replace_recursive($qry, array(
+					'joins' => array(
+						array(
+							'table' => 'zonas',
+							'alias' => 'z',
+							'type' => 'INNER',
+							'conditions' => array(
+								'z.id = Ubicacion.zona_id',
+								'z.bodega_id' => $inputs['bodega_id']
+							)
+						)
+					)
+				));
+			}
+
 		}
 
-		$datos = $this->Ubicacion->find('all', array(
-			'conditions' => $filtro
-		));
+		$datos = $this->Ubicacion->find('all', $qry);
 
 		$campos			= array_keys($this->Ubicacion->_schema);
 
 		$this->set(compact('campos', 'datos'));
 	}
 
+
+		
+	/**
+	 * Crea los PDF con los QRs de las ubicaciones indicadas
+	 *
+	 * @return void
+	 */
 	public function admin_crear_etiqueta_qr()
 	{	
 		ini_set('max_execution_time', 0);
 		ini_set('memory_limit', -1);
 
-		$filtro = ['Ubicacion.activo' => 1];
-
-		if ( isset($this->request->params['named']) ) {
-
-			$inputs = $this->request->params['named'];
-			
-			$filtro = [
-				'Ubicacion.id' 		=> $inputs['id']		?? null,
-				'zona_id' 			=> $inputs['zona_id']	?? null,
-				'fila LIKE' 		=> ($inputs['fila']??null )  ? '%'.$inputs['fila'].'%': null,
-				'columna LIKE' 		=> ($inputs['columna']??null )  ? '%'.$inputs['columna'].'%': null,
-				'Ubicacion.activo' 	=> $inputs['activo']	?? null,
-			];
-			$filtro = array_filter($filtro,function($v, $k) {
-				return $v === false || $v === true  || $v != ''  || $v != null ;
-			}, ARRAY_FILTER_USE_BOTH);
-		}
-
-		$ubicaciones = $this->Ubicacion->find('all', array(
-			'conditions' => $filtro,
+		$qry = array(
+			'conditions' => array(
+				'Ubicacion.activo' => 1
+			),
 			'joins' => array(
 				array(
 					'table' => 'zonas',
@@ -470,7 +507,48 @@ class UbicacionesController extends AppController
 			'fields' => array(
 				'Ubicacion.id'
 			)
-		));
+		);
+
+		if ( isset($this->request->params['named']) ) {
+
+			$inputs = $this->request->params['named'];
+			
+			$filtro = [
+				'Ubicacion.id' 		=> $inputs['id']		?? null,
+				'zona_id' 			=> $inputs['zona_id']	?? null,
+				'fila LIKE' 		=> ($inputs['fila']??null )  ? '%'.$inputs['fila'].'%': null,
+				'columna LIKE' 		=> ($inputs['columna']??null )  ? '%'.$inputs['columna'].'%': null,
+				'Ubicacion.activo' 	=> $inputs['activo']	?? null,
+			];
+			$filtro = array_filter($filtro,function($v, $k) {
+				return $v === false || $v === true  || $v != ''  || $v != null ;
+			}, ARRAY_FILTER_USE_BOTH);
+
+
+			$qry = array_replace_recursive($qry, array(
+				'conditions' => $filtro
+			));
+
+			if (isset($inputs['bodega_id']))
+			{
+				$qry = array_replace_recursive($qry, array(
+					'joins' => array(
+						array(
+							'table' => 'zonas',
+							'alias' => 'zona',
+							'type' => 'INNER',
+							'conditions' => array(
+								'zona.id = Ubicacion.zona_id',
+								'zona.bodega_id' => $inputs['bodega_id']
+							)
+						)
+					)
+				));
+			}
+
+		}
+		
+		$ubicaciones = $this->Ubicacion->find('all', $qry);
 
 		if (empty($ubicaciones))
 		{
