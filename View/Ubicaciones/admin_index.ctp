@@ -13,6 +13,7 @@
 				$fila 		= (isset($inputs['fila'])) 	? str_replace('%2F', '/', urldecode($inputs['fila'])) : '' ;
 				$columna	= (isset($inputs['columna'])) 		? str_replace('%2F', '/', urldecode($inputs['columna'])) : '' ;
 				$activo 	= (isset($inputs['activo']))	? str_replace('%2F', '/', urldecode($inputs['activo'])) : '' ;
+				$bodega_id 	= (isset($inputs['bodega_id']))	? str_replace('%2F', '/', urldecode($inputs['bodega_id'])) : '' ;
 			?>
 			<div class="panel panel-default">
 				<div class="panel-heading">
@@ -29,6 +30,18 @@
 								'placeholder' => 'Ej: 1, 10',
 								'value' => $id
 								))?>
+						</div>
+					</div>
+
+					<div class="col-sm-3 col-xs-12">
+						<div class="form-group">
+							<label>Bodega</label>
+							<?=$this->Form->select('bodega_id', $bodegas, array(
+								'class' => 'form-control select',
+								'data-live-search' => true,
+								'empty' => 'Seleccione',
+								'default' => $bodega_id
+								));?>
 						</div>
 					</div>
 					
