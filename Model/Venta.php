@@ -490,12 +490,7 @@ class Venta extends AppModel
 							'MetodoEnvio.*'
 						),
 						'Bodega' => [
-							'Comuna' => [
-								'fields' => [
-									'Comuna.district_id_blue_express',
-									'Comuna.state_id_blue_express'
-								],
-							],
+							'Comuna',
 							'fields' => [
 								'Bodega.nombre',
 								'Bodega.nombre_contacto',
@@ -2108,5 +2103,11 @@ class Venta extends AppModel
 			),
 			'group' => array('Venta.id')
 		));
+	}
+
+	public function metodo_envio_id($id)
+	{	
+		$this->id = $id;
+		return $this->field('metodo_envio_id');
 	}
 }

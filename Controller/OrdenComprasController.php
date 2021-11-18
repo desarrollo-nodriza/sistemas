@@ -664,6 +664,21 @@ class OrdenComprasController extends AppController
 			$this->redirect(array('action' => 'index'));
 		}
 
+		if ( $this->request->is('post') || $this->request->is('put') )
+		{	
+		
+			// prx($this->request->data);
+			if ($this->OrdenCompra->save($this->request->data)) {
+				$this->Session->setFlash('Se ha cambiado bodega', null, array(), 'success');
+				$this->redirect(array('controller'=>'ordenCompras','action' => 'index'));
+			}else{
+				$this->Session->setFlash('se ha podido cambiar bodega, intente nuevamente', null, array(), 'warning');
+			}
+			
+			// 
+			
+		}
+
 		$ocs = $this->OrdenCompra->find('all', array(
 			'conditions' => array(
 				'OrdenCompra.id' => $id
@@ -679,11 +694,15 @@ class OrdenComprasController extends AppController
 				'OrdenCompraHistorico'
 			)
 		));
+
+		$bodegas = ClassRegistry::init('Bodega')->find('list',['conditions'=>['activo'=>true]]);
 		
 		BreadcrumbComponent::add('Ordenes de compra ', array('action' => 'index'));
 		BreadcrumbComponent::add('Ver OC ');
+		
+		$estados = ["espera_dte","recepcion_incompleta","recepcion_completa"];
 
-		$this->set(compact('ocs'));
+		$this->set(compact('ocs','bodegas','estados'));
 
 	}
 
