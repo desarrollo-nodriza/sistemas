@@ -3831,6 +3831,8 @@ class OrdenComprasController extends AppController
 
 			throw new CakeException($response);
 		}
+
+		$bodega_id = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
 		
 		$ocs = $this->OrdenCompra->find('all', array(
 			'conditions' => array(
@@ -3840,7 +3842,7 @@ class OrdenComprasController extends AppController
 					'espera_dte'
 				),
 				'OrdenCompra.fecha_recibido <>' => '',
-				'OrdenCompra.bodega_id' => $bodega_id
+				'OrdenCompra.bodega_id' => $bodega_id['Administrador']['Rol']['bodega_id']
 			),
 			'joins' => array(
 				array(
