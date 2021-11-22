@@ -9903,7 +9903,7 @@ class VentasController extends AppController {
 
 		# Unir etiquetas embalajes. nunca serán más de 500
 		$this->Etiquetas = $this->Components->load('Etiquetas');
-		$etiqueta_interna2 = $this->Etiquetas->unir_documentos(Hash::extract($etiquetas_embalajes, '{n}.path'), date('Y-m-d-H-i-s'))['result'][0]['document'];
+		$etiqueta_interna2 = @$this->Etiquetas->unir_documentos(Hash::extract($etiquetas_embalajes, '{n}.path'), date('Y-m-d-H-i-s'))['result'][0]['document'];
 
 		$documentos = $this->generar_documentos($venta);
 		
@@ -10051,23 +10051,20 @@ class VentasController extends AppController {
 					$item['VentaDetalleProducto']['nombre'] = $item['VentaDetalleProducto']['nombre'] . ' - ' . $item['Atributo'][0]['VentaDetallesAtributo']['valor'];
 				}
 
-				if ($emp['EmbalajeWarehouse']['estado'] == 'procesando')
-				{	
-					$respuesta['body']['itemes'][] = array(
-						'id' => $item['id'],
-						'producto_id' => $item['venta_detalle_producto_id'],
-						'nombre' => $item['VentaDetalleProducto']['nombre'],
-						'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
-						'cantidad_pendiente_entrega' => (int) $item['cantidad_pendiente_entrega'],
-						'cantidad_reservada' => (int) $item['cantidad_reservada'],
-						'cantidad_a_emabalar' => $emp['cantidad_a_embalar'] - $emp['cantidad_embalada'],
-						'imagen' => Hash::extract($imagen, '{n}[principal=1].url')[0],
-						'peso' => $pbodega['ProductoWarehouse']['peso'],
-						'ancho' => $pbodega['ProductoWarehouse']['ancho'],
-						'largo' => $pbodega['ProductoWarehouse']['largo'],
-						'alto' => $pbodega['ProductoWarehouse']['alto']
-					);
-				}
+				$respuesta['body']['itemes'][] = array(
+					'id' => $item['id'],
+					'producto_id' => $item['venta_detalle_producto_id'],
+					'nombre' => $item['VentaDetalleProducto']['nombre'],
+					'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
+					'cantidad_pendiente_entrega' => (int) $item['cantidad_pendiente_entrega'],
+					'cantidad_reservada' => (int) $item['cantidad_reservada'],
+					'cantidad_a_emabalar' => $emp['cantidad_a_embalar'] - $emp['cantidad_embalada'],
+					'imagen' => Hash::extract($imagen, '{n}[principal=1].url')[0],
+					'peso' => $pbodega['ProductoWarehouse']['peso'],
+					'ancho' => $pbodega['ProductoWarehouse']['ancho'],
+					'largo' => $pbodega['ProductoWarehouse']['largo'],
+					'alto' => $pbodega['ProductoWarehouse']['alto']
+				);
 
 				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['peso'] = $pbodega['ProductoWarehouse']['peso'];
 				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['alto'] = $pbodega['ProductoWarehouse']['alto'];
