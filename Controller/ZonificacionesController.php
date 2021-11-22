@@ -7,7 +7,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
-
+use function PHPSTORM_META\map;
 
 class ZonificacionesController extends AppController
 {
@@ -23,8 +23,8 @@ class ZonificacionesController extends AppController
 		
 		$ubicacion = ClassRegistry::init('Ubicacion')->find('all', array(
             'conditions' => array('Ubicacion.activo' => 1),
-            'fields' => array('id', 'fila','columna','Zona.nombre'),
-			'contain' => ['Zona'],
+            'fields' => array('id', 'fila','columna','Zona.nombre', 'Zona.bodega_id'),
+			'contain' => ['Zona' => ['Bodega']],
             'order' => array('Zona.nombre ASC'),
         ));
 		$zonificaciones = $this->Zonificacion->find('all', array(
@@ -34,18 +34,17 @@ class ZonificacionesController extends AppController
 				'movimiento !='	=> 'garantia'
 				
             ),
-            'contain' => array('Ubicacion'),
+            'contain' => array('Ubicacion' => ['Zona' => ['Bodega']]),
             'group' => array('ubicacion_id'),
 		));
-      
+		
 		$this->TieneZonificacion($zonificaciones,$id);
 		
         $ubicaciones= [];
         $persistir= [];
-
        
         foreach ($ubicacion as $value) {
-            $ubicaciones[$value['Ubicacion']['id']] =  $value['Zona']['nombre'].' - '.$value['Ubicacion']['columna'].' - '.$value['Ubicacion']['fila'];
+            $ubicaciones[$value['Ubicacion']['id']] =  $value['Zona']['Bodega']['nombre'] . ' ' . $value['Zona']['nombre'].' - '.$value['Ubicacion']['columna'].' - '.$value['Ubicacion']['fila'];
         }
         
 		if ( $this->request->is('post') || $this->request->is('put')) {
@@ -124,7 +123,11 @@ class ZonificacionesController extends AppController
 				'producto_id' 	=> $id,
 				'movimiento !='	=> 'garantia'
             ),
-            'contain' => array('Ubicacion'=>'Zona','VentaDetalleProducto'),
+            'contain' => array('Ubicacion'=>[
+				'Zona' => [
+					'Bodgea'
+				]
+			],'VentaDetalleProducto'),
             'group' => array('ubicacion_id'),
 		));
        
@@ -138,7 +141,7 @@ class ZonificacionesController extends AppController
 					'producto_id'       => $id,
 					'nombre'			=> $valor['VentaDetalleProducto']['nombre'],
 					'ubicacion_origen'  => $valor['Zonificacion']['ubicacion_id'],
-					'nombre_ubicacion'	=> $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
+					'nombre_ubicacion'	=> $valor['Ubicacion']['Zona']['Bodega']['nombre'] . ' ' . $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
 					'cantidad'          => $valor[0]['cantidad'],
 					'ubicacion_destino' => '',
 					'cantidad_a_mover'  => ''
@@ -554,141 +557,58 @@ class ZonificacionesController extends AppController
 		
 		$datos 		= [];
 
-		$ids = ClassRegistry::init('Zonificacion')->find('all',[
-			'fields'     =>'producto_id',
-			'group'      => 'producto_id'
-		]
-		);
-		$ids = Hash::extract($ids, '{n}.Zonificacion.producto_id');
-		
-		$db = ClassRegistry::init('VentaDetalleProducto')->getDataSource();
-		$subQueryStockFisico = $db->buildStatement(
-			array(
-				'fields'     => array('SUM(Bodega.cantidad)'),
-				'table'      => 'rp_bodegas_venta_detalle_productos',
-				'alias'      => 'Bodega',
-				'limit'      => null,
-				'offset'     => null,
-				'joins'      => array(),
-				'conditions' => array('Bodega.venta_detalle_producto_id = VentaDetalleProducto.id'),
-				'order'      => null,
-				'group'      => array('Bodega.venta_detalle_producto_id')
+		$zonificaciones = $this->Zonificacion->find('all', array(
+			'fields' => array('SUM(Zonificacion.cantidad) as cantidad', 'Zonificacion.producto_id', 'Zonificacion.ubicacion_id'),
+			'conditions' => array(
+				'Zonificacion.movimiento !='	=> 'garantia'
 			),
-			ClassRegistry::init('VentaDetalleProducto')
-		);
-		$subQueryStockFisico = '(' . $subQueryStockFisico . ') as stock_fisico';
-		$subQueryStockFisicoExpression = $db->expression($subQueryStockFisico);
-
-
-		$opciones = array_replace_recursive($opciones, array(
-			
-			'order' => array('VentaDetalleProducto.id_externo' => 'DESC'),
 			'contain' => array(
-				'Marca' => array(
+				'Ubicacion' =>array(
+					'Zona' => array(
+						'Bodega' => array(
+							'fields' => array(
+								'Bodega.id',
+								'Bodega.nombre'
+							)
+						),
+						'fields' => array(
+							'Zona.id',
+							'Zona.bodega_id',
+							'Zona.nombre'
+						)
+					),
 					'fields' => array(
-						'Marca.id', 'Marca.nombre'
+						'Ubicacion.id',
+						'Ubicacion.fila',
+						'Ubicacion.columna',
+						'Ubicacion.zona_id'
+					) 
+				),
+				'VentaDetalleProducto' => array(
+					'fields' => array(
+						'VentaDetalleProducto.id',
+						'VentaDetalleProducto.nombre'
 					)
-				),
-
+				)
 			),
-			'fields' => array(
-				'VentaDetalleProducto.id', 
-				'VentaDetalleProducto.id_externo',
-				'VentaDetalleProducto.nombre', 
-				'VentaDetalleProducto.marca_id', 
-				'VentaDetalleProducto.cantidad_virtual', 
-				'VentaDetalleProducto.codigo_proveedor', 
-				'VentaDetalleProducto.precio_costo', 
-				'VentaDetalleProducto.cantidad_virtual', 
-				'VentaDetalleProducto.activo',
-				$subQueryStockFisicoExpression->value
-			),
-			'conditions'=>
-			[
-				'VentaDetalleProducto.id in'=>$ids
-			]
-			));
+			'having' => array('SUM(Zonificacion.cantidad) > 0'),
+			'group' => array('Zonificacion.ubicacion_id', 'Zonificacion.producto_id'),
+			'order' => 'Zonificacion.producto_id'
+		));
 
-		# Filtrar
-		if ( isset($this->request->params['named']) ) {
-			foreach ($this->request->params['named'] as $campo => $valor) {
-				switch ($campo) {
-					case 'id':
-						$opciones = array_replace_recursive($opciones, array(
-							'conditions' => array('VentaDetalleProducto.id_externo' => str_replace('%2F', '/', urldecode($valor) ) )));
-						break;
-					case 'nombre':
-						$opciones = array_replace_recursive($opciones, array(
-							'conditions' => array('VentaDetalleProducto.nombre LIKE' => '%'.trim(str_replace('%2F', '/', urldecode($valor) )).'%')));
-						break;
-					case 'marca':
-						$opciones = array_replace_recursive($opciones, array(
-							'conditions' => array('VentaDetalleProducto.marca_id' => $valor)));
-						break;
-					case 'proveedor':
-						$opciones = array_replace_recursive($opciones, array(
-							'joins'=> array(
-								array(
-									'alias' => 'Proveedor',
-									'table' => 'proveedores_venta_detalle_productos',
-									'type' => 'INNER',
-									'conditions' => array(
-										'Proveedor.venta_detalle_producto_id = VentaDetalleProducto.id',
-										'Proveedor.proveedor_id' => $valor
-									)
-								),
-							)));
-						break;
-					case 'existencia':
-						
-						if ($valor == 'en_existencia')
-						{
-							$opciones = array_replace_recursive($opciones, array(
-								'group' => array(
-									'stock_fisico HAVING stock_fisico > 0'
-								),
-								'order' => 'stock_fisico DESC'
-							));
-						}
-						
-						break;
-				}
-			}
-		}
+		foreach ($zonificaciones as $valor)
+		{	
+			$datos[] = array(
+				'producto_id'       => $valor['VentaDetalleProducto']['id'],
+				'nombre'			=> $valor['VentaDetalleProducto']['nombre'],
+				'ubicacion_origen'  => $valor['Ubicacion']['id'],
+				'nombre_ubicacion'	=> $valor['Ubicacion']['Zona']['Bodega']['nombre'].' ' . $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
+				'cantidad'          => $valor[0]['cantidad'],
+				'ubicacion_destino' => '',
+				'cantidad_a_mover'  => ''
+			);
+		}	
 		
-		
-		$productos 	= ClassRegistry::init('VentaDetalleProducto')->find('list',$opciones);
-		$zonificaciones=[];
-        foreach ($productos as $id) {
-			
-			$zonificaciones = $this->Zonificacion->find('all', array(
-				'fields' => array('Zonificacion.*','SUM(Zonificacion.cantidad) as cantidad','Ubicacion.*'),
-				'conditions' => array(
-					'Zonificacion.producto_id' 		=> $id,
-					'Zonificacion.movimiento !='	=> 'garantia'
-				),
-				'contain' => array('Ubicacion'=>'Zona','VentaDetalleProducto'),
-				'group' => array('Zonificacion.ubicacion_id'),
-			));
-			
-	
-			foreach ($zonificaciones as $valor)
-			{	
-				if ($valor[0]['cantidad']>0) {
-					$datos[] = 
-					array(
-						'producto_id'       => $id,
-						'nombre'			=> $valor['VentaDetalleProducto']['nombre'],
-						'ubicacion_origen'  => $valor['Zonificacion']['ubicacion_id'],
-						'nombre_ubicacion'	=> $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
-						'cantidad'          => $valor[0]['cantidad'],
-						'ubicacion_destino' => '',
-						'cantidad_a_mover'  => ''
-					);
-				}
-				
-			}	
-		}
 		$this->TieneZonificacion($zonificaciones);
 		
         $campos = array('producto_id','nombre','ubicacion_origen','nombre_ubicacion','cantidad','ubicacion_destino', 'cantidad_a_mover');
@@ -707,11 +627,16 @@ class ZonificacionesController extends AppController
 		}
 		$ubicacion = ClassRegistry::init('Ubicacion')->find('all', array(
             'conditions' => array('Ubicacion.activo' => 1),
-            'fields' => array('id', 'fila','columna','Zona.nombre'),
-			'contain' => ['Zona'],
+            'fields' => array('id', 'fila','columna','Zona.nombre', 'Zona.bodega_id'),
+			'contain' => ['Zona' => ['Bodega' => [
+				'fields' => [
+					'Bodega.id',
+					'Bodega.nombre',
+				]
+			]]],
             'order' => array('Zona.nombre ASC'),
         ));
-		
+
 		$zonificaciones = $this->Zonificacion->find('all', array(
             'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 			'conditions' => array(
@@ -719,12 +644,17 @@ class ZonificacionesController extends AppController
 				'movimiento !='	=> 'garantia'
 				
             ),
-            'contain' => array('Ubicacion'=>'Zona'),
+            'contain' => array(
+				'Ubicacion' => [
+					'Zona' => [
+						'Bodega'
+					]
+				]),
             'group' => array('ubicacion_id'),
 		));
 		
 		foreach ($ubicacion as $value) {
-            $ubicaciones[$value['Ubicacion']['id']] =  $value['Zona']['nombre'].' - '.$value['Ubicacion']['columna'].' - '.$value['Ubicacion']['fila'];
+            $ubicaciones[$value['Ubicacion']['id']] =  $value['Zona']['Bodega']['nombre'] . ' ' . $value['Zona']['nombre'].' - '.$value['Ubicacion']['columna'].' - '.$value['Ubicacion']['fila'];
         }
 		
 		if ( $this->request->is('post') || $this->request->is('put')) {
@@ -897,7 +827,11 @@ class ZonificacionesController extends AppController
 				'movimiento !='	=> 'garantia'
             ),
             'contain' =>[
-				'Ubicacion'=>'Zona',
+				'Ubicacion'=>[
+					'Zona' => [
+						'Bodega'
+					]
+				],
 				'VentaDetalleProducto'],
             'group' => array('ubicacion_id'),
 		));
@@ -929,7 +863,7 @@ class ZonificacionesController extends AppController
 					'referencia'       				=> $valor['VentaDetalleProducto']['codigo_proveedor'],
 					'nompre_del_producto'			=> $valor['VentaDetalleProducto']['nombre'],
 					'ubicacion_id'  				=> $valor['Zonificacion']['ubicacion_id'],
-					'nombre_ubicacion'				=> $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
+					'nombre_ubicacion'				=> $valor['Ubicacion']['Zona']['Bodega']['nombre'] . ' ' . $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
 					'cantidad_actual'				=> $valor[0]['cantidad'],
 					'indique_cantidad_a_ajustar'  	=> '',
 					'precio'						=> $PMP[$valor['Ubicacion']['Zona']['bodega_id']]==0?'':$PMP[$valor['Ubicacion']['Zona']['bodega_id']],
@@ -1102,7 +1036,6 @@ class ZonificacionesController extends AppController
 					
 				}else{
 
-					$this->Zonificacion->create();
 					$infoPersistirInventario=[];
 					if ( $this->Zonificacion->saveMany($persistir) )
 					{
@@ -1158,27 +1091,9 @@ class ZonificacionesController extends AppController
 		
 		$datos 		= [];
 
-		$db = ClassRegistry::init('VentaDetalleProducto')->getDataSource();
-		$subQueryStockFisico = $db->buildStatement(
-			array(
-				'fields'     => array('SUM(Bodega.cantidad)'),
-				'table'      => 'rp_bodegas_venta_detalle_productos',
-				'alias'      => 'Bodega',
-				'limit'      => null,
-				'offset'     => null,
-				'joins'      => array(),
-				'conditions' => array('Bodega.venta_detalle_producto_id = VentaDetalleProducto.id'),
-				'order'      => null,
-				'group'      => array('Bodega.venta_detalle_producto_id')
-			),
-			ClassRegistry::init('VentaDetalleProducto')
-		);
-		$subQueryStockFisico = '(' . $subQueryStockFisico . ') as stock_fisico';
-		$subQueryStockFisicoExpression = $db->expression($subQueryStockFisico);
-
+		$id_stock_disponible = ClassRegistry::init('VentaDetalleProducto')->obtener_productos_con_stock_disponible();
 
 		$opciones = array_replace_recursive($opciones, array(
-			
 			'order' => array('VentaDetalleProducto.id_externo' => 'DESC'),
 			'contain' => array(
 				'Marca' => array(
@@ -1186,17 +1101,18 @@ class ZonificacionesController extends AppController
 						'Marca.id', 'Marca.nombre'
 					)
 				),
-
+			),
+			'conditions' => array(
+				'VentaDetalleProducto.id' => Hash::extract($id_stock_disponible, '{n}.id')
 			),
 			'fields' => array(
 				'VentaDetalleProducto.id', 
 				'VentaDetalleProducto.nombre', 
-				'VentaDetalleProducto.codigo_proveedor', 
-				$subQueryStockFisicoExpression->value
+				'VentaDetalleProducto.codigo_proveedor',
 			),
 			)
 		);
-
+		
 		# Filtrar
 		if ( isset($this->request->params['named']) ) {
 			foreach ($this->request->params['named'] as $campo => $valor) {
@@ -1227,54 +1143,59 @@ class ZonificacionesController extends AppController
 								),
 							)));
 						break;
-					case 'existencia':
-						
-						if ($valor == 'en_existencia')
-						{
-							$opciones = array_replace_recursive($opciones, array(
-								'group' => array(
-									'stock_fisico HAVING stock_fisico > 0'
-								),
-								'order' => 'stock_fisico DESC'
-							));
-						}
-						
-						break;
 				}
 			}
 		}
 		
 		$productos 	= ClassRegistry::init('VentaDetalleProducto')->find('all',$opciones);
-
+		
 		$movimientos = $this->Movimientos();
-		$bodegas = ClassRegistry::init('Bodega')->find('list'); 
+		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('activo' => 1))); 
 		
         foreach ($productos as $producto) {
-			
 			$zonificaciones = $this->Zonificacion->find('all', array(
-				'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
+				'fields' => array('Zonificacion.producto_id', 'Zonificacion.ubicacion_id','SUM(Zonificacion.cantidad) as cantidad'),
 				'conditions' => array(
 					'producto_id' 	=> $producto['VentaDetalleProducto']['id'],
 					'movimiento !='	=> 'garantia'
 				),
 				'contain' =>[
-					'Ubicacion'=>'Zona',
-					'VentaDetalleProducto'],
+					'Ubicacion'=>[
+						'Zona' => [
+							'Bodega' => [
+								'fields' => [
+									'Bodega.id',
+									'Bodega.nombre'
+								]
+							],
+							'fields' => [
+								'Zona.id',
+								'Zona.bodega_id',
+								'Zona.nombre'
+							]
+						],
+						'fields' => [
+							'Ubicacion.id',
+							'Ubicacion.zona_id',
+							'Ubicacion.fila',
+							'Ubicacion.columna'
+						]
+					]],
 				'group' => array('ubicacion_id'),
 			));
 			
 			foreach ($zonificaciones as $valor)
 			{	
-				$PMP = $this->PMP($bodegas,$valor['VentaDetalleProducto']['id']);
-			
+				$PMP = $this->PMP($bodegas,$producto['VentaDetalleProducto']['id']);
+				
 				if ($valor[0]['cantidad']>0) {
 					$datos[] = 
 					array(
-						'producto_id'       			=> $valor['VentaDetalleProducto']['id'],
-						'referencia'       				=> $valor['VentaDetalleProducto']['codigo_proveedor'],
-						'nompre_del_producto'			=> $valor['VentaDetalleProducto']['nombre'],
+						'producto_id'       			=> $producto['VentaDetalleProducto']['id'],
+						'referencia'       				=> $producto['VentaDetalleProducto']['codigo_proveedor'],
+						'nompre_del_producto'			=> $producto['VentaDetalleProducto']['nombre'],
 						'ubicacion_id'  				=> $valor['Zonificacion']['ubicacion_id'],
-						'nombre_ubicacion'				=> $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
+						'nombre_ubicacion'				=> $valor['Ubicacion']['Zona']['Bodega']['nombre'] . ' ' . $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
 						'cantidad_actual'				=> $valor[0]['cantidad'],
 						'indique_cantidad_a_ajustar'  	=> '',
 						'precio'						=> $PMP[$valor['Ubicacion']['Zona']['bodega_id']]==0?'':$PMP[$valor['Ubicacion']['Zona']['bodega_id']],
@@ -1286,6 +1207,7 @@ class ZonificacionesController extends AppController
 			}
 			if (!$zonificaciones ) {
 				$PMP = $this->PMP($bodegas,$producto['VentaDetalleProducto']['id']);
+				
 				$datos[] = 
 					array(
 						'producto_id'       			=> $producto['VentaDetalleProducto']['id'],
@@ -1302,7 +1224,7 @@ class ZonificacionesController extends AppController
 			}
 
 		}	
-		
+	
 		$campos = array('producto_id','referencia','nompre_del_producto','ubicacion_id','nombre_ubicacion','cantidad_actual', 'indique_cantidad_a_ajustar','precio','glosa','glosas_que_puedes_usar_pero_no_son_obligatorias');
 		$this->set(compact('datos', 'campos'));
 

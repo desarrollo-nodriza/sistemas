@@ -1421,7 +1421,7 @@ class VentaDetalleProductosController extends AppController
 					'producto_id' 	=> $id,
 					'movimiento !='	=> 'garantia'
 				),
-				'contain' => ['Ubicacion'] ,
+				'contain' => ['Ubicacion' => ['Zona' => ['Bodega']]] ,
 				'joins'      => array(
 					array(
 						'table' => 'zonas',
@@ -1480,14 +1480,14 @@ class VentaDetalleProductosController extends AppController
 
 		$ubicacion = ClassRegistry::init('Ubicacion')->find('all', array(
             'conditions' => array('Ubicacion.activo' => 1),
-            'fields' => array('id', 'fila','columna','Zona.nombre'),
-			'contain' => ['Zona'],
+            'fields' => array('id', 'fila','columna','Zona.nombre', 'Zona.bodega_id'),
+			'contain' => ['Zona' => ['Bodega']],
             'order' => array('Zona.nombre ASC'),
         ));
 
 		$ubicaciones= [];
 		foreach ($ubicacion as $value) {
-			$ubicaciones[$value['Ubicacion']['id']] =  $value['Zona']['nombre'].' - '.$value['Ubicacion']['columna'].' - '.$value['Ubicacion']['fila'];
+			$ubicaciones[$value['Ubicacion']['id']] =  $value['Zona']['Bodega']['nombre'] . ' ' . $value['Zona']['nombre'].' - '.$value['Ubicacion']['columna'].' - '.$value['Ubicacion']['fila'];
 		}
 
 		$totalZonificado = $totalZonificado[0][0]['cantidad']??0;
