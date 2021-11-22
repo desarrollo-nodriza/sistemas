@@ -4461,7 +4461,7 @@ class VentasController extends AppController {
 
 			]],
 			'fields'=>['MetodoEnvio.id','MetodoEnvio.nombre','MetodoEnvio.dependencia'],
-			'conditions' => array('MetodoEnvio.activo' => 1)));
+			'conditions' => array('MetodoEnvio.activo' => 1,'MetodoEnvio.bodega_id' => $this->Auth->user('Rol.bodega_id'))));
 		foreach ($metodoEnvios_sin_procesar as $value) {
 			$metodoEnvios[$value['MetodoEnvio']['id']] ="{$value['Bodega']['nombre']} - {$value['MetodoEnvio']['nombre']} ".(isset($value['MetodoEnvio']['dependencia'])?"| Dependencia {$value['MetodoEnvio']['dependencia']}":'');
 		}
