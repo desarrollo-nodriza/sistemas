@@ -1408,7 +1408,7 @@ class VentasController extends AppController {
 					{	
 						# Vuelve a calcular la reserva
 						$cantidad_reservar = $cantidad_vendida - $detalles[$idd]['VentaDetalle']['cantidad_entregada'];
-						$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($d['VentaDetalle']['venta_detalle_producto_id'],  $cantidad_reservar);
+						$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($d['VentaDetalle']['venta_detalle_producto_id'],  $cantidad_reservar, $venta['Venta']['bodega_id']);
 						$detalles[$idd]['VentaDetalle']['cantidad_reservada'] = $cantidad_reservado;
 					}
 
@@ -2897,7 +2897,7 @@ class VentasController extends AppController {
 									$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
 									$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 									if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
-										$NuevoDetalle['cantidad_reservada']     = ClassRegistry::init('Bodega')->calcular_reserva_stock($DetalleVenta['product_id'], $DetalleVenta['product_quantity']);	
+										$NuevoDetalle['cantidad_reservada']     = ClassRegistry::init('Bodega')->calcular_reserva_stock($DetalleVenta['product_id'], $DetalleVenta['product_quantity'],$NuevaVenta['Venta']['bodega_id']);	
 									}
 									$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 									# Evitamos que se vuelva actualizar el stock en prestashop
@@ -3043,7 +3043,7 @@ class VentasController extends AppController {
 											$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
 											$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 											if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
-												$NuevoDetalle['cantidad_reservada']    = ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, 1);	
+												$NuevoDetalle['cantidad_reservada']    = ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, 1, $NuevaVenta['Venta']['bodega_id']);	
 											}
 											# OBtenemos el último metodo de envio
 											$metodo_envio = $DetalleVenta['ShipmentProvider'];
@@ -3234,7 +3234,7 @@ class VentasController extends AppController {
 											$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
 											$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 											if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['metodo_envio_id'])) {
-												$NuevoDetalle['cantidad_reservada'] 	= ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, $DetalleVenta['quantity']);	
+												$NuevoDetalle['cantidad_reservada'] 	= ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, $DetalleVenta['quantity'], $NuevaVenta['Venta']['bodega_id']);	
 											}											
 											$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 											//se toma el id de producto para usarlo luego en la sincronización de stock
@@ -5379,16 +5379,17 @@ class VentasController extends AppController {
 	public function admin_procesar_ventas($id = null)
 	{	
 
+	
 		if ( ! $this->Venta->exists($id) ) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
-		
+	
 		$this->Session->setFlash('Método inactivo temporalmente.', null, array(), 'danger');
 		$this->redirect(array('action' => 'index'));
 
 		if ($this->request->is('post') || $this->request->is('put')) {
-
+			
 
 			$aceptados = array();
 			$erorres   = array();

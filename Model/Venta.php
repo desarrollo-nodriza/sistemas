@@ -1060,7 +1060,7 @@ class Venta extends AppModel
 			# Reservamos
 			if ( $cantidad_reservar > 0 && $producto['cantidad_reservada'] < $cantidad_reservar) 
 			{
-				$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'],  $cantidad_reservar);
+				$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'],  $cantidad_reservar, $venta['Venta']['bodega_id']);
 
 				$log[] = array(
 					'Log' => array(
@@ -1381,7 +1381,7 @@ class Venta extends AppModel
 
 		$reservar = $cant_vendida - $cant_reservada - $cant_entregada;
 		
-		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], $reservar);
+		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], $reservar, ClassRegistry::init('Venta')->bodega_id($ventaDetalle['VentaDetalle']['venta_id']));
 		$reservado  = $cant_reservada + $disponible;
 		
 		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente
@@ -2109,5 +2109,11 @@ class Venta extends AppModel
 	{	
 		$this->id = $id;
 		return $this->field('metodo_envio_id');
+	}
+
+	public function bodega_id($id)
+	{	
+		$this->id = $id;
+		return $this->field('bodega_id');
 	}
 }
