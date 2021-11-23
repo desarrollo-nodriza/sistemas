@@ -155,6 +155,7 @@
 								
 								<table class="table table-bordered">
 									<tr>
+										<?= $this->Form->input('bodega_venta', array('type' => 'hidden', 'default'=>$bodega_id)); ?>
 										<th valign="middle">Ingrese nombre del producto</th>
 										<td><input type="text" id="obtener_producto" name="p" class="form-control" placeholder="Ingrese nombre o referencia del producto"></td>
 									</tr>

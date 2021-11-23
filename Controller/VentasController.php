@@ -4474,7 +4474,9 @@ class VentasController extends AppController {
 		[['VentaEstado.nombre '=>$this->tipo_venta]]
 		]);
 
-		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios', 'origen_venta','tipo_venta'));
+		$bodega_id = $this->Auth->user('Rol.bodega_id');
+
+		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios', 'origen_venta','tipo_venta','bodega_id'));
 		
 	}
 

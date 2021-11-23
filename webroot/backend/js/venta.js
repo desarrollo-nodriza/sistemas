@@ -1045,6 +1045,7 @@ $(function() {
 			          url: webroot + 'api/productos.json',
 			          data: {
 			          	token : $('#VentaAccessToken').val(),
+						bodega_id:$('#VentaBodegaVenta').val(),
 			          	limit: 20,
 			            s: request.term,
 			            tr: 1, // Solicitamos que nos retorne el TR
