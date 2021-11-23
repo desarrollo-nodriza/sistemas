@@ -559,8 +559,7 @@
 							<table class="table table-bordered table-striped">
 								<thead>
 									<th><?=__('Id');?></th>
-									<th><?=__('Ubicacion');?></th>
-									
+									<th style="width: 100px"><?=__('Ubicacion');?></th>
 									<th><?=__('Cantidad');?></th>
 									<th><?=__('Movimiento');?></th>
 									<th><?=__('Glosa');?></th>

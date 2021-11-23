@@ -17,7 +17,7 @@
                         <tr>
                             <td align="center" style="width: 400px">
                                 <?= $this->Form->input(sprintf('%d.id', $key), array('default'=>$zonificacion['Ubicacion']['id'])); 
-                                    echo($zonificacion['Ubicacion']['Zona']['nombre'].' - '.$zonificacion['Ubicacion']['columna'].' - '.$zonificacion['Ubicacion']['fila']);
+                                    echo($zonificacion['Ubicacion']['Zona']['Bodega']['nombre'] . ' ' . $zonificacion['Ubicacion']['Zona']['nombre'].' - '.$zonificacion['Ubicacion']['columna'].' - '.$zonificacion['Ubicacion']['fila']);
                                 ?>
                             </td>
                            <td align="center">
