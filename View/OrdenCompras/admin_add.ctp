@@ -24,7 +24,6 @@
 										<th></th>
 										<th>ID</th>
 										<th>ID EXTERNO</th>
-										<th>BODEGA</th>
 										<th>REFERENCIA</th>
 										<th>ESTADO</th>
 										<th>CLIENTE</th>

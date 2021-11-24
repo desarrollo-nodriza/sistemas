@@ -50,16 +50,12 @@ class MetodoEnviosController extends AppController
 			}
 		}
 
-		$bodegas = ClassRegistry::init('Bodega')->find('list',[
-			'conditions'=>['Bodega.activo'=>true]
-		]);
-
 		$dependencias = $this->MetodoEnvio->dependencias();
 
-		BreadcrumbComponent::add('Métodos de envio', '/metodoEnvios');
+		BreadcrumbComponent::add('Métodos de envio');
 		BreadcrumbComponent::add('Editar Método de envio');
 
-		$this->set(compact('dependencias','bodegas'));
+		$this->set(compact('dependencias'));
 	}
 
 
@@ -122,9 +118,8 @@ class MetodoEnviosController extends AppController
 		$dependenciasVars['boosmap']['pickup'] = $this->Boosmap->obtener_pickups();
 		$dependenciasVars['boosmap']['tipo_servicios'] = $this->Boosmap->obtener_tipo_servicios();
 		
-		BreadcrumbComponent::add('Métodos de envio', '/metodoEnvios');
+		BreadcrumbComponent::add('Métodos de envio');
 		BreadcrumbComponent::add('Editar Método de envio');
-		
 		$bodegas = ClassRegistry::init('Bodega')->find('list',[
 			'conditions'=>['Bodega.activo'=>true]
 		]);
@@ -481,17 +476,10 @@ class MetodoEnviosController extends AppController
 		}
 		
 		$filtrar = [
-			['nombre LIKE' 	=>	!empty($this->request->query['nombre'])? '%'.$this->request->query['nombre'].'%': null],	
-			['activo' 	    => 	$this->request->query['activo'] ??1 ],
-			['bodega_id'    =>	$this->request->query['bodega_id'] ?? null ]
+			'nombre LIKE' 	=>	isset($this->request->query['nombre'])?'%'.$this->request->query['nombre'].'%':null,	
+			array('activo' 	=> 	$this->request->query['activo']??1)
 		];
-		
-		$filtrar = array_filter($filtrar, function ($var) {
-			foreach ($var as $value) {
-				return !empty($value);
-			}
-		});
-
+		$filtrar = array_filter($filtrar);		
 		$metodoEnvios = $this->MetodoEnvio->find('list', ['conditions' => $filtrar]);
 
 		$this->set(array(

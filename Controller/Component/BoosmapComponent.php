@@ -88,7 +88,7 @@ class BoosmapComponent extends Component
      */
     public function generar_ot($venta)
 	{	
-		$volumenMaximo = $venta['MetodoEnvio']['volumen_maximo']?? (float) 5832000;
+		$volumenMaximo = (float) 5832000;
 		
 		# Algoritmo LAFF para ordenamiento de productos
 		$paquetes = $this->LAFFPack->obtener_bultos_venta($venta, $volumenMaximo);
@@ -101,7 +101,7 @@ class BoosmapComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' 		=> 'BoosmapComponent',
+					'modulo' => 'BoosmapComponent',
 					'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
 				)
 			);
@@ -136,7 +136,7 @@ class BoosmapComponent extends Component
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-					'modulo' 		=> 'BoosmapComponent',
+					'modulo' => 'BoosmapComponent',
 					'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
 				)
 			);
@@ -182,9 +182,9 @@ class BoosmapComponent extends Component
                 'pickup' => array(
                     'location' => array(
                         //'id' => $venta['MetodoEnvio']['boosmap_pick_up_id']
-                        'name' =>  $venta['MetodoEnvio']['Bodega']['nombre'],
-                        'address' => $venta['MetodoEnvio']['Bodega']['direccion'],
-                        'district' => $venta['MetodoEnvio']['Bodega']['Comuna']['nombre'],
+                        'name' => 'Bodega Toolmania',
+                        'address' => 'Los vientos',
+                        'district' => 'Pudahuel'
                     )
                 ),
                 'dropoff' => array(
@@ -237,16 +237,14 @@ class BoosmapComponent extends Component
 					'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
 					'modulo' 		=> 'BoosmapComponent',
 					'modulo_accion' => json_encode([
-						'code'					  => $response['httpCode'],
-						'Respuesta de generar OT' => $response,
-						'Request para generar OT' => $boosmapArr
-						
+						'Request para generar OT' => $boosmapArr,
+						'Se genero OT' => $response
 					])
 				)
 			);
-		
+			
 			if ($response['httpCode'] > 299) {
-				continue;
+				return false;
 			}
 			
 			$canal_venta = '';
@@ -330,7 +328,7 @@ class BoosmapComponent extends Component
 				$log[] = array(
 					'Log' => array(
 						'administrador' => 'Boosmap vid:' . $venta['Venta']['id'],
-						'modulo' 		=> 'BoosmapComponent',
+						'modulo' => 'BoosmapComponent',
 						'modulo_accion' => 'Problemas con la URL de la etiqueta: ' . json_encode($etiquetaArr)
 					)
 				);
@@ -346,10 +344,6 @@ class BoosmapComponent extends Component
 		}
 
 		if (empty($transportes)) {
-			
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
-
 			return false;
 		}
 

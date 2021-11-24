@@ -41,8 +41,8 @@ class BlueExpressComponent extends Component
         $this->crearCliente($credenciales['Venta']['MetodoEnvio']['token_blue_express'], $credenciales['Venta']['MetodoEnvio']['cod_usuario_blue_express'], $credenciales['Venta']['MetodoEnvio']['cta_corriente_blue_express']);
         $response           = $this->blue_express->BXLabel($trackingNumber);
         $response['url']    = null;
-        
-        if ($response['code'] == 200 || $response['response']['status']) {
+
+        if ($response['code'] == 200) {
 
             $response['response'] = base64_decode($response['response']['data'][0]['base64']);
 
@@ -409,7 +409,8 @@ class BlueExpressComponent extends Component
             ];
 
             $response = $this->blue_express->BXEmission($data);
-            if ($response['code'] != 200 || !$response['response']['status']) {
+
+            if ($response['code'] != 200) {
                 $log[] = array(
                     'Log' => array(
                         'administrador' => 'BlueExpress, problemas para generar ot para vid:' . $venta['Venta']['id'],

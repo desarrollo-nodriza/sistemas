@@ -1185,13 +1185,14 @@ $.extend({
 				$('.loader').css('display', 'block');
 
 				if (cargarOrdenes) {
-				
+
 					data = {
 						'limit' : $limit,
 						'offset' : $offset
 					};
 
 					$.get( webroot + 'ordenCompras/obtener_ordenes_ajax/', data , function(respuesta){
+					
 						if (respuesta != '0') {
 							$('#wrapper-ordenes tbody').append(respuesta);
 							$offset = $offset + $limit;
@@ -1300,41 +1301,12 @@ $.extend({
 
 				}
 			});
-			
+
 			$(document).on('change', '.create_input', function(){
-
-				var checkout = document.getElementsByClassName('create_input');
-
 				if ( $(this).prop('checked') ) {
-					total_checked +=1;
-					let i;
-					if (total_checked == 1) {
-						noty({text: "Para generar una orden de compra solo se deben seleccionar ventas de una misma bodega", layout: 'topRight', type: 'warning'});
-						setTimeout(function(){
-							$.noty.closeAll();
-						}, 10000);	
-					}
-					for (i = 0; i < checkout.length; i++) {
-						if(checkout[i].dataset.bodega != $(this).data( 'bodega')){
-							checkout[i].disabled = true;
-						}
-					}
-				
 					$seleccionado = $(this);
 					evaluarModal();
 				}else{
-
-					total_checked -=1;
-					if (total_checked<=0) {
-
-						let i;
-						for (i = 0; i < checkout.length; i++) {
-							if(checkout[i].dataset.bodega != $(this).data( 'bodega')){
-								checkout[i].disabled = false;
-							}
-						}
-						
-					}
 					$("#venta_" + $(this).val() ).remove();
 					$seleccionado = null;
 				}
@@ -1423,11 +1395,9 @@ $.extend({
 	}
 });
 
-var total_checked = 0;
 
 $(document).ready(function(){
 	$.ordenCompra.init();
-	
 	if ($('.review-oc').length == 0) {
 		$.ordenCompra.calcularTotalesProducto();
 		$.ordenCompra.calcularTotales();
