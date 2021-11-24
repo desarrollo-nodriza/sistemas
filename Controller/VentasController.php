@@ -32,7 +32,8 @@ class VentasController extends AppController {
 		'Boosmap',
 		'Etiquetas',
 		'LAFFPack',
-		'BlueExpress'
+		'BlueExpress',
+		'WarehouseNodriza'
 	);
 
 	private $tipo_venta = [
@@ -634,7 +635,7 @@ class VentasController extends AppController {
 						);
 
 						if ($accion) {
-							$this->Session->setFlash('Venta #'. $id_externo . ' creada con éxito', null, array(), 'success');
+							$this->Session->setFlash('Venta con Id Externo #'. $id_externo . ' creada con éxito', null, array(), 'success');
 						}else{
 							$this->Session->setFlash('No fue posible obtener la venta. Verifique los campos.', null, array(), 'danger');
 						}
@@ -1407,7 +1408,7 @@ class VentasController extends AppController {
 					{	
 						# Vuelve a calcular la reserva
 						$cantidad_reservar = $cantidad_vendida - $detalles[$idd]['VentaDetalle']['cantidad_entregada'];
-						$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($d['VentaDetalle']['venta_detalle_producto_id'],  $cantidad_reservar);
+						$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($d['VentaDetalle']['venta_detalle_producto_id'],  $cantidad_reservar, $venta['Venta']['bodega_id']);
 						$detalles[$idd]['VentaDetalle']['cantidad_reservada'] = $cantidad_reservado;
 					}
 
@@ -1995,9 +1996,10 @@ class VentasController extends AppController {
 		}
 
 		//si el medio de pago no existe, se crea
+		$bodega 					      = ClassRegistry::init('Bodega')->obtener_bodega_principal();
 		$data = array();
-		$data['MetodoEnvio']['nombre'] = $metodo_envio;
-
+		$data['MetodoEnvio']['nombre']    = $metodo_envio;
+		$data['MetodoEnvio']['bodega_id'] = $bodega['Bodega']['id'];
 		$this->Venta->MetodoEnvio->create();
 		$this->Venta->MetodoEnvio->save($data);
 
@@ -2354,7 +2356,7 @@ class VentasController extends AppController {
 
 		$dataToSave = array();
 
-
+		$bodega 							     = ClassRegistry::init('Bodega')->obtener_bodega_principal();
 		foreach ($ventas as $venta) {
 
 			$dataWS = $this->Prestashop->prestashop_obtener_venta($venta['Venta']['id_externo']);
@@ -2389,6 +2391,7 @@ class VentasController extends AppController {
 					$venta['Venta']['descuento']       = round($data['Orden']['total_discounts_tax_incl'], 2);
 					$venta['Venta']['metodo_envio_id'] = $this->Prestashop->prestashop_obtener_transportista($data['Orden']['id_carrier']);
 					$venta['Venta']['total']           = round($data['Orden']['total_paid'], 2);
+					$venta['Venta']['bodega_id'] 	   = ClassRegistry::init('MetodoEnvio')->bodega_id($venta['Venta']['metodo_envio_id']) ?? $bodega['Bodega']['id']; 
 				}
 
 			}else{
@@ -2404,6 +2407,7 @@ class VentasController extends AppController {
 					$venta['Venta']['descuento']       = round($dataWS['total_discounts_tax_incl'], 2);
 					$venta['Venta']['metodo_envio_id'] = $this->Prestashop->prestashop_obtener_transportista($dataWS['id_carrier']);
 					$venta['Venta']['total']           = round($dataWS['total_paid'], 2);
+					$venta['Venta']['bodega_id'] 	   = ClassRegistry::init('MetodoEnvio')->bodega_id($venta['Venta']['metodo_envio_id']) ?? $bodega['Bodega']['id']; 
 				}
 
 			}
@@ -2867,7 +2871,11 @@ class VentasController extends AppController {
 							$NuevaVenta['Venta']['venta_estado_id'] = $this->Prestashop->prestashop_obtener_venta_estado($DataVenta['current_state']);
 							$NuevaVenta['Venta']['estado_anterior'] = $NuevaVenta['Venta']['venta_estado_id'];
 						}
+						
 						$NuevaVenta['Venta']['metodo_envio_id']  = $this->Prestashop->prestashop_obtener_transportista($DataVenta['id_carrier']);
+
+						$bodega 							     = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+						$NuevaVenta['Venta']['bodega_id'] 		 = ClassRegistry::init('MetodoEnvio')->bodega_id($NuevaVenta['Venta']['metodo_envio_id']) ?? $bodega['Bodega']['id']; 
 						//se obtiene el medio de pago
 						$NuevaVenta['Venta']['medio_pago_id']    = $this->Prestashop->prestashop_obtener_medio_pago($DataVenta['payment']);
 						
@@ -2889,7 +2897,7 @@ class VentasController extends AppController {
 									$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
 									$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 									if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
-										$NuevoDetalle['cantidad_reservada']     = ClassRegistry::init('Bodega')->calcular_reserva_stock($DetalleVenta['product_id'], $DetalleVenta['product_quantity']);	
+										$NuevoDetalle['cantidad_reservada']     = ClassRegistry::init('Bodega')->calcular_reserva_stock($DetalleVenta['product_id'], $DetalleVenta['product_quantity'],$NuevaVenta['Venta']['bodega_id']);	
 									}
 									$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 									# Evitamos que se vuelva actualizar el stock en prestashop
@@ -3003,6 +3011,10 @@ class VentasController extends AppController {
 										//se obtiene el metodo de envio
 										$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id($metodo_envio);
 										
+										$bodega 							     = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+										
+										$NuevaVenta['Venta']['bodega_id'] 		 = ClassRegistry::init('MetodoEnvio')->bodega_id($NuevaVenta['Venta']['metodo_envio_id']) ?? $bodega['Bodega']['id']; 
+										
 										//se obtiene el cliente
 										$NuevaVenta['Venta']['venta_cliente_id'] = $this->obtener_cliente_id($DataVenta);
 										$NuevaVenta['Venta']['total'] 			 = (float) 0; // El total se calcula en en base a la sumatoria de items
@@ -3031,7 +3043,7 @@ class VentasController extends AppController {
 											$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
 											$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 											if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id'])) {
-												$NuevoDetalle['cantidad_reservada']    = ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, 1);	
+												$NuevoDetalle['cantidad_reservada']    = ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, 1, $NuevaVenta['Venta']['bodega_id']);	
 											}
 											# OBtenemos el último metodo de envio
 											$metodo_envio = $DetalleVenta['ShipmentProvider'];
@@ -3179,6 +3191,11 @@ class VentasController extends AppController {
 									}else{
 										$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id('Marketplace Externo');	
 									}
+
+									$bodega 							     = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+
+									$NuevaVenta['Venta']['bodega_id'] 		 = ClassRegistry::init('MetodoEnvio')->bodega_id($NuevaVenta['Venta']['metodo_envio_id']) ?? $bodega['Bodega']['id']; 
+
 									//se obtiene el cliente
 									$NuevaVenta['Venta']['venta_cliente_id'] = $this->MeliMarketplace->mercadolibre_obtener_cliente($DataVenta);
 									
@@ -3217,7 +3234,7 @@ class VentasController extends AppController {
 											$NuevoDetalle['total_neto']              = $NuevoDetalle['precio'] * $NuevoDetalle['cantidad'];			
 											$NuevoDetalle['total_bruto']				= monto_bruto($NuevoDetalle['total_neto']);
 											if (ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['metodo_envio_id'])) {
-												$NuevoDetalle['cantidad_reservada'] 	= ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, $DetalleVenta['quantity']);	
+												$NuevoDetalle['cantidad_reservada'] 	= ClassRegistry::init('Bodega')->calcular_reserva_stock($idNuevoProducto, $DetalleVenta['quantity'], $NuevaVenta['Venta']['bodega_id']);	
 											}											
 											$NuevaVenta['VentaDetalle'][] = $NuevoDetalle;
 											//se toma el id de producto para usarlo luego en la sincronización de stock
@@ -3621,15 +3638,19 @@ class VentasController extends AppController {
 			$venta['Transporte'][$it]['TransportesVenta']['EnvioHistorico'] = $historico; 
 			
 		}
+		$metodos_de_envios=[];
+		$metodoEnvios_sin_procesar = ClassRegistry::init('MetodoEnvio')->find('all', array(
+			'contain'=>[
+				'Bodega'=>['fields'=>'Bodega.nombre'
 
-		$metodos_de_envios = ClassRegistry::init('MetodoEnvio')->find( 
-			'list', 
-			array( 
-				'conditions' => array( 
-					'MetodoEnvio.activo' => true 
-				), 
-			) 
-		);
+			]],
+			'fields'=>['MetodoEnvio.id','MetodoEnvio.nombre','MetodoEnvio.dependencia'],
+			'conditions' => array('MetodoEnvio.activo' => 1)));
+
+		foreach ($metodoEnvios_sin_procesar as $value) {
+			$metodos_de_envios[$value['MetodoEnvio']['id']] ="{$value['Bodega']['nombre']} - {$value['MetodoEnvio']['nombre']} ".(isset($value['MetodoEnvio']['dependencia'])?"| Dependencia {$value['MetodoEnvio']['dependencia']}":'');
+		}
+		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
@@ -3661,7 +3682,8 @@ class VentasController extends AppController {
 				'Venta.fecha_venta',
 				'Venta.venta_estado_id',
 				'Venta.administrador_id',
-				'Venta.picking_estado'
+				'Venta.picking_estado',
+				'Venta.bodega_id'
 			)
 		));
 
@@ -3678,7 +3700,7 @@ class VentasController extends AppController {
 						'EmbalajeWarehouse' => array(
 							'venta_id' => $venta['Venta']['id'],
 							'estado' => 'inicial',
-							'bodega_id' => $bodega['Bodega']['id'],
+							'bodega_id' => $venta['Venta']['bodega_id'] ?? $bodega['Bodega']['id'],
 							'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
 							'marketplace_id' => $venta['Venta']['marketplace_id'],
 							'comuna_id' => $venta['Venta']['comuna_id'],
@@ -3705,7 +3727,7 @@ class VentasController extends AppController {
 								'EmbalajeWarehouse' => array(
 									'id' => $embalaje['id'],
 									'estado' => 'listo_para_embalar',
-									'bodega_id' => $bodega['Bodega']['id'],
+									'bodega_id' => $venta['Venta']['bodega_id'] ?? $bodega['Bodega']['id'],
 									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
 									'marketplace_id' => $venta['Venta']['marketplace_id'],
 									'comuna_id' => $venta['Venta']['comuna_id'],
@@ -3723,7 +3745,7 @@ class VentasController extends AppController {
 						'EmbalajeWarehouse' => array(
 							'venta_id' => $venta['Venta']['id'],
 							'estado' => 'listo_para_embalar',
-							'bodega_id' => $bodega['Bodega']['id'],
+							'bodega_id' => $venta['Venta']['bodega_id'] ?? $bodega['Bodega']['id'],
 							'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
 							'marketplace_id' => $venta['Venta']['marketplace_id'],
 							'comuna_id' => $venta['Venta']['comuna_id'],
@@ -3752,7 +3774,7 @@ class VentasController extends AppController {
 								'EmbalajeWarehouse' => array(
 									'id' => $embalaje['id'],
 									'estado' => 'procesando',
-									'bodega_id' => $bodega['Bodega']['id'],
+									'bodega_id' => $venta['Venta']['bodega_id'] ?? $bodega['Bodega']['id'],
 									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
 									'marketplace_id' => $venta['Venta']['marketplace_id'],
 									'comuna_id' => $venta['Venta']['comuna_id'],
@@ -3781,7 +3803,7 @@ class VentasController extends AppController {
 								'EmbalajeWarehouse' => array(
 									'id' => $embalaje['id'],
 									'estado' => 'finalizado',
-									'bodega_id' => $bodega['Bodega']['id'],
+									'bodega_id' => $venta['Venta']['bodega_id'] ?? $bodega['Bodega']['id'],
 									'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
 									'marketplace_id' => $venta['Venta']['marketplace_id'],
 									'comuna_id' => $venta['Venta']['comuna_id'],
@@ -4367,7 +4389,7 @@ class VentasController extends AppController {
 			if (!empty($this->request->data['Venta']['comuna_entrega'])) {
 				$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega']);
 			}
-			
+			$this->request->data['Venta']['bodega_id'] = ClassRegistry::init('MetodoEnvio')->bodega_id($this->request->data['Venta']['metodo_envio_id']); 
 			if ($this->Venta->saveAll($this->request->data) ) {
 
 				$tienda = ClassRegistry::init('Tienda')->obtener_tienda($this->request->data['Venta']['tienda_id'], array('Tienda.nombre', 'Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
@@ -4431,8 +4453,18 @@ class VentasController extends AppController {
 		$marketplaces = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1)));
 		
 		$medioPagos   = ClassRegistry::init('MedioPago')->find('list', array('conditions' => array('activo' => 1)));
-		
-		$metodoEnvios = ClassRegistry::init('MetodoEnvio')->find('list', array('conditions' => array('activo' => 1)));
+		$metodoEnvios = [];
+
+		$metodoEnvios_sin_procesar = ClassRegistry::init('MetodoEnvio')->find('all', array(
+			'contain'=>[
+				'Bodega'=>['fields'=>'Bodega.nombre'
+
+			]],
+			'fields'=>['MetodoEnvio.id','MetodoEnvio.nombre','MetodoEnvio.dependencia'],
+			'conditions' => array('MetodoEnvio.activo' => 1,'MetodoEnvio.bodega_id' => $this->Auth->user('Rol.bodega_id'))));
+		foreach ($metodoEnvios_sin_procesar as $value) {
+			$metodoEnvios[$value['MetodoEnvio']['id']] ="{$value['Bodega']['nombre']} - {$value['MetodoEnvio']['nombre']} ".(isset($value['MetodoEnvio']['dependencia'])?"| Dependencia {$value['MetodoEnvio']['dependencia']}":'');
+		}
 		
 		$clientes     = ClassRegistry::init('VentaCliente')->find('list', array('fields' => array('VentaCliente.id', 'VentaCliente.email')));
 
@@ -4442,7 +4474,9 @@ class VentasController extends AppController {
 		[['VentaEstado.nombre '=>$this->tipo_venta]]
 		]);
 
-		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios', 'origen_venta','tipo_venta'));
+		$bodega_id = $this->Auth->user('Rol.bodega_id');
+
+		$this->set(compact('ventaEstados', 'transportes', 'comunas', 'marketplaces', 'clientes', 'medioPagos', 'referencia', 'metodoEnvios', 'origen_venta','tipo_venta','bodega_id'));
 		
 	}
 
@@ -4486,6 +4520,7 @@ class VentasController extends AppController {
 						'Venta.total',
 						'Venta.referencia_despacho',
 						'Venta.nota_interna',
+						'Venta.bodega_id'
 					)
 				)
 			);
@@ -4497,9 +4532,13 @@ class VentasController extends AppController {
 				} 
 
 				$metodo_envio =  ClassRegistry::init('MetodoEnvio')->find('first',[
-					'fields'=>[	'MetodoEnvio.retiro_local','MetodoEnvio.id'],
-					'conditions' =>['MetodoEnvio.id'=>$this->request->data['Venta']['metodo_envio_id']]
+					'fields'     => [	'MetodoEnvio.retiro_local','MetodoEnvio.id'],
+					'conditions' => 
+						[
+						'MetodoEnvio.id' =>$this->request->data['Venta']['metodo_envio_id']
+						]
 				]);
+				
 				if ($metodo_envio) {
 
 					$TotalProductos = 0;
@@ -4512,10 +4551,19 @@ class VentasController extends AppController {
 				}
 			} 
 			
+			$metodo_envio_id_old = ClassRegistry::init('Venta')->metodo_envio_id($this->request->data['Venta']['id']);
+			$cambiar_metodo_envio = false;
+			if ($metodo_envio_id_old != $this->request->data['Venta']['metodo_envio_id']) {
+
+				$this->request->data['Venta']['bodega_id'] = ClassRegistry::init('MetodoEnvio')->bodega_id($this->request->data['Venta']['metodo_envio_id']); 
+				$cambiar_metodo_envio= true;
+			}
 			if ($this->Venta->save($this->request->data)) {
+				
 				ksort($venta['Venta']);
 				ksort($this->request->data['Venta']);
-				$log = array(
+
+				$log[] = array(
 					'Log' => array(
 						'administrador' => 'Cambio información despacho vid - ' . $id,
 						'modulo' => 'Ventas',
@@ -4529,6 +4577,31 @@ class VentasController extends AppController {
 							])
 					)
 				);
+
+				if ($cambiar_metodo_envio) {
+
+					$response = $this->WarehouseNodriza->CambiarCancelado_V2($venta['Venta']['id'],CakeSession::read('Auth.Administrador.id')??1,true,"Se han cancelado embalajes de la vid {$venta['Venta']['id']} debido a cambios en el metodo de envio");
+					if ($response['code'] == 200) {
+						$this->Venta->save([
+							'Venta'=>[
+								'id'=> $id,
+								'picking_estado' => 'empaquetar'
+							]
+							]);
+					}
+					
+					$log[] = array(
+						'Log' => array(
+							'administrador' => "Se solicito cancelar embalajes de la vid {$venta['Venta']['id']} a Warehouse",
+							'modulo' 		=> 'Ventas',
+							'modulo_accion' => json_encode($response)
+						)
+					);
+
+					$response = $this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id']);
+										
+				}
+
 				ClassRegistry::init('Log')->create();
 				ClassRegistry::init('Log')->saveMany($log);
 
@@ -5313,16 +5386,17 @@ class VentasController extends AppController {
 	public function admin_procesar_ventas($id = null)
 	{	
 
+	
 		if ( ! $this->Venta->exists($id) ) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
-		
+	
 		$this->Session->setFlash('Método inactivo temporalmente.', null, array(), 'danger');
 		$this->redirect(array('action' => 'index'));
 
 		if ($this->request->is('post') || $this->request->is('put')) {
-
+			
 
 			$aceptados = array();
 			$erorres   = array();
@@ -7459,6 +7533,9 @@ class VentasController extends AppController {
 
 		//se obtiene el metodo de envio
 		$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id('');
+
+		$bodega 							     = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+		$NuevaVenta['Venta']['bodega_id'] 		 = ClassRegistry::init('MetodoEnvio')->bodega_id($NuevaVenta['Venta']['metodo_envio_id']) ?? $bodega['Bodega']['id']; 
 		
 		//se obtiene el cliente
 		$NuevaVenta['Venta']['venta_cliente_id'] = $this->obtener_cliente_id($detalle_venta);
@@ -7929,6 +8006,10 @@ class VentasController extends AppController {
 			$NuevaVenta['Venta']['metodo_envio_id']  = $this->obtener_metodo_envio_id('A coordinar con comprador');	
 		}
 
+		$bodega 							     = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+
+		$NuevaVenta['Venta']['bodega_id'] 		 = ClassRegistry::init('MetodoEnvio')->bodega_id($NuevaVenta['Venta']['metodo_envio_id']) ?? $bodega['Bodega']['id']; 
+
 		# se obtiene el cliente
 		$NuevaVenta['Venta']['venta_cliente_id'] = $this->MeliMarketplace->mercadolibre_obtener_cliente($ventaMeli);
 		
@@ -8019,6 +8100,8 @@ class VentasController extends AppController {
 	 */
 	public function crear_venta_prestashop($tienda_id, $id_externo, $nuevo_estado = '')
 	{	
+
+		
 		$tienda = ClassRegistry::init('Tienda')->find('first', array(
 			'conditions' => array(
 				'Tienda.id' => $tienda_id
@@ -8067,7 +8150,7 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['descuento']   = round($nwVenta['total_discounts_tax_incl'], 2);
 		$NuevaVenta['Venta']['costo_envio'] = round($nwVenta['total_shipping_tax_incl'], 2);
 		$NuevaVenta['Venta']['total']       = round($nwVenta['total_paid'], 2);
-		
+	
 		//se obtienen las transacciones de una venta
 		//si la venta tiene transacciones asociadas
 		if ($VentaTransacciones = $this->Prestashop->prestashop_obtener_venta_transacciones($nwVenta['reference'])) {
@@ -8105,7 +8188,7 @@ class VentasController extends AppController {
 			}
 
 		}
-		
+	
 		# Direccion de entrega
 		$direccionEntrega = $this->Prestashop->prestashop_obtener_venta_direccion($nwVenta['id_address_delivery']);
 		
@@ -8193,7 +8276,7 @@ class VentasController extends AppController {
 			$NuevaVenta['Venta']['nombre_receptor']   =  $nombre_receptor;
 			$NuevaVenta['Venta']['fono_receptor']     =  $fono_receptor;
 		}
-
+		
 		//se obtienen el detalle de la venta
 		$VentaDetalles = $this->Prestashop->prestashop_obtener_venta_detalles($nwVenta['id']);
 		
@@ -8232,7 +8315,10 @@ class VentasController extends AppController {
 		);
 
 		$NuevaVenta['Venta']['metodo_envio_id']  = $this->Prestashop->prestashop_obtener_transportista($nwVenta['id_carrier']);
+		
+		$bodega 							     = ClassRegistry::init('Bodega')->obtener_bodega_principal();
 
+		$NuevaVenta['Venta']['bodega_id'] 		 = ClassRegistry::init('MetodoEnvio')->bodega_id($NuevaVenta['Venta']['metodo_envio_id']) ?? $bodega['Bodega']['id']; 
 		//se obtiene el medio de pago
 		$NuevaVenta['Venta']['medio_pago_id']    = $this->Prestashop->prestashop_obtener_medio_pago($nwVenta['payment']);
 		
@@ -8605,7 +8691,13 @@ class VentasController extends AppController {
 			)
 		);
 
+		
+
 		$ActualizarVenta['Venta']['metodo_envio_id']  = $this->Prestashop->prestashop_obtener_transportista($nwVenta['id_carrier']);
+
+		$bodega 							          = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+
+		$ActualizarVenta['Venta']['bodega_id'] 		  = ClassRegistry::init('MetodoEnvio')->bodega_id($ActualizarVenta['Venta']['metodo_envio_id']) ?? $bodega['Bodega']['id']; 
 
 		//se obtiene el medio de pago
 		$ActualizarVenta['Venta']['medio_pago_id']    = $this->Prestashop->prestashop_obtener_medio_pago($nwVenta['payment']);

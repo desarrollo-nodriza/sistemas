@@ -664,6 +664,21 @@ class OrdenComprasController extends AppController
 			$this->redirect(array('action' => 'index'));
 		}
 
+		if ( $this->request->is('post') || $this->request->is('put') )
+		{	
+		
+			// prx($this->request->data);
+			if ($this->OrdenCompra->save($this->request->data)) {
+				$this->Session->setFlash('Se ha cambiado bodega', null, array(), 'success');
+				$this->redirect(array('controller'=>'ordenCompras','action' => 'index'));
+			}else{
+				$this->Session->setFlash('se ha podido cambiar bodega, intente nuevamente', null, array(), 'warning');
+			}
+			
+			// 
+			
+		}
+
 		$ocs = $this->OrdenCompra->find('all', array(
 			'conditions' => array(
 				'OrdenCompra.id' => $id
@@ -679,11 +694,15 @@ class OrdenComprasController extends AppController
 				'OrdenCompraHistorico'
 			)
 		));
+
+		$bodegas = ClassRegistry::init('Bodega')->find('list',['conditions'=>['activo'=>true]]);
 		
 		BreadcrumbComponent::add('Ordenes de compra ', array('action' => 'index'));
 		BreadcrumbComponent::add('Ver OC ');
+		
+		$estados = ["espera_dte","recepcion_incompleta","recepcion_completa"];
 
-		$this->set(compact('ocs'));
+		$this->set(compact('ocs','bodegas','estados'));
 
 	}
 
@@ -1078,6 +1097,7 @@ class OrdenComprasController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
+			
 			foreach ($this->request->data['OrdenesCompra'] as $ic => $d) {
 				
 				if (!isset($d['VentaDetalleProducto'])) {
@@ -1120,18 +1140,19 @@ class OrdenComprasController extends AppController
 			),
 			'fields' => array(
 				'VentaDetalle.cantidad', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.venta_id'
-			)
+			),
+			'contain'=>['Venta'=>['fields'=>['Venta.bodega_id']]]
 		));
 
 
 		$productosSolicitar = array();
 		$productosNoSolicitar = array();
 		$productosTotales   = array();
-	
+		
 		# Se calculan los totales de productos vendidos
 		foreach ($venta_detalles as $iv => $venta) {
-			
-			$cantidad = $venta['VentaDetalle']['cantidad'] - $venta['VentaDetalle']['cantidad_reservada']; // Se descuenta la cantidad ya reservada
+			$bodega_id[$venta['VentaDetalle']['venta_detalle_producto_id']] = $venta['Venta']['bodega_id'];
+			$cantidad  = $venta['VentaDetalle']['cantidad'] - $venta['VentaDetalle']['cantidad_reservada']; // Se descuenta la cantidad ya reservada
 
 			if ($cantidad === 0) {
 				continue;
@@ -1144,14 +1165,14 @@ class OrdenComprasController extends AppController
 			}
 
 		}
-
+	
 		# comprobamos el stock en bodegas para saber cuales productos se deben solicitar por OC
 		foreach ($productosTotales as $ip => $p) {
 			
 			$pedir = $p;			
 
 			# Consultamos la cantiad que tenemos en la bodega principal
-			$enBodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($ip);
+			$enBodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($ip, $bodega_id[$ip]??null);
 
 			# Calculamos la diferencia que se debe pedir segun lo que tenemos en bodega
 			if ($enBodega >= $p) {
@@ -1486,7 +1507,6 @@ class OrdenComprasController extends AppController
 	{
 		if ( $this->request->is('post') )
 		{	
-
 			$this->request->data['OrdenCompraHistorico'] = array(
 				array(
 					'estado' => 'creada',
@@ -1495,7 +1515,7 @@ class OrdenComprasController extends AppController
 				)
 			);
 
-			$this->request->data['OrdenCompra']['bodega_id'] = $this->Session->read('Auth.Administrador.Rol.bodega_id');
+			$this->request->data['OrdenCompra']['bodega_id'] = $this->request->data['OrdenCompra']['bodega_id']?? $this->Session->read('Auth.Administrador.Rol.bodega_id');
 			
 			$this->OrdenCompra->create();
 			if ( $this->OrdenCompra->saveAll($this->request->data) )
@@ -1523,8 +1543,12 @@ class OrdenComprasController extends AppController
 
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
 		BreadcrumbComponent::add('Agregar oc manual');
+		
+		$bodegas = ClassRegistry::init('Bodega')->find('list',[
+			'conditions'=>['Bodega.activo'=>true]
+		]);
 
-		$this->set(compact('monedas', 'proveedores', 'tipoDescuento'));
+		$this->set(compact('monedas', 'proveedores', 'tipoDescuento','bodegas'));
 	}
 
 
@@ -2105,7 +2129,8 @@ class OrdenComprasController extends AppController
 					'fields' => array(
 						'OrdenCompra.id'
 					)
-				)
+				),
+				'Bodega'=>['fields'=>'Bodega.nombre']
 			),
 			'group' => array(
 				'Venta.id'
@@ -2146,8 +2171,15 @@ class OrdenComprasController extends AppController
 			}
 
 		}
+
+		$bodega_default = ClassRegistry::init('Bodega')->find('first',
+			[
+				'conditions'=>['Bodega.principal' => 1],
+				'fields' => ['Bodega.id','Bodega.nombre']
+			]
+		);
 		
-		$this->set(compact('ventas'));
+		$this->set(compact('ventas','bodega_default'));
 	}
 
 

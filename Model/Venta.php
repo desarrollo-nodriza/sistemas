@@ -490,12 +490,7 @@ class Venta extends AppModel
 							'MetodoEnvio.*'
 						),
 						'Bodega' => [
-							'Comuna' => [
-								'fields' => [
-									'Comuna.district_id_blue_express',
-									'Comuna.state_id_blue_express'
-								],
-							],
+							'Comuna',
 							'fields' => [
 								'Bodega.nombre',
 								'Bodega.nombre_contacto',
@@ -608,7 +603,7 @@ class Venta extends AppModel
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
 					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.metodo_envio_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.numero_entrega', 'Venta.otro_entrega', 'Venta.comuna_entrega', 'Venta.ciudad_entrega', 'Venta.nombre_receptor', 'Venta.rut_receptor',
 					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito', 'Venta.etiqueta_envio_externa', 
-					'Venta.venta_manual', 'Venta.administrador_id', 'Venta.nota_interna', 'Venta.paquete_generado', 'Venta.comuna_id', 'Venta.picking_motivo_revision', 'Venta.origen_venta_manual' ,'Venta.referencia_despacho'
+					'Venta.venta_manual', 'Venta.administrador_id', 'Venta.nota_interna', 'Venta.paquete_generado', 'Venta.comuna_id', 'Venta.picking_motivo_revision', 'Venta.origen_venta_manual' ,'Venta.referencia_despacho' ,'Venta.bodega_id'
 				)
 			)
 		);
@@ -1082,7 +1077,7 @@ class Venta extends AppModel
 			# Reservamos
 			if ( $cantidad_reservar > 0 && $producto['cantidad_reservada'] < $cantidad_reservar) 
 			{
-				$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'],  $cantidad_reservar);
+				$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'],  $cantidad_reservar, $venta['Venta']['bodega_id']);
 
 				$log[] = array(
 					'Log' => array(
@@ -1429,7 +1424,7 @@ class Venta extends AppModel
 
 		$reservar = $cant_vendida - $cant_reservada - $cant_entregada;
 		
-		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], $reservar);
+		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], $reservar, ClassRegistry::init('Venta')->bodega_id($ventaDetalle['VentaDetalle']['venta_id']));
 		$reservado  = $cant_reservada + $disponible;
 		
 		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente
@@ -1854,6 +1849,7 @@ class Venta extends AppModel
 					'type' => 'INNER',
 					'conditions' => array(
 						'estado_categoria.id = estado.venta_estado_categoria_id',
+						'estado_categoria.venta = 1',
 						'estado_categoria.reserva_stock = 1',
 						'estado_categoria.final = 0'
 					)
@@ -2164,5 +2160,17 @@ class Venta extends AppModel
 			),
 			'group' => array('Venta.id')
 		));
+	}
+
+	public function metodo_envio_id($id)
+	{	
+		$this->id = $id;
+		return $this->field('metodo_envio_id');
+	}
+
+	public function bodega_id($id)
+	{	
+		$this->id = $id;
+		return $this->field('bodega_id');
 	}
 }
