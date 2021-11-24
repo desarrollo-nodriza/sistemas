@@ -72,6 +72,12 @@
 												<td>Vendedor: </td>
 												<td><?=$this->Form->input('vendedor', array('type' => 'text', 'class' => 'form-control not-blank', 'value' => $this->Session->read('Auth.Administrador.nombre') ) );?></td>
 											</tr>
+											<tr>
+												<td>Bodega: </td>
+												<td>
+													<?= $this->Form->select('bodega_id', $bodegas , array('required' => true ,'class' => 'form-control not-blank','empty' =>'Seleccione Bodega'));?>
+												</td>
+											</tr>
 										</table>
 									</td>
 								</tr>

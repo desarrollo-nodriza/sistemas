@@ -252,7 +252,8 @@ Class EmbalajeWarehouse extends AppModel {
 				'Venta.venta_estado_id',
 				'Venta.administrador_id',
 				'Venta.picking_estado',
-				'Venta.prioritario'
+				'Venta.prioritario',
+				'Venta.bodega_id'
 			)
 		));
 
@@ -264,8 +265,8 @@ Class EmbalajeWarehouse extends AppModel {
 			)
 		);
 		
-		$bodega = ClassRegistry::init('Bodega')->obtener_bodega_principal();
 
+		$bodega = ClassRegistry::init('Bodega')->obtener_bodega_principal();
 		$dte_valido = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
 
 		switch ($venta['Venta']['picking_estado']) {
@@ -307,7 +308,7 @@ Class EmbalajeWarehouse extends AppModel {
 					'EmbalajeWarehouse' => array(
 						'venta_id' => $venta['Venta']['id'],
 						'estado' => 'listo_para_embalar',
-						'bodega_id' => $bodega['Bodega']['id'],
+						'bodega_id' => $venta['Venta']['bodega_id'] ?? $bodega['Bodega']['id'],
 						'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
 						'marketplace_id' => $venta['Venta']['marketplace_id'],
 						'comuna_id' => $venta['Venta']['comuna_id'],

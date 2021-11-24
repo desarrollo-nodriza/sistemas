@@ -72,7 +72,7 @@ class ConexxionComponent extends Component
 
     public function generar_ot($venta)
 	{	
-		$volumenMaximo = (float) 60;
+		$volumenMaximo = $venta['MetodoEnvio']['volumen_maximo']?? (float) 60;
 		
 		# Algoritmo LAFF para ordenamiento de productos
 		$paquetes = $this->obtener_bultos_venta($venta, $volumenMaximo);

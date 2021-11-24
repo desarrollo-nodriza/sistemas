@@ -88,4 +88,10 @@ class MetodoEnvio extends AppModel
 		$this->id = $id;
 		return $this->field('es_despacho');
 	}
+
+	public function bodega_id($id)
+	{	
+		$this->id = $id;
+		return $this->field('bodega_id');
+	}
 }

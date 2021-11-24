@@ -191,7 +191,7 @@ class VentaDetalle extends AppModel
 
 		$reservar = $cant_vendida - $cant_reservada - $cant_entregada;
 		
-		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], $reservar);
+		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], $reservar, ClassRegistry::init('Venta')->bodega_id($ventaDetalle['VentaDetalle']['venta_id']));
 		$reservado  = $cant_reservada + $disponible;
 
 		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente

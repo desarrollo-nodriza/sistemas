@@ -2997,7 +2997,7 @@ class VentaDetalleProductosController extends AppController
 
     	# Verificamos la existencia del item en bodegas
     	foreach ($productos as $ip => $producto) {
-    		$productos[$ip]['VentaDetalleProducto']['stock_fisico_total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
+    		$productos[$ip]['VentaDetalleProducto']['stock_fisico_total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($producto['VentaDetalleProducto']['id'],$this->request->query['bodega_id']??null);
     	}
 
         $this->set(array(

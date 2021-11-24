@@ -37,6 +37,11 @@
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
 								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('bodega_id', 'Bodega para despachar'); ?></th>
+								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control','required')); ?></td>
+							</tr>
+
 							<tr id="peso_maximo" class="">
 								<th><?= $this->Form->label('peso_maximo', 'Peso Máximo'); ?></th>
 								<td><?= $this->Form->input('peso_maximo'); ?></td>
@@ -262,10 +267,6 @@
 							<tr>
 								<th><?= $this->Form->label('cta_corriente_blue_express', 'Cuenta Corriente en BlueExpress'); ?></th>
 								<td><?= $this->Form->input('cta_corriente_blue_express', array('placeholder' => 'Ingrese su Cuenta Corriente', 'required')); ?></td>
-							</tr>
-							<tr>
-								<th><?= $this->Form->label('bodega_id', 'Bodega para despachar'); ?></th>
-								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control','required')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('tipo_servicio_blue_express', 'Tipo de Servicio'); ?></th>
