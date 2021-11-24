@@ -1794,6 +1794,7 @@ class Venta extends AppModel
 					'conditions' => array(
 						'estado_categoria.id = estado.venta_estado_categoria_id',
 						'estado_categoria.venta = 1',
+						'estado_categoria.reserva_stock = 1',
 						'estado_categoria.final = 0'
 					)
 				)
