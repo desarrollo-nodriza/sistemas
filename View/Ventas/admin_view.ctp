@@ -79,7 +79,7 @@
 												<td>
 												<? if (!empty($venta['MetodoEnvio'])) : ?>
 													<div class="input-group-btn"> 
-															<span class="btn btn-xs btn-info"><?= $metodos_de_envios[ $venta['Venta']['metodo_envio_id']]??'No definido|O se encuentra inactivo'; ?></span> 
+															<span class="btn btn-xs btn-info"><?= $venta['MetodoEnvio']['nombre']; ?></span> 
 															<span class="btn btn-xs "> 
 																<button class="btn btn-default toggle-metodo-envio" type="button"><i class="fa fa-eye"></i> <i class="fa fa-close" style="display: none;"></i></button> 
 															</span> 
@@ -89,7 +89,7 @@
 															<?=$this->Form->select( 
 																'metodo_envio_id',  
 																$metodos_de_envios,  
-																[	'default'			=> $venta['Venta']['metodo_envio_id'], 
+																[	'default'			=> $venta['MetodoEnvio']['id'], 
 																	'class' 			=> 'form-control select js-metodo-envios-ajax', 
 																	'data-live-search' 	=> true, 
 																	'id'				=> 'MetodoEnvio'

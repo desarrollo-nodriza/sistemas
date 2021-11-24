@@ -650,9 +650,9 @@ class Bodega extends AppModel
 	 * @param  string $bodega_origen_id [description]
 	 * @return bool                   [description]
 	 */
-	public function calcular_reserva_stock($id, $cantidad, $bodega= null)
+	public function calcular_reserva_stock($id, $cantidad)
 	{	
-		$enBodega   = $this->obtenerCantidadProductoBodega($id, $bodega);
+		$enBodega   = $this->obtenerCantidadProductoBodegas($id);
 		$nwcantidad = 0;
 
 		# Se toman todos los items de bodega

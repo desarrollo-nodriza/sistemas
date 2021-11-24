@@ -104,7 +104,7 @@
 										<div class="panel-body">
 											<div class="form-group">
 												<label><?=__('Método de envio');?></label>
-												<?= $this->Form->input('metodo_envio_id', array('class' => 'form-control not-blank js-metodo-envios-ajax mi-selector', 'empty' => 'Seleccione')); ?>
+												<?= $this->Form->input('metodo_envio_id', array('class' => 'form-control not-blank js-metodo-envios-ajax', 'empty' => 'Seleccione')); ?>
 											</div>
 											<div class="form-group hidden">
 												<label><?=__('Rut receptor');?></label>
@@ -155,7 +155,6 @@
 								
 								<table class="table table-bordered">
 									<tr>
-										<?= $this->Form->input('bodega_venta', array('type' => 'hidden', 'default'=>$bodega_id)); ?>
 										<th valign="middle">Ingrese nombre del producto</th>
 										<td><input type="text" id="obtener_producto" name="p" class="form-control" placeholder="Ingrese nombre o referencia del producto"></td>
 									</tr>
@@ -314,13 +313,3 @@
 <?=$this->element('clientes/form-add', array('token' => $this->Session->read('Auth.Administrador.token.token'))); ?>
 
 <? endif; ?>
-
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script type="text/javascript">
-	jQuery(document).ready(function($){
-		$(document).ready(function() {
-			$('.mi-selector').select2();
-		});
-	});
-</script>

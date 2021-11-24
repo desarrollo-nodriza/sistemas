@@ -178,20 +178,9 @@
 											<td><?=$oc['OrdenCompra']['vendedor'];?></td>
 										</tr>
 										<tr>
+											
 											<td>Descuento: </td>
 											<td><?=$oc['OrdenCompra']['descuento'];?></td>
-										</tr>
-
-										<tr>
-											<td>Bodega: </td>
-											<td>
-												<div class="form-group">
-													<?= $this->Form->create('OrdenCompras', array('url' => array('action' => 'view', $oc['OrdenCompra']['id']), 'class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-													<?= $this->Form->input('id',['default'=> $oc['OrdenCompra']['id'],'type'=>'hidden']);?>
-													<?= $this->Form->select('bodega_id', $bodegas , array('required','class' => 'form-control select not-blank','disabled' => !in_array($oc['OrdenCompra']['estado'],$estados) ,'default' =>$oc['OrdenCompra']['bodega_id'],'empty' => false));?>
-													<?= $this->Form->button('Guardar cambios', array('disabled' => !in_array($oc['OrdenCompra']['estado'],$estados),'type' 	=> 'submit', 'class' => 'btn btn-warning btn-block mt-5', 'id'	=> 'ModificarBodega')); ?> 
-												</div>
-											</td>
 										</tr>
 									</table>
 								</td>
