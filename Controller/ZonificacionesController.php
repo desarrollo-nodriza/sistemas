@@ -1271,20 +1271,40 @@ class ZonificacionesController extends AppController
 		if (trim($valor['cantidad']) !='' && $validar_glosa) {
 		
 			$zonificacion = $this->Zonificacion->find('all', array(
-				'fields' => array('*','SUM(Zonificacion.cantidad) as cantidad'),
 				'conditions' => array(
 					'Zonificacion.producto_id' 		=> $id,
 					'Zonificacion.ubicacion_id' 	=> $valor['id'],
 					'Zonificacion.movimiento !='	=> 'garantia'
 				),
-				'contain' => ['Ubicacion' => [ 'Zona' => ['Bodega']]],
-				'group' => array('ubicacion_id'),
+				'contain' => array(
+					'Ubicacion' => array(
+						'Zona' => array(
+							'fields' => array(
+								'Zona.id',
+								'Zona.bodega_id',
+								'Zona.nombre'
+							)
+						),
+						'fields' => array(
+							'Ubicacion.id',
+							'Ubicacion.zona_id',
+							'Ubicacion.fila',
+							'Ubicacion.columna',
+						)
+					) 
+				),
+				'fields' => array(
+					'Zonificacion.id',
+					'Zonificacion.ubicacion_id',
+					'Zonificacion.cantidad'
+				)
 			));
 			
 			
 			if (count($zonificacion)>0) {
 			
-				$cantidad = $valor['cantidad'] - $zonificacion[0][0]['cantidad'];
+				$cantidad = $valor['cantidad'] - array_sum(Hash::extract($zonificacion, '{n}.Zonificacion.cantidad'));
+
 				if ($cantidad == 0) {
 
 					return [
