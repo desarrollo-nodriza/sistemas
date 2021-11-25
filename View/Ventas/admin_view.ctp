@@ -1367,7 +1367,7 @@
 
 
 				<div class="panel-footer">
-					<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Actualizar Estado">
+					<input type="submit" class="btn btn-primary esperar-carga start-loading-then-redirect" autocomplete="off" data-loading-text="Espera un momento..." value="Actualizar Estado">
 					<?=$this->Html->link('<i class="fa fa-send"></i> Re-enviar email', array('controller' => 'ventas', 'action' => 'enviar_email_estado', $venta['Venta']['id']), array('class' => 'btn btn-success', 'escape' => false) );?>
 				</div>
 				<?= $this->Form->end(); ?>

@@ -5147,6 +5147,7 @@ class VentasController extends AppController {
 		ClassRegistry::init('Log')->saveMany($log);
 		
 		if ($this->Venta->saveAll($saveVenta)) {
+				ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id_venta);
 			return true;
 		}else{
 			
