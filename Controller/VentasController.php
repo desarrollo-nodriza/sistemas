@@ -113,6 +113,7 @@ class VentasController extends AppController {
 		$FiltroDte           	    = '';
 		$FiltroMontoDesde           = '';
 		$FiltroMontoHasta           = '';
+		$FiltroAdministrador        = '';
 
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
@@ -400,6 +401,14 @@ class VentasController extends AppController {
 							$condiciones['Venta.origen_venta_manual'] = $FiltroVentaOrigen;
 						}
 						break;
+					case 'administrador_id' :
+						
+						$FiltroAdministrador = $valor;
+
+						if ($FiltroAdministrador != "") {
+							$condiciones['Venta.administrador_id'] = $FiltroAdministrador;
+						}
+						break;
 				
 				}
 			}
@@ -512,7 +521,23 @@ class VentasController extends AppController {
 		
 		# Mercadolibre conectar
 		$meliConexion = $this->admin_verificar_conexion_meli();
+
+		$vendedores = ClassRegistry::init('Administrador')->find('list',[
+			'joins' => [array(
+				'table' => 'rp_roles',
+				'alias' => 'rol',
+				'type' => 'INNER',
+				'conditions' => array(
+					'rol.id = Administrador.rol_id',
+				)
+			)],
+			'conditions'=>[
+				'rol.app_perfil'=> 'vendedor',
+				'Administrador.activo'=>true
+			]
+		]);
 		
+
 		BreadcrumbComponent::add('Ventas', '/ventas');
 
 		$this->set(compact(
@@ -539,7 +564,9 @@ class VentasController extends AppController {
 			'FiltroMontoDesde',
 			'FiltroMontoHasta',
 			'FiltroVentaId',
-			'FiltroAtributo'
+			'FiltroAtributo',
+			'FiltroAdministrador',
+			'vendedores'
 		));
 
 	}

@@ -185,6 +185,14 @@
 							</div>
 						</div>
 
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
+							<div class="form-group">
+								<br />
+								<label>Vendedor</label>
+								<?= $this->Form->select('administrador_id', $vendedores, array('class' => 'form-control select', 'data-live-search' => true, 'multiple' => false, 'empty' => false, 'required' => false, 'default' => $FiltroAdministrador)); ?>
+							</div>
+						</div>
+
 					</div>
 
 					<div class="panel-footer">
