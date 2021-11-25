@@ -579,6 +579,143 @@ class AdministradoresController extends AppController
 			throw new CakeException($response);
     	}
 	}
+    public function api_v2_login()
+  {
+
+    if ($this->request->is('post')) {
+
+      $email = $this->request->data['email'];
+      $clave = $this->request->data['clave'];
+
+      # Que los campos de autenticacion no esten vacios
+      if (empty($email) || empty($clave)) {
+        $response = array(
+          'code'    => 502,
+          'message' => 'Email y contraseña son requeridos'
+        );
+
+        throw new CakeException($response);
+      }
+
+      # Buscar usuario
+      $usuario = $this->Administrador->find('first', array(
+        'conditions' => array(
+          'Administrador.email' => $email
+        )
+      ));
+
+      # No existe usuario
+      if (empty($usuario)) {
+        $response = array(
+          'code'    => 404,
+          'message' => 'El email ingresado no existe'
+        );
+
+        throw new CakeException($response);
+      }
+
+      # Contraseña no válida
+      if (AuthComponent::password($clave) != $usuario['Administrador']['clave']) {
+        $response = array(
+          'code'    => 403,
+          'message' => 'La contraseña ingresada no es correcta'
+        );
+
+        throw new CakeException($response);
+      }
+
+      # Crear Token
+      $token = ClassRegistry::init('Token')->crear_token($usuario['Administrador']['id'], null, 8760);
+      $tokenData = ClassRegistry::init('Token')->find('first', array(
+        'conditions' => array(
+          'Token.token' => $token['token']
+        ),
+        'contain' => array(
+          'Administrador' => array(
+            'Rol' => array(
+              'fields' => array(
+                'Rol.nombre', 'Rol.app_retiro', 'Rol.app_despacho', 'Rol.app_entrega', 'Rol.app_agencia', 'Rol.app_picking', 'Rol.app_perfil', 'Rol.app_embalajes', 'Rol.bodega_id'
+              )
+            ),
+            'fields' => array(
+              'Administrador.id', 'Administrador.nombre', 'Administrador.email', 'Administrador.google_imagen'
+            )
+          )
+        ),
+        'fields' => array('Token.token', 'Token.administrador_id')
+      ));
+
+      # Validamos usuario
+      if (empty($tokenData['Administrador'])) {
+        $response = array(
+          'code'    => 404,
+          'message' => 'User not found'
+        );
+
+        throw new CakeException($response);
+      }
+
+      $response = array(
+        'Usuario' => array(
+          'id' => $tokenData['Administrador']['id'],
+          'nombre' => $tokenData['Administrador']['nombre'],
+          'email'  => $tokenData['Administrador']['email'],
+          'avatar' => (!empty($tokenData['Administrador']['google_imagen'])) ? $tokenData['Administrador']['google_imagen'] : 'https://ui-avatars.com/api/?size=50&background=fff&color=771D97&name=' . urlencode($tokenData['Administrador']['nombre']),
+          'bodega_predeterminada' => ($tokenData['Administrador']['Rol']['bodega_id']) ? $tokenData['Administrador']['Rol']['bodega_id'] : null
+        )
+      );
+
+      if (!empty($tokenData['Administrador']['Rol'])) {
+		
+	
+        $permisos = array(
+          'Usuario' => array(
+            'perfil' => (isset(ClassRegistry::init('Rol')->app[$tokenData['Administrador']['Rol']['app_perfil']])) ? ClassRegistry::init('Rol')->app[$tokenData['Administrador']['Rol']['app_perfil']] : ClassRegistry::init('Rol')->app['general']
+          ),
+          'Opciones' => array(
+            'retirar_en_tienda' => $tokenData['Administrador']['Rol']['app_retiro'],
+            'despachar'         => $tokenData['Administrador']['Rol']['app_despacho'],
+            'entrega_domicilio' => $tokenData['Administrador']['Rol']['app_entrega'],
+            'entrega_agencia'   => $tokenData['Administrador']['Rol']['app_agencia'],
+            'picking'           => $tokenData['Administrador']['Rol']['app_picking']
+          ),
+          'Ambientes' => array()
+        );
+		$permisos = array_replace_recursive($permisos, ['Usuario'=>$token]);
+
+        if ($tokenData['Administrador']['Rol']['app_embalajes']) {
+          $permisos = array_replace_recursive($permisos, array(
+            'Ambientes' => array(
+              'embalajes' => true
+            )
+          ));
+        }
+
+        if ($tokenData['Administrador']['Rol']['app_perfil']) {
+          $permisos = array_replace_recursive($permisos, array(
+            'Ambientes' => array(
+              'app_mobile' => true
+            )
+          ));
+        }
+
+        $response = array_replace_recursive($response, $permisos);
+      }
+      
+      $this->set(array(
+        'response' => $response,
+        '_serialize' => array('response')
+      ));
+    } else {
+
+      $response = array(
+        'code'    => 501,
+        'message' => 'Only POST request allow'
+      );
+
+      throw new CakeException($response);
+    }
+  }
 	
 
 	/**

@@ -159,6 +159,15 @@ Router::connect(
         'prefix' => 'api'
     )
 );
+Router::connect(
+    '/api/administradores/v2/auth', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Administradores', 
+        'action' => 'v2_login',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
 
 
 Router::connect(
