@@ -189,7 +189,7 @@
 							<div class="form-group">
 								<br />
 								<label>Vendedor</label>
-								<?= $this->Form->select('administrador_id', $vendedores, array('class' => 'form-control select', 'data-live-search' => true, 'multiple' => false, 'empty' => false, 'required' => false, 'default' => $FiltroAdministrador)); ?>
+								<?= $this->Form->select('administrador_id', $vendedores, array('class' => 'form-control select', 'data-live-search' => true, 'multiple' => false, 'empty' => 'Seleccionar Vendedor', 'default' => $FiltroAdministrador)); ?>
 							</div>
 						</div>
 
