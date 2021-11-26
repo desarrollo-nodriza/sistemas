@@ -3710,7 +3710,7 @@ class VentaDetalleProductosController extends AppController
 
 		$producto = $this->VentaDetalleProducto->find('first', array(
 			'conditions' => array(
-				'VentaDetalleProducto.codigo_proveedor' => $this->request->data['sku']
+				'VentaDetalleProducto.referencia' => $this->request->data['sku']
 			)
 		));
 
