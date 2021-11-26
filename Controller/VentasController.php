@@ -10170,6 +10170,9 @@ class VentasController extends AppController {
 
 			foreach ($item['EmbalajeProductoWarehouse'] as $iemp => $emp) 
 			{	
+				if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado')
+					continue;
+
 				# Le concatenamos los atributos si corresponde
 				if (!empty($item['Atributo']))
 				{
