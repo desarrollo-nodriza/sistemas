@@ -92,6 +92,12 @@
 					<td style="font-size: 10px !important;">Descuento: </td>
 					<td style="font-size: 10px !important;"><?=$oc['OrdenCompra']['descuento'];?>%</td>
 				</tr>
+				<? if ($oc['OrdenCompra']['bodega_id']) : ?>
+					<tr>
+						<td style="font-size: 10px !important;">Bodega asignada: </td>
+						<td style="font-size: 10px !important;"><?= $oc['Bodega']['nombre']; ?> - Dirección: <?= $oc['Bodega']['direccion']; ?></td>
+					</tr>
+				<? endif; ?>
 				<? if ($oc['OrdenCompra']['tipo_entrega']) : ?>
 					<tr>
 						<td style="font-size: 10px !important;">Tipo de entrega: </td>

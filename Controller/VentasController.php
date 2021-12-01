@@ -393,12 +393,12 @@ class VentasController extends AppController {
 
 						break;
 				
-					case 'origen_venta_manual' :
+					case 'canal_venta_id' :
 						
 						$FiltroVentaOrigen = $valor;
 
 						if ($FiltroVentaOrigen != "") {
-							$condiciones['Venta.origen_venta_manual'] = $FiltroVentaOrigen;
+							$condiciones['Venta.canal_venta_id'] = $FiltroVentaOrigen;
 						}
 						break;
 					case 'administrador_id' :
@@ -536,6 +536,13 @@ class VentasController extends AppController {
 				'Administrador.activo'=>true
 			]
 		]);
+
+		# Canales de venta
+		$canal_ventas = $this->Venta->CanalVenta->find('list', array(
+			'conditions' => array(
+				'activo' => 1
+			)
+		));
 		
 
 		BreadcrumbComponent::add('Ventas', '/ventas');
@@ -566,7 +573,8 @@ class VentasController extends AppController {
 			'FiltroVentaId',
 			'FiltroAtributo',
 			'FiltroAdministrador',
-			'vendedores'
+			'vendedores',
+			'canal_ventas'
 		));
 
 	}
@@ -3564,7 +3572,6 @@ class VentasController extends AppController {
 	public function admin_view ($id = null) 
 	{
 
-
 		if ( ! $this->Venta->exists($id) ) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
@@ -3597,7 +3604,8 @@ class VentasController extends AppController {
 			'conditions' => array(
 				'activo' => 1,
 				'origen' => (empty($this->request->data['Venta']['marketplace_id'])) ? 0 : $this->request->data['Venta']['marketplace_id'] 
-			)
+			),
+			'order' => array('nombre' => 'ASC')
 		));
 
 		$transportes = ClassRegistry::init('Transporte')->find('list', array('conditions' => array('activo' => 1)));
@@ -3665,6 +3673,7 @@ class VentasController extends AppController {
 			$venta['Transporte'][$it]['TransportesVenta']['EnvioHistorico'] = $historico; 
 			
 		}
+
 		$metodos_de_envios=[];
 		$metodoEnvios_sin_procesar = ClassRegistry::init('MetodoEnvio')->find('all', array(
 			'contain'=>[
@@ -3677,11 +3686,18 @@ class VentasController extends AppController {
 		foreach ($metodoEnvios_sin_procesar as $value) {
 			$metodos_de_envios[$value['MetodoEnvio']['id']] ="{$value['Bodega']['nombre']} - {$value['MetodoEnvio']['nombre']} ".(isset($value['MetodoEnvio']['dependencia'])?"| Dependencia {$value['MetodoEnvio']['dependencia']}":'');
 		}
+
+		# Canales de venta
+		$canal_ventas = $this->Venta->CanalVenta->find('list', array(
+			'conditions' => array(
+				'activo' => 1
+			)
+		));
 		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
 		
-		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios'));
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas'));
 
 	}
 
@@ -4413,10 +4429,18 @@ class VentasController extends AppController {
 			}
 
 			# Viene comuna
-			if (!empty($this->request->data['Venta']['comuna_entrega'])) {
+			if (!empty($this->request->data['Venta']['comuna_entrega'])) 
+			{
 				$this->request->data['Venta']['comuna_id'] =  ClassRegistry::init('Comuna')->obtener_id_comuna_por_nombre($this->request->data['Venta']['comuna_entrega']);
 			}
+
 			$this->request->data['Venta']['bodega_id'] = ClassRegistry::init('MetodoEnvio')->bodega_id($this->request->data['Venta']['metodo_envio_id']); 
+			
+			# Guardamos el origen de la venta
+			$this->request->data['Venta']['origen_venta_manual'] = ClassRegistry::init('CanalVenta')->field('nombre', array(
+				'id' => $this->request->data['Venta']['canal_venta_id']
+			));	
+			
 			if ($this->Venta->saveAll($this->request->data) ) {
 
 				$tienda = ClassRegistry::init('Tienda')->obtener_tienda($this->request->data['Venta']['tienda_id'], array('Tienda.nombre', 'Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
@@ -4495,7 +4519,7 @@ class VentasController extends AppController {
 		
 		$clientes     = ClassRegistry::init('VentaCliente')->find('list', array('fields' => array('VentaCliente.id', 'VentaCliente.email')));
 
-		$origen_venta = $this->Venta->canal_venta_manual;
+		$origen_venta = ClassRegistry::init('CanalVenta')->find('list', array('conditions' => array('activo' => 1)));
 		
 		$tipo_venta   =	ClassRegistry::init('VentaEstado')->find('list',['conditions'=>
 		[['VentaEstado.nombre '=>$this->tipo_venta]]
@@ -4585,6 +4609,15 @@ class VentasController extends AppController {
 				$this->request->data['Venta']['bodega_id'] = ClassRegistry::init('MetodoEnvio')->bodega_id($this->request->data['Venta']['metodo_envio_id']); 
 				$cambiar_metodo_envio= true;
 			}
+
+			# Actualizar canal venta - Homologamos el campo
+			if ($this->request->data['Venta']['canal_venta_id'])
+			{	
+				$this->request->data['Venta']['origen_venta_manual'] = ClassRegistry::init('CanalVenta')->field('nombre', array(
+					'id' => $this->request->data['Venta']['canal_venta_id']
+				));	
+			}
+
 			if ($this->Venta->save($this->request->data)) {
 				
 				ksort($venta['Venta']);
@@ -5645,7 +5678,9 @@ class VentasController extends AppController {
 		}	
 
 		# PRestashop
-		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) {
+		if (!$venta['Venta']['marketplace_id'] 
+		&& !empty($venta['Venta']['id_externo']) 
+		&& !$venta['Venta']['venta_manual']) {
 
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
@@ -5893,7 +5928,9 @@ class VentasController extends AppController {
 		}	
 
 		# Prestashop
-		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) {
+		if (!$venta['Venta']['marketplace_id'] 
+		&& !empty($venta['Venta']['id_externo']) 
+		&& !$venta['Venta']['venta_manual']) {
 			# Para la consola se carga el componente on the fly!
 			if ($this->shell) {
 				$this->Prestashop = $this->Components->load('Prestashop');
@@ -7048,7 +7085,10 @@ class VentasController extends AppController {
 		}	
 
 		# Prestashop
-		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) {
+		if (!$venta['Venta']['marketplace_id'] 
+		&& !empty($venta['Venta']['id_externo'])
+		&& !$venta['Venta']['venta_manual']) 
+		{
 			
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
@@ -9328,7 +9368,7 @@ class VentasController extends AppController {
 				'Venta.marketplace_id'
 			)
 		);
-
+		
 		# Buscamos la venta
 		$venta = $this->Venta->find('first', $qry);
 		
@@ -9477,6 +9517,11 @@ class VentasController extends AppController {
 
 		# Detalles de la venta
 		$venta = $this->preparar_venta($id);
+		
+		if ($venta['Venta']['canal_venta_id'])
+		{
+			$venta['Tienda']['nombre'] = $venta['CanalVenta']['nombre'] . ' - ' . $venta['Tienda']['nombre'];
+		}
 
 		$respuesta =  array(
 			'cliente' => array(
@@ -9820,7 +9865,9 @@ class VentasController extends AppController {
 		}	
 
 		# Prestashop
-		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) 
+		if (!$venta['Venta']['marketplace_id'] 
+		&& !empty($venta['Venta']['id_externo']) 
+		&& !$venta['Venta']['venta_manual']) 
 		{
 			# Para la consola se carga el componente on the fly!
 			$this->Prestashop = $this->Components->load('Prestashop');
@@ -9998,7 +10045,8 @@ class VentasController extends AppController {
 				'VentaEstado' => array(
 					'VentaEstadoCategoria'
 				),
-				'EmbalajeWarehouse'
+				'EmbalajeWarehouse',
+				'CanalVenta'
 			)
 		));
 		
@@ -10050,6 +10098,11 @@ class VentasController extends AppController {
 					break;
 				}
 			}
+		}
+
+		if ($venta['Venta']['canal_venta_id'])
+		{
+			$venta['Tienda']['nombre'] = $venta['CanalVenta']['nombre'] . ' - ' . $venta['Tienda']['nombre'];
 		}
 		
 		$respuesta =  array(

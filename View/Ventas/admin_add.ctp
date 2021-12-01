@@ -92,7 +92,7 @@
 										</div>
 										<div class="panel-body">
 											<div class="form-group">
-												<?=$this->Form->select('origen_venta_manual', $origen_venta, array('empty' => 'Seleccione', 'class' => 'form-control not-blank')); ?>
+												<?=$this->Form->select('canal_venta_id', $origen_venta, array('empty' => 'Seleccione', 'class' => 'form-control not-blank')); ?>
 											</div>
 										</div>
 									</div>
