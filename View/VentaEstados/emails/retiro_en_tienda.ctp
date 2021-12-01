@@ -122,7 +122,7 @@
                                           <h5 class="text-muted text-center" style="color: #636c72; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 30px; margin-top: 0px; text-align: center; vertical-align: baseline;">N° de venta #<?=$venta['Venta']['id']?></h5>
 
                                           <!-- Parrafo -->
-                                          <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 0px; text-align: center; vertical-align: baseline;">Tu compra está disponible para ser retirada en nuestra tienda ubicada en <?=$venta['Tienda']['direccion'];?>.</p>
+                                          <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 0px; text-align: center; vertical-align: baseline;">Tu compra está disponible para ser retirada en nuestra tienda ubicada en <?=$venta['Bodega']['direccion'];?>.</p>
                                           <!-- /Parrafo -->
 
                                            <!-- Parrafo -->
@@ -152,49 +152,40 @@
                                             </tbody>
                                           </table>
 
-                                          <!-- Titulo tus productos -->
-                                          <h5 class="text-center" style="color: inherit; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 20px; margin-top: 10px; text-align: center; vertical-align: baseline;">Nuestro horario de atención</h5>
-                                          <!-- /titulo tus productos -->
 
-                                          <!-- Parrafo -->
-                                          <? if (strtotime(date("d-m-Y H:i:00",time())) < strtotime("16-09-2021 18:00:00")) : ?>
-                                            <p class="text-muted text-center" style="color: #d44848; font-size: 16px; font-weight: 600; line-height: 22px; margin-bottom: 25px;; margin-top: 0px; text-align: center; vertical-align: baseline;">Jueves 16 de septiembre de 09:00-14:00 hrs.</p>
-                                          <? endif; ?>
-                                          <p class="text-muted text-center" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 25px;; margin-top: 0px; text-align: center; vertical-align: baseline;">Lunes a Viernes de 09:00-14:00 y de 15:00-18:30 hrs.</p>
-                                          <!-- /Parrafo -->
+                                          <table class="hr" style="border: 0; border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                            <tbody>
+                                              <tr>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; font-size: 16px; line-height: 24px; margin: 0; padding: 16px 0px;" width="100%">
+                                                  <table style="border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                    <tbody>
+                                                      <tr>
+                                                        <td style="border-collapse: collapse; border-spacing: 0px; border-top: 1px solid #dddddd; font-size: 16px; line-height: 24px; margin: 0;" width="100%" height="1px"></td>
+                                                      </tr>
+                                                    </tbody>
+                                                  </table>
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
 
+                                          <!-- Titulo retiro -->
+                                          <h5 class="text-center" style="color: inherit; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 20px; margin-top: 10px; text-align: center; vertical-align: baseline;">Sucursal de retiro</h5>
+                                          <!-- /titulo retiro -->
 
-                                          <!-- Links de interés -->
-                                          <div class="mb-4" style="margin-bottom: 24px; ">
-                                             
-                                              <table class="table" style="border-collapse: collapse; border-spacing: 0px; border-radius: 4px; overflow: hidden; font-family: Helvetica, Arial, sans-serif; margin-bottom: 16px; max-width: 100%; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
-                                                width="100%">
-                                                <tbody>
-                                                  <tr>
-                                                    <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 30px; margin: 0; padding: 0; width: 50%;" valign="top">
-                                                      <a href="https://www.waze.com/ul?ll=-33.4482614%2C-70.8491983&navigate=yes&zoom=17" style="width: 100%;text-align: center;float: left;">
-                                                        <img src="https://sistemasdev.nodriza.cl/img/toolmania/iconos/waze.png" style="max-width: 100%; margin-top: 40px;" width="40">
-                                                      </a>
-                                                      <a href="https://www.waze.com/ul?ll=-33.4482614%2C-70.8491983&navigate=yes&zoom=17" style="width: 100%;text-align: center;float: left; color: #636c72; font-size: 16px;">
-                                                        Ir con Waze
-                                                      </a>
-                                                    </td>
-                                                    <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 30px; margin: 0; padding: 0; width: 50%;" valign="top">
-                                                      <a href="https://goo.gl/maps/jTZP6XTYESPrwhsu6" style="width: 100%;text-align: center;float: left;">
-                                                        <img src="https://sistemasdev.nodriza.cl/img/toolmania/iconos/google.png" style="max-width: 100%; margin-top: 40px;" width="40">
-                                                      </a>
-                                                      <a href="https://goo.gl/maps/jTZP6XTYESPrwhsu6" style="width: 100%;text-align: center;float: left; color: #636c72; font-size: 16px;">
-                                                        Ir con Maps
-                                                      </a>
-                                                    </td>
-                                                  </tr>
-                                                </tbody>
-                                              </table>
-                                              
-                                          </div>
-                                          <!-- /Links de interés -->
-                                          
-
+                                          <table class="table" style="border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; margin-bottom: 16px; max-width: 100%; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
+                                            width="100%">
+                                            <tbody>
+                                              <tr>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top"><?=$venta['Bodega']['nombre'];?></td>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" class="text-right" valign="top" align="right"><?=$venta['Bodega']['direccion'];?></td>
+                                              </tr>
+                                              <tr>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" valign="top">Horario de atención</td>
+                                                <td style="border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 12px;" class="text-right" valign="top" align="right"><?=$venta['Bodega']['horario_atencion'];?></td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
 
                                           <table class="hr" style="border: 0; border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" width="100%">
                                             <tbody>
@@ -215,8 +206,7 @@
                                           <!-- Titulo tus productos -->
                                           <h5 class="text-center" style="color: inherit; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 20px; margin-top: 10px; text-align: center; vertical-align: baseline;">Tus productos</h5>
                                           <!-- /titulo tus productos -->
-                                          
-
+                                        
                                           <!-- Productos y totales-->
                                           <table class="table" style="border-collapse: collapse; border-spacing: 0px; font-family: Helvetica, Arial, sans-serif; margin-bottom: 16px; max-width: 100%; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
                                             width="100%">
@@ -304,7 +294,7 @@
                         <tr>
                           <td style="border-bottom: 0; border-collapse: collapse; border-spacing: 0px; border-top: 0; font-size: 16px; line-height: 24px; margin: 0; padding: 20px" align="left">
 
-                            
+                              <font color="636c72" font-size="13" style="font-size: 13px; line-height: 16px; font-weight: 800;">Casa matríz</font><br>
                               <font color="636c72" font-size="13" style="font-size: 13px; line-height: 16px;"><?=$venta['Tienda']['direccion'];?><br>
                               <a style="color: #636c72; line-height: 26px; width: 100%;" href="tel:+56 2 2379 2188">+56 2 2379 2188</a><br>
                               <a style="color: #636c72; line-height: 26px; width: 100%;" href="mailto:ventas@toolmania.cl">ventas@toolmania.cl</a><br>

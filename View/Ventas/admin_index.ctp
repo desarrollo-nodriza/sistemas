@@ -106,7 +106,7 @@
 							<div class="form-group">
 								<br />
 								<label>Origen de la venta</label>
-								<?= $this->Form->select('origen_venta_manual', $this->Html->origen_venta_manual(), array('class' => 'form-control', 'empty' => 'Origen', 'required' => false, 'default' => $FiltroVentaOrigen)); ?>
+								<?= $this->Form->select('canal_venta_id', $canal_ventas, array('class' => 'form-control', 'empty' => 'Origen', 'required' => false, 'default' => $FiltroVentaOrigen)); ?>
 							</div>
 						</div>
 

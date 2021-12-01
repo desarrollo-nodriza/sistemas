@@ -2379,9 +2379,6 @@ class VentaDetalleProductosController extends AppController
             )
         );
 
-        # Preparamos ids para usarlos en la actualización
-        $id_actualizar = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible();
-
         # Obtenemos la tienda principal
         $tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
             'id',
@@ -2395,6 +2392,12 @@ class VentaDetalleProductosController extends AppController
             'stock_default'
         ));
 
+		#Usamos la bodega principal para mantener actualizado el stock en prestashop
+		$bodega_principal = ClassRegistry::init('Bodega')->find('first', array('conditions' => array('Bodega.principal' => 1), 'limit' => 1, 'fields' => array('Bodega.id')))['Bodega']['id'];
+
+		# Preparamos ids para usarlos en la actualización
+        $id_actualizar = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible($bodega_principal);
+		
         $this->Onestock 	= $this->Components->load('Onestock');
         $this->Onestock->crearCliente($tienda['Tienda']['apiurl_onestock'], $tienda['Tienda']['cliente_id_onestock'], $tienda['Tienda']['onestock_correo'],    $tienda['Tienda']['onestock_clave'], $tienda['Tienda']['token_onestock']);
         $productos_onestock = $this->Onestock->obtenerProductosClienteOneStock();

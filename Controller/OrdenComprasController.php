@@ -732,7 +732,8 @@ class OrdenComprasController extends AppController
 				'Tienda',
 				'Proveedor' => array(
 					'Moneda'
-				)
+				),
+				'Bodega'
 			)
 		));
 
@@ -779,7 +780,8 @@ class OrdenComprasController extends AppController
 					'Tienda',
 					'Proveedor' => array(
 						'Moneda'
-					)
+					),
+					'Bodega'
 				)
 			));
 
@@ -1399,7 +1401,8 @@ class OrdenComprasController extends AppController
 							'VentaDetalle'
 						),
 						'Tienda',
-						'Proveedor'
+						'Proveedor',
+						'Bodega'
 					)
 				));
 			
@@ -2864,7 +2867,8 @@ class OrdenComprasController extends AppController
 						'Tienda'
 					),
 					'Tienda',
-					'Proveedor'
+					'Proveedor',
+					'Bodega'
 				)
 			));
 
@@ -3104,7 +3108,8 @@ class OrdenComprasController extends AppController
 								'Tienda'
 							),
 							'Tienda',
-							'Proveedor'
+							'Proveedor',
+							'Bodega'
 						)
 					));					
 					

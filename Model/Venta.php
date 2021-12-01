@@ -173,6 +173,14 @@ class Venta extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 		),
+		'CanalVenta' => array(
+			'className'				=> 'CanalVenta',
+			'foreignKey'			=> 'canal_venta_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		),
 	);
 	public $hasMany = array(
 		'VentaDetalle' => array(
@@ -597,13 +605,26 @@ class Venta extends AppModel
 							'Comuna.district_id_blue_express',
 							'Comuna.state_id_blue_express'
 						]
-					]
+					],
+					'CanalVenta' => array(
+						'fields' => array(
+							'CanalVenta.id',
+							'CanalVenta.nombre'
+						)
+					),
+					'Bodega' => array(
+						'fields' => array(
+							'Bodega.nombre',
+							'Bodega.direccion',
+							'Bodega.horario_atencion'
+						)
+					)
 				),
 				'fields' => array(
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
 					'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.metodo_envio_id', 'Venta.venta_cliente_id', 'Venta.direccion_entrega', 'Venta.numero_entrega', 'Venta.otro_entrega', 'Venta.comuna_entrega', 'Venta.ciudad_entrega', 'Venta.nombre_receptor', 'Venta.rut_receptor',
 					'Venta.fono_receptor', 'Venta.picking_estado', 'Venta.prioritario', 'Venta.estado_anterior', 'Venta.picking_email', 'Venta.venta_estado_responsable', 'Venta.chofer_email', 'Venta.fecha_enviado', 'Venta.fecha_entregado', 'Venta.ci_receptor', 'Venta.fecha_transito', 'Venta.etiqueta_envio_externa', 
-					'Venta.venta_manual', 'Venta.administrador_id', 'Venta.nota_interna', 'Venta.paquete_generado', 'Venta.comuna_id', 'Venta.picking_motivo_revision', 'Venta.origen_venta_manual' ,'Venta.referencia_despacho' ,'Venta.bodega_id'
+					'Venta.venta_manual', 'Venta.administrador_id', 'Venta.nota_interna', 'Venta.paquete_generado', 'Venta.comuna_id', 'Venta.picking_motivo_revision', 'Venta.origen_venta_manual' ,'Venta.referencia_despacho' ,'Venta.bodega_id', 'Venta.canal_venta_id'
 				)
 			)
 		);
