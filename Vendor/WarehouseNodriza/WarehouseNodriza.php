@@ -21,7 +21,7 @@ class WarehouseNodriza
      */
     public function __construct($BX_TOKEN, $API_ROOT_URL = 'local')
     {
-        self::$API_ROOT_URL = $this->URLs[$API_ROOT_URL] ?? 'https://dev-warehouse.nodriza.cl';
+        self::$API_ROOT_URL = 'https://warehouse-api-855622.herokuapp.com/';
         self::$BX_TOKEN = $BX_TOKEN ?? '';
     }
 
