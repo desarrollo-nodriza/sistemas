@@ -170,7 +170,10 @@ class PagesController extends AppController
 			)
 		)), '{n}.Tienda' );
 
-		$prestashops = Hash::insert($prestashops, '{n}', array('tipo' => 'prestashop'));
+
+		$prestashops = array_map(function($p){
+			return array_replace_recursive($p, array('tipo' => 'prestashop'));
+		}, $prestashops);
 
 		# Obtenemos los marketplaces
 		$marketplaces = Hash::extract(ClassRegistry::init('Marketplace')->find('all', array(
@@ -182,8 +185,10 @@ class PagesController extends AppController
 				'Marketplace.id AS canal_id'
 			)
 		)), '{n}.Marketplace' );
-
-		$marketplaces = Hash::insert($marketplaces, '{n}', array('tipo' => 'marketplace'));
+		
+		$marketplaces = array_map(function($m){
+			return array_replace_recursive($m, array('tipo' => 'marketplace'));
+		}, $marketplaces);
 
 		# Unificamos los canales de ventas
 		$canales = array_merge_recursive($prestashops, $marketplaces);
@@ -213,7 +218,6 @@ class PagesController extends AppController
 				        )
 				    )
 				);
-
 
 			# Agrupar ventas por criterio
 			$group_by_col = '';
