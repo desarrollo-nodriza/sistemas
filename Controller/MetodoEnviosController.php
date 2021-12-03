@@ -18,17 +18,59 @@ class MetodoEnviosController extends AppController
 
 	public function admin_index () {
 
-		$this->paginate = array(
+		# Al recibir el filtro lo pasamos a parámetros
+		if ( $this->request->is('post') ) {
+
+			$this->filtro('metodoEnvios', 'index', 'Filtro');
+
+		}
+
+		$qry = array(
 			'recursive' => 0,
 			'sort' => 'MetodoEnvio.nombre',
 			'direction' => 'ASC'
 		);
+		
+		# condiciones del filtro
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'id':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('MetodoEnvio.id' => str_replace('%2F', '/', urldecode($valor) ) )));
+						break;
+					case 'nombre':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('MetodoEnvio.nombre LIKE' => '%'.trim(str_replace('%2F', '/', urldecode($valor) )).'%')));
+						break;
+					case 'dependencia':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('MetodoEnvio.dependencia' => $valor)));
+						break;
+					case 'bodega':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('MetodoEnvio.bodega_id' => $valor)));
+						break;
+					case 'activo':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('MetodoEnvio.activo' => ($valor == 'activo') ? 1 : 0 )));
+						
+						break;
+				}
+			}
+		}
+
+		$this->paginate = $qry;
 
 		$metodoEnvios = $this->paginate();
 
+		$dependencias = $this->MetodoEnvio->dependencias();
+
+		$bodegas = $this->MetodoEnvio->Bodega->find('list', array('conditions' => array('activo' => 1)));
+
 		BreadcrumbComponent::add('Métodos de envio');
 
-		$this->set(compact('metodoEnvios'));
+		$this->set(compact('metodoEnvios', 'dependencias', 'bodegas'));
 
 	}
 
