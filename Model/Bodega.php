@@ -80,6 +80,22 @@ class Bodega extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'Rol' => array(
+			'className'				=> 'Rol',
+			'joinTable'				=> 'bodegas_roles',
+			'foreignKey'			=> 'bodega_id',
+			'associationForeignKey'	=> 'roles_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'width'					=> 'BodegasRol',
+			'offset'				=> '',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 

@@ -73,7 +73,7 @@ class Rol extends AppModel
 	 * ASOCIACIONES
 	 */
 	public $belongsTo = array(
-		'Bodega' => array(
+		/*'Bodega' => array(
 			'className'				=> 'Bodega',
 			'foreignKey'			=> 'bodega_id',
 			'conditions'			=> '',
@@ -81,7 +81,7 @@ class Rol extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Comentario')
-        )
+        )*/
     );
 
 	public $hasMany = array(
@@ -114,6 +114,22 @@ class Rol extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
+		),
+		'Bodega' => array(
+			'className'				=> 'Bodega',
+			'joinTable'				=> 'bodegas_roles',
+			'foreignKey'			=> 'rol_id',
+			'associationForeignKey'	=> 'bodega_id',
+			'unique'				=> true,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'width'					=> 'BodegasRol',
+			'offset'				=> '',
+			'finderQuery'			=> '',
+			'deleteQuery'			=> '',
+			'insertQuery'			=> ''
 		)
 	);
 
@@ -129,5 +145,37 @@ class Rol extends AppModel
 	        }
 	    }
 	    return $results;
+	}
+
+	public function beforeSave($options = array())
+	{	
+		if (isset($this->data['Bodega']))
+		{	
+			
+			# Tomamos la primera bodega y la seteamos a por defecto
+			foreach ($this->data['Bodega'] as $i => $b) 
+			{
+				if (!isset($b['bodega_id']))
+				{
+					unset($this->data['Bodega'][$i]);
+					continue;
+				}
+				
+				# Llevamos todas las bodegas a no default
+				$this->data['Bodega'][$i]['default'] = 0;
+
+			}
+
+			$this->data['Bodega'] = array_values($this->data['Bodega']);
+			
+			# Normalizamos
+			if (!empty($this->data['Bodega']))
+			{
+				$this->data['Rol']['bodega_id'] = $this->data['Bodega'][0]['bodega_id'];
+				$this->data['Bodega'][0]['default'] = 1;
+			}
+			
+			return true;
+		}
 	}
 }

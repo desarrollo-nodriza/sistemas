@@ -63,9 +63,8 @@ $.extend({
 		clonarElemento: function($ths){
 
 			$contexto = $ths.parents('.panel').eq(0).find('.clone-tr').eq(0);
-			console.log($contexto);
-			var newTr = $contexto.clone();
 
+			var newTr = $contexto.clone();
 
 			newTr.removeClass('hidden');
 			newTr.removeClass('clone-tr');
@@ -74,7 +73,9 @@ $.extend({
 			});
 
 			// Agregar nuevo campo
-			$contexto.parents('tbody').eq(0).append(newTr);
+			$nw = $contexto.parents('tbody').eq(0).append(newTr);
+
+			$.roles.reordenar();
 
 			// Re indexar
 			$contexto.parents('tbody').eq(0).find('tr').each(function(indx){
@@ -89,7 +90,6 @@ $.extend({
 						$that.attr('name', nombre);
 
 					}
-
 
 					if ($that.hasClass('not-blank')) {
 						$that.rules("add", {
@@ -138,6 +138,16 @@ $.extend({
 
 				$.roles.clonarElemento($(this));
 
+				$('.ddd').nestable({
+					maxDepth  : 1,
+					rootClass : 'ddd',
+					listClass : 'ddd-list',
+					itemClass : 'ddd-item',
+					handleClass : 'ddd-handle',
+					listNodeName : 'tbody',
+					itemNodeName : 'tr'
+				});
+
 			});
 
 
@@ -147,11 +157,31 @@ $.extend({
 
 				var $th = $(this).parents('tr').eq(0);
 
-				$th.fadeOut('slow', function() {
-					$th.remove();
-				});
-
+				$th.remove();
+				$.roles.reordenar();
+			
 			});
+		},
+		reordenar: () => {
+			let $ddd = $('.ddd');
+
+			if (!$ddd.length)
+			{
+				return;
+			}
+
+			// todos los trs creados
+			let trs = $ddd.find('.ddd-item');
+			console.log(trs.length);
+			// Asignamos los indices
+			for (let index = 0; index < trs.length; index++) {
+				const element = trs[index];
+				$(element).attr('data-id', index);
+				$(element).find('.js-orden').val(index);
+			}
+
+			return;
+
 		},
 		init: function(){
 
@@ -159,6 +189,31 @@ $.extend({
 				$.roles.validar();
 				$.roles.clonar();
 			}
+
+			$('.ddd').nestable({
+				maxDepth  : 1,
+				rootClass : 'ddd',
+				listClass : 'ddd-list',
+				itemClass : 'ddd-item',
+				handleClass : 'ddd-handle',
+				listNodeName : 'tbody',
+				itemNodeName : 'tr'
+			});
+
+			$('.ddd').on('change', function() 
+			{
+				let $that = $(this);
+				
+				orden  = $that.nestable('serialize');
+				
+				orden.forEach((posicion, index) => {
+					if (posicion.id !== '')
+					{
+						$that.find('[data-id='+posicion.id+']').find('.js-orden').val(index);
+					}
+				});
+
+			});
 
 		}
 	}

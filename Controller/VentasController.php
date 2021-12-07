@@ -4493,26 +4493,20 @@ class VentasController extends AppController {
 		$transportes  = ClassRegistry::init('Transporte')->find('list', array('conditions' => array('activo' => 1)));
 		
 		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
-
-		/*$comunas_starken = $this->Starken->listarCiudadesDestino();
-		$comunas         = array();
-
-		foreach ($comunas_starken['body'] as $ic => $comuna) {
-			$comunas[$comuna['nombreCiudad']] = $comuna['nombreCiudad'];
-		}*/
 		
 		$marketplaces = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1)));
 		
 		$medioPagos   = ClassRegistry::init('MedioPago')->find('list', array('conditions' => array('activo' => 1)));
-		$metodoEnvios = [];
-
+		$metodoEnvios = []; 
+		
 		$metodoEnvios_sin_procesar = ClassRegistry::init('MetodoEnvio')->find('all', array(
 			'contain'=>[
 				'Bodega'=>['fields'=>'Bodega.nombre'
 
 			]],
 			'fields'=>['MetodoEnvio.id','MetodoEnvio.nombre','MetodoEnvio.dependencia'],
-			'conditions' => array('MetodoEnvio.activo' => 1,'MetodoEnvio.bodega_id' => $this->Auth->user('Rol.bodega_id'))));
+			'conditions' => array('MetodoEnvio.activo' => 1,'MetodoEnvio.bodega_id IN' => Hash::extract($this->Auth->user('Bodega'), '{n}.id' ))));
+
 		foreach ($metodoEnvios_sin_procesar as $value) {
 			$metodoEnvios[$value['MetodoEnvio']['id']] ="{$value['Bodega']['nombre']} - {$value['MetodoEnvio']['nombre']} ".(isset($value['MetodoEnvio']['dependencia'])?"| Dependencia {$value['MetodoEnvio']['dependencia']}":'');
 		}

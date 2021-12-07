@@ -54,12 +54,16 @@ class AdministradoresController extends AppController
 					$rol = ClassRegistry::init('Rol')->find('first', array(
 						'conditions' => array(
 							'Rol.id' => $this->Session->read('Auth.Administrador.rol_id')
-						)	
+						),
+						'contain' => array(
+							'Bodega'
+						)
 					));
 
 					if (!empty($rol))
 					{
 						$this->Session->write('Auth.Administrador.Rol', $rol['Rol']);
+						$this->Session->write('Auth.Administrador.Bodega', $rol['Bodega']);
 					}
 				}
 
@@ -250,12 +254,16 @@ class AdministradoresController extends AppController
 					$rol = ClassRegistry::init('Rol')->find('first', array(
 						'conditions' => array(
 							'Rol.id' => $this->Session->read('Auth.Administrador.rol_id')
-						)	
+						),
+						'contain' => array(
+							'Bodega'
+						)
 					));
-
+					
 					if (!empty($rol))
 					{
 						$this->Session->write('Auth.Administrador.Rol', $rol['Rol']);
+						$this->Session->write('Auth.Administrador.Bodega', $rol['Bodega']);
 					}
 				}
 
@@ -331,12 +339,16 @@ class AdministradoresController extends AppController
 					$rol = ClassRegistry::init('Rol')->find('first', array(
 						'conditions' => array(
 							'Rol.id' => $this->Session->read('Auth.Administrador.rol_id')
-						)	
+						),
+						'contain' => array(
+							'Bodega'
+						)
 					));
 
 					if (!empty($rol))
 					{
 						$this->Session->write('Auth.Administrador.Rol', $rol['Rol']);
+						$this->Session->write('Auth.Administrador.Bodega', $rol['Bodega']);
 					}
 
 					$this->redirect($this->Auth->redirectUrl());
@@ -758,8 +770,19 @@ class AdministradoresController extends AppController
 			'contain' => array(
 				'Administrador' => array(
 					'Rol' => array(
+						'Bodega' => array(
+							'fields' => array(
+								'Bodega.id',
+								'Bodega.nombre',
+								'Bodega.direccion'
+							),
+							'order' => array(
+								'BodegasRol.orden' => 'ASC',
+								'BodegasRol.default' => 'DESC'
+							)
+						),
 						'fields' => array(
-							'Rol.nombre', 'Rol.app_retiro', 'Rol.app_despacho', 'Rol.app_entrega', 'Rol.app_agencia', 'Rol.app_picking', 'Rol.app_perfil', 'Rol.app_embalajes', 'Rol.bodega_id'
+							'Rol.id', 'Rol.nombre', 'Rol.app_retiro', 'Rol.app_despacho', 'Rol.app_entrega', 'Rol.app_agencia', 'Rol.app_picking', 'Rol.app_perfil', 'Rol.app_embalajes', 'Rol.bodega_id'
 						)
 					),
 					'fields' => array(
@@ -787,7 +810,10 @@ class AdministradoresController extends AppController
 				'email'  => $tokenData['Administrador']['email'],
 				'avatar' => (!empty($tokenData['Administrador']['google_imagen'])) ? $tokenData['Administrador']['google_imagen'] : 'https://ui-avatars.com/api/?size=50&background=fff&color=771D97&name=' . urlencode($tokenData['Administrador']['nombre']),
 				'bodega_predeterminada' => ($tokenData['Administrador']['Rol']['bodega_id']) ? $tokenData['Administrador']['Rol']['bodega_id'] : null
-			)
+			),
+			'Bodegas' => [
+				
+			]
 		);
 
 		if (!empty($tokenData['Administrador']['Rol'])) {
@@ -825,6 +851,17 @@ class AdministradoresController extends AppController
 			}
 
 			$response = array_replace_recursive($response, $permisos);
+			
+			# Agregamos las bodegas del rol
+			foreach ($tokenData['Administrador']['Rol']['Bodega'] as $bodega)
+			{
+				$response['Bodegas'][] = array(
+					'id' => $bodega['id'],
+					'nombre' => $bodega['nombre'],
+					'direccion' => $bodega['direccion'],
+					'Pivot' => $bodega['BodegasRol']
+				);
+			}
 		}
 
 		$this->set(array(

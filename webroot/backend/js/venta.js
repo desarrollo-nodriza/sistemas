@@ -626,7 +626,7 @@ $(function() {
 			.done(function(res) {
 				
 				habilitar_formulario(res);
-
+			
 			})
 			.fail(function() {
 				
@@ -639,6 +639,9 @@ $(function() {
 
 		function habilitar_formulario(res) {
 			var $metodo_envio = JSON.parse(res);
+			
+			// Actualizamos el campo bodegaVenta
+			$('#VentaBodegaVenta').val($metodo_envio.MetodoEnvio.bodega_id);
 
 			if ($metodo_envio.MetodoEnvio.retiro_local) {
 			
