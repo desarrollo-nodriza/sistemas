@@ -634,7 +634,7 @@ class AdministradoresController extends AppController
           'Administrador' => array(
             'Rol' => array(
               'fields' => array(
-                'Rol.nombre', 'Rol.app_retiro', 'Rol.app_despacho', 'Rol.app_entrega', 'Rol.app_agencia', 'Rol.app_picking', 'Rol.app_perfil', 'Rol.app_embalajes', 'Rol.bodega_id'
+                'Rol.nombre', 'Rol.app_retiro', 'Rol.app_despacho', 'Rol.app_entrega', 'Rol.app_agencia', 'Rol.app_picking', 'Rol.app_perfil', 'Rol.app_embalajes', 'Rol.bodega_id', 'Rol.app_recepcion ', 'Rol.app_zonificiacion '
               )
             ),
             'fields' => array(
@@ -677,27 +677,30 @@ class AdministradoresController extends AppController
             'despachar'         => $tokenData['Administrador']['Rol']['app_despacho'],
             'entrega_domicilio' => $tokenData['Administrador']['Rol']['app_entrega'],
             'entrega_agencia'   => $tokenData['Administrador']['Rol']['app_agencia'],
-            'picking'           => $tokenData['Administrador']['Rol']['app_picking']
+            'picking'           => $tokenData['Administrador']['Rol']['app_picking'],
+            'app_embalajes'   	=> $tokenData['Administrador']['Rol']['app_embalajes'],
+            'app_recepcion'     => $tokenData['Administrador']['Rol']['app_recepcion'],
+            'app_zonificiacion' => $tokenData['Administrador']['Rol']['app_zonificiacion'],
           ),
           'Ambientes' => array()
         );
 		$permisos = array_replace_recursive($permisos, ['Usuario'=>$token]);
 
-        if ($tokenData['Administrador']['Rol']['app_embalajes']) {
+        if ($tokenData['Administrador']['Rol']['app_embalajes'] || $tokenData['Administrador']['Rol']['app_perfil']) {
           $permisos = array_replace_recursive($permisos, array(
             'Ambientes' => array(
               'embalajes' => true
             )
           ));
-        }
+        }else{
+			$permisos = array_replace_recursive($permisos, array(
+				'Ambientes' => array(
+				  'app_mobile' => false
+				)
+			  ));
+		}
 
-        if ($tokenData['Administrador']['Rol']['app_perfil']) {
-          $permisos = array_replace_recursive($permisos, array(
-            'Ambientes' => array(
-              'app_mobile' => true
-            )
-          ));
-        }
+       
 
         $response = array_replace_recursive($response, $permisos);
       }

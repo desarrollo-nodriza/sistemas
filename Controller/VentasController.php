@@ -9460,17 +9460,19 @@ class VentasController extends AppController {
 				'fono'     => $venta['VentaCliente']['telefono'],
 			),
 			'venta' => array(
-				'id'          => $venta['Venta']['id'],
-				'id_externo'  => $venta['Venta']['id_externo'],
-				'referencia'  => $venta['Venta']['referencia'],
-				'fecha_venta' => $venta['Venta']['fecha_venta'],
-				'total'       => $venta['Venta']['total'],
-				'total_clp'   => CakeNumber::currency($venta['Venta']['total'], 'CLP'),
-				'descuento'   => $venta['Venta']['descuento'],
-				'costo_envio' => $venta['Venta']['costo_envio'],
-				'estado'      => $venta['VentaEstado']['VentaEstadoCategoria']['nombre'],
-				'subestado'   => $venta['VentaEstado']['nombre'],
-				'canal_venta' => (!empty($venta['Marketplace']['id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'], 
+				'id'              => $venta['Venta']['id'],
+				'id_externo'      => $venta['Venta']['id_externo'],
+				'referencia'      => $venta['Venta']['referencia'],
+				'fecha_venta'     => $venta['Venta']['fecha_venta'],
+				'total'           => $venta['Venta']['total'],
+				'total_clp'       => CakeNumber::currency($venta['Venta']['total'], 'CLP'),
+				'descuento'   	  => $venta['Venta']['descuento'],
+				'descuento_clp'   => CakeNumber::currency($venta['Venta']['descuento'], 'CLP'),
+				'costo_envio' 	  => $venta['Venta']['costo_envio'],
+				'costo_envio_clp' => CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP'),
+				'estado'          => $venta['VentaEstado']['VentaEstadoCategoria']['nombre'],
+				'subestado'       => $venta['VentaEstado']['nombre'],
+				'canal_venta'     => (!empty($venta['Marketplace']['id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'], 
 			),
 			'entrega' => array(
 				'metodo'                 => $venta['MetodoEnvio']['nombre'],
@@ -9487,7 +9489,7 @@ class VentasController extends AppController {
 			),
 		);
 
-
+		
 		foreach ($venta['VentaDetalle'] as $i => $item) {
 
 			$total_items = $item['cantidad'];
@@ -9497,13 +9499,16 @@ class VentasController extends AppController {
 				#continue;
 
 			$respuesta['itemes'][$i] = array(
-				'id'               => $item['id'],
-				'nombre'           => $item['VentaDetalleProducto']['nombre'],
-				'cantidad'         => $total_items,
-				'precio_neto'      => $item['precio'],
-				'precio_bruto'     => $this->precio_bruto($item['precio']),
-				'precio_bruto_clp' => CakeNumber::currency($this->precio_bruto($item['precio']), 'CLP'),
-				'codigo_barra'     => null
+				'id'               			 => $item['id'],
+				'nombre'           			 => $item['VentaDetalleProducto']['nombre'],
+				'cantidad'         			 => $total_items,
+				'precio_neto_clp'      		 => CakeNumber::currency($item['precio'], 'CLP'),
+				'precio_neto'      			 => $item['precio'],
+				'precio_bruto'     			 => $this->precio_bruto($item['precio']),
+				'precio_bruto_clp' 			 => CakeNumber::currency($this->precio_bruto($item['precio']), 'CLP'),
+				'codigo_barra'     			 => null,
+				'cantidad_pendiente_entrega' => $item['cantidad_pendiente_entrega'],
+				'cantidad_entregada' 		 => $item['cantidad_entregada'],
 			);
 			
 			if (!empty($item['VentaDetalleProducto']['imagenes'])) {
