@@ -209,9 +209,6 @@ class Bodega extends AppModel
 
 		if (!empty($historico)) {
 			// Sumatoria de las cantidades
-			$inCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=IN].cantidad'));
-			$edCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=ED].cantidad'));
-
 			$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));	
 		}
 
@@ -219,7 +216,7 @@ class Bodega extends AppModel
 			return $total;
 
 		# Obtenemos la cantidad reservada o vendida no empaquetada
-		$reservado = ClassRegistry::init('VentaDetalleProducto')->obtener_cantidad_reservada($id_producto);
+		$reservado = ClassRegistry::init('VentaDetalleProducto')->obtener_cantidad_reservada($id_producto, null, $id_bodega);
 
 		if ($total <= $reservado)
 			return 0; // No tenemos stock

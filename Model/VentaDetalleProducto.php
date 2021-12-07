@@ -331,7 +331,7 @@ class VentaDetalleProducto extends AppModel
 	 * @param  [type] $id_venta [description]
 	 * @return [type]           [description]
 	 */
-	public function obtener_cantidad_reservada($id, $id_venta = null)
+	public function obtener_cantidad_reservada($id, $id_venta = null, $id_bodega = null)
 	{
 
 		$qry = array(
@@ -368,7 +368,7 @@ class VentaDetalleProducto extends AppModel
 				)
 			),
 			'fields' => array(
-				'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.venta_id', 'VentaDetalle.id'
+				'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.venta_id', 'VentaDetalle.id', 'Venta.bodega_id'
 			)
 		);
 
@@ -376,6 +376,22 @@ class VentaDetalleProducto extends AppModel
 			$qry = array_replace_recursive($qry, array('conditions' => array(
 				'VentaDetalle.venta_id' => $id_venta
 			)));
+		}
+
+		# Cantdad reservada por venta bodega
+		if (!empty($id_bodega)) {
+			$qry = array_replace_recursive($qry, array(
+				'joins' => array(
+					array(
+						'table' => 'rp_ventas',
+						'alias' => 'Venta',
+						'type' => 'INNER',
+						'conditions' => array(
+							'Venta.bodega_id' => $id_bodega
+						)
+					)
+				)
+			));
 		}
 		
 		$vendidos = ClassRegistry::init('VentaDetalle')->find('all', $qry);
@@ -393,7 +409,7 @@ class VentaDetalleProducto extends AppModel
 
 			$total = $total + ( $vendido['VentaDetalle']['cantidad_reservada']);
 		}
-
+		
 		return $total;
 
 	}

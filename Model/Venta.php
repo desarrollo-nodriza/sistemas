@@ -1413,7 +1413,8 @@ class Venta extends AppModel
 			'fields' => array(
 				'Venta.id',
 				'Venta.picking_estado',
-				'Venta.venta_estado_id'
+				'Venta.venta_estado_id',
+				'Venta.bodega_id'
 			)
 		));
 
