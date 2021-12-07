@@ -689,7 +689,7 @@ class AdministradoresController extends AppController
         if ($tokenData['Administrador']['Rol']['app_embalajes'] || $tokenData['Administrador']['Rol']['app_perfil']) {
           $permisos = array_replace_recursive($permisos, array(
             'Ambientes' => array(
-              'embalajes' => true
+              'app_mobile' => true
             )
           ));
         }else{
