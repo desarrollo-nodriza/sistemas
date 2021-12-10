@@ -176,6 +176,7 @@
 									<th><?= $this->Paginator->sort('precio_costo', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('cantidad_virtual', 'Stock disponible', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('cantidad_virtual', 'Stock virtual', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('activo', 'Activo', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th>Acciones</th>
 								</tr>
 							</thead>
@@ -190,15 +191,19 @@
 									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['codigo_proveedor']); ?>&nbsp;</td>
 									<td><?= h($ventadetalleproducto['Marca']['nombre']); ?>&nbsp;</td>
 									<td><?= CakeNumber::currency(h($ventadetalleproducto['VentaDetalleProducto']['costo']), 'CLP'); ?>&nbsp;</td>
-									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['stock']); ?>&nbsp;</td>
+									<td>
+										<? foreach ( $ventadetalleproducto['Bodega'] as $b ): ?>
+											<label class="label btn-block label-<?=($b['stock'] == 0) ? 'danger' : 'success' ;?>"><?= h($b['nombre']); ?>: <?= h($b['stock']); ?> uni.</label>
+										<? endforeach; ?>
+									</td>
 									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['cantidad_virtual']); ?>&nbsp;</td>
 									<td><?= ($ventadetalleproducto['VentaDetalleProducto']['activo'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
 									<td>
 									<? if ($permisos['edit']) : ?>
-										<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $ventadetalleproducto['VentaDetalleProducto']['id']), array('class' => 'btn btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false, 'target' => '_blank')); ?>
+										<?= $this->Html->link('<i class="fa fa-edit"></i> Editar', array('action' => 'edit', $ventadetalleproducto['VentaDetalleProducto']['id']), array('class' => 'btn btn-block btn-xs btn-info', 'rel' => 'tooltip', 'title' => 'Editar este registro', 'escape' => false, 'target' => '_blank')); ?>
 									<? endif; ?>
 									<? if ($permisos['delete']) : ?>
-										<?= $this->Form->postLink('<i class="fa fa-remove"></i> Eliminar', array('action' => 'delete', $ventadetalleproducto['VentaDetalleProducto']['id']), array('class' => 'btn btn-xs btn-danger confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
+										<?= $this->Form->postLink('<i class="fa fa-remove"></i> Eliminar', array('action' => 'delete', $ventadetalleproducto['VentaDetalleProducto']['id']), array('class' => 'btn btn-block btn-xs btn-danger confirmar-eliminacion', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
 									<? endif; ?>
 									</td>
 								</tr>

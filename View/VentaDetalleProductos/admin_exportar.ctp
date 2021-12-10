@@ -14,22 +14,14 @@ foreach ( $campos as $campo )
 	array_push($cabeceras, array_merge(array('label' => Inflector::humanize($campo)), $opciones));
 }
 
-foreach ($bodegas_stock as $ib => $bodega) {
-	array_push($cabeceras, array_merge(array('label' => 'Stock ' . $bodega['bodega_nombre']), $opciones));
+foreach ($bodegas as $ib => $bodega) {
+	array_push($cabeceras, array_merge(array('label' => 'Stock ' . $bodega['nombre']), $opciones));
+	array_push($cabeceras, array_merge(array('label' => 'Reservado ' . $bodega['nombre']), $opciones));
 }
 
 array_push($cabeceras, array_merge(array('label' => 'Stock Total'), $opciones));
 array_push($cabeceras, array_merge(array('label' => 'Stock Reservado'), $opciones));
 array_push($cabeceras, array_merge(array('label' => 'UPC'), $opciones));
-
-foreach ($marketplaces as $im => $m) {
-
-	if ($m['Marketplace']['marketplace_tipo_id'] != 2)
-		continue;
-	
-	array_push($cabeceras, array_merge(array('label' => 'Precio ' . $m['Marketplace']['nombre']), $opciones));
-	array_push($cabeceras, array_merge(array('label' => 'Costo transporte ' . $m['Marketplace']['nombre']), $opciones));
-}
 
 $this->PhpSpreadsheet->addTableHeader($cabeceras, array('bold' => true));
 

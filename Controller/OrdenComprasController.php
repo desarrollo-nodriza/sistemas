@@ -2062,11 +2062,12 @@ class OrdenComprasController extends AppController
 
 
 		$fecha_actual = date("Y-m-d H:i:s");
-		$hace_un_mes  = date("Y-m-d H:i:s",strtotime($fecha_actual."-2 month")); 
+		$hace_dos_mes  = date("Y-m-d H:i:s",strtotime($fecha_actual."-2 month")); 
 
 		$ventas          = $this->OrdenCompra->Venta->find('all', array(
 			'conditions' => array(
-				'Venta.fecha_venta >' => $hace_un_mes
+				'Venta.fecha_venta >' => $hace_dos_mes,
+				'Venta.bodega_id' => Hash::extract($this->Auth->user('Bodega'), '{n}.id')
 			),
 			'fields' => array(
 				'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.prioritario', 'Venta.picking_estado'
@@ -3869,7 +3870,10 @@ class OrdenComprasController extends AppController
 			throw new CakeException($response);
 		}
 
-		$bodega_id = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+		$tokenInfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+		
+		# Tomamos las bodegas del rol
+		$bodegas_id = Hash::extract($tokenInfo, 'Administrador.Rol.Bodega.{n}.id');
 		
 		$ocs = $this->OrdenCompra->find('all', array(
 			'conditions' => array(
@@ -3879,7 +3883,7 @@ class OrdenComprasController extends AppController
 					'espera_dte'
 				),
 				'OrdenCompra.fecha_recibido <>' => '',
-				'OrdenCompra.bodega_id' => $bodega_id['Administrador']['Rol']['bodega_id']
+				'OrdenCompra.bodega_id IN' => $bodegas_id
 			),
 			'joins' => array(
 				array(

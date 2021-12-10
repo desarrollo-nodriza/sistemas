@@ -742,11 +742,13 @@ class VentaDetalleProducto extends AppModel
 					'BodegasVentaDetalleProducto.bodega_id' => $bodega_id
 				)
 			));
-		}
 
+			$qry['fields'][] = 'BodegasVentaDetalleProducto.bodega_id';
+		}
+		
 		$ids_con_stock_fisico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', $qry);
 
-		$ids_con_reserva = ClassRegistry::init('VentaDetalle')->find('all', array(
+		$qry2 = array(
 			'fields'     => array(
 				'VentaDetalle.venta_detalle_producto_id',
 				'SUM(VentaDetalle.cantidad_reservada) as reservado'
@@ -784,7 +786,28 @@ class VentaDetalleProducto extends AppModel
 			'having' => array('SUM(VentaDetalle.cantidad_reservada) > 0'),
 			'order'      => array('reservado' => 'asc'),
 			'group'      => array('VentaDetalle.venta_detalle_producto_id')
-		));
+		);
+
+		# Agregamos la bodega al calculo de reservas
+		if (!empty($bodega_id))
+		{
+			$qry2 = array_replace_recursive($qry2, array(
+				'joins' => array(
+					array(
+						'table' => 'rp_ventas',
+						'alias' => 'Venta',
+						'type' => 'INNER',
+						'conditions' => array(
+							'Venta.bodega_id' => $bodega_id
+						)
+					)
+				)
+			));
+
+			$qry2['fields'][] = 'Venta.bodega_id';
+		}
+
+		$ids_con_reserva = ClassRegistry::init('VentaDetalle')->find('all', $qry2);
 
 		# Preparamos ids para usarlos en la actualización
 		$id_stock_disponible = array();
@@ -794,6 +817,11 @@ class VentaDetalleProducto extends AppModel
 			$id_stock_disponible[$ids]['stock_disponible'] = $s[0]['stock'];
 			$id_stock_disponible[$ids]['stock_fisico'] = $s[0]['stock'];
 			$id_stock_disponible[$ids]['stock_reservado'] = 0;
+
+			if (!empty($bodega_id))
+			{
+				$id_stock_disponible[$ids]['bodega_id'] = $s['BodegasVentaDetalleProducto']['bodega_id'];
+			}
 
 			foreach ($ids_con_reserva as $idr => $r) 
 			{	
