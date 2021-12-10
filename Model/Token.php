@@ -322,7 +322,18 @@ class Token extends AppModel
 						'Administrador.nombre',
 						'Administrador.email'
 					),
-					'Rol'=> ['fields'=>['Rol.bodega_id']]
+					'Rol'=> [
+						'Bodega' => [
+							'fields' => [
+								'Bodega.id',
+								'Bodega.nombre'
+							]
+						],
+						'fields'=>[
+							'Rol.id',
+							'Rol.bodega_id'
+							]
+					]
 				),
 				'Proveedor' => array(
 					'fields' => array(

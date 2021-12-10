@@ -65,7 +65,6 @@
 			'/backend/js/productos.js?v=' . rand(),
 			'/backend/js/marcas.js?v=' . rand(),
 			'/backend/js/proveedor.js?v=' . rand(),
-			'/backend/js/roles.js?v=' . rand(),
 			'/backend/js/orden_compra.js?v=' . rand(),
 			'/backend/js/print_js/print.min',
 			'/backend/js/logistica.js?v=' . rand(),

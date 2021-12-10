@@ -705,24 +705,6 @@ class VentaDetalleProducto extends AppModel
 
 	}
 
-
-	/**
-	 * Vrifica que el producto que se intenta preparar esté en la bodega principal
-	 * @param  [type] $id [description]
-	 * @return [type]     [description]
-	 */
-	public function permitir_preparacion($id, $cantidad)
-	{	
-
-		$disponible_en_bodega_principal = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, null, true);
-		
-		if ( $disponible_en_bodega_principal >= $cantidad) {
-			return true;
-		}
-
-		return false;
-	}
-
 	
 	/**
 	 * Retorna un arreglo con los ids de productos con stock disponible para vender.
@@ -758,8 +740,10 @@ class VentaDetalleProducto extends AppModel
 					'BodegasVentaDetalleProducto.bodega_id' => $bodega_id
 				)
 			));
-		}
 
+			$qry['fields'][] = 'BodegasVentaDetalleProducto.bodega_id';
+		}
+		
 		$ids_con_stock_fisico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', $qry);
 
 		$qry2 = array(
@@ -802,6 +786,7 @@ class VentaDetalleProducto extends AppModel
 			'group'      => array('VentaDetalle.venta_detalle_producto_id')
 		);
 
+		# Agregamos la bodega al calculo de reservas
 		if (!empty($bodega_id))
 		{
 			$qry2 = array_replace_recursive($qry2, array(
@@ -811,12 +796,13 @@ class VentaDetalleProducto extends AppModel
 						'alias' => 'Venta',
 						'type' => 'INNER',
 						'conditions' => array(
-							'Venta.id = VentaDetalle.venta_id',
 							'Venta.bodega_id' => $bodega_id
 						)
 					)
 				)
 			));
+
+			$qry2['fields'][] = 'Venta.bodega_id';
 		}
 
 		$ids_con_reserva = ClassRegistry::init('VentaDetalle')->find('all', $qry2);
@@ -829,6 +815,11 @@ class VentaDetalleProducto extends AppModel
 			$id_stock_disponible[$ids]['stock_disponible'] = $s[0]['stock'];
 			$id_stock_disponible[$ids]['stock_fisico'] = $s[0]['stock'];
 			$id_stock_disponible[$ids]['stock_reservado'] = 0;
+
+			if (!empty($bodega_id))
+			{
+				$id_stock_disponible[$ids]['bodega_id'] = $s['BodegasVentaDetalleProducto']['bodega_id'];
+			}
 
 			foreach ($ids_con_reserva as $idr => $r) 
 			{	

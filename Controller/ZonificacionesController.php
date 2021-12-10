@@ -591,11 +591,22 @@ class ZonificacionesController extends AppController
 					)
 				)
 			),
+			'joins' => array(
+				array(
+					'table' => 'zonas',
+					'alias' => 'z',
+					'type' => 'INNER',
+					'conditions' => array(
+						'Ubicacion.Zona_id = z.id',
+						'z.bodega_id IN' => Hash::extract($this->Auth->user('Bodega'), '{n}.id')
+					)
+				),
+			),
 			'having' => array('SUM(Zonificacion.cantidad) > 0'),
 			'group' => array('Zonificacion.ubicacion_id', 'Zonificacion.producto_id'),
 			'order' => 'Zonificacion.producto_id'
 		));
-
+		
 		foreach ($zonificaciones as $valor)
 		{	
 			$datos[] = array(
@@ -634,6 +645,17 @@ class ZonificacionesController extends AppController
 					'Bodega.nombre',
 				]
 			]]],
+			'joins' => array(
+				array(
+					'table' => 'zonas',
+					'alias' => 'z',
+					'type' => 'INNER',
+					'conditions' => array(
+						'Ubicacion.Zona_id = z.id',
+						'z.bodega_id IN' => Hash::extract($this->Auth->user('Bodega'), '{n}.id')
+					)
+				),
+			),
             'order' => array('Zona.nombre ASC'),
         ));
 
@@ -650,6 +672,17 @@ class ZonificacionesController extends AppController
 						'Bodega'
 					]
 				]),
+			'joins' => array(
+				array(
+					'table' => 'zonas',
+					'alias' => 'z',
+					'type' => 'INNER',
+					'conditions' => array(
+						'Ubicacion.Zona_id = z.id',
+						'z.bodega_id IN' => Hash::extract($this->Auth->user('Bodega'), '{n}.id')
+					)
+				),
+			),
             'group' => array('ubicacion_id'),
 		));
 		
@@ -1091,7 +1124,12 @@ class ZonificacionesController extends AppController
 		
 		$datos 		= [];
 
-		$id_stock_disponible = ClassRegistry::init('VentaDetalleProducto')->obtener_productos_con_stock_disponible();
+		$id_stock_disponible = [];
+		
+		foreach ($this->Auth->user('Bodega') as $bodega)
+		{
+			$id_stock_disponible = array_replace_recursive($id_stock_disponible, ClassRegistry::init('VentaDetalleProducto')->obtener_productos_con_stock_disponible($bodega['id']));
+		}
 
 		$opciones = array_replace_recursive($opciones, array(
 			'order' => array('VentaDetalleProducto.id_externo' => 'DESC'),
@@ -1143,6 +1181,18 @@ class ZonificacionesController extends AppController
 								),
 							)));
 						break;
+					case 'existencia':
+					
+						if ($valor == 'en_existencia')
+						{
+							$opciones = array_replace_recursive($opciones, array(
+								'conditions' => array(
+									'VentaDetalleProducto.id' => Hash::extract($id_stock_disponible, '{n}.id')
+								)
+							));
+						}
+						
+						break;
 				}
 			}
 		}
@@ -1150,7 +1200,14 @@ class ZonificacionesController extends AppController
 		$productos 	= ClassRegistry::init('VentaDetalleProducto')->find('all',$opciones);
 		
 		$movimientos = $this->Movimientos();
-		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('activo' => 1))); 
+		
+		# Filtramos por las bodegas que tiene acceso el usuario
+		$bodegas = ClassRegistry::init('Bodega')->find('list', array(
+			'conditions' => array(
+				'id IN' => Hash::extract($this->Auth->user('Bodega'), '{n}.id'), 
+				'activo' => 1
+			)
+		)); 
 		
         foreach ($productos as $producto) {
 			$zonificaciones = $this->Zonificacion->find('all', array(
@@ -1181,12 +1238,24 @@ class ZonificacionesController extends AppController
 							'Ubicacion.columna'
 						]
 					]],
+				'joins' => array(
+					array(
+						'table' => 'zonas',
+						'alias' => 'z',
+						'type' => 'INNER',
+						'conditions' => array(
+							'Ubicacion.Zona_id = z.id',
+							'z.bodega_id IN' => Hash::extract($this->Auth->user('Bodega'), '{n}.id')
+						)
+					),
+				),
 				'group' => array('ubicacion_id'),
 			));
 			
 			foreach ($zonificaciones as $valor)
 			{	
-				$PMP = $this->PMP($bodegas,$producto['VentaDetalleProducto']['id']);
+				# pmp por bodega de la ubicación
+				$PMP = ClassRegistry::init('Pmp')->obtener_pmp($producto['VentaDetalleProducto']['id'], $valor['Ubicacion']['Zona']['bodega_id']);
 				
 				if ($valor[0]['cantidad']>0) {
 					$datos[] = 
@@ -1198,15 +1267,18 @@ class ZonificacionesController extends AppController
 						'nombre_ubicacion'				=> $valor['Ubicacion']['Zona']['Bodega']['nombre'] . ' ' . $valor['Ubicacion']['Zona']['nombre'].' - '.$valor['Ubicacion']['columna'].' - '.$valor['Ubicacion']['fila'],
 						'cantidad_actual'				=> $valor[0]['cantidad'],
 						'indique_cantidad_a_ajustar'  	=> '',
-						'precio'						=> $PMP[$valor['Ubicacion']['Zona']['bodega_id']]==0?'':$PMP[$valor['Ubicacion']['Zona']['bodega_id']],
+						'precio'						=> $PMP,
 						'glosa'							=> '',
 						'glosas_definidas'				=> $movimientos
 					);
 				}
 								
 			}
+
 			if (!$zonificaciones ) {
-				$PMP = $this->PMP($bodegas,$producto['VentaDetalleProducto']['id']);
+
+				# pmp global
+				$PMP = ClassRegistry::init('Pmp')->obtener_pmp($producto['VentaDetalleProducto']['id']);
 				
 				$datos[] = 
 					array(
@@ -1217,7 +1289,7 @@ class ZonificacionesController extends AppController
 						'nombre_ubicacion'				=> '',
 						'cantidad_actual'				=> '',
 						'indique_cantidad_a_ajustar'  	=> '',
-						'precio'						=> $PMP[1]==0?'':$PMP[1],
+						'precio'						=> $PMP,
 						'glosa'							=> '',
 						'glosas_definidas'				=> $movimientos
 					);

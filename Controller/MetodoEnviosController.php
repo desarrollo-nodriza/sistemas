@@ -525,7 +525,7 @@ class MetodoEnviosController extends AppController
 		$filtrar = [
 			['nombre LIKE' 	=>	!empty($this->request->query['nombre'])? '%'.$this->request->query['nombre'].'%': null],	
 			['activo' 	    => 	$this->request->query['activo'] ??1 ],
-			['bodega_id'    =>	$this->request->query['bodega_id'] ?? null ]
+			['bodega_id IN'    =>	explode(',', $this->request->query['bodega_id']) ?? null ]
 		];
 		
 		$filtrar = array_filter($filtrar, function ($var) {

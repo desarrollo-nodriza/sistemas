@@ -55,8 +55,15 @@ class VentaDetalleProductosController extends AppController
 			$this->filtrar('ventaDetalleProductos', 'index');
 
 		}
-	
-		$id_stock_disponible = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible($this->Auth->user('Rol.bodega_id'));
+
+		$id_stock_disponible = [];
+
+		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('activo' => 1)));
+		
+		foreach ($bodegas as $bid => $bodega)
+		{
+			$id_stock_disponible = array_replace_recursive($id_stock_disponible, $this->VentaDetalleProducto->obtener_productos_con_stock_disponible($bid));
+		}
 
 		$paginate = array_replace_recursive($paginate, array(
 			'limit' => 20,
@@ -132,9 +139,19 @@ class VentaDetalleProductosController extends AppController
 		$ventadetalleproductos	= $this->paginate();
 
 		foreach ($ventadetalleproductos as $iv => $producto) 
-		{
-			$stock_fisico = Hash::extract($id_stock_disponible, '{n}[id='.$producto['VentaDetalleProducto']['id'].']');
-			$ventadetalleproductos[$iv]['VentaDetalleProducto']['stock'] = ($stock_fisico) ? $stock_fisico[0]['stock_disponible'] : 0;
+		{	
+			foreach ($bodegas as $id_b => $bb)
+			{
+				$stock_fisico = Hash::extract($id_stock_disponible, '{n}[id='.$producto['VentaDetalleProducto']['id'].']');
+				$stock_fisico = Hash::extract($stock_fisico, '{n}[bodega_id='.$id_b.']');
+				
+				$ventadetalleproductos[$iv]['Bodega'][] = array(
+					'id' => $id_b,
+					'nombre' => $bb,
+					'stock' => ($stock_fisico) ? $stock_fisico[0]['stock_disponible'] : 0,
+				);
+			}
+			# Agregamos costo
 			$ventadetalleproductos[$iv]['VentaDetalleProducto']['costo'] = ClassRegistry::init('VentaDetalleProducto')->obtener_precio_costo($producto['VentaDetalleProducto']['id']);
 		}
 
@@ -1696,25 +1713,19 @@ class VentaDetalleProductosController extends AppController
 		# Aumentamos el tiempo máxmimo de ejecución para evitar caídas
 		set_time_limit(-1);
 		ini_set('memory_limit', -1);
-
-		$id_stock_disponible = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible($this->Auth->user('Rol.bodega_id'));
+		
+		$id_stock_disponible = [];
+		
+		foreach ($this->Auth->user('Bodega') as $bodega)
+		{
+			$id_stock_disponible = array_replace_recursive($id_stock_disponible, $this->VentaDetalleProducto->obtener_productos_con_stock_disponible($bodega['id']));
+		}
 		
 		$qry = array(
 			'recursive'	=> -1,
 			'limit' => $limite,
 			'offset' => $offset,
 			'contain' => array(
-				'Bodega' => array(
-					'fields' => array(
-						'Bodega.id',
-						'BodegasVentaDetalleProducto.cantidad'
-					)
-				),
-				'VentaDetalle' => array(
-					'fields' => array(
-						'VentaDetalle.cantidad_reservada'
-					)
-				),
 				'PrecioEspecificoProducto' => array(
 					'conditions' => array(
 						'PrecioEspecificoProducto.activo' => 1,
@@ -1801,38 +1812,40 @@ class VentaDetalleProductosController extends AppController
 		}
 		
 		$datos			= $this->VentaDetalleProducto->find('all', $qry);
-		
-		$bodegas_stock = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible_por_bodega();
-			
-		$meliConexion = array();
 
 		$campos			= array_keys($this->VentaDetalleProducto->_schema);
 		$modelo			= $this->VentaDetalleProducto->alias;
 
-		$marketplaces = ClassRegistry::init('Marketplace')->find('all', array(
-			'conditions' => array(
-				'Marketplace.tienda_id' => $this->Session->read('Tienda.id')
-			)
-		));
-
+		$bodegas = $this->Auth->user('Bodega');
+		
 		if ($canales == 'true') {
+
 			foreach ($datos as $id => $p) {
 				
-				foreach ($bodegas_stock as $ib => $b) 
+				$stock_total = 0;
+				$stock_reservado_total = 0;
+
+				foreach ($this->Auth->user('Bodega') as $b) 
 				{	
-					$stocks_bodega = Hash::extract($b['productos'], '{n}[id='.$p['VentaDetalleProducto']['id'].'].stock_fisico');
-					
-					$datos[$id]['VentaDetalleProducto']['stock_fisico_' . strtolower(Inflector::slug($b['bodega_nombre']))] = ($stocks_bodega) ? $stocks_bodega[0] : 0;	
+					$stock = Hash::extract($id_stock_disponible, '{n}[id='.$p['VentaDetalleProducto']['id'].']');
+					$stock = Hash::extract($stock, '{n}[bodega_id='.$b['id'].']');
+					$stock_fisico = ($stock) ? $stock[0]['stock_fisico'] : 0;
+					$stock_reservado = ($stock) ? $stock[0]['stock_reservado'] : 0;
+
+					$stock_total = $stock_total + $stock_fisico;
+					$stock_reservado_total = $stock_reservado_total + $stock_reservado;
+
+
+					$datos[$id]['VentaDetalleProducto']['stock_fisico_' . strtolower(Inflector::slug($b['nombre']))] = $stock_fisico;
+					$datos[$id]['VentaDetalleProducto']['stock_reservado_' . strtolower(Inflector::slug($b['nombre']))] = $stock_reservado;	
 				}
 
 				$descuento_producto = $this->VentaDetalleProducto->obtener_descuento_por_producto($p, true);
 
 				$precio_costo = $p['VentaDetalleProducto']['precio_costo'] - $descuento_producto['total_descuento'];
-				
-				$stock_fisico_total = Hash::extract($id_stock_disponible, '{n}[id='.$p['VentaDetalleProducto']['id'].'].stock_fisico');
 
-				$datos[$id]['VentaDetalleProducto']['stock_fisico_total'] = ($stock_fisico_total) ? $stock_fisico_total[0] : 0;
-				$datos[$id]['VentaDetalleProducto']['stock_reservado']    = array_sum(Hash::extract($p['VentaDetalle'], '{n}.cantidad_reservada'));
+				$datos[$id]['VentaDetalleProducto']['stock_fisico_total'] = $stock_total;
+				$datos[$id]['VentaDetalleProducto']['stock_reservado_total']    = $stock_reservado_total;
 				$datos[$id]['VentaDetalleProducto']['ultimo_precio_compra'] = ClassRegistry::init('Bodega')->ultimo_precio_compra($p['VentaDetalleProducto']['id']);
 				$datos[$id]['VentaDetalleProducto']['precio_costo'] = $precio_costo;
 
@@ -1840,7 +1853,7 @@ class VentaDetalleProductosController extends AppController
 
 		}
 		
-		$this->set(compact('datos', 'campos', 'modelo', 'bodegas_stock', 'marketplaces'));
+		$this->set(compact('datos', 'campos', 'modelo', 'bodegas'));
 
 	}
 

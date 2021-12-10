@@ -34,12 +34,10 @@
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>
-						<? if ( $this->Session->read('Auth.Administrador.rol_id') == 1 ) : ?>
 							<tr>
 								<th><?= $this->Form->label('rol_id', 'Rol de usuario'); ?></th>
 								<td><?= $this->Form->input('rol_id', array('class' => 'form-control select', 'empty' => 'Seleccione Rol')); ?></td>
 							</tr>
-						<? endif; ?>
 							<tr>
 								<th><?= $this->Form->label('secret_key', 'Secreto'); ?></th>
 								<td>

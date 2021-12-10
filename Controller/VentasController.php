@@ -72,7 +72,10 @@ class VentasController extends AppController {
      */
 	public function admin_index () {
 		
-		$condiciones = array();
+		$condiciones = array(
+			'Venta.bodega_id IN' => Hash::extract($this->Auth->user('Bodega'), '{n}.id') 
+		);
+
 		$joins       = array();
 		$group       = array();
 		$fields      = array(
@@ -92,6 +95,7 @@ class VentasController extends AppController {
 			'Venta.picking_estado', 
 			'Venta.venta_manual',
 			'Venta.total',
+			'Venta.bodega_id'
 		);
 
 		
@@ -114,6 +118,7 @@ class VentasController extends AppController {
 		$FiltroMontoDesde           = '';
 		$FiltroMontoHasta           = '';
 		$FiltroAdministrador        = '';
+		$FiltroBodega        		= '';
 
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
@@ -174,6 +179,13 @@ class VentasController extends AppController {
 
 						if ($FiltroTienda != "") {
 							$condiciones['Venta.tienda_id'] = $FiltroTienda;
+						} 
+						break;
+					case 'bodega_id':
+						$FiltroBodega = $valor;
+
+						if ($FiltroBodega != "") {
+							$condiciones['Venta.bodega_id'] = $FiltroBodega;
 						} 
 						break;
 					case 'marketplace_id':
@@ -456,6 +468,11 @@ class VentasController extends AppController {
 					'fields' => array(
 						'Dte.id', 'Dte.estado'
 					)
+				),
+				'Bodega' => array(
+					'fields' => array(
+						'Bodega.nombre'
+					)
 				)
 			),
 			'conditions' => $condiciones,
@@ -543,6 +560,14 @@ class VentasController extends AppController {
 				'activo' => 1
 			)
 		));
+
+		# Bodegas permitidas para el rol
+		$bodegas = [];
+
+		foreach ($this->Auth->user('Bodega') as $b)
+		{
+			$bodegas[$b['id']] = $b['nombre'];
+		}
 		
 
 		BreadcrumbComponent::add('Ventas', '/ventas');
@@ -557,6 +582,7 @@ class VentasController extends AppController {
 			'FiltroVenta', 
 			'FiltroCliente', 
 			'FiltroTienda', 
+			'FiltroBodega',
 			'FiltroMarketplace', 
 			'FiltroMedioPago', 
 			'FiltroVentaEstadoCategoria', 
@@ -574,7 +600,8 @@ class VentasController extends AppController {
 			'FiltroAtributo',
 			'FiltroAdministrador',
 			'vendedores',
-			'canal_ventas'
+			'canal_ventas',
+			'bodegas'
 		));
 
 	}
@@ -4493,26 +4520,20 @@ class VentasController extends AppController {
 		$transportes  = ClassRegistry::init('Transporte')->find('list', array('conditions' => array('activo' => 1)));
 		
 		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
-
-		/*$comunas_starken = $this->Starken->listarCiudadesDestino();
-		$comunas         = array();
-
-		foreach ($comunas_starken['body'] as $ic => $comuna) {
-			$comunas[$comuna['nombreCiudad']] = $comuna['nombreCiudad'];
-		}*/
 		
 		$marketplaces = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1)));
 		
 		$medioPagos   = ClassRegistry::init('MedioPago')->find('list', array('conditions' => array('activo' => 1)));
-		$metodoEnvios = [];
-
+		$metodoEnvios = []; 
+		
 		$metodoEnvios_sin_procesar = ClassRegistry::init('MetodoEnvio')->find('all', array(
 			'contain'=>[
 				'Bodega'=>['fields'=>'Bodega.nombre'
 
 			]],
 			'fields'=>['MetodoEnvio.id','MetodoEnvio.nombre','MetodoEnvio.dependencia'],
-			'conditions' => array('MetodoEnvio.activo' => 1,'MetodoEnvio.bodega_id' => $this->Auth->user('Rol.bodega_id'))));
+			'conditions' => array('MetodoEnvio.activo' => 1,'MetodoEnvio.bodega_id IN' => Hash::extract($this->Auth->user('Bodega'), '{n}.id' ))));
+
 		foreach ($metodoEnvios_sin_procesar as $value) {
 			$metodoEnvios[$value['MetodoEnvio']['id']] ="{$value['Bodega']['nombre']} - {$value['MetodoEnvio']['nombre']} ".(isset($value['MetodoEnvio']['dependencia'])?"| Dependencia {$value['MetodoEnvio']['dependencia']}":'');
 		}
