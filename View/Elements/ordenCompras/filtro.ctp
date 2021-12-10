@@ -8,6 +8,7 @@
     $dtf = (isset($this->request->params['named']['dtf'])) ? $this->request->params['named']['dtf'] : '' ;
     $dtt = (isset($this->request->params['named']['dtt'])) ? $this->request->params['named']['dtt'] : '' ;
     $ret = (isset($this->request->params['named']['ret'])) ? $this->request->params['named']['ret'] : '' ;
+    $bodega_id = (isset($this->request->params['named']['bodega_id'])) ? $this->request->params['named']['bodega_id'] : '' ;
 
     echo $this->Form->hidden('sta', array('value' => $sta));
 
@@ -17,8 +18,7 @@
         <h3 class="panel-title"><i class="fa fa-search" aria-hidden="true"></i> Filtro de busqueda</h3>
     </div>
     <div class="panel-body">
-        <div class="col-sm-2 col-xs-12">
-            <div class="form-group">
+        <div class="form-group col-sm-3 col-xs-12">
                 <label>ID OC:</label>
                 <?=$this->Form->input('id', array(
                     'type' => 'text',
@@ -26,10 +26,8 @@
                     'placeholder' => 'Ingrese ID de OC',
                     'value' => $id
                     ));?>
-            </div>
         </div>
-        <div class="col-sm-2 col-xs-12">
-            <div class="form-group">
+        <div class="form-group col-sm-3 col-xs-12">
                 <label>ID Venta:</label>
                 <? if (!empty($venta)) : ?>
                 <div class="input-group" style="max-width: 100%;">
@@ -52,10 +50,8 @@
                     'placeholder' => 'Ingrese ID de venta'
                     ));?>
                 <? endif; ?>
-            </div>
         </div>
-        <div class="col-sm-2 col-xs-12">
-            <div class="form-group">
+        <div class="form-group col-sm-3 col-xs-12">
                 <label>ID Producto:</label>
                 <? if (!empty($prod)) : ?>
                 <div class="input-group" style="max-width: 100%;">
@@ -78,10 +74,8 @@
                     'placeholder' => 'Ingrese ID de producto'
                     ));?>
                 <? endif; ?>
-            </div>
         </div>
-        <div class="col-sm-2 col-xs-12">
-            <div class="form-group">
+        <div class="form-group col-sm-3 col-xs-12">
                 <label>Proveedor</label>
                 <?=$this->Form->select('prov', $proveedores,
                     array(
@@ -92,10 +86,20 @@
                     'data-live-search' => true
                     )
                 );?>
-            </div>
         </div>
-        <div class="col-sm-2 col-xs-12">
-            <div class="form-group">
+        <div class="form-group col-sm-3 col-xs-12">
+                <label>Bodega</label>
+                <?=$this->Form->select('bodega_id', $bodegas,
+                    array(
+                    'class' => 'form-control select',
+                    'empty' => 'Seleccione Bodega',
+                    'multiple' => true,
+                    'value' => $bodega_id,
+                    'data-live-search' => true
+                    )
+                );?>
+        </div>
+        <div class="form-group col-sm-3 col-xs-12">
                 <label>Retirar OC:</label>
                 <?=$this->Form->select('ret', array(
                         'si' => 'Retiro marcado',
@@ -105,9 +109,8 @@
                     'empty' => 'Seleccione',
                     'default' => $ret
                     ));?>
-            </div>
         </div>
-        <div class="col-sm-2 col-xs-12">
+        <div class="form-group col-sm-3 col-xs-12">
             <label>Emitidos entre</label>
             <div class="input-group">
                 <?=$this->Form->input('dtf', array(
@@ -121,7 +124,6 @@
                     'type' => 'text',
                     'value' => $dtt
                     ))?>
-            </div>
         </div>
     </div>
     <div class="panel-footer">

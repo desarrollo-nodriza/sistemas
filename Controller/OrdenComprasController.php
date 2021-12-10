@@ -115,6 +115,15 @@ class OrdenComprasController extends AppController
 					));
 					
 					break;
+				case 'bodega_id':
+
+					$filtro = array_replace_recursive($filtro, array(
+						'conditions' => array(
+							'OrdenCompra.bodega_id' => $valor
+						)
+					));
+					
+					break;
 				case 'ret':
 
 					$filtro = array_replace_recursive($filtro, array(
@@ -161,10 +170,16 @@ class OrdenComprasController extends AppController
 					'fields' => array(
 						'Tienda.nombre'
 					)
+				),
+				'Bodega' => array(
+					'fields' => array(
+						'Bodega.nombre'
+					)
 				)
 			),
 			'conditions' => array(
-				'OrdenCompra.proveedor_id !=' => ''
+				'OrdenCompra.proveedor_id !=' => '',
+				'OrdenCompra.bodega_id' => Hash::extract($this->Auth->user('Bodega'), '{n}.id')
 			),
 			'fields' => array(
 				'OrdenCompra.id',
@@ -175,7 +190,8 @@ class OrdenComprasController extends AppController
 				'OrdenCompra.administrador_id',
 				'OrdenCompra.email_finanza',
 				'OrdenCompra.oc_manual',
-				'OrdenCompra.retiro'
+				'OrdenCompra.retiro',
+				'OrdenCompra.bodega_id'
 			),
 			'order' => array(
 				'OrdenCompra.id' => 'DESC'
@@ -214,7 +230,7 @@ class OrdenComprasController extends AppController
 		$this->paginate = $paginate;
 
 		$ordenCompras	= $this->paginate();
-
+	
 		BreadcrumbComponent::add('Ordenes de compra ');
 
 		$estados = $this->OrdenCompra->estados;
@@ -225,7 +241,14 @@ class OrdenComprasController extends AppController
 			)
 		));
 
-		$this->set(compact('ordenCompras', 'estados', 'proveedores', 'titulo_index'));
+		$bodegas = [];
+
+		foreach ($this->Auth->user('Bodega') as $b)
+		{
+			$bodegas[$b['id']] = $b['nombre'];
+		}
+
+		$this->set(compact('ordenCompras', 'estados', 'proveedores', 'titulo_index', 'bodegas'));
 	}
 
 
@@ -583,7 +606,12 @@ class OrdenComprasController extends AppController
 			)
 		));
 	
-		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('activo' => 1)));
+		$bodegas = [];
+
+		foreach ($this->Auth->user('Bodega') as $b)
+		{
+			$bodegas[$b['id']] = $b['nombre'];
+		}
 		
 		$url_retorno = Router::url( $this->referer(), true );
 
@@ -695,7 +723,12 @@ class OrdenComprasController extends AppController
 			)
 		));
 
-		$bodegas = ClassRegistry::init('Bodega')->find('list',['conditions'=>['activo'=>true]]);
+		$bodegas = [];
+
+		foreach ($this->Auth->user('Bodega') as $b)
+		{
+			$bodegas[$b['id']] = $b['nombre'];
+		}
 		
 		BreadcrumbComponent::add('Ordenes de compra ', array('action' => 'index'));
 		BreadcrumbComponent::add('Ver OC ');
@@ -1099,7 +1132,6 @@ class OrdenComprasController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-			
 			foreach ($this->request->data['OrdenesCompra'] as $ic => $d) {
 				
 				if (!isset($d['VentaDetalleProducto'])) {
@@ -1114,10 +1146,16 @@ class OrdenComprasController extends AppController
 					)
 				);
 
-				$d['OrdenCompra']['bodega_id'] = $this->Session->read('Auth.Administrador.Rol.bodega_id');
+				$ventas = Hash::extract($d['Venta'], '{n}.venta_id');
+
+				# Tomamos la bodega de la primera venta. Al permitir solo OC de ventas de una bodega en especifica, 
+				# todas las ventas de este request pertenecen a la misma bodega
+				$bodega_id = ClassRegistry::init('Venta')->field('bodega_id', array('id' => $ventas[0]));
+
+				$d['OrdenCompra']['bodega_id'] = ($bodega_id) ? $bodega_id : $this->Session->read('Auth.Administrador.Rol.bodega_id');
 
 				$d['Venta'] = unique_multidim_array($d['Venta'], 'venta_id');
-				
+			
 				if ( ! $this->OrdenCompra->saveAll($d, array('deep' => true)) ) {
 					$this->Session->setFlash('Ocurrió un error al guardar la OC. Verifique la información.', null, array(), 'danger');
 					$this->redirect(array('action' => 'validate', 'Venta' => $this->request->query['Venta']));
@@ -1547,9 +1585,12 @@ class OrdenComprasController extends AppController
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
 		BreadcrumbComponent::add('Agregar oc manual');
 		
-		$bodegas = ClassRegistry::init('Bodega')->find('list',[
-			'conditions'=>['Bodega.activo'=>true]
-		]);
+		$bodegas = [];
+
+		foreach ($this->Auth->user('Bodega') as $b)
+		{
+			$bodegas[$b['id']] = $b['nombre'];
+		}
 
 		$this->set(compact('monedas', 'proveedores', 'tipoDescuento','bodegas'));
 	}

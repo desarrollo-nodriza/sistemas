@@ -689,24 +689,6 @@ class VentaDetalleProducto extends AppModel
 
 	}
 
-
-	/**
-	 * Vrifica que el producto que se intenta preparar esté en la bodega principal
-	 * @param  [type] $id [description]
-	 * @return [type]     [description]
-	 */
-	public function permitir_preparacion($id, $cantidad)
-	{	
-
-		$disponible_en_bodega_principal = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, null, true);
-		
-		if ( $disponible_en_bodega_principal >= $cantidad) {
-			return true;
-		}
-
-		return false;
-	}
-
 	
 	/**
 	 * Retorna un arreglo con los ids de productos con stock disponible para vender.

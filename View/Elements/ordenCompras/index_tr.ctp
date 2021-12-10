@@ -2,6 +2,7 @@
     <td><?= h($ordenCompra['OrdenCompra']['id']); ?>&nbsp;</td>
     <td><?= h($ordenCompra['Administrador']['nombre']); ?></td>
     <td><?= (!empty($ordenCompra['Proveedor'])) ? $ordenCompra['Proveedor']['nombre'] : 'Sin especificar' ; ?>&nbsp;</td>
+    <td><?= h($ordenCompra['Bodega']['nombre']); ?>&nbsp;</td>
     <td><?= h($estados[$ordenCompra['OrdenCompra']['estado']]); ?>&nbsp;</td>
     <td><?= ($ordenCompra['OrdenCompra']['oc_manual'] ? '<i class="fa fa-check"></i>' : '<i class="fa fa-remove"></i>'); ?>&nbsp;</td>
     <td><?= h($ordenCompra['OrdenCompra']['created']); ?>&nbsp;</td>

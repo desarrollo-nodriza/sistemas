@@ -192,6 +192,14 @@
 								<?= $this->Form->select('administrador_id', $vendedores, array('class' => 'form-control select', 'data-live-search' => true, 'multiple' => false, 'empty' => 'Seleccionar Vendedor', 'default' => $FiltroAdministrador)); ?>
 							</div>
 						</div>
+							
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
+							<div class="form-group">
+								<br />
+								<label>Bodega</label>
+								<?= $this->Form->select('bodega_id', $bodegas, array('class' => 'form-control select', 'data-live-search' => true, 'multiple' => false, 'empty' => 'Seleccionar Bodega', 'default' => $FiltroBodega)); ?>
+							</div>
+						</div>
 
 					</div>
 
@@ -264,6 +272,7 @@
 									<th><?= $this->Paginator->sort('venta_estado_categoria_id', 'Estado', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('picking_estado', 'Picking', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('marketplace_id', 'Canal de venta', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+									<th><?= $this->Paginator->sort('bodega_id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th style="width: 120px"><?= $this->Paginator->sort('cliente_id', 'Cliente', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<th><?= $this->Paginator->sort('Dte.id', 'Dtes', array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 									<!--<th><?= $this->Paginator->sort('atendida', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>-->
@@ -339,6 +348,9 @@
 											<? else : ?>
 												<?= (!empty($venta['Venta']['marketplace_id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'] ; ?>&nbsp;</td>
 											<? endif; ?>
+										<td>
+											<?=h($venta['Bodega']['nombre']); ?>
+										</td>
 										<td>
 											<?php
 
