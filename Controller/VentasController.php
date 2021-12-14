@@ -9500,6 +9500,7 @@ class VentasController extends AppController {
 
 			$respuesta['itemes'][$i] = array(
 				'id'               			 => $item['id'],
+				'producto_id'                => $item['VentaDetalleProducto']['id'],
 				'nombre'           			 => $item['VentaDetalleProducto']['nombre'],
 				'cantidad'         			 => $total_items,
 				'precio_neto_clp'      		 => CakeNumber::currency($item['precio'], 'CLP'),
@@ -10318,6 +10319,191 @@ class VentasController extends AppController {
 	 * @param  string $id [description]
 	 * @return [type]     [description]
 	 */
+	public function api_cambiar_estado_v2($id = '')
+	{
+
+		if (!$this->request->is('post')) {
+
+		throw new MethodNotAllowedException('Método no permitido');
+		}
+
+
+		if (!isset($this->request->query['token'])) {
+
+		throw new NotFoundException('Token requerido', 403);
+		}
+
+
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+
+		throw new NotFoundException('Token de sesión expirado o invalido', 403);
+		}
+
+
+		if (!$this->Venta->exists($id)) {
+		throw new NotFoundException('Venta no encontrada', 404);
+		}
+
+		$embalaje = $this->request->data['embalaje_producto'];
+
+		$HistorialEmbalaje = ClassRegistry::init('HistorialEmbalaje')->find('all', [
+		'fields' => [
+			'producto_id',
+			'embalaje_id',
+			'cantidad_embalada'
+		],
+		'conditions' => ['venta_id' => $id]
+		]);
+
+		$VentaDetalle = ClassRegistry::init('VentaDetalle')->find('all', [
+		'fields' => [
+			'VentaDetalle.venta_detalle_producto_id',
+			'VentaDetalle.id',
+			'VentaDetalle.cantidad_entregada',
+			'VentaDetalle.cantidad_pendiente_entrega',
+
+		],
+		'conditions' => ['venta_id' => $id]
+		]);
+
+		$actualizar = [];
+		$log = [];
+
+		foreach ($embalaje as $value) {
+
+		$existe                = Hash::extract($HistorialEmbalaje, "{n}.HistorialEmbalaje[embalaje_id={$value['embalaje_id']}][producto_id={$value['producto_id']}]");
+
+		// TODO Se valida si el embalaje ya se registro en el historial
+		if ($existe) {
+			$log[] = array(
+			'Log' => array(
+				'administrador' => 'App Nodriza metodo api_cambiar_estado_v2',
+				'modulo'        => 'Ventas',
+				'modulo_accion' => json_encode(["Se intento registrar nuevamente el embalaje {$value['embalaje_id']} a la venta {$id}" => ['Detalle de la Venta' => $VentaDetalle, 'HistorialEmbalaje desde sistema' => $HistorialEmbalaje, 'Embalaje desde la app' => $embalaje]])
+			)
+			);
+			continue;
+		}
+
+		$cantidad_entregada_sistema         = Hash::extract($VentaDetalle, "{n}.VentaDetalle[id={$value['detalle_id']}].cantidad_entregada");
+		$cantidad_pendiente_entrega_sistema = Hash::extract($VentaDetalle, "{n}.VentaDetalle[id={$value['detalle_id']}].cantidad_pendiente_entrega");
+		$cantidad_a_entregar_sistema        = $cantidad_entregada_sistema[0] +  $cantidad_pendiente_entrega_sistema[0];
+		$cantidad_embalada_warehouse        = Hash::extract($HistorialEmbalaje, "{n}.HistorialEmbalaje[producto_id={$value['producto_id']}].cantidad_embalada");
+
+		$cantidad_embalada_warehouse        = $cantidad_embalada_warehouse ? array_sum($cantidad_embalada_warehouse) : 0;
+
+		// ** Se valida que la cantidad entregada sea la correcta y no se entregue de más
+		if ($cantidad_embalada_warehouse >= $cantidad_a_entregar_sistema) {
+
+			continue;
+		}
+
+		$actualizar[] =
+			[
+			'HistorialEmbalaje' =>
+			[
+				'detalle_id'        => $value['detalle_id'],
+				'embalaje_id'       => $value['embalaje_id'],
+				'producto_id'       => $value['producto_id'],
+				'cantidad_embalada' => $value['cantidad_embalada'],
+				'venta_id'          => $id,
+			]
+			];
+		}
+
+		if (!$actualizar) {
+
+			$log[] = array(
+				'Log' => array(
+				'administrador' => 'App Nodriza metodo api_cambiar_estado_v2',
+				'modulo'        => 'Ventas',
+				'modulo_accion' => json_encode(["Problemas para registrar embalaje {$embalaje[0]['embalaje_id']} ." => ['Detalle de la Venta' => $VentaDetalle, 'HistorialEmbalaje desde sistema' => $HistorialEmbalaje, 'Embalaje desde la app' => $embalaje]])
+				)
+			);
+
+			if ($log) {
+
+				ClassRegistry::init('Log')->create();
+				ClassRegistry::init('Log')->saveAll($log);
+			}
+
+			throw new BadRequestException("Se han enviado embalajes que ya fueron registrados en la venta");
+		}
+
+
+		ClassRegistry::init('HistorialEmbalaje')->create();
+		ClassRegistry::init('HistorialEmbalaje')->saveAll($actualizar);
+
+		$response = array(
+			'name'    => 'Solicitud procesada con exito',
+			'message' => "Se registro embalaje {$embalaje[0]['embalaje_id']} a la VID-{$id}."
+		);
+
+		// TODO Se consulta para saber si la venta ya entrego todos sus productos 
+		$HistorialEmbalaje = ClassRegistry::init('HistorialEmbalaje')->find('all', [
+		'fields' =>
+		[
+			'cantidad_embalada',
+			'producto_id'
+		],
+		'conditions' =>
+		[
+			'venta_id' => $id,
+		]
+		]);
+
+		$venta_parcial = false;
+
+		// TODO Si existe una diferencia entre los embalajes entregados y el detalle de la venta el estado sera Entregado Parcial
+		foreach ($VentaDetalle as $producto) {
+
+		$total                       = $producto['VentaDetalle']['cantidad_pendiente_entrega'] + $producto['VentaDetalle']['cantidad_entregada'];
+		$cantidad_embalada_warehouse = Hash::extract($HistorialEmbalaje, "{n}.HistorialEmbalaje[producto_id={$producto['VentaDetalle']['venta_detalle_producto_id']}].cantidad_embalada");
+		$cantidad_embalada_warehouse = $cantidad_embalada_warehouse ? array_sum($cantidad_embalada_warehouse) : 0;
+
+		if ($total != $cantidad_embalada_warehouse) {
+			$venta_parcial = true;
+		}
+		}
+
+		$estado = ClassRegistry::init('VentaEstado')->find(
+		'first',
+		array(
+			'conditions' => array(
+			'VentaEstado.nombre' => trim($venta_parcial ? "Entregado Parcial" : "Entregado")
+			)
+		)
+		);
+
+		$venta = $this->Venta->find(
+		'first',
+		[
+			'fields'     => [
+			'Venta.id_externo',
+			'Venta.tienda_id'
+			],
+			'conditions' => ['id' => $id]
+		]
+		);
+		try {
+
+		$this->cambiarEstado($id, $venta['Venta']['id_externo'], $estado['VentaEstado']['id'], $venta['Venta']['tienda_id']);
+		} catch (\Throwable $th) {
+		}
+
+		if ($log) {
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveAll($log);
+		}
+
+
+		$this->set(array(
+		'response'   => $response,
+		'_serialize' => array('response')
+		));
+	}
+
 	public function api_cambiar_estado($id = '')
 	{	
 		# Solo método POST
