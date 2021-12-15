@@ -153,7 +153,7 @@ class Socket
             $response_line = $response_line[count($response_line)-1];
         }
 
-        $response_line = $response_line . 'err';
+        $response_line = $response_line . ' err';
 
         list($protocol, $status, $message) = explode(' ', $response_line, 3);
         return [
