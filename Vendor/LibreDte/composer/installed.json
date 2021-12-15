@@ -1,0 +1,47 @@
+[
+    {
+        "name": "sasco/libredte-sdk-php",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/LibreDTE/libredte-sdk-php.git",
+            "reference": "cd2495f1106858f8fa19d90e41b16e367e5d95eb"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/LibreDTE/libredte-sdk-php/zipball/cd2495f1106858f8fa19d90e41b16e367e5d95eb",
+            "reference": "cd2495f1106858f8fa19d90e41b16e367e5d95eb",
+            "shasum": ""
+        },
+        "require": {
+            "ext-curl": "*",
+            "php": ">=5.5"
+        },
+        "time": "2017-08-30T03:32:52+00:00",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "psr-4": {
+                "sasco\\LibreDTE\\SDK\\": "sdk/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "LGPL-3.0+"
+        ],
+        "authors": [
+            {
+                "name": "SASCO SpA",
+                "homepage": "https://sasco.cl"
+            }
+        ],
+        "description": "SDK para realizar la integración con los servicios web de LibreDTE",
+        "homepage": "https://libredte.cl",
+        "keywords": [
+            "dte",
+            "facturación electrónica",
+            "sii"
+        ]
+    }
+]
