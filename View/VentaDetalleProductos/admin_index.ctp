@@ -193,7 +193,7 @@
 									<td><?= CakeNumber::currency(h($ventadetalleproducto['VentaDetalleProducto']['costo']), 'CLP'); ?>&nbsp;</td>
 									<td>
 										<? foreach ( $ventadetalleproducto['Bodega'] as $b ): ?>
-											<label class="label btn-block label-<?=($b['stock'] == 0) ? 'danger' : 'success' ;?>"><?= h($b['nombre']); ?>: <?= h($b['stock']); ?> uni.</label>
+											<label class="label btn-block label-<?=($b['stock'] == 0) ? 'danger' : 'success' ;?>"><?= h($b['nombre']); ?>: <?= h($b['stock']); ?> uni.</label><br>
 										<? endforeach; ?>
 									</td>
 									<td><?= h($ventadetalleproducto['VentaDetalleProducto']['cantidad_virtual']); ?>&nbsp;</td>
