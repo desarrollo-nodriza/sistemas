@@ -1128,7 +1128,7 @@ class ZonificacionesController extends AppController
 		
 		foreach ($this->Auth->user('Bodega') as $bodega)
 		{
-			$id_stock_disponible = array_replace_recursive($id_stock_disponible, ClassRegistry::init('VentaDetalleProducto')->obtener_productos_con_stock_disponible($bodega['id']));
+			$id_stock_disponible[$bodega['id']] = ClassRegistry::init('VentaDetalleProducto')->obtener_productos_con_stock_disponible($bodega['id']);
 		}
 
 		$opciones = array_replace_recursive($opciones, array(
@@ -1187,7 +1187,7 @@ class ZonificacionesController extends AppController
 						{
 							$opciones = array_replace_recursive($opciones, array(
 								'conditions' => array(
-									'VentaDetalleProducto.id' => Hash::extract($id_stock_disponible, '{n}.id')
+									'VentaDetalleProducto.id' => Hash::extract($id_stock_disponible, '{n}.{n}.id')
 								)
 							));
 						}

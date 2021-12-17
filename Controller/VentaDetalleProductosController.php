@@ -62,7 +62,7 @@ class VentaDetalleProductosController extends AppController
 		
 		foreach ($bodegas as $bid => $bodega)
 		{
-			$id_stock_disponible = array_replace_recursive($id_stock_disponible, $this->VentaDetalleProducto->obtener_productos_con_stock_disponible($bid));
+			$id_stock_disponible[$bid] = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible($bid);
 		}
 
 		$paginate = array_replace_recursive($paginate, array(
@@ -124,7 +124,7 @@ class VentaDetalleProductosController extends AppController
 						{
 							$paginate = array_replace_recursive($paginate, array(
 								'conditions' => array(
-									'VentaDetalleProducto.id' => Hash::extract($id_stock_disponible, '{n}.id')
+									'VentaDetalleProducto.id' => Hash::extract($id_stock_disponible, '{n}.{n}.id')
 								)
 							));
 						}
@@ -137,14 +137,13 @@ class VentaDetalleProductosController extends AppController
 		$this->paginate		= $paginate;
 		
 		$ventadetalleproductos	= $this->paginate();
-
+		
 		foreach ($ventadetalleproductos as $iv => $producto) 
 		{	
 			foreach ($bodegas as $id_b => $bb)
 			{
-				$stock_fisico = Hash::extract($id_stock_disponible, '{n}[id='.$producto['VentaDetalleProducto']['id'].']');
-				$stock_fisico = Hash::extract($stock_fisico, '{n}[bodega_id='.$id_b.']');
-				
+				$stock_fisico = Hash::extract($id_stock_disponible, "{$id_b}.{n}[id={$producto['VentaDetalleProducto']['id']}]");
+
 				$ventadetalleproductos[$iv]['Bodega'][] = array(
 					'id' => $id_b,
 					'nombre' => $bb,
@@ -1718,7 +1717,7 @@ class VentaDetalleProductosController extends AppController
 		
 		foreach ($this->Auth->user('Bodega') as $bodega)
 		{
-			$id_stock_disponible = array_replace_recursive($id_stock_disponible, $this->VentaDetalleProducto->obtener_productos_con_stock_disponible($bodega['id']));
+			$id_stock_disponible[$bodega['id']] = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible($bodega['id']);
 		}
 		
 		$qry = array(
@@ -1801,7 +1800,7 @@ class VentaDetalleProductosController extends AppController
 						{
 							$qry = array_replace_recursive($qry, array(
 								'conditions' => array(
-									'VentaDetalleProducto.id' => Hash::extract($id_stock_disponible, '{n}.id')
+									'VentaDetalleProducto.id' => Hash::extract($id_stock_disponible, '{n}.{n}.id')
 								)
 							));
 						}
@@ -1825,10 +1824,9 @@ class VentaDetalleProductosController extends AppController
 				$stock_total = 0;
 				$stock_reservado_total = 0;
 
-				foreach ($this->Auth->user('Bodega') as $b) 
+				foreach ($bodegas as $b) 
 				{	
-					$stock = Hash::extract($id_stock_disponible, '{n}[id='.$p['VentaDetalleProducto']['id'].']');
-					$stock = Hash::extract($stock, '{n}[bodega_id='.$b['id'].']');
+					$stock = Hash::extract($id_stock_disponible, "{$b['id']}.{n}[id={$p['VentaDetalleProducto']['id']}]");
 					$stock_fisico = ($stock) ? $stock[0]['stock_fisico'] : 0;
 					$stock_reservado = ($stock) ? $stock[0]['stock_reservado'] : 0;
 
