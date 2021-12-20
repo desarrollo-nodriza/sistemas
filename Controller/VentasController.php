@@ -7034,7 +7034,7 @@ class VentasController extends AppController {
 		}	
 
 		# Prestashop
-		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'])) {
+		if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo'] && !$venta['Venta']['venta_manual'] )) {
 			
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
