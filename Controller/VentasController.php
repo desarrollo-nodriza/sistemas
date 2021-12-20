@@ -3653,7 +3653,20 @@ class VentasController extends AppController {
 		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
-		
+
+		$embaljes_ids = Hash::extract($venta, "HistorialEmbalaje.{n}");
+		$response = $this->WarehouseNodriza->ObtenerEvidencia(["embalajes_id"=>$embaljes_ids]);
+		$HistorialEmbalaje=[];
+		foreach ($venta['HistorialEmbalaje'] as $key => $value) {
+
+			$existe = Hash::extract($response['response']['body'], "{n}[embalaje_id={$value['embalaje_id']}]");
+			
+			if (!empty($existe)) {
+				$HistorialEmbalaje[$value['detalle_id']]= array_replace_recursive($venta['HistorialEmbalaje'][ $key], $existe[0]);
+			}
+			
+		}
+		$venta['HistorialEmbalaje'] =$HistorialEmbalaje;
 		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios'));
 
 	}
@@ -10344,7 +10357,26 @@ class VentasController extends AppController {
 		throw new NotFoundException('Venta no encontrada', 404);
 		}
 
-		$embalaje = $this->request->data['embalaje_producto'];
+		$embalaje 	 = $this->request->data['embalaje_producto']?? null;
+		$responsable = $this->request->data['responsable']??null;
+
+	
+
+		if (empty($embalaje)) {
+			throw new NotFoundException('Se requiere productos', 403);
+		}
+
+		if (!isset($responsable)) {
+			throw new NotFoundException('Se requiere un responsable', 403);
+		}
+	
+
+		foreach ($embalaje as $productos) {
+
+			if (empty(Hash::extract($productos, "embalaje_id")) ||	empty(Hash::extract($productos, "producto_id")) ||	empty(Hash::extract($productos, "cantidad_embalada")) || empty(Hash::extract($productos, "detalle_id"))) {
+				throw new NotFoundException("Asegurece de haber enviado todos los a parametros: embalaje_id, producto_id, cantidad_embalada, detalle_id", 403);
+			}
+		}
 
 		$HistorialEmbalaje = ClassRegistry::init('HistorialEmbalaje')->find('all', [
 		'fields' => [
@@ -10363,7 +10395,7 @@ class VentasController extends AppController {
 			'VentaDetalle.cantidad_pendiente_entrega',
 
 		],
-		'conditions' => ['venta_id' => $id]
+			'conditions' => ['venta_id' => $id]
 		]);
 
 		$actualizar = [];
@@ -10485,9 +10517,9 @@ class VentasController extends AppController {
 			'conditions' => ['id' => $id]
 		]
 		);
+		
 		try {
-
-		$this->cambiarEstado($id, $venta['Venta']['id_externo'], $estado['VentaEstado']['id'], $venta['Venta']['tienda_id']);
+			$this->cambiarEstado($id, $venta['Venta']['id_externo'], $estado['VentaEstado']['id'], $venta['Venta']['tienda_id'],null,'','',$responsable);
 		} catch (\Throwable $th) {
 		}
 
