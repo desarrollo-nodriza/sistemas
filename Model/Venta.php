@@ -449,6 +449,7 @@ class Venta extends AppModel
 					
 					'HistorialEmbalaje',
 					'VentaDetalle' => array(
+						'HistorialEmbalaje',
 						'EmbalajeProductoWarehouse' => array(
 							'EmbalajeWarehouse'
 						),
@@ -593,6 +594,7 @@ class Venta extends AppModel
 						)
 					),
 					'EmbalajeWarehouse' => array(
+						'HistorialEmbalaje',
 						'Bodega' => array(
 							'fields' => array(
 								'Bodega.id',

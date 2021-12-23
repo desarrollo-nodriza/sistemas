@@ -23,15 +23,6 @@ class VentaDetalle extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'VentaDetalleProducto')
-		),
-		'HistorialEmbalaje' => array(
-			'className'				=> 'HistorialEmbalaje',
-			'foreignKey'			=> 'detalle_id',
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'VentaDetalleProducto')
 		)
 	);
 
@@ -47,7 +38,15 @@ class VentaDetalle extends AppModel
 			'offset'				=> '',
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
-			'counterQuery'			=> ''
+			'counterQuery'			=> '',
+		),
+		'HistorialEmbalaje' => array(
+			'className'				=> 'HistorialEmbalaje',
+			'foreignKey'			=> 'detalle_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
 		)
 	);
 
