@@ -87,6 +87,15 @@ Class EmbalajeWarehouse extends AppModel {
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
 		)
+		,
+		'HistorialEmbalaje' => array(
+			'className'				=> 'HistorialEmbalaje',
+			'foreignKey'			=> 'embalaje_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		)
 	);
 
 

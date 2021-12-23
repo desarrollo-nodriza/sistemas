@@ -180,6 +180,16 @@ Router::connect(
     )
 );
 
+Router::connect(
+    '/api/administradores/v2/google_auth', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Administradores', 
+        'action' => 'v2_google_auth',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
+
 
 Router::connect(
     '/api/administradores/userinfo', // E.g. /blog/3-CakePHP_Rocks
@@ -890,3 +900,13 @@ Router::connect(
         'api'           => true,
         'prefix'        => 'api')
 );
+
+Router::connect(
+    '/api/pruebas', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'Pruebas', 
+        'action'        => 'pruebas',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+

@@ -10,7 +10,9 @@ class WarehouseNodrizaComponent extends Component
 
     public function crearCliente()
     {
-        $BX_TOKEN = ClassRegistry::init('Token')->crear_token(CakeSession::read('Auth.Administrador.id') ?? 1);
+
+        $BX_TOKEN = !empty(CakeSession::read('Auth.Administrador.token.token')) ? ['token' => CakeSession::read('Auth.Administrador.token.token')]  : ClassRegistry::init('Token')->crear_token(CakeSession::read('Auth.Administrador.id') ?? 1);
+        
         // $this->WarehouseNodriza = new WarehouseNodriza($BX_TOKEN['token'] ?? '', Configure::read('ambiente'));
         $this->WarehouseNodriza = new WarehouseNodriza($BX_TOKEN['token'] ?? '', 'local');
     }

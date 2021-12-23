@@ -371,10 +371,10 @@
 															<? endforeach; ?>
 														</td>
 														<td>
-															<? if ($venta['HistorialEmbalaje'][$detalle['id']]??false) : ?>
-																<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-evidencia-embalaje-<?=$detalle['id'];?>"><i class="fa fa-eye"></i> Ver evidencia</button>
-															<? else : ?>	
+															<? if (empty($detalle['HistorialEmbalaje'][0]['evidencia']) && empty($detalle['HistorialEmbalaje'][0]['fecha_despachado']) && empty($detalle['HistorialEmbalaje'][0]['responsable_id_despachado'])) : ?>
 																-
+															<? else : ?>	
+																	<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-evidencia-venta-detalle-<?=$detalle['id'];?>"><i class="fa fa-eye"></i> Ver evidencia</button>
 															<? endif; ?>
 														</td>
 														<td>
@@ -1274,8 +1274,8 @@
 										<td><?= $em['fecha_procesando']; ?></td>
 										<td><?= $em['fecha_finalizado']; ?></td>
 										<td>
-											<? if ($venta['HistorialEmbalaje'][$em['EmbalajeProductoWarehouse'][0]['detalle_id']]??false) : ?>
-												<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-evidencia-embalaje-<?=$detalle['id'];?>"><i class="fa fa-eye"></i> Ver evidencia</button>
+											<? if (!empty($em['evidencia']) && !empty($em['fecha_despachado']) && !empty($em['responsable_id_despachado'])) : ?>
+												<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-evidencia-embalaje-<?=$em['id'];?>"><i class="fa fa-eye"></i> Ver evidencia</button>
 											<? else : ?>	
 												-
 											<? endif; ?>
@@ -1505,50 +1505,104 @@
 <? endif; ?>
 
 <!-- Modal -->
-<?php foreach ($venta['VentaDetalle'] as $indice => $detalle) :?>
-	<div class="modal fade" id="modal-evidencia-embalaje-<?=$detalle['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-evidencia-embalaje-<?=$detalle['id'];?>-label">
-		<div class="modal-dialog" role="document">
-			<div class="modal-content">
-
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-					<h4 class="modal-title">Embalaje #<?=$venta['HistorialEmbalaje'][$detalle['id']]['embalaje_id']?></h4>
-				</div>
-			
-				<div class="modal-body">
-					<div>
-						<table class="table table-bordered ">
-							<thead>
-								<th>Fecha Entregado</th>
-								<th>Responsable</th>
-								
-							</thead>
-							<tbody>
-								<tr>
-									<td>
-										<?= $venta['HistorialEmbalaje'][$detalle['id']]['fecha_despachado'] ?>
-									</td>
-									<td>
-										<?= $venta['HistorialEmbalaje'][$detalle['id']]['responsable'] ?>
-									</td>
-								</tr>
-								<thead>
-									<th colspan="2">Evidencia</th>
-								</thead>
-								<tr>
-									<td colspan="2">
-										<img class="center-block img-responsive" src="<?= $venta['HistorialEmbalaje'][$detalle['id']]['evidencia'] ?>" width="250 px" alt="">
-									</td>
-								</tr>
-							</tbody>																					
-						</table>
+<?php foreach ($venta['EmbalajeWarehouse'] as $EmbalajeWarehouse) :?>
+	<? if (count($EmbalajeWarehouse['HistorialEmbalaje'])>0) : ?>
+		<div class="modal fade" id="modal-evidencia-embalaje-<?=$EmbalajeWarehouse['HistorialEmbalaje'][0]['embalaje_id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-evidencia-embalaje-<?=$EmbalajeWarehouse['HistorialEmbalaje'][0]['embalaje_id'];?>-label">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+				<?php foreach ($EmbalajeWarehouse['HistorialEmbalaje'] as $historial_embalaje) :?>
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Embalaje #<?=$historial_embalaje['embalaje_id']?></h4>
 					</div>
+				
+					<div class="modal-body">
+						<div>
+							<table class="table table-bordered ">
+								<thead>
+									<th>Fecha Entregado</th>
+									<th>Responsable</th>
+									
+								</thead>
+								<tbody>
+									<tr>
+										<td>
+											<?= $historial_embalaje['fecha_despachado'] ?>
+										</td>
+										<td>
+											<?= $historial_embalaje['responsable'] ?>
+										</td>
+									</tr>
+									<thead>
+										<th colspan="2">Evidencia</th>
+									</thead>
+									<tr>
+										<td colspan="2">
+											<img class="center-block img-responsive" src="<?= $historial_embalaje['evidencia'] ?>" width="250 px" alt="">
+										</td>
+									</tr>
+								</tbody>																					
+							</table>
+						</div>
+					</div>
+				<? endforeach; ?>
 				</div>
 			</div>
 		</div>
-	</div>
+	<? endif; ?>
 <? endforeach; ?>
+<!-- Fin modal Evidencia por embalaje -->
 
+
+<!-- Modal -->
+<?php foreach ($venta['VentaDetalle'] as  $detalle) :?>
+	<? if (count($detalle['HistorialEmbalaje'])>0) : ?>
+		<div class="modal fade" id="modal-evidencia-venta-detalle-<?=$detalle['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-evidencia-venta-detalle-<?=$detalle['id'];?>-label">
+			<div class="modal-dialog" role="document">
+			<?php foreach ($detalle['HistorialEmbalaje'] as $HistorialEmbalaje) :?>
+				<div class="modal-content">
+
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Embalaje #<?=$HistorialEmbalaje['embalaje_id']?></h4>
+					</div>
+				
+					<div class="modal-body">
+						<div>
+							<table class="table table-bordered ">
+								<thead>
+									<th>Fecha Entregado</th>
+									<th>Responsable</th>
+									
+								</thead>
+								<tbody>
+									<tr>
+										<td>
+											<?=$HistorialEmbalaje['fecha_despachado']?>
+										</td>
+										<td>
+											<?=$HistorialEmbalaje['responsable'] ?>
+										</td>
+									</tr>
+									<thead>
+										<th colspan="2">Evidencia</th>
+									</thead>
+									<tr>
+										<td colspan="2">
+											<img class="center-block img-responsive" src="<?=$HistorialEmbalaje['evidencia']?>" width="250 px" alt="">
+										</td>
+									</tr>
+								</tbody>																					
+							</table>
+						</div>
+					</div>
+				</div>
+			<? endforeach; ?>
+			</div>
+		</div>
+	<? endif; ?>
+<? endforeach; ?>
+<!-- Fin modal Evidencia por ventaDetalle -->
 
 <?= $this->Html->script(array(
 	'/backend/js/venta.js?v=' . rand()

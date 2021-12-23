@@ -3655,18 +3655,29 @@ class VentasController extends AppController {
 		BreadcrumbComponent::add('Detalles de Venta');
 
 		$embaljes_ids = Hash::extract($venta, "HistorialEmbalaje.{n}");
-		$response = $this->WarehouseNodriza->ObtenerEvidencia(["embalajes_id"=>$embaljes_ids]);
-		$HistorialEmbalaje=[];
-		foreach ($venta['HistorialEmbalaje'] as $key => $value) {
-
-			$existe = Hash::extract($response['response']['body'], "{n}[embalaje_id={$value['embalaje_id']}]");
+		$response = $this->WarehouseNodriza->ObtenerEvidencia(["embalajes_id"=>$embaljes_ids]);		
+	
+		foreach ($venta['VentaDetalle'] as $key => $value ) {
 			
-			if (!empty($existe)) {
-				$HistorialEmbalaje[$value['detalle_id']]= array_replace_recursive($venta['HistorialEmbalaje'][ $key], $existe[0]);
+		
+			foreach ($value['HistorialEmbalaje'] as $key2 => $value2) {
+				$existe = Hash::extract($response['response']['body'], "{n}[embalaje_id={$value2['embalaje_id']}]");
+				if (!empty($existe)) {
+					$venta['VentaDetalle'][$key]['HistorialEmbalaje'][$key2] = array_replace_recursive($venta['VentaDetalle'][$key]['HistorialEmbalaje'][$key2], $existe[0]);
+				}
 			}
-			
 		}
-		$venta['HistorialEmbalaje'] =$HistorialEmbalaje;
+
+		foreach ($venta['EmbalajeWarehouse'] as $key => $value ) {
+		
+			foreach ($value['HistorialEmbalaje'] as $key2 => $value2) {
+				$existe = Hash::extract($response['response']['body'], "{n}[embalaje_id={$value2['embalaje_id']}]");
+
+				if (!empty($existe)) {
+					$venta['EmbalajeWarehouse'][$key]['HistorialEmbalaje'][$key2] = array_replace_recursive($venta['EmbalajeWarehouse'][$key]['HistorialEmbalaje'][$key2], $existe[0]);
+				}
+			}
+		}
 		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios'));
 
 	}
