@@ -371,7 +371,7 @@
 															<? endforeach; ?>
 														</td>
 														<td>
-															<? if (empty($detalle['HistorialEmbalaje'][0]['evidencia']) && empty($detalle['HistorialEmbalaje'][0]['fecha_despachado']) && empty($detalle['HistorialEmbalaje'][0]['responsable_id_despachado'])) : ?>
+															<? if (empty($detalle['HistorialEmbalaje'][0]['evidencia']) && empty($detalle['HistorialEmbalaje'][0]['fecha_entregado']) && empty($detalle['HistorialEmbalaje'][0]['responsable_id_entregado'])) : ?>
 																-
 															<? else : ?>	
 																	<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-evidencia-venta-detalle-<?=$detalle['id'];?>"><i class="fa fa-eye"></i> Ver evidencia</button>
@@ -1274,7 +1274,7 @@
 										<td><?= $em['fecha_procesando']; ?></td>
 										<td><?= $em['fecha_finalizado']; ?></td>
 										<td>
-											<? if (!empty($em['evidencia']) && !empty($em['fecha_despachado']) && !empty($em['responsable_id_despachado'])) : ?>
+											<? if (!empty($em['evidencia']) && !empty($em['fecha_entregado']) && !empty($em['responsable_id_entregado'])) : ?>
 												<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-evidencia-embalaje-<?=$em['id'];?>"><i class="fa fa-eye"></i> Ver evidencia</button>
 											<? else : ?>	
 												-
@@ -1527,7 +1527,7 @@
 								<tbody>
 									<tr>
 										<td>
-											<?= $historial_embalaje['fecha_despachado'] ?>
+											<?= $historial_embalaje['fecha_entregado'] ?>
 										</td>
 										<td>
 											<?= $historial_embalaje['responsable'] ?>
@@ -1578,7 +1578,7 @@
 								<tbody>
 									<tr>
 										<td>
-											<?=$HistorialEmbalaje['fecha_despachado']?>
+											<?=$HistorialEmbalaje['fecha_entregado']?>
 										</td>
 										<td>
 											<?=$HistorialEmbalaje['responsable'] ?>
