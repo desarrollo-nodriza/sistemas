@@ -504,7 +504,6 @@ class PrestashopComponent extends Component
 		return $estado['order_state'];
 	}
 
-
 	public function prestashop_cambiar_estado_venta($id, $estado_id, $apiurl = '')
 	{	
 		# Cambiamos directamente el estado actual del pedido y hace el envio correspondiente de emails. ¡Wena CTM!
@@ -583,6 +582,62 @@ class PrestashopComponent extends Component
 		}
 
 		return true;
+	}
+	// TODO Se cambia metodo de envio de una venta en prestashop
+	public function prestashop_cambiar_transportista_actual_venta($id, $transportista_id, $forzar = true)
+	{
+		
+		try {
+
+			$opt             = array();
+			$opt['resource'] = 'orders';
+			$opt['id']  	 = $id;
+
+			$xml       			   = $this->ConexionPrestashop->get($opt);
+			$resources 			   = $xml->children()->children();
+			$resources->id_carrier = $transportista_id;
+
+			$opt           = array('resource' => 'orders');
+			$opt['putXml'] = $xml->asXML();
+			$opt['id'] 	   = $id; 
+		
+			$xml           = $this->ConexionPrestashop->edit($opt);
+			
+		} catch (PrestaShopWebserviceException $ex) {
+			
+			if ($forzar) { // Algo pasa en prestashop que retorna un error 500 pero de todas maneras actualiza el estado.
+				return true;
+			}
+
+			return false;
+		}
+
+		return true;
+	}
+
+	// TODO Se consulta metodo de envio por nombre en prestashop para obtener su id
+	public function prestashop_obtener_trasnportista_por_nombre($nombre)
+	{	
+		try {
+			$opt                 = array();
+			$opt['resource']     = 'carriers';
+			$opt['display']      = '[id,name]';
+			$opt['limit']        = 1;
+			$opt['filter[name]'] = '[' .$nombre. ']';
+
+			$xml 				 = $this->ConexionPrestashop->get($opt);
+			$PrestashopResources = $xml->children()->children();
+			$nombre 			 = to_array($PrestashopResources);	
+			
+		} catch (PrestaShopWebserviceException $ex) {
+			
+		}
+		
+		if (!isset($nombre['carrier'])) {
+			return array(); 
+		}
+
+		return $nombre['carrier'];
 	}
 
 
