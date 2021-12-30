@@ -87,15 +87,6 @@ Class EmbalajeWarehouse extends AppModel {
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
 		)
-		,
-		'HistorialEmbalaje' => array(
-			'className'				=> 'HistorialEmbalaje',
-			'foreignKey'			=> 'embalaje_id',
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'counterCache'			=> true,
-		)
 	);
 
 
@@ -290,7 +281,7 @@ Class EmbalajeWarehouse extends AppModel {
 						# Cancelamos todos loe embalajes relacionados al detalle
 						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
 						{	
-							if (in_array($emp['EmbalajeWarehouse']['estado'], array('cancelado', 'finalizado','entregado')) )
+							if (in_array($emp['EmbalajeWarehouse']['estado'], array('cancelado', 'finalizado')) )
 							{
 								continue;
 							}
@@ -341,11 +332,11 @@ Class EmbalajeWarehouse extends AppModel {
 						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
 						{	
 
-
-							if (in_array($emp['EmbalajeWarehouse']['estado'], array('cancelado', 'finalizado','entregado')) )
+							if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado' || $emp['EmbalajeWarehouse']['estado'] == 'finalizado')
 							{
 								continue;
-							}							
+							}
+							
 
 							$cantidad_a_embalar = $cantidad_a_embalar - $emp['cantidad_a_embalar'];
 						}

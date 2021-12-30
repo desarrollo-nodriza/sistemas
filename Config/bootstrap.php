@@ -157,14 +157,14 @@ Configure::write('CakePdf', array(
 
 // URL Base para consola
 if ( Configure::read('ambiente') == 'dev' ) {
-	@define('FULL_BASE_URL', 'http://sistemasdev-855622.herokuapp.com/');
+	@define('FULL_BASE_URL', 'https://sistemasdev.nodriza.cl/');
 }else{
-	@define('FULL_BASE_URL', 'http://sistemasdev-855622.herokuapp.com/');
+	@define('FULL_BASE_URL', 'https://sistema.nodriza.cl/');
 }
 
 // URL DEV Base para consola
 if ( !defined('FULL_BASE_URL_DEV') ) {
-	define('FULL_BASE_URL_DEV', 'http://sistemasdev-855622.herokuapp.com/');
+	define('FULL_BASE_URL_DEV', 'https://sistemasdev.nodriza.cl/');
 }
 
 /**

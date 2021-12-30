@@ -3,8 +3,6 @@ class WarehouseNodriza
 {
 
     protected static $API_ROOT_URL;
-
-    // ** La URL local apunta a heroku que es donde se suben los cambios para no cambiar de rama en desarrollo
     private $URLs =  [
         'local' => 'https://warehouse-api-nodriza.herokuapp.com',
         'dev'   => 'https://dev-warehouse.nodriza.cl',
@@ -21,20 +19,18 @@ class WarehouseNodriza
      * @param  mixed $BX_CLIENT_ACCOUNT
      * @return void
      */
-    // TODO Se inializan las variables  
     public function __construct($BX_TOKEN, $API_ROOT_URL = 'local')
     {
         self::$API_ROOT_URL = $this->URLs[$API_ROOT_URL] ?? 'https://dev-warehouse.nodriza.cl';
-        self::$BX_TOKEN     = $BX_TOKEN ?? '';
+        self::$BX_TOKEN = $BX_TOKEN ?? '';
     }
 
-    // TODO Solo cambia estado del embalaje
     public function CambiarCancelado($embalajes)
     {
         return $this->cURL_POST('/api/v1/embalaje/cambiar-estado-a-cancelado', $embalajes);
     }
 
-    // TODO Metodo que ademas de cambiar estado cancela embalajes que no hayan sido cancelados ni finzalizados, y zonifica productos que se hayan estado embalando
+
     public function CambiarCancelado_V2($venta_id, $responsable_id_cancelado, $devolucion, $motivo_cancelado = null)
     {
         return $this->cURL_POST(
@@ -47,7 +43,6 @@ class WarehouseNodriza
             ]
         );
     }
-    // TODO Cuando se anulan Items de una venta se vuelve a recrear embalaje
     public function RecrearEmbalajesPorItemAnulados($venta)
     {
         return $this->cURL_POST(
@@ -56,7 +51,6 @@ class WarehouseNodriza
         );
     }
 
-    // TODO Añade OT al embalaje
     public function OrdenTransporteEmbalajes($orden_transporte)
     {
         // $ejemplo = [
@@ -76,7 +70,6 @@ class WarehouseNodriza
         );
     }
 
-    // TODO Crea un embalaje
     public function CrearPedido($embalaje)
     {
         // [
@@ -107,26 +100,6 @@ class WarehouseNodriza
         );
     }
 
-    // TODO Obtenemos evidencia de los embalajes despachados
-    public function ObtenerEvidencia($embalaje)
-    {
-        // [
-        //     "embalajes_id" => [
-        //         [
-        //             "embalaje_id" => 6701
-        //         ],
-        //         [
-        //             "embalaje_id" => 6711
-        //         ],
-        //     ]
-        // ]
-        return $this->cURL_POST(
-            '/api/v1/embalaje/obtener-evidencia',
-            $embalaje
-        );
-    }
-
-    // TODO Abstraccion para hacer peticiones a endpoints por metodo POST
     private function cURL_POST($URL, $POSTFIELDS)
     {
         $curl = curl_init();
@@ -162,7 +135,6 @@ class WarehouseNodriza
         ];
     }
 
-    // TODO Abstraccion para hacer peticiones a endpoints por metodo GET
     private function cURL_GET($URL)
     {
 

@@ -159,15 +159,6 @@ Router::connect(
         'prefix' => 'api'
     )
 );
-Router::connect(
-    '/api/administradores/v2/auth', // E.g. /blog/3-CakePHP_Rocks
-    array(
-        'controller' => 'Administradores', 
-        'action' => 'v2_login',
-        'api' => true,
-        'prefix' => 'api'
-    )
-);
 
 
 Router::connect(
@@ -175,16 +166,6 @@ Router::connect(
     array(
         'controller' => 'Administradores', 
         'action' => 'google_auth',
-        'api' => true,
-        'prefix' => 'api'
-    )
-);
-
-Router::connect(
-    '/api/administradores/v2/google_auth', // E.g. /blog/3-CakePHP_Rocks
-    array(
-        'controller' => 'Administradores', 
-        'action' => 'v2_google_auth',
         'api' => true,
         'prefix' => 'api'
     )
@@ -280,20 +261,6 @@ Router::connect(
     array(
         'controller' => 'Ventas', 
         'action' => 'cambiar_estado',
-        'api' => true,
-        'prefix' => 'api'),
-    array(
-        'pass' => array('id'),
-        'id' => '[0-9]+'
-    )
-);
-
-
-Router::connect(
-    '/api/ventas/recibir-notificacion-entrega-embalaje/:id', // E.g. /blog/3-CakePHP_Rocks
-    array(
-        'controller' => 'Ventas', 
-        'action' => 'cambiar_estado_v2',
         'api' => true,
         'prefix' => 'api'),
     array(
@@ -900,13 +867,3 @@ Router::connect(
         'api'           => true,
         'prefix'        => 'api')
 );
-
-Router::connect(
-    '/api/pruebas', // E.g. /blog/3-CakePHP_Rocks
-    array(
-        'controller'    => 'Pruebas', 
-        'action'        => 'pruebas',
-        'api'           => true,
-        'prefix'        => 'api')
-);
-

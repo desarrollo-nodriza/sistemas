@@ -10,10 +10,8 @@ class WarehouseNodrizaComponent extends Component
 
     public function crearCliente()
     {
-
-        $BX_TOKEN = !empty(CakeSession::read('Auth.Administrador.token.token')) ? ['token' => CakeSession::read('Auth.Administrador.token.token')]  : ClassRegistry::init('Token')->crear_token(CakeSession::read('Auth.Administrador.id') ?? 1);
+        $BX_TOKEN = ClassRegistry::init('Token')->crear_token(CakeSession::read('Auth.Administrador.id') ?? 1);
         $this->WarehouseNodriza = new WarehouseNodriza($BX_TOKEN['token'] ?? '', Configure::read('ambiente'));
-        // $this->WarehouseNodriza = new WarehouseNodriza($BX_TOKEN['token'] ?? '', 'local');
     }
 
     public function CambiarCancelado_V2($venta_id, $responsable_id_cancelado, $devolucion, $motivo_cancelado)
@@ -228,11 +226,5 @@ class WarehouseNodrizaComponent extends Component
     {
         $this->crearCliente();
         return $this->WarehouseNodriza->CrearPedido($embalaje);
-    }
-
-    public function ObtenerEvidencia($embalaje)
-    {
-        $this->crearCliente();
-        return $this->WarehouseNodriza->ObtenerEvidencia($embalaje);
     }
 }

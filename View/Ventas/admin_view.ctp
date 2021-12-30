@@ -260,7 +260,6 @@
 												<th>Cant<br/> anulada</th>
 												<th>Subtotal</th>
 												<th>Detalle <br> oc</th>
-												<th>Evidencia <br> Embalaje</th>
 												<th>Opciones</th>
 											</thead>
 											<tbody>
@@ -371,13 +370,6 @@
 															<? endforeach; ?>
 														</td>
 														<td>
-															<? if (empty($detalle['HistorialEmbalaje'][0]['evidencia']) && empty($detalle['HistorialEmbalaje'][0]['fecha_entregado']) && empty($detalle['HistorialEmbalaje'][0]['responsable_id_entregado'])) : ?>
-																-
-															<? else : ?>	
-																	<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-evidencia-venta-detalle-<?=$detalle['id'];?>"><i class="fa fa-eye"></i> Ver evidencia</button>
-															<? endif; ?>
-														</td>
-														<td>
 															<? if ($detalle['cantidad_anulada'] > 0 && !empty($detalle['dte'])) : ?>
 																<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Ver NTC', array('controller' => 'ordenes', 'action' => 'editar', $detalle['dte'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-block btn-xs', 'data-toggle' => 'tooltip', 'title' => 'Ver nota de crédito', 'escape' => false, 'target' => '_blank')); ?>
 															<? endif; ?>
@@ -434,29 +426,29 @@
 											</tbody>
 											<tfoot>
 												<tr>
-													<th colspan="11" class="text-right">Total Productos</th>
+													<th colspan="10" class="text-right">Total Productos</th>
 													<td><?=CakeNumber::currency($TotalProductos, 'CLP');?></td>
 												</tr>
 												<tr>
-													<th colspan="11" class="text-right">IVA <small>(19%)</small></th>
+													<th colspan="10" class="text-right">IVA <small>(19%)</small></th>
 													<td><?=CakeNumber::currency(round($TotalProductos * 0.19), 'CLP');?></td>
 												</tr>
 												<tr>
-													<th colspan="11" class="text-right">Descuento</th>
+													<th colspan="10" class="text-right">Descuento</th>
 													<td>
 														<?php if (!empty($venta['Venta']['descuento'])) {echo CakeNumber::currency($venta['Venta']['descuento'], 'CLP');} ?>
 														<?= $this->Form->input('DscRcgGlobal.ValorDR', array('type' => 'hidden', 'value' => round($this->request->data['Venta']['descuento']))); ?>
 													</td>
 												</tr>
 												<tr>
-													<th colspan="11" class="text-right">Transporte</th>
+													<th colspan="10" class="text-right">Transporte</th>
 													<td>
 														<?=$this->Form->hidden('Dte.Transporte', array('value' => $venta['Venta']['costo_envio'] ));?>
 														<?php if (!empty($venta['Venta']['costo_envio'])) {echo CakeNumber::currency($venta['Venta']['costo_envio'], 'CLP');} ?>
 													</td>
 												</tr>
 												<tr class="success">
-													<th colspan="11" class="text-right" style="font-size: 22px;">Total</th>
+													<th colspan="10" class="text-right" style="font-size: 22px;">Total</th>
 													<td style="font-size: 22px;"><?= CakeNumber::currency($venta['Venta']['total'], 'CLP'); ?></td>
 												</tr>
 											</tfoot>
@@ -1261,7 +1253,6 @@
 								<th>Fecha listo para embalar</th>
 								<th>Fecha preparación</th>
 								<th>Fecha finalizado</th>
-								<th>Evidencia</th>
 								<th></th>
 								<tbody>
 								<? foreach ($venta['EmbalajeWarehouse'] as $im => $em) : ?>
@@ -1273,17 +1264,10 @@
 										<td><?= $em['fecha_listo_para_embalar']; ?></td>
 										<td><?= $em['fecha_procesando']; ?></td>
 										<td><?= $em['fecha_finalizado']; ?></td>
-										<td>
-											<? if (!empty($em['evidencia']) && !empty($em['fecha_entregado']) && !empty($em['responsable_id_entregado'])) : ?>
-												<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-evidencia-embalaje-<?=$em['id'];?>"><i class="fa fa-eye"></i> Ver evidencia</button>
-											<? else : ?>	
-												-
-											<? endif; ?>
-										</td>
 										<td><button class="btn btn-xs btn-block btn-primary btn-expandir-venta" data-toggle="collapse" data-target="#accordion-embalaje-<?=$em['id']; ?>"><i class="fa fa-expand"></i> Productos</button></td>
 									</tr>
 									<tr>
-										<td colspan="9">
+										<td colspan="8">
 											<div id="accordion-embalaje-<?=$em['id']; ?>" class="collapse">
 												<div class="table-responsive">
 													<table class="table table-bordered">
@@ -1504,105 +1488,7 @@
 </div>
 <? endif; ?>
 
-<!-- Modal -->
-<?php foreach ($venta['EmbalajeWarehouse'] as $EmbalajeWarehouse) :?>
-	<? if (count($EmbalajeWarehouse['HistorialEmbalaje'])>0) : ?>
-		<div class="modal fade" id="modal-evidencia-embalaje-<?=$EmbalajeWarehouse['HistorialEmbalaje'][0]['embalaje_id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-evidencia-embalaje-<?=$EmbalajeWarehouse['HistorialEmbalaje'][0]['embalaje_id'];?>-label">
-			<div class="modal-dialog" role="document">
-				<div class="modal-content">
-				<?php foreach ($EmbalajeWarehouse['HistorialEmbalaje'] as $historial_embalaje) :?>
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-						<h4 class="modal-title">Embalaje #<?=$historial_embalaje['embalaje_id']?></h4>
-					</div>
-				
-					<div class="modal-body">
-						<div>
-							<table class="table table-bordered ">
-								<thead>
-									<th>Fecha Entregado</th>
-									<th>Responsable</th>
-									
-								</thead>
-								<tbody>
-									<tr>
-										<td>
-											<?= $historial_embalaje['fecha_entregado'] ?>
-										</td>
-										<td>
-											<?= $historial_embalaje['responsable'] ?>
-										</td>
-									</tr>
-									<thead>
-										<th colspan="2">Evidencia</th>
-									</thead>
-									<tr>
-										<td colspan="2">
-											<img class="center-block img-responsive" src="<?= $historial_embalaje['evidencia'] ?>" width="250 px" alt="">
-										</td>
-									</tr>
-								</tbody>																					
-							</table>
-						</div>
-					</div>
-				<? endforeach; ?>
-				</div>
-			</div>
-		</div>
-	<? endif; ?>
-<? endforeach; ?>
-<!-- Fin modal Evidencia por embalaje -->
 
-
-<!-- Modal -->
-<?php foreach ($venta['VentaDetalle'] as  $detalle) :?>
-	<? if (count($detalle['HistorialEmbalaje'])>0) : ?>
-		<div class="modal fade" id="modal-evidencia-venta-detalle-<?=$detalle['id'];?>" tabindex="-1" role="dialog" aria-labelledby="modal-evidencia-venta-detalle-<?=$detalle['id'];?>-label">
-			<div class="modal-dialog" role="document">
-			<?php foreach ($detalle['HistorialEmbalaje'] as $HistorialEmbalaje) :?>
-				<div class="modal-content">
-
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-						<h4 class="modal-title">Embalaje #<?=$HistorialEmbalaje['embalaje_id']?></h4>
-					</div>
-				
-					<div class="modal-body">
-						<div>
-							<table class="table table-bordered ">
-								<thead>
-									<th>Fecha Entregado</th>
-									<th>Responsable</th>
-									
-								</thead>
-								<tbody>
-									<tr>
-										<td>
-											<?=$HistorialEmbalaje['fecha_entregado']?>
-										</td>
-										<td>
-											<?=$HistorialEmbalaje['responsable'] ?>
-										</td>
-									</tr>
-									<thead>
-										<th colspan="2">Evidencia</th>
-									</thead>
-									<tr>
-										<td colspan="2">
-											<img class="center-block img-responsive" src="<?=$HistorialEmbalaje['evidencia']?>" width="250 px" alt="">
-										</td>
-									</tr>
-								</tbody>																					
-							</table>
-						</div>
-					</div>
-				</div>
-			<? endforeach; ?>
-			</div>
-		</div>
-	<? endif; ?>
-<? endforeach; ?>
-<!-- Fin modal Evidencia por ventaDetalle -->
 
 <?= $this->Html->script(array(
 	'/backend/js/venta.js?v=' . rand()

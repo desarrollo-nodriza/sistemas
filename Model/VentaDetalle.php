@@ -38,15 +38,7 @@ class VentaDetalle extends AppModel
 			'offset'				=> '',
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
-			'counterQuery'			=> '',
-		),
-		'HistorialEmbalaje' => array(
-			'className'				=> 'HistorialEmbalaje',
-			'foreignKey'			=> 'detalle_id',
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'counterCache'			=> true,
+			'counterQuery'			=> ''
 		)
 	);
 

@@ -1,7 +1,11 @@
 <?php
 
-Configure::write('debug', 1);
-Configure::write('ambiente', 'dev');
+if (isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] == 'localhost')
+{
+	Configure::write('debug', 2);
+}else{
+	Configure::write('debug', 2);
+}
 
 
 Configure::write('Error', array(
