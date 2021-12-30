@@ -286,6 +286,19 @@ class Venta extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'HistorialEmbalaje' => array(
+			'className'				=> 'HistorialEmbalaje',
+			'foreignKey'			=> 'venta_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
@@ -441,7 +454,10 @@ class Venta extends AppModel
 					'Venta.id' => $id
 				),
 				'contain' => array(
+					
+					'HistorialEmbalaje',
 					'VentaDetalle' => array(
+						'HistorialEmbalaje',
 						'EmbalajeProductoWarehouse' => array(
 							'EmbalajeWarehouse'
 						),
@@ -586,6 +602,7 @@ class Venta extends AppModel
 						)
 					),
 					'EmbalajeWarehouse' => array(
+						'HistorialEmbalaje',
 						'Bodega' => array(
 							'fields' => array(
 								'Bodega.id',
