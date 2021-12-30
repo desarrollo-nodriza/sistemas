@@ -584,14 +584,14 @@ class PrestashopComponent extends Component
 		return true;
 	}
 	// TODO Se cambia metodo de envio de una venta en prestashop
-	public function prestashop_cambiar_transportista_actual_venta($id_venta, $transportista_id, $forzar = true)
+	public function prestashop_cambiar_transportista_actual_venta($id, $transportista_id, $forzar = true)
 	{
 		
 		try {
 
 			$opt             = array();
 			$opt['resource'] = 'orders';
-			$opt['id']  	 = $id_venta;
+			$opt['id']  	 = $id;
 
 			$xml       			   = $this->ConexionPrestashop->get($opt);
 			$resources 			   = $xml->children()->children();
@@ -599,7 +599,7 @@ class PrestashopComponent extends Component
 
 			$opt           = array('resource' => 'orders');
 			$opt['putXml'] = $xml->asXML();
-			$opt['id'] 	   = $id_venta; 
+			$opt['id'] 	   = $id; 
 		
 			$xml           = $this->ConexionPrestashop->edit($opt);
 			

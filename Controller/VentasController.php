@@ -4672,12 +4672,12 @@ class VentasController extends AppController {
 						$metodo_envio_prestashop =  $this->Prestashop->prestashop_obtener_trasnportista_por_nombre(ClassRegistry::init('MetodoEnvio')->nombre($this->request->data['Venta']['metodo_envio_id']));
 				
 						if ($metodo_envio_prestashop) {
-							$this->Prestashop->prestashop_cambiar_transportista_actual_venta($id,$metodo_envio_prestashop['id']);
+							$this->Prestashop->prestashop_cambiar_transportista_actual_venta($venta['Venta']['id_externo'], $metodo_envio_prestashop['id']);
 							$log[] = array(
 								'Log' => array(
-									'administrador' => "Se actualizo  vid - $id en Prestashop",
+									'administrador' => "Se actualizo  vid - $id | id_externo {$venta['Venta']['id_externo']} en Prestashop",
 									'modulo'	 	=> 'Ventas',
-									'modulo_accion' => "Se actualizo metodo de envio id {$this->request->data['Venta']['metodo_envio_id']} - ".ClassRegistry::init('MetodoEnvio')->nombre($this->request->data['Venta']['metodo_envio_id'])
+									'modulo_accion' => "Se actualiza metodo envio en prestashop {$metodo_envio_prestashop['id']} | Sistema {$this->request->data['Venta']['metodo_envio_id']} - ".ClassRegistry::init('MetodoEnvio')->nombre($this->request->data['Venta']['metodo_envio_id'])
 								)
 							);
 						}else{
