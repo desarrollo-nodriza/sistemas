@@ -4592,7 +4592,11 @@ class VentasController extends AppController {
 						'Venta.total',
 						'Venta.referencia_despacho',
 						'Venta.nota_interna',
-						'Venta.bodega_id'
+						'Venta.bodega_id',
+						'Venta.tienda_id',
+						'Venta.venta_manual',
+						'Venta.id_externo',
+						'Venta.marketplace_id',
 					)
 				)
 			);
@@ -4632,7 +4636,7 @@ class VentasController extends AppController {
 			}
 
 			# Actualizar canal venta - Homologamos el campo
-			if ($this->request->data['Venta']['canal_venta_id'])
+			if (isset($this->request->data['Venta']['canal_venta_id']))
 			{	
 				$this->request->data['Venta']['origen_venta_manual'] = ClassRegistry::init('CanalVenta')->field('nombre', array(
 					'id' => $this->request->data['Venta']['canal_venta_id']
@@ -4658,8 +4662,35 @@ class VentasController extends AppController {
 							])
 					)
 				);
-
+			
 				if ($cambiar_metodo_envio) {
+
+					if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo']) && !$venta['Venta']['venta_manual']) {
+
+						ClassRegistry::init('Tienda')->id = $venta['Venta']['tienda_id'];
+						$this->Prestashop->crearCliente( ClassRegistry::init('Tienda')->field('apiurl_prestashop'), ClassRegistry::init('Tienda')->field('apikey_prestashop'));
+						$metodo_envio_prestashop =  $this->Prestashop->prestashop_obtener_trasnportista_por_nombre(ClassRegistry::init('MetodoEnvio')->nombre($this->request->data['Venta']['metodo_envio_id']));
+				
+						if ($metodo_envio_prestashop) {
+							$this->Prestashop->prestashop_cambiar_transportista_actual_venta($id,$metodo_envio_prestashop['id']);
+							$log[] = array(
+								'Log' => array(
+									'administrador' => "Se actualizo  vid - $id en Prestashop",
+									'modulo'	 	=> 'Ventas',
+									'modulo_accion' => "Se actualizo metodo de envio id {$this->request->data['Venta']['metodo_envio_id']} - ".ClassRegistry::init('MetodoEnvio')->nombre($this->request->data['Venta']['metodo_envio_id'])
+								)
+							);
+						}else{
+
+							$log[] = array(
+								'Log' => array(
+									'administrador' => "Problemas para actualizar  vid - $id en Prestashop",
+									'modulo'	 	=> 'Ventas',
+									'modulo_accion' => "No se pudo actualizar metodo de envio {$this->request->data['Venta']['metodo_envio_id']} debido a que no fue encontrado en Prestashop."
+								)
+							);
+						}
+					}
 
 					$response = $this->WarehouseNodriza->CambiarCancelado_V2($venta['Venta']['id'],CakeSession::read('Auth.Administrador.id')??1,true,"Se han cancelado embalajes de la vid {$venta['Venta']['id']} debido a cambios en el metodo de envio");
 					if ($response['code'] == 200) {
@@ -7113,7 +7144,7 @@ class VentasController extends AppController {
 			
 			# Cliente Prestashop
 			$this->Prestashop->crearCliente( $venta['Tienda']['apiurl_prestashop'], $venta['Tienda']['apikey_prestashop'] );	
-
+		
 			// Obtener detall venta externo
 			$venta['VentaExterna'] = $this->Prestashop->prestashop_obtener_venta($venta['Venta']['id_externo']);		
 
