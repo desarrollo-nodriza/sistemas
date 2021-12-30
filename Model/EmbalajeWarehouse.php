@@ -341,11 +341,11 @@ Class EmbalajeWarehouse extends AppModel {
 						foreach ($d['EmbalajeProductoWarehouse'] as $emp) 
 						{	
 
-							if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado' || $emp['EmbalajeWarehouse']['estado'] == 'finalizado')
+
+							if (in_array($emp['EmbalajeWarehouse']['estado'], array('cancelado', 'finalizado','entregado')) )
 							{
 								continue;
-							}
-							
+							}							
 
 							$cantidad_a_embalar = $cantidad_a_embalar - $emp['cantidad_a_embalar'];
 						}
