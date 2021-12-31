@@ -4688,30 +4688,33 @@ class VentasController extends AppController {
 			
 				if ($cambiar_metodo_envio) {
 
-					if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo']) && !$venta['Venta']['venta_manual']) {
+					if (Configure::read('ambiente') != 'dev') {
 
-						ClassRegistry::init('Tienda')->id = $venta['Venta']['tienda_id'];
-						$this->Prestashop->crearCliente( ClassRegistry::init('Tienda')->field('apiurl_prestashop'), ClassRegistry::init('Tienda')->field('apikey_prestashop'));
-						$metodo_envio_prestashop =  $this->Prestashop->prestashop_obtener_trasnportista_por_nombre(ClassRegistry::init('MetodoEnvio')->nombre($this->request->data['Venta']['metodo_envio_id']));
-				
-						if ($metodo_envio_prestashop) {
-							$this->Prestashop->prestashop_cambiar_transportista_actual_venta($venta['Venta']['id_externo'], $metodo_envio_prestashop['id']);
-							$log[] = array(
-								'Log' => array(
-									'administrador' => "Se actualizo  vid - $id | id_externo {$venta['Venta']['id_externo']} en Prestashop",
-									'modulo'	 	=> 'Ventas',
-									'modulo_accion' => "Se actualiza metodo envio en prestashop {$metodo_envio_prestashop['id']} | Sistema {$this->request->data['Venta']['metodo_envio_id']} - ".ClassRegistry::init('MetodoEnvio')->nombre($this->request->data['Venta']['metodo_envio_id'])
-								)
-							);
-						}else{
+						if (!$venta['Venta']['marketplace_id'] && !empty($venta['Venta']['id_externo']) && !$venta['Venta']['venta_manual']) {
 
-							$log[] = array(
-								'Log' => array(
-									'administrador' => "Problemas para actualizar  vid - $id en Prestashop",
-									'modulo'	 	=> 'Ventas',
-									'modulo_accion' => "No se pudo actualizar metodo de envio {$this->request->data['Venta']['metodo_envio_id']} debido a que no fue encontrado en Prestashop."
-								)
-							);
+							ClassRegistry::init('Tienda')->id = $venta['Venta']['tienda_id'];
+							$this->Prestashop->crearCliente( ClassRegistry::init('Tienda')->field('apiurl_prestashop'), ClassRegistry::init('Tienda')->field('apikey_prestashop'));
+							$metodo_envio_prestashop =  $this->Prestashop->prestashop_obtener_trasnportista_por_nombre(ClassRegistry::init('MetodoEnvio')->nombre($this->request->data['Venta']['metodo_envio_id']));
+					
+							if ($metodo_envio_prestashop) {
+								$this->Prestashop->prestashop_cambiar_transportista_actual_venta($venta['Venta']['id_externo'], $metodo_envio_prestashop['id']);
+								$log[] = array(
+									'Log' => array(
+										'administrador' => "Se actualizo  vid - $id | id_externo {$venta['Venta']['id_externo']} en Prestashop",
+										'modulo'	 	=> 'Ventas',
+										'modulo_accion' => "Se actualiza metodo envio en prestashop {$metodo_envio_prestashop['id']} | Sistema {$this->request->data['Venta']['metodo_envio_id']} - ".ClassRegistry::init('MetodoEnvio')->nombre($this->request->data['Venta']['metodo_envio_id'])
+									)
+								);
+							}else{
+	
+								$log[] = array(
+									'Log' => array(
+										'administrador' => "Problemas para actualizar  vid - $id en Prestashop",
+										'modulo'	 	=> 'Ventas',
+										'modulo_accion' => "No se pudo actualizar metodo de envio {$this->request->data['Venta']['metodo_envio_id']} debido a que no fue encontrado en Prestashop."
+									)
+								);
+							}
 						}
 					}
 
