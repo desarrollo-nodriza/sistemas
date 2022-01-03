@@ -405,13 +405,49 @@ class AdministradoresController extends AppController
 
 	public function admin_index()
 	{	
-		$this->paginate		= array(
-			'recursive'			=> 0
+			# Al recibir el filtro lo pasamos a parámetros
+			if ( $this->request->is('post') ) {
+
+				$this->filtro('administradores', 'index', 'Filtro');
+	
+			}
+
+		$qry = array(
+			'recursive' => 0,
 		);
+
+			# condiciones del filtro
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'id':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('Administrador.id' => str_replace('%2F', '/', urldecode($valor) ) )));
+						break;
+					case 'nombre':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('Administrador.nombre LIKE' => '%'.trim(str_replace('%2F', '/', urldecode($valor) )).'%')));
+						break;
+					case 'email':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('Administrador.email LIKE' => '%'.trim(str_replace('%2F', '/', urldecode($valor) )).'%')));
+						break;
+					case 'rol':
+						$qry = array_replace_recursive($qry, array(
+							'conditions' => array('Administrador.rol_id' => $valor)));
+						break;
+				}
+			}
+		}
+
+
+		$this->paginate = $qry;	
+
 		$administradores	= $this->paginate();
+		$roles  = $this->Administrador->Rol->find('list', array('conditions' => array('activo' => 1)));
 		BreadcrumbComponent::add('Administradores ');
 
-		$this->set(compact('administradores'));
+		$this->set(compact('administradores','roles'));
 	}
 
 	public function admin_add()
@@ -473,6 +509,23 @@ class AdministradoresController extends AppController
 		$this->set(compact('roles'));
 	}
 
+	public function filtrar($controlador = '', $accion = '')
+    {
+    	$redirect = array(
+    		'controller' => $controlador,
+    		'action' => $accion
+    		);
+
+		foreach ($this->request->data['Filtro'] as $campo => $valor) {
+			if ($valor != '') {
+				$redirect[$campo] = str_replace('/', '-', $valor);
+			}
+		}
+		
+    	$this->redirect($redirect);
+
+    }
+
 	public function admin_delete($id = null)
 	{
 		$this->Administrador->id = $id;
@@ -494,13 +547,66 @@ class AdministradoresController extends AppController
 
 	public function admin_exportar()
 	{
-		$datos			= $this->Administrador->find('all', array(
-			'recursive'				=> -1
+
+		set_time_limit(0);
+		ini_set('memory_limit', '-1');
+
+		$conditions = array(
+		
+		);
+
+		if ( $this->request->is('post') ) { 
+			$this->filtrar('cotizaciones', 'index');
+		}
+		
+						# condiciones del filtro
+		if ( isset($this->request->params['named']) ) {
+			foreach ($this->request->params['named'] as $campo => $valor) {
+				switch ($campo) {
+					case 'id':
+						$conditions['Administrador.id'] = $valor;
+						break;
+					case 'nombre':
+						$conditions['Administrador.nombre'] = $valor;
+						break;
+					case 'email':
+						$conditions['Administrador.email'] = $valor;
+						break;
+					case 'rol':
+						$conditions['Administrador.rol_id'] = $valor;
+						break;
+				}
+			}
+		}
+
+		// Opciones de paginación
+		$datos = $this->Administrador->find('all', array(
+			'fields'     => array(
+				'Administrador.id',
+				'Administrador.nombre',
+				'Administrador.email',
+				'Rol.nombre'
+				
+			),
+			'contain' => array('Rol'),
+			'conditions' => $conditions,
+			'recursive' => 0,
+			'order'     => 'Administrador.id DESC'
 		));
-		$campos			= array_keys($this->Administrador->_schema);
+
+		
+		$cabeceras = array(
+			'Id',
+			'Nombre',
+			'Email',
+			'Rol',
+		
+		);
+		
+
 		$modelo			= $this->Administrador->alias;
 
-		$this->set(compact('datos', 'campos', 'modelo'));
+		$this->set(compact('datos','cabeceras', 'modelo'));
 	}
 
 
