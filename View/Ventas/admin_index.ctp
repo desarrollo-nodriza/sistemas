@@ -201,6 +201,15 @@
 							</div>
 						</div>
 
+						<div class="col-xs-6 col-sm-6 col-md-3 col-lg-2">
+							<div class="form-group">
+								<br />
+								<label>Metodo de envíos</label>
+								<?= $this->Form->select('metodos_de_envios', $metodos_de_envios, array('class' => 'form-control select', 'data-live-search' => true, 'multiple' => true, 'empty' => 'Seleccionar metodo de envio', 'required' => false, 'default' => $FiltroMetodoEnvio )); ?>
+							</div>
+					</div>
+						
+
 					</div>
 
 					<div class="panel-footer">

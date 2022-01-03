@@ -119,6 +119,7 @@ class VentasController extends AppController {
 		$FiltroMontoHasta           = '';
 		$FiltroAdministrador        = '';
 		$FiltroBodega        		= '';
+		$FiltroMetodoEnvio          = '';
 
 		// Filtrado de ordenes por formulario
 		if ( $this->request->is('post') ) {
@@ -421,6 +422,13 @@ class VentasController extends AppController {
 							$condiciones['Venta.administrador_id'] = $FiltroAdministrador;
 						}
 						break;
+					case 'metodos_de_envios' :
+						$FiltroMetodoEnvio = $valor;
+				
+						if ($FiltroMetodoEnvio != "") {
+							$condiciones['Venta.metodo_envio_id'] = $FiltroMetodoEnvio;
+						}
+						break;
 				
 				}
 			}
@@ -569,6 +577,21 @@ class VentasController extends AppController {
 			$bodegas[$b['id']] = $b['nombre'];
 		}
 		
+		$metodos_de_envios=[];
+		$metodoEnvios_sin_procesar = ClassRegistry::init('MetodoEnvio')->find('all', array(
+			'contain'=>[
+				'Bodega'=>['fields'=>'Bodega.nombre'
+
+			]],
+			'fields'=>['MetodoEnvio.id','MetodoEnvio.nombre','MetodoEnvio.dependencia'],
+			'conditions' => [
+				'MetodoEnvio.activo' => 1,
+				'MetodoEnvio.bodega_id' => Hash::extract(CakeSession::read('Auth.Administrador.Bodega'), '{n}.id') 
+			]));
+
+		foreach ($metodoEnvios_sin_procesar as $value) {
+			$metodos_de_envios[$value['MetodoEnvio']['id']] ="{$value['Bodega']['nombre']} - {$value['MetodoEnvio']['nombre']} ".(isset($value['MetodoEnvio']['dependencia'])?"| Dependencia {$value['MetodoEnvio']['dependencia']}":'');
+		}
 
 		BreadcrumbComponent::add('Ventas', '/ventas');
 
@@ -591,6 +614,7 @@ class VentasController extends AppController {
 			'FiltroFechaDesde', 
 			'FiltroFechaHasta', 
 			'FiltroDte', 
+			'FiltroMetodoEnvio', 
 			'meliConexion', 
 			'picking', 
 			'FiltroVentaOrigen',
@@ -601,7 +625,8 @@ class VentasController extends AppController {
 			'FiltroAdministrador',
 			'vendedores',
 			'canal_ventas',
-			'bodegas'
+			'bodegas',
+			'metodos_de_envios'
 		));
 
 	}
