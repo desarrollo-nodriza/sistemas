@@ -1545,6 +1545,7 @@
 							</table>
 						</div>
 					</div>
+					<? break;?>
 				<? endforeach; ?>
 				</div>
 			</div>
