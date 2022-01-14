@@ -13,7 +13,8 @@ class MetodoEnviosController extends AppController
 	public $tipo_servicio=[
 		"EX" => "Express.",
 		"PR" => "Premium.",
-		"PY" => "Prioritario."
+		"PY" => "Prioritario.",
+		"MD" => "Same Day."
 	];
 
 	public function admin_index () {
