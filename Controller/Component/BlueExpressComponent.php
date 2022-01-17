@@ -9,6 +9,7 @@ class BlueExpressComponent extends Component
 
     private $blue_express;
     public $components = array('LAFFPack', 'LibreDte', 'Etiquetas');
+    private $intentos = 1;
 
     public function crearCliente($BX_TOKEN, $BX_USERCODE, $BX_CLIENT_ACCOUNT)
     {
@@ -41,7 +42,7 @@ class BlueExpressComponent extends Component
         $this->crearCliente($credenciales['Venta']['MetodoEnvio']['token_blue_express'], $credenciales['Venta']['MetodoEnvio']['cod_usuario_blue_express'], $credenciales['Venta']['MetodoEnvio']['cta_corriente_blue_express']);
         $response           = $this->blue_express->BXLabel($trackingNumber);
         $response['url']    = null;
-        
+
         if ($response['code'] == 200 || $response['response']['status']) {
 
             $response['response'] = base64_decode($response['response']['data'][0]['base64']);
@@ -242,6 +243,24 @@ class BlueExpressComponent extends Component
         ClassRegistry::init('Log')->saveMany($log);
 
         if (empty($historicos)) {
+
+            // * Debido a problemas para recuperar los estados se hacen tres intentos
+            if ($this->intentos <= 3) {
+
+                $this->registrar_estados($id);
+            }
+
+            ClassRegistry::init('Log')->create();
+            ClassRegistry::init('Log')->save(array(
+                'Log' => array(
+                    'administrador' => "Venta {$id} obteniendo estados",
+                    'modulo'        => 'BlueExpressComponent',
+                    'modulo_accion' => "Número de intentos: {$this->intentos} para obtener estados de seguimiento."
+                )
+            ));
+            
+            $this->intento = 1;
+
             return false;
         }
 
