@@ -150,6 +150,14 @@ class BlueExpressComponent extends Component
 
             $estados = $this->blue_express->BXTrackingPull($trans['TransportesVenta']['cod_seguimiento']);
 
+            $log[] = array(
+                'Log' => array(
+                    'administrador'     => "Respuesta codigo de seguimiento {$trans['TransportesVenta']['cod_seguimiento']} | vid - {$id}",
+                    'modulo'            => 'BlueExpressComponent',
+                    'modulo_accion'     => json_encode($estados)
+                )
+            );
+
             if ($estados['code'] != 200) {
 
                 $log[] = array(
