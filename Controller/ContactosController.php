@@ -6,129 +6,133 @@ class ContactosController extends AppController
     public function admin_index()
     {
         // Filtrado de ordenes por formulario
-		if ( $this->request->is('post') ) { 
-			$this->filtro('contactos', 'index', $this->Contacto->alias);
+        if ($this->request->is('post')) {
+            $this->filtro('contactos', 'index', $this->Contacto->alias);
         }
-        
+
         $condiciones = array();
-		$joins       = array();
-		$group       = array();
-		$fields      = array(
+        $joins       = array();
+        $group       = array();
+        $fields      = array(
             'Contacto.*'
         );
-    
+
         # Filtrar
-		if ( isset($this->request->params['named']) ) {
-			foreach ($this->request->params['named'] as $campo => $valor) {
-				switch ($campo) {
+        if (isset($this->request->params['named'])) {
+            foreach ($this->request->params['named'] as $campo => $valor) {
+                switch ($campo) {
                     case 'administrador_id':
 
-						$condiciones['Contacto.administrador_id'] = trim($valor);
+                        $condiciones['Contacto.administrador_id'] = trim($valor);
 
-                    break;
-                    
+                        break;
+
                     case 'id_contacto':
-						
-						$condiciones['Contacto.id'] = trim($valor);
 
-					break;
+                        $condiciones['Contacto.id'] = trim($valor);
 
-					case 'origen':
-						
-						$condiciones['Contacto.origen'] = trim($valor);
+                        break;
 
-					break;
+                    case 'origen':
 
-					case 'asunto':
+                        $condiciones['Contacto.origen'] = trim($valor);
 
-						$condiciones['Contacto.asunto'] = trim($valor);
+                        break;
 
-					break;
+                    case 'asunto':
 
-					case 'email_contacto':
+                        $condiciones['Contacto.asunto'] = trim($valor);
 
-						$condiciones['Contacto.email_contacto'] = trim($valor);
+                        break;
 
-					break;
+                    case 'email_contacto':
 
-					case 'fono_contacto':
+                        $condiciones['Contacto.email_contacto'] = trim($valor);
 
-						$condiciones['Contacto.fono_contacto'] = trim($valor);
+                        break;
 
-					break;
+                    case 'fono_contacto':
 
-					case 'nombre_contacto':
+                        $condiciones['Contacto.fono_contacto'] = trim($valor);
 
-						$condiciones['Contacto.nombre_contacto LIKE'] = '%' . trim($valor) . '%';
+                        break;
 
-                    break;
-                    
+                    case 'nombre_contacto':
+
+                        $condiciones['Contacto.nombre_contacto LIKE'] = '%' . trim($valor) . '%';
+
+                        break;
+
                     case 'apellido_contacto':
 
-						$condiciones['Contacto.apellido_contacto LIKE'] = '%' . trim($valor) . '%';
+                        $condiciones['Contacto.apellido_contacto LIKE'] = '%' . trim($valor) . '%';
 
-                    break;
-                    
+                        break;
+
                     case 'atendido':
 
-						$condiciones['Contacto.atendido'] = ($valor == 'si') ? 1 : 0;
+                        $condiciones['Contacto.atendido'] = ($valor == 'si') ? 1 : 0;
 
-                    break;
-                    
+                        break;
+
                     case 'confirmado_cliente':
 
-						$condiciones['Contacto.confirmado_cliente'] = ($valor == 'si') ? 1 : 0;
+                        $condiciones['Contacto.confirmado_cliente'] = ($valor == 'si') ? 1 : 0;
 
-					break;
+                        break;
 
-					case 'fecha_desde' :
-						$condiciones["Contacto.created >="] = $valor;
-					break;
+                    case 'fecha_desde':
+                        $condiciones["Contacto.created >="] = $valor;
+                        break;
 
-					case 'fecha_hasta' :
-						$condiciones["Contacto.created <="] = $valor;
-					break;
-				}
-			}
-		}
+                    case 'fecha_hasta':
+                        $condiciones["Contacto.created <="] = $valor;
+                        break;
+                }
+            }
+        }
 
-		$paginate = array(
-			'recursive' => 0,
+        $paginate = array(
+            'recursive' => 0,
             'conditions' => $condiciones,
             'contain' => array(
-                'Administrador' => array(
+                'AtencionCliente' => array(
                     'fields' => array(
-                        'Administrador.email'
+                        'AtencionCliente.correo'
                     )
                 )
-                    ),
-			'joins' => $joins,
-			'fields' => $fields,
-			'order' => array('Contacto.created' => 'DESC'),
-			'limit' => 20
-		);
+            ),
+            'joins' => $joins,
+            'fields' => $fields,
+            'order' => array('Contacto.created' => 'DESC'),
+            'limit' => 20
+        );
 
-		$this->paginate = $paginate;
+        $this->paginate = $paginate;
         $contactos          = $this->paginate();
-        
-        $administradores = $this->Contacto->Administrador->find('list', array(
+
+        $administradores = $this->Contacto->AtencionCliente->find('list', array(
             'conditions' => array(
-                'Administrador.activo' => 1,
-                'Administrador.notificacion_contactos' => 1
+                'AtencionCliente.activo' => 1,
             ),
             'fields' => array(
-                'Administrador.id',
-                'Administrador.email'
+                'AtencionCliente.id',
+                'AtencionCliente.correo'
             )
         ));
 
+        $asuntos = ClassRegistry::init('Asuntos')->find(
+            "list",
+            [
+                'fields' =>
+                ['nombre', 'nombre'],
+                'conditions' => ['activo' => true]
+            ]
+        );
         $origenes = $this->Contacto->origenes();
-        $asuntos = $this->Contacto->asuntos();
-        
         BreadcrumbComponent::add('Contactos', '/contactos');
 
         $this->set(compact('contactos', 'administradores', 'origenes', 'asuntos'));
-        
     }
 
     /**
@@ -149,7 +153,7 @@ class ContactosController extends AppController
             'contain' => array(
                 'Tienda',
                 'VentaCliente',
-                'Administrador'
+                'AtencionCliente'
             )
         ));
 
@@ -223,7 +227,7 @@ class ContactosController extends AppController
             'contain' => array(
                 'Tienda',
                 'VentaCliente',
-                'Administrador'
+                'AtencionCliente'
             )
         ));
 
@@ -233,120 +237,112 @@ class ContactosController extends AppController
         $this->set(compact('contacto'));
     }
 
-    /**
+   /**
      * Api crear contacto
      */
     public function api_add()
-	{
-		# Sólo método post
-		if (!$this->request->is('post')) {
-			$response = array(
-				'code'    => 501, 
-				'message' => 'Only POST request allow'
-			);
+    {
+        # Sólo método post
+        if (!$this->request->is('post')) {
+            $response = array(
+                'code'    => 501,
+                'message' => 'Only POST request allow'
+            );
 
-			throw new CakeException($response);
-		}
+            throw new CakeException($response);
+        }
 
-		# Existe token
-		if (!isset($this->request->query['token'])) {
-			$response = array(
-				'code'    => 502, 
-				'message' => 'Expected Token'
-			);
+        # Existe token
+        if (!isset($this->request->query['token'])) {
+            $response = array(
+                'code'    => 502,
+                'message' => 'Expected Token'
+            );
 
-			throw new CakeException($response);
-		}
+            throw new CakeException($response);
+        }
 
-		# Validamos token
-		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
-			$response = array(
-				'code'    => 401, 
-				'message' => 'Invalid or expired Token'
-			);
+        # Validamos token
+        if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+            $response = array(
+                'code'    => 401,
+                'message' => 'Invalid or expired Token'
+            );
 
-			throw new CakeException($response);
-		}
+            throw new CakeException($response);
+        }
 
         # Validamos los campo
-        if (!isset($this->request->data['origen']))
-        {
+        if (!isset($this->request->data['origen'])) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'Origen es requerido'
-			);
+                'code'    => 401,
+                'message' => 'Origen es requerido'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
-        if (!isset($this->request->data['asunto']))
-        {
+        if (!isset($this->request->data['asunto'])) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'Asunto es requerido'
-			);
+                'code'    => 401,
+                'message' => 'Asunto es requerido'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
-        if (!isset($this->request->data['mensaje']))
-        {
+        if (!isset($this->request->data['mensaje'])) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'Mensaje es requerido'
-			);
+                'code'    => 401,
+                'message' => 'Mensaje es requerido'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
-        if (!isset($this->request->data['email_contacto']))
-        {
+        if (!isset($this->request->data['email_contacto'])) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'Email es requerido'
-			);
+                'code'    => 401,
+                'message' => 'Email es requerido'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
-        if (!isset($this->request->data['fono_contacto']))
-        {
+        if (!isset($this->request->data['fono_contacto'])) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'Fono es requerido'
-			);
+                'code'    => 401,
+                'message' => 'Fono es requerido'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
-        if (!isset($this->request->data['nombre_contacto']))
-        {
+        if (!isset($this->request->data['nombre_contacto'])) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'Nombre es requerido'
-			);
+                'code'    => 401,
+                'message' => 'Nombre es requerido'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
-        if (!isset($this->request->data['apellido_contacto']))
-        {
+        if (!isset($this->request->data['apellido_contacto'])) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'Apellido es requerido'
-			);
+                'code'    => 401,
+                'message' => 'Apellido es requerido'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
-        if (isset($this->request->data['tienda_id']) && !ClassRegistry::init('Tienda')->exists($this->request->data['tienda_id']))
-        {
+        if (isset($this->request->data['tienda_id']) && !ClassRegistry::init('Tienda')->exists($this->request->data['tienda_id'])) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'Tienda no existe'
-			);
+                'code'    => 401,
+                'message' => 'Tienda no existe'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
         # Varificamos la existencia del cliente en el sistema
@@ -359,13 +355,12 @@ class ContactosController extends AppController
                 'VentaCliente.id'
             )
         ));
-     
+
         $cliente_id = '';
         $tienda_id = '';
 
         # Se crea cliente
-        if (empty($cliente))
-        {   
+        if (empty($cliente)) {
 
             $nwCliente = array(
                 'VentaCliente' => array(
@@ -379,16 +374,13 @@ class ContactosController extends AppController
             ClassRegistry::init('VentaCliente')->create();
             $cliente = ClassRegistry::init('VentaCliente')->save($nwCliente);
         }
-        
+
         $cliente_id = $cliente['VentaCliente']['id'];
 
         # Se obtiene tienda
-        if (isset($this->request->data['tienda_id']))
-        {
+        if (isset($this->request->data['tienda_id'])) {
             $tienda_id = $this->request->data['tienda_id'];
-        }
-        else
-        {
+        } else {
             $tienda = ClassRegistry::init('Tienda')->tienda_principal(array('Tienda.id'));
             $tienda_id = $tienda['Tienda']['id'];
         }
@@ -408,27 +400,60 @@ class ContactosController extends AppController
             )
         );
 
-        # Obtenemos un administrador tipo venta para asignarle el contacto
-        $ultimo_asignado = $this->Contacto->ultimo_admin_id();
-        
-        $admin_id = ClassRegistry::init('Administrador')->obtener_siguiente_admin_contacto($ultimo_asignado);
+        $existe_asunto = ClassRegistry::init('Asunto')->find('first', [
+            'conditions' => ['nombre' => $this->request->data['asunto']],
+
+        ]);
+
+        // TODO Si no existe el asunto se crea
+        if (!$existe_asunto) {
+
+            ClassRegistry::init('Asunto')->create();
+            ClassRegistry::init('Asunto')->save(['Asunto' => [
+                'nombre' => $this->request->data['asunto']
+            ]]);
+        }
+
+        // TODO Obtenemos administradores para el asuntos solicitado
+        $AsuntoAtencionCliente = ClassRegistry::init('AsuntoAtencionCliente')->atencion_cliente_ids($this->request->data['asunto']);
+       
+        $admin_id = $this->Contacto->obtener_atencion_cliente( $AsuntoAtencionCliente );
         
         # Asignamos al vendedor
-        if (!empty($admin_id))
-        {
+        if (!empty($admin_id)) {
             $contacto['Contacto']['administrador_id'] = $admin_id;
-        }
-        
-        if (!$this->Contacto->save($contacto))
-        {
-            $response = array(
-				'code'    => 401, 
-				'name' => 'error',
-				'message' => 'No fue posible guardar el mensaje. Intente nuevamente.'
-			);
-
-			throw new CakeException($response);
         }else{
+
+            ClassRegistry::init('Log')->create();
+            ClassRegistry::init('Log')->save(
+                [
+                    'Log' =>
+                    [
+                        'administrador' => "Problemas para asignar resposable al asunto {$this->request->data['asunto']}",
+                        'modulo'        => 'ContactosController',
+                        'modulo_accion' => "No existen administradores que puedan ser asignados al asunto {$this->request->data['asunto']}"
+                    ]
+                ]
+            );
+
+            $response = array(
+                'code'    => 401,
+                'name' => 'error',
+                'message' => 'No fue posible guardar el mensaje. Intente nuevamente.'
+            );
+
+            throw new CakeException($response);
+        }
+      
+        if (!$this->Contacto->save($contacto)) {
+            $response = array(
+                'code'    => 401,
+                'name' => 'error',
+                'message' => 'No fue posible guardar el mensaje. Intente nuevamente.'
+            );
+
+            throw new CakeException($response);
+        } else {
 
             $contactoCreado = $this->Contacto->find('first', array(
                 'conditions' => array(
@@ -442,14 +467,14 @@ class ContactosController extends AppController
                             'Tienda.mandrill_apikey'
                         )
                     ),
-                    'Administrador'
+                    'AtencionCliente'
                 )
             ));
-
             $this->notificar_vendedor($contactoCreado);
+         
         }
 
-		$this->set(array(
+        $this->set(array(
             'response' => array(
                 'code' => 200,
                 'name' => 'success',
@@ -555,7 +580,7 @@ class ContactosController extends AppController
 		$destinatarios = array();
 
 		$destinatarios[] = array(
-			'email' => $contacto['Administrador']['email'],
+			'email' => $contacto['AtencionCliente']['correo'],
 			'type' => 'to'
 		);
 		
@@ -604,7 +629,7 @@ class ContactosController extends AppController
 		$destinatarios = array();
 
 		$destinatarios[] = array(
-			'email' => $contacto['Administrador']['email'],
+			'email' => $contacto['AtencionCliente']['correo'],
 			'type' => 'to'
 		);
 		
@@ -747,7 +772,7 @@ class ContactosController extends AppController
                 'Contacto.confirmado_cliente' => 0
             ),
             'contain' => array(
-                'Administrador',
+                'AtencionCliente',
                 'Tienda' => array(
                     'fields' => array(
                         'Tienda.id',
