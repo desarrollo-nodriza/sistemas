@@ -1426,6 +1426,9 @@ class VentasController extends AppController {
 					# Creamos la OT
 					if ($this->BlueExpress->generar_ot($venta)) {
 
+						// Pondremos un sleep para retrasar el obtener estados
+						sleep(1);
+
 						$this->BlueExpress->registrar_estados($venta['Venta']['id']);
 
 						$log[] = array(
