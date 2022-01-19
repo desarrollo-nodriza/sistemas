@@ -1,15 +1,17 @@
 <?php
 App::uses('AppModel', 'Model');
 
-class Asunto extends AppModel
+class Notificar extends AppModel
 {
 
-	public $displayField	= 'nombre';
-	
+
+	public $displayField = 'nombre';
+	public $useTable     = 'notificar';
+
 	public $hasMany = array(
 		'NotificarAsunto' => array(
 			'className'				=> 'NotificarAsunto',
-			'foreignKey'			=> 'asunto_id',
+			'foreignKey'			=> 'notificar_id',
 		)
 	);
 }

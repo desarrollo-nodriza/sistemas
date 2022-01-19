@@ -2,7 +2,7 @@
 
 App::uses('AppController', 'Controller');
 
-class AsuntosResponsablesController extends AppController
+class NotificarAsuntoController extends AppController
 {
 	public $helpers = array('Html', 'Form');
 
@@ -28,9 +28,9 @@ class AsuntosResponsablesController extends AppController
 
 		BreadcrumbComponent::add('Asuntos|Responsables');
 
-		$responsables          = ClassRegistry::init('AtencionCliente')->find('all', []);
+		$responsables          = ClassRegistry::init('Notificar')->find('all', []);
 		$asuntos               = ClassRegistry::init('Asunto')->find('all', []);
-		$asuntoAtencionClientes = ClassRegistry::init('AsuntoAtencionCliente')->find(
+		$NotificarAsuntos = ClassRegistry::init('NotificarAsunto')->find(
 			'all',
 			[
 				'contain' =>
@@ -39,11 +39,11 @@ class AsuntosResponsablesController extends AppController
 					[
 						'fields' => ['Asunto.nombre']
 					],
-					'AtencionCliente' =>
+					'Notificar' =>
 					[
 						'fields' => [
-							'AtencionCliente.nombre',
-							'AtencionCliente.correo'
+							'Notificar.nombre',
+							'Notificar.correo'
 						]
 					]
 				]
@@ -51,14 +51,14 @@ class AsuntosResponsablesController extends AppController
 		);
 		$responsables_activos = [];
 		foreach ($responsables as $value) {
-			if ($value['AtencionCliente']['activo']) {
-				$responsables_activos[$value['AtencionCliente']['id']] = "{$value['AtencionCliente']['nombre']} - {$value['AtencionCliente']['correo']}";
+			if ($value['Notificar']['activo']) {
+				$responsables_activos[$value['Notificar']['id']] = "{$value['Notificar']['nombre']} - {$value['Notificar']['correo']}";
 			}
 		}
 
 		$asuntos_activos      = ClassRegistry::init('Asunto')->find('list', ['conditions' => ['Asunto.activo' => true]]);
 
-		$this->set(compact('asuntos', 'responsables', 'asuntoAtencionClientes', 'responsables_activos', 'asuntos_activos'));
+		$this->set(compact('asuntos', 'responsables', 'NotificarAsuntos', 'responsables_activos', 'asuntos_activos'));
 	}
 
 	public function admin_asuntos_add()
@@ -107,8 +107,8 @@ class AsuntosResponsablesController extends AppController
 
 				$mensaje = 'Registro editado correctamente.';
 				if (!$this->request->data['activo']) {
-					ClassRegistry::init('AsuntoAtencionCliente')->create();
-					if (ClassRegistry::init('AsuntoAtencionCliente')->deleteAll(['AsuntoAtencionCliente.asunto_id' => $this->request->data['id']])) {
+					ClassRegistry::init('NotificarAsunto')->create();
+					if (ClassRegistry::init('NotificarAsunto')->deleteAll(['NotificarAsunto.asunto_id' => $this->request->data['id']])) {
 						$mensaje = $mensaje . " Se han eliminado las relaciones ya que ha inactivo {$this->request->data['nombre']}";
 					}
 				}
@@ -137,8 +137,8 @@ class AsuntosResponsablesController extends AppController
 
 		if ($this->request->is('post')) {
 
-			ClassRegistry::init('AsuntoAtencionCliente')->create();
-			if (ClassRegistry::init('AsuntoAtencionCliente')->deleteAll(['AsuntoAtencionCliente.asunto_id' => $this->request->data['id']])) {
+			ClassRegistry::init('NotificarAsunto')->create();
+			if (ClassRegistry::init('NotificarAsunto')->deleteAll(['NotificarAsunto.asunto_id' => $this->request->data['id']])) {
 
 				ClassRegistry::init('Asunto')->create();
 				if (ClassRegistry::init('Asunto')->deleteAll(['Asunto.id' => $this->request->data['id']])) {
@@ -181,12 +181,12 @@ class AsuntosResponsablesController extends AppController
 			}, ARRAY_FILTER_USE_BOTH);
 			$nuevo_responsable = [];
 			foreach ($responsable as  $value) {
-				$nuevo_responsable[] = ['AtencionCliente' => $value];
+				$nuevo_responsable[] = ['Notificar' => $value];
 			}
 
-			ClassRegistry::init('AtencionCliente')->create();
+			ClassRegistry::init('Notificar')->create();
 
-			if (ClassRegistry::init('AtencionCliente')->saveAll($nuevo_responsable)) {
+			if (ClassRegistry::init('Notificar')->saveAll($nuevo_responsable)) {
 				$this->Session->setFlash(
 					'Registro agregado correctamente.',
 					null,
@@ -211,15 +211,15 @@ class AsuntosResponsablesController extends AppController
 
 		if ($this->request->is('post')) {
 
-			ClassRegistry::init('AtencionCliente')->create();
+			ClassRegistry::init('Notificar')->create();
 
-			if (ClassRegistry::init('AtencionCliente')->save(['AtencionCliente' => $this->request->data])) {
+			if (ClassRegistry::init('Notificar')->save(['Notificar' => $this->request->data])) {
 
 				$mensaje = 'Registro editado correctamente.';
 
 				if (!$this->request->data['activo']) {
-					ClassRegistry::init('AsuntoAtencionCliente')->create();
-					if (ClassRegistry::init('AsuntoAtencionCliente')->deleteAll(['AsuntoAtencionCliente.atencion_cliente_id' => $this->request->data['id']])) {
+					ClassRegistry::init('NotificarAsunto')->create();
+					if (ClassRegistry::init('NotificarAsunto')->deleteAll(['NotificarAsunto.notificar_id' => $this->request->data['id']])) {
 						$mensaje = $mensaje . " Se han eliminado las relaciones ya que ha inactivo {$this->request->data['nombre']}";
 					}
 				}
@@ -248,11 +248,11 @@ class AsuntosResponsablesController extends AppController
 
 		if ($this->request->is('post')) {
 
-			ClassRegistry::init('AsuntoAtencionCliente')->create();
-			if (ClassRegistry::init('AsuntoAtencionCliente')->deleteAll(['AsuntoAtencionCliente.atencion_cliente_id' => $this->request->data['id']])) {
+			ClassRegistry::init('NotificarAsunto')->create();
+			if (ClassRegistry::init('NotificarAsunto')->deleteAll(['NotificarAsunto.notificar_id' => $this->request->data['id']])) {
 
-				ClassRegistry::init('AtencionCliente')->create();
-				if (ClassRegistry::init('AtencionCliente')->deleteAll(['AtencionCliente.id' => $this->request->data['id']])) {
+				ClassRegistry::init('Notificar')->create();
+				if (ClassRegistry::init('Notificar')->deleteAll(['Notificar.id' => $this->request->data['id']])) {
 					$this->Session->setFlash(
 						'Se ha eliminado responsable y sus respectivas relaciones.',
 						null,
@@ -288,16 +288,16 @@ class AsuntosResponsablesController extends AppController
 		if ($this->request->is('post')) {
 
 			$relaciones = array_filter($this->request->data, function ($key, $value) {
-				return (!empty($key['atencion_cliente_id'] && !empty($key['asunto_id'])));
+				return (!empty($key['notificar_id'] && !empty($key['asunto_id'])));
 			}, ARRAY_FILTER_USE_BOTH);
 			$nuevas_relacion = [];
 			foreach ($relaciones as  $value) {
-				$nuevas_relacion[] = ['AsuntoAtencionCliente' => $value];
+				$nuevas_relacion[] = ['NotificarAsunto' => $value];
 			}
 
-			ClassRegistry::init('AsuntoAtencionCliente')->create();
+			ClassRegistry::init('NotificarAsunto')->create();
 
-			if (ClassRegistry::init('AsuntoAtencionCliente')->saveAll($nuevas_relacion)) {
+			if (ClassRegistry::init('NotificarAsunto')->saveAll($nuevas_relacion)) {
 				$this->Session->setFlash(
 					'Registro agregado correctamente.',
 					null,
@@ -321,8 +321,8 @@ class AsuntosResponsablesController extends AppController
 	{
 		if ($this->request->is('post')) {
 
-			ClassRegistry::init('AsuntoAtencionCliente')->create();
-			if (ClassRegistry::init('AsuntoAtencionCliente')->delete(['AsuntoAtencionCliente.id' => $this->request->data['id']])) {
+			ClassRegistry::init('NotificarAsunto')->create();
+			if (ClassRegistry::init('NotificarAsunto')->delete(['NotificarAsunto.id' => $this->request->data['id']])) {
 
 				$this->Session->setFlash(
 					'Se ha eliminado relacion.',

@@ -3,7 +3,7 @@
     '/backend/js/asuntos_responsables.js?v=' . rand()
 )); ?>
 <div class="page-title">
-    <h2><span class="fa fa-flag-checkered"></span> Asuntos y Responsable</h2>
+    <h2><span class="fa fa-flag-checkered"></span> Notificar Asunto</h2>
 </div>
 <div class="page-content-wrap">
 
@@ -32,7 +32,7 @@
                                     <tbody>
                                         <?= $this->Form->create(false, array(
                                             'class' => 'form-horizontal',
-                                            'url' => array('controller' => 'asuntosResponsables', 'action' => 'asuntos_add'),
+                                            'url' => array('controller' => 'notificarAsunto', 'action' => 'asuntos_add'),
                                             'id' => 'AsuntosAdd'
                                         )); ?>
                                         <? for ($i = 0; $i <= 20; $i++) : ?>
@@ -88,7 +88,7 @@
             <div class="page-content-wrap">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Responsables</h3>
+                        <h3 class="panel-title">Notificar Correo</h3>
                         <ul class="panel-controls">
                             <li><a href="#" class="clone-boton-responsable "><span class="fa fa-plus"></span></a></li>
                         </ul>
@@ -109,7 +109,7 @@
                                     <tbody>
                                         <?= $this->Form->create(false, array(
                                             'class' => 'form-horizontal',
-                                            'url' => array('controller' => 'asuntosResponsables', 'action' => 'responsable_add'),
+                                            'url' => array('controller' => 'notificarAsunto', 'action' => 'responsable_add'),
                                             'id' => 'responsableAdd'
                                         )); ?>
                                         <? for ($i = 0; $i <= 20; $i++) : ?>
@@ -133,13 +133,13 @@
                                         <? endfor; ?>
                                         <? foreach ($responsables as $respnsable) : ?>
                                             <tr>
-                                                <td> <?= $respnsable['AtencionCliente']['nombre'] ?></td>
-                                                <td> <?= $respnsable['AtencionCliente']['correo'] ?></td>
-                                                <td align="center" style="vertical-align: middle; width: 100px;"><?= $respnsable['AtencionCliente']['activo'] ? 'Si' : 'No' ?></td>
-                                                <td align="center" style="vertical-align: middle; width: 100px;"> <?= $respnsable['AtencionCliente']['default'] ? 'Si' : 'No' ?></td>
+                                                <td> <?= $respnsable['Notificar']['nombre'] ?></td>
+                                                <td> <?= $respnsable['Notificar']['correo'] ?></td>
+                                                <td align="center" style="vertical-align: middle; width: 100px;"><?= $respnsable['Notificar']['activo'] ? 'Si' : 'No' ?></td>
+                                                <td align="center" style="vertical-align: middle; width: 100px;"> <?= $respnsable['Notificar']['default'] ? 'Si' : 'No' ?></td>
                                                 <td style="vertical-align: middle; width: 100px;">
-                                                    <button type="button" data-toggle="modal" data-target="#modal-editar-responsable-<?= $respnsable['AtencionCliente']['id'] ?>" class="btn btn-info btn-block ">Editar</button>
-                                                    <button type="button" data-toggle="modal" data-target="#modal-eliminar-responsable-<?= $respnsable['AtencionCliente']['id'] ?>" class="btn btn-danger btn-block ">Eliminar</button>
+                                                    <button type="button" data-toggle="modal" data-target="#modal-editar-responsable-<?= $respnsable['Notificar']['id'] ?>" class="btn btn-info btn-block ">Editar</button>
+                                                    <button type="button" data-toggle="modal" data-target="#modal-eliminar-responsable-<?= $respnsable['Notificar']['id'] ?>" class="btn btn-danger btn-block ">Eliminar</button>
                                                 </td>
                                             </tr>
                                         <? endforeach; ?>
@@ -177,8 +177,8 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th style="width: 500px;"><?= 'Responsable correo' ?></th>
-                                    <th><?= 'Responsable nombre' ?></th>
+                                    <th style="width: 500px;"><?= 'Correo a Notificar' ?></th>
+                                    <th><?= 'Responsable del correo' ?></th>
                                     <th><?= 'Asunto' ?></th>
                                     <th>Acciones</th>
                                 </tr>
@@ -186,13 +186,13 @@
                             <tbody>
                                 <?= $this->Form->create(false, array(
                                     'class' => 'form-horizontal',
-                                    'url' => array('controller' => 'asuntosResponsables', 'action' => 'asuntos_responsables_add'),
+                                    'url' => array('controller' => 'notificarAsunto', 'action' => 'asuntos_responsables_add'),
 
                                 )); ?>
                                 <? for ($i = 0; $i <= 20; $i++) : ?>
                                     <tr class="hidden clone-tr-administrar_asuntos">
                                         <td>
-                                            <?= $this->Form->select(sprintf('%d.atencion_cliente_id', $i), $responsables_activos, array('empty' => 'Seleccione', 'class' => 'form-control')); ?>
+                                            <?= $this->Form->select(sprintf('%d.notificar_id', $i), $responsables_activos, array('empty' => 'Seleccione', 'class' => 'form-control')); ?>
                                         </td>
                                         <td align="center">
                                             " - "
@@ -206,13 +206,13 @@
                                         </td>
                                     </tr>
                                 <? endfor; ?>
-                                <? foreach ($asuntoAtencionClientes as $asuntoAtencionCliente) : ?>
+                                <? foreach ($NotificarAsuntos as $NotificarAsunto) : ?>
                                     <tr>
-                                        <td> <?= $asuntoAtencionCliente['AtencionCliente']['correo'] ?> </td>
-                                        <td> <?= $asuntoAtencionCliente['AtencionCliente']['nombre'] ?> </td>
-                                        <td> <?= $asuntoAtencionCliente['Asunto']['nombre'] ?></td>
+                                        <td> <?= $NotificarAsunto['Notificar']['correo'] ?> </td>
+                                        <td> <?= $NotificarAsunto['Notificar']['nombre'] ?> </td>
+                                        <td> <?= $NotificarAsunto['Asunto']['nombre'] ?></td>
                                         <td style="vertical-align: middle; width: 100px;">
-                                            <button type="button" data-toggle="modal" data-target="#modal-eliminar-administrar_asuntos-<?= $asuntoAtencionCliente['AsuntoAtencionCliente']['id'] ?>" class="btn btn-danger btn-block ">Eliminar</button>
+                                            <button type="button" data-toggle="modal" data-target="#modal-eliminar-administrar_asuntos-<?= $NotificarAsunto['NotificarAsunto']['id'] ?>" class="btn btn-danger btn-block ">Eliminar</button>
                                         </td>
                                     </tr>
                                 <? endforeach; ?>
@@ -250,7 +250,7 @@
                 <div class="modal-body">
                     <?= $this->Form->create(false, array(
                         'class' => 'form-horizontal',
-                        'url' => array('controller' => 'asuntosResponsables', 'action' => 'asuntos_edit'),
+                        'url' => array('controller' => 'notificarAsunto', 'action' => 'asuntos_edit'),
                         'id' => 'AsuntosEdit'
                     )); ?>
                     <div>
@@ -299,7 +299,7 @@
                 <div class="modal-body">
                     <?= $this->Form->create(false, array(
                         'class' => 'form-horizontal',
-                        'url' => array('controller' => 'asuntosResponsables', 'action' => 'asuntos_delete'),
+                        'url' => array('controller' => 'notificarAsunto', 'action' => 'asuntos_delete'),
                         'id' => 'AsuntosDelete'
                     )); ?>
                     <div>
@@ -325,42 +325,42 @@
 
 <!-- Modal Editar Responsable -->
 <?php foreach ($responsables as $responsable) : ?>
-    <div class="modal fade" id="modal-editar-responsable-<?= $responsable['AtencionCliente']['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="modal-editar-responsable-<?= $responsable['AtencionCliente']['id']; ?>-label">
+    <div class="modal fade" id="modal-editar-responsable-<?= $responsable['Notificar']['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="modal-editar-responsable-<?= $responsable['Notificar']['id']; ?>-label">
         <div class="modal-dialog" role="document">
 
             <div class="modal-content">
 
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title text-center">Responsable #<?= $responsable['AtencionCliente']['id'] ?></h4>
+                    <h4 class="modal-title text-center">Responsable #<?= $responsable['Notificar']['id'] ?></h4>
                 </div>
 
                 <div class="modal-body">
                     <?= $this->Form->create(false, array(
                         'class' => 'form-horizontal',
-                        'url' => array('controller' => 'asuntosResponsables', 'action' => 'responsable_edit'),
+                        'url' => array('controller' => 'notificarAsunto', 'action' => 'responsable_edit'),
                     )); ?>
                     <div>
                         <div class="form-group">
-                            <?= $this->Form->input('id', array('label' => '', 'default', "class" => "hidden", 'default' => $responsable['AtencionCliente']['id'])); ?>
-                            <?= $this->Form->input('nombre', array("class" => "form-control", 'default' => $responsable['AtencionCliente']['nombre'])); ?>
+                            <?= $this->Form->input('id', array('label' => '', 'default', "class" => "hidden", 'default' => $responsable['Notificar']['id'])); ?>
+                            <?= $this->Form->input('nombre', array("class" => "form-control", 'default' => $responsable['Notificar']['nombre'])); ?>
                         </div>
                         <div class="form-group">
                             <label><?= __('Correo'); ?></label>
                             <br>
-                            <?= $this->Form->textarea('correo', array("class" => "form-control", 'default' => $responsable['AtencionCliente']['correo'])); ?>
+                            <?= $this->Form->textarea('correo', array("class" => "form-control", 'default' => $responsable['Notificar']['correo'])); ?>
                         </div>
 
                         <div class="form-group">
                             <label><?= __('Atención por defecto'); ?></label>
                             <br>
-                            <?= $this->Form->checkbox('default', array('label' => '', 'default' => $responsable['AtencionCliente']['default'])); ?>
+                            <?= $this->Form->checkbox('default', array('label' => '', 'default' => $responsable['Notificar']['default'])); ?>
                         </div>
 
                         <div class="form-group">
                             <label><?= __('Activo'); ?></label>
                             <br>
-                            <?= $this->Form->checkbox('activo', array('label' => '', 'default' => $responsable['AtencionCliente']['activo'])); ?>
+                            <?= $this->Form->checkbox('activo', array('label' => '', 'default' => $responsable['Notificar']['activo'])); ?>
                             <p style="color: red;">Si el Resposable queda inactivo se eliminaran sus relaciones.</p>
                         </div>
                         <div class="col-xs-12">
@@ -380,26 +380,26 @@
 
 <!-- Modal Eliminar Responsable -->
 <?php foreach ($responsables as $responsable) : ?>
-    <div class="modal fade" id="modal-eliminar-responsable-<?= $responsable['AtencionCliente']['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="modal-eliminar-responsable-<?= $responsable['AtencionCliente']['id']; ?>-label">
+    <div class="modal fade" id="modal-eliminar-responsable-<?= $responsable['Notificar']['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="modal-eliminar-responsable-<?= $responsable['Notificar']['id']; ?>-label">
         <div class="modal-dialog" role="document">
 
             <div class="modal-content">
 
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title text-center">Responsable #<?= $responsable['AtencionCliente']['id'] ?></h4>
+                    <h4 class="modal-title text-center">Responsable #<?= $responsable['Notificar']['id'] ?></h4>
                 </div>
 
                 <div class="modal-body">
                     <?= $this->Form->create(false, array(
                         'class' => 'form-horizontal',
-                        'url' => array('controller' => 'asuntosResponsables', 'action' => 'responsable_delete'),
+                        'url' => array('controller' => 'notificarAsunto', 'action' => 'responsable_delete'),
 
                     )); ?>
                     <div>
                         <div class="form-group">
-                            <?= $this->Form->input('id', array('label' => '', 'default', "class" => "hidden", 'default' => $responsable['AtencionCliente']['id'])); ?>
-                            <label><?= "Al eliminar el Responsable '{$responsable['AtencionCliente']['nombre']}' se eliminaran todas las relaciones que existentes entre esta y los asuntos."; ?></label>
+                            <?= $this->Form->input('id', array('label' => '', 'default', "class" => "hidden", 'default' => $responsable['Notificar']['id'])); ?>
+                            <label><?= "Al eliminar el Responsable '{$responsable['Notificar']['nombre']}' se eliminaran todas las relaciones que existentes entre esta y los asuntos."; ?></label>
                         </div>
                         <div class="col-xs-12">
                             <div class="btn-group pull-right">
@@ -418,28 +418,28 @@
 <!-- Fin modal Eliminar Responsable -->
 
 
-<!-- Modal Eliminar AtencionCliente -->
-<?php foreach ($asuntoAtencionClientes as $asuntoAtencionCliente) : ?>
-    <div class="modal fade" id="modal-eliminar-administrar_asuntos-<?= $asuntoAtencionCliente['AsuntoAtencionCliente']['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="modal-eliminar-administrar_asuntos-<?= $asuntoAtencionCliente['AtencionCliente']['id']; ?>-label">
+<!-- Modal Eliminar Notificar -->
+<?php foreach ($NotificarAsuntos as $NotificarAsunto) : ?>
+    <div class="modal fade" id="modal-eliminar-administrar_asuntos-<?= $NotificarAsunto['NotificarAsunto']['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="modal-eliminar-administrar_asuntos-<?= $NotificarAsunto['Notificar']['id']; ?>-label">
         <div class="modal-dialog" role="document">
 
             <div class="modal-content">
 
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title text-center">Administrar asuntos #<?= $asuntoAtencionCliente['AsuntoAtencionCliente']['id'] ?></h4>
+                    <h4 class="modal-title text-center">Administrar asuntos #<?= $NotificarAsunto['NotificarAsunto']['id'] ?></h4>
                 </div>
 
                 <div class="modal-body">
                     <?= $this->Form->create(false, array(
                         'class' => 'form-horizontal',
-                        'url' => array('controller' => 'asuntosResponsables', 'action' => 'asuntos_responsables_delete'),
+                        'url' => array('controller' => 'notificarAsunto', 'action' => 'asuntos_responsables_delete'),
 
                     )); ?>
                     <div>
                         <div class="form-group">
-                            <?= $this->Form->input('id', array('label' => '', 'default', "class" => "hidden", 'default' => $asuntoAtencionCliente['AsuntoAtencionCliente']['id'])); ?>
-                            <label><?= "Estas seguro de eliminar la relación entre '{$asuntoAtencionCliente['AtencionCliente']['nombre']}' y '{$asuntoAtencionCliente['Asunto']['nombre']}'."; ?></label>
+                            <?= $this->Form->input('id', array('label' => '', 'default', "class" => "hidden", 'default' => $NotificarAsunto['NotificarAsunto']['id'])); ?>
+                            <label><?= "Estas seguro de eliminar la relación entre '{$NotificarAsunto['Notificar']['nombre']}' y '{$NotificarAsunto['Asunto']['nombre']}'."; ?></label>
                         </div>
                         <div class="col-xs-12">
                             <div class="btn-group pull-right">
@@ -455,4 +455,4 @@
         </div>
     </div>
 <? endforeach; ?>
-<!-- Fin modal Eliminar AtencionCliente -->
+<!-- Fin modal Eliminar Notificar -->

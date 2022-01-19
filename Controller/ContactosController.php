@@ -1,7 +1,7 @@
 <?php
 App::uses('AppController', 'Controller');
 class ContactosController extends AppController
-{   
+{
 
     public function admin_index()
     {
@@ -96,9 +96,9 @@ class ContactosController extends AppController
             'recursive' => 0,
             'conditions' => $condiciones,
             'contain' => array(
-                'AtencionCliente' => array(
+                'Administrador' => array(
                     'fields' => array(
-                        'AtencionCliente.correo'
+                        'Administrador.email'
                     )
                 )
             ),
@@ -111,13 +111,13 @@ class ContactosController extends AppController
         $this->paginate = $paginate;
         $contactos          = $this->paginate();
 
-        $administradores = $this->Contacto->AtencionCliente->find('list', array(
+        $administradores = $this->Contacto->Administrador->find('list', array(
             'conditions' => array(
-                'AtencionCliente.activo' => 1,
+                'Administrador.activo' => 1,
             ),
             'fields' => array(
-                'AtencionCliente.id',
-                'AtencionCliente.correo'
+                'Administrador.id',
+                'Administrador.email'
             )
         ));
 
@@ -140,10 +140,9 @@ class ContactosController extends AppController
      */
     public function admin_notificar_cliente($id)
     {
-        if(!$this->Contacto->exists($id))
-        {
+        if (!$this->Contacto->exists($id)) {
             $this->Session->setFlash('Registro no encontrado.', null, array(), 'danger');
-			$this->redirect($this->referer('/', true));
+            $this->redirect($this->referer('/', true));
         }
 
         $contacto = $this->Contacto->find('first', array(
@@ -153,60 +152,55 @@ class ContactosController extends AppController
             'contain' => array(
                 'Tienda',
                 'VentaCliente',
-                'AtencionCliente'
+                'Administrador'
             )
         ));
 
-        if (!$this->notificar_cliente($contacto))
-        {
+        if (!$this->notificar_cliente($contacto)) {
             $this->Session->setFlash('No fue posible notificar al cliente. Intente nuevamente.', null, array(), 'warning');
-			$this->redirect($this->referer('/', true));
+            $this->redirect($this->referer('/', true));
         }
 
         $this->Session->setFlash(sprintf('Contacto n°%d notificado con éxito a %s.', $contacto['Contacto']['id'], $contacto['Contacto']['email_contacto']), null, array(), 'success');
         $this->redirect($this->referer('/', true));
-        
     }
 
     /**
      * Atender contacto desde admin
      */
     public function admin_atender($id)
-    {   
+    {
 
-        if(!$this->Contacto->exists($id))
-        {
+        if (!$this->Contacto->exists($id)) {
             $this->Session->setFlash('Registro no encontrado.', null, array(), 'danger');
-			$this->redirect($this->referer('/', true));
+            $this->redirect($this->referer('/', true));
         }
 
         $token = $this->Session->read('Auth.Administrador.token.token');
-        
+
         App::uses('HttpSocket', 'Network/Http');
-		$socket			= new HttpSocket();
-		$request		= $socket->post(
-			Router::url('/api/contactos/attend.json?token='.$token, true),
-			array(
+        $socket  = new HttpSocket();
+        $request = $socket->post(
+            Router::url('/api/contactos/attend.json?token=' . $token, true),
+            array(
                 'contacto_id' => $id
             )
-		);
+        );
 
-		$respuesta = json_decode($request->body(), true);
-        
-        if (!isset($respuesta['response']))
-        {
+        $respuesta = json_decode($request->body(), true);
+
+        if (!isset($respuesta['response'])) {
             $this->Session->setFlash($respuesta['message'], null, array(), 'danger');
-			$this->redirect($this->referer('/', true));
+            $this->redirect($this->referer('/', true));
         }
 
-		if ($respuesta['response']['code'] != 200) {
-			$this->Session->setFlash('No fue posible atender este contacto. Póngase en contacto con el equipo TI.', null, array(), 'danger');
-			$this->redirect($this->referer('/', true));
+        if ($respuesta['response']['code'] != 200) {
+            $this->Session->setFlash('No fue posible atender este contacto. Póngase en contacto con el equipo TI.', null, array(), 'danger');
+            $this->redirect($this->referer('/', true));
         }
-        
+
         $this->Session->setFlash('Contacto procesado con éxito.', null, array(), 'success');
-		$this->redirect($this->referer('/', true));
-
+        $this->redirect($this->referer('/', true));
     }
 
     /**
@@ -214,10 +208,9 @@ class ContactosController extends AppController
      */
     public function admin_view($id)
     {
-        if(!$this->Contacto->exists($id))
-        {
+        if (!$this->Contacto->exists($id)) {
             $this->Session->setFlash('Registro no encontrado.', null, array(), 'danger');
-			$this->redirect($this->referer('/', true));
+            $this->redirect($this->referer('/', true));
         }
 
         $contacto = $this->Contacto->find('first', array(
@@ -227,7 +220,7 @@ class ContactosController extends AppController
             'contain' => array(
                 'Tienda',
                 'VentaCliente',
-                'AtencionCliente'
+                'Administrador'
             )
         ));
 
@@ -237,7 +230,7 @@ class ContactosController extends AppController
         $this->set(compact('contacto'));
     }
 
-   /**
+    /**
      * Api crear contacto
      */
     public function api_add()
@@ -415,36 +408,8 @@ class ContactosController extends AppController
         }
 
         // TODO Obtenemos administradores para el asuntos solicitado
-        $AsuntoAtencionCliente = ClassRegistry::init('AsuntoAtencionCliente')->atencion_cliente_ids($this->request->data['asunto']);
-       
-        $admin_id = $this->Contacto->obtener_atencion_cliente( $AsuntoAtencionCliente );
-        
-        # Asignamos al vendedor
-        if (!empty($admin_id)) {
-            $contacto['Contacto']['administrador_id'] = $admin_id;
-        }else{
+        $NotificarAsunto = ClassRegistry::init('NotificarAsunto')->atencion_cliente_ids($this->request->data['asunto']);
 
-            ClassRegistry::init('Log')->create();
-            ClassRegistry::init('Log')->save(
-                [
-                    'Log' =>
-                    [
-                        'administrador' => "Problemas para asignar resposable al asunto {$this->request->data['asunto']}",
-                        'modulo'        => 'ContactosController',
-                        'modulo_accion' => "No existen administradores que puedan ser asignados al asunto {$this->request->data['asunto']}"
-                    ]
-                ]
-            );
-
-            $response = array(
-                'code'    => 401,
-                'name' => 'error',
-                'message' => 'No fue posible guardar el mensaje. Intente nuevamente.'
-            );
-
-            throw new CakeException($response);
-        }
-      
         if (!$this->Contacto->save($contacto)) {
             $response = array(
                 'code'    => 401,
@@ -466,12 +431,26 @@ class ContactosController extends AppController
                             'Tienda.nombre',
                             'Tienda.mandrill_apikey'
                         )
-                    ),
-                    'AtencionCliente'
+                    )
                 )
             ));
-            $this->notificar_vendedor($contactoCreado);
-         
+            if (!$NotificarAsunto) {
+                ClassRegistry::init('Log')->create();
+                ClassRegistry::init('Log')->save(
+                    [
+                        'Log' =>
+                        [
+                            'administrador' => "Problemas para notificar asunto {$this->request->data['asunto']}",
+                            'modulo'        => 'ContactosController',
+                            'modulo_accion' => "No se han encontrado correos para notificar"
+                        ]
+                    ]
+                );
+            } else {
+
+                $contactoCreado['Administrador']['email'] = $NotificarAsunto;
+                $this->notificar_vendedor($contactoCreado);
+            }
         }
 
         $this->set(array(
@@ -493,52 +472,51 @@ class ContactosController extends AppController
     {
         # creamos un token de acceso vía email por 30 días
         $token = ClassRegistry::init('Token')->crear_token_cliente($contacto['Contacto']['cliente_id'], $contacto['Contacto']['tienda_id'], 168)['token'];
-        
+       
         if (empty($token)) {
-			return false;
+            return false;
         }
+
+        $this->View             = new View();
+        $this->View->viewPath   = 'Contactos' . DS . 'emails';
+        $this->View->layoutPath = 'Correos' . DS . 'html';
+
+        $url = obtener_url_base();
+       
+        $this->View->set(compact('contacto', 'url', 'token'));
+        $html = $this->View->render('confirmar_contacto');
+
+        $mandrill_apikey = $contacto['Tienda']['mandrill_apikey'];
+
+        if (empty($mandrill_apikey)) {
+            return false;
+        }
+
+        $mandrill = $this->Components->load('Mandrill');
+
+        $mandrill->conectar($mandrill_apikey);
+
+        $asunto = sprintf('[CS %s] ¿Resolvimos tu requerimiento? - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
+
+        if (Configure::read('ambiente') == 'dev') {
+            $asunto = sprintf('[CS %s - DEV] ¿Resolvimos tu requerimiento? - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
+        }
+
+        $remitente = array(
+            'email' => 'clientes@nodriza.cl',
+            'nombre' => 'Servicio al cliente ' . $contacto['Tienda']['nombre']
+        );
+
+        $destinatarios = array();
+        $destinatarios[] = array(
+            'email' => $contacto['Contacto']['email_contacto'],
+            'type' => 'to'
+        );
         
-        $this->View					= new View();
-		$this->View->viewPath		= 'Contactos' . DS . 'emails';
-		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
-		$url = obtener_url_base();
-		
-		$this->View->set(compact('contacto', 'url', 'token'));
-		$html = $this->View->render('confirmar_contacto');
-	
-		$mandrill_apikey = $contacto['Tienda']['mandrill_apikey'];
-
-		if (empty($mandrill_apikey)) {
-			return false;
-		}
-
-		$mandrill = $this->Components->load('Mandrill');
-
-		$mandrill->conectar($mandrill_apikey);
-
-		$asunto = sprintf('[CS %s] ¿Resolvimos tu requerimiento? - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));		
-		
-		if (Configure::read('ambiente') == 'dev') {
-			$asunto = sprintf('[CS %s - DEV] ¿Resolvimos tu requerimiento? - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
-		}
-		
-		$remitente = array(
-			'email' => 'clientes@nodriza.cl',
-			'nombre' => 'Servicio al cliente ' . $contacto['Tienda']['nombre']
-		);
-
-		$destinatarios = array();
-
-		$destinatarios[] = array(
-			'email' => $contacto['Contacto']['email_contacto'],
-			'type' => 'to'
-		);
-		
-		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+        return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
     }
 
-    
+
     /**
      * Envia el email al cliente para que confirme si fue atendido o no
      * @param array Contacto
@@ -546,45 +524,45 @@ class ContactosController extends AppController
      */
     public function notificar_vendedor_rechazo($contacto)
     {
-        
-        $this->View					= new View();
-		$this->View->viewPath		= 'Contactos' . DS . 'emails';
-		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
-		$url = obtener_url_base();
-		
-		$this->View->set(compact('contacto', 'url', 'token'));
-		$html = $this->View->render('notificar_vendedor');
-	
-		$mandrill_apikey = $contacto['Tienda']['mandrill_apikey'];
 
-		if (empty($mandrill_apikey)) {
-			return false;
-		}
+        $this->View                    = new View();
+        $this->View->viewPath        = 'Contactos' . DS . 'emails';
+        $this->View->layoutPath        = 'Correos' . DS . 'html';
 
-		$mandrill = $this->Components->load('Mandrill');
+        $url = obtener_url_base();
 
-		$mandrill->conectar($mandrill_apikey);
+        $this->View->set(compact('contacto', 'url', 'token'));
+        $html = $this->View->render('notificar_vendedor');
 
-		$asunto = sprintf('[CS %s] Cliente respondió el contacto - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));		
-		
-		if (Configure::read('ambiente') == 'dev') {
-			$asunto = sprintf('[CS %s - DEV] Cliente respondió el contacto - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
-		}
-		
-		$remitente = array(
-			'email' => 'clientes@nodriza.cl',
-			'nombre' => 'Servicio al cliente ' . $contacto['Tienda']['nombre']
-		);
+        $mandrill_apikey = $contacto['Tienda']['mandrill_apikey'];
 
-		$destinatarios = array();
+        if (empty($mandrill_apikey)) {
+            return false;
+        }
 
-		$destinatarios[] = array(
-			'email' => $contacto['AtencionCliente']['correo'],
-			'type' => 'to'
-		);
-		
-		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+        $mandrill = $this->Components->load('Mandrill');
+
+        $mandrill->conectar($mandrill_apikey);
+
+        $asunto = sprintf('[CS %s] Cliente respondió el contacto - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
+
+        if (Configure::read('ambiente') == 'dev') {
+            $asunto = sprintf('[CS %s - DEV] Cliente respondió el contacto - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
+        }
+
+        $remitente = array(
+            'email' => 'clientes@nodriza.cl',
+            'nombre' => 'Servicio al cliente ' . $contacto['Tienda']['nombre']
+        );
+
+        $destinatarios = array();
+
+        $destinatarios[] = array(
+            'email' => $contacto['Administrador']['email'],
+            'type' => 'to'
+        );
+
+        return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
     }
 
 
@@ -595,45 +573,47 @@ class ContactosController extends AppController
      */
     public function notificar_vendedor($contacto)
     {
-        
-        $this->View					= new View();
-		$this->View->viewPath		= 'Contactos' . DS . 'emails';
-		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
-		$url = obtener_url_base();
-		
-		$this->View->set(compact('contacto', 'url', 'token'));
-		$html = $this->View->render('notificar_vendedor_nuevo_contacto');
-        
-		$mandrill_apikey = $contacto['Tienda']['mandrill_apikey'];
 
-		if (empty($mandrill_apikey)) {
-			return false;
-		}
+        $this->View             = new View();
+        $this->View->viewPath   = 'Contactos' . DS . 'emails';
+        $this->View->layoutPath = 'Correos' . DS . 'html';
 
-		$mandrill = $this->Components->load('Mandrill');
+        $url = obtener_url_base();
 
-		$mandrill->conectar($mandrill_apikey);
+        $this->View->set(compact('contacto', 'url', 'token'));
+        $html = $this->View->render('notificar_vendedor_nuevo_contacto');
 
-		$asunto = sprintf('[CS %s] Nuevo contacto asignado - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));		
-		
-		if (Configure::read('ambiente') == 'dev') {
-			$asunto = sprintf('[CS %s - DEV] Nuevo contacto asignado - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
-		}
-		
-		$remitente = array(
-			'email' => 'clientes@nodriza.cl',
-			'nombre' => 'Servicio al cliente ' . $contacto['Tienda']['nombre']
-		);
+        $mandrill_apikey = $contacto['Tienda']['mandrill_apikey'];
 
-		$destinatarios = array();
+        if (empty($mandrill_apikey)) {
+            return false;
+        }
 
-		$destinatarios[] = array(
-			'email' => $contacto['AtencionCliente']['correo'],
-			'type' => 'to'
-		);
-		
-		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+        $mandrill = $this->Components->load('Mandrill');
+
+        $mandrill->conectar($mandrill_apikey);
+
+        $asunto = sprintf('[CS %s] Un cliente espera ser atendido - número de Contacto id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
+
+        if (Configure::read('ambiente') == 'dev') {
+            $asunto = sprintf('[CS %s - DEV] Un cliente espera ser atendido - número de Contacto id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
+        }
+
+        $remitente = array(
+            'email' => 'clientes@nodriza.cl',
+            'nombre' => 'Servicio al cliente ' . $contacto['Tienda']['nombre']
+        );
+
+        $destinatarios = array();
+
+        foreach ($contacto['Administrador']['email'] as $value) {
+            $destinatarios[] = array(
+                'email' => $value,
+                'type' => 'to'
+            );
+        }
+
+        return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
     }
 
 
@@ -644,56 +624,54 @@ class ContactosController extends AppController
     public function api_atender()
     {
         # Sólo método post
-		if (!$this->request->is('post')) {
-			$response = array(
-				'code'    => 501, 
-				'message' => 'Only POST request allow'
-			);
-
-			throw new CakeException($response);
-		}
-
-		# Existe token
-		if (!isset($this->request->query['token'])) {
-			$response = array(
-				'code'    => 502, 
-				'message' => 'Expected Token'
-			);
-
-			throw new CakeException($response);
-		}
-
-		# Validamos token
-		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
-			$response = array(
-				'code'    => 401, 
-				'message' => 'Invalid or expired Token'
-			);
-
-			throw new CakeException($response);
-        }
-        
-
-        if (!isset($this->request->data['contacto_id']))
-        {
+        if (!$this->request->is('post')) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'contacto_id es requerido'
-			);
+                'code'    => 501,
+                'message' => 'Only POST request allow'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
+        }
+
+        # Existe token
+        if (!isset($this->request->query['token'])) {
+            $response = array(
+                'code'    => 502,
+                'message' => 'Expected Token'
+            );
+
+            throw new CakeException($response);
+        }
+
+        # Validamos token
+        if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+            $response = array(
+                'code'    => 401,
+                'message' => 'Invalid or expired Token'
+            );
+
+            throw new CakeException($response);
+        }
+
+
+        if (!isset($this->request->data['contacto_id'])) {
+            $response = array(
+                'code'    => 401,
+                'message' => 'contacto_id es requerido'
+            );
+
+            throw new CakeException($response);
         }
 
         $id = $this->request->data['contacto_id'];
 
-        if (!$this->Contacto->exists($id))
-        {
+        if (!$this->Contacto->exists($id)) {
             $response = array(
-				'code'    => 404, 
-				'message' => 'Contacto no encontrado'
-			);
+                'code'    => 404,
+                'message' => 'Contacto no encontrado'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
         $contacto =  $this->Contacto->find('first', array(
@@ -719,25 +697,23 @@ class ContactosController extends AppController
         $contacto['Contacto']['fecha_confirmado_cliente'] = null;
         $contacto['Contacto']['fecha_no_confirmado_cliente'] = null;
 
-        if (!$this->Contacto->save($contacto))
-        {
+        if (!$this->Contacto->save($contacto)) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'No se pudo actualizar el contacto'
-			);
+                'code'    => 401,
+                'message' => 'No se pudo actualizar el contacto'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
         # Notificamos
-        if (!$this->notificar_cliente($contacto))
-        {
+        if (!$this->notificar_cliente($contacto)) {
             $response = array(
-				'code'    => 401, 
-				'message' => 'No fue posible notificar al cliente. Intente notificarlo manualmente.'
-			);
+                'code'    => 401,
+                'message' => 'No fue posible notificar al cliente. Intente notificarlo manualmente.'
+            );
 
-			throw new CakeException($response);
+            throw new CakeException($response);
         }
 
         $this->set(array(
@@ -748,7 +724,6 @@ class ContactosController extends AppController
             ),
             '_serialize' => array('response')
         ));
-
     }
 
 
@@ -757,22 +732,22 @@ class ContactosController extends AppController
      * contacto mediante un link
      */
     public function cliente_confirmar($id)
-	{	
+    {
         $error = '';
 
         $PageTitle = 'Confirmar atención';
 
         $tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
-	    	'Tienda.id', 'Tienda.nombre', 'Tienda.logo', 'Tienda.url', 'Tienda.whatsapp_numero'
+            'Tienda.id', 'Tienda.nombre', 'Tienda.logo', 'Tienda.url', 'Tienda.whatsapp_numero'
         ));
-        
+
         $contacto = $this->Contacto->find('first', array(
             'conditions' => array(
                 'Contacto.id' => $id,
                 'Contacto.confirmado_cliente' => 0
             ),
             'contain' => array(
-                'AtencionCliente',
+                'Administrador',
                 'Tienda' => array(
                     'fields' => array(
                         'Tienda.id',
@@ -784,61 +759,92 @@ class ContactosController extends AppController
         ));
 
         if (!isset($this->request->query['access_token'])) {
-			$error = 'No tienes permitido acceder a esta sección. Por favor ponte en contacto con nuestro equipo vía whatsapp al ' . $tienda['Tienda']['whatsapp_numero'] . '.';
-			$this->set(compact('PageTitle', 'error', 'tienda', 'contacto'));
-			return;
-		}
+            $error = 'No tienes permitido acceder a esta sección. Por favor ponte en contacto con nuestro equipo vía whatsapp al ' . $tienda['Tienda']['whatsapp_numero'] . '.';
+            $this->set(compact('PageTitle', 'error', 'tienda', 'contacto'));
+            return;
+        }
 
-		$token = $this->request->query['access_token'];
+        $token = $this->request->query['access_token'];
 
-        try 
-        {
+        try {
             $token_valido = ClassRegistry::init('Token')->validar_token($token);
-        }catch (Exception $e)
-        {
+        } catch (Exception $e) {
             $token_valido = 0;
         }
 
-		# Validamos el token
-		if (!$token_valido) {
-			$error = 'El token de acceso no es válido o está caduco. Si ya se resolvió su requerimiento, ignore este mensaje. De lo contrario ponte en contacto con nosotros vía whatsapp al ' . $tienda['Tienda']['whatsapp_numero'] . '.';
-			$this->set(compact('PageTitle', 'error', 'tienda', 'contacto'));
-			return;
+        # Validamos el token
+        if (!$token_valido) {
+            $error = 'El token de acceso no es válido o está caduco. Si ya se resolvió su requerimiento, ignore este mensaje. De lo contrario ponte en contacto con nosotros vía whatsapp al ' . $tienda['Tienda']['whatsapp_numero'] . '.';
+            $this->set(compact('PageTitle', 'error', 'tienda', 'contacto'));
+            return;
         }
-        
+
         if (!isset($this->request->query['action'])) {
-			$error = 'No tienes permitido acceder a esta sección. Por favor ponte en contacto con nuestro equipo vía whatsapp al ' . $tienda['Tienda']['whatsapp_numero'] . '.';
-			$this->set(compact('PageTitle', 'error', 'tienda', 'contacto'));
-			return;
-		}
+            $error = 'No tienes permitido acceder a esta sección. Por favor ponte en contacto con nuestro equipo vía whatsapp al ' . $tienda['Tienda']['whatsapp_numero'] . '.';
+            $this->set(compact('PageTitle', 'error', 'tienda', 'contacto'));
+            return;
+        }
 
         # si existe confirmamos según corresponda
-        if (!empty($contacto))
-        {
+        if (!empty($contacto)) {
             $this->Contacto->id = $id;
 
-            if ($this->request->query['action'] == 'ok')
-            {   
+            if ($this->request->query['action'] == 'ok') {
                 $this->Contacto->savefield('confirmado_cliente', 1);
                 $this->Contacto->savefield('atendido', 1);
                 $this->Contacto->savefield('fecha_confirmado_cliente', date('Y-m-d H:i:s'));
                 $this->Contacto->savefield('fecha_no_confirmado_cliente', null);
-            }
-            else
-            {
+            } else {
                 $this->Contacto->savefield('confirmado_cliente', 0);
                 $this->Contacto->savefield('atendido', 0);
                 $this->Contacto->savefield('fecha_confirmado_cliente', null);
                 $this->Contacto->savefield('fecha_no_confirmado_cliente', date('Y-m-d H:i:s'));
-                
+
                 $this->notificar_vendedor_rechazo($contacto);
             }
-        }
-        else
-        {
+        } else {
             $error = 'Ocurrió un error al intentar confirmar su petición o su caso ya se encuentra resuelto.';
         }
 
-		$this->set(compact('PageTitle', 'error', 'contacto', 'tienda'));
-	}
+        $this->set(compact('PageTitle', 'error', 'contacto', 'tienda'));
+    }
+
+    public function admin_relacionar_contacto_administror($id)
+    {
+      
+        $contacto = $this->Contacto->find('first', array(
+            'conditions' => array(
+                'Contacto.id' =>  $id,
+            ),
+            'fields' => [
+                'Contacto.id',
+                'Contacto.administrador_id'
+            ]
+        ));
+     
+        if (is_null($contacto['Contacto']['administrador_id'])) {
+         
+            $contacto['Contacto']['administrador_id'] = CakeSession::read('Auth.Administrador.id');
+           
+            if ($this->Contacto->save($contacto)) {
+                $this->Session->setFlash(
+                    'Contacto a sido asignado al usuario ' . CakeSession::read('Auth.Administrador.email'),
+                    null,
+                    array(),
+                    'success'
+                );
+
+                $this->redirect(array('action' => 'view', $id));
+            }
+        }
+        
+        $this->Session->setFlash(
+            'Contacto ya a sido atendido por otro usuario',
+            null,
+            array(),
+            'danger'
+        );
+
+        $this->redirect(array('action' => 'index'));
+    }
 }

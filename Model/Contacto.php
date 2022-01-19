@@ -40,15 +40,6 @@ class Contacto extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
-		),
-		'AtencionCliente' => array(
-			'className'				=> 'AtencionCliente',
-			'foreignKey'			=> 'administrador_id',
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'counterCache'			=> true,
-
 		)
 	);
 
@@ -97,20 +88,20 @@ class Contacto extends AppModel
 	 * 
 	 * Se obtienen los administradores que tienen asignada la atencion al asunto en base al array entrante(Se calcula la mitad). 
 	 * 
-	 * @param  mixed $atencionCliente_ids
+	 * @param  mixed $Notificar_ids
 	 * @return void
 	 */
-	public function obtener_atencion_cliente($atencionCliente_ids)
+	public function obtener_atencion_cliente($Notificar_ids)
 	{
 		
 		$ids_atencion = $this->find('all', array(
 			'fields'     => array('administrador_id'),
-			'conditions' => ['administrador_id' => $atencionCliente_ids],
+			'conditions' => ['administrador_id' => $Notificar_ids],
 			'order' 	 => array('id' => 'desc'),
-			'limit'	     => round(count($atencionCliente_ids) / 2)
+			'limit'	     => round(count($Notificar_ids) / 2)
 		));
 
-		$ids_atencion =	count($ids_atencion) == 1 ? Hash::extract($ids_atencion, '{n}.Contacto.administrador_id') : array_diff($atencionCliente_ids, Hash::extract($ids_atencion, '{n}.Contacto.administrador_id'));
+		$ids_atencion =	count($ids_atencion) == 1 ? Hash::extract($ids_atencion, '{n}.Contacto.administrador_id') : array_diff($Notificar_ids, Hash::extract($ids_atencion, '{n}.Contacto.administrador_id'));
 		
 		$ids_atencion = array_values($ids_atencion);
 		$ids_atencion = $ids_atencion[rand(0, (count($ids_atencion) - 1))] ?? null;
