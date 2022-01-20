@@ -65,8 +65,9 @@ class BlueExpressComponent extends Component
         return $response;
     }
 
-    public function registrar_estados($id)
+    public function registrar_estados($id, $sleep = 5)
     {
+        sleep($sleep);
 
         $log = [];
 
@@ -106,7 +107,7 @@ class BlueExpressComponent extends Component
         $log[] = array(
             'Log' => array(
                 'administrador' => 'Información de la Venta - vid ' . $id,
-                'modulo'         => 'BlueExpressComponent',
+                'modulo'        => 'BlueExpressComponent',
                 'modulo_accion' => json_encode($v)
             )
         );
@@ -116,7 +117,7 @@ class BlueExpressComponent extends Component
             $log[] = array(
                 'Log' => array(
                     'administrador' => "Venta {$id} no tiene dependencia con blueexpress",
-                    'modulo'         => 'BlueExpressComponent',
+                    'modulo'        => 'BlueExpressComponent',
                     'modulo_accion' => json_encode($v['MetodoEnvio'])
                 )
             );
@@ -246,8 +247,8 @@ class BlueExpressComponent extends Component
 
             // * Debido a problemas para recuperar los estados se hacen tres intentos
             if ($this->intentos <= 3) {
-
-                $this->registrar_estados($id);
+                $this->intentos++;
+                $this->registrar_estados($id ,2);
             }
 
             ClassRegistry::init('Log')->create();
@@ -258,7 +259,7 @@ class BlueExpressComponent extends Component
                     'modulo_accion' => "Número de intentos: {$this->intentos} para obtener estados de seguimiento."
                 )
             ));
-            
+
             $this->intento = 1;
 
             return false;
