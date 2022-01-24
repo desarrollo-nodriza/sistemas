@@ -132,6 +132,10 @@
                     <? if ($contacto['Contacto']['atendido'] && !$contacto['Contacto']['confirmado_cliente'] && $contacto['Contacto']['administrador_id'] == $this->Session->read('Auth.Administrador.id')) : ?>
                     <?= $this->Html->link('<i class="fa fa-envelope"></i> Enviar notificación al cliente', array('action' => 'notificar_cliente', $contacto['Contacto']['id']), array('class' => 'btn btn-warning', 'escape' => false)); ?>
                     <? endif; ?>
+                    
+                    <? if (is_null($contacto['Contacto']['administrador_id'] ) ): ?>
+                        <?= $this->Html->link('<i class="fa fa-hand-stop-o"></i> Atender contacto', array('action' => 'relacionar_contacto_administror', $contacto['Contacto']['id']), array('class' => 'btn btn-success start-loading-then-redirect', 'title' => 'Atender Contacto', 'escape' => false)); ?>
+                    <? endif; ?>
                     <?= $this->Html->link('Volver', array('action' => 'index'), array('class' => 'btn btn-danger'))?>
                     </div>
                 </div>

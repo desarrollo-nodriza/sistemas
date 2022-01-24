@@ -140,7 +140,7 @@
 									<tr>
 
                                         <td><?= h($contacto['Contacto']['id']); ?>&nbsp;</td>
-                                        <td><?= h($contacto['Administrador']['email']); ?>&nbsp;</td>
+                                        <td><?= h($contacto['Administrador']['email']??'Sin Asignar'); ?>&nbsp;</td>
                                         <td><?= h($contacto['Contacto']['origen']); ?>&nbsp;</td>
                                         <td><?= h($contacto['Contacto']['email_contacto']); ?>&nbsp;</td>
                                         <td><?= h($contacto['Contacto']['fono_contacto']); ?>&nbsp;</td>
@@ -162,6 +162,9 @@
                                             <? if ($contacto['Contacto']['atendido'] && !$contacto['Contacto']['confirmado_cliente'] && $contacto['Contacto']['administrador_id'] == $this->Session->read('Auth.Administrador.id')) : ?>
                                                 <?= $this->Html->link('<i class="fa fa-envelope"></i> Notificar', array('action' => 'notificar_cliente', $contacto['Contacto']['id']), array('class' => 'btn btn-xs btn-warning btn-block mt-5', 'rel' => 'tooltip', 'title' => 'Notificar este registro', 'escape' => false)); ?>
                                             <? endif; ?>
+											<? if (is_null($contacto['Contacto']['administrador_id'] ) ): ?>
+												<?= $this->Html->link('<i class="fa fa-hand-stop-o"></i> Atender contacto', array('action' => 'relacionar_contacto_administror', $contacto['Contacto']['id']), array('class' => 'btn btn-xs btn-success btn-block start-loading-then-redirect', 'title' => 'Atender Contacto', 'escape' => false)); ?>
+											<? endif; ?>
 
 										</td>
 

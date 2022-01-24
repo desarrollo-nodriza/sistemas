@@ -1,11 +1,12 @@
-<?php 
+<?php
 App::uses('AppModel', 'Model');
 
-Class Contacto extends AppModel {
+class Contacto extends AppModel
+{
 
 	/**
-	* Config
-	*/
+	 * Config
+	 */
 	public $displayField	= 'id';
 
 	/**
@@ -21,8 +22,8 @@ Class Contacto extends AppModel {
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
-        ),
-        'Tienda' => array(
+		),
+		'Tienda' => array(
 			'className'				=> 'Tienda',
 			'foreignKey'			=> 'tienda_id',
 			'conditions'			=> '',
@@ -67,7 +68,7 @@ Class Contacto extends AppModel {
 
 
 	public function ultimo_admin_id()
-	{	
+	{
 		$ultimo = $this->find('first', array(
 			'fields' => array(
 				'administrador_id'
@@ -75,13 +76,45 @@ Class Contacto extends AppModel {
 			'order' => array('id' => 'desc')
 		));
 
-		if (empty($ultimo['Contacto']['administrador_id']))
-		{
+		if (empty($ultimo['Contacto']['administrador_id'])) {
 			return null;
 		}
 
 		return $ultimo['Contacto']['administrador_id'];
-
 	}
 
+	/**
+	 * Obtenemos el adminsitrador que atendera la siguiente solicitud de atencion.(Solo uno)
+	 * 
+	 * Se obtienen los administradores que tienen asignada la atencion al asunto en base al array entrante(Se calcula la mitad). 
+	 * 
+	 * @param  mixed $Notificar_ids
+	 * @return void
+	 */
+	public function obtener_atencion_cliente($Notificar_ids)
+	{
+		
+		$ids_atencion = $this->find('all', array(
+			'fields'     => array('administrador_id'),
+			'conditions' => ['administrador_id' => $Notificar_ids],
+			'order' 	 => array('id' => 'desc'),
+			'limit'	     => round(count($Notificar_ids) / 2)
+		));
+
+		$ids_atencion =	count($ids_atencion) == 1 ? Hash::extract($ids_atencion, '{n}.Contacto.administrador_id') : array_diff($Notificar_ids, Hash::extract($ids_atencion, '{n}.Contacto.administrador_id'));
+		
+		$ids_atencion = array_values($ids_atencion);
+		$ids_atencion = $ids_atencion[rand(0, (count($ids_atencion) - 1))] ?? null;
+
+		if (!$ids_atencion) {
+			
+			$ids_atencion = $this->find('first', array(
+				'fields'     => array('administrador_id'),
+				'order' 	 => array('id' => 'desc')
+			));
+			$ids_atencion = $ids_atencion['Contacto']['administrador_id'] ?? null;
+		}
+
+		return $ids_atencion;
+	}
 }

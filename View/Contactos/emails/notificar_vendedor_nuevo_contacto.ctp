@@ -34,10 +34,10 @@
               <TR style="HEIGHT: 20px">
                 <TD style="BORDER-TOP: medium none; BORDER-RIGHT: medium none; WIDTH: 100%; VERTICAL-ALIGN: top; BORDER-BOTTOM: medium none; PADDING-BOTTOM: 0px; TEXT-ALIGN: center; PADDING-TOP: 35px; PADDING-LEFT: 15px; BORDER-LEFT: medium none; PADDING-RIGHT: 15px; BACKGROUND-COLOR: #feffff">
                   <P style="FONT-SIZE: 16px; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a8a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>
-                    <STRONG>Nuevo contacto desde <?=$contacto['Contacto']['origen']; ?></STRONG>
+                    <STRONG>Se ha recibido un nuevo contacto desde <?=$contacto['Contacto']['origen']; ?></STRONG>
                   </P>
                   <P style="FONT-SIZE: 12px; MARGIN-BOTTOM: 1em; FONT-FAMILY: Arial, Helvetica, sans-serif; MARGIN-TOP: 0px; COLOR: #a7a7a7; LINE-HEIGHT: 155%; BACKGROUND-COLOR: transparent; mso-line-height-rule: exactly" align=left>
-                  Estimada/o, se le ha asignado el nuevo contacto n° <?=$contacto['Contacto']['id']; ?>. Puede ver la información pinchando <a href="<?=$url; ?>contactos/view/<?=$contacto['Contacto']['id'];?>">AQUÍ</a>
+                  Estimada/o, un cliente esta a la espera de ser atentido con n° de contacto <?=$contacto['Contacto']['id']; ?>. Puede ver la información pinchando <a href="<?=$url; ?>contactos/view/<?=$contacto['Contacto']['id'];?>">AQUÍ</a>
                   </P>
                   <BR>
                   
