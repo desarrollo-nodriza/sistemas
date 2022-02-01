@@ -5014,7 +5014,7 @@ class VentasController extends AppController {
 		}
 
 		# Prestashop
-		if ( $estado_actual_nombre != $estado_nuevo_nombre && $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) 
+		if ( $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) 
 		{	
 			# Para la consola se carga el componente on the fly!
 			$this->Prestashop = $this->Components->load('Prestashop');
@@ -5130,7 +5130,7 @@ class VentasController extends AppController {
 			
 		# Linio
 		}
-		elseif ( $estado_actual_nombre != $estado_nuevo_nombre && $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) 
+		elseif ( $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) 
 		{	
 			# Para la consola se carga el componente on the fly!
 			if ($this->shell) {
@@ -5198,12 +5198,12 @@ class VentasController extends AppController {
 			
 		# Meli
 		}
-		elseif ( $estado_actual_nombre != $estado_nuevo_nombre && $esMercadolibre ) 
+		elseif ( $esMercadolibre ) 
 		{	
 			#throw new Exception('¡Error! No está habilitada la opción de cambios de estado en Meli.', 501);
 			
 		}
-		elseif ($estado_actual_nombre != $estado_nuevo_nombre && $venta['Venta']['venta_manual'])
+		elseif ( $venta['Venta']['venta_manual'])
 		{	
 			# Venta manual
 			# Enviar email al cliente
@@ -12668,6 +12668,136 @@ class VentasController extends AppController {
 
 		$this->set(array(
             'response' => $respuesta,
+            '_serialize' => array('response')
+		));
+	}
+	/**
+	 * api_cambiar_estado_desde_warehouse_v2
+	 * Se cambia estado a venta segun se hayan terminado de embalar todos los productos de esta
+	 * Los estados se tomaran según el metodo de envio
+	 * @param  mixed $id de la Venta
+	 * @return void
+	 */
+	public function api_cambiar_estado_desde_warehouse_v2($id)
+	{	
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+						
+		$tokeninfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+		
+		# Body
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $id
+			),
+			'contain' =>
+			[
+				'VentaDetalle',
+				'MetodoEnvio' =>[ 'fields' => ['MetodoEnvio.embalado_venta_estado_parcial_id','MetodoEnvio.embalado_venta_estado_id']]
+			]
+		));
+
+		// TODO Se consultan embalajes finalizados para validar que estado colocar a la venta
+		$embalajesFinalizados = $this->WarehouseNodriza->ObtenerEmbalajesVenta($id);		
+		$cambiar_estado 	  = false;
+		$nuevo_estado   	  = null;
+		$logs 		  		  = [];
+
+	
+		try {
+
+			$cantidad	       = Hash::extract($venta['VentaDetalle'], "{n}.cantidad");
+			$cantidad_embalada = Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada");
+			
+			// TODO Si existen productos por entregar se envia estado parcial
+			if (array_sum($cantidad) != array_sum($cantidad_embalada)) {
+
+				// !! Se valida que metodo tenga el estado a cambiar
+				if (is_null($venta['MetodoEnvio']['embalado_venta_estado_parcial_id'])) {
+
+					$logs[] = [
+						'Log' =>
+						[
+							'administrador' => "Problemas para actualizar vid {$id}",
+							'modulo'        => 'VentasController',
+							'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado parcial', valor actual Null"
+						]
+					];
+				// !! Solo se cambia si el estado si es distinto
+				}
+				
+				$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_parcial_id'];
+				$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $venta['MetodoEnvio']['embalado_venta_estado_parcial_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+			
+
+			} else {
+			
+				// !! Se valida que metodo tenga el estado a cambiar
+				if (is_null($venta['MetodoEnvio']['embalado_venta_estado_id'])) {
+
+					$logs[] = [
+						'Log' =>
+						[
+							'administrador' => "Problemas para actualizar vid {$id}",
+							'modulo'        => 'VentasController',
+							'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado completo', valor actual Null"
+						]
+					];
+				
+				// !! Solo se cambia si el estado si es distinto			
+				}
+				
+				$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_id'];
+				$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $venta['MetodoEnvio']['embalado_venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+			}
+		} catch (Exception $e) {
+
+			$cambiar_estado = false;
+		}
+
+
+		if ($cambiar_estado) {
+			$logs[] = [
+				'Log' =>
+				[
+					'administrador' => "Se actualiza estado vid {$id}",
+					'modulo'        => 'VentasController',
+					'modulo_accion' => "Estado original {$venta['Venta']['venta_estado_id']} | Estado después {$nuevo_estado}"
+				]
+			];
+		}
+			
+		if ($logs) {
+			ClassRegistry::init('Log')->saveMany($logs);
+		}
+	
+		$respuesta = array(
+			'code'    => 200,
+			'message' => 'Estado actualizado con éxito',
+			'body'    => array()
+		);
+		
+		$this->set(array(
+            'response'   => $respuesta,
             '_serialize' => array('response')
 		));
 	}

@@ -125,6 +125,17 @@ class WarehouseNodriza
             $embalaje
         );
     }
+    
+    /**
+     * ObtenerEmbalajesVenta
+     * Obtenemos todos los embalajes excepto los cancelados
+     * @param  mixed $venta_id
+     * @return void
+     */
+    public function ObtenerEmbalajesVenta($venta_id)
+    {
+        return $this->cURL_GET("/api/v1/embalaje/embalaje-venta/{$venta_id}");
+    }
 
     // TODO Abstraccion para hacer peticiones a endpoints por metodo POST
     private function cURL_POST($URL, $POSTFIELDS)

@@ -235,4 +235,10 @@ class WarehouseNodrizaComponent extends Component
         $this->crearCliente();
         return $this->WarehouseNodriza->ObtenerEvidencia($embalaje);
     }
+
+    public function ObtenerEmbalajesVenta($venta_id)
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->ObtenerEmbalajesVenta($venta_id);
+    }
 }

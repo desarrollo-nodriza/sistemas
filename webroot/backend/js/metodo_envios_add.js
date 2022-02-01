@@ -80,3 +80,26 @@ let mostrar_segun_dependencia = function () {
 
 }
 
+$.app.formularios.bind('#MetodoEnvioAdminAddForm');
+$('#MetodoEnvioEmbaladoVentaEstadoId').rules("add", {
+	required: true,
+	messages: {
+		required: 'Campo requerido'
+	}
+});
+$('#MetodoEnvioEmbaladoVentaEstadoParcialId').rules("add", {
+	required: true,
+	messages: {
+		required: 'Campo requerido'
+	}
+});
+
+$('#MetodoEnvioBodegaId').rules("add", {
+	required: true,
+	messages: {
+		required: 'Campo requerido'
+	}
+});
+
+
+
