@@ -405,6 +405,7 @@ class BlueExpressComponent extends Component
             # creamos el arreglo para generar la OT
             $data = [
                 'serviceType' => $venta['MetodoEnvio']['tipo_servicio_blue_express'],
+                'companyId' => $venta['MetodoEnvio']['compania_blue_express'],
                 'venta'     => [
                     'id'                    => $venta['Venta']['id'],
                     'referencia'            => $venta['Venta']['referencia'],

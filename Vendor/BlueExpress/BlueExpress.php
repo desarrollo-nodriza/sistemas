@@ -109,7 +109,7 @@ class BlueExpress
             "currency" => "CLP",
             "shipmentCost" => $BULTO['venta']['costo_envio'] * 1,
             "extendedClaim" => false,
-            "companyId" => 2000,
+            "companyId" => $BULTO['companyId'],
             "userName" => $BULTO['credenciales'],
             "comments" => $BULTO['venta']['referencia_despacho'],
             "pickup" => [
