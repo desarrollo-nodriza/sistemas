@@ -261,6 +261,10 @@
 								<td><?= $this->Form->input('usuario_blue_express', array('placeholder' => 'Ingrese su Usuario', 'required')); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('compania_blue_express', 'Código Empresa de BlueExpress'); ?></th>
+								<td><?= $this->Form->input('compania_blue_express', array('placeholder' => 'Ingrese su código empresa', 'required')); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('cod_usuario_blue_express', 'Código Usuario en BlueExpress'); ?></th>
 								<td><?= $this->Form->input('cod_usuario_blue_express', array('placeholder' => 'Ingrese su Código Usuario', 'required')); ?></td>
 							</tr>
