@@ -1250,7 +1250,7 @@ class Venta extends AppModel
 					}
 		
 					# Se saca el producto de la bodega
-					ClassRegistry::init('Bodega')->crearSalidaBodega($producto['venta_detalle_producto_id'], null, $producto['cantidad_reservada'], null, 'VT', null, $id);
+					ClassRegistry::init('Bodega')->crearSalidaBodega($producto['venta_detalle_producto_id'], $venta['Venta']['bodega_id'], $producto['cantidad_reservada'], null, 'VT', null, $id);
 
 					# Se actualizan los valors de la linea de producto
 					$detalles[$ip]['VentaDetalle']['completo']         = ( ($producto['cantidad'] - $producto['cantidad_anulada']) == $producto['cantidad_reservada']) ? 1 : 0;
