@@ -33,6 +33,14 @@
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('embalado_venta_estado_id', 'Estado de la venta por defecto'); ?></th>
+								<td><?= $this->Form->select('embalado_venta_estado_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('embalado_venta_estado_parcial_id', 'Estado de la venta parcial por defecto'); ?></th>
+								<td><?= $this->Form->select('embalado_venta_estado_parcial_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
+							</tr>
 							<tr id="generar_ot" class="">
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
 								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
@@ -295,3 +303,13 @@
 <?= $this->Html->script(array(
 	'/backend/js/metodo_envios.js?v=' . rand())); ?>
 <?= $this->fetch('script'); ?>
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script type="text/javascript">
+	jQuery(document).ready(function($){
+		$(document).ready(function() {
+			$('.mi-selector').select2();
+		});
+	});
+</script>

@@ -86,7 +86,7 @@ var campos_requeridos_blue_express = function (opcion) {
 		$("#MetodoEnvioCtaCorrienteBlueExpress").attr("required", false);
 		$("#MetodoEnvioBodegaId").attr("required", false);
 		$("#MetodoEnvioTipoServicioBlueExpress").attr("required", false);
-		
+
 	}
 
 }
@@ -126,7 +126,7 @@ var mostrar_segun_dependencia = function () {
 
 	if ($('.js-select-dependencia').val() == 'blueexpress') {
 		campos_requeridos_blue_express(true)
-		
+
 		// Desactivamos las otras dependencias
 		metodo_envios.desactivarDependencia($('.js-panel-conexxion'));
 		metodo_envios.desactivarDependencia($('.js-panel-boosmap'));
@@ -223,4 +223,27 @@ let mostrar_solo_a_dependencias = function () {
 
 $(document).ready(function () {
 	metodo_envios.init();
+
+
+	$.app.formularios.bind('#MetodoEnvioAdminEditForm');
+	$('#MetodoEnvioEmbaladoVentaEstadoId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
+	$('#MetodoEnvioEmbaladoVentaEstadoParcialId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
+
+	$('#MetodoEnvioBodegaId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
+
 });
