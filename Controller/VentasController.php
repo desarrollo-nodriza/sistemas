@@ -12725,11 +12725,11 @@ class VentasController extends AppController {
 	
 		try {
 
-			$cantidad	       = Hash::extract($venta['VentaDetalle'], "{n}.cantidad");
-			$cantidad_embalada = Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada");
+			$cantidad	       = array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
+			$cantidad_embalada = array_sum(Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
 			
 			// TODO Si existen productos por entregar se envia estado parcial
-			if (array_sum($cantidad) != array_sum($cantidad_embalada)) {
+			if ($cantidad != $cantidad_embalada) {
 
 				// !! Se valida que metodo tenga el estado a cambiar
 				if (is_null($venta['MetodoEnvio']['embalado_venta_estado_parcial_id'])) {
@@ -12742,7 +12742,7 @@ class VentasController extends AppController {
 							'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado parcial', valor actual Null"
 						]
 					];
-				// !! Solo se cambia si el estado si es distinto
+				// !! Solo se cambia si el estado es distinto
 				}
 				
 				$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_parcial_id'];
@@ -12763,7 +12763,7 @@ class VentasController extends AppController {
 						]
 					];
 				
-				// !! Solo se cambia si el estado si es distinto			
+				// !! Solo se cambia si el estado es distinto			
 				}
 				
 				$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_id'];
