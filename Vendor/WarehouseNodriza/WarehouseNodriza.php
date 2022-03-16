@@ -137,6 +137,87 @@ class WarehouseNodriza
         return $this->cURL_GET("/api/v1/embalaje/embalaje-venta/{$venta_id}");
     }
 
+
+    /**
+     * Obtiene los embalajes de una venta dado su filtro
+     * 
+     * @param int $venta_id ID de la venta
+     * @param array $filtro    criterios para filtrar
+     * 
+     * @return mixed    Embalajes
+     */
+    public function ObtenerEmbalajesVentaV2($venta_id, $filtro = [])
+    {   
+
+        $path = "/api/v2/embalaje/embalaje-venta/{$venta_id}";
+
+        foreach($filtro as $param => $val)
+        {
+            $path = $path . "?{$param}=$val";
+        }
+
+        return $this->cURL_GET($path);
+    }
+
+
+    /** 
+     * Crear nota de despacho
+     * 
+     * @param   array   $body   Arreglo de datos para crear la nota
+     * 
+     * @return mixed
+     */
+    public function crearNotaDespacho($body)
+    {
+        return $this->cURL_POST('/api/v1/embalaje/nota-embalaje-crear', $body);
+    }
+
+
+    /**
+     * Editar nota de despacho
+     * 
+     * @param   int $id Identificador de la nota
+     * @param   array   $body   Arreglo de datos
+     * 
+     * @return mixed
+     */
+    public function editarNotaDespacho($id, $body)
+    {
+        return $this->cURL_POST("/api/v1/embalaje/editar-nota/{$id}", $body);
+    }
+
+
+    /**
+     * Elimina una nota de despacho
+     * 
+     * @param   int     $id Identificador de la nota
+     * 
+     * @return mixed
+     */
+    public function eliminarNotaDespacho($id)
+    {
+        return $this->cURL_POST("/api/v1/embalaje/eliminar-nota/{$id}", []);
+    }
+
+    
+    /**
+     * ObtenerNotasDespacho
+     *
+     * @param  mixed $filtro
+     * @return void
+     */
+    public function ObtenerNotasDespacho($filtro = [])
+    {   
+        $path = "/api/v1/embalaje/notas-despacho";
+
+        foreach($filtro as $param => $val)
+        {
+            $path = $path . "?{$param}=$val";
+        }
+
+        return $this->cURL_GET($path);
+    }
+
     // TODO Abstraccion para hacer peticiones a endpoints por metodo POST
     private function cURL_POST($URL, $POSTFIELDS)
     {
