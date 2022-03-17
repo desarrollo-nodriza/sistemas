@@ -10161,6 +10161,78 @@ class VentasController extends AppController {
 				'CanalVenta'
 			)
 		));
+
+		# En ocaciones la BD registra duplicado los embalajes, por ende al procesar el primero de ellos, eliminaremos los duplicados
+		foreach ($venta['VentaDetalle'] as $detalle)
+		{
+			$tmp_embalaje = [];
+			$diff = [];
+			
+			foreach ($detalle['EmbalajeProductoWarehouse'] as $embalaje_producto)
+			{	
+				$em = [
+					'id' => $embalaje_producto['id'],
+					'embalaje_id' => $embalaje_producto['embalaje_id'],
+					'producto_id' => $embalaje_producto['producto_id'],
+					'detalle_id' => $embalaje_producto['detalle_id'],
+					'cantidad_a_embalar' => $embalaje_producto['cantidad_a_embalar'],
+					'cantidad_embalada' => $embalaje_producto['cantidad_embalada'],
+					'fecha_creacion' => $embalaje_producto['fecha_creacion'],
+					'ultima_modifacion' => $embalaje_producto['ultima_modifacion'],
+					'cantidad_anulada' => $embalaje_producto['cantidad_anulada'],
+					'embalaje_bodega_id' => $embalaje_producto['EmbalajeWarehouse']['bodega_id'],
+					'embalaje_estado' => $embalaje_producto['EmbalajeWarehouse']['estado'],
+					'embalaje_fecha' => $embalaje_producto['EmbalajeWarehouse']['fecha_creacion']
+				];
+
+				# Buscamos las diferencias entre los embalajes
+				$diff = Hash::diff($em, $tmp_embalaje);
+				
+				# Asignamos el embalaje a una variable temporal que la contendrá para compararla en la siguente iteración
+				$tmp_embalaje = $em;
+
+				# si no existen estos indices en las diferencias queire decir que es un embalaje duplicado
+				if (!isset($diff['embalaje_fecha']) 
+				&& !isset($diff['embalaje_bodega_id'])
+				&& !isset($diff['cantidad_a_embalar']))
+				{
+
+					$mandrill_apikey = $venta['Tienda']['mandrill_apikey'];
+
+					if (empty($mandrill_apikey)) {
+						return false;
+					}
+
+					$mandrill = $this->Components->load('Mandrill');
+
+					$mandrill->conectar($mandrill_apikey);
+
+					$asunto = '['.$venta['Tienda']['nombre'].' ALERTA] ¡Venta #' . $venta['Venta']['id'] . ' tiene embalaje duplicado!';
+					
+					if (Configure::read('ambiente') == 'dev') {
+						$asunto = '['.$venta['Tienda']['nombre'].' ALERTA - DEV] ¡Venta #' . $venta['Venta']['id'] . ' tiene embalaje duplicado!';
+					}
+
+					$remitente = array(
+						'email' => 'warehouse@nodriza.cl',
+						'nombre' => 'Ventas ' . $venta['Tienda']['nombre']
+					);
+
+					$destinatarios = array(
+						array(
+							'email' => 'cristian.rojas@nodriza.cl',
+							'name' => 'Cristian rojas'
+						)
+					);
+
+					$html = "<h1>La venta #{$venta['Venta']['id']} al parecer tiene un embalaje duplicado. Revíselo a la brevedad.</h1>";
+
+					$mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
+				}
+			}
+	
+		}
 		
 		$etiquetas_embalajes = array();
 		
