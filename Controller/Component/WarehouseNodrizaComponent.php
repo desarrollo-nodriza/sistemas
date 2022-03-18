@@ -241,4 +241,30 @@ class WarehouseNodrizaComponent extends Component
         $this->crearCliente();
         return $this->WarehouseNodriza->ObtenerEmbalajesVenta($venta_id);
     }
+
+
+    public function ObtenerEmbalajesVentaV2($venta_id, $filtro = [])
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->ObtenerEmbalajesVentaV2($venta_id, $filtro);
+    }
+    
+    public function ObtenerNotasDespacho($filtro = [])
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->ObtenerNotasDespacho($filtro);
+    }
+
+    public function crearNotaDespacho($data = [])
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->crearNotaDespacho($data);
+    }
+
+
+    public function eliminarNotaDespacho($id)
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->eliminarNotaDespacho($id);
+    }
 }

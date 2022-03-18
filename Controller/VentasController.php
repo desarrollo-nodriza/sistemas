@@ -3693,14 +3693,6 @@ class VentasController extends AppController {
 				}
 			}
 			
-			# Seteamos las comunas
-			/*$comunas_starken = $this->Starken->listarCiudadesDestino();
-			$comunas         = array();
-
-			foreach ($comunas_starken['body'] as $ic => $comuna) {
-				$comunas[$comuna['nombreCiudad']] = $comuna['nombreCiudad'];
-			}*/
-			
 		}
 		
 		# Estados de envios
@@ -3751,6 +3743,7 @@ class VentasController extends AppController {
 		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
+
 		$embaljes_ids = Hash::extract($venta, "HistorialEmbalaje.{n}");
 		$response = $this->WarehouseNodriza->ObtenerEvidencia(["embalajes_id"=>$embaljes_ids]);		
 		
@@ -3775,7 +3768,30 @@ class VentasController extends AppController {
 				}
 			}
 		}
-		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas'));
+
+		# Obtener embalajes vía api y las notas relacionadas
+		$embalajes_req = $this->WarehouseNodriza->ObtenerEmbalajesVentaV2($id);	
+		$notas_req = $this->WarehouseNodriza->ObtenerNotasDespacho(['venta_id' => $id]);		
+		
+		$embalajes = [];
+		$notas_despacho = [];
+
+		if ($embalajes_req['code'] == 200)
+		{
+			$embalajes = $embalajes_req['response'];
+		}
+
+		if ($notas_req['code'] == 200)
+		{
+			$notas_despacho = $notas_req['response'];
+		}
+		
+		# Aislamos solo las notas de despacho y las ordenamos
+		$notas_embalajes = Hash::extract($embalajes, 'body.{n}.notas_despacho.{n}');
+		
+		$this->sort_array_by_key($notas_embalajes, 'fecha_creacion');
+		
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas', 'embalajes', 'notas_embalajes', 'notas_despacho'));
 
 	}
 
@@ -4780,6 +4796,88 @@ class VentasController extends AppController {
 		$this->redirect($this->referer('/', true));
 	}
 
+	
+	/**
+	 * admin_crear_nota_despacho
+	 *
+	 * @return void
+	 */
+	public function admin_crear_nota_despacho()
+	{	
+
+		if (!$this->request->is('post'))
+		{
+			$this->Session->setFlash('Sólo se permite request de tipo post.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		if (!$this->Venta->exists($this->request->data['Nota']['venta_id']))
+		{
+			$this->Session->setFlash('La venta seleccionada no existe.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+		
+		$nota = [
+			'venta_id' => $this->request->data['Nota']['venta_id'],
+			'nombre' => $this->request->data['Nota']['titulo'],
+			'descripcion' => $this->request->data['Nota']['nota_despacho_global'],
+			'id_usuario' => $this->Auth->user('id'),
+			'nombre_usuario' => $this->Auth->user('nombre'),
+			'mail_usuario' => $this->Auth->user('email')
+		];
+
+		# Se asignan los id de embalajes si vienen
+		if (isset($this->request->data['Nota']['embalaje_id']))
+		{
+			$nota = array_replace_recursive($nota, [
+				'embalajes' => [
+					['id_embalaje' => $this->request->data['Nota']['embalaje_id']]
+				]
+			]);
+		}
+	
+		# Creamos la nota vía api
+		$result = $this->WarehouseNodriza->crearNotaDespacho($nota);
+
+		if ($result['code'] == 200)
+		{
+			$this->Session->setFlash('Notificación creada con éxito.', null, array(), 'success');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$this->Session->setFlash('No fue posible crear la nota. Intente nuevamente.', null, array(), 'danger');
+		$this->redirect($this->referer('/', true));
+	}
+
+	
+	/**
+	 * admin_eliminar_nota_despacho
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
+	public function admin_eliminar_nota_despacho($id)
+	{	
+
+		if (!$this->request->is('post'))
+		{
+			$this->Session->setFlash('Sólo se permite request de tipo post.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		# Creamos la nota vía api
+		$result = $this->WarehouseNodriza->eliminarNotaDespacho($id);
+		
+		if ($result['code'] == 200)
+		{
+			$this->Session->setFlash('Notificación eliminada con éxito.', null, array(), 'success');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$this->Session->setFlash('No fue posible eliminar la nota. Intente nuevamente.', null, array(), 'danger');
+		$this->redirect($this->referer('/', true));
+	}
+	
 
 	public function admin_en_espera($id)
 	{
