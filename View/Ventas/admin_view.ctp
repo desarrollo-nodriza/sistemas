@@ -1301,8 +1301,8 @@
 						
 						<br>
 									
-						<h4><i class="fa fa-bell " aria-hidden="true"></i> <?= __('Notas globales para picking');?></h4> 
-						<p class="text-primary"><?= __('Las notas globales serán visible para todos los embalajes que sean creados a partir de la venta. Para crear una notificación para un embalaje en especifico debe ingresar al embalaje en cuestión.');?></p>
+						<h4><i class="fa fa-bell " aria-hidden="true"></i> <?= __('Notas globales para warehouse');?></h4> 
+						<p class="text-primary"><?= __('Las notas globales serán visible para todos los embalajes que sean creados a partir de la venta. Para crear una nota para un embalaje en especifico debe ingresar al embalaje en cuestión.');?></p>
 						<div class="messages">
 							<? foreach ($notas_despacho['body'] as $nota) : if (!empty($nota['embalajes'])) : continue; endif;?>
 							<div class="item item-visible">
@@ -1329,9 +1329,10 @@
 						
 						<?= $this->Form->create('Nota', array('url' => array('controller' => 'ventas', 'action' => 'crear_nota_despacho'), 'id' => 'AgregarNota','class' => 'form-horizontal js-formulario', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?> 					
 						<div class="form-group" style="margin-top: 25px;float: left;width: 100%;">
+							<?=$this->Form->hidden('titulo', array('value' => 'Nota global desde venta')); ?>
 							<?=$this->Form->hidden('venta_id', array('value' => $venta['Venta']['id'])); ?>					
-							<?=$this->Form->label('nota_despacho_global', 'Crear nueva nota global para picking')?>
-							<?=$this->Form->textarea('nota_despacho_global', array('class' => 'form-control not-blank', 'rows' => 4, 'placeholder' => 'Ingrese una nota para picking'));?>
+							<?=$this->Form->label('nota_despacho_global', 'Crear nueva nota global para warehouse')?>
+							<?=$this->Form->textarea('nota_despacho_global', array('class' => 'form-control not-blank', 'rows' => 4, 'placeholder' => 'Ingrese una nota para warehouse'));?>
 						</div>
 						
 						<?=$this->Form->button('Crear nota global', array('type' => 'submit', 'class' => 'btn btn-block btn-warning start-loading-when-form-is-validate')); ?> 

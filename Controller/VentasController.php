@@ -4808,35 +4808,45 @@ class VentasController extends AppController {
 		if (!$this->request->is('post'))
 		{
 			$this->Session->setFlash('Sólo se permite request de tipo post.', null, array(), 'danger');
-			$this->redirect(array('action' => 'view', $this->request->data['Nota']['venta_id']));
+			$this->redirect($this->referer('/', true));
 		}
 
 		if (!$this->Venta->exists($this->request->data['Nota']['venta_id']))
 		{
 			$this->Session->setFlash('La venta seleccionada no existe.', null, array(), 'danger');
-			$this->redirect(array('action' => 'view', $this->request->data['Nota']['venta_id']));
+			$this->redirect($this->referer('/', true));
 		}
 		
 		$nota = [
 			'venta_id' => $this->request->data['Nota']['venta_id'],
-			'nombre' => 'Nota global desde venta',
+			'nombre' => $this->request->data['Nota']['titulo'],
 			'descripcion' => $this->request->data['Nota']['nota_despacho_global'],
 			'id_usuario' => $this->Auth->user('id'),
 			'nombre_usuario' => $this->Auth->user('nombre'),
 			'mail_usuario' => $this->Auth->user('email')
 		];
 
+		# Se asignan los id de embalajes si vienen
+		if (isset($this->request->data['Nota']['embalaje_id']))
+		{
+			$nota = array_replace_recursive($nota, [
+				'embalajes' => [
+					['id_embalaje' => $this->request->data['Nota']['embalaje_id']]
+				]
+			]);
+		}
+	
 		# Creamos la nota vía api
 		$result = $this->WarehouseNodriza->crearNotaDespacho($nota);
 
 		if ($result['code'] == 200)
 		{
 			$this->Session->setFlash('Notificación creada con éxito.', null, array(), 'success');
-			$this->redirect(array('action' => 'view', $this->request->data['Nota']['venta_id']));
+			$this->redirect($this->referer('/', true));
 		}
 
 		$this->Session->setFlash('No fue posible crear la nota. Intente nuevamente.', null, array(), 'danger');
-		$this->redirect(array('action' => 'view', $this->request->data['Nota']['venta_id']));
+		$this->redirect($this->referer('/', true));
 	}
 
 	
@@ -4852,7 +4862,7 @@ class VentasController extends AppController {
 		if (!$this->request->is('post'))
 		{
 			$this->Session->setFlash('Sólo se permite request de tipo post.', null, array(), 'danger');
-			$this->redirect(array('action' => 'view', $this->request->data['Nota']['venta_id']));
+			$this->redirect($this->referer('/', true));
 		}
 
 		# Creamos la nota vía api
