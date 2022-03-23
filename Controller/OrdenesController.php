@@ -21,7 +21,8 @@ class OrdenesController extends AppController
     	'Toolmania',
     	'MeliMarketplace',
     	'LibreDte',
-    	'Prestashop'
+    	'Prestashop',
+		'WarehouseNodriza'
     );
     /**
      * Obtiene y lista los medios de pago disponibles en u array único
@@ -444,7 +445,6 @@ class OrdenesController extends AppController
 					'DteDetalle.dte_id' => $this->request->data['Dte']['id']
 				), false);
 			}
-			
 			# Guardar información del DTE en base de datos local
 			if($this->Orden->Dte->saveAll($this->request->data)) 
 			{
@@ -482,7 +482,7 @@ class OrdenesController extends AppController
 						)
 					);
 				}
-
+			
 				if (!empty($id_dte)) 
 				{
 					# Los tipos de NDC que devuelven stock a bodega
@@ -491,6 +491,8 @@ class OrdenesController extends AppController
 						'garantia',
 						'stockout'
 					);
+
+					// $id_dte['Dte']['estado'] = 'dte_real_emitido' ;
 
 					# Si es NDC se anulan los items en la venta, se recalculan los montos de la venta y se devuelven a bodega los itmes cancelados si corresponde.
 					if (!empty($this->request->data['DteDetalle']) 
@@ -514,12 +516,20 @@ class OrdenesController extends AppController
 										'VentaDetalle.cantidad_entregada', 
 										'VentaDetalle.total_neto', 
 										'VentaDetalle.cantidad_pendiente_entrega', 
-										'VentaDetalle.cantidad_reservada', 
 										'VentaDetalle.cantidad_anulada',
 										'VentaDetalle.reservado_virtual',
 										'VentaDetalle.cantidad_en_espera',
 										'VentaDetalle.fecha_llegada_en_espera'
-									)
+									),
+									'VentaDetallesReserva'=>[
+										'fields'=>[ 
+												'VentaDetallesReserva.venta_detalle_id',
+												'VentaDetallesReserva.venta_detalle_producto_id',
+												'VentaDetallesReserva.cantidad_reservada',
+												'VentaDetallesReserva.bodega_id',
+											]
+										]
+
 								),
 								'EmbalajeWarehouse' => array(
 									'EmbalajeProductoWarehouse'
@@ -541,7 +551,7 @@ class OrdenesController extends AppController
 							$porcentaje_descuento = 0;
 						}
 
-						$itemsDevuletos = array();
+						$itemsDevueltos = array();
 
 						# Aunlamos los items correspondientes
 						foreach ($venta['VentaDetalle'] as $ip => $d) 
@@ -555,19 +565,19 @@ class OrdenesController extends AppController
 
 								if ($id_item == $d['venta_detalle_producto_id']) 
 								{
-									# Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
-									$cantidad_entregada = 0;
+									// # Si hay productos ya entregados y se estan devolviendo por NDC se deben re-ingresar a la bodega.
+									// $cantidad_entregada = 0;
 
-									# Obtenemos los movimientos del productos en esta venta
-									$cantidad_mv = ClassRegistry::init('Bodega')->obtener_total_mv_por_venta($venta['Venta']['id'], $d['venta_detalle_producto_id']);
+									// # Obtenemos los movimientos del productos en esta venta
+									// $cantidad_mv = ClassRegistry::init('Bodega')->obtener_total_mv_por_venta($venta['Venta']['id'], $d['venta_detalle_producto_id']);
 									
-									# tiene salida
-									if ($cantidad_mv < 0)
-									{
-										$cantidad_entregada = ($cantidad_mv * -1);
-									}
+									// # tiene salida
+									// if ($cantidad_mv < 0)
+									// {
+									// 	$cantidad_entregada = ($cantidad_mv * -1);
+									// }
 
-									# Calcula la cantidad toal anulada
+									# Calcula la cantidad total anulada
 									$venta['VentaDetalle'][$ip]['cantidad_anulada'] = $d['cantidad_anulada'] + $detalle['QtyItem'];
 
 									# Calcula el monto anulado
@@ -576,31 +586,44 @@ class OrdenesController extends AppController
 									# Asigna NDC a linea de producto
 									$venta['VentaDetalle'][$ip]['dte'] = $id_dte['Dte']['id'];
 
+									$cantidad_reservada = array_sum(Hash::extract($d['VentaDetallesReserva'], "{n}.cantidad_reservada"));
+
 									# Se calcula la cantidad en espera
 									if ($d['cantidad_en_espera'] > 0)
 									{
-										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = ($d['cantidad'] - $venta['VentaDetalle'][$ip]['cantidad_anulada']) - $d['cantidad_reservada'];
+										$cantidad_en_espera = ($d['cantidad'] - $venta['VentaDetalle'][$ip]['cantidad_anulada']) - $cantidad_reservada;
+										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = $cantidad_en_espera > 0 ? $cantidad_en_espera : 0;
 									}
 
-									# si la cantidad reservada es menor a la cantidad anulada, la reserva se lleva a 0
-									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) 
+									// # si la cantidad reservada es menor a la cantidad anulada, la reserva se lleva a 0
+									// if ($cantidad_reservada > 0 && $cantidad_reservada <= $detalle['QtyItem']) 
+									// {
+									// 	$venta['VentaDetalle'][$ip]['cantidad_reservada'] = 0;
+									// }
+
+									// # si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
+									// if ($cantidad_reservada> 0 && $cantidad_reservada > $detalle['QtyItem'] && $cantidad_reservada != ($d['cantidad'] - $detalle['QtyItem']) ) 
+									// {
+									// 	$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $cantidad_reservada - $detalle['QtyItem'];
+									// }
+
+									ClassRegistry::init('VentaDetallesReserva')->updateAll(['VentaDetallesReserva.cantidad_reservada'=> 0 ], ['VentaDetallesReserva.venta_detalle_id'=> $d['id']]);
+
+									# Stock virtual
+									if ($d['reservado_virtual'] > 0)
 									{
-										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = 0;
+										$venta['VentaDetalle'][$ip]['reservado_virtual'] = $d['reservado_virtual'] - $detalle['QtyItem'];
 									}
 
-									# si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
-									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem'] && $d['cantidad_reservada'] != ($d['cantidad'] - $detalle['QtyItem']) ) 
-									{
-										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
-									}
-
+										
 									if ($d['cantidad'] == $detalle['QtyItem']) 
 									{
 										$venta['VentaDetalle'][$ip]['total_neto']   = 0;
 									}
 									else
 									{
-										$venta['VentaDetalle'][$ip]['total_neto']   = $d['total_neto'] - $venta['VentaDetalle'][$ip]['monto_anulado'];
+										// $venta['VentaDetalle'][$ip]['total_neto']   = $d['total_neto'] - $venta['VentaDetalle'][$ip]['monto_anulado'];
+										$venta['VentaDetalle'][$ip]['total_neto']   = ($d['cantidad'] - $venta['VentaDetalle'][$ip]['cantidad_anulada']) * $detalle['PrcItem'];
 
 										if ($venta['VentaDetalle'][$ip]['total_neto'] < 0)
 										{
@@ -608,35 +631,43 @@ class OrdenesController extends AppController
 										}
 									}
 
-									# Stock virtual
-									if ($d['reservado_virtual'] > 0)
-									{
-										$venta['VentaDetalle'][$ip]['reservado_virtual'] = $d['reservado_virtual'] - $detalle['QtyItem'];
-									}
+								
+									$cantidad_entregada = $venta['VentaDetalle'][$ip]['cantidad_entregada'];
 									
 									# Calculamos la cantidad anulada
 									$cant_diferencia = $d['cantidad'] - $cantidad_entregada;
 									$cant_anulada 	 = $venta['VentaDetalle'][$ip]['cantidad_anulada']; 
-
+									
 									$cant_devolver = $cant_diferencia - $cant_anulada;
 									
-									# Devemos devolver
+									# Debemos devolver
 									if ($cant_devolver < 0)
 									{
 										$cant_devolver = ($cant_devolver * -1);
 									}
 
 									# Calcula cantidad pendiente entrega
-									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad'] - $cant_devolver;
+									// $venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad'] - $cant_devolver;
+									// $cantidad_pendiente_entrega 							  = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
+									// $venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] =  $cantidad_pendiente_entrega  > 0 ? $cantidad_pendiente_entrega  : 0;
+									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] =  0;
 
 									# Devolvemos a bodega
 									if ( $cant_devolver > 0 && $cantidad_entregada > 0) 
 									{
-										# Quitadmos de entregado los prductos devueltos
+										# Quitamos de entregado los prductos devueltos
 										$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $cantidad_entregada - $cant_devolver;
 
-										$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = $cant_devolver;
-										$itemsDevuletos[] = $venta['VentaDetalle'][$ip];
+										$venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] = $venta['VentaDetalle'][$ip]['cantidad_entregada_anulada'] + $cant_devolver;
+										
+										$itemsDevueltos[] = [
+											"producto_id"            => $d['venta_detalle_producto_id'],
+											"cantidad"               => $cant_devolver,
+											"responsable_id"         => CakeSession::read('Auth.Administrador.id'),
+											"bodega_id"              => $this->request->data['Dte']['bodegas'],
+											"glosa"                  => "VID {$this->request->data['Dte']['venta_id']}",
+											"movimiento"             => $this->request->data['Dte']['tipo_ntc']
+										];
 									}
 								}
 
@@ -662,37 +693,49 @@ class OrdenesController extends AppController
 						ClassRegistry::init('Venta')->saveAll($venta);
 
 						# Re ingresamos los itemes devueltos
-						if (!empty($itemsDevuletos)) 
+						if (!empty($itemsDevueltos)) 
 						{
 							
-							foreach ($itemsDevuletos as $i => $d) 
+							foreach ($itemsDevueltos as $i => $d) 
 							{
 								
-								$pmp = ClassRegistry::init('Bodega')->obtener_pmp_por_id($d['venta_detalle_producto_id']);
+								$pmp = ClassRegistry::init('Bodega')->obtener_pmp_por_id($d['producto_id']);
 								
 								# Según el tipo de ndc devolvemos con distintas glosas
 								switch($this->request->data['Dte']['tipo_ntc'])
 								{	
 									case 'stockout': 
-										// ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $d['cantidad_entregada_anulada'], 'aumentar');
-										// ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
-										// ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'devolucion',$d['cantidad_entregada_anulada']);
+										// ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['producto_id'], $d['cantidad'], 'aumentar');
+										// ClassRegistry::init('Bodega')->crearEntradaBodega($d['producto_id'], null, $d['cantidad'], $pmp, 'NC', null, $this->request->data['Dte']['venta_id']);
 										break;
 
 									case 'devolucion':
-										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['venta_detalle_producto_id'], $d['cantidad_entregada_anulada'], 'aumentar');
-										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'NC', null, $d['venta_id']);
-										ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'devolucion',$d['cantidad_entregada_anulada']);
+										ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($d['producto_id'], $d['cantidad'], 'aumentar');
+										ClassRegistry::init('Bodega')->crearEntradaBodega($d['producto_id'], $this->request->data['Dte']['bodegas'], $d['cantidad'], $pmp, 'NC', null, $this->request->data['Dte']['venta_id']);
 									
 										break;
 									case 'garantia':
-										ClassRegistry::init('Bodega')->crearEntradaBodega($d['venta_detalle_producto_id'], null, $d['cantidad_entregada_anulada'], $pmp, 'GT', null, $d['venta_id']);
-										ClassRegistry::init('Zonificacion')->crearEntradaParcialZonificacion($d['venta_id'],$d['venta_detalle_producto_id'],'garantia',$d['cantidad_entregada_anulada']);
+										ClassRegistry::init('Bodega')->crearEntradaBodega($d['producto_id'], $this->request->data['Dte']['bodegas'], $d['cantidad'], $pmp, 'GT', null, $this->request->data['Dte']['venta_id']);
 									
 										break;
 								}
 							}
+							$respuestaWarehouse = $this->WarehouseNodriza->CrearEntradaSalidaZonificacion($itemsDevueltos);
+						
+							ClassRegistry::init('Log')->save(
+								[
+									'Log' =>
+										[
+											'administrador' => 'Ordenes',
+											'modulo' 		=> 'admin_generar',
+											'modulo_accion' => json_encode($respuestaWarehouse)
+										]
+								]
+							);
+							
 						}
+				
+						
 
 						# Reservamos stock
 						/*$ventasController = new VentasController();
@@ -722,12 +765,19 @@ class OrdenesController extends AppController
 										'VentaDetalle.cantidad_entregada', 
 										'VentaDetalle.total_neto', 
 										'VentaDetalle.cantidad_pendiente_entrega', 
-										'VentaDetalle.cantidad_reservada', 
 										'VentaDetalle.cantidad_anulada',
 										'VentaDetalle.reservado_virtual',
 										'VentaDetalle.cantidad_en_espera',
 										'VentaDetalle.fecha_llegada_en_espera'
-									)
+									),
+									'VentaDetallesReserva'=>[
+										'fields'=>[ 
+												'VentaDetallesReserva.venta_detalle_id',
+												'VentaDetallesReserva.venta_detalle_producto_id',
+												'VentaDetallesReserva.cantidad_reservada',
+												'VentaDetallesReserva.bodega_id',
+											]
+										]
 								),
 								'EmbalajeWarehouse' => array(
 									'EmbalajeProductoWarehouse'
@@ -748,9 +798,6 @@ class OrdenesController extends AppController
 							$porcentaje_descuento = 0;
 						}
 
-						$itemsDevuletos = array();
-
-						# Aunlamos los items correspondientes
 						foreach ($venta['VentaDetalle'] as $ip => $d) 
 						{
 
@@ -769,25 +816,30 @@ class OrdenesController extends AppController
 
 									# Asigna NDC a linea de producto
 									$venta['VentaDetalle'][$ip]['dte'] = $id_dte['Dte']['id'];
+									
+									$cantidad_reservada = array_sum(Hash::extract($d['VentaDetallesReserva'], "{n}.cantidad_reservada"));
 
 									# Se calcula la cantidad en espera
 									if ($d['cantidad_en_espera'] > 0)
 									{
-										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = ($d['cantidad'] - $venta['VentaDetalle'][$ip]['cantidad_anulada']) - $d['cantidad_reservada'];
+										$cantidad_en_espera 							  = ($d['cantidad'] - $venta['VentaDetalle'][$ip]['cantidad_anulada']) - $cantidad_reservada;
+										$venta['VentaDetalle'][$ip]['cantidad_en_espera'] = $cantidad_en_espera > 0 ? $cantidad_en_espera : 0;
 									}
 
-									# si la cantidad reservada es menor a la cantidad anulada, la reserva se lleva a 0
-									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) 
-									{
-										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = 0;
-									}
+									// # si la cantidad reservada es menor a la cantidad anulada, la reserva se lleva a 0
+									// if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] <= $detalle['QtyItem']) 
+									// {
+									// 	$venta['VentaDetalle'][$ip]['cantidad_reservada'] = 0;
+									// }
 
-									# si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
-									if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem'] && $d['cantidad_reservada'] != ($d['cantidad'] - $detalle['QtyItem']) ) 
-									{
-										$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
-									}
+									// # si la cantidad reservada es mayor a la cantidad anulada, se descuenta de la reserva la cantidad anulada.
+									// if ($d['cantidad_reservada'] > 0 && $d['cantidad_reservada'] > $detalle['QtyItem'] && $d['cantidad_reservada'] != ($d['cantidad'] - $detalle['QtyItem']) ) 
+									// {
+									// 	$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $d['cantidad_reservada'] - $detalle['QtyItem'];
+									// }
 
+									ClassRegistry::init('VentaDetallesReserva')->updateAll(['VentaDetallesReserva.cantidad_reservada' => 0 ], ['VentaDetallesReserva.venta_detalle_id'=> $d['id']]);
+									
 									# Stock virtual
 									if ($d['reservado_virtual'] > 0)
 									{
@@ -811,7 +863,9 @@ class OrdenesController extends AppController
 									}
 
 									# Calcula cantidad pendiente entrega
-									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
+									// $cantidad_pendiente_entrega 							  = $d['cantidad_pendiente_entrega'] - $detalle['QtyItem'];
+									// $venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] =  $cantidad_pendiente_entrega  > 0 ? $cantidad_pendiente_entrega  : 0;
+									$venta['VentaDetalle'][$ip]['cantidad_pendiente_entrega'] = 0;
 
 								}
 
@@ -839,8 +893,31 @@ class OrdenesController extends AppController
 
 					}
 					
+					// ! Al hacer una Nota de Credito se Cancelan embalajes , se realizan nuevas reservas y se vuelve a procesar embalaje
+					if (
+						(!empty($this->request->data['DteDetalle']) 
+						&& $this->request->data['Dte']['tipo_documento'] == 61 
+						&& $id_dte['Dte']['estado'] == 'dte_real_emitido' 
+						&& in_array($this->request->data['Dte']['tipo_ntc'], $tipos_ndc_devloucion)
+						)
+						|| 
+						(!empty($this->request->data['DteDetalle']) 
+						&& $this->request->data['Dte']['tipo_documento'] == 61 
+						&& $id_dte['Dte']['estado'] == 'dte_real_emitido' 
+						&& $this->request->data['Dte']['tipo_ntc'] == 'anulacion')
+					 )
+					{
+						ClassRegistry::init('Venta')->id = $id_orden;
+						ClassRegistry::init('Venta')->cambiar_estado_picking($id_orden, 'no_definido');
+						ClassRegistry::init('Venta')->saveField('subestado_oc', 'no_entregado');
+						
+						$this->WarehouseNodriza->procesar_embalajes($id_orden);
+	
+						ClassRegistry::init('Venta')->pagar_venta($id_orden);
+					}
+				
 					# Preparamos los embalajes
-					ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id_orden, CakeSession::read('Auth.Administrador.id'));
+					$this->WarehouseNodriza->procesar_embalajes($id_orden);
 
 					$this->redirect(array('controller' => 'ordenes', 'action' => 'editar', $id_dte['Dte']['id'], $id_orden));
 				}
@@ -970,7 +1047,6 @@ class OrdenesController extends AppController
 				$venta['VentaMensaje'] = $this->Prestashop->prestashop_obtener_venta_mensajes($venta['Venta']['id_externo']);
 
 			}
-
 			else {
 
 				//----------------------------------------------------------------------------------------------------
@@ -1155,6 +1231,8 @@ class OrdenesController extends AppController
 
 		$tipos_ndc = $this->Orden->get_tipos_ndc();
 
+		$bodegas = ClassRegistry::init('Bodega')->obtener_bodegas();
+
 		# Se desactivan las opciones de ndc de devolución a stock si no han salido productos
 		if (ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id']) && !array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')))
 		{
@@ -1166,7 +1244,7 @@ class OrdenesController extends AppController
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');
 
-		$this->set(compact('venta', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc'));
+		$this->set(compact('venta', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc','bodegas'));
 
 	}
 

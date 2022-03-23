@@ -48,6 +48,15 @@ class VentaDetalle extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 		)
+		,
+		'VentaDetallesReserva' => array(
+			'className'				=> 'VentaDetallesReserva',
+			'foreignKey'			=> 'venta_detalle_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		)
 	);
 
 	public $hasAndBelongsToMany = array(
@@ -114,6 +123,9 @@ class VentaDetalle extends AppModel
 	 * @param  [type] $id [description]
 	 * @return [type]     [description]
 	 */
+
+	//  ! No se está usando, no actualizar.
+	//  ! Revisar mismo metodo en modelo Venta
 	public function reservar_stock_producto($id)
 	{	
 
@@ -287,6 +299,7 @@ class VentaDetalle extends AppModel
 	 * @param  [type] $id_venta [description]
 	 * @return [type]           [description]
 	 */
+	// !Obsoleta se esta ocupando la del modelo VentaDetalleProducto
 	public function obtener_cantidad_reservada($id_producto, $id_venta = null)
 	{
 		$qry = array(
@@ -351,5 +364,11 @@ class VentaDetalle extends AppModel
 
 		return $total;
 
+	}
+
+	public function Venta_id($id)
+	{	
+		$this->id = $id;
+		return $this->field('venta_id');
 	}
 }

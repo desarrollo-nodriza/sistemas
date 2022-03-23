@@ -85,8 +85,18 @@ class WarehouseNodrizaComponent extends Component
                 'VentaDetalle' => array(
                     'EmbalajeProductoWarehouse' => array(
                         'EmbalajeWarehouse'
-                    )
-                )
+                    ),
+                    'VentaDetallesReserva' => [
+                        'fields' => [
+                            'VentaDetallesReserva.venta_detalle_id',
+                            'VentaDetallesReserva.venta_detalle_producto_id',
+                            'VentaDetallesReserva.cantidad_reservada',
+                            'VentaDetallesReserva.bodega_id'
+                        ]
+                    ]
+                ),
+                'MetodoEnvio' => ['fields' => ['MetodoEnvio.retiro_local']],
+                'Bodega'  => ['fields' => ['Bodega.nombre', 'Bodega.comuna_id']],
             ),
             'fields' => array(
                 'Venta.id',
@@ -98,9 +108,11 @@ class WarehouseNodrizaComponent extends Component
                 'Venta.administrador_id',
                 'Venta.picking_estado',
                 'Venta.prioritario',
-                'Venta.bodega_id '
+                'Venta.bodega_id',
+                'Venta.nota_interna'
             )
         ));
+
 
         $logs[] = array(
             'Log' => array(
@@ -109,19 +121,16 @@ class WarehouseNodrizaComponent extends Component
                 'modulo_accion' => json_encode($venta)
             )
         );
-        $bodega = ClassRegistry::init('Bodega')->obtener_bodega_principal();
-        $dte_valido = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
 
         switch ($venta['Venta']['picking_estado']) {
 
             case 'no_definido':
-
                 # si hay un embalaje creado se cancela siempre y cuando sean las 
                 # unidades del embalaje las que se quitan de la reserva
-                $response = $this->RecrearEmbalajesPorItemAnulados($id);
+                $response = $this->CambiarCancelado_V2($id, CakeSession::read('Auth.Administrador.id') ?? 1, true, "La VID {$venta['Venta']['id']} ha sido cancelada.");
                 $logs[] = array(
                     'Log' => array(
-                        'administrador' => "Se solicita recrear embalajes vid {$id} a Warehouse",
+                        'administrador' => "Cancelar embalajes vid {$id} en Warehouse",
                         'modulo'        => 'WarehouseNodrizaComponent',
                         'modulo_accion' => json_encode(['Respuesta warehouse: ' => $response])
                     )
@@ -129,67 +138,133 @@ class WarehouseNodrizaComponent extends Component
                 break;
 
             case 'empaquetar':
-
+                $bodega = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+                $dte_valido = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
                 # si el estado de la venta no es pagado no pasa
                 if (!ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id'])) {
                     break;
                 }
 
-                # Embalaje
+                $bodegas_activas = ClassRegistry::init('Bodegas')->find(
+                    'list',
+                    ['conditions' => ['Bodegas.activo' => true]]
+                );
 
-                $embalaje = [
-                    'venta_id'         => $venta['Venta']['id'],
-                    'bodega_id'        => $venta['Venta']['bodega_id'] ?? $bodega['Bodega']['id'],
-                    'metodo_envio_id'  => $venta['Venta']['metodo_envio_id'],
-                    'comuna_id'        => $venta['Venta']['comuna_id'],
-                    'prioritario'      => ($venta['Venta']['prioritario']) ? 1 : 0,
-                    'fecha_venta'      => $venta['Venta']['fecha_venta'],
-                    'responsable'      => CakeSession::read('Auth.Administrador.id') ?? 1,
-                    'productos'        => []
+                $reservas_separadas_por_bodega = [];
 
-                ];
-                if (isset($venta['Venta']['marketplace_id'])) {
-                    $embalaje['marketplace_id'] = $venta['Venta']['marketplace_id'];
+                // TODO Extraemos solo los productos que fueron reservados en otras bodegas
+                foreach ($bodegas_activas as $key => $value) {
+                    $reservas_separadas_por_bodega[] = Hash::extract($venta['VentaDetalle'], "{n}.VentaDetallesReserva.{n}[bodega_id={$key}]");
                 }
 
-                # Asignamos los productos al embalaje
-                foreach ($venta['VentaDetalle'] as $d) {
+                // TODO Ya que se consultan todas las bodegas se filtra aquellas bodegas que no tuvieron reserva en stock, para recorrer solo las que corresponde
+                $reservas_separadas_por_bodega = array_filter($reservas_separadas_por_bodega);
 
-                    $cantidad_a_embalar = $d['cantidad_reservada'];
+                // TODO Al recorrer se crean embalajes de acuerdo a la bodega
+                foreach ($reservas_separadas_por_bodega as $productos_por_bodegas) {
+                    $embalaje = [];
+                    $embalaje = [
+                        'venta_id'        => $venta['Venta']['id'],
+                        'bodega_id'       => $venta['Venta']['bodega_id'] ?? $bodega['Bodega']['id'],
+                        'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
+                        'comuna_id'       => $venta['Venta']['comuna_id']  ?? $venta['Bodega']['comuna_id'],
+                        'prioritario'     => ($venta['Venta']['prioritario']) ? 1 : 0,
+                        'fecha_venta'     => $venta['Venta']['fecha_venta'],
+                        'responsable'     => CakeSession::read('Auth.Administrador.id') ?? 1,
+                        'productos'       => []
+                    ];
 
-                    if (!empty($d['EmbalajeProductoWarehouse'])) {
-                        foreach ($d['EmbalajeProductoWarehouse'] as $emp) {
+                    if (isset($venta['Venta']['marketplace_id'])) {
+                        $embalaje['marketplace_id'] = $venta['Venta']['marketplace_id'];
+                    }
 
-                            if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado' || $emp['EmbalajeWarehouse']['estado'] == 'finalizado') {
-                                continue;
+                    $bodega_distinta_a_principal = false;
+
+                    // ! Verificamos Si el total del producto ya fue embalada, si falta, se crea un embalaje con lo que falta
+                    foreach ($productos_por_bodegas as $d) {
+
+                        $cantidad_a_embalar = $d['cantidad_reservada'] - (array_sum(Hash::extract($venta['VentaDetalle'], "{n}.EmbalajeProductoWarehouse.{n}[detalle_id={$d['venta_detalle_id']}].cantidad_a_embalar")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.EmbalajeProductoWarehouse.{n}[detalle_id={$d['venta_detalle_id']}].cantidad_embalada")));
+
+                        # Agregamos el item al nuevo embalaje
+                        if ($cantidad_a_embalar > 0) {
+                            // ! Si existen reservas en más de una bodega y las reservas que se estan procesando son distinta a la bodega de la venta, al embalaje se le indica la bodega de la reserva
+                            if (count($reservas_separadas_por_bodega) > 1 && $d['bodega_id'] != $embalaje['bodega_id']) {
+                                $embalaje['bodega_id']       = $d['bodega_id'];
+                                $bodega_distinta_a_principal = true;
                             }
 
-                            $cantidad_a_embalar = $cantidad_a_embalar - $emp['cantidad_a_embalar'];
+                            $embalaje['productos'][] = array(
+                                'producto_id'        => $d['venta_detalle_producto_id'],
+                                'detalle_id'         => $d['venta_detalle_id'],
+                                'cantidad_a_embalar' => $cantidad_a_embalar,
+                                'fecha_creacion'     => date('Y-m-d H:i:s'),
+                                'ultima_modifacion'  => date('Y-m-d H:i:s')
+                            );
                         }
                     }
 
-                    # Agregamos el item al nuevo embalaje
-                    if ($cantidad_a_embalar > 0) {
-                        $embalaje['productos'][] = array(
-                            'producto_id' => $d['venta_detalle_producto_id'],
-                            'detalle_id' => $d['id'],
-                            'cantidad_a_embalar' => $cantidad_a_embalar
+                    # si hay productos para embalar y tiene dte válido pasa a embalaje
+                    if (!empty($embalaje['productos']) && $dte_valido) {
+
+                        $response = $this->CrearPedido($embalaje);
+
+                        if ($response['code'] == 200) {
+
+                            $logs[] = array(
+                                'Log' => array(
+                                    'administrador' => "Se han creado embalajes para la vid {$id} bodega {$embalaje['bodega_id']} en Warehouse",
+                                    'modulo'        => 'WarehouseNodrizaComponent',
+                                    'modulo_accion' => json_encode(['Respuesta warehouse: ' => $response])
+                                )
+                            );
+
+                            if ($bodega_distinta_a_principal) {
+
+                                if ($venta['MetodoEnvio']['retiro_local']) {
+                                    try {
+                                        $nota = is_null($venta['Venta']['nota_interna']) ? '' : "{$venta['Venta']['nota_interna']} - El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                    } catch (\Throwable $th) {
+
+                                        $nota = is_null($venta['Venta']['nota_interna']) ? '' : "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                    }
+
+                                    ClassRegistry::init('Venta')->save([
+                                        'Venta' =>
+                                        [
+                                            'nota_interna' => $nota,
+                                            'id'           => $venta['Venta']['id']
+                                        ]
+                                    ]);
+                                }
+                            }
+                        } else {
+
+                            $logs[] = array(
+                                'Log' => array(
+                                    'administrador' => "No se han podido crear embalajes para la vid {$id} bodega {$embalaje['bodega_id']} en Warehouse",
+                                    'modulo'        => 'WarehouseNodrizaComponent',
+                                    'modulo_accion' => json_encode(['Respuesta warehouse: ' => $response])
+                                )
+                            );
+                        };
+                    } else {
+
+                        $logs[] = array(
+                            'Log' => array(
+                                'administrador' => "no se logro crear embalajes para la vid {$id} bodega {$embalaje['bodega_id']} en Warehouse",
+                                'modulo'        => 'WarehouseNodrizaComponent',
+                                'modulo_accion' => json_encode(
+                                    [
+                                        'Existen productos para embalar?'   => !empty($embalaje['productos']) ? 'si' : 'no',
+                                        'Productos'                         => $embalaje['productos'],
+                                        'Existen DTE valido para embalar?'  => $dte_valido ? 'si' : 'no',
+                                        'DTE'                               => $dte_valido,
+
+                                    ]
+                                )
+                            )
                         );
                     }
-                }
-
-                # si hay productos para embalar y tiene dte válido pasa a embalaje
-                if (!empty($embalaje['productos']) && $dte_valido) {
-
-                    $response = $this->CrearPedido($embalaje);
-
-                    $logs[] = array(
-                        'Log' => array(
-                            'administrador' => "Se solicito crear embalajes para la vid {$id} en Warehouse",
-                            'modulo'        => 'WarehouseNodrizaComponent',
-                            'modulo_accion' => json_encode(['Respuesta warehouse: ' => $response])
-                        )
-                    );
                 }
 
                 break;
@@ -234,5 +309,11 @@ class WarehouseNodrizaComponent extends Component
     {
         $this->crearCliente();
         return $this->WarehouseNodriza->ObtenerEvidencia($embalaje);
+    }
+
+    public function CrearEntradaSalidaZonificacion($zonificacion)
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->CrearEntradaSalidaZonificacion($zonificacion);
     }
 }

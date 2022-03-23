@@ -6,6 +6,10 @@ App::uses('PagosController', 'Controller');
 class OrdenComprasController extends AppController
 {	
 
+	public $components = array(
+		'WarehouseNodriza',
+	  );
+
 	/**
      * Crea un redirect y agrega a la URL los parámetros del filtro
      * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
@@ -374,7 +378,11 @@ class OrdenComprasController extends AppController
 			
 			# Reservamos los productos de las ventas relacionadas a la OC padre
 			if (!$oc_manual) {
-				ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
+				// ! Se mueve metodo al controllador
+				// ! Queda en desuzo el metodo en el Modelo
+				// ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
+				$this->reservar_stock_por_oc($id);
+				
 			}else{
 				
 				# Reservamos las ventas mas antiguas
@@ -382,7 +390,11 @@ class OrdenComprasController extends AppController
 
 				foreach ($ventasSinReserva as $venta) {
 					foreach ($venta['VentaDetalle'] as $detalle) {
-						ClassRegistry::init('Venta')->reservar_stock_producto($detalle['id']);
+
+						if (ClassRegistry::init('Venta')->reservar_stock_producto($detalle['id']) > 0) {
+							// * Se sigue misma logica de instanciar metodo que hay en metodo "reservar_stock_producto"
+							$this->WarehouseNodriza->procesar_embalajes($detalle['venta_id']);
+						}
 					}	
 				}
 			}
@@ -694,8 +706,6 @@ class OrdenComprasController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-		
-			// prx($this->request->data);
 			if ($this->OrdenCompra->save($this->request->data)) {
 				$this->Session->setFlash('Se ha cambiado bodega', null, array(), 'success');
 				$this->redirect(array('controller'=>'ordenCompras','action' => 'index'));
@@ -1129,7 +1139,6 @@ class OrdenComprasController extends AppController
 			$this->redirect($this->referer('/', true));
 		}
 
-
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
 			foreach ($this->request->data['OrdenesCompra'] as $ic => $d) {
@@ -1179,20 +1188,28 @@ class OrdenComprasController extends AppController
 				'VentaDetalle.venta_id' => Hash::extract($this->request->query['Venta'], '{n}.venta_id')
 			),
 			'fields' => array(
-				'VentaDetalle.cantidad', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.venta_id'
+				'VentaDetalle.cantidad', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.venta_id'
 			),
-			'contain'=>['Venta'=>['fields'=>['Venta.bodega_id']]]
+			'contain'=>[
+				'Venta'=>['fields'=>['Venta.bodega_id']],
+				'VentaDetallesReserva'=>[
+					'fields'=>[ 
+							'VentaDetallesReserva.venta_detalle_id',
+							'VentaDetallesReserva.venta_detalle_producto_id',
+							'VentaDetallesReserva.cantidad_reservada',
+							'VentaDetallesReserva.bodega_id',
+						]
+					]
+				]
 		));
-
 
 		$productosSolicitar = array();
 		$productosNoSolicitar = array();
 		$productosTotales   = array();
-		
 		# Se calculan los totales de productos vendidos
 		foreach ($venta_detalles as $iv => $venta) {
 			$bodega_id[$venta['VentaDetalle']['venta_detalle_producto_id']] = $venta['Venta']['bodega_id'];
-			$cantidad  = $venta['VentaDetalle']['cantidad'] - $venta['VentaDetalle']['cantidad_reservada']; // Se descuenta la cantidad ya reservada
+			$cantidad  = $venta['VentaDetalle']['cantidad'] - array_sum(Hash::extract($venta['VentaDetallesReserva'], "{n}.cantidad_reservada")); // Se descuenta la cantidad ya reservada
 
 			if ($cantidad === 0) {
 				continue;
@@ -1205,7 +1222,6 @@ class OrdenComprasController extends AppController
 			}
 
 		}
-	
 		# comprobamos el stock en bodegas para saber cuales productos se deben solicitar por OC
 		foreach ($productosTotales as $ip => $p) {
 			
@@ -1213,7 +1229,6 @@ class OrdenComprasController extends AppController
 
 			# Consultamos la cantiad que tenemos en la bodega principal
 			$enBodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($ip, $bodega_id[$ip]??null);
-
 			# Calculamos la diferencia que se debe pedir segun lo que tenemos en bodega
 			if ($enBodega >= $p) {
 				$pedir = 0;
@@ -1231,7 +1246,6 @@ class OrdenComprasController extends AppController
 			}
 
 		}
-		
 		# Si no hay producto que pedir se cancela el paso
 		if (empty($productosSolicitar)) {
 			$this->Session->setFlash('No hay productos que agregar a la OC.', null, array(), 'danger');
@@ -2140,8 +2154,20 @@ class OrdenComprasController extends AppController
 					'type' => 'INNER',
 					'conditions' => array(
 						'venta_detalles.venta_id = Venta.id',
-						'venta_detalles.cantidad_reservada < venta_detalles.cantidad',
-					)
+						
+					),
+					'joins' => [
+						'table' => 'rp_venta_detalles_reservas',
+						'alias' => 'VentaDetallesReserva',
+						'type' => 'LEFT',
+						'conditions' => array(
+							'VentaDetallesReserva.venta_detalle_id = venta_detalles.id',
+							'ifnull(Sum(VentaDetallesReserva.cantidad_reservada),0) < venta_detalles.cantidad',
+						),
+						'group' => array(
+							'VentaDetallesReserva.venta_detalle_id'
+						),
+					]
 				),
 			),
 			'contain' => array(
@@ -3212,7 +3238,6 @@ class OrdenComprasController extends AppController
 		$estados = $this->OrdenCompra->estado_proveedor;
 		
 		$this->set(compact('estados'));
-		#prx($this->request->data);
 
 	}
 
@@ -3655,7 +3680,10 @@ class OrdenComprasController extends AppController
 		# Reservamos los productos de las ventas relacionadas a la OC padre
 		if (!$oc['OrdenCompra']['oc_manual']) 
 		{
-			ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
+			// ! Se mueve metodo al controllador
+			// ! Queda en desuzo el metodo en el Modelo
+			// ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
+			$this->reservar_stock_por_oc($id);
 		}
 
 		$ocSave = array(
@@ -4193,5 +4221,48 @@ class OrdenComprasController extends AppController
             '_serialize' => array('response')
         ));
 
+	}
+
+	public function reservar_stock_por_oc($id_oc)
+	{
+		$ocVentas = ClassRegistry::init('OrdenCompra')->find('first', array(
+			'conditions' => array(
+				'OrdenCompra.id' => $id_oc
+			),
+			'contain' => array(
+				'Venta' => array(
+					'VentaDetalle' => array(
+						'fields' => array(
+							'VentaDetalle.id'
+						)
+					),
+					'fields' => array(
+						'Venta.id'
+					),
+					'order' => array('Venta.fecha_venta' => 'ASC')
+				)
+			),
+			'fields' => array(
+				'OrdenCompra.id'
+			)
+		));
+		
+		if (empty($ocVentas['Venta'])) {
+			return;
+		}
+		
+		foreach ($ocVentas['Venta'] as $iv => $venta) {
+			foreach ($venta['VentaDetalle'] as $id => $d) {
+
+				$reservado = ClassRegistry::init('Venta')->reservar_stock_producto($d['id']);
+
+				if ($reservado > 0) {
+					// * Se sigue misma logica de instanciar metodo que hay en metodo "reservar_stock_producto"
+					$this->WarehouseNodriza->procesar_embalajes($venta['id']);
+				}
+			}
+		}
+
+		return;
 	}
 }

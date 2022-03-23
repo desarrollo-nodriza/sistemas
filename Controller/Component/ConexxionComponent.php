@@ -73,239 +73,263 @@ class ConexxionComponent extends Component
     public function generar_ot($venta)
 	{	
 		$volumenMaximo = $venta['MetodoEnvio']['volumen_maximo']?? (float) 60;
-		
-		# Algoritmo LAFF para ordenamiento de productos
-		$paquetes = $this->obtener_bultos_venta($venta, $volumenMaximo);
 
+		$embalajes = Hash::extract($venta['EmbalajeWarehouse'], "{n}[estado=procesando]");
+
+		$exito = false;
 		$log = array();		
 
-		# si no hay paquetes se retorna false
-		if (empty($paquetes)) {
+		if (!$embalajes) {
 
 			$log[] = array(
 				'Log' => array(
-					'administrador' => 'Conexxion vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
+					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
+					'modulo' 		=> 'StarkenComponent',
+					'modulo_accion' => json_encode(["No posee embalajes en procesando" => $venta])
 				)
-			);
-
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
-
-			return false;
-		}
-
-		# Si los paquetes no tienen dimensiones se setean con el valor default
-		foreach ($paquetes as $ip => $paquete) {
-			
-			if($paquete['paquete']['length'] == 0)
-				$paquetes[$ip]['paquete']['length'] = $venta['MetodoEnvio']['largo_default'];
-
-			if($paquete['paquete']['width'] == 0)
-				$paquetes[$ip]['paquete']['width']  = $venta['MetodoEnvio']['ancho_default'];
-
-			if($paquete['paquete']['height'] == 0)
-				$paquetes[$ip]['paquete']['height'] = $venta['MetodoEnvio']['alto_default'];
-
-			# peso seteado al minimo para asegurar cobro por balanza
-			if($paquete['paquete']['weight'] == 0)
-				$paquetes[$ip]['paquete']['weight'] = $venta['MetodoEnvio']['peso_default'];
-		}
-
-		$peso_total            = array_sum(Hash::extract($paquetes, '{n}.paquete.weight'));
-		$peso_maximo_permitido = $venta['MetodoEnvio']['peso_maximo'];
-
-		if ($peso_total > $peso_maximo_permitido) {
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'Conexxion vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
-				)
-			);
-
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
-
-			return false;
-		}
-
-		$transportes = array();
-
-		# Mantenemos las ot ya generadas
-		foreach ($venta['Transporte'] as $key => $t) {
-			$transportes[] = array(
-				'id'              => $t['TransportesVenta']['id'],
-				'transporte_id'   => $t['id'],
-				'cod_seguimiento' => $t['TransportesVenta']['cod_seguimiento'],
-				'etiqueta'        => $t['TransportesVenta']['etiqueta'],
-				'entrega_aprox'   => $t['TransportesVenta']['entrega_aprox']
 			);
 		}
 		
-		$ruta_pdfs = array();
+		foreach ($embalajes as $embalaje) {
+			# Algoritmo LAFF para ordenamiento de productos
+			$paquetes = $this->LAFFPack->obtener_bultos_venta_por_embalaje_v2($embalaje, $volumenMaximo);
 
-		foreach ($paquetes as $id_venta => $paquete) {
+			# si no hay paquetes se retorna false
+			if (empty($paquetes)) {
 
-			# dimensiones de todos los paquetes unificado
-			$largoTotal = (int) $paquete['paquete']['length'];
-			$anchoTotal = (int) $paquete['paquete']['width'];
-			$altoTotal  = (int) $paquete['paquete']['height'];
-			$pesoTotal  = $paquete['paquete']['weight'];
+				$log[] = array(
+					'Log' => array(
+						'administrador' => "Conexxion vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
+						'modulo' 		=> 'ConexxionComponent',
+						'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
+					)
+				);
 
-
-			# Normalizamos el rut
-			$venta['Venta']['rut_receptor'] = str_replace('-', '', $venta['Venta']['rut_receptor']);
-			$venta['Venta']['rut_receptor'] = trim(str_replace('.', '', $venta['Venta']['rut_receptor']));
-
-			# separamos el rut
-			$rut_destinatario = substr($venta['Venta']['rut_receptor'], 0, -1);	
-
-			# creamos el arreglo para generar la OT
-			$data = array(
-				'sender_full_name'        => $venta['MetodoEnvio']['sender_full_name'],
-				'sender_rut'              => $venta['MetodoEnvio']['sender_rut'],
-				'sender_email'            => $venta['MetodoEnvio']['sender_email'],
-				'sender_address'          => $venta['MetodoEnvio']['sender_address'] . ', ' . $venta['MetodoEnvio']['ciudad_origen'],
-				'sender_address_number'   => $venta['MetodoEnvio']['sender_address_number'],
-				'receiver_full_name'      => (empty($venta['Venta']['nombre_receptor'])) ? $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'] : $venta['Venta']['nombre_receptor'],
-				'receiver_rut'            => $rut_destinatario,
-				'receiver_email'          => $venta['VentaCliente']['email'],
-				'receiver_phone'          => $venta['Venta']['fono_receptor'],
-				'receiver_address'        => $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega']  . ', ' . $venta['Venta']['comuna_entrega'],
-				'receiver_address_number' => $venta['Venta']['otro_entrega'],
-				'deliver_info'            => 'OT generada automáticamente por ' . $venta['Tienda']['nombre'] . ' - Venta Ref: ' . $venta['Venta']['referencia'],
-				'has_return'              => $venta['MetodoEnvio']['has_return'],
-				'height'                  => $altoTotal,
-				'width'                   => $anchoTotal,
-				'depth'                   => $largoTotal,
-				'weight'                  => round($pesoTotal, 2),
-				'product'                 => (int) $venta['MetodoEnvio']['product'],
-				'service'                 => (int) $venta['MetodoEnvio']['service'],
-				'notification_type'       => $venta['MetodoEnvio']['notification_type']
-			);
-			
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'Conexxion vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Request: ' . json_encode($data)
-				)
-			);
-			
-			$response = $this->ConexxionCliente->createOt($data);
-			
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'Conexxion vid:' . $venta['Venta']['id'],
-					'modulo' => 'Ventas',
-					'modulo_accion' => 'Response: ' . json_encode($response)
-				)
-			);
-
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
-			
-			if ($response['httpCode'] != 201) {
-				return false;
+				continue;
 			}
 
-			$rutaPublica = '';
+			# Si los paquetes no tienen dimensiones se setean con el valor default
+			foreach ($paquetes as $ip => $paquete) {
+				
+				if($paquete['paquete']['length'] == 0)
+					$paquetes[$ip]['paquete']['length'] = $venta['MetodoEnvio']['largo_default'];
+
+				if($paquete['paquete']['width'] == 0)
+					$paquetes[$ip]['paquete']['width']  = $venta['MetodoEnvio']['ancho_default'];
+
+				if($paquete['paquete']['height'] == 0)
+					$paquetes[$ip]['paquete']['height'] = $venta['MetodoEnvio']['alto_default'];
+
+				# peso seteado al minimo para asegurar cobro por balanza
+				if($paquete['paquete']['weight'] == 0)
+					$paquetes[$ip]['paquete']['weight'] = $venta['MetodoEnvio']['peso_default'];
+			}
+
+			$peso_total            = array_sum(Hash::extract($paquetes, '{n}.paquete.weight'));
+			$peso_maximo_permitido = $venta['MetodoEnvio']['peso_maximo'];
+
+			if ($peso_total > $peso_maximo_permitido) {
+				$log[] = array(
+					'Log' => array(
+						'administrador' => "Conexxion vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
+						'modulo' 		=> 'ConexxionComponent',
+						'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
+					)
+				);
+
+				continue;
+			}
+
+			$transportes = array();
+
 			$ruta_pdfs = array();
 
-			#Generamos la etiqueta
-			$etiquetaZpl = $this->getEtiquetaEmision($response, $venta);	
-			
-			$etiquetaPdf = '';
+			foreach ($paquetes as $id_venta => $paquete) {
 
-			$pathEtiquetas  = APP . 'webroot' . DS . 'img' . DS . 'ModuloConexxion' . DS . $venta['Venta']['id'] . DS;
-			$nombreEtiqueta = $response['body']['barcode'] . '.pdf';
-			
+				# dimensiones de todos los paquetes unificado
+				$largoTotal = (int) $paquete['paquete']['length'];
+				$anchoTotal = (int) $paquete['paquete']['width'];
+				$altoTotal  = (int) $paquete['paquete']['height'];
+				$pesoTotal  = $paquete['paquete']['weight'];
 
-			$curl = curl_init();
-			// adjust print density (8dpmm), label width (4 inches), label height (6 inches), and label index (0) as necessary
-			curl_setopt($curl, CURLOPT_URL, "http://api.labelary.com/v1/printers/8dpmm/labels/6x4/0/");
-			curl_setopt($curl, CURLOPT_POST, TRUE);
-			curl_setopt($curl, CURLOPT_POSTFIELDS, $etiquetaZpl);
-			curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-			curl_setopt($curl, CURLOPT_HTTPHEADER, array("Accept: application/pdf")); // omit this line to get PNG images back
-			$etiquetaPdf = curl_exec($curl);
-			
-			if (!is_dir($pathEtiquetas)) {
-				@mkdir($pathEtiquetas, 0775, true);
-			}
 
-			if (curl_getinfo($curl, CURLINFO_HTTP_CODE) == 200) {
-			    $file = fopen($pathEtiquetas . $nombreEtiqueta, "w"); // change file name for PNG images
-			    fwrite($file, $etiquetaPdf);
-			    fclose($file);
+				# Normalizamos el rut
+				$venta['Venta']['rut_receptor'] = str_replace('-', '', $venta['Venta']['rut_receptor']);
+				$venta['Venta']['rut_receptor'] = trim(str_replace('.', '', $venta['Venta']['rut_receptor']));
 
-			    $rutaPublica = obtener_url_base() . 'img/ModuloConexxion/' . $venta['Venta']['id'] . '/' . $nombreEtiqueta;
-			    $ruta_pdfs[] = $pathEtiquetas . $nombreEtiqueta;
+				# separamos el rut
+				$rut_destinatario = substr($venta['Venta']['rut_receptor'], 0, -1);	
 
-			}else{
+				# creamos el arreglo para generar la OT
+				$data = array(
+					'sender_full_name'        => $venta['MetodoEnvio']['sender_full_name'],
+					'sender_rut'              => $venta['MetodoEnvio']['sender_rut'],
+					'sender_email'            => $venta['MetodoEnvio']['sender_email'],
+					'sender_address'          => $venta['MetodoEnvio']['sender_address'] . ', ' . $venta['MetodoEnvio']['ciudad_origen'],
+					'sender_address_number'   => $venta['MetodoEnvio']['sender_address_number'],
+					'receiver_full_name'      => (empty($venta['Venta']['nombre_receptor'])) ? $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'] : $venta['Venta']['nombre_receptor'],
+					'receiver_rut'            => $rut_destinatario,
+					'receiver_email'          => $venta['VentaCliente']['email'],
+					'receiver_phone'          => $venta['Venta']['fono_receptor'],
+					'receiver_address'        => $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega']  . ', ' . $venta['Venta']['comuna_entrega'],
+					'receiver_address_number' => $venta['Venta']['otro_entrega'],
+					'deliver_info'            => 'OT generada automáticamente por ' . $venta['Tienda']['nombre'] . ' - Venta Ref: ' . $venta['Venta']['referencia'],
+					'has_return'              => $venta['MetodoEnvio']['has_return'],
+					'height'                  => $altoTotal,
+					'width'                   => $anchoTotal,
+					'depth'                   => $largoTotal,
+					'weight'                  => round($pesoTotal, 2),
+					'product'                 => (int) $venta['MetodoEnvio']['product'],
+					'service'                 => (int) $venta['MetodoEnvio']['service'],
+					'notification_type'       => $venta['MetodoEnvio']['notification_type']
+				);
+				
+				$log[] = array(
+					'Log' => array(
+						'administrador' => "Conexxion vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
+						'modulo' 		=> 'Ventas',
+						'modulo_accion' => 'Request: ' . json_encode($data)
+					)
+				);
+				
+				$response = $this->ConexxionCliente->createOt($data);
+				
+				$log[] = array(
+					'Log' => array(
+						'administrador' => "Conexxion vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
+						'modulo' 		=> 'ConexxionComponent',
+						'modulo_accion' => 'Response: ' . json_encode($response)
+					)
+				);
+
+				if ($response['httpCode'] != 201) {
+					return false;
+				}
+
 				$rutaPublica = '';
-			}
+				$ruta_pdfs = array();
 
-			curl_close($curl);
-			
-			
-			# Guardamos el transportista y el/los numeros de seguimiento
-			$carrier_name = 'CONEXXION';
-			$carrier_opt = array(
-				'Transporte' => array(
-					'codigo' => 'CONEXXION-WS',
-					'url_seguimiento' => 'https://courier.conexxion.cl/' // Url de seguimiento conexión
-				)
-			);
+				#Generamos la etiqueta
+				$etiquetaZpl = $this->getEtiquetaEmision($response, $venta);	
+				
+				$etiquetaPdf = '';
 
-			if (!empty($rutaPublica)) {
-				$carrier_opt = array_replace_recursive($carrier_opt, array(
+				$pathEtiquetas  = APP . 'webroot' . DS . 'img' . DS . 'ModuloConexxion' . DS . $venta['Venta']['id'] . DS;
+				$nombreEtiqueta = $response['body']['barcode'] . '.pdf';
+				
+
+				$curl = curl_init();
+				// adjust print density (8dpmm), label width (4 inches), label height (6 inches), and label index (0) as necessary
+				curl_setopt($curl, CURLOPT_URL, "http://api.labelary.com/v1/printers/8dpmm/labels/6x4/0/");
+				curl_setopt($curl, CURLOPT_POST, TRUE);
+				curl_setopt($curl, CURLOPT_POSTFIELDS, $etiquetaZpl);
+				curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
+				curl_setopt($curl, CURLOPT_HTTPHEADER, array("Accept: application/pdf")); // omit this line to get PNG images back
+				$etiquetaPdf = curl_exec($curl);
+				
+				if (!is_dir($pathEtiquetas)) {
+					@mkdir($pathEtiquetas, 0775, true);
+				}
+
+				if (curl_getinfo($curl, CURLINFO_HTTP_CODE) == 200) {
+					$file = fopen($pathEtiquetas . $nombreEtiqueta, "w"); // change file name for PNG images
+					fwrite($file, $etiquetaPdf);
+					fclose($file);
+
+					$rutaPublica = obtener_url_base() . 'img/ModuloConexxion/' . $venta['Venta']['id'] . '/' . $nombreEtiqueta;
+					$ruta_pdfs[] = $pathEtiquetas . $nombreEtiqueta;
+
+				}else{
+					$rutaPublica = '';
+				}
+
+				curl_close($curl);
+				
+				
+				# Guardamos el transportista y el/los numeros de seguimiento
+				$carrier_name = 'CONEXXION';
+				$carrier_opt = array(
 					'Transporte' => array(
-						'etiqueta' => $rutaPublica
+						'codigo' => 'CONEXXION-WS',
+						'url_seguimiento' => 'https://courier.conexxion.cl/' // Url de seguimiento conexión
 					)
-				));	
+				);
+
+				if (!empty($rutaPublica)) {
+					$carrier_opt = array_replace_recursive($carrier_opt, array(
+						'Transporte' => array(
+							'etiqueta' => $rutaPublica
+						)
+					));	
+				}
+
+				$transportes[] = array(
+					'transporte_id'   => ClassRegistry::init('Transporte')->obtener_transporte_por_nombre($carrier_name, true, $carrier_opt),
+					'cod_seguimiento' => $response['body']['barcode'],
+					'etiqueta'        => $rutaPublica,
+					'entrega_aprox'   => null
+				);
+
+				$union = null;
+
+				if (!empty($ruta_pdfs)) {
+					$union = $this->unir_documentos($ruta_pdfs, $venta['Venta']['id']);
+
+					if (!empty($union['result'])) {
+						
+						$union = $union['result'][0]['document'];
+					}
+				}
+
+				$transportes[] = 
+                [
+                    'TransportesVenta'=>
+                        [
+                            'transporte_id'   		 => ClassRegistry::init('Transporte')->obtener_transporte_por_nombre($carrier_name, true, $carrier_opt),
+                            'venta_id'               => $venta['Venta']['id'],
+                            'cod_seguimiento' 	     => $response['body']['barcode'],
+                            'etiqueta'               => $union,
+                            'entrega_aprox'          => null,
+                            'paquete_generado'       => count($paquetes),
+                            'costo_envio'            => null,
+                            'etiqueta_envio_externa' => $union,
+                            'embalaje_id'            => $embalaje["id"]
+                        ]
+                ];
+				
 			}
 
-			$transportes[] = array(
-				'transporte_id'   => ClassRegistry::init('Transporte')->obtener_transporte_por_nombre($carrier_name, true, $carrier_opt),
-				'cod_seguimiento' => $response['body']['barcode'],
-				'etiqueta'        => $rutaPublica,
-				'entrega_aprox'   => null
-			);
 		}
 
-		if (empty($transportes)) {
-			return false;
-		}
+		if ($transportes) {
+			# Se guarda la información del tracking en la venta
+			if (ClassRegistry::init('TransportesVenta')->saveAll($transportes)) {
+				$log[] = array(
+					'Log' => array(
+						'administrador' => "Conexxion vid: {$venta['Venta']['id']}" ,
+						'modulo' 		=> 'ConexxionComponent',
+						'modulo_accion' => json_encode($transportes)
+					)
+				);
 
+				$exito = true;
+				
+			} else {
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Conexxion, dificultades para guardar información ot vid:' . $venta['Venta']['id'],
+						'modulo'        => 'ConexxionComponent',
+						'modulo_accion' => 'No se encontraron transportes: ' . json_encode($transportes)
+					   
+					)
+				);
+			}
+		}
 		
-		# Se guarda la información del tracking en la venta
-		$nwVenta = array(
-			'Venta' => array(
-				'id' => $venta['Venta']['id'],
-				'paquete_generado' => 1
-			),
-			'Transporte' => $transportes
-		);
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($log);
 
-		# unificar pdfs en 1 solo
-		if (!empty($ruta_pdfs)) {
-			$union = $this->unir_documentos($ruta_pdfs, $venta['Venta']['id']);
-			
-			if (!empty($union['result'])) {			
-				# Tomamos el primer indice ya que jamás tendremos más de 500 etiquetas unidas pra una venta
-				$nwVenta = array_replace_recursive($nwVenta, array(
-					'Venta' => array(
-						'etiqueta_envio_externa' => $union['result'][0]['document'],
-					)
-				));
-			}
-		}
-
-		return ClassRegistry::init('Venta')->saveAll($nwVenta);
-
+		return $exito;
 	}
 
 	/**
@@ -360,96 +384,6 @@ class ConexxionComponent extends Component
 
 		return $resultados;
 	}
-
-
-    /**
-	 * Calcula a aproximacion de bltos que se deberían armar en base a los itemes
-	 * @param  array $venta         Detalle de la venta
-	 * @param  float $volumenMaximo volumen máximo para cada paquete
-	 * @return array
-	 */
-	public function obtener_bultos_venta($venta, $volumenMaximo)
-	{	
-		$bultos = array();
-
-		foreach ($venta['VentaDetalle'] as $ivd => $d) {
-
-			if ($d['cantidad_reservada'] <= 0) {
-				continue;
-			}
-
-			for ($i=0; $i < $d['cantidad_reservada']; $i++) {
-
-				$alto  = $d['VentaDetalleProducto']['alto'];
-				$ancho = $d['VentaDetalleProducto']['ancho'];
-				$largo = $d['VentaDetalleProducto']['largo'];
-				$peso  = $d['VentaDetalleProducto']['peso'];
-
-				$volumen = $this->calcular_volumen($alto, $ancho, $largo);
-
-				$caja = array(
-					'id'     => $d['VentaDetalleProducto']['id'],
-					'width'  => $ancho,
-					'height' => $alto,
-					'length' => $largo,
-					'weight' => $peso
-				);
-
-				$unico = rand(1000, 100000);
-				
-				if ($volumen > $volumenMaximo) {
-					$bultos[$d['venta_id'] . $unico]['venta_id']    = $d['venta_id'];
-					$bultos[$d['venta_id'] . $unico]['cajas'][]     = $caja;
-				}else{
-					$bultos[$d['venta_id']]['venta_id']    = $d['venta_id'];
-					$bultos[$d['venta_id']]['cajas'][]     = $caja;
-				}	
-			}
-
-		}
-		
-		$resultado = array();
-		
-		foreach ($bultos as $ib => $b) {
-			$resultado[$ib]['paquete']             = $this->obtenerDimensionesPaquete($b['cajas']);
-			$resultado[$ib]['paquete']['weight']   = array_sum(Hash::extract($b['cajas'], '{n}.weight'));
-			$resultado[$ib]['paquete']['venta_id'] = $b['venta_id'];
-			$resultado[$ib]['items']               = $b['cajas'];
-		}
-
-		return $resultado;
-	}
-
-
-	/**
-	 * [calcular_volumen description]
-	 * @param  float $largo cm
-	 * @param  float $ancho cm
-	 * @param  float $alto  cm
-	 * @return float
-	 */
-	public function calcular_volumen($alto, $ancho, $largo)
-	{	
-		return (float) round( ($largo/100) * ($ancho/100) * ($alto/100), 2);
-	}
-
-
-	/**
-	 * [obtenerDimensionesPaquete description]
-	 * @param  array  $cajas [description]
-	 * @return [type]        [description]
-	 */
-	public function obtenerDimensionesPaquete($cajas = array())
-	{	
-		$this->LAFFPack->pack($cajas);
-        
-        # Se obtienen las dimensiones del paquete
-        $paquete = $this->LAFFPack->get_container_dimensions();
-
-        return $paquete;
-        
-	}
-
 
  	public function obtener_tipo_retornos()
  	{	

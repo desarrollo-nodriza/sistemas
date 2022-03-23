@@ -100,6 +100,19 @@ class VentaDetalleProducto extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'VentaDetallesReserva' => array(
+			'className'				=> 'VentaDetallesReserva',
+			'foreignKey'			=> 'venta_detalle_producto_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
@@ -334,83 +347,31 @@ class VentaDetalleProducto extends AppModel
 	public function obtener_cantidad_reservada($id, $id_venta = null, $id_bodega = null)
 	{
 
-		$qry = array(
-			'conditions' => array(
-				'VentaDetalle.venta_detalle_producto_id' => $id,
-				'VentaDetalle.completo' => 0,
-				'VentaDetalle.created >' => '2019-05-28 18:00:00' 
-			),
-			'joins'      => array(
-				array(
-					'table' => 'rp_ventas',
-					'alias' => 'Venta',
-					'type' => 'INNER',
-					'conditions' => array(
-						'Venta.id = VentaDetalle.venta_id'
-					)
-				),
-				array(
-					'table' => 'rp_venta_estados',
-					'alias' => 'VentaEstado',
-					'type' => 'INNER',
-					'conditions' => array(
-						'VentaEstado.id = Venta.venta_estado_id'
-					)
-				),
-				array(
-					'table' => 'rp_venta_estado_categorias',
-					'alias' => 'VentaEstadoCategoria',
-					'type' => 'INNER',
-					'conditions' => array(
-						'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
-						'VentaEstadoCategoria.reserva_stock = 1'
-					)
-				)
-			),
-			'fields' => array(
-				'VentaDetalle.cantidad_pendiente_entrega', 'VentaDetalle.cantidad_entregada', 'VentaDetalle.cantidad', 'VentaDetalle.cantidad_reservada', 'VentaDetalle.venta_id', 'VentaDetalle.id', 'Venta.bodega_id'
-			)
-		);
+		// ! Se cambia la forma de leer las reservas ya que al mandar la bodega esta no siempre conside con la bodega de la venta
+		$venta_detalle_ids = [];
 
-		if (!empty($id_venta)) {
-			$qry = array_replace_recursive($qry, array('conditions' => array(
-				'VentaDetalle.venta_id' => $id_venta
-			)));
-		}
-
-		# Cantdad reservada por venta bodega
-		if (!empty($id_bodega)) {
-			$qry = array_replace_recursive($qry, array(
-				'joins' => array(
-					array(
-						'table' => 'rp_ventas',
-						'alias' => 'Venta',
-						'type' => 'INNER',
-						'conditions' => array(
-							'Venta.bodega_id' => $id_bodega
-						)
-					)
-				)
-			));
+		if($id_venta){
+			$venta_detalle_ids = ClassRegistry::init('VentaDetalle')->find('all',
+			[
+				"conditions" => ['VentaDetalle.venta_id' => $id_venta],
+				"fields" 	 => ['VentaDetalle.id'],
+			]);
 		}
 		
-		$vendidos = ClassRegistry::init('VentaDetalle')->find('all', $qry);
-		
-		if (empty($vendidos)) {
-			return 0;
-		}
+		$conditions = [
+			'VentaDetallesReserva.venta_detalle_producto_id' => $id,
+			'VentaDetallesReserva.venta_detalle_id'		 	 => Hash::extract($venta_detalle_ids, '{n}.VentaDetalle.id'),
+			'VentaDetallesReserva.bodega_id' 				 => $id_bodega
+		];
+	
+		$vendidos = ClassRegistry::init('VentaDetallesReserva')->find('all', [
+			'fields' 	 => ['VentaDetallesReserva.venta_detalle_producto_id','VentaDetallesReserva.bodega_id','cantidad_reservada_total'],
+			'conditions' => array_filter($conditions),
+			'group'  	 => ['VentaDetallesReserva.venta_detalle_producto_id']
+		]);
 
-		$total = 0;
-
-		foreach ($vendidos as $iv => $vendido) {
-
-			if ($vendido['VentaDetalle']['cantidad_reservada'] == 0)
-				continue;
-
-			$total = $total + ( $vendido['VentaDetalle']['cantidad_reservada']);
-		}
-		
-		return $total;
+		// ! Se retornan las reservas desde VentaDetallesReserva y no desde VentaDetalle
+		return $vendidos[0]['VentaDetallesReserva']['cantidad_reservada_total'] ?? 0;
 
 	}
 
@@ -746,67 +707,80 @@ class VentaDetalleProducto extends AppModel
 		
 		$ids_con_stock_fisico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', $qry);
 
-		$qry2 = array(
-			'fields'     => array(
-				'VentaDetalle.venta_detalle_producto_id',
-				'SUM(VentaDetalle.cantidad_reservada) as reservado'
-			),
-			'joins'      => array(
-				array(
-					'table' => 'rp_ventas',
-					'alias' => 'Venta',
-					'type' => 'INNER',
-					'conditions' => array(
-						'Venta.id = VentaDetalle.venta_id'
-					)
-				),
-				array(
-					'table' => 'rp_venta_estados',
-					'alias' => 'VentaEstado',
-					'type' => 'INNER',
-					'conditions' => array(
-						'VentaEstado.id = Venta.venta_estado_id'
-					)
-				),
-				array(
-					'table' => 'rp_venta_estado_categorias',
-					'alias' => 'VentaEstadoCategoria',
-					'type' => 'INNER',
-					'conditions' => array(
-						'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
-						'VentaEstadoCategoria.reserva_stock = 1'
-					)
-				)
-			),
-			'conditions' => array(
-				'VentaDetalle.venta_detalle_producto_id' => Hash::extract($ids_con_stock_fisico, '{n}.BodegasVentaDetalleProducto.venta_detalle_producto_id')
-			),
-			'having' => array('SUM(VentaDetalle.cantidad_reservada) > 0'),
-			'order'      => array('reservado' => 'asc'),
-			'group'      => array('VentaDetalle.venta_detalle_producto_id')
-		);
+		// $qry2 = array(
+		// 	'fields'     => array(
+		// 		'VentaDetalle.venta_detalle_producto_id',
+		// 		'SUM(VentaDetalle.cantidad_reservada) as reservado'
+		// 	),
+		// 	'contain' => ['VentaDetallesReserva']
+		// 	,
+		// 	'joins'      => array(
+		// 		array(
+		// 			'table' => 'rp_ventas',
+		// 			'alias' => 'Venta',
+		// 			'type' => 'INNER',
+		// 			'conditions' => array(
+		// 				'Venta.id = VentaDetalle.venta_id'
+		// 			)
+		// 		),
+		// 		array(
+		// 			'table' => 'rp_venta_estados',
+		// 			'alias' => 'VentaEstado',
+		// 			'type' => 'INNER',
+		// 			'conditions' => array(
+		// 				'VentaEstado.id = Venta.venta_estado_id'
+		// 			)
+		// 		),
+		// 		array(
+		// 			'table' => 'rp_venta_estado_categorias',
+		// 			'alias' => 'VentaEstadoCategoria',
+		// 			'type' => 'INNER',
+		// 			'conditions' => array(
+		// 				'VentaEstadoCategoria.id = VentaEstado.venta_estado_categoria_id',
+		// 				'VentaEstadoCategoria.reserva_stock = 1'
+		// 			)
+		// 		)
+		// 	),
+		// 	
+		// 	
+		// 	
+		// 	'having' => array('SUM(VentaDetalle.cantidad_reservada) > 0'),
+		// 	'order'      => array('reservado' => 'asc'),
+		// 	'group'      => array('VentaDetalle.venta_detalle_producto_id')
+		// );
 
-		# Agregamos la bodega al calculo de reservas
-		if (!empty($bodega_id))
-		{
-			$qry2 = array_replace_recursive($qry2, array(
-				'joins' => array(
-					array(
-						'table' => 'rp_ventas',
-						'alias' => 'Venta',
-						'type' => 'INNER',
-						'conditions' => array(
-							'Venta.bodega_id' => $bodega_id
-						)
-					)
-				)
-			));
+		// # Agregamos la bodega al calculo de reservas
+		// if (!empty($bodega_id))
+		// {
+		// 	$qry2 = array_replace_recursive($qry2, array(
+		// 		'joins' => array(
+		// 			array(
+		// 				'table' => 'rp_ventas',
+		// 				'alias' => 'Venta',
+		// 				'type' => 'INNER',
+		// 				'conditions' => array(
+		// 					'Venta.bodega_id' => $bodega_id
+		// 				)
+		// 			)
+		// 		)
+		// 	));
 
-			$qry2['fields'][] = 'Venta.bodega_id';
-		}
+		// 	$qry2['fields'][] = 'Venta.bodega_id';
+		// }
 
-		$ids_con_reserva = ClassRegistry::init('VentaDetalle')->find('all', $qry2);
-
+		// $ids_con_reserva = ClassRegistry::init('VentaDetalle')->find('all', $qry2);
+		$conditions = [
+			'VentaDetallesReserva.venta_detalle_producto_id' => Hash::extract($ids_con_stock_fisico, '{n}.BodegasVentaDetalleProducto.venta_detalle_producto_id'),
+			'VentaDetallesReserva.bodega_id' => $bodega_id
+		];
+	
+		$ids_con_reserva = ClassRegistry::init('VentaDetallesReserva')->find('all', [
+			'fields' 	 => ['VentaDetallesReserva.venta_detalle_producto_id','VentaDetallesReserva.bodega_id','cantidad_reservada_total'],
+			'conditions' => array_filter($conditions),
+			'having' 	 => ['SUM(VentaDetallesReserva.cantidad_reservada) > 0'],
+			'group'  	 => ['VentaDetallesReserva.venta_detalle_producto_id']
+		]);
+		
 		# Preparamos ids para usarlos en la actualización
 		$id_stock_disponible = array();
 		foreach ($ids_con_stock_fisico as $ids => $s) 
@@ -821,15 +795,20 @@ class VentaDetalleProducto extends AppModel
 				$id_stock_disponible[$ids]['bodega_id'] = $s['BodegasVentaDetalleProducto']['bodega_id'];
 			}
 
-			foreach ($ids_con_reserva as $idr => $r) 
-			{	
-				if ($s['BodegasVentaDetalleProducto']['venta_detalle_producto_id'] ==  $r['VentaDetalle']['venta_detalle_producto_id'])
-				{	
-					# Descontamos las unidades reservadas
-					$id_stock_disponible[$ids]['stock_disponible'] = ($r[0]['reservado'] <= $s[0]['stock'] ) ? $s[0]['stock'] - $r[0]['reservado'] : 0;
-					$id_stock_disponible[$ids]['stock_reservado'] = $r[0]['reservado'];
-				}
-			}
+			$producto_reservado  = array_sum(Hash::extract($ids_con_reserva, "{n}.VentaDetallesReserva[venta_detalle_producto_id={$s['BodegasVentaDetalleProducto']['venta_detalle_producto_id']}].cantidad_reservada_total") );
+			$id_stock_disponible[$ids]['stock_disponible'] = ($producto_reservado <= $s[0]['stock'] ) ? $s[0]['stock'] - $producto_reservado : 0;
+			$id_stock_disponible[$ids]['stock_reservado'] = $producto_reservado;
+			
+
+			// foreach ($ids_con_reserva as $idr => $r) 
+			// {	
+			// 	if ($s['BodegasVentaDetalleProducto']['venta_detalle_producto_id'] ==  $r['VentaDetalle']['venta_detalle_producto_id'])
+			// 	{	
+			// 		# Descontamos las unidades reservadas
+			// 		$id_stock_disponible[$ids]['stock_disponible'] = ($r[0]['reservado'] <= $s[0]['stock'] ) ? $s[0]['stock'] - $r[0]['reservado'] : 0;
+			// 		$id_stock_disponible[$ids]['stock_reservado'] = $r[0]['reservado'];
+			// 	}
+			// }
 
 			# Quitamos los stock disponibles iguales a 0
 			if ($id_stock_disponible[$ids]['stock_disponible'] == 0)

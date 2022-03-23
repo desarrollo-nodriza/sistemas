@@ -261,7 +261,7 @@
 																<tr>
 																	<td><?=$vd['VentaDetalleProducto']['nombre'];?></td>
 																	<td><?=$vd['cantidad']; ?></td>
-																	<td><?=$vd['cantidad_reservada']; ?></td>
+																	<td><?=array_sum(Hash::extract($vd['VentaDetallesReserva'], '{n}.cantidad_reservada')); ?></td>
 																	<td><?=$vd['cantidad_en_espera']; ?></td>
 																	<td><?=$vd['fecha_llegada_en_espera']; ?></td>
 																</tr>

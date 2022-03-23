@@ -1375,6 +1375,16 @@ class VentaDetalleProductosController extends AppController
 								)
 							)
 						),
+						'VentaDetallesReserva'=>[
+							'fields'=>[ 
+									'VentaDetallesReserva.id',
+									'VentaDetallesReserva.venta_detalle_id',
+									'VentaDetallesReserva.venta_detalle_producto_id',
+									'VentaDetallesReserva.cantidad_reservada',
+									'VentaDetallesReserva.bodega_id',
+							],
+							'Bodega'=>['fields'=>'Bodega.nombre']
+						],
 						'limit' => 200,
 						'order' => array('VentaDetalle.id' => 'DESC')
 					),
@@ -1396,7 +1406,8 @@ class VentaDetalleProductosController extends AppController
 							'Marca.nombre'
 						)
 					),
-					'PrecioEspecificoProducto'
+					'PrecioEspecificoProducto',
+					
 				)
 			));
 		}
@@ -1422,9 +1433,9 @@ class VentaDetalleProductosController extends AppController
 			'order' => array('BodegasVentaDetalleProducto.fecha' => 'desc'),
 		));
 
-		$this->request->data['VentaDetalleProducto']['cantidad_real_fisica']      = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($id, true);
-		$this->request->data['VentaDetalleProducto']['cantidad_real']    = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($id);
-		$this->request->data['VentaDetalleProducto']['cantidad_reservada']    = $this->VentaDetalleProducto->obtener_cantidad_reservada($id);
+		$this->request->data['VentaDetalleProducto']['cantidad_real_fisica']    = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($id, true);
+		$this->request->data['VentaDetalleProducto']['cantidad_real']    		= ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($id);
+		$this->request->data['VentaDetalleProducto']['cantidad_reservada']   	= $this->VentaDetalleProducto->obtener_cantidad_reservada($id);
 
 		# PMP
 		$this->request->data['VentaDetalleProducto']['pmp_global'] = ClassRegistry::init('Bodega')->obtener_pmp_por_id($id);
@@ -1450,10 +1461,10 @@ class VentaDetalleProductosController extends AppController
 					)
 					)
 			));
-			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_id'] = $ib;
+			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_id'] 	 = $ib;
 			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['bodega_nombre'] = $b;
-			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['total'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib, true);
-			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['pmp'] = ClassRegistry::init('Bodega')->obtener_pmp_por_producto_bodega($id, $ib);
+			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['total'] 		 = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($id, $ib, true);
+			$this->request->data['VentaDetalleProducto']['Inventario'][$ib]['pmp'] 			 = ClassRegistry::init('Bodega')->obtener_pmp_por_producto_bodega($id, $ib);
 		}
 
 		if (!in_array(1, Hash::extract($canales, '{s}.{n}.existe'))) {
@@ -1533,7 +1544,6 @@ class VentaDetalleProductosController extends AppController
 
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos');
 		BreadcrumbComponent::add('Editar');
-
 		$this->set(compact('bodegas', 'proveedores', 'precioEspecificoProductos', 'tipoDescuento', 'canales', 'marcas', 'movimientosBodega', 'precio_costo_final', 'imaganes', 'productoWarehouse','zonificaciones','totalZonificado','totalBodegasZonificadas','ubicaciones'));
 	}
 
@@ -1542,6 +1552,11 @@ class VentaDetalleProductosController extends AppController
 	{	
 
 		$cant = ClassRegistry::init('Venta')->reservar_stock_producto($id_detalle);
+
+		if ( $cant > 0) {
+			// * Se sigue misma logica de instanciar metodo que hay en metodo "reservar_stock_producto"
+			$this->WarehouseNodriza->procesar_embalajes(ClassRegistry::init('VentaDetalle')->Venta_id($id_detalle));
+		}
 
 		if ($cant == 1) {
 			$this->Session->setFlash('Cantidad reservada: ' . $cant . ' unidad.', null, array(), 'success');
@@ -1876,8 +1891,16 @@ class VentaDetalleProductosController extends AppController
 				),
 				'VentaDetalle' => array(
 					'fields' => array(
-						'VentaDetalle.cantidad_reservada'
-					)
+						'VentaDetalle.id',
+					),
+					'VentaDetallesReserva'=>[
+						'fields'=>[ 
+								'VentaDetallesReserva.venta_detalle_id',
+								'VentaDetallesReserva.venta_detalle_producto_id',
+								'VentaDetallesReserva.cantidad_reservada',
+								'VentaDetallesReserva.bodega_id',
+							]
+						]
 				)
 			),
 			'fields' => array(
@@ -1890,21 +1913,18 @@ class VentaDetalleProductosController extends AppController
 		
 		$productos = $this->VentaDetalleProducto->find('all', $qry);
 		
-
 		$datos = array();
-
 		foreach ($productos as $p)
 		{	
 			$datos[] = array(
-				'id' => $p['VentaDetalleProducto']['id'],
-				'codigo_proveedor' => $p['VentaDetalleProducto']['codigo_proveedor'],
-				'nombre' => $p['VentaDetalleProducto']['nombre'],
+				'id' 				=> $p['VentaDetalleProducto']['id'],
+				'codigo_proveedor'  => $p['VentaDetalleProducto']['codigo_proveedor'],
+				'nombre' 			=> $p['VentaDetalleProducto']['nombre'],
 				'stock_fisico_real' => array_sum(Hash::extract($p['Bodega'], '{n}.BodegasVentaDetalleProducto[tipo!=GT].cantidad')),
-				'stock_disponible' => array_sum(Hash::extract($p['Bodega'], '{n}.BodegasVentaDetalleProducto[tipo!=GT].cantidad')) - array_sum(Hash::extract($p['VentaDetalle'], '{n}.cantidad_reservada')),
-				'stock_virtual' => $p['VentaDetalleProducto']['cantidad_virtual']
+				'stock_disponible' 	=> array_sum(Hash::extract($p['Bodega'], '{n}.BodegasVentaDetalleProducto[tipo!=GT].cantidad')) - array_sum(Hash::extract($p['VentaDetalle'], '{n}.VentaDetallesReserva.{n}.cantidad_reservada')),
+				'stock_virtual' 	=> $p['VentaDetalleProducto']['cantidad_virtual']
 			);
 		}	
-
 		$campos			= array(
 			'id',
 			'codigo_proveedor',
@@ -4155,11 +4175,12 @@ class VentaDetalleProductosController extends AppController
 			]
 		]);
 
-		$cantidad_reservada = ClassRegistry::init('VentaDetalle')->find('all', [
-			'fields' => 'SUM(VentaDetalle.cantidad_reservada) as cantidad_reservada',
+		$cantidad_reservada = ClassRegistry::init('VentaDetallesReserva')->find('all', [
+			'fields' => 'VentaDetallesReserva.cantidad_reservada_total',
 			'conditions' => array(
-				'venta_detalle_producto_id' 	=> $producto_id,
+				'VentaDetallesReserva.venta_detalle_producto_id' 	=> $producto_id,
 			),
+		
 		]);
 
 		$proveedor_onestock = null;
@@ -4206,11 +4227,9 @@ class VentaDetalleProductosController extends AppController
 				}
 			}
 		}
-
-		$bodega 			= Hash::extract($bodega, '{*}.{*}.cantidad');
-		$cantidad_reservada = Hash::extract($cantidad_reservada, '{*}.{*}.cantidad_reservada');
-		$bodega				= $bodega[0] ?? 0;
-		$cantidad_reservada	= $cantidad_reservada[0] ?? 0;
+		
+		$bodega 			= array_sum(Hash::extract($bodega, '{*}.{*}.cantidad'));
+		$cantidad_reservada = array_sum(Hash::extract($cantidad_reservada, '{*}.VentaDetallesReserva.cantidad_reservada_total'));
 		$stock 				= $bodega - $cantidad_reservada;
 		$onestock			= [];
 		$canal 				= 'sistemas';

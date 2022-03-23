@@ -877,6 +877,7 @@ class VentasController extends AppController {
 	 * @param  [type] $id [description]
 	 * @return [type]     [description]
 	 */
+	// ! En desuzo
 	public function admin_obtener_ventas_preparacion_modal($id)
 	{
 		$this->layout   = 'ajax';
@@ -1107,8 +1108,6 @@ class VentasController extends AppController {
 			# Creamos la OT
 			if ($this->Starken->generar_ot($venta)) {
 
-				$this->Starken->registrar_estados($venta['Venta']['id']);
-
 				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
 			} else {
 				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
@@ -1134,7 +1133,6 @@ class VentasController extends AppController {
 			# Creamos la OT
 			if ($this->Boosmap->generar_ot($venta)) {
 
-				$this->Boosmap->registrar_estados($venta['Venta']['id']);
 
 				$this->Session->setFlash('Envío creado con éxito en Boosmap.', null, array(), 'success');
 			} else {
@@ -1149,7 +1147,6 @@ class VentasController extends AppController {
 			# Creamos la OT
 			if ($this->BlueExpress->generar_ot($venta)) {
 
-				$this->BlueExpress->registrar_estados($venta['Venta']['id']);
 
 				$this->Session->setFlash('Envío creado con éxito en BlueExpress.', null, array(), 'success');
 			} else {
@@ -1196,7 +1193,6 @@ class VentasController extends AppController {
 			'conditions' => array(
 				'VentaDetalle.venta_id' => $id,
 				'VentaDetalle.completo' => 0,
-				'VentaDetalle.cantidad_reservada >' => 0
 			)
 		));
 
@@ -1251,6 +1247,7 @@ class VentasController extends AppController {
 	 * @param  [type] $id [description]
 	 * @return [type]     [description]
 	 */
+	// ! Metodo obsoleto y en desuzo
 	public function admin_cambiar_subestado($id = null)
 	{	
 		$respuesta = array(
@@ -1391,7 +1388,7 @@ class VentasController extends AppController {
 						$log[] = array(
 							'Log' => array(
 								'administrador' => 'Cambiar estado venta: Ingresa Conexxion',
-								'modulo' => 'Ventas',
+								'modulo' 		=> 'Ventas',
 								'modulo_accion' => 'creado: OT generada'
 							)
 						);
@@ -1406,12 +1403,11 @@ class VentasController extends AppController {
 					# Creamos la OT
 					if($this->Boosmap->generar_ot($venta)){
 
-						$this->Boosmap->registrar_estados($venta['Venta']['id']);
 
 						$log[] = array(
 							'Log' => array(
 								'administrador' => 'Cambiar estado venta: Ingresa Boosmap',
-								'modulo' => 'Ventas',
+								'modulo' 		=> 'Ventas',
 								'modulo_accion' => 'creado: OT generada'
 							)
 						);
@@ -1426,15 +1422,12 @@ class VentasController extends AppController {
 					# Creamos la OT
 					if ($this->BlueExpress->generar_ot($venta)) {
 
-						// Pondremos un sleep para retrasar el obtener estados
-						sleep(1);
-
-						$this->BlueExpress->registrar_estados($venta['Venta']['id']);
+				
 
 						$log[] = array(
 							'Log' => array(
 								'administrador' => 'Cambiar estado venta: Ingresa BlueExpress',
-								'modulo' => 'Ventas',
+								'modulo' 		=> 'Ventas',
 								'modulo_accion' => 'creado: OT generada'
 							)
 						);
@@ -2689,6 +2682,7 @@ class VentasController extends AppController {
 
 					# Devolvemos el stock reservado si corresponde
 					$this->Venta->cancelar_venta($venta['Venta']['id']);
+					$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id']);
 					$this->actualizar_canales_stock($venta['Venta']['id']);
 
 
@@ -2812,6 +2806,8 @@ class VentasController extends AppController {
 
 	/****************************************************************************************************/
 	//actualización de ventas
+
+	// ! Metodo obsoleto y en desuzo
 	public function admin_actualizar_ventas () {
 		
 		$this->layout = 'ajax';
@@ -4119,7 +4115,6 @@ class VentasController extends AppController {
 					'fields' => array(
 						'VentaDetalle.id',
 						'VentaDetalle.cantidad',
-						'VentaDetalle.cantidad_reservada',
 						'VentaDetalle.cantidad_en_espera',
 						'VentaDetalle.fecha_llegada_en_espera',
 					),
@@ -4127,7 +4122,15 @@ class VentasController extends AppController {
 						'fields' => array(
 							'VentaDetalleProducto.nombre'
 						)
-					)
+					),
+					'VentaDetallesReserva'=>[
+						'fields'=>[ 
+								'VentaDetallesReserva.venta_detalle_id',
+								'VentaDetallesReserva.venta_detalle_producto_id',
+								'VentaDetallesReserva.cantidad_reservada',
+								'VentaDetallesReserva.bodega_id',
+							]
+						]
 				),
 				'OrdenCompra' => array(
 					'fields' => array(
@@ -4198,7 +4201,6 @@ class VentasController extends AppController {
 			endforeach;
 
 		}
-		
 		BreadcrumbComponent::add('Ventas', '/index');
 		BreadcrumbComponent::add('Ventas especiales');
 
@@ -4418,7 +4420,11 @@ class VentasController extends AppController {
 
 		foreach ($ventas as $venta) {
 			foreach ($venta['VentaDetalle'] as $detalle) {
-				$this->Venta->reservar_stock_producto($detalle['id']);
+
+				if (ClassRegistry::init('Venta')->reservar_stock_producto($detalle['id']) > 0) {
+					// * Se sigue misma logica de instanciar metodo que hay en metodo "reservar_stock_producto"
+					$this->WarehouseNodriza->procesar_embalajes($detalle['venta_id']);
+				}
 			}	
 		}
 
@@ -4680,12 +4686,13 @@ class VentasController extends AppController {
 			
 			$metodo_envio_id_old = ClassRegistry::init('Venta')->metodo_envio_id($this->request->data['Venta']['id']);
 			$cambiar_metodo_envio = false;
-			if ($metodo_envio_id_old != $this->request->data['Venta']['metodo_envio_id']) {
-
-				$this->request->data['Venta']['bodega_id'] = ClassRegistry::init('MetodoEnvio')->bodega_id($this->request->data['Venta']['metodo_envio_id']); 
-				$cambiar_metodo_envio= true;
+			if (isset($this->request->data['Venta']['metodo_envio_id'])) {
+				if ($metodo_envio_id_old != $this->request->data['Venta']['metodo_envio_id'] ) {
+					$this->request->data['Venta']['bodega_id'] = ClassRegistry::init('MetodoEnvio')->bodega_id($this->request->data['Venta']['metodo_envio_id']); 
+					$cambiar_metodo_envio= true;
+				}
 			}
-
+			
 			# Actualizar canal venta - Homologamos el campo
 			if (isset($this->request->data['Venta']['canal_venta_id']))
 			{	
@@ -4789,6 +4796,7 @@ class VentasController extends AppController {
 		}
 
 		if ($this->request->is('post') || $this->request->is('put')) {
+			
 			if ($this->Venta->VentaDetalle->saveMany($this->request->data)) {
 				$this->Session->setFlash('Venta actualizada con éxito.', null, array(), 'success');
 				$this->shell = true;
@@ -5080,6 +5088,7 @@ class VentasController extends AppController {
 
 				# Se entrega la venta
 				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
+					
 					$this->Venta->entregar($id_venta);
 
 					$log[] = array(
@@ -5096,6 +5105,7 @@ class VentasController extends AppController {
 				# si es un estado cancelado se devuelve el stock a la bodega
 				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
 					$this->Venta->cancelar_venta($id_venta);
+					$this->WarehouseNodriza->procesar_embalajes($id_venta);
 					$this->actualizar_canales_stock($id_venta);
 
 					$log[] = array(
@@ -5111,6 +5121,7 @@ class VentasController extends AppController {
 				
 				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id) ) {
 					$this->Venta->cancelar_venta($id_venta);
+					$this->WarehouseNodriza->procesar_embalajes($id_venta);
 					$this->actualizar_canales_stock($id_venta);
 
 					$log[] = array(
@@ -5193,6 +5204,7 @@ class VentasController extends AppController {
 
 			if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
 				$this->Venta->cancelar_venta($id_venta);
+				$this->WarehouseNodriza->procesar_embalajes($id_venta);
 				$this->actualizar_canales_stock($id_venta);
 			}
 			
@@ -5257,6 +5269,7 @@ class VentasController extends AppController {
 			# si es un estado cancelado se devuelve el stock a la bodega
 			if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
 				$this->Venta->cancelar_venta($id_venta);
+				$this->WarehouseNodriza->procesar_embalajes($id_venta);
 				$this->actualizar_canales_stock($id_venta);
 
 				$log[] = array(
@@ -5272,6 +5285,7 @@ class VentasController extends AppController {
 
 			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id) ) {
 				$this->Venta->cancelar_venta($id_venta);
+				$this->WarehouseNodriza->procesar_embalajes($id_venta);
 				$this->actualizar_canales_stock($id_venta);
 
 				$log[] = array(
@@ -5313,8 +5327,10 @@ class VentasController extends AppController {
 		ClassRegistry::init('Log')->saveMany($log);
 		
 		if ($this->Venta->saveAll($saveVenta)) {
-				ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id_venta);
+
+			$this->WarehouseNodriza->procesar_embalajes($id_venta);	
 			return true;
+			
 		}else{
 			
 			if ($notificar && !$notificado) {
@@ -5339,6 +5355,10 @@ class VentasController extends AppController {
 			foreach ($venta['VentaDetalle'] as $key => $value) {
 
 				$cant = $this->Venta->reservar_stock_producto($value['id']);
+				if ( $cant > 0) {
+					// * Se sigue misma logica de instanciar metodo que hay en metodo "reservar_stock_producto"
+					$this->WarehouseNodriza->procesar_embalajes(ClassRegistry::init('VentaDetalle')->Venta_id($value['id']));
+				}
 	
 				if ($cant == 1) {
 					$result['success'][]  = $value['VentaDetalleProducto']['nombre'] . ' - Cant reservada: ' . $cant  . ' unidad.';
@@ -5411,37 +5431,49 @@ class VentasController extends AppController {
 	 * @param  [type] $cant_liberar [description]
 	 * @return [type]               [description]
 	 */
-	public function admin_liberar_stock_reservado($id = '', $id_detalle = '', $cant_liberar)
+	public function admin_liberar_stock_reservado($venta_detalle_reserva_id , $venta_id, $venta_detalle_id = null , $venta_detalle_producto_id = null )
 	{
-		$venta = $this->Venta->obtener_venta_por_id($id);
-		
-		$dataToSave = array();
+		// TODO Cuando envian "venta_detalle_id" "venta_detalle_producto_id" es para eliminar todas las reservas del producto
+		// TODO Cuando se libera una reserva se elimina el registro en VentaDetallesReserva
+		$venta_detalle_reserva_ids=[];
+		if (!is_null($venta_detalle_id) && !is_null($venta_detalle_id)) {
+			$venta_detalle_reserva_ids = Hash::extract(ClassRegistry::init('VentaDetallesReserva')->find('all',[
+				'conditions' => [
+					'VentaDetallesReserva.venta_detalle_producto_id' => $venta_detalle_producto_id,
+					'VentaDetallesReserva.venta_detalle_id' 	 	 => $venta_detalle_id
+				],
+				'fields'=> 'VentaDetallesReserva.id'
+			]), "{n}.VentaDetallesReserva.id") ;
+		}else{
+			$venta_detalle_reserva_ids[] = $venta_detalle_reserva_id;
+		}
 
-		$result = array();
-		
-		foreach ($venta['VentaDetalle'] as $key => $value) {
+		$liberar = 0;
+		$result  = [];
+	
+		foreach ($venta_detalle_reserva_ids as $id) {
+			ClassRegistry::init('VentaDetallesReserva')->id = $id;
+			ClassRegistry::init('VentaDetalleProducto')->id = ClassRegistry::init('VentaDetallesReserva')->field('venta_detalle_producto_id');
+			$liberar = $liberar + $this->Venta->liberar_reserva_stock_producto($id);
 			
-			if ($value['id'] != $id_detalle)
-				continue;
-			
-			$liberar = $this->Venta->liberar_reserva_stock_producto($id_detalle, $cant_liberar);
-
-			if ($liberar == 1) {
-				$result['success'][]  = $value['VentaDetalleProducto']['codigo_proveedor'] . ' - Cant liberada: ' . $liberar  . ' unidad.';
-			}elseif($liberar > 1) {
-				$result['success'][]  = $value['VentaDetalleProducto']['codigo_proveedor'] . ' - Cant liberada: ' . $liberar  . ' unidades.';
-			}else{
-				$result['warning'][]  = $value['VentaDetalleProducto']['codigo_proveedor'] . ' - Cant liberada: ' . $liberar  . ' unidades.';
-			}
+		}
+		if ( $liberar > 0) {
+			// * Preparamos los embalajes
+			$this->WarehouseNodriza->procesar_embalajes($venta_id);
 		}
 
-		if (!empty($result['success'])) {
-			$this->Session->setFlash($this->crearAlertaUl($result['success'], 'Resultados'), null, array(), 'success');
+		if ($liberar == 1) {
+			$result['mesaje'] = ClassRegistry::init('VentaDetalleProducto')->field('codigo_proveedor') . ' - Cant liberada: ' . $liberar  . ' unidad.';
+			$result['tipo']   = 'success';
+		}elseif($liberar > 1) {
+			$result['mesaje'] = ClassRegistry::init('VentaDetalleProducto')->field('codigo_proveedor') . ' - Cant liberada: ' . $liberar  . ' unidades.';
+			$result['tipo']   = 'success';
+		}else{
+			$result['mesaje'] = ClassRegistry::init('VentaDetalleProducto')->field('codigo_proveedor') . ' - Cant liberada: ' . $liberar  . ' unidades.';
+			$result['tipo']   = 'warning';
 		}
-
-		if (!empty($result['warning'])) {
-			$this->Session->setFlash($this->crearAlertaUl($result['warning'], 'Resultados'), null, array(), 'warning');
-		}
+		
+		$this->Session->setFlash($result['mesaje'], null, array(), $result['tipo']);
 
 		$this->redirect($this->referer('/', true));
 
@@ -5450,7 +5482,12 @@ class VentasController extends AppController {
 
 	public function reservar_stock_detalle($id_detalle)
 	{
-		return $this->Venta->reservar_stock_producto($id_detalle);
+		$cant = $this->Venta->reservar_stock_producto($id_detalle);
+		if ( $cant > 0) {
+			// * Se sigue misma logica de instanciar metodo que hay en metodo "reservar_stock_producto"
+			$this->WarehouseNodriza->procesar_embalajes(ClassRegistry::init('VentaDetalle')->Venta_id($id_detalle));
+		}
+		return $cant;
 	}
 
 
@@ -5550,10 +5587,10 @@ class VentasController extends AppController {
 	 * Permite decontar desde bodega la cantidad de productos solicitadas por una venta.
 	 * @return [type] [description]
 	 */
+	// ! Metodo obsoleto y en desuzo
 	public function admin_procesar_ventas($id = null)
 	{	
 
-	
 		if ( ! $this->Venta->exists($id) ) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
@@ -7001,7 +7038,7 @@ class VentasController extends AppController {
 			}
 
 			# Preparamos los embalajes
-			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($venta['Venta']['id'], CakeSession::read('Auth.Administrador.id'));
+			$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id']);
 
 			try {
 				$this->LibreDte->generarPDFDteEmitido($dteInterno['Dte']['venta_id'], $dteInterno['Dte']['id'], $dteInterno['Dte']['tipo_documento'], $dteInterno['Dte']['folio'], $dteInterno['Dte']['emisor'] );
@@ -7057,7 +7094,6 @@ class VentasController extends AppController {
 	{
 		# Toda la información de la venta
 		$venta = $this->Venta->obtener_venta_por_id($id);
-
 		$this->LibreDte = $this->Components->load('LibreDte');
 		$this->Prestashop = $this->Components->load('Prestashop');
 		
@@ -7883,6 +7919,7 @@ class VentasController extends AppController {
 
 			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($nw_estado_id) ) {
 				$this->Venta->cancelar_venta($venta['Venta']['id']);
+				$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id']);
 				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirLinio);
 			}
 
@@ -8028,6 +8065,7 @@ class VentasController extends AppController {
 
 			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
 				$this->Venta->cancelar_venta($venta['Venta']['id']);
+				$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id']);
 				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirMeli);
 			}
 
@@ -8928,6 +8966,7 @@ class VentasController extends AppController {
 
 			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
 				$this->Venta->cancelar_venta($venta['Venta']['id']);
+				$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id']);
 				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirPrestashop);
 			}
 
@@ -11269,6 +11308,7 @@ class VentasController extends AppController {
 
 
 	/**
+	 * ! Metodo obsoleto y en desuzo
 	 * [api_picking_venta description]
 	 * @param  string $id [description]
 	 * @return [type]     [description]
@@ -12693,8 +12733,7 @@ class VentasController extends AppController {
 
 		foreach ($ventas as $v) 
 		{
-			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($v['Venta']['id']);
-			
+			$this->WarehouseNodriza->procesar_embalajes($v['Venta']['id']);
 			$procesadas++;
 		
 		}

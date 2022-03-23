@@ -126,6 +126,42 @@ class WarehouseNodriza
         );
     }
 
+    // TODO Obtenemos evidencia de los embalajes despachados
+    public function CrearEntradaSalidaZonificacion($zonificacion)
+    {
+        // [
+        //     [
+        //         "producto_id"            => "19411",
+        //         "cantidad"               => "10",
+        //         "responsable_id"         => "23",
+        //         "bodega_id"              => 1,
+        //         "embalaje_id"            => null,
+        //         "nueva_ubicacion_id"     => null,
+        //         "antigua_ubicacion_id"   => null,
+        //         "glosa"                  => null,
+        //         "orden_de_compra"        => null,
+        //         "movimiento"             => "item_devueltos_por_nota_de_credito",
+        //     ],
+        //     [
+        //         "producto_id"            => "19411",
+        //         "cantidad"               => "10",
+        //         "responsable_id"         => "23",
+        //         "bodega_id"              => 1,
+        //         "embalaje_id"            => null,
+        //         "nueva_ubicacion_id"     => null,
+        //         "antigua_ubicacion_id"   => null,
+        //         "glosa"                  => null,
+        //         "orden_de_compra"        => null,
+        //         "movimiento"             => "item_devueltos_por_nota_de_credito",
+        //     ],
+        // ];
+
+        return $this->cURL_POST(
+            '/api/v1/zonificacion/crear-entrada-salida',
+            $zonificacion
+        );
+    }
+
     // TODO Abstraccion para hacer peticiones a endpoints por metodo POST
     private function cURL_POST($URL, $POSTFIELDS)
     {

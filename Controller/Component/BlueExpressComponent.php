@@ -302,244 +302,241 @@ class BlueExpressComponent extends Component
 
         $volumenMaximo = $venta['MetodoEnvio']['volumen_maximo'];
         # Algoritmo LAFF para ordenamiento de productos
-        $paquetes = $this->LAFFPack->obtener_bultos_venta_dimension_decimal($venta, $volumenMaximo);
-
+        $embalajes = Hash::extract($venta['EmbalajeWarehouse'], "{n}[estado=procesando]");
+        
+        $exito = false;
         $log = array();
 
-        # si no hay paquetes se retorna false
-        if (empty($paquetes)) {
+        if (!$embalajes) {
 
-            $log[] = array(
-                'Log' => array(
-                    'administrador' => 'BlueExpress vid:' . $venta['Venta']['id'],
-                    'modulo' => 'BlueExpressComponent',
-                    'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
-                )
-            );
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'BlueExpress vid:' . $venta['Venta']['id'],
+					'modulo' 		=> 'BlueExpressComponent',
+					'modulo_accion' => json_encode(["No posee embalajes en procesando" => $venta])
+				)
+			);
+		}
 
-            ClassRegistry::init('Log')->create();
-            ClassRegistry::init('Log')->saveMany($log);
+        foreach ($embalajes as $embalaje) {
 
-            return false;
-        }
+            $paquetes = $this->LAFFPack->obtener_bultos_venta_dimension_decimal_por_embalaje($embalaje, $volumenMaximo);
 
-        # Si los paquetes no tienen dimensiones se setean con el valor default
-        foreach ($paquetes as $ip => $paquete) {
+            # si no hay paquetes se retorna false
+            if (empty($paquetes)) {
 
-            $paquetes[$ip]['paquete']['length'] =  $paquetes[$ip]['paquete']['length'] == 0 ? $venta['MetodoEnvio']['largo_default'] : $paquetes[$ip]['paquete']['length'];
-
-            $paquetes[$ip]['paquete']['width']  = $paquetes[$ip]['paquete']['width'] == 0 ? $venta['MetodoEnvio']['ancho_default'] : $paquetes[$ip]['paquete']['width'];
-
-            $paquetes[$ip]['paquete']['height'] = $paquetes[$ip]['paquete']['height'] == 0 ? $venta['MetodoEnvio']['alto_default'] : $paquetes[$ip]['paquete']['height'];
-
-            $paquetes[$ip]['paquete']['weight'] = $paquetes[$ip]['paquete']['weight'] == 0 ? $venta['MetodoEnvio']['peso_default'] : $paquetes[$ip]['paquete']['weight'];
-        }
-
-        $peso_total            = array_sum(Hash::extract($paquetes, '{n}.paquete.weight'));
-        $peso_maximo_permitido = $venta['MetodoEnvio']['peso_maximo'];
-
-        if ($peso_total > $peso_maximo_permitido) {
-            $log[] = array(
-                'Log' => array(
-                    'administrador' => 'BlueExpress vid:' . $venta['Venta']['id'],
-                    'modulo' => 'BlueExpressComponent',
-                    'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
-                )
-            );
-
-            ClassRegistry::init('Log')->create();
-            ClassRegistry::init('Log')->saveMany($log);
-
-            return false;
-        }
-
-        $transportes = array();
-
-        $ruta_pdfs = null;
-        $exito = true;
-
-        # Mantenemos las ot ya generadas
-        foreach ($venta['Transporte'] as $key => $t) {
-            $transportes[] = array(
-                'id'              => $t['TransportesVenta']['id'],
-                'transporte_id'   => $t['id'],
-                'cod_seguimiento' => $t['TransportesVenta']['cod_seguimiento'],
-                'etiqueta'        => $t['TransportesVenta']['etiqueta'],
-                'entrega_aprox'   => $t['TransportesVenta']['entrega_aprox']
-            );
-        }
-
-        $costo_envio = 0;
-        $numero_paquete = 0;
-
-        foreach ($paquetes as $paquete) {
-            $numero_paquete++;
-            # dimensiones de todos los paquetes unificado
-            $largoTotal             = $paquete['paquete']['length'] * 1;
-            $anchoTotal             = $paquete['paquete']['width'] * 1;
-            $altoTotal              = $paquete['paquete']['height'] * 1;
-            $pesoTotal              = $paquete['paquete']['weight'] * 1;
-
-            $obtener_costo_envio    = $this->obtener_costo_envio($venta, $largoTotal, $anchoTotal, $altoTotal, $pesoTotal);
-
-            if ($obtener_costo_envio['code'] != 200) {
                 $log[] = array(
                     'Log' => array(
-                        'administrador' => 'BlueExpress, dificultades para obtener costo de envio vid:' . $venta['Venta']['id'],
-                        'modulo'        => 'Ventas',
-                        'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $obtener_costo_envio])
+                        'administrador' => "BlueExpress vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
+                        'modulo'        => 'BlueExpressComponent',
+                        'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
                     )
                 );
-                $exito = false;
+
                 continue;
             }
 
-            $log[] = array(
-                'Log' => array(
-                    'administrador' => 'BlueExpress retorno costo de envio vid:' . $venta['Venta']['id'],
-                    'modulo'        => 'BlueExpressComponent',
-                    'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $obtener_costo_envio])
-                )
-            );
+            # Si los paquetes no tienen dimensiones se setean con el valor default
+            foreach ($paquetes as $ip => $paquete) {
 
-            # creamos el arreglo para generar la OT
-            $data = [
-                'serviceType' => $venta['MetodoEnvio']['tipo_servicio_blue_express'],
-                'venta'     => [
-                    'id'                    => $venta['Venta']['id'],
-                    'referencia'            => $venta['Venta']['referencia'],
-                    'referencia_despacho'   => $venta['Venta']['referencia_despacho'],
-                    'costo_envio'           => $obtener_costo_envio['response']['data']['total']
-                ],
-                'pickup'    => [
-                    'stateId'       => $venta['MetodoEnvio']['Bodega']['Comuna']['state_id_blue_express'],
-                    'districtId'    => $venta['MetodoEnvio']['Bodega']['Comuna']['district_id_blue_express'],
-                    'address'       => $venta['MetodoEnvio']['Bodega']['direccion'],
-                    'name'          => $venta['MetodoEnvio']['Bodega']['nombre'],
-                    'fullname'      => $venta['MetodoEnvio']['Bodega']['nombre_contacto'],
-                    'phone'         => $venta['MetodoEnvio']['Bodega']['fono'],
-                ],
-                'dropoff'   => [
-                    'nombre_receptor'   => $venta['Venta']['nombre_receptor'],
-                    'fono_receptor'     => $venta['Venta']['fono_receptor'],
-                    'stateId'           => $venta['Comuna']['state_id_blue_express'],
-                    'districtId'        => $venta['Comuna']['district_id_blue_express'],
-                    'direccion'         => "{$venta['Venta']['direccion_entrega']} {$venta['Venta']['numero_entrega']}, {$venta['Venta']['otro_entrega']} ",
-                    'name'              => $venta['Venta']['nombre_receptor'],
-                ],
-                'packages'  => [
-                    'peso'  => ceil($pesoTotal),
-                    'largo' => ceil($largoTotal),
-                    'ancho' => ceil($anchoTotal),
-                    'alto'  => ceil($altoTotal),
-                ],
-                'credenciales' => $venta['MetodoEnvio']['usuario_blue_express']
-            ];
+                $paquetes[$ip]['paquete']['length'] =  $paquetes[$ip]['paquete']['length'] == 0 ? $venta['MetodoEnvio']['largo_default'] : $paquetes[$ip]['paquete']['length'];
 
-            $response = $this->blue_express->BXEmission($data);
-            if ($response['code'] != 200 || !$response['response']['status']) {
+                $paquetes[$ip]['paquete']['width']  = $paquetes[$ip]['paquete']['width'] == 0 ? $venta['MetodoEnvio']['ancho_default'] : $paquetes[$ip]['paquete']['width'];
+
+                $paquetes[$ip]['paquete']['height'] = $paquetes[$ip]['paquete']['height'] == 0 ? $venta['MetodoEnvio']['alto_default'] : $paquetes[$ip]['paquete']['height'];
+
+                $paquetes[$ip]['paquete']['weight'] = $paquetes[$ip]['paquete']['weight'] == 0 ? $venta['MetodoEnvio']['peso_default'] : $paquetes[$ip]['paquete']['weight'];
+            }
+
+            $peso_total            = array_sum(Hash::extract($paquetes, '{n}.paquete.weight'));
+            $peso_maximo_permitido = $venta['MetodoEnvio']['peso_maximo'];
+
+            if ($peso_total > $peso_maximo_permitido) {
+
                 $log[] = array(
                     'Log' => array(
-                        'administrador' => 'BlueExpress, problemas para generar ot para vid:' . $venta['Venta']['id'],
+                        'administrador' => "BlueExpress vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
+                        'modulo'        => 'BlueExpressComponent',
+                        'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
+                    )
+                );
+
+                continue;
+            }
+
+            $transportes = array();
+
+            $ruta_pdfs = null;
+            $exito     = true;
+
+            $numero_paquete = 0;
+
+            foreach ($paquetes as $paquete) {
+
+                $numero_paquete++;
+                # dimensiones de todos los paquetes unificado
+                $largoTotal  = $paquete['paquete']['length'] * 1;
+                $anchoTotal  = $paquete['paquete']['width']  * 1;
+                $altoTotal   = $paquete['paquete']['height'] * 1;
+                $pesoTotal   = $paquete['paquete']['weight'] * 1;
+
+                $obtener_costo_envio = $this->obtener_costo_envio($venta, $largoTotal, $anchoTotal, $altoTotal, $pesoTotal);
+
+                if ($obtener_costo_envio['code'] != 200) {
+
+                    $log[] = array(
+                        'Log' => array(
+                            'administrador' => 'BlueExpress, dificultades para obtener costo de envio vid:' . $venta['Venta']['id'],
+                            'modulo'        => 'Ventas',
+                            'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $obtener_costo_envio])
+                        )
+                    );
+                    continue;
+                }
+
+                $log[] = array(
+                    'Log' => array(
+                        'administrador' => 'BlueExpress retorno costo de envio vid:' . $venta['Venta']['id'],
+                        'modulo'        => 'BlueExpressComponent',
+                        'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $obtener_costo_envio])
+                    )
+                );
+
+                # creamos el arreglo para generar la OT
+                $data = [
+                    'serviceType' => $venta['MetodoEnvio']['tipo_servicio_blue_express'],
+                    'venta'     => [
+                        'id'                    => $venta['Venta']['id'],
+                        'referencia'            => $venta['Venta']['referencia'],
+                        'referencia_despacho'   => $venta['Venta']['referencia_despacho'],
+                        'costo_envio'           => $obtener_costo_envio['response']['data']['total']
+                    ],
+                    'pickup'    => [
+                        'stateId'       => $venta['MetodoEnvio']['Bodega']['Comuna']['state_id_blue_express'],
+                        'districtId'    => $venta['MetodoEnvio']['Bodega']['Comuna']['district_id_blue_express'],
+                        'address'       => $venta['MetodoEnvio']['Bodega']['direccion'],
+                        'name'          => $venta['MetodoEnvio']['Bodega']['nombre'],
+                        'fullname'      => $venta['MetodoEnvio']['Bodega']['nombre_contacto'],
+                        'phone'         => $venta['MetodoEnvio']['Bodega']['fono'],
+                    ],
+                    'dropoff'   => [
+                        'nombre_receptor'   => $venta['Venta']['nombre_receptor'],
+                        'fono_receptor'     => $venta['Venta']['fono_receptor'],
+                        'stateId'           => $venta['Comuna']['state_id_blue_express'],
+                        'districtId'        => $venta['Comuna']['district_id_blue_express'],
+                        'direccion'         => "{$venta['Venta']['direccion_entrega']} {$venta['Venta']['numero_entrega']}, {$venta['Venta']['otro_entrega']} ",
+                        'name'              => $venta['Venta']['nombre_receptor'],
+                    ],
+                    'packages'  => [
+                        'peso'  => ceil($pesoTotal),
+                        'largo' => ceil($largoTotal),
+                        'ancho' => ceil($anchoTotal),
+                        'alto'  => ceil($altoTotal),
+                    ],
+                    'credenciales' => $venta['MetodoEnvio']['usuario_blue_express']
+                ];
+
+                $response = $this->blue_express->BXEmission($data);
+
+                $log[] = array(
+                    'Log' => array(
+                        'administrador' => $response['code'] != 200 || !$response['response']['status'] ? 'BlueExpress, problemas para generar ot para vid:' . $venta['Venta']['id'] : 'BlueExpress retorno ot vid:' . $venta['Venta']['id'],
                         'modulo'        => 'BlueExpressComponent',
                         'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $response])
                     )
                 );
-                $exito = false;
-                continue;
-            }
 
-            $log[] = array(
-                'Log' => array(
-                    'administrador' => 'BlueExpress retorno ot vid:' . $venta['Venta']['id'],
-                    'modulo'        => 'BlueExpressComponent',
-                    'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $response])
-                )
-            );
+                if ($response['code'] != 200 || !$response['response']['status']) {
+
+                    continue;
+                }
 
 
+                $nombreEtiqueta = $response['response']['data']['trackingNumber'] . date("Y-m-d H:i:s") . '.pdf';
+                $modulo_ruta    = 'webroot' . DS . 'img' . DS . 'ModuloBlueExpress' . DS . $venta['Venta']['id'] . DS;
+                $rutaPublica    = APP .  $modulo_ruta;
 
-            $nombreEtiqueta = $response['response']['data']['trackingNumber'] . date("Y-m-d H:i:s") . '.pdf';
-            $modulo_ruta = 'webroot' . DS . 'img' . DS . 'ModuloBlueExpress' . DS . $venta['Venta']['id'] . DS;
-            $rutaPublica    = APP .  $modulo_ruta;
+                if (!is_dir($rutaPublica)) {
+                    @mkdir($rutaPublica, 0775, true);
+                }
 
-            if (!is_dir($rutaPublica)) {
-                @mkdir($rutaPublica, 0775, true);
-            }
+                $etiqueta = $this->Etiquetas->generarEtiquetaExternaTransporte($response['response']['data']['labels'][0]['contenido']);
 
-            $etiqueta = $this->Etiquetas->generarEtiquetaExternaTransporte($response['response']['data']['labels'][0]['contenido']);
+                if ($etiqueta['curl_getinfo'] == 200) {
 
-            if ($etiqueta['curl_getinfo'] == 200) {
+                    $file = fopen($rutaPublica . $nombreEtiqueta, "w");
+                    fwrite($file, $etiqueta['etiquetaPdf']);
+                    fclose($file);
 
-                $file = fopen($rutaPublica . $nombreEtiqueta, "w");
-                fwrite($file, $etiqueta['etiquetaPdf']);
-                fclose($file);
+                    $ruta_pdfs = 'https://' . $_SERVER['HTTP_HOST'] . DS . $modulo_ruta . $nombreEtiqueta;
 
-                $ruta_pdfs = 'https://' . $_SERVER['HTTP_HOST'] . DS . $modulo_ruta . $nombreEtiqueta;
-            } else {
-                $ruta_pdfs = null;
-            }
+                } else {
 
+                    $ruta_pdfs = null;
+                }
 
-            # Guardamos el transportista y el/los numeros de seguimiento
-            $carrier_name = 'BLUEXPRESS';
-            $carrier_opt = array(
-                'Transporte' => array(
-                    'codigo' => 'BLUEXPRESS',
-                    'url_seguimiento' => 'https://www.bluex.cl/seguimiento/' // Url de seguimiento BlueExpress
-                )
-            );
-
-            if (!empty($rutaPublica)) {
-                $carrier_opt = array_replace_recursive($carrier_opt, array(
-                    'Transporte'    => array(
-                        'etiqueta'  => $rutaPublica
+                # Guardamos el transportista y el/los numeros de seguimiento
+                $carrier_name = 'BLUEXPRESS';
+                $carrier_opt = array(
+                    'Transporte' => array(
+                        'codigo' => 'BLUEXPRESS',
+                        'url_seguimiento' => 'https://www.bluex.cl/seguimiento/' // Url de seguimiento BlueExpress
                     )
-                ));
+                );
+
+                if (!empty($rutaPublica)) {
+
+                    $carrier_opt = array_replace_recursive($carrier_opt, array(
+                        'Transporte'    => array(
+                            'etiqueta'  => $rutaPublica
+                        )
+                    ));
+                }
+
+                $transportes[] = 
+                [
+                    'TransportesVenta'=>
+                        [
+                            'transporte_id'             => ClassRegistry::init('Transporte')->obtener_transporte_por_nombre($carrier_name, true, $carrier_opt),
+                            'venta_id'                  => $venta['Venta']['id'],
+                            'cod_seguimiento'           => $response['response']['data']['trackingNumber'],
+                            'etiqueta'                  => $ruta_pdfs,
+                            'entrega_aprox'             => date("Y-m-d", strtotime($obtener_costo_envio['response']['data']['fechaEstimadaEntrega'])),
+                            'paquete_generado'          => count($paquetes),
+                            'costo_envio'               => $obtener_costo_envio['response']['data']['total'],
+                            'etiqueta_envio_externa'    => $ruta_pdfs,
+                            'embalaje_id'               => $embalaje["id"]
+                        ]
+                ];
+
+                if (empty($transportes)) {
+                    continue;
+                }
+
             }
 
-            $transportes[] = [
-                'transporte_id'   => ClassRegistry::init('Transporte')->obtener_transporte_por_nombre($carrier_name, true, $carrier_opt),
-                'cod_seguimiento' => $response['response']['data']['trackingNumber'],
-                'etiqueta'        => $ruta_pdfs,
-                'entrega_aprox'   =>  date("Y-m-d", strtotime($obtener_costo_envio['response']['data']['fechaEstimadaEntrega']))
-            ];
-
-            if (empty($transportes)) {
-                continue;
-                $exito = false;
-            }
-
-            $costo_envio = $costo_envio + $obtener_costo_envio['response']['data']['total'];
+          
         }
 
         if ($transportes) {
-            $fin_proceso_ot = array(
-                'Venta' => array(
-                    'id'                        => $venta['Venta']['id'],
-                    'paquete_generado'          => count($paquetes),
-                    'costo_envio'               => $costo_envio,
-                    'etiqueta_envio_externa'    => $ruta_pdfs
-                ),
-                'Transporte' => $transportes
-            );
-
             # Se guarda la información del tracking en la venta
-            if (ClassRegistry::init('Venta')->saveAll($fin_proceso_ot)) {
+            if (ClassRegistry::init('TransportesVenta')->saveAll($transportes)) {
                 $log[] = array(
                     'Log' => array(
                         'administrador' => 'BlueExpress, se registro ot vid:' . $venta['Venta']['id'],
                         'modulo'        => 'BlueExpressComponent',
-                        'modulo_accion' => json_encode($fin_proceso_ot)
+                        'modulo_accion' => json_encode($transportes)
                     )
                 );
+
                 $exito = true;
+                
             } else {
                 $log[] = array(
                     'Log' => array(
                         'administrador' => 'BlueExpress, dificultades para guardar información ot vid:' . $venta['Venta']['id'],
                         'modulo'        => 'BlueExpressComponent',
-                        'modulo_accion' => json_encode($fin_proceso_ot)
+                        'modulo_accion' => json_encode($transportes)
                     )
                 );
             }
@@ -548,6 +545,8 @@ class BlueExpressComponent extends Component
 
         ClassRegistry::init('Log')->create();
         ClassRegistry::init('Log')->saveMany($log);
+
+        $this->registrar_estados($venta['Venta']['id']);
 
         return $exito;
     }

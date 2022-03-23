@@ -1,9 +1,10 @@
 <div class="page-title">
 	<h2><span class="fa fa-truck"></span> Método de envio</h2>
 </div>
-<?= $this->Form->create('MetodoEnvio', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-<?= $this->Form->input('id'); ?>
+
 <div class="page-content-wrap">
+	<?= $this->Form->create('MetodoEnvio', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+	<?= $this->Form->input('id'); ?>
 	<div class="row">
 		<div class="col-xs-12 col-md-6">
 			<div class="panel panel-default">
@@ -33,13 +34,18 @@
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>
+
+							<tr>
+								<th><?= $this->Form->label('permitir_reservar_stock_otra_bodega', 'Permitir reservas en otras bodegas'); ?></th>
+								<td><?= $this->Form->input('permitir_reservar_stock_otra_bodega', array('class' => 'icheckbox')); ?></td>
+							</tr>
 							<tr id="generar_ot" class="">
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
 								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('bodega_id', 'Bodega para despachar'); ?></th>
-								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control','required')); ?></td>
+								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control', 'required')); ?></td>
 							</tr>
 
 							<tr id="peso_maximo" class="">
@@ -62,7 +68,7 @@
 								<th><?= $this->Form->label('largo_default', 'Largo por defecto'); ?></th>
 								<td><?= $this->Form->input('largo_default'); ?></td>
 							</tr>
-							
+
 							<tr id="volumen_maximo" class="">
 								<th><?= $this->Form->label('volumen_maximo', 'Volumen Máximo'); ?></th>
 								<td><?= $this->Form->input('volumen_maximo'); ?></td>
@@ -79,7 +85,7 @@
 			</div>
 		</div> <!-- end col -->
 		<div class="col-xs-12 col-md-6">
-			<div class="panel panel-default js-panel-starken <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'starken') ? '' : 'hidden' ;?>">
+			<div class="panel panel-default js-panel-starken <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'starken') ? '' : 'hidden'; ?>">
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-truck"></i> Configuración de starken</h3>
 				</div>
@@ -134,7 +140,7 @@
 								<th><?= $this->Form->label('ciudad_origen', 'Ciudad de origen de la encomienda'); ?></th>
 								<td><?= $this->Form->select('ciudad_origen', $dependenciasVars['starken']['comunas'], array('empty' => 'Seleccione ciudad', 'class' => 'form-control select', 'data-live-search' => true)); ?></td>
 							</tr>
-							
+
 						</table>
 					</div>
 				</div>
@@ -146,7 +152,7 @@
 				</div>
 			</div>
 
-			<div class="panel panel-default js-panel-conexxion <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'conexxion') ? '' : 'hidden' ;?>">
+			<div class="panel panel-default js-panel-conexxion <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'conexxion') ? '' : 'hidden'; ?>">
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-truck"></i> Configuración de conexxion</h3>
 				</div>
@@ -197,8 +203,8 @@
 								<th><?= $this->Form->label('notification_type', 'Tipo de notificación'); ?></th>
 								<td><?= $this->Form->select('notification_type', $dependenciasVars['conexxion']['tipo_notificaciones'], array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
-							
-							
+
+
 						</table>
 					</div>
 				</div>
@@ -210,7 +216,7 @@
 				</div>
 			</div>
 
-			<div class="panel panel-default js-panel-boosmap <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'boosmap') ? '' : 'hidden' ;?>">
+			<div class="panel panel-default js-panel-boosmap <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'boosmap') ? '' : 'hidden'; ?>">
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-truck"></i> Configuración de boosmap</h3>
 				</div>
@@ -229,7 +235,7 @@
 								<th><?= $this->Form->label('boosmap_service', 'Típo de servicio'); ?></th>
 								<td><?= $this->Form->select('boosmap_service', $dependenciasVars['boosmap']['tipo_servicios'], array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
-							
+
 						</table>
 					</div>
 				</div>
@@ -241,7 +247,7 @@
 				</div>
 			</div>
 
-			<div class="panel panel-default js-panel-blueexpress <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'blueexpress') ? '' : 'hidden' ;?>">
+			<div class="panel panel-default js-panel-blueexpress <?= ($this->request->data['MetodoEnvio']['dependencia'] == 'blueexpress') ? '' : 'hidden'; ?>">
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-truck"></i> Configuración de BlueExpress</h3>
 				</div>
@@ -270,7 +276,7 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('tipo_servicio_blue_express', 'Tipo de Servicio'); ?></th>
-								<td><?= $this->Form->select('tipo_servicio_blue_express', $tipo_servicio, array('empty' => 'Seleccione Servicio', 'class' => 'form-control','required')); ?></td>
+								<td><?= $this->Form->select('tipo_servicio_blue_express', $tipo_servicio, array('empty' => 'Seleccione Servicio', 'class' => 'form-control', 'required')); ?></td>
 							</tr>
 
 						</table>
@@ -285,9 +291,140 @@
 			</div>
 		</div>
 	</div> <!-- end row -->
+	<?= $this->Form->end(); ?>
+
+	<? if ($this->request->data['MetodoEnvio']['permitir_reservar_stock_otra_bodega']) : ?>
+
+		<?= $this->Form->create(false, array(
+			'class' => 'form-horizontal',
+			'url' => array('controller' => 'metodoEnvios', 'action' => 'bodega_add', $this->request->data['MetodoEnvio']['id']),
+			'id' => 'BodegaAdd'
+		)); ?>
+		<div class="row">
+			<div class="col-xs-12 col-md-6">
+				<div class="page-content-wrap">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h3 class="panel-title">Otras bodegas para reservar stock</h3>
+							<ul class="panel-controls">
+								<li><a href="#" class="clone-boton"><span class="fa fa-plus"></span></a></li>
+							</ul>
+						</div>
+						<div class="panel-body">
+							<div class="table-responsive" style="max-height: 600px;">
+								<div class="table-responsive">
+									<table id="sortable" class="table">
+										<thead>
+											<tr>
+												<th><?= 'Bodega' ?></th>
+												<th style="text-align: center;"> <?= 'Prioritario' ?></th>
+												<th style="text-align: center;"> <?= 'Orden' ?></th>
+												<th style="text-align: center;"> Acciones</th>
+											</tr>
+										</thead>
+										<tbody>
+											<? unset($bodegas[$this->request->data['MetodoEnvio']['bodega_id']]); ?>
+											<? foreach ($this->request->data['BodegasMetodoEnvio'] as $indice => $bodega) : ?>
+												<tr class="fila">
+													<?= $this->Form->input(sprintf('%d.id', $indice), array('type' => 'text', 'label' => '', 'default' =>  $bodega['id'] ?? 1, 'class' => 'form-control hidden')); ?>
+													<?= $this->Form->input(sprintf('%d.metodo_envio_id', $indice), array('type' => 'text', 'label' => '', 'default' =>  $this->request->data['MetodoEnvio']['id'], 'class' => 'form-control hidden')); ?>
+													<td align="center" style="vertical-align: middle;">
+														<?= $this->Form->select(sprintf('%d.bodega_id', $indice), $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control', 'required', 'default' => $bodega['bodega_id'])); ?>
+													</td>
+													<td align="center" style="vertical-align: middle; width: 100px;">
+														<?= $this->Form->checkbox(sprintf('%d.prioritaria', $indice), array('label' => '', 'default' =>  $bodega['prioritaria'])); ?>
+													</td>
+													<td align="center" style="vertical-align: middle; width: 100px;">
+														<?= $this->Form->input(sprintf('%d.orden', $indice), array('type' => 'text', 'label' => '', 'disabled' => 'disabled', 'default' =>  $bodega['orden'] ?? 1, 'class' => 'form-control orden')); ?>
+													</td>
+													<td  align="center"  style="vertical-align: middle; width: 100px;">
+														<button type="button" data-toggle="modal" data-target="#modal-eliminar-bodega-<?= $bodega['id'] ?>" class="btn btn-danger btn-block ">Eliminar</button>
+													</td>
+												</tr>
+											<? endforeach; ?>
+											<?if(count($this->request->data['BodegasMetodoEnvio']) < count($bodegas)):?>
+
+											<? for ($i = (count($this->request->data['BodegasMetodoEnvio']) + 1); $i <= (count($this->request->data['BodegasMetodoEnvio']) + count($bodegas)); $i++) : ?>
+												<tr class="fila hidden clone-tr">
+													<?= $this->Form->input(sprintf('%d.metodo_envio_id', $i), array('type' => 'text', 'label' => '', 'default' =>  $this->request->data['MetodoEnvio']['id'], 'class' => 'form-control hidden')); ?>
+													<td align="center" style="vertical-align: middle;">
+														<?= $this->Form->select(sprintf('%d.bodega_id', $i), $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control',)); ?>
+													</td>
+													<td align="center" style="vertical-align: middle; width: 100px;">
+														<?= $this->Form->checkbox(sprintf('%d.prioritaria', $i), array('label' => '', 'default' => 0)); ?>
+													</td>
+													<td align="center" style="vertical-align: middle">
+														<?= $this->Form->input(sprintf('%d.orden', $i), array('type' => 'text', 'label' => '', 'disabled' => 'disabled', 'default' => $i, 'class' => 'form-control orden')); ?>
+													</td>
+													<td valign="center" align="center" style="vertical-align: middle; width: 100px;" w>
+														<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>
+													</td>
+												</tr>
+											<? endfor; ?>
+											<?endif?>
+										</tbody>
+									</table>
+								</div>
+							</div>
+
+						</div>
+
+						<div id="guardar-bodega" class="row">
+							<div class="col-xs-12">
+								<div class="pull-right pagination">
+									<button type="submit" class="btn btn-success btn-block start-loading-then-redirect ">Guardar Información</button>
+								</div>
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+		<?= $this->Form->end(); ?>
+
+	<? endif ?>
 </div>
-<?= $this->Form->end(); ?>
+
+
+<!-- Modal Eliminar Bodega -->
+<? foreach ($this->request->data['BodegasMetodoEnvio'] as $bodega) : ?>
+	<div class="modal fade" id="modal-eliminar-bodega-<?= $bodega['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="modal-eliminar-bodega-<?= $bodega['id']; ?>-label">
+		<div class="modal-dialog" role="document">
+
+			<div class="modal-content">
+
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title text-center"> <?= "Esta seguro de eliminar la relación entre el metodo '{$this->request->data['MetodoEnvio']['nombre']} ' y la bodega '{$bodega['Bodega']['nombre']}'"  ?></h4>
+				</div>
+
+				<div class="modal-body">
+					<?= $this->Form->create(false, array(
+						'class' => 'form-horizontal',
+						'url' => array('controller' => 'metodoEnvios', 'action' => 'bodega_delete', $this->request->data['MetodoEnvio']['id']),
+						'id' => 'BodegaDelete'
+
+					)); ?>
+					<?= $this->Form->input('id', array('type' => 'text', 'label' => '', 'default' =>  $bodega['id'] ?? 1, 'class' => 'form-control hidden')); ?>
+					<div>
+						<div class="col-xs-12">
+							<div class="btn-group pull-right">
+								<button type="submit" class="btn btn-success  start-loading-then-redirect">Continuar</button>
+								<button type="button" data-dismiss="modal" aria-label="Close" class="btn btn-danger ">Cancelar</button>
+							</div>
+						</div>
+					</div>
+					<?= $this->Form->end(); ?>
+				</div>
+			</div>
+
+		</div>
+	</div>
+<? endforeach; ?>
+<!-- Fin modal Eliminar Bodega -->
 
 <?= $this->Html->script(array(
-	'/backend/js/metodo_envios.js?v=' . rand())); ?>
+	'/backend/js/metodo_envios.js?v=' . rand()
+)); ?>
 <?= $this->fetch('script'); ?>
