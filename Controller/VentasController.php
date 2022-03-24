@@ -3689,14 +3689,6 @@ class VentasController extends AppController {
 				}
 			}
 			
-			# Seteamos las comunas
-			/*$comunas_starken = $this->Starken->listarCiudadesDestino();
-			$comunas         = array();
-
-			foreach ($comunas_starken['body'] as $ic => $comuna) {
-				$comunas[$comuna['nombreCiudad']] = $comuna['nombreCiudad'];
-			}*/
-			
 		}
 		
 		# Estados de envios
@@ -3747,6 +3739,7 @@ class VentasController extends AppController {
 		
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Detalles de Venta');
+
 		$embaljes_ids = Hash::extract($venta, "HistorialEmbalaje.{n}");
 		$response = $this->WarehouseNodriza->ObtenerEvidencia(["embalajes_id"=>$embaljes_ids]);		
 		
@@ -3771,7 +3764,30 @@ class VentasController extends AppController {
 				}
 			}
 		}
-		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas'));
+
+		# Obtener embalajes vía api y las notas relacionadas
+		$embalajes_req = $this->WarehouseNodriza->ObtenerEmbalajesVentaV2($id);	
+		$notas_req = $this->WarehouseNodriza->ObtenerNotasDespacho(['venta_id' => $id]);		
+		
+		$embalajes = [];
+		$notas_despacho = [];
+
+		if ($embalajes_req['code'] == 200)
+		{
+			$embalajes = $embalajes_req['response'];
+		}
+
+		if ($notas_req['code'] == 200)
+		{
+			$notas_despacho = $notas_req['response'];
+		}
+		
+		# Aislamos solo las notas de despacho y las ordenamos
+		$notas_embalajes = Hash::extract($embalajes, 'body.{n}.notas_despacho.{n}');
+		
+		$this->sort_array_by_key($notas_embalajes, 'fecha_creacion');
+		
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas', 'embalajes', 'notas_embalajes', 'notas_despacho'));
 
 	}
 
@@ -4787,6 +4803,88 @@ class VentasController extends AppController {
 		$this->redirect($this->referer('/', true));
 	}
 
+	
+	/**
+	 * admin_crear_nota_despacho
+	 *
+	 * @return void
+	 */
+	public function admin_crear_nota_despacho()
+	{	
+
+		if (!$this->request->is('post'))
+		{
+			$this->Session->setFlash('Sólo se permite request de tipo post.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		if (!$this->Venta->exists($this->request->data['Nota']['venta_id']))
+		{
+			$this->Session->setFlash('La venta seleccionada no existe.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+		
+		$nota = [
+			'venta_id' => $this->request->data['Nota']['venta_id'],
+			'nombre' => $this->request->data['Nota']['titulo'],
+			'descripcion' => $this->request->data['Nota']['nota_despacho_global'],
+			'id_usuario' => $this->Auth->user('id'),
+			'nombre_usuario' => $this->Auth->user('nombre'),
+			'mail_usuario' => $this->Auth->user('email')
+		];
+
+		# Se asignan los id de embalajes si vienen
+		if (isset($this->request->data['Nota']['embalaje_id']))
+		{
+			$nota = array_replace_recursive($nota, [
+				'embalajes' => [
+					['id_embalaje' => $this->request->data['Nota']['embalaje_id']]
+				]
+			]);
+		}
+	
+		# Creamos la nota vía api
+		$result = $this->WarehouseNodriza->crearNotaDespacho($nota);
+
+		if ($result['code'] == 200)
+		{
+			$this->Session->setFlash('Notificación creada con éxito.', null, array(), 'success');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$this->Session->setFlash('No fue posible crear la nota. Intente nuevamente.', null, array(), 'danger');
+		$this->redirect($this->referer('/', true));
+	}
+
+	
+	/**
+	 * admin_eliminar_nota_despacho
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
+	public function admin_eliminar_nota_despacho($id)
+	{	
+
+		if (!$this->request->is('post'))
+		{
+			$this->Session->setFlash('Sólo se permite request de tipo post.', null, array(), 'danger');
+			$this->redirect($this->referer('/', true));
+		}
+
+		# Creamos la nota vía api
+		$result = $this->WarehouseNodriza->eliminarNotaDespacho($id);
+		
+		if ($result['code'] == 200)
+		{
+			$this->Session->setFlash('Notificación eliminada con éxito.', null, array(), 'success');
+			$this->redirect($this->referer('/', true));
+		}
+
+		$this->Session->setFlash('No fue posible eliminar la nota. Intente nuevamente.', null, array(), 'danger');
+		$this->redirect($this->referer('/', true));
+	}
+	
 
 	public function admin_en_espera($id)
 	{
@@ -5022,7 +5120,7 @@ class VentasController extends AppController {
 		}
 
 		# Prestashop
-		if ( $estado_actual_nombre != $estado_nuevo_nombre && $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) 
+		if ( $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) 
 		{	
 			# Para la consola se carga el componente on the fly!
 			$this->Prestashop = $this->Components->load('Prestashop');
@@ -5141,7 +5239,7 @@ class VentasController extends AppController {
 			
 		# Linio
 		}
-		elseif ( $estado_actual_nombre != $estado_nuevo_nombre && $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) 
+		elseif ( $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) 
 		{	
 			# Para la consola se carga el componente on the fly!
 			if ($this->shell) {
@@ -5210,12 +5308,12 @@ class VentasController extends AppController {
 			
 		# Meli
 		}
-		elseif ( $estado_actual_nombre != $estado_nuevo_nombre && $esMercadolibre ) 
+		elseif ( $esMercadolibre ) 
 		{	
 			#throw new Exception('¡Error! No está habilitada la opción de cambios de estado en Meli.', 501);
 			
 		}
-		elseif ($estado_actual_nombre != $estado_nuevo_nombre && $venta['Venta']['venta_manual'])
+		elseif ( $venta['Venta']['venta_manual'])
 		{	
 			# Venta manual
 			# Enviar email al cliente
@@ -10200,6 +10298,78 @@ class VentasController extends AppController {
 				'CanalVenta'
 			)
 		));
+
+		# En ocaciones la BD registra duplicado los embalajes, por ende al procesar el primero de ellos, eliminaremos los duplicados
+		foreach ($venta['VentaDetalle'] as $detalle)
+		{
+			$tmp_embalaje = [];
+			$diff = [];
+			
+			foreach ($detalle['EmbalajeProductoWarehouse'] as $embalaje_producto)
+			{	
+				$em = [
+					'id' => $embalaje_producto['id'],
+					'embalaje_id' => $embalaje_producto['embalaje_id'],
+					'producto_id' => $embalaje_producto['producto_id'],
+					'detalle_id' => $embalaje_producto['detalle_id'],
+					'cantidad_a_embalar' => $embalaje_producto['cantidad_a_embalar'],
+					'cantidad_embalada' => $embalaje_producto['cantidad_embalada'],
+					'fecha_creacion' => $embalaje_producto['fecha_creacion'],
+					'ultima_modifacion' => $embalaje_producto['ultima_modifacion'],
+					'cantidad_anulada' => $embalaje_producto['cantidad_anulada'],
+					'embalaje_bodega_id' => $embalaje_producto['EmbalajeWarehouse']['bodega_id'],
+					'embalaje_estado' => $embalaje_producto['EmbalajeWarehouse']['estado'],
+					'embalaje_fecha' => $embalaje_producto['EmbalajeWarehouse']['fecha_creacion']
+				];
+
+				# Buscamos las diferencias entre los embalajes
+				$diff = Hash::diff($em, $tmp_embalaje);
+				
+				# Asignamos el embalaje a una variable temporal que la contendrá para compararla en la siguente iteración
+				$tmp_embalaje = $em;
+
+				# si no existen estos indices en las diferencias queire decir que es un embalaje duplicado
+				if (!isset($diff['embalaje_fecha']) 
+				&& !isset($diff['embalaje_bodega_id'])
+				&& !isset($diff['cantidad_a_embalar']))
+				{
+
+					$mandrill_apikey = $venta['Tienda']['mandrill_apikey'];
+
+					if (empty($mandrill_apikey)) {
+						return false;
+					}
+
+					$mandrill = $this->Components->load('Mandrill');
+
+					$mandrill->conectar($mandrill_apikey);
+
+					$asunto = '['.$venta['Tienda']['nombre'].' ALERTA] ¡Venta #' . $venta['Venta']['id'] . ' tiene embalaje duplicado!';
+					
+					if (Configure::read('ambiente') == 'dev') {
+						$asunto = '['.$venta['Tienda']['nombre'].' ALERTA - DEV] ¡Venta #' . $venta['Venta']['id'] . ' tiene embalaje duplicado!';
+					}
+
+					$remitente = array(
+						'email' => 'warehouse@nodriza.cl',
+						'nombre' => 'Ventas ' . $venta['Tienda']['nombre']
+					);
+
+					$destinatarios = array(
+						array(
+							'email' => 'cristian.rojas@nodriza.cl',
+							'name' => 'Cristian rojas'
+						)
+					);
+
+					$html = "<h1>La venta #{$venta['Venta']['id']} al parecer tiene un embalaje duplicado. Revíselo a la brevedad.</h1>";
+
+					$mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+
+				}
+			}
+	
+		}
 		
 		$etiquetas_embalajes = array();
 		
@@ -12708,6 +12878,136 @@ class VentasController extends AppController {
 
 		$this->set(array(
             'response' => $respuesta,
+            '_serialize' => array('response')
+		));
+	}
+	/**
+	 * api_cambiar_estado_desde_warehouse_v2
+	 * Se cambia estado a venta segun se hayan terminado de embalar todos los productos de esta
+	 * Los estados se tomaran según el metodo de envio
+	 * @param  mixed $id de la Venta
+	 * @return void
+	 */
+	public function api_cambiar_estado_desde_warehouse_v2($id)
+	{	
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+			$response = array(
+				'code'    => 401, 
+				'name' => 'error',
+				'message' => 'Token requerido'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+			$response = array(
+				'code'    => 404, 
+				'name' => 'error',
+				'message' => 'Token de sesión expirado o invalido'
+			);
+
+			throw new CakeException($response);
+		}
+						
+		$tokeninfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+		
+		# Body
+		$venta = $this->Venta->find('first', array(
+			'conditions' => array(
+				'Venta.id' => $id
+			),
+			'contain' =>
+			[
+				'VentaDetalle',
+				'MetodoEnvio' =>[ 'fields' => ['MetodoEnvio.embalado_venta_estado_parcial_id','MetodoEnvio.embalado_venta_estado_id']]
+			]
+		));
+
+		// TODO Se consultan embalajes finalizados para validar que estado colocar a la venta
+		$embalajesFinalizados = $this->WarehouseNodriza->ObtenerEmbalajesVenta($id);		
+		$cambiar_estado 	  = false;
+		$nuevo_estado   	  = null;
+		$logs 		  		  = [];
+
+	
+		try {
+
+			$cantidad	       = array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
+			$cantidad_embalada = array_sum(Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
+			
+			// TODO Si existen productos por entregar se envia estado parcial
+			if ($cantidad != $cantidad_embalada) {
+
+				// !! Se valida que metodo tenga el estado a cambiar
+				if (is_null($venta['MetodoEnvio']['embalado_venta_estado_parcial_id'])) {
+
+					$logs[] = [
+						'Log' =>
+						[
+							'administrador' => "Problemas para actualizar vid {$id}",
+							'modulo'        => 'VentasController',
+							'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado parcial', valor actual Null"
+						]
+					];
+				// !! Solo se cambia si el estado es distinto
+				}
+				
+				$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_parcial_id'];
+				$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $venta['MetodoEnvio']['embalado_venta_estado_parcial_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+			
+
+			} else {
+			
+				// !! Se valida que metodo tenga el estado a cambiar
+				if (is_null($venta['MetodoEnvio']['embalado_venta_estado_id'])) {
+
+					$logs[] = [
+						'Log' =>
+						[
+							'administrador' => "Problemas para actualizar vid {$id}",
+							'modulo'        => 'VentasController',
+							'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado completo', valor actual Null"
+						]
+					];
+				
+				// !! Solo se cambia si el estado es distinto			
+				}
+				
+				$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_id'];
+				$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $venta['MetodoEnvio']['embalado_venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+			}
+		} catch (Exception $e) {
+
+			$cambiar_estado = false;
+		}
+
+
+		if ($cambiar_estado) {
+			$logs[] = [
+				'Log' =>
+				[
+					'administrador' => "Se actualiza estado vid {$id}",
+					'modulo'        => 'VentasController',
+					'modulo_accion' => "Estado original {$venta['Venta']['venta_estado_id']} | Estado después {$nuevo_estado}"
+				]
+			];
+		}
+			
+		if ($logs) {
+			ClassRegistry::init('Log')->saveMany($logs);
+		}
+	
+		$respuesta = array(
+			'code'    => 200,
+			'message' => 'Estado actualizado con éxito',
+			'body'    => array()
+		);
+		
+		$this->set(array(
+            'response'   => $respuesta,
             '_serialize' => array('response')
 		));
 	}

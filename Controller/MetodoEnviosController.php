@@ -102,13 +102,32 @@ class MetodoEnviosController extends AppController
 		BreadcrumbComponent::add('Métodos de envio', '/metodoEnvios');
 		BreadcrumbComponent::add('Editar Método de envio');
 
-		$this->set(compact('dependencias','bodegas'));
+		$estados_sin_procesar = ClassRegistry::init('VentaEstado')->find(
+			'all',
+			[
+				'fields' => ['VentaEstado.id', 'VentaEstado.nombre'],
+				'conditions' => ['VentaEstado.activo'],
+				'contain'   => [
+					'VentaEstadoCategoria' =>
+					[
+						'fields' => 'VentaEstadoCategoria.nombre'
+					]
+				]
+			]
+		);
+		$estados = [];
+		foreach ($estados_sin_procesar as  $value) {
+			$estados[$value['VentaEstado']['id']] = "Estado {$value['VentaEstado']['nombre']} | Categoría {$value['VentaEstadoCategoria']['nombre']}";
+		}
+
+		$this->set(compact('dependencias','bodegas','estados'));
 	}
 
 
 
 	public function admin_edit($id = null)
 	{
+
 		if ( ! $this->MetodoEnvio->exists($id) )
 		{
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
@@ -172,7 +191,26 @@ class MetodoEnviosController extends AppController
 			'conditions'=>['Bodega.activo'=>true]
 		]);
 		$tipo_servicio = $this->tipo_servicio;
-		$this->set(compact('dependencias', 'dependenciasVars','bodegas','tipo_servicio'));
+
+		$estados_sin_procesar = ClassRegistry::init('VentaEstado')->find(
+			'all',
+			[
+				'fields' => ['VentaEstado.id', 'VentaEstado.nombre'],
+				'conditions' => ['VentaEstado.activo'],
+				'contain'   => [
+					'VentaEstadoCategoria' =>
+					[
+						'fields' => 'VentaEstadoCategoria.nombre'
+					]
+				]
+			]
+		);
+		$estados = [];
+		foreach ($estados_sin_procesar as  $value) {
+			$estados[$value['VentaEstado']['id']] = "Estado {$value['VentaEstado']['nombre']} | Categoría {$value['VentaEstadoCategoria']['nombre']}";
+		}
+		
+		$this->set(compact('dependencias', 'dependenciasVars','bodegas','tipo_servicio','estados'));
 
 	}
 

@@ -283,3 +283,25 @@ $(document).ready(function () {
 		}
 	}
 });
+	$.app.formularios.bind('#MetodoEnvioAdminEditForm');
+	$('#MetodoEnvioEmbaladoVentaEstadoId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
+	$('#MetodoEnvioEmbaladoVentaEstadoParcialId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
+
+	$('#MetodoEnvioBodegaId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
+
+

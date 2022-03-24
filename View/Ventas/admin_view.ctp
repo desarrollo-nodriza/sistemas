@@ -25,7 +25,7 @@
 					<li><a href="#tab-estados" data-toggle="tab"><i class="fa fa-list"></i> Historial de estados</a></li>
 			    	
 					<? if (!empty($venta['EmbalajeWarehouse'])) : ?>
-						<li><a href="#tab-embalajes" data-toggle="tab"><i class="fa fa-cube"></i> Embalajes</a></li>
+						<li><a href="#tab-embalajes" data-toggle="tab"><i class="fa fa-cube"></i> Embalajes y notas</a></li>
 					<? endif; ?>
 
 			    </ul>
@@ -673,25 +673,6 @@
 								</div>
 							</div>
 							<? endif; ?>
-							
-							<?= $this->Form->create('Venta', array('url' => array('action' => 'edit', $venta['Venta']['id']), 'id' => 'AgregarNota','class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?> 
-								<div class="panel panel-warnig"> 
-									<div class="panel-body"> 
-										<h4><i class="fa fa-bell " aria-hidden="true"></i> <?= __('Referencia de despacho');?></h4> 
-									</div> 
-									<div class="panel-body"> 
-										<div class="form-group"> 
-											<?=$this->Form->input('id');?> 
-											<?=$this->Form->label('referencia_despacho', 'Ingrese comentario sobre despacho'); ?> 
-											<?=$this->Form->input('referencia_despacho', array('class' => 'form-control', 'placeholder' => 'Ingrese comentario'));?> 
-										</div> 
-									</div> 
-									<div class="panel-footer"> 
-										<?=$this->Form->button('Guardar referencia de despacho', array('type' => 'submit', 'class' => 'btn btn-block btn-warning start-loading-then-redirect')); ?> 
-									</div> 
-								</div> 
- 
-							<?= $this->Form->end(); ?> 
 
 							<?= $this->Form->create('Venta', array('url' => array('action' => 'edit', $venta['Venta']['id']), 'id' => 'AgregarNota','class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
 								<div class="panel panel-danger">
@@ -1249,11 +1230,12 @@
 					</div>
 
 					<? if ($venta['EmbalajeWarehouse']) : ?>
-						<div class="tab-pane panel-body" id="tab-embalajes">
+					<div class="tab-pane panel-body" id="tab-embalajes">
+						<br>
+						<h4><i class="fa fa-cube"></i> Embalajes de la venta</h4>
 						
 						<div class="table-responsive">
 							<table class="table table-bordered">
-								<caption>Embalajes de la venta.</caption>
 								<th>ID</th>
 								<th>Estado</th>
 								<th>Bodega</th>
@@ -1280,7 +1262,12 @@
 												-
 											<? endif; ?>
 										</td>
-										<td><button class="btn btn-xs btn-block btn-primary btn-expandir-venta" data-toggle="collapse" data-target="#accordion-embalaje-<?=$em['id']; ?>"><i class="fa fa-expand"></i> Productos</button></td>
+										<td>
+											<div class="btn-group">
+											<button class="btn btn-xs btn-primary btn-expandir-venta" data-toggle="collapse" data-target="#accordion-embalaje-<?=$em['id']; ?>"><i class="fa fa-expand"></i> Productos</button>
+											<?=$this->Html->link('<i class="fa fa-eye"></i> Ver embalaje', array('controller' => 'embalajeWarehouses', 'action' => 'view', $em['id']), array('class' => 'btn btn-xs btn-info', 'escape' => false, 'target' => '_blank')); ?>
+											</div>
+										</td>
 									</tr>
 									<tr>
 										<td colspan="9">
@@ -1311,6 +1298,46 @@
 
 							</table>
 						</div>
+						
+						<br>
+									
+						<h4><i class="fa fa-bell " aria-hidden="true"></i> <?= __('Notas globales para warehouse');?></h4> 
+						<p class="text-primary"><?= __('Las notas globales serán visible para todos los embalajes que sean creados a partir de la venta. Para crear una nota para un embalaje en especifico debe ingresar al embalaje en cuestión.');?></p>
+						<div class="messages">
+							<? foreach ($notas_despacho['body'] as $nota) : if (!empty($nota['embalajes'])) : continue; endif;?>
+							<div class="item item-visible">
+								<div class="text">
+									<div class="heading" style="display: flex; flex-direction: column;">
+										<div style="display: flex; align-items: center; justify-content: space-between;">
+										<a style="width: 90%">#<?=$nota['id']; ?> - <?=$nota['nombre'];?></a>
+										<? if ($nota['atendido']) : ?>
+										<span class="label label-success label-form" style="margin-right: 10px; margin-left: auto; margin-top: 0;">Leída por <?=$nota['mail_usuario']; ?></span>
+										<? else : ?>
+										<span class="label label-default label-form" style="margin-right: 10px; margin-left: auto; margin-top: 0;">Sin atender</span>
+										<? endif; ?>
+										<?=$this->Form->postButton('<i class="fa fa-trash"></i> Eliminar', array('action' => 'eliminar_nota_despacho', $nota['id']), array('class' => 'btn btn-xs btn-danger pull-right', 'style' => "display: block; margin-left: auto; margin-right: 0;", 'escape' => false)); ?>
+										</div>
+										<span class="date" style="float: none;display: block;">Creada por: <?=$nota['nombre_usuario'];?></span>
+										<span class="date" style="float: none;display: block;">Fecha de creación: <?=$this->Time->format($nota['fecha_creacion'], '%y-%m-%d %H:%M:%S');?></span>
+									</div>
+									<p style="display: block; width: 100%;"><?=$nota['descripcion']; ?></p>
+								</div>
+							</div>
+							<? endforeach; ?>
+						</div>
+						
+						
+						<?= $this->Form->create('Nota', array('url' => array('controller' => 'ventas', 'action' => 'crear_nota_despacho'), 'id' => 'AgregarNota','class' => 'form-horizontal js-formulario', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?> 					
+						<div class="form-group" style="margin-top: 25px;float: left;width: 100%;">
+							<?=$this->Form->hidden('titulo', array('value' => 'Nota global desde venta')); ?>
+							<?=$this->Form->hidden('venta_id', array('value' => $venta['Venta']['id'])); ?>					
+							<?=$this->Form->label('nota_despacho_global', 'Crear nueva nota global para warehouse')?>
+							<?=$this->Form->textarea('nota_despacho_global', array('class' => 'form-control not-blank', 'rows' => 4, 'placeholder' => 'Ingrese una nota para warehouse'));?>
+						</div>
+						
+						<?=$this->Form->button('Crear nota global', array('type' => 'submit', 'class' => 'btn btn-block btn-warning start-loading-when-form-is-validate')); ?> 
+
+						<?= $this->Form->end(); ?> 
 						
 					</div>
 					<? endif; ?>

@@ -3,6 +3,11 @@ App::uses('AppController', 'Controller');
 class EmbalajeWarehousesController extends AppController
 {	
 
+	public $components = array(
+		'RequestHandler',
+		'WarehouseNodriza'
+	);
+
 	/**
      * Crea un redirect y agrega a la URL los parámetros del filtro
      * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
@@ -263,11 +268,18 @@ class EmbalajeWarehousesController extends AppController
 			)
 		));
 
+		$notas_req = $this->WarehouseNodriza->ObtenerNotasDespacho(['embalaje_id[]' => $id]);		
+		$notas_despacho = [];
+
+		if ($notas_req['code'] == 200)
+		{
+			$notas_despacho = $notas_req['response'];
+		}
 
 		BreadcrumbComponent::add('Embalajes ', '/embalajeWarehouses');
 		BreadcrumbComponent::add('Ver embalaje');
 
-		$this->set(compact('embalaje', 'embalado_por', 'finalizado_por', 'cancelado_por'));
+		$this->set(compact('embalaje', 'embalado_por', 'finalizado_por', 'cancelado_por', 'notas_despacho'));
 
 	}
 

@@ -406,6 +406,21 @@ Router::connect(
     )
 );
 
+Router::connect(
+    '/api/ventas/v2/cambiar-estado-desde-warehouse/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'Ventas', 
+        'action' => 'cambiar_estado_desde_warehouse_v2',
+        'api' => true,
+        '[method]' => 'POST',
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+
 
 Router::connect(
     '/api/ventas/seguimiento/:id', // E.g. /blog/3-CakePHP_Rocks

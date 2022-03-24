@@ -38,6 +38,13 @@
 							<tr>
 								<th><?= $this->Form->label('permitir_reservar_stock_otra_bodega', 'Permitir reservas en otras bodegas'); ?></th>
 								<td><?= $this->Form->input('permitir_reservar_stock_otra_bodega', array('class' => 'icheckbox')); ?></td>
+							<tr>
+								<th><?= $this->Form->label('embalado_venta_estado_id', 'Estado de la venta por defecto'); ?></th>
+								<td><?= $this->Form->select('embalado_venta_estado_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('embalado_venta_estado_parcial_id', 'Estado de la venta parcial por defecto'); ?></th>
+								<td><?= $this->Form->select('embalado_venta_estado_parcial_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
 							</tr>
 							<tr id="generar_ot" class="">
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
@@ -267,6 +274,10 @@
 								<td><?= $this->Form->input('usuario_blue_express', array('placeholder' => 'Ingrese su Usuario', 'required')); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('compania_blue_express', 'Código Empresa de BlueExpress'); ?></th>
+								<td><?= $this->Form->input('compania_blue_express', array('placeholder' => 'Ingrese su código empresa', 'required')); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('cod_usuario_blue_express', 'Código Usuario en BlueExpress'); ?></th>
 								<td><?= $this->Form->input('cod_usuario_blue_express', array('placeholder' => 'Ingrese su Código Usuario', 'required')); ?></td>
 							</tr>
@@ -425,6 +436,15 @@
 <!-- Fin modal Eliminar Bodega -->
 
 <?= $this->Html->script(array(
-	'/backend/js/metodo_envios.js?v=' . rand()
-)); ?>
+	'/backend/js/metodo_envios.js?v=' . rand())); ?>
 <?= $this->fetch('script'); ?>
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script type="text/javascript">
+	jQuery(document).ready(function($){
+		$(document).ready(function() {
+			$('.mi-selector').select2();
+		});
+	});
+</script>
