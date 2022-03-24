@@ -154,18 +154,26 @@ class WarehouseNodrizaComponent extends Component
 
                 // TODO Extraemos solo los productos que fueron reservados en otras bodegas
                 foreach ($bodegas_activas as $key => $value) {
-                    $reservas_separadas_por_bodega[] = Hash::extract($venta['VentaDetalle'], "{n}.VentaDetallesReserva.{n}[bodega_id={$key}]");
+                    $reservas_separadas_por_bodega[$key] = Hash::extract($venta['VentaDetalle'], "{n}.VentaDetallesReserva.{n}[bodega_id={$key}]");
                 }
 
                 // TODO Ya que se consultan todas las bodegas se filtra aquellas bodegas que no tuvieron reserva en stock, para recorrer solo las que corresponde
                 $reservas_separadas_por_bodega = array_filter($reservas_separadas_por_bodega);
 
+                $logs[] = array(
+                    'Log' => array(
+                        'administrador' => "Reservas por bodega",
+                        'modulo'        => 'WarehouseNodrizaComponent',
+                        'modulo_accion' => json_encode($reservas_separadas_por_bodega)
+                    )
+                );
+
                 // TODO Al recorrer se crean embalajes de acuerdo a la bodega
-                foreach ($reservas_separadas_por_bodega as $productos_por_bodegas) {
+                foreach ($reservas_separadas_por_bodega as $bodega_id => $productos_por_bodegas) {
                     $embalaje = [];
                     $embalaje = [
                         'venta_id'        => $venta['Venta']['id'],
-                        'bodega_id'       => $venta['Venta']['bodega_id'] ?? $bodega['Bodega']['id'],
+                        'bodega_id'       => $bodega_id,
                         'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
                         'comuna_id'       => $venta['Venta']['comuna_id']  ?? $venta['Bodega']['comuna_id'],
                         'prioritario'     => ($venta['Venta']['prioritario']) ? 1 : 0,
@@ -178,7 +186,7 @@ class WarehouseNodrizaComponent extends Component
                         $embalaje['marketplace_id'] = $venta['Venta']['marketplace_id'];
                     }
 
-                    $bodega_distinta_a_principal = false;
+                    $bodega_distinta_a_principal = $bodega_id != $venta['Venta']['bodega_id'];
 
                     // ! Verificamos Si el total del producto ya fue embalada, si falta, se crea un embalaje con lo que falta
                     foreach ($productos_por_bodegas as $d) {
@@ -187,11 +195,6 @@ class WarehouseNodrizaComponent extends Component
 
                         # Agregamos el item al nuevo embalaje
                         if ($cantidad_a_embalar > 0) {
-                            // ! Si existen reservas en más de una bodega y las reservas que se estan procesando son distinta a la bodega de la venta, al embalaje se le indica la bodega de la reserva
-                            if (count($reservas_separadas_por_bodega) > 1 && $d['bodega_id'] != $embalaje['bodega_id']) {
-                                $embalaje['bodega_id']       = $d['bodega_id'];
-                                $bodega_distinta_a_principal = true;
-                            }
 
                             $embalaje['productos'][] = array(
                                 'producto_id'        => $d['venta_detalle_producto_id'],
@@ -218,24 +221,22 @@ class WarehouseNodrizaComponent extends Component
                                 )
                             );
 
-                            if ($bodega_distinta_a_principal) {
+                            if ($bodega_distinta_a_principal && $venta['MetodoEnvio']['retiro_local']) {
 
-                                if ($venta['MetodoEnvio']['retiro_local']) {
-                                    try {
-                                        $nota = is_null($venta['Venta']['nota_interna']) ? '' : "{$venta['Venta']['nota_interna']} - El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
-                                    } catch (\Throwable $th) {
+                                try {
+                                    $nota = "{$venta['Venta']['nota_interna']} - El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                } catch (\Throwable $th) {
 
-                                        $nota = is_null($venta['Venta']['nota_interna']) ? '' : "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
-                                    }
-
-                                    ClassRegistry::init('Venta')->save([
-                                        'Venta' =>
-                                        [
-                                            'nota_interna' => $nota,
-                                            'id'           => $venta['Venta']['id']
-                                        ]
-                                    ]);
+                                    $nota = "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
                                 }
+
+                                ClassRegistry::init('Venta')->save([
+                                    'Venta' =>
+                                    [
+                                        'nota_interna' => $nota,
+                                        'id'           => $venta['Venta']['id']
+                                    ]
+                                ]);
                             }
                         } else {
 
@@ -316,7 +317,7 @@ class WarehouseNodrizaComponent extends Component
         $this->crearCliente();
         return $this->WarehouseNodriza->CrearEntradaSalidaZonificacion($zonificacion);
     }
-    
+
     public function ObtenerEmbalajesVenta($venta_id)
     {
         $this->crearCliente();
