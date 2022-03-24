@@ -492,7 +492,7 @@ class OrdenesController extends AppController
 						'stockout'
 					);
 
-					// $id_dte['Dte']['estado'] = 'dte_real_emitido' ;
+					$id_dte['Dte']['estado'] = 'dte_real_emitido' ;
 
 					# Si es NDC se anulan los items en la venta, se recalculan los montos de la venta y se devuelven a bodega los itmes cancelados si corresponde.
 					if (!empty($this->request->data['DteDetalle']) 
