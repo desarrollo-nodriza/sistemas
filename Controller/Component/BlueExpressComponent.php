@@ -404,14 +404,15 @@ class BlueExpressComponent extends Component
 
                 # creamos el arreglo para generar la OT
                 $data = [
-                    'serviceType' => $venta['MetodoEnvio']['tipo_servicio_blue_express'],
-                    'venta'     => [
+                    'serviceType'   => $venta['MetodoEnvio']['tipo_servicio_blue_express'],
+                    'companyId'     => $venta['MetodoEnvio']['compania_blue_express'],
+                    'venta'         => [
                         'id'                    => $venta['Venta']['id'],
                         'referencia'            => $venta['Venta']['referencia'],
                         'referencia_despacho'   => $venta['Venta']['referencia_despacho'],
                         'costo_envio'           => $obtener_costo_envio['response']['data']['total']
                     ],
-                    'pickup'    => [
+                    'pickup'        => [
                         'stateId'       => $venta['MetodoEnvio']['Bodega']['Comuna']['state_id_blue_express'],
                         'districtId'    => $venta['MetodoEnvio']['Bodega']['Comuna']['district_id_blue_express'],
                         'address'       => $venta['MetodoEnvio']['Bodega']['direccion'],
@@ -419,7 +420,7 @@ class BlueExpressComponent extends Component
                         'fullname'      => $venta['MetodoEnvio']['Bodega']['nombre_contacto'],
                         'phone'         => $venta['MetodoEnvio']['Bodega']['fono'],
                     ],
-                    'dropoff'   => [
+                    'dropoff'       => [
                         'nombre_receptor'   => $venta['Venta']['nombre_receptor'],
                         'fono_receptor'     => $venta['Venta']['fono_receptor'],
                         'stateId'           => $venta['Comuna']['state_id_blue_express'],
@@ -427,7 +428,7 @@ class BlueExpressComponent extends Component
                         'direccion'         => "{$venta['Venta']['direccion_entrega']} {$venta['Venta']['numero_entrega']}, {$venta['Venta']['otro_entrega']} ",
                         'name'              => $venta['Venta']['nombre_receptor'],
                     ],
-                    'packages'  => [
+                    'packages'      => [
                         'peso'  => ceil($pesoTotal),
                         'largo' => ceil($largoTotal),
                         'ancho' => ceil($anchoTotal),
