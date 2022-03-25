@@ -175,8 +175,8 @@ class WarehouseNodrizaComponent extends Component
                     $embalaje = [
                         'venta_id'                  => $venta['Venta']['id'],
                         'bodega_id'                 => $bodega_id,
-                        'trasladar_a_otra_bodega'   => !$bodega_id == $venta['Venta']['bodega_id'],
-                        'bodega_id_para_trasladar'  => !$bodega_id == $venta['Venta']['bodega_id'] ? $venta['Venta']['bodega_id'] : null,
+                        'trasladar_a_otra_bodega'   => !($bodega_id == $venta['Venta']['bodega_id']),
+                        'bodega_id_para_trasladar'  => !($bodega_id == $venta['Venta']['bodega_id']) ? $venta['Venta']['bodega_id'] : null,
                         'metodo_envio_id'           => $venta['Venta']['metodo_envio_id'],
                         'comuna_id'                 => $venta['Venta']['comuna_id']  ?? $venta['Bodega']['comuna_id'],
                         'prioritario'               => ($venta['Venta']['prioritario']) ? 1 : 0,
