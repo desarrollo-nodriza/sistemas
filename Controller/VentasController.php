@@ -5143,7 +5143,7 @@ class VentasController extends AppController {
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Respuesta cambio estado ' . $id_venta,
-					'modulo' => 'Ventas',
+					'modulo' 		=> 'Ventas',
 					'modulo_accion' => 'Resultado: ' . $resCambio . ' - Estado nuevo:' . json_encode($estadoPrestashop)
 				)
 			);
@@ -5157,11 +5157,11 @@ class VentasController extends AppController {
 					$log[] = array(
 						'Log' => array(
 							'administrador' => 'Notificacion cambio estado ' . $id_venta,
-							'modulo' => 'Ventas',
+							'modulo' 		=> 'Ventas',
 							'modulo_accion' => 'Resultado: ' . json_encode(array(
-								'notificado' => $notificado,
-								'plantilla' => $plantillaEmail,
-								'nuevo_estado' => $estado_nuevo_nombre
+								'notificado' 	=> $notificado,
+								'plantilla' 	=> $plantillaEmail,
+								'nuevo_estado' 	=> $estado_nuevo_nombre
 							))
 						)
 					);

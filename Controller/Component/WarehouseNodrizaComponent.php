@@ -171,15 +171,18 @@ class WarehouseNodrizaComponent extends Component
                 // TODO Al recorrer se crean embalajes de acuerdo a la bodega
                 foreach ($reservas_separadas_por_bodega as $bodega_id => $productos_por_bodegas) {
                     $embalaje = [];
+                    // TODO Si la bodega de la venta es distinta a los del embalaje se solicita que el embalaje debe ser trasladado
                     $embalaje = [
-                        'venta_id'        => $venta['Venta']['id'],
-                        'bodega_id'       => $bodega_id,
-                        'metodo_envio_id' => $venta['Venta']['metodo_envio_id'],
-                        'comuna_id'       => $venta['Venta']['comuna_id']  ?? $venta['Bodega']['comuna_id'],
-                        'prioritario'     => ($venta['Venta']['prioritario']) ? 1 : 0,
-                        'fecha_venta'     => $venta['Venta']['fecha_venta'],
-                        'responsable'     => CakeSession::read('Auth.Administrador.id') ?? 1,
-                        'productos'       => []
+                        'venta_id'                  => $venta['Venta']['id'],
+                        'bodega_id'                 => $bodega_id,
+                        'trasladar_a_otra_bodega'   => !$bodega_id == $venta['Venta']['bodega_id'],
+                        'bodega_id_para_trasladar'  => !$bodega_id == $venta['Venta']['bodega_id'] ? $venta['Venta']['bodega_id'] : null,
+                        'metodo_envio_id'           => $venta['Venta']['metodo_envio_id'],
+                        'comuna_id'                 => $venta['Venta']['comuna_id']  ?? $venta['Bodega']['comuna_id'],
+                        'prioritario'               => ($venta['Venta']['prioritario']) ? 1 : 0,
+                        'fecha_venta'               => $venta['Venta']['fecha_venta'],
+                        'responsable'               => CakeSession::read('Auth.Administrador.id') ?? 1,
+                        'productos'                 => []
                     ];
 
                     if (isset($venta['Venta']['marketplace_id'])) {
