@@ -231,8 +231,8 @@ class WarehouseNodrizaComponent extends Component
 
                                     $nota = [
                                         'venta_id'          => $venta['Venta']['id'],
-                                        'nombre'            => $this->request->data['Nota']['titulo'],
-                                        'descripcion'       => $this->request->data['Nota']['nota_despacho_global'],
+                                        'nombre'            => "Trasladar",
+                                        'descripcion'       => "El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.",
                                         'id_usuario'        => $this->Auth->user('id'),
                                         'nombre_usuario'    => $this->Auth->user('nombre'),
                                         'mail_usuario'      => $this->Auth->user('email')
