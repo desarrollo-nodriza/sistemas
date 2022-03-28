@@ -67,7 +67,8 @@ class WarehouseNodrizaComponent extends Component
         $embalajes[] = [
             'id'                       => $embalaje_id,
             'responsable_id_cancelado' => CakeSession::read('Auth.Administrador.id') ?? 1,
-            'motivo_cancelado'         => $motivo_cancelado
+            'motivo_cancelado'         => $motivo_cancelado,
+            'devolucion'               => true
         ];
         return $this->WarehouseNodriza->CambiarCancelado($embalajes);
     }
@@ -227,19 +228,58 @@ class WarehouseNodrizaComponent extends Component
                             if ($bodega_distinta_a_principal && $venta['MetodoEnvio']['retiro_local']) {
 
                                 try {
-                                    $nota = "{$venta['Venta']['nota_interna']} - El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+
+                                    $nota = [
+                                        'venta_id'          => $venta['Venta']['id'],
+                                        'nombre'            => $this->request->data['Nota']['titulo'],
+                                        'descripcion'       => $this->request->data['Nota']['nota_despacho_global'],
+                                        'id_usuario'        => $this->Auth->user('id'),
+                                        'nombre_usuario'    => $this->Auth->user('nombre'),
+                                        'mail_usuario'      => $this->Auth->user('email')
+                                    ];
+
+                                    $crearNotaDespacho = $this->crearNotaDespacho($nota);
+
+                                    $logs[] = array(
+                                        'Log' => array(
+                                            'administrador' => "Crear Notas",
+                                            'modulo'        => 'WarehouseNodrizaComponent',
+                                            'modulo_accion' => json_encode(['Respuesta warehouse: ' => $crearNotaDespacho])
+                                        )
+                                    );
+
+                                    if ($response['code'] != 200) {
+
+                                        try {
+                                            $nota = "{$venta['Venta']['nota_interna']} - El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                        } catch (\Throwable $th) {
+                                            $nota = "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                        }
+
+                                        ClassRegistry::init('Venta')->save([
+                                            'Venta' =>
+                                            [
+                                                'nota_interna' => $nota,
+                                                'id'           => $venta['Venta']['id']
+                                            ]
+                                        ]);
+                                    }
                                 } catch (\Throwable $th) {
 
-                                    $nota = "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
-                                }
+                                    try {
+                                        $nota = "{$venta['Venta']['nota_interna']} - El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                    } catch (\Throwable $th) {
+                                        $nota = "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                    }
 
-                                ClassRegistry::init('Venta')->save([
-                                    'Venta' =>
-                                    [
-                                        'nota_interna' => $nota,
-                                        'id'           => $venta['Venta']['id']
-                                    ]
-                                ]);
+                                    ClassRegistry::init('Venta')->save([
+                                        'Venta' =>
+                                        [
+                                            'nota_interna' => $nota,
+                                            'id'           => $venta['Venta']['id']
+                                        ]
+                                    ]);
+                                }
                             }
                         } else {
 
@@ -351,5 +391,26 @@ class WarehouseNodrizaComponent extends Component
     {
         $this->crearCliente();
         return $this->WarehouseNodriza->eliminarNotaDespacho($id);
+    }
+
+    public function CambiarEstadoAEnTrasladoABodega($embalaje_id, $responsable_id_en_traslado_a_bodega)
+    {
+        $body =
+            [
+                "id"                                    => $embalaje_id,
+                "responsable_id_en_traslado_a_bodega"   => $responsable_id_en_traslado_a_bodega,
+            ];
+        $this->crearCliente();
+        return $this->WarehouseNodriza->CambiarEstadoAEnTrasladoABodega($body);
+    }
+    public function RecepcionarEmbalajeTrasladado($embalaje_id, $responsable)
+    {
+        $body =
+            [
+                "id"            => $embalaje_id,
+                "responsable"   => $responsable,
+            ];
+        $this->crearCliente();
+        return $this->WarehouseNodriza->RecepcionarEmbalajeTrasladado($body);
     }
 }

@@ -70,7 +70,16 @@ Class EmbalajeWarehouse extends AppModel {
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
-		)
+		),
+		'BodegaTrasladar' => array(
+			'className'				=> 'Bodega',
+			'foreignKey'			=> 'bodega_id_para_trasladar',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
+		),
 	);
 
 	public $hasMany = array(
@@ -112,6 +121,7 @@ Class EmbalajeWarehouse extends AppModel {
 	 * @param  mixed $responsable
 	 * @return void
 	 */
+	// ! En Desuso
 	public function cancelar_embalaje($id, $responsable = '')
 	{	
 		$logs = array();

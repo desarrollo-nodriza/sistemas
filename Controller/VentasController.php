@@ -3781,13 +3781,13 @@ class VentasController extends AppController {
 		{
 			$notas_despacho = $notas_req['response'];
 		}
-		
+		$bodegas = ClassRegistry::init("Bodega")->obtener_bodegas();
 		# Aislamos solo las notas de despacho y las ordenamos
 		$notas_embalajes = Hash::extract($embalajes, 'body.{n}.notas_despacho.{n}');
 		
 		$this->sort_array_by_key($notas_embalajes, 'fecha_creacion');
 		
-		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas', 'embalajes', 'notas_embalajes', 'notas_despacho'));
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas', 'embalajes', 'notas_embalajes', 'notas_despacho','bodegas'));
 
 	}
 
@@ -5531,8 +5531,8 @@ class VentasController extends AppController {
 	 */
 	public function admin_liberar_stock_reservado($venta_detalle_reserva_id , $venta_id, $venta_detalle_id = null , $venta_detalle_producto_id = null )
 	{
-		// TODO Cuando envian "venta_detalle_id" "venta_detalle_producto_id" es para eliminar todas las reservas del producto
-		// TODO Cuando se libera una reserva se elimina el registro en VentaDetallesReserva
+		// * Cuando envian "venta_detalle_id" "venta_detalle_producto_id" es para eliminar todas las reservas del producto
+		// * Cuando se libera una reserva se elimina el registro en VentaDetallesReserva
 		$venta_detalle_reserva_ids=[];
 		if (!is_null($venta_detalle_id) && !is_null($venta_detalle_id)) {
 			$venta_detalle_reserva_ids = Hash::extract(ClassRegistry::init('VentaDetallesReserva')->find('all',[
@@ -10790,7 +10790,7 @@ class VentasController extends AppController {
 
 		$existe                = Hash::extract($HistorialEmbalaje, "{n}.HistorialEmbalaje[embalaje_id={$value['embalaje_id']}][producto_id={$value['producto_id']}]");
 
-		// TODO Se valida si el embalaje ya se registro en el historial
+		// * Se valida si el embalaje ya se registro en el historial
 		if ($existe) {
 			$log[] = array(
 			'Log' => array(
@@ -10856,7 +10856,7 @@ class VentasController extends AppController {
 			'message' => "Se registro embalaje {$embalaje[0]['embalaje_id']} a la VID-{$id}."
 		);
 
-		// TODO Se consulta para saber si la venta ya entrego todos sus productos 
+		// * Se consulta para saber si la venta ya entrego todos sus productos 
 		$HistorialEmbalaje = ClassRegistry::init('HistorialEmbalaje')->find('all', [
 		'fields' =>
 		[
@@ -10871,7 +10871,7 @@ class VentasController extends AppController {
 
 		$venta_parcial = false;
 
-		// TODO Si existe una diferencia entre los embalajes entregados y el detalle de la venta el estado sera Entregado Parcial
+		// * Si existe una diferencia entre los embalajes entregados y el detalle de la venta el estado sera Entregado Parcial
 		foreach ($VentaDetalle as $producto) {
 
 		$total                       = $producto['VentaDetalle']['cantidad_pendiente_entrega'] + $producto['VentaDetalle']['cantidad_entregada'];
@@ -12922,11 +12922,11 @@ class VentasController extends AppController {
 			'contain' =>
 			[
 				'VentaDetalle',
-				'MetodoEnvio' =>[ 'fields' => ['MetodoEnvio.embalado_venta_estado_parcial_id','MetodoEnvio.embalado_venta_estado_id']]
+				'MetodoEnvio' =>[ 'fields' => ['MetodoEnvio.embalado_venta_estado_parcial_id','MetodoEnvio.embalado_venta_estado_id','MetodoEnvio.consolidacion_venta_estado_id']]
 			]
 		));
 
-		// TODO Se consultan embalajes finalizados para validar que estado colocar a la venta
+		// * Se consultan embalajes finalizados para validar que estado colocar a la venta
 		$embalajesFinalizados = $this->WarehouseNodriza->ObtenerEmbalajesVenta($id);		
 		$cambiar_estado 	  = false;
 		$nuevo_estado   	  = null;
@@ -12935,50 +12935,74 @@ class VentasController extends AppController {
 	
 		try {
 
-			$cantidad	       = array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
-			$cantidad_embalada = array_sum(Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
+			$ExisteEmbalajes_listo_para_trasladar = Hash::extract($embalajesFinalizados['response']['body'], "{n}[estado=listo_para_trasladar]");
+			$ExisteEmbalajes_en_traslado_a_bodega = Hash::extract($embalajesFinalizados['response']['body'], "{n}[estado=en_traslado_a_bodega]");
 			
-			// TODO Si existen productos por entregar se envia estado parcial
-			if ($cantidad != $cantidad_embalada) {
+			if( count($ExisteEmbalajes_listo_para_trasladar) > 0 || count($ExisteEmbalajes_en_traslado_a_bodega) > 0){
 
-				// !! Se valida que metodo tenga el estado a cambiar
-				if (is_null($venta['MetodoEnvio']['embalado_venta_estado_parcial_id'])) {
+				// * Se valida que metodo tenga el estado a cambiar
+				if (is_null($venta['MetodoEnvio']['consolidacion_venta_estado_id'])) {
 
 					$logs[] = [
 						'Log' =>
 						[
 							'administrador' => "Problemas para actualizar vid {$id}",
 							'modulo'        => 'VentasController',
-							'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado parcial', valor actual Null"
+							'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'consolidación', valor actual Null"
 						]
 					];
-				// !! Solo se cambia si el estado es distinto
 				}
-				
-				$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_parcial_id'];
-				$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $venta['MetodoEnvio']['embalado_venta_estado_parcial_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
-			
 
-			} else {
-			
-				// !! Se valida que metodo tenga el estado a cambiar
-				if (is_null($venta['MetodoEnvio']['embalado_venta_estado_id'])) {
+				$nuevo_estado   = $venta['MetodoEnvio']['consolidacion_venta_estado_id'];
+				$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
 
-					$logs[] = [
-						'Log' =>
-						[
-							'administrador' => "Problemas para actualizar vid {$id}",
-							'modulo'        => 'VentasController',
-							'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado completo', valor actual Null"
-						]
-					];
+			}else{
+
+				$cantidad	       = array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
+				$cantidad_embalada = array_sum(Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
 				
-				// !! Solo se cambia si el estado es distinto			
+				// * Si existen productos por entregar se envia estado parcial
+				if ($cantidad != $cantidad_embalada) {
+
+					// * Se valida que metodo tenga el estado a cambiar
+					if (is_null($venta['MetodoEnvio']['embalado_venta_estado_parcial_id'])) {
+
+						$logs[] = [
+							'Log' =>
+							[
+								'administrador' => "Problemas para actualizar vid {$id}",
+								'modulo'        => 'VentasController',
+								'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado parcial', valor actual Null"
+							]
+						];
+					}
+					
+					$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_parcial_id'];
+					$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+				
+
+				} else {
+				
+					// * Se valida que metodo tenga el estado a cambiar
+					if (is_null($venta['MetodoEnvio']['embalado_venta_estado_id'])) {
+
+						$logs[] = [
+							'Log' =>
+							[
+								'administrador' => "Problemas para actualizar vid {$id}",
+								'modulo'        => 'VentasController',
+								'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado completo', valor actual Null"
+							]
+						];
+					
+					}
+					
+					$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_id'];
+					$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'],$nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
 				}
-				
-				$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_id'];
-				$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $venta['MetodoEnvio']['embalado_venta_estado_id'], $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
 			}
+
+			
 		} catch (Exception $e) {
 
 			$cambiar_estado = false;

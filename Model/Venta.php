@@ -470,7 +470,7 @@ class Venta extends AppModel
 							'AtributoGrupo'
 						),
 						'VentaDetallesReserva'=>[
-							'fields'=>['VentaDetallesReserva.cantidad_reservada',"VentaDetallesReserva.venta_detalle_id","VentaDetallesReserva.venta_detalle_producto_id","VentaDetallesReserva.embalaje_id"]
+							'fields'=>['VentaDetallesReserva.cantidad_reservada',"VentaDetallesReserva.venta_detalle_id","VentaDetallesReserva.venta_detalle_producto_id","VentaDetallesReserva.embalaje_id","VentaDetallesReserva.bodega_id"]
 						],
 						'conditions' => array(
 							'VentaDetalle.activo' => 1

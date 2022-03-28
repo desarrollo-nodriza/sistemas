@@ -155,6 +155,15 @@
 										<? if ($permisos['edit'] && in_array($embalaje['EmbalajeWarehouse']['estado'], array('listo_para_embalar', 'procesando', 'en_revision'))) : ?>
 											<?= $this->Html->link('<i class="fa fa-remove"></i> Cancelar', array('action' => 'cancelar', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-danger start-loading-then-redirect', 'escape' => false)); ?>
 										<? endif; ?>
+
+										<? if ($permisos['edit']) : ?>
+												<? if ($embalaje['EmbalajeWarehouse']['estado'] == "listo_para_trasladar") : ?>
+													<?= $this->Html->link("<i class='fa fa-arrows'></i> Trasladar embalaje a {$embalaje['BodegaTrasladar']['nombre'] }", array('action' => 'trasladar', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-info start-loading-then-redirect', 'escape' => false)); ?>
+												<? endif; ?>
+												<? if ($embalaje['EmbalajeWarehouse']['estado'] == "en_traslado_a_bodega") : ?>
+													<?= $this->Html->link("<i class='fa fa-hand-paper-o'></i> Recepcionar embalaje en {$embalaje['BodegaTrasladar']['nombre'] }", array('action' => 'recepcionar', $embalaje['EmbalajeWarehouse']['id']), array('class' => 'btn btn-xs btn-info start-loading-then-redirect', 'escape' => false)); ?>
+												<? endif; ?>
+										<? endif; ?>
 										</div>
 										</td>
 									</tr>

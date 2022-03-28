@@ -139,6 +139,10 @@ class MetodoEnviosController extends AppController
 			
 			if ( $this->MetodoEnvio->save($this->request->data) )
 			{
+				ClassRegistry::init('BodegasMetodoEnvio')->deleteAll([
+					'BodegasMetodoEnvio.bodega_id'			=> $this->request->data['MetodoEnvio']['bodega_id'],
+					'BodegasMetodoEnvio.metodo_envio_id' 	=> $this->request->data['MetodoEnvio']['id']
+				]);
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
 				$this->redirect(array('action' => 'edit', $id));
 			}
@@ -645,7 +649,6 @@ class MetodoEnviosController extends AppController
 			foreach ($relaciones as  $value) {
 				$nuevas_relacion[] = ['BodegasMetodoEnvio' => $value];
 			}
-
 			if (ClassRegistry::init('BodegasMetodoEnvio')->saveAll($nuevas_relacion)) {
 				$this->Session->setFlash(
 					'Registro agregado correctamente.',

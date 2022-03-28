@@ -46,6 +46,10 @@
 								<th><?= $this->Form->label('embalado_venta_estado_parcial_id', 'Estado de la venta parcial por defecto'); ?></th>
 								<td><?= $this->Form->select('embalado_venta_estado_parcial_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('consolidacion_venta_estado_id', 'Estado de la venta en consolidación'); ?></th>
+								<td><?= $this->Form->select('consolidacion_venta_estado_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
+							</tr>
 							<tr id="generar_ot" class="">
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
 								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
@@ -329,7 +333,6 @@
 											<tr>
 												<th><?= 'Bodega' ?></th>
 												<th style="text-align: center;"> <?= 'Prioritario' ?></th>
-												<th style="text-align: center;"> <?= 'Orden' ?></th>
 												<th style="text-align: center;"> Acciones</th>
 											</tr>
 										</thead>
@@ -345,8 +348,8 @@
 													<td align="center" style="vertical-align: middle; width: 100px;">
 														<?= $this->Form->checkbox(sprintf('%d.prioritaria', $indice), array('label' => '', 'default' =>  $bodega['prioritaria'])); ?>
 													</td>
-													<td align="center" style="vertical-align: middle; width: 100px;">
-														<?= $this->Form->input(sprintf('%d.orden', $indice), array('type' => 'text', 'label' => '', 'disabled' => 'disabled', 'default' =>  $bodega['orden'] ?? 1, 'class' => 'form-control orden')); ?>
+													<td class="hidden" align="center" style="vertical-align: middle; width: 100px;">
+														<?= $this->Form->input(sprintf('%d.orden', $indice), array('type' => 'text', 'label' => '',  'default' =>  $bodega['orden'] ?? 1, 'class' => 'form-control orden')); ?>
 													</td>
 													<td  align="center"  style="vertical-align: middle; width: 100px;">
 														<button type="button" data-toggle="modal" data-target="#modal-eliminar-bodega-<?= $bodega['id'] ?>" class="btn btn-danger btn-block ">Eliminar</button>
@@ -364,8 +367,8 @@
 													<td align="center" style="vertical-align: middle; width: 100px;">
 														<?= $this->Form->checkbox(sprintf('%d.prioritaria', $i), array('label' => '', 'default' => 0)); ?>
 													</td>
-													<td align="center" style="vertical-align: middle">
-														<?= $this->Form->input(sprintf('%d.orden', $i), array('type' => 'text', 'label' => '', 'disabled' => 'disabled', 'default' => $i, 'class' => 'form-control orden')); ?>
+													<td class="hidden" align="center" style="vertical-align: middle">
+														<?= $this->Form->input(sprintf('%d.orden', $i), array('type' => 'text', 'label' => '', 'default' => $i, 'class' => 'form-control orden')); ?>
 													</td>
 													<td valign="center" align="center" style="vertical-align: middle; width: 100px;" w>
 														<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>

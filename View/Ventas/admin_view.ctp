@@ -256,10 +256,10 @@
 												<th>Precio<br/> Bruto</th>
 												<th>Cantidad</th>
 												<th>Cantidad<br/> Entregada</th>
-												<th>Stock<br/> reservado</th>
-												<th>Cant<br/> anulada</th>
+												<th>Stock<br/> Reservado</th>
+												<th>Cant<br/> Anulada</th>
 												<th>Subtotal</th>
-												<th>Detalle <br> oc</th>
+												<th>Detalle <br> OC</th>
 												<th>Evidencia <br> Embalaje</th>
 												<th>Opciones</th>
 											</thead>
@@ -319,8 +319,20 @@
 														<td>
 															<?= number_format($detalle['cantidad_entregada'], 0, ".", "."); ?>
 														</td>
-														<td>
-															<?=array_sum(Hash::extract($detalle['VentaDetallesReserva'], '{n}.cantidad_reservada'));?>
+														<td >
+																<? foreach($bodegas as $bodega_id => $bodega) : ?>
+																	<? $suma = array_sum(Hash::extract($detalle['VentaDetallesReserva'], "{n}[bodega_id={$bodega_id}].cantidad_reservada"))?>
+																	<? $NoHayReservas = true?>
+																	<? if ($suma > 0) : ?>
+																		<li style="width: 250px">
+																			<? $NoHayReservas = false?>
+																			<?= "Bodega {$bodega}: {$suma}";?>
+																		</li>
+																	<? endif; ?>
+																<? endforeach; ?>
+																<? if ($NoHayReservas) : ?>
+																		0
+																<? endif; ?>
 														</td>
 														<td>
 															<?=$detalle['cantidad_anulada'];?>
