@@ -12935,7 +12935,8 @@ class VentasController extends AppController {
 	
 		try {
 
-			$embalajes_en_otras_bodegas = Hash::extract($embalajesFinalizados['response']['body'], "{n}[bodega_id_para_trasladar={$venta['Venta']['bodega_id']}]");
+			// *Si hay embalajes distinto a la bodega de la venta se considera el estado en consolidacion
+			$embalajes_en_otras_bodegas = Hash::extract($embalajesFinalizados['response']['body'], "{n}[bodega_id!={$venta['Venta']['bodega_id']}]");
 			$cantidad	       			= array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
 			$cantidad_embalada 			= array_sum(Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
 			
