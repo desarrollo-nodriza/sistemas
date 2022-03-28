@@ -320,9 +320,9 @@
 															<?= number_format($detalle['cantidad_entregada'], 0, ".", "."); ?>
 														</td>
 														<td >
+																<? $NoHayReservas = true?>
 																<? foreach($bodegas as $bodega_id => $bodega) : ?>
 																	<? $suma = array_sum(Hash::extract($detalle['VentaDetallesReserva'], "{n}[bodega_id={$bodega_id}].cantidad_reservada"))?>
-																	<? $NoHayReservas = true?>
 																	<? if ($suma > 0) : ?>
 																		<li style="width: 250px">
 																			<? $NoHayReservas = false?>
