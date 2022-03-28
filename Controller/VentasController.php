@@ -12935,10 +12935,11 @@ class VentasController extends AppController {
 	
 		try {
 
-			$ExisteEmbalajes_listo_para_trasladar = Hash::extract($embalajesFinalizados['response']['body'], "{n}[estado=listo_para_trasladar]");
-			$ExisteEmbalajes_en_traslado_a_bodega = Hash::extract($embalajesFinalizados['response']['body'], "{n}[estado=en_traslado_a_bodega]");
+			$embalajes_en_otras_bodegas = Hash::extract($embalajesFinalizados['response']['body'], "{n}[bodega_id_para_trasladar={$venta['Venta']['bodega_id']}]");
+			$cantidad	       			= array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
+			$cantidad_embalada 			= array_sum(Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
 			
-			if( count($ExisteEmbalajes_listo_para_trasladar) > 0 || count($ExisteEmbalajes_en_traslado_a_bodega) > 0){
+			if( count($embalajes_en_otras_bodegas) > 0 && $cantidad != $cantidad_embalada ){
 
 				// * Se valida que metodo tenga el estado a cambiar
 				if (is_null($venta['MetodoEnvio']['consolidacion_venta_estado_id'])) {
@@ -12957,9 +12958,6 @@ class VentasController extends AppController {
 				$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
 
 			}else{
-
-				$cantidad	       = array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
-				$cantidad_embalada = array_sum(Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
 				
 				// * Si existen productos por entregar se envia estado parcial
 				if ($cantidad != $cantidad_embalada) {

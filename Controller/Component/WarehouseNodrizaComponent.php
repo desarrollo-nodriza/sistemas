@@ -233,9 +233,9 @@ class WarehouseNodrizaComponent extends Component
                                         'venta_id'          => $venta['Venta']['id'],
                                         'nombre'            => "Trasladar",
                                         'descripcion'       => "El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.",
-                                        'id_usuario'        => $this->Auth->user('id'),
-                                        'nombre_usuario'    => $this->Auth->user('nombre'),
-                                        'mail_usuario'      => $this->Auth->user('email')
+                                        'id_usuario'        => CakeSession::read('Auth.Administrador.id') ?? 1 ,
+                                        'nombre_usuario'    => CakeSession::read('Auth.Administrador.nombre') ?? 'Automatico',
+                                        'mail_usuario'      => CakeSession::read('Auth.Administrador.email') ?? "cristian.rojas@nodriza.cl"
                                     ];
 
                                     $crearNotaDespacho = $this->crearNotaDespacho($nota);
