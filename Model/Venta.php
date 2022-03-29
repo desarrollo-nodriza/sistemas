@@ -1088,30 +1088,17 @@ class Venta extends AppModel
 			
 			return;
 		}
+		
 		$VentaDetallesReserva = [];
 		foreach ($venta['VentaDetalle'] as $ip => $producto) 
 		{
 			
 			ClassRegistry::init('VentaDetalle')->id = $producto['id'];
 
-			// $cantidad_entregada = 0;
-
-			// # Obtenemos los movimientos del productos en esta venta
-			// $cantidad_mv = ClassRegistry::init('Bodega')->obtener_total_mv_por_venta($id, $producto['venta_detalle_producto_id']);
-			
-			// # tiene salida
-			// if ($cantidad_mv < 0)
-			// {
-			// 	$cantidad_entregada = ($cantidad_mv * -1);
-			// }
-
-			// # Guardamos las cantidades entregadas
-			// ClassRegistry::init('VentaDetalle')->saveField('cantidad_entregada', $cantidad_entregada);
-			// $venta['VentaDetalle'][$ip]['cantidad_entregada'] = $cantidad_entregada;
-
 			# Calculamos las unidades que se deben reservar
 			$cantidad_vendida   = ($producto['cantidad'] - $producto['cantidad_anulada'] - $producto['cantidad_en_espera']);
-			$cantidad_reservar  = $cantidad_vendida - $producto['cantidad_entregada'];
+			$cant_reservada 	= array_sum( Hash::extract($producto['VentaDetallesReserva'], "{n}.cantidad_reservada"));
+			$cantidad_reservar  = $cantidad_vendida - $producto['cantidad_entregada'] - $cant_reservada ;
 			
 			$log[] = array(
 				'Log' => array(
