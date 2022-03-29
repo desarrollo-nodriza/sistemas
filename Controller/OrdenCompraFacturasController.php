@@ -5,6 +5,8 @@ App::uses('PagosController', 'Controller');
 class OrdenCompraFacturasController extends AppController
 {	
 
+	public $components = array('ApiLibreDte');
+
 	/**
      * Crea un redirect y agrega a la URL los parámetros del filtro
      * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
@@ -31,6 +33,83 @@ class OrdenCompraFacturasController extends AppController
 
 	public function admin_index()
 	{	
+
+		# Buscamos las facturas que no han sido recepcionadas
+        $dtes = $this->OrdenCompraFactura->find('all', array(
+            'conditions' => array(
+                'OrdenCompraFactura.tipo_documento' => 33 // Sólo facturas
+            ),
+            'joins' => array(
+                array(
+					'table' => 'dte_compras',
+					'alias' => 'DteCompra',
+					'type'  => 'INNER',
+					'conditions' => array(
+                        'OrdenCompraFactura.folio = DteCompra.folio',
+                        'OrdenCompraFactura.emisor = DteCompra.rut_emisor',
+                        'DteCompra.estado' => 'PENDIENTE'
+                    )
+                ),
+                array(
+					'table' => 'proveedores',
+					'alias' => 'pp',
+					'type'  => 'inner',
+					'conditions' => array(
+                        'OrdenCompraFactura.proveedor_id = pp.id',
+                        'pp.aceptar_dte' => 1
+                    )
+				)
+            ),
+            'contain' => array(
+                'Proveedor' => array(
+                    'fields' => array(
+                        'Proveedor.id',
+                        'Proveedor.aceptar_dte',
+						'Proveedor.margen_aceptar_dte'
+					)
+				),
+				'OrdenCompra' => array(
+					'fields' => array(
+						'OrdenCompra.id',
+						'OrdenCompra.tienda_id',
+						'OrdenCompra.bodega_id'
+					),
+					'Tienda' => array(
+						'fields' => array(
+							'Tienda.id', 
+							'Tienda.rut'
+						)
+					),
+					'Bodega' => array(
+						'fields' => array(
+							'Bodega.id',
+							'Bodega.nombre'
+						)
+					)
+				)
+            ),
+            'fields' => array(
+                'OrdenCompraFactura.id',
+                'OrdenCompraFactura.folio',
+                'OrdenCompraFactura.proveedor_id',
+				'OrdenCompraFactura.orden_compra_id',
+				'OrdenCompraFactura.monto_facturado',
+                'DteCompra.*'
+            )
+        ));
+        
+
+		$TiendaConf = ClassRegistry::init('Tienda')->tienda_principal(
+			array(
+				'Tienda.sii_public_key',
+				'Tienda.sii_private_key',
+				'Tienda.libredte_token'
+			)
+		);
+
+		$result = $this->recepcionar_dte_compra($TiendaConf['Tienda']['libredte_token'], $TiendaConf['Tienda']['sii_public_key'], $TiendaConf['Tienda']['sii_private_key'], $dtes);
+
+        
 
 		// Filtrado de oc por formulario
 		if ( $this->request->is('post') ) {
@@ -330,7 +409,40 @@ class OrdenCompraFacturasController extends AppController
 
 		$estados_pagos =  array('pagado' => 'Pagado', 'agendado' => 'Pago agendado', 'agendamineto_pendiente' => 'Agendamiento pendiente',  'pago_pendiente' => 'Pago pendiente');
 
-		$this->set(compact('facturas', 'folios', 'ocs', 'proveedores', 'estados_pagos'));
+		
+		# Almacenar los periodos
+		$periodos = [];
+		$periodos2 = [];
+
+		$ahora = date('Y-m-d');
+		$anno_anterior = date("Y-m-d", strtotime($ahora."-1 year"));
+
+		$ts1 = strtotime($anno_anterior);
+		$ts2 = strtotime($ahora);
+
+		$year1 = date('Y', $ts1);
+		$year2 = date('Y', $ts2);
+
+		$month1 = date('m', $ts1);
+		$month2 = date('m', $ts2);
+
+		$diff = (($year2 - $year1) * 12) + ($month2 - $month1);
+		
+		$periodos[date('Ym')] = date('Y-m');
+		$periodos2[date('Y-m')] = date('Y-m');
+
+		# Se crea la lista de periodos desde hace un año
+		for ($i=1; $i <= $diff; $i++) 
+		{ 
+			$pt = strtotime($ahora."-{$i} month");
+			$periodos[date("Ym", $pt)] = date("Y-m", $pt);
+			$periodos2[date("Y-m", $pt)] = date("Y-m", $pt);
+		}
+
+		# Tipos de compras
+		$tipo_compras = $this->ApiLibreDte->obtener_estados();
+		
+		$this->set(compact('facturas', 'folios', 'ocs', 'proveedores', 'estados_pagos', 'periodos', 'tipo_compras', 'periodos2'));
 	}
 
 
@@ -373,7 +485,7 @@ class OrdenCompraFacturasController extends AppController
 				'conditions'	=> array('OrdenCompraFactura.id' => $id),
 				'contain' => array(
 					'OrdenCompra' => array(
-						'Tienda' => array('fields' => array('Tienda.rut')),
+						'Tienda' => array('fields' => array('Tienda.rut', 'Tienda.sii_public_key', 'Tienda.sii_private_key', 'Tienda.libredte_token')),
 						'OrdenCompraPago' => array(
 							'Moneda',
 							'fields' => array(
@@ -450,6 +562,128 @@ class OrdenCompraFacturasController extends AppController
 		BreadcrumbComponent::add('Detalles ');
 	}
 
+	
+	/**
+	 * admin_obtener_compras_manual
+	 *
+	 * @param  mixed $periodo 	Año y mes
+	 * @return void
+	 */
+	public function admin_obtener_compras_manual()
+	{	
+
+		if (!$this->request->is('post'))
+		{
+			$this->Session->setFlash('Petición mal ejecutada', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal([
+			"sincronizar_compras",
+			"sii_rut",
+			"sii_clave",
+			"sii_public_key",
+			"sii_private_key",
+			"libredte_token"
+		]);
+
+		if (!$tienda['Tienda']['sincronizar_compras'])
+		{
+			$this->Session->setFlash('La tienda no tiene activa la sincronización de compras. Por favor actívela e intente nuevamente', null, array(), 'warning');
+			$this->redirect(array('action' => 'index'));
+		}
+		
+		$cert_data = [
+			"private" => $tienda['Tienda']['sii_private_key'],
+			"public" => $tienda['Tienda']['sii_public_key']
+		];
+
+		$pass_data = [
+			"rut" => formato_rut($tienda['Tienda']['sii_rut']),
+			"clave" => $tienda['Tienda']['sii_clave']
+		];
+
+		$this->ApiLibreDte->crearCliente($tienda['Tienda']['libredte_token'], $cert_data, $pass_data, 0);
+		
+		$pars = [
+			"formato" => "json",
+			"certificacion" => 0,
+			"tipo" => "csv"
+		];
+
+		$result = $this->ApiLibreDte->obtenerDocumentosCompras(formato_rut($tienda['Tienda']['sii_rut']), $this->request->data['OrdenCompraFacturas']['periodo'], 33, $this->request->data['OrdenCompraFacturas']['tipo_compra'], $pars);
+	
+		if ($result['httpCode'] != 200)
+		{
+			$this->Session->setFlash($result['body']['message'], null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		if (!isset($result['body']['data']))
+		{
+			$this->Session->setFlash('No fue posible obtener los documentos', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		# consultamos y guardamos los folios que ya estan en nuestra bd
+		$guardar = [];
+		$actualizar = 0;
+		foreach ($result['body']['data'] as $id => $doc) 
+		{
+			
+			$guardar[$id] = array(
+				'DteCompra' => array(
+					'tipo_documento'      => $doc['detTipoDoc'],
+					'rut_emisor'          => $doc['detRutDoc'],
+					'dv_emisor'           => $doc['detDvDoc'],
+					'razon_social_emisor' => $doc['detRznSoc'],
+					'folio'               => $doc['detNroDoc'],
+					'fecha_emision'       => date('Y-m-d', strtotime(str_replace('/','-', $doc['detFchDoc']))),
+					'fecha_recepcion'     => date('Y-m-d H:i:s', strtotime(str_replace('/','-', $doc['detFecRecepcion']))),
+					'monto_exento'        => $doc['detMntExe'],
+					'monto_neto'          => $doc['detMntNeto'],
+					'monto_iva'           => $doc['detMntIVA'],
+					'monto_total'         => $doc['detMntTotal'],
+					'estado'			  => $this->request->data['OrdenCompraFacturas']['tipo_compra']
+				)
+			);
+
+			$qry_existen = ClassRegistry::init('DteCompra')->find('first', array(
+				'conditions' => array(
+					'rut_emisor' => $doc['detRutDoc'],
+					'folio' => $doc['detNroDoc'],
+				),
+				'fields' => array(
+					'id'
+				)
+			));
+
+			# si existe, lo actualizamos si corresponde
+			if ($qry_existen)
+			{
+				$guardar[$id] = array_replace_recursive($guardar[$id], [
+					'DteCompra' => [
+						'id' => $qry_existen['DteCompra']['id']
+					]
+				]);
+			}
+		}
+		
+		if (ClassRegistry::init('DteCompra')->saveMany($guardar)) 
+		{	
+
+			$total_actualizados = count(Hash::extract($guardar, '{n}.DteCompra.id'));
+			$total_nuevos = count($guardar) - $total_actualizados;
+			
+			$this->Session->setFlash(sprintf('Se crearon %d documentos, y %d documentos actualizados.', $total_nuevos, $total_actualizados), null, array(), 'success');
+			$this->redirect(array('action' => 'index'));	
+		}
+		else
+		{
+			$this->Session->setFlash('No se encontraron documentos nuevos para el periodo', null, array(), 'warning');
+			$this->redirect(array('action' => 'index'));
+		}
+	}
 
 	/**
 	 * 
@@ -590,7 +824,12 @@ class OrdenCompraFacturasController extends AppController
 
 	}
 
-
+	
+	/**
+	 * admin_relacionar_facturas_pagos
+	 *
+	 * @return void
+	 */
 	public function admin_relacionar_facturas_pagos()
 	{
 		# solo metodos post
@@ -621,7 +860,68 @@ class OrdenCompraFacturasController extends AppController
 		}
 	}
 
+	
+	/**
+	 * admin_exportar_compras
+	 *
+	 * @return void
+	 */
+	public function admin_exportar_compras()
+	{	
+		set_time_limit(0);
 
+		ini_set('memory_limit', '-1');
+		
+		// Filtrado de oc por formulario
+		if ( $this->request->is('post') ) {
+			$this->filtro('ordenCompraFacturas', 'exportar_compras', 'OrdenCompraFacturas');
+		}
+
+		$opts = array(
+			
+		);
+
+		foreach ($this->request->params['named'] as $param => $value) 
+		{
+			switch ($param) {
+				case 'periodo':
+
+					$inicio_perido = date('Y-m-01', strtotime($value));
+					$fin_periodo = date('Y-m-t', strtotime($value));
+
+					$opts = array_replace_recursive($opts, array(
+						'conditions' => array(
+							'fecha_emision BETWEEN ? AND ?' => array($inicio_perido, $fin_periodo)
+						)
+					));
+					break;
+				case 'tipo_compra':
+					$opts = array_replace_recursive($opts, array(
+						'conditions' => array(
+							'estado' => trim($value)
+						)
+					));
+					break;
+
+				default:
+					# code...
+					break;
+			}
+		}
+
+		$datos			= ClassRegistry::init('DteCompra')->find('all', $opts);
+		$campos			= array_keys(ClassRegistry::init('DteCompra')->_schema);
+		$modelo			= ClassRegistry::init('DteCompra')->alias;	
+		
+		$this->set(compact('datos', 'campos', 'modelo'));
+	}
+
+		
+	/**
+	 * admin_add
+	 *
+	 * @return void
+	 */
 	public function admin_add()
 	{
 		if ( $this->request->is('post') )
@@ -923,6 +1223,13 @@ class OrdenCompraFacturasController extends AppController
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}
 
+		
+	/**
+	 * admin_notificar_pagos
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
 	public function admin_notificar_pagos($id)
 	{
 		$factura = $this->OrdenCompraFactura->find('first', array(
@@ -950,7 +1257,13 @@ class OrdenCompraFacturasController extends AppController
 		$this->redirect($this->referer('/', true));
 	}
 
-
+	
+	/**
+	 * obtener_factura
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
 	public static function obtener_factura($id)
 	{
 		if ( ! ClassRegistry::init('OrdenCompraFactura')->exists($id) )
@@ -961,7 +1274,89 @@ class OrdenCompraFacturasController extends AppController
 		$libreDte = $this->Components->load('LibreDte');
 	}
 
+	
+	/**
+	 * recepcionar_dte_compra
+	 *
+	 * @param  mixed $token LibreDTE Token
+	 * @param  mixed $cert Datos del certificvado público del SII
+	 * @param  mixed $pk Datos de la llave privada del SII 
+	 * @param  mixed $facturas Modelo OrdenCompraFactura. Debe incluir OC, Bodega y Tienda.
+	 * @return void
+	 */
+	public function recepcionar_dte_compra($token, $cert, $pk, $facturas = [])
+	{
+		$this->ApiLibreDte->crearCliente($token, ['cert' => $cert, 'pkey' => $pk]);
 
+		$docs = [];
+		$logs = [];
+		$result = [];
+		
+
+		$log[] = array('Log' => array(
+			'administrador' => 'OrdenCompraFactura',
+			'modulo' => 'DteCompra',
+			'modulo_accion' => 'Init: ' . json_encode($facturas)
+		));
+
+		foreach ($facturas as $fac) 
+		{	# No tiene registro de facturas recibidas
+			if (!$fac['DteCompra'])
+				continue;
+
+			# El proveedor no permite recepción automática
+			if(!$fac['Proveedor']['aceptar_dte'])
+				continue;
+
+			# si la factura de compra ya esta registrada se omite
+			if ($fac['DteCompra']['estado'] == 'REGISTRO')
+				continue;
+			
+
+			$margen_proveedor = ($fac['Proveedor']['margen_aceptar_dte']) ? $fac['Proveedor']['margen_aceptar_dte'] : 500;
+
+			$margen_min = $fac['OrdenCompraFactura']['monto_facturado'] - $margen_proveedor;
+			$margen_max = $fac['OrdenCompraFactura']['monto_facturado'] + $margen_proveedor;
+
+			# Si el monto de la factura es diferente a la registrada en el SII no se recepciona. Se deja un margen de error
+			if($fac['DteCompra']['monto_total'] < $margen_min || $fac['DteCompra']['monto_total'] > $margen_max)
+				continue;
+
+			$docs[] = [
+				'TipoDTE' => (int) $fac['DteCompra']['tipo_documento'],
+				'Folio' => $fac['DteCompra']['folio'],
+				'FchEmis' => $fac['DteCompra']['fecha_emision'],
+				'RUTEmisor' => sprintf('%s-%s', $fac['DteCompra']['rut_emisor'], $fac['DteCompra']['dv_emisor']),
+				'RUTRecep' => formato_rut($fac['OrdenCompra']['Tienda']['rut']),
+				'MntTotal' => $fac['DteCompra']['monto_total'],
+				'EstadoRecepDTE' => 'ERM',
+				'RecepDTEGlosa' => sprintf('Recibido en bodega %s el %s a las %s', $fac['OrdenCompra']['Bodega']['nombre'], date('Y-m-d'), date('H:i:s'))
+			];
+			
+		}
+
+		$log[] = array('Log' => array(
+			'administrador' => 'OrdenCompraFactura',
+			'modulo' => 'DteCompra',
+			'modulo_accion' => 'Process: ' . json_encode($docs)
+		));
+		
+		if (!empty($docs))
+		{
+			$result = $this->ApiLibreDte->cambiarEstadoDteCompra($docs);
+		}
+
+		$log[] = array('Log' => array(
+			'administrador' => 'OrdenCompraFactura',
+			'modulo' => 'DteCompra',
+			'modulo_accion' => 'Result: ' . json_encode($result)
+		));
+
+		# Guardamos los logs
+		ClassRegistry::init('Log')->saveMany($log);
+
+		return $result;
+	}
 
 	/**
      * Elimina una factura

@@ -695,15 +695,12 @@ class OrdenComprasController extends AppController
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
 		
-			// prx($this->request->data);
 			if ($this->OrdenCompra->save($this->request->data)) {
 				$this->Session->setFlash('Se ha cambiado bodega', null, array(), 'success');
 				$this->redirect(array('controller'=>'ordenCompras','action' => 'index'));
 			}else{
 				$this->Session->setFlash('se ha podido cambiar bodega, intente nuevamente', null, array(), 'warning');
 			}
-			
-			// 
 			
 		}
 

@@ -21,4 +21,22 @@ class DteCompra extends AppModel
 		return false;
 	}
 
+	
+	/**
+	 * obtenerDte
+	 *
+	 * @param  mixed $folio
+	 * @param  mixed $emisor
+	 * @return void
+	 */
+	public function obtenerDte($folio, $emisor)
+	{
+		return $this->find('first', array(
+			'conditions' => array(
+				'DteCompra.folio' => $folio,
+				'DteCompra.rut_emisor' => $emisor
+			)
+		));
+	}
+
 }

@@ -714,6 +714,8 @@ class AppController extends Controller
 				'mandrill_apikey',
 				'sii_rut',
 				'sii_clave',
+				'sii_public_key',
+				'sii_private_key',
 				'libredte_token',
 				'sincronizar_compras',
 				'starken_rut',
@@ -772,7 +774,15 @@ class AppController extends Controller
 		}
 		
 	}
-
+	
+	/**
+	 * rutSinDv
+	 * 
+	 * Quita los puntos y el DV a un rut
+	 *
+	 * @param  String $rut
+	 * @return String Rut sin DV
+	 */
 	public function rutSinDv($rut = '') {
 		if (!empty($rut)) {
 			$posGuion = strpos($rut, '-');
