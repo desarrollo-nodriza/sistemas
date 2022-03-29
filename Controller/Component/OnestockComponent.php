@@ -8,6 +8,8 @@ class OnestockComponent extends Component
 {
 	private $onestock;
 
+	public $components = array('Mandrill');
+
 	public function crearCliente($apiurl_onestock, $cliente_id_onestock, $onestock_correo, $onestock_clave, $token_onestock)
 	{
 		$this->onestock = new Onestock($apiurl_onestock, $cliente_id_onestock, $onestock_correo, $onestock_clave, $token_onestock);
@@ -103,7 +105,7 @@ class OnestockComponent extends Component
 
 			if (!empty($mandrill_apikey)) 
 			{
-				$mandrill = $this->Components->load('Mandrill');
+				$mandrill = $this->Mandrill;
 				$mandrill->conectar($mandrill_apikey);	
 
 				$asunto = '[Nodriza Spa-'.rand(100,10000).'] Onestock dejó de actualizar';
