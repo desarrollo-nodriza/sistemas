@@ -12989,26 +12989,49 @@ class VentasController extends AppController {
 				
 
 				} else {
-				
-					// * Se valida que metodo tenga el estado a cambiar
-					if (is_null($venta['MetodoEnvio']['embalado_venta_estado_id'])) {
 
-						$logs[] = [
-							'Log' =>
-							[
-								'administrador' => "Problemas para actualizar vid {$id}",
-								'modulo'        => 'VentasController',
-								'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado completo', valor actual Null"
-							]
-						];
+					// * Cuando la cantidad vendida es igual a la embalada pero aun quedan embalajes en listo_para_trasladar en_traslado_a_bodega se debe considerar el estado consolidación
+					if(count($ExisteEmbalajes_listo_para_trasladar) > 0 || count($ExisteEmbalajes_en_traslado_a_bodega) > 0 ){
+
+						if (is_null($venta['MetodoEnvio']['consolidacion_venta_estado_id'])) {
+
+							$logs[] = [
+								'Log' =>
+								[
+									'administrador' => "Problemas para actualizar vid {$id}",
+									'modulo'        => 'VentasController',
+									'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'consolidación', valor actual Null"
+								]
+							];
+						}else{
+		
+							$nuevo_estado   = $venta['MetodoEnvio']['consolidacion_venta_estado_id'];
+							$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+						}
+						
 					
+
 					}else{
 
-						$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_id'];
-						$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'],$nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+						// * Se valida que metodo tenga el estado a cambiar
+						if (is_null($venta['MetodoEnvio']['embalado_venta_estado_id'])) {
+
+							$logs[] = [
+								'Log' =>
+								[
+									'administrador' => "Problemas para actualizar vid {$id}",
+									'modulo'        => 'VentasController',
+									'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado completo', valor actual Null"
+								]
+							];
+						
+						}else{
+
+							$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_id'];
+							$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'],$nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+						}
+
 					}
-					
-				
 				}
 			}
 
