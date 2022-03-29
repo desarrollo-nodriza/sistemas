@@ -128,10 +128,9 @@
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<h3 class="panel-title">Listado de Facturas</h3>
+   
 						<div class="btn-group pull-right">							
-                            
                             <?=$this->element('items_por_pagina'); ?>
-
                             <? $export = array(
 							'action' => 'exportar'
 							);
@@ -141,6 +140,8 @@
 							}?>
 							
 							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', $export, array('class' => 'btn btn-primary', 'escape' => false)); ?>
+							<button class="btn btn-warning" data-toggle="modal" data-target="#modalObtenercompas">Actualizar DTE de compra</button>
+                            <button class="btn btn-info" data-toggle="modal" data-target="#modalCompasExportar">Exportar DTE de compra</button>
 						</div>
 					</div>
 					<div class="panel-body">
@@ -242,4 +243,65 @@
 			</div>
 		</div>
 	</div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modalObtenercompas" tabindex="-1" role="dialog" aria-labelledby="modalObtenercompasLabel">
+  <div class="modal-dialog" role="document">
+  	<?= $this->Form->create('OrdenCompraFacturas', array('url' => array('controller' => 'ordenCompraFacturas', 'action' => 'obtener_compras_manual'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
+	<div class="modal-content">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title" id="modalObtenercompasLabel"><i class="fa fa-spin"></i> Actualizar documentos de compra</h4>
+		</div>
+		<div class="modal-body">
+			<div class="row">
+                <div class="form-group col-md-12">
+                    <?=$this->Form->label('periodo', 'Periodo a obtener/actualizar'); ?>
+                    <?=$this->Form->select('periodo', $periodos, array('class' => 'form-control', 'empty' => false)); ?>
+                </div>
+                <div class="form-group col-md-12">
+                    <?=$this->Form->label('tipo_compra', 'Estado del documento'); ?>
+                    <?=$this->Form->select('tipo_compra', $tipo_compras, array('class' => 'form-control', 'empty' => false)); ?>
+                </div>
+			</div>						
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+			<button type="submit" class="btn btn-primary start-loading-then-redirect">Obtener/actualizar</button>
+		</div>
+	</div>
+	<?= $this->Form->end(); ?>
+  </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="modalCompasExportar" tabindex="-1" role="dialog" aria-labelledby="modalCompasExportarLabel">
+  <div class="modal-dialog" role="document">
+  	<?= $this->Form->create('OrdenCompraFacturas', array('url' => array('controller' => 'ordenCompraFacturas', 'action' => 'exportar_compras'), 'inputDefaults' => array('div' => false, 'label' => false))); ?>
+	<div class="modal-content">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			<h4 class="modal-title" id="modalCompasExportarLabel"><i class="fa fa-spin"></i> Exportar documentos de compra</h4>
+		</div>
+		<div class="modal-body">
+			<div class="row">
+                <div class="form-group col-md-12">
+                    <?=$this->Form->label('periodo', 'Filtrar por periodo'); ?>
+                    <?=$this->Form->select('periodo', $periodos2, array('class' => 'form-control', 'empty' => 'Seleccione periodo')); ?>
+                </div>
+                <div class="form-group col-md-12">
+                    <?=$this->Form->label('tipo_compra', 'Filtrar por estado'); ?>
+                    <?=$this->Form->select('tipo_compra', $tipo_compras, array('class' => 'form-control', 'empty' => 'Seleccione estado')); ?>
+                </div>
+			</div>						
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+			<button type="submit" class="btn btn-primary">Exportar</button>
+		</div>
+	</div>
+	<?= $this->Form->end(); ?>
+  </div>
 </div>

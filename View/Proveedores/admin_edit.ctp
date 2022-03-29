@@ -63,6 +63,14 @@
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('aceptar_dte', 'Aceptar facturas de compra automática'); ?></th>
+								<td><?= $this->Form->input('aceptar_dte', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('margen_aceptar_dte', 'Margen para aceptar facturas de compra'); ?></th>
+								<td><?= $this->Form->input('margen_aceptar_dte', array('class' => 'form-control', 'min' => 0)); ?></td>
+							</tr>
 						</table>
 					</div>
 				</div>
