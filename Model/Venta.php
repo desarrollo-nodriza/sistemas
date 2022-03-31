@@ -1171,7 +1171,7 @@ class Venta extends AppModel
 					)
 				);
 
-				ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $suma_cant_reservada_y_por_reservar);
+				ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', ($producto['cantidad'] - $producto['cantidad_anulada'] - $producto['cantidad_entregada']));
 				
 			}				
 
@@ -1329,7 +1329,7 @@ class Venta extends AppModel
 						'completo'					 => ($cantidad_pendiente_entrega == 0),
 						'fecha_completado'			 => ($cantidad_pendiente_entrega == 0) ? $fecha : null,
 						'cantidad_entregada'		 => ($detalle['VentaDetalle']['cantidad_entregada'] + $producto['cantidad_embalada']),
-						'cantidad_pendiente_entrega' => $cantidad_pendiente_entrega,
+						'cantidad_pendiente_entrega' => $cantidad_pendiente_entrega < 0 ? 0: $cantidad_pendiente_entrega,
 					]
 				];
 				

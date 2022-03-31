@@ -10739,7 +10739,7 @@ class VentasController extends AppController {
 
 
 		if (!$this->Venta->exists($id)) {
-		throw new NotFoundException('Venta no encontrada', 404);
+		throw new NotFoundException("Venta {$id} no encontrada", 404);
 		}
 
 		$embalaje 	 = $this->request->data['embalaje_producto']?? null;
@@ -10764,14 +10764,14 @@ class VentasController extends AppController {
 		}
 
 		$HistorialEmbalaje = ClassRegistry::init('HistorialEmbalaje')->find('all', [
-		'fields' => [
-			'producto_id',
-			'embalaje_id',
-			'cantidad_embalada'
-		],
-		'conditions' => ['venta_id' => $id]
+			'fields' => [
+				'producto_id',
+				'embalaje_id',
+				'cantidad_embalada'
+			],
+			'conditions' => ['venta_id' => $id]
 		]);
-
+	
 		$VentaDetalle = ClassRegistry::init('VentaDetalle')->find('all', [
 		'fields' => [
 			'VentaDetalle.venta_detalle_producto_id',
@@ -10785,54 +10785,57 @@ class VentasController extends AppController {
 
 		$actualizar = [];
 		$log = [];
-
 		foreach ($embalaje as $value) {
 
-		$existe                = Hash::extract($HistorialEmbalaje, "{n}.HistorialEmbalaje[embalaje_id={$value['embalaje_id']}][producto_id={$value['producto_id']}]");
+			$existe                = Hash::extract($HistorialEmbalaje, "{n}.HistorialEmbalaje[embalaje_id={$value['embalaje_id']}][producto_id={$value['producto_id']}]");
+			
+			// * Se valida si el embalaje ya se registro en el historial
+			if ($existe) {
+				$log[] = array(
+				'Log' => array(
+					'administrador' => "App Nodriza metodo api_cambiar_estado_v2 vid {$id}",
+					'modulo'        => 'Ventas',
+					'modulo_accion' => json_encode(["Se intento registrar nuevamente el embalaje {$value['embalaje_id']} a la venta {$id}" => ['Detalle de la Venta' => $VentaDetalle, 'HistorialEmbalaje desde sistema' => $HistorialEmbalaje, 'Embalaje desde la app' => $embalaje]])
+				)
+				);
+				continue;
+			}
 
-		// * Se valida si el embalaje ya se registro en el historial
-		if ($existe) {
-			$log[] = array(
-			'Log' => array(
-				'administrador' => 'App Nodriza metodo api_cambiar_estado_v2',
-				'modulo'        => 'Ventas',
-				'modulo_accion' => json_encode(["Se intento registrar nuevamente el embalaje {$value['embalaje_id']} a la venta {$id}" => ['Detalle de la Venta' => $VentaDetalle, 'HistorialEmbalaje desde sistema' => $HistorialEmbalaje, 'Embalaje desde la app' => $embalaje]])
-			)
-			);
-			continue;
-		}
+			$cantidad_entregada_sistema         = array_sum(Hash::extract($VentaDetalle, "{n}.VentaDetalle[id={$value['detalle_id']}].cantidad_entregada"));
+			$cantidad_pendiente_entrega_sistema = array_sum(Hash::extract($VentaDetalle, "{n}.VentaDetalle[id={$value['detalle_id']}].cantidad_pendiente_entrega"));
+			$cantidad_a_entregar_sistema        = $cantidad_entregada_sistema +  $cantidad_pendiente_entrega_sistema;
+			$cantidad_embalada_warehouse        = array_sum(Hash::extract($HistorialEmbalaje, "{n}.HistorialEmbalaje[producto_id={$value['producto_id']}].cantidad_embalada"));
 
-		$cantidad_entregada_sistema         = Hash::extract($VentaDetalle, "{n}.VentaDetalle[id={$value['detalle_id']}].cantidad_entregada");
-		$cantidad_pendiente_entrega_sistema = Hash::extract($VentaDetalle, "{n}.VentaDetalle[id={$value['detalle_id']}].cantidad_pendiente_entrega");
-		$cantidad_a_entregar_sistema        = $cantidad_entregada_sistema[0] +  $cantidad_pendiente_entrega_sistema[0];
-		$cantidad_embalada_warehouse        = Hash::extract($HistorialEmbalaje, "{n}.HistorialEmbalaje[producto_id={$value['producto_id']}].cantidad_embalada");
+			// ** Se valida que la cantidad entregada sea la correcta y no se entregue de más
+			if ($cantidad_embalada_warehouse >= $cantidad_a_entregar_sistema) {
 
-		$cantidad_embalada_warehouse        = $cantidad_embalada_warehouse ? array_sum($cantidad_embalada_warehouse) : 0;
+				$log[] = array(
+					'Log' => array(
+					'administrador' => "App Nodriza metodo api_cambiar_estado_v2 vid {$id}",
+					'modulo'        => 'Ventas',
+					'modulo_accion' => json_encode(["La cantidad embalada($$cantidad_embalada_warehouse) no coinciden con la entregada($cantidad_a_entregar_sistema)."])
+					)
+				);
 
-		// ** Se valida que la cantidad entregada sea la correcta y no se entregue de más
-		if ($cantidad_embalada_warehouse >= $cantidad_a_entregar_sistema) {
+				continue;
+			}
 
-			continue;
-		}
-
-		$actualizar[] =
-			[
-			'HistorialEmbalaje' =>
-			[
-				'detalle_id'        => $value['detalle_id'],
-				'embalaje_id'       => $value['embalaje_id'],
-				'producto_id'       => $value['producto_id'],
-				'cantidad_embalada' => $value['cantidad_embalada'],
-				'venta_id'          => $id,
-			]
+			$actualizar[] =[
+				'HistorialEmbalaje' =>
+					[
+						'detalle_id'        => $value['detalle_id'],
+						'embalaje_id'       => $value['embalaje_id'],
+						'producto_id'       => $value['producto_id'],
+						'cantidad_embalada' => $value['cantidad_embalada'],
+						'venta_id'          => $id,
+					]
 			];
 		}
-
 		if (!$actualizar) {
 
 			$log[] = array(
 				'Log' => array(
-				'administrador' => 'App Nodriza metodo api_cambiar_estado_v2',
+				'administrador' => "App Nodriza metodo api_cambiar_estado_v2 vid {$id}",
 				'modulo'        => 'Ventas',
 				'modulo_accion' => json_encode(["Problemas para registrar embalaje {$embalaje[0]['embalaje_id']} ." => ['Detalle de la Venta' => $VentaDetalle, 'HistorialEmbalaje desde sistema' => $HistorialEmbalaje, 'Embalaje desde la app' => $embalaje]])
 				)
@@ -10844,7 +10847,7 @@ class VentasController extends AppController {
 				ClassRegistry::init('Log')->saveAll($log);
 			}
 
-			throw new BadRequestException("Se han enviado embalajes que ya fueron registrados en la venta");
+			throw new BadRequestException("Problemas para registrar entrega del embalaje {$embalaje[0]['embalaje_id']}");
 		}
 
 
