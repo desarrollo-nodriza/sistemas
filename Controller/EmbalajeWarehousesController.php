@@ -609,7 +609,11 @@ class EmbalajeWarehousesController extends AppController
 		{
 			$msjTexto .= $valor['mensaje'];
 		}
-		
+
+		if(!is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'] ?? null)){
+			ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'];
+			$msjTexto .= strtoupper(" Embalaje debe ser trasladado a la bodega ".ClassRegistry::init('Bodega')->field('nombre'));
+		}
 		$archivos = array();
 
 		foreach ($paquetes as $paquete) 
