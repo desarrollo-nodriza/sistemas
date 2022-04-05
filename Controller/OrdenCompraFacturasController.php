@@ -336,8 +336,8 @@ class OrdenCompraFacturasController extends AppController
 		$periodos = [];
 		$periodos2 = [];
 
-		$ahora = date('Y-m-d');
-		$anno_anterior = date("Y-m-d", strtotime($ahora."-1 year"));
+		$ahora = date('Y-m-28');
+		$anno_anterior = date("Y-m-28", strtotime($ahora."-1 year"));
 
 		$ts1 = strtotime($anno_anterior);
 		$ts2 = strtotime($ahora);
@@ -352,7 +352,7 @@ class OrdenCompraFacturasController extends AppController
 		
 		$periodos[date('Ym')] = date('Y-m');
 		$periodos2[date('Y-m')] = date('Y-m');
-
+		
 		# Se crea la lista de periodos desde hace un año
 		for ($i=1; $i <= $diff; $i++) 
 		{ 
