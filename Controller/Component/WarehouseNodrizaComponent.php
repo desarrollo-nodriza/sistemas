@@ -176,8 +176,8 @@ class WarehouseNodrizaComponent extends Component
                     $embalaje = [
                         'venta_id'                  => $venta['Venta']['id'],
                         'bodega_id'                 => $bodega_id,
-                        'trasladar_a_otra_bodega'   => !($bodega_id == $venta['Venta']['bodega_id']),
-                        'bodega_id_para_trasladar'  => !($bodega_id == $venta['Venta']['bodega_id']) ? $venta['Venta']['bodega_id'] : null,
+                        'trasladar_a_otra_bodega'   => $venta['MetodoEnvio']['retiro_local'] ? $bodega_id != $venta['Venta']['bodega_id'] : null,
+                        'bodega_id_para_trasladar'  => $venta['MetodoEnvio']['retiro_local'] ? ($bodega_id != $venta['Venta']['bodega_id'] ? $venta['Venta']['bodega_id'] : null) : null,
                         'metodo_envio_id'           => $venta['Venta']['metodo_envio_id'],
                         'comuna_id'                 => $venta['Venta']['comuna_id']  ?? $venta['Bodega']['comuna_id'],
                         'prioritario'               => ($venta['Venta']['prioritario']) ? 1 : 0,
@@ -233,7 +233,7 @@ class WarehouseNodrizaComponent extends Component
                                         'venta_id'          => $venta['Venta']['id'],
                                         'nombre'            => "Trasladar",
                                         'descripcion'       => "El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.",
-                                        'id_usuario'        => CakeSession::read('Auth.Administrador.id') ?? 1 ,
+                                        'id_usuario'        => CakeSession::read('Auth.Administrador.id') ?? 1,
                                         'nombre_usuario'    => CakeSession::read('Auth.Administrador.nombre') ?? 'Automatico',
                                         'mail_usuario'      => CakeSession::read('Auth.Administrador.email') ?? "cristian.rojas@nodriza.cl"
                                     ];

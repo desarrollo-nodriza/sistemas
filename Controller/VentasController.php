@@ -12917,7 +12917,7 @@ class VentasController extends AppController {
 						
 		$tokeninfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
 		
-		# Body
+		
 		$venta = $this->Venta->find('first', array(
 			'conditions' => array(
 				'Venta.id' => $id
@@ -12925,7 +12925,7 @@ class VentasController extends AppController {
 			'contain' =>
 			[
 				'VentaDetalle',
-				'MetodoEnvio' =>[ 'fields' => ['MetodoEnvio.embalado_venta_estado_parcial_id','MetodoEnvio.embalado_venta_estado_id','MetodoEnvio.consolidacion_venta_estado_id']]
+				'MetodoEnvio' =>[ 'fields' => ['MetodoEnvio.embalado_venta_estado_parcial_id','MetodoEnvio.embalado_venta_estado_id','MetodoEnvio.consolidacion_venta_estado_id','MetodoEnvio.retiro_local']]
 			]
 		));
 
@@ -12934,41 +12934,88 @@ class VentasController extends AppController {
 		$cambiar_estado 	  = false;
 		$nuevo_estado   	  = null;
 		$logs 		  		  = [];
-
 	
 		try {
 
 			// *Si hay embalajes distinto a la bodega de la venta se considera el estado en consolidacion
-			$embalajes_en_otras_bodegas = Hash::extract($embalajesFinalizados['response']['body'], "{n}[bodega_id!={$venta['Venta']['bodega_id']}]");
-			$cantidad	       			= array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
-			$cantidad_embalada 			= array_sum(Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
-			$ExisteEmbalajes_listo_para_trasladar = Hash::extract($embalajesFinalizados['response']['body'], "{n}[estado=listo_para_trasladar]");
-			$ExisteEmbalajes_en_traslado_a_bodega = Hash::extract($embalajesFinalizados['response']['body'], "{n}[estado=en_traslado_a_bodega]");
+			$embalajes_en_otras_bodegas 			= Hash::extract($embalajesFinalizados['response']['body'], "{n}[bodega_id!={$venta['Venta']['bodega_id']}]");
+			$cantidad	       						= array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
+			$cantidad_embalada 						= array_sum(Hash::extract($embalajesFinalizados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
 			
-			if( ( count($ExisteEmbalajes_listo_para_trasladar) > 0 || count($ExisteEmbalajes_en_traslado_a_bodega) > 0 || count($embalajes_en_otras_bodegas) > 0) && $cantidad != $cantidad_embalada ){
+			// * Se borraran estas variables comentadas cuando terminemos las pruebas y nos demos cuenta que realmente no las necesitamos
+			// $ExisteEmbalajes_listo_para_trasladar 	= Hash::extract($embalajesFinalizados['response']['body'], "{n}[estado=listo_para_trasladar]");
+			// $ExisteEmbalajes_en_traslado_a_bodega 	= Hash::extract($embalajesFinalizados['response']['body'], "{n}[estado=en_traslado_a_bodega]");
 
-				// * Se valida que metodo tenga el estado a cambiar
-				if (is_null($venta['MetodoEnvio']['consolidacion_venta_estado_id'])) {
+			if($venta['MetodoEnvio']['retiro_local']){
 
-					$logs[] = [
-						'Log' =>
-						[
-							'administrador' => "Problemas para actualizar vid {$id}",
-							'modulo'        => 'VentasController',
-							'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'consolidación', valor actual Null"
-						]
-					];
+				$cantidad_pendiente_entrega = array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_pendiente_entrega"));
+				
+				if( count($embalajes_en_otras_bodegas) > 0 && $cantidad_pendiente_entrega > 0 ){
+
+					// * Se valida que metodo tenga el estado a cambiar
+					if (is_null($venta['MetodoEnvio']['consolidacion_venta_estado_id'])) {
+	
+						$logs[] = [
+							'Log' =>
+							[
+								'administrador' => "Problemas para actualizar vid {$id}",
+								'modulo'        => 'VentasController',
+								'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'consolidación', valor actual Null"
+							]
+						];
+
+					}else{
+	
+						$nuevo_estado   = $venta['MetodoEnvio']['consolidacion_venta_estado_id'];
+						$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+					}
+	
 				}else{
 
-					$nuevo_estado   = $venta['MetodoEnvio']['consolidacion_venta_estado_id'];
-					$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+					if ($cantidad != $cantidad_embalada) {
+
+						// * Se valida que metodo tenga el estado a cambiar
+						if (is_null($venta['MetodoEnvio']['embalado_venta_estado_parcial_id'])) {
+	
+							$logs[] = [
+								'Log' =>
+								[
+									'administrador' => "Problemas para actualizar vid {$id}",
+									'modulo'        => 'VentasController',
+									'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado parcial', valor actual Null"
+								]
+							];
+						}else{
+	
+							$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_parcial_id'];
+							$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+						}
+	
+					} else {
+	
+						if (is_null($venta['MetodoEnvio']['embalado_venta_estado_id'])) {
+	
+							$logs[] = [
+								'Log' =>
+								[
+									'administrador' => "Problemas para actualizar vid {$id}",
+									'modulo'        => 'VentasController',
+									'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado completo', valor actual Null"
+								]
+							];
+						
+						}else{
+	
+							$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_id'];
+							$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'],$nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
+						}
+	
+					}
+
 				}
 
-				
-
 			}else{
-				
-				// * Si existen productos por entregar se envia estado parcial
+
 				if ($cantidad != $cantidad_embalada) {
 
 					// * Se valida que metodo tenga el estado a cambiar
@@ -12987,54 +13034,26 @@ class VentasController extends AppController {
 						$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_parcial_id'];
 						$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
 					}
-					
-					
-				
 
 				} else {
 
-					// * Cuando la cantidad vendida es igual a la embalada pero aun quedan embalajes en listo_para_trasladar en_traslado_a_bodega se debe considerar el estado consolidación
-					if(count($ExisteEmbalajes_listo_para_trasladar) > 0 || count($ExisteEmbalajes_en_traslado_a_bodega) > 0 ){
+					if (is_null($venta['MetodoEnvio']['embalado_venta_estado_id'])) {
 
-						if (is_null($venta['MetodoEnvio']['consolidacion_venta_estado_id'])) {
-
-							$logs[] = [
-								'Log' =>
-								[
-									'administrador' => "Problemas para actualizar vid {$id}",
-									'modulo'        => 'VentasController',
-									'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'consolidación', valor actual Null"
-								]
-							];
-						}else{
-		
-							$nuevo_estado   = $venta['MetodoEnvio']['consolidacion_venta_estado_id'];
-							$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'], $nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
-						}
-						
+						$logs[] = [
+							'Log' =>
+							[
+								'administrador' => "Problemas para actualizar vid {$id}",
+								'modulo'        => 'VentasController',
+								'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado completo', valor actual Null"
+							]
+						];
 					
-
 					}else{
 
-						// * Se valida que metodo tenga el estado a cambiar
-						if (is_null($venta['MetodoEnvio']['embalado_venta_estado_id'])) {
-
-							$logs[] = [
-								'Log' =>
-								[
-									'administrador' => "Problemas para actualizar vid {$id}",
-									'modulo'        => 'VentasController',
-									'modulo_accion' => "Metodo de envio {$venta['Venta']['metodo_envio_id']} no tiene configurado 'estado completo', valor actual Null"
-								]
-							];
-						
-						}else{
-
-							$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_id'];
-							$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'],$nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
-						}
-
+						$nuevo_estado   = $venta['MetodoEnvio']['embalado_venta_estado_id'];
+						$cambiar_estado = $this->cambiarEstado($id, $venta['Venta']['id_externo'],$nuevo_estado, $venta['Venta']['tienda_id'], $venta['Venta']['marketplace_id'], '', '', $tokeninfo['Administrador']['email']);
 					}
+
 				}
 			}
 
