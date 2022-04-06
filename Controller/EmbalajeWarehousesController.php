@@ -614,6 +614,8 @@ class EmbalajeWarehousesController extends AppController
 			ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'];
 			$msjTexto .= strtoupper(" Embalaje debe ser trasladado a la bodega ".ClassRegistry::init('Bodega')->field('nombre'));
 		}
+
+		$msjTexto= inflector::slug($msjTexto,' ');
 		$archivos = array();
 
 		foreach ($paquetes as $paquete) 
