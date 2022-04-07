@@ -241,7 +241,7 @@ class WarehouseNodrizaComponent extends Component
                             if ($trasladar_a_otra_bodega) {
 
                                 ClassRegistry::init('Bodega')->id   = $bodega_id_para_trasladar;
-                                $nombre_bodega                      = ClassRegistry::init('Bodega')->nombre;
+                                $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
                                 $embalaje_id                        = $response['response']['body']['id'];
 
                                 try {

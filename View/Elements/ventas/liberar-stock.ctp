@@ -9,7 +9,7 @@
             $listo_para_embalar = true;
         }
 
-        if ($em['EmbalajeWarehouse']['estado'] == 'procesando') {
+        if (in_array($em['EmbalajeWarehouse']['estado'], ['procesando','listo_para_trasladar','en_traslado_a_bodega'])) {
             $preparando = true;
         }
 
