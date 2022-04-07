@@ -181,13 +181,11 @@ class WarehouseNodrizaComponent extends Component
 
                         $trasladar_a_otra_bodega    = $bodega_id != $venta['Venta']['bodega_id'];
                         $bodega_id_para_trasladar   = ($bodega_id != $venta['Venta']['bodega_id'] ? $venta['Venta']['bodega_id'] : null);
-
                     } else {
                         // * Si la bodega del embalaje es creada en otra bodega que no sea la principal y la venta posee metodo de envio con "despacho a domicilio", debe ser trasladado a la bodega principal
 
                         $trasladar_a_otra_bodega    = $bodega_principal != $bodega_id;
                         $bodega_id_para_trasladar   = ($bodega_principal != $bodega_id ? $bodega_principal : null);
-
                     }
 
                     $embalaje = [
@@ -241,11 +239,11 @@ class WarehouseNodrizaComponent extends Component
                             );
 
                             if ($trasladar_a_otra_bodega) {
-                                
+
                                 ClassRegistry::init('Bodega')->id   = $bodega_id_para_trasladar;
-                                $nombre_bodega                      = ClassRegistry::init('Bodega')->nombre ;
+                                $nombre_bodega                      = ClassRegistry::init('Bodega')->nombre;
                                 $embalaje_id                        = $response['response']['body']['id'];
-                                
+
                                 try {
 
                                     $nota = [
@@ -255,7 +253,9 @@ class WarehouseNodrizaComponent extends Component
                                         'id_usuario'        => CakeSession::read('Auth.Administrador.id') ?? 1,
                                         'nombre_usuario'    => CakeSession::read('Auth.Administrador.nombre') ?? 'Automatico',
                                         'mail_usuario'      => CakeSession::read('Auth.Administrador.email') ?? "cristian.rojas@nodriza.cl",
-                                        'embalajes'         => ["id_embalaje" => $embalaje_id]
+                                        'embalajes'         => [
+                                            ["id_embalaje" => $embalaje_id]
+                                        ]
                                     ];
 
                                     $crearNotaDespacho = $this->crearNotaDespacho($nota);
