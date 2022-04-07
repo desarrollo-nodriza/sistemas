@@ -126,6 +126,41 @@
 				</div>
 				
 			</div>
+				<div class="panel panel-info">
+		                <div class="panel-heading">
+		                    <h3 class="panel-title"><i class="fa fa-book" aria-hidden="true"></i> Registros de cambios en stock</h3>
+		                    <ul class="panel-controls"> 
+		                    	<li><a href="#" class="panel-collapse"><span class="fa fa-angle-up"></span></a></li>
+		                    </ul>
+		                </div>
+		                <div class="panel-body">
+		                	<div class="table-responsive" style="max-height: 470px;">
+								<table class="table table-bordered datatable">
+									<thead>
+										<th>Proveedor</th>
+										<th>Stock<br>modificado</th>
+										<th>Fecha<br>del cambio</th>
+										<th>Sku</th>
+									</thead>
+									<tbody>
+								
+									<? foreach ($this->request->data['Onestock']['detalle_proveedores'] as $ivd => $vd) : ?>
+									<? foreach ($vd['modificaciones_stock'] as $ivd => $vd2) : ?>
+										<tr>
+											<td><?= $vd['nombre']; ?></td>
+											<td><?= $vd2['stock_modificado']; ?></td>
+											<td><?= $vd2['fecha_modificacion']; ?></td>
+											<td><?= $vd2['sku']; ?></td>
+									
+										</tr>
+										<? endforeach; ?>	
+									<? endforeach; ?>										
+									</tbody>	
+								</table>
+		                	</div>
+		                </div>                             
+		            </div>
+
 		</div> <!-- end col -->
 
 
@@ -256,7 +291,7 @@
 		                	</div>
 		                </div>                             
 		            </div>
-
+					
 					<div class="panel panel-info panel-toggled">
 		                <div class="panel-heading">
 		                    <h3 class="panel-title"><i class="fa fa-cubes" aria-hidden="true"></i> Unidades reservadas</h3>
