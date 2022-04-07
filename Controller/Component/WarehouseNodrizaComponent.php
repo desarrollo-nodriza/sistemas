@@ -139,8 +139,10 @@ class WarehouseNodrizaComponent extends Component
                 break;
 
             case 'empaquetar':
-                $bodega = ClassRegistry::init('Bodega')->obtener_bodega_principal();
-                $dte_valido = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
+
+                $bodega_principal   = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+                $dte_valido         = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
+
                 # si el estado de la venta no es pagado no pasa
                 if (!ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id'])) {
                     break;
@@ -153,12 +155,12 @@ class WarehouseNodrizaComponent extends Component
 
                 $reservas_separadas_por_bodega = [];
 
-                // TODO Extraemos solo los productos que fueron reservados en otras bodegas
+                // * Extraemos solo los productos que fueron reservados en otras bodegas
                 foreach ($bodegas_activas as $key => $value) {
                     $reservas_separadas_por_bodega[$key] = Hash::extract($venta['VentaDetalle'], "{n}.VentaDetallesReserva.{n}[bodega_id={$key}]");
                 }
 
-                // TODO Ya que se consultan todas las bodegas se filtra aquellas bodegas que no tuvieron reserva en stock, para recorrer solo las que corresponde
+                // * Ya que se consultan todas las bodegas se filtra aquellas bodegas que no tuvieron reserva en stock, para recorrer solo las que corresponde
                 $reservas_separadas_por_bodega = array_filter($reservas_separadas_por_bodega);
 
                 $logs[] = array(
@@ -169,15 +171,30 @@ class WarehouseNodrizaComponent extends Component
                     )
                 );
 
-                // TODO Al recorrer se crean embalajes de acuerdo a la bodega
+                // * Al recorrer se crean embalajes de acuerdo a la bodega
                 foreach ($reservas_separadas_por_bodega as $bodega_id => $productos_por_bodegas) {
                     $embalaje = [];
-                    // TODO Si la bodega de la venta es distinta a los del embalaje se solicita que el embalaje debe ser trasladado
+
+
+                    if ($venta['MetodoEnvio']['retiro_local']) {
+                        // * Si la bodega del embalaje es distinta al de la venta con "retiro en tienda", se solicita que el embalaje sea trasladado para su eventual retiro.
+
+                        $trasladar_a_otra_bodega    = $bodega_id != $venta['Venta']['bodega_id'];
+                        $bodega_id_para_trasladar   = ($bodega_id != $venta['Venta']['bodega_id'] ? $venta['Venta']['bodega_id'] : null);
+
+                    } else {
+                        // * Si la bodega del embalaje es creada en otra bodega que no sea la principal y la venta posee metodo de envio con "despacho a domicilio", debe ser trasladado a la bodega principal
+
+                        $trasladar_a_otra_bodega    = $bodega_principal != $bodega_id;
+                        $bodega_id_para_trasladar   = ($bodega_principal != $bodega_id ? $bodega_principal : null);
+
+                    }
+
                     $embalaje = [
                         'venta_id'                  => $venta['Venta']['id'],
                         'bodega_id'                 => $bodega_id,
-                        'trasladar_a_otra_bodega'   => $venta['MetodoEnvio']['retiro_local'] ? $bodega_id != $venta['Venta']['bodega_id'] : null,
-                        'bodega_id_para_trasladar'  => $venta['MetodoEnvio']['retiro_local'] ? ($bodega_id != $venta['Venta']['bodega_id'] ? $venta['Venta']['bodega_id'] : null) : null,
+                        'trasladar_a_otra_bodega'   => $trasladar_a_otra_bodega,
+                        'bodega_id_para_trasladar'  => $bodega_id_para_trasladar,
                         'metodo_envio_id'           => $venta['Venta']['metodo_envio_id'],
                         'comuna_id'                 => $venta['Venta']['comuna_id']  ?? $venta['Bodega']['comuna_id'],
                         'prioritario'               => ($venta['Venta']['prioritario']) ? 1 : 0,
@@ -189,8 +206,6 @@ class WarehouseNodrizaComponent extends Component
                     if (isset($venta['Venta']['marketplace_id'])) {
                         $embalaje['marketplace_id'] = $venta['Venta']['marketplace_id'];
                     }
-
-                    $bodega_distinta_a_principal = $bodega_id != $venta['Venta']['bodega_id'];
 
                     // ! Verificamos Si el total del producto ya fue embalada, si falta, se crea un embalaje con lo que falta
                     foreach ($productos_por_bodegas as $d) {
@@ -225,17 +240,22 @@ class WarehouseNodrizaComponent extends Component
                                 )
                             );
 
-                            if ($bodega_distinta_a_principal && $venta['MetodoEnvio']['retiro_local']) {
-
+                            if ($trasladar_a_otra_bodega) {
+                                
+                                ClassRegistry::init('Bodega')->id   = $bodega_id_para_trasladar;
+                                $nombre_bodega                      = ClassRegistry::init('Bodega')->nombre ;
+                                $embalaje_id                        = $response['response']['body']['id'];
+                                
                                 try {
 
                                     $nota = [
                                         'venta_id'          => $venta['Venta']['id'],
                                         'nombre'            => "Trasladar",
-                                        'descripcion'       => "El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.",
+                                        'descripcion'       => "El embalaje {$embalaje_id} requiere ser trasladado a la bodega {$nombre_bodega}.",
                                         'id_usuario'        => CakeSession::read('Auth.Administrador.id') ?? 1,
                                         'nombre_usuario'    => CakeSession::read('Auth.Administrador.nombre') ?? 'Automatico',
-                                        'mail_usuario'      => CakeSession::read('Auth.Administrador.email') ?? "cristian.rojas@nodriza.cl"
+                                        'mail_usuario'      => CakeSession::read('Auth.Administrador.email') ?? "cristian.rojas@nodriza.cl",
+                                        'embalajes'         => ["id_embalaje" => $embalaje_id]
                                     ];
 
                                     $crearNotaDespacho = $this->crearNotaDespacho($nota);
@@ -251,9 +271,9 @@ class WarehouseNodrizaComponent extends Component
                                     if ($response['code'] != 200) {
 
                                         try {
-                                            $nota = "{$venta['Venta']['nota_interna']} - El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                            $nota = "{$venta['Venta']['nota_interna']} - El embalaje {$embalaje_id} requiere ser trasladado a la bodega {$nombre_bodega}.";
                                         } catch (\Throwable $th) {
-                                            $nota = "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                            $nota = "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$nombre_bodega}.";
                                         }
 
                                         ClassRegistry::init('Venta')->save([
@@ -267,9 +287,9 @@ class WarehouseNodrizaComponent extends Component
                                 } catch (\Throwable $th) {
 
                                     try {
-                                        $nota = "{$venta['Venta']['nota_interna']} - El embalaje {$response['response']['body']['id']} requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                        $nota = "{$venta['Venta']['nota_interna']} - El embalaje {$embalaje_id} requiere ser trasladado a la bodega {$nombre_bodega}.";
                                     } catch (\Throwable $th) {
-                                        $nota = "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$venta['Bodega']['nombre']} para ser retirado en tienda por el cliente.";
+                                        $nota = "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$nombre_bodega}.";
                                     }
 
                                     ClassRegistry::init('Venta')->save([
