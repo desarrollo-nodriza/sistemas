@@ -57,7 +57,8 @@
                     <div class="mb-title" id="alerta_liberar_stock<?= $detalle['id']; ?>_label"><i class="fa fa-exclamation-triangle"></i> Liberar stock</div>
                     <div class="mb-content">
                         <p style="margin: 15px 0;">
-                            Este producto está asignado un embalaje en <b>Warehouse</b> que se encuentra en preparación.
+                       
+                            Este producto está asignado un embalaje en <b>Warehouse</b> que se encuentra "<?=str_replace("_"," ",ucfirst($em['EmbalajeWarehouse']['estado']))?>".
                         </p>
                         <p style="margin: 15px 0;">
                             <b>Es imposible liberar la reserva</b>
