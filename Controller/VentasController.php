@@ -12939,15 +12939,16 @@ class VentasController extends AppController {
 		try {
 
 			// *Si hay embalajes distinto a la bodega de la venta se considera el estado en consolidacion
-			$embalajes_en_otras_bodegas 			= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[bodega_id!={$venta['Venta']['bodega_id']}]");
+			$embalajes_en_otras_bodegas 			= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[bodega_id!={$venta['Venta']['bodega_id']}]"));
 			$cantidad	       						= array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
 			$cantidad_embalada 						= array_sum(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
 
 			$cantidadEmbalajes						= count($embalajesExceptoCancelados);
 			$ExisteEmbalajes_listo_para_trasladar 	= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=listo_para_trasladar]"));
 			$ExisteEmbalajes_en_traslado_a_bodega 	= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=en_traslado_a_bodega]"));
+			$cantidad_pendiente_entrega 			= array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_pendiente_entrega"));
 
-			if (($ExisteEmbalajes_listo_para_trasladar > 0 || $ExisteEmbalajes_en_traslado_a_bodega > 0) && $cantidadEmbalajes >= 1) {
+			if (($ExisteEmbalajes_listo_para_trasladar > 0 || $ExisteEmbalajes_en_traslado_a_bodega > 0 || $embalajes_en_otras_bodegas > 0) && $cantidadEmbalajes >= 1 && $cantidad_pendiente_entrega > 0) {
 
 					// * Se valida que metodo tenga el estado a cambiar
 					if (is_null($venta['MetodoEnvio']['consolidacion_venta_estado_id'])) {
