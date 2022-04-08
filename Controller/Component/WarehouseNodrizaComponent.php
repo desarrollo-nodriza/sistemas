@@ -140,7 +140,7 @@ class WarehouseNodrizaComponent extends Component
 
             case 'empaquetar':
 
-                $bodega_principal   = ClassRegistry::init('Bodega')->obtener_bodega_principal();
+                $bodega_principal   = ClassRegistry::init('Bodega')->obtener_bodega_principal()['Bodega']['id'];
                 $dte_valido         = ClassRegistry::init('Dte')->obtener_dte_valido_venta($id);
 
                 # si el estado de la venta no es pagado no pasa
