@@ -12944,8 +12944,8 @@ class VentasController extends AppController {
 			$cantidad_embalada 						= array_sum(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
 
 			$cantidadEmbalajes						= count($embalajesExceptoCancelados);
-			$ExisteEmbalajes_listo_para_trasladar 	= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=listo_para_trasladar]");
-			$ExisteEmbalajes_en_traslado_a_bodega 	= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=en_traslado_a_bodega]");
+			$ExisteEmbalajes_listo_para_trasladar 	= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=listo_para_trasladar]"));
+			$ExisteEmbalajes_en_traslado_a_bodega 	= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=en_traslado_a_bodega]"));
 
 			if (($ExisteEmbalajes_listo_para_trasladar > 0 || $ExisteEmbalajes_en_traslado_a_bodega > 0) && $cantidadEmbalajes >= 1) {
 
