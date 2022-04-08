@@ -43,6 +43,19 @@ class MetodoEnvio extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'BodegasMetodoEnvio' => array(
+			'className'				=> 'BodegasMetodoEnvio',
+			'foreignKey'			=> 'metodo_envio_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 

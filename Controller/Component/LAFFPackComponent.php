@@ -16,12 +16,66 @@ class LAFFPackComponent extends Component
     /** @var array $container_dimensions Current container dimensions */
     private $container_dimensions = null;
 
-    /**
-	 * Calcula a aproximacion de bltos que se deberían armar en base a los itemes
-	 * @param  array $venta         Detalle de la venta
-	 * @param  float $volumenMaximo volumen máximo para cada paquete
-	 * @return array
+	
+	/**
+	 * obtener_bultos_venta_por_embalaje_v2
+	 * !Este metodo es similar al metodo obtener_bultos_venta_dimension_decimal_por_embalaje
+     * ! Se calcula bultos segun los productos de un embalaje mas que por el VentaDetalle
+	 * @param  mixed $embalaje
+	 * @param  mixed $volumenMaximo
+	 * @return void
 	 */
+	public function obtener_bultos_venta_por_embalaje_v2($embalaje, $volumenMaximo)
+	{	
+		$bultos = array();
+
+        foreach ($embalaje['EmbalajeProductoWarehouse'] as $detalleEmbalaje) {
+
+			if ($detalleEmbalaje['cantidad_a_embalar'] <= 0) {
+                continue;
+            }
+
+            for ($i = 0; $i < $detalleEmbalaje['cantidad_a_embalar']; $i++) {
+
+				$alto  = $detalleEmbalaje['VentaDetalleProducto']['alto'];
+                $ancho = $detalleEmbalaje['VentaDetalleProducto']['ancho'];
+                $largo = $detalleEmbalaje['VentaDetalleProducto']['largo'];
+                $peso  = $detalleEmbalaje['VentaDetalleProducto']['peso'];
+
+				$volumen = $this->calcular_volumen($alto, $ancho, $largo);
+
+				$caja = array(
+                    'id'     => $detalleEmbalaje['VentaDetalleProducto']['id'],
+                    'width'  => $ancho,
+                    'height' => $alto,
+                    'length' => $largo,
+                    'weight' => $peso
+                );
+
+				$unico = rand(1000, 100000);
+				
+				if ($volumen > $volumenMaximo) {
+                    $bultos[$embalaje['venta_id'] . $unico]['venta_id']    = $embalaje['venta_id'];
+                    $bultos[$embalaje['venta_id'] . $unico]['cajas'][]     = $caja;
+                } else {
+                    $bultos[$embalaje['venta_id']]['venta_id']    = $embalaje['venta_id'];
+                    $bultos[$embalaje['venta_id']]['cajas'][]     = $caja;
+                }
+			}
+
+		}
+		
+		$resultado = array();
+		
+		foreach ($bultos as $ib => $b) {
+			$resultado[$ib]['paquete']             = $this->obtenerDimensionesPaquete($b['cajas']);
+			$resultado[$ib]['paquete']['weight']   = array_sum(Hash::extract($b['cajas'], '{n}.weight'));
+			$resultado[$ib]['paquete']['venta_id'] = $b['venta_id'];
+			$resultado[$ib]['items']               = $b['cajas'];
+		}
+
+		return $resultado;
+	}
 	public function obtener_bultos_venta($venta, $volumenMaximo)
 	{	
 		$bultos = array();
@@ -124,14 +178,72 @@ class LAFFPackComponent extends Component
         return $resultado;
     }
     
-
-
     /**
-	 * Calcula a aproximacion de bltos que se deberían armar en base a los itemes
-	 * @param  array $embalaje         Detalle de la venta
-	 * @param  float $volumenMaximo volumen máximo para cada paquete
-	 * @return array
-	 */
+     * obtener_bultos_venta_dimension_decimal_por_embalaje
+     * ! Se calcula bultos segun los productos de un embalaje mas que por el VentaDetalle
+     * @param  mixed $embalaje
+     * @param  mixed $volumenMaximo
+     * @return void
+     */
+    public function obtener_bultos_venta_dimension_decimal_por_embalaje($embalaje, $volumenMaximo)
+    {
+        $bultos = array();
+
+        foreach ($embalaje['EmbalajeProductoWarehouse'] as $detalleEmbalaje) {
+
+            if ($detalleEmbalaje['cantidad_a_embalar'] <= 0) {
+                continue;
+            }
+
+            for ($i = 0; $i < $detalleEmbalaje['cantidad_a_embalar']; $i++) {
+
+                $alto  = $detalleEmbalaje['VentaDetalleProducto']['alto'];
+                $ancho = $detalleEmbalaje['VentaDetalleProducto']['ancho'];
+                $largo = $detalleEmbalaje['VentaDetalleProducto']['largo'];
+                $peso  = $detalleEmbalaje['VentaDetalleProducto']['peso'];
+
+                $volumen = $this->calcular_volumen_dimension_decimal($alto, $ancho, $largo);
+
+                $caja = array(
+                    'id'     => $detalleEmbalaje['VentaDetalleProducto']['id'],
+                    'width'  => $ancho,
+                    'height' => $alto,
+                    'length' => $largo,
+                    'weight' => $peso
+                );
+                $unico = rand(1000, 100000);
+
+                if ($volumen > $volumenMaximo) {
+                    $bultos[$embalaje['venta_id'] . $unico]['venta_id']    = $embalaje['venta_id'];
+                    $bultos[$embalaje['venta_id'] . $unico]['cajas'][]     = $caja;
+                } else {
+                    $bultos[$embalaje['venta_id']]['venta_id']    = $embalaje['venta_id'];
+                    $bultos[$embalaje['venta_id']]['cajas'][]     = $caja;
+                }
+            }
+        }
+
+        $resultado = array();
+
+        foreach ($bultos as $ib => $b) {
+            $resultado[$ib]['paquete']             = $this->obtenerDimensionesPaquete($b['cajas']);
+            $resultado[$ib]['paquete']['weight']   = array_sum(Hash::extract($b['cajas'], '{n}.weight'));
+            $resultado[$ib]['paquete']['venta_id'] = $b['venta_id'];
+            $resultado[$ib]['items']               = $b['cajas'];
+        }
+
+        return $resultado;
+    }
+    
+
+    
+    /**
+     * obtener_bultos_venta_por_embalaje
+     *
+     * @param  mixed $embalaje
+     * @param  mixed $volumenMaximo
+     * @return void
+     */
     public function obtener_bultos_venta_por_embalaje($embalaje, $volumenMaximo)
 	{	
 		$bultos = array();

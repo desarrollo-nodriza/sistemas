@@ -469,6 +469,9 @@ class Venta extends AppModel
 						'Atributo' => array(
 							'AtributoGrupo'
 						),
+						'VentaDetallesReserva'=>[
+							'fields'=>['VentaDetallesReserva.cantidad_reservada',"VentaDetallesReserva.venta_detalle_id","VentaDetallesReserva.venta_detalle_producto_id","VentaDetallesReserva.embalaje_id","VentaDetallesReserva.bodega_id"]
+						],
 						'conditions' => array(
 							'VentaDetalle.activo' => 1
 						),
@@ -522,7 +525,8 @@ class Venta extends AppModel
 								'Bodega.direccion',
 								'Bodega.comuna_id'
 							],
-						]
+						],
+						'BodegasMetodoEnvio'
 					),
 					'Mensaje' => array(
 						'conditions' => array(
@@ -612,9 +616,14 @@ class Venta extends AppModel
 						'EmbalajeProductoWarehouse' => array(
 							'VentaDetalleProducto' => array(
 								'fields' => array(
-									'VentaDetalleProducto.nombre'
+									'VentaDetalleProducto.id',
+									'VentaDetalleProducto.nombre',
+									'VentaDetalleProducto.alto',
+									'VentaDetalleProducto.ancho',
+									'VentaDetalleProducto.largo',
+									'VentaDetalleProducto.peso'
 								)
-							)
+							),
 						)
 					),
 					'Comuna' => [
@@ -653,6 +662,8 @@ class Venta extends AppModel
 	 * @param  [type] $id_oc [description]
 	 * @return [type]        [description]
 	 */
+	// ! Se mueve metodo a controllador OrdenComprasController 
+	// ! No usar este metodo desde acá, sino desde el controllador
 	public function reservar_stock_por_oc($id_oc)
 	{
 		$ocVentas = ClassRegistry::init('OrdenCompra')->find('first', array(
@@ -815,6 +826,7 @@ class Venta extends AppModel
 	 * @param  array   $estados_ids [description]
 	 * @return [type]               [description]
 	 */
+	// ! Metodo obsoleto y en desuzo
 	public function obtener_ventas_preparar($estado = '', $limit = -1, $offset = 0, $estados_ids = array(), $id_venta = 0, $id_metodo_envio = 0, $id_marketplace = 0, $id_tienda = 0, $comuna = '')
 	{	
 		$joins[] = array(
@@ -983,7 +995,7 @@ class Venta extends AppModel
 		}
 
 		$venta = $this->obtener_venta_por_id($id);
-		
+
 		foreach ($venta['VentaDetalle'] as $iv => $detalle) {
 
 			$bodega_id = ClassRegistry::init('Bodega')->find('first', array(
@@ -1013,13 +1025,10 @@ class Venta extends AppModel
 			{	
 				#ClassRegistry::init('Bodega')->crearEntradaBodega($detalle['venta_detalle_producto_id'], null, $detalle['cantidad_entregada'], $pmp, 'VT', null, $id);
 			}
-
-			# Devolver unidades reservadas
-			if ($detalle['cantidad_reservada'] > 0) 
-			{
-				$vDetalle->saveField('cantidad_reservada', 0);
-			}
-
+			
+			// TODO Quitamos las reservas
+			ClassRegistry::init('VentaDetallesReserva')->updateAll(['VentaDetallesReserva.cantidad_reservada'=> 0 ], ['VentaDetallesReserva.venta_detalle_id'=> $detalle['id']]);
+			
 			# Nuevo stock virtual
 			if ($detalle['reservado_virtual']) 
 			{ 
@@ -1031,7 +1040,7 @@ class Venta extends AppModel
 		$this->cambiar_estado_picking($id, 'no_definido');
 		
 		# Preparamos los embalajes
-		ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id);
+		// ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($id);
 
 		$this->saveField('subestado_oc', 'no_entregado');
 
@@ -1079,30 +1088,17 @@ class Venta extends AppModel
 			
 			return;
 		}
-
+		
+		$VentaDetallesReserva = [];
 		foreach ($venta['VentaDetalle'] as $ip => $producto) 
 		{
 			
 			ClassRegistry::init('VentaDetalle')->id = $producto['id'];
 
-			$cantidad_entregada = 0;
-
-			# Obtenemos los movimientos del productos en esta venta
-			$cantidad_mv = ClassRegistry::init('Bodega')->obtener_total_mv_por_venta($id, $producto['venta_detalle_producto_id']);
-			
-			# tiene salida
-			if ($cantidad_mv < 0)
-			{
-				$cantidad_entregada = ($cantidad_mv * -1);
-			}
-
-			# Guardamos las cantidades entregadas
-			ClassRegistry::init('VentaDetalle')->saveField('cantidad_entregada', $cantidad_entregada);
-			$venta['VentaDetalle'][$ip]['cantidad_entregada'] = $cantidad_entregada;
-
 			# Calculamos las unidades que se deben reservar
 			$cantidad_vendida   = ($producto['cantidad'] - $producto['cantidad_anulada'] - $producto['cantidad_en_espera']);
-			$cantidad_reservar  = $cantidad_vendida - $cantidad_entregada;
+			$cant_reservada 	= array_sum( Hash::extract($producto['VentaDetallesReserva'], "{n}.cantidad_reservada"));
+			$cantidad_reservar  = $cantidad_vendida - $producto['cantidad_entregada'] - $cant_reservada ;
 			
 			$log[] = array(
 				'Log' => array(
@@ -1112,23 +1108,71 @@ class Venta extends AppModel
 				)
 			);
 
+			$suma_cant_reservada_y_por_reservar = 0;
 			# Reservamos
-			if ( $cantidad_reservar > 0 && $producto['cantidad_reservada'] < $cantidad_reservar) 
+			if ( $cantidad_reservar > 0 ) 
 			{
+
 				$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'],  $cantidad_reservar, $venta['Venta']['bodega_id']);
+				
+				$suma_cant_reservada_y_por_reservar = $suma_cant_reservada_y_por_reservar + $cantidad_reservado;
+
+				if ($cantidad_reservado > 0) {
+					
+					$VentaDetallesReserva [] = [
+						'VentaDetallesReserva' => 
+						[
+							'venta_detalle_id'	       	=> $producto['id'],
+							'bodega_id'			       	=> $venta['Venta']['bodega_id'],
+							'cantidad_reservada'       	=> $cantidad_reservado,
+							'venta_detalle_producto_id' => $producto['venta_detalle_producto_id'],
+							
+						]
+					];
+				}
+				
+				// TODO Si aun no se termina de reservar el total y el metodo de envio permite buscar reserva en otras bodegas se procede a consultar stock en dichas
+				if ($venta['MetodoEnvio']['permitir_reservar_stock_otra_bodega'] && $suma_cant_reservada_y_por_reservar < $cantidad_vendida  ) {
+			
+					foreach ($venta['MetodoEnvio']['BodegasMetodoEnvio'] as $value) {
+		
+						// TODO Como ya se hizo una reserva se trata de reservar lo que falta
+						$cantidad_reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($producto['venta_detalle_producto_id'], ($cantidad_vendida - $suma_cant_reservada_y_por_reservar ), $value['bodega_id']);
+						
+						// TODO Si se encuentra stock en otras bodegas no se continua buscando 
+						if ($cantidad_reservado > 0 ) {
+
+							$suma_cant_reservada_y_por_reservar = $suma_cant_reservada_y_por_reservar + $cantidad_reservado;
+							$bodega_a_reservar 	  				= $value['bodega_id'];
+							$VentaDetallesReserva [] 			= [
+								'VentaDetallesReserva' => 
+								[
+									'venta_detalle_id'	       	=> $producto['id'],
+									'bodega_id'			       	=> $bodega_a_reservar,
+									'cantidad_reservada'       	=> $cantidad_reservado,
+									'venta_detalle_producto_id' => $producto['venta_detalle_producto_id'],
+									
+								]
+							];
+							// TODO Si ya reserve el total se termina de recorrer bodegas
+							if ($suma_cant_reservada_y_por_reservar == $cantidad_vendida) {
+								break;
+							}
+							
+						}
+					}
+				}
 
 				$log[] = array(
 					'Log' => array(
 						'administrador' => 'Reservar producto detalle ' . $producto['id'],
-						'modulo' => 'Ventas',
+						'modulo' 		=> 'Ventas',
 						'modulo_accion' => 'Cantidad disponible para reservar:' . $cantidad_reservado
 					)
 				);
 
-				ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $cantidad_reservado);
-				ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $cantidad_reservar);
-
-				$venta['VentaDetalle'][$ip]['cantidad_reservada'] = $cantidad_reservado;
+				ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', ($producto['cantidad'] - $producto['cantidad_anulada'] - $producto['cantidad_entregada']));
+				
 			}				
 
 			# Nuevo stock virtual
@@ -1140,6 +1184,13 @@ class Venta extends AppModel
 			}
 
 		}
+
+		if ($VentaDetallesReserva) {
+			ClassRegistry::init('VentaDetallesReserva')->create();
+			ClassRegistry::init('VentaDetallesReserva')->saveMany($VentaDetallesReserva);
+		}
+
+		
 
 		$log[] = array(
 			'Log' => array(
@@ -1153,8 +1204,9 @@ class Venta extends AppModel
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->saveMany($log);
 		
+		// ! Calculamos a partir de la nueva tabla para reservar stock
 		# Calculamos el total de unidades reservadas de la venta
-		$cant_reservada_sum = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
+		$cant_reservada_sum = array_sum(Hash::extract($VentaDetallesReserva, '{n}.VentaDetallesReserva.cantidad_reservada'));
 		$cant_anulada_sum 	= array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada'));
 		$cant_en_espera_sum = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
 		$cant_entregada_sum = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));
@@ -1178,6 +1230,7 @@ class Venta extends AppModel
 		}
 		
 		return;
+
 	}
 
 
@@ -1189,132 +1242,134 @@ class Venta extends AppModel
 	public function entregar($id)
 	{
 		$this->id = $id;
+
 		if (!$this->exists()) 
 		{
 			return false;
 		}
 
-		$log = array();
+		$log = [];
 
 		$venta = $this->obtener_venta_por_id($id);
 		
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Inicia entregar venta ' . $id,
-				'modulo' => 'Ventas',
+				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($venta)
 			)
 		);
 
-		$detalles = array();
+		$HuboCambios = false;
+		$embalajes 	 = Hash::extract($venta['EmbalajeWarehouse'], "{n}[estado=finalizado]");
+		$fecha       = date('Y-m-d H:i:s');
 
-		# solo se procesa si el estado de la venta ha cambiado
-		if ($venta['Venta']['venta_estado_id'] != $venta['Venta']['estado_anterior'] ) 
-		{
+		foreach ($embalajes as $embalaje) 
+		{	
+			foreach ($embalaje['EmbalajeProductoWarehouse'] as $producto) {
 
-			foreach ($venta['VentaDetalle'] as $ip => $producto) 
-			{	
-				$cantidad_entregada = 0;
-
-				# Obtenemos los movimientos del productos en esta venta
-				$cantidad_mv = ClassRegistry::init('Bodega')->obtener_total_mv_por_venta($id, $producto['venta_detalle_producto_id']);
-				
-				# tiene salida
-				if ($cantidad_mv < 0)
-				{
-					$cantidad_entregada = ($cantidad_mv * -1);
-				}
-
-				$logProducto = array(
-					'producto' => $producto,
-					'cantidad_entregada' => $cantidad_entregada,
+				$detalle = ClassRegistry::init('VentaDetalle')->find('first',
+					[
+						'fields'=>[ 
+							'VentaDetalle.id',
+							'VentaDetalle.completo',
+							'VentaDetalle.cantidad',
+							'VentaDetalle.cantidad_entregada',
+							'VentaDetalle.cantidad_pendiente_entrega',
+							'VentaDetalle.cantidad_anulada',
+							'VentaDetalle.reservado_virtual',
+						],
+						'conditions' => ['VentaDetalle.id'=> $producto['detalle_id']]
+					]
 				);
+
+				$VentaDetallesReserva = ClassRegistry::init('VentaDetallesReserva')->find('first',[
+					'fields'=>
+					[ 
+						'VentaDetallesReserva.id',
+						'VentaDetallesReserva.venta_detalle_id',
+						'VentaDetallesReserva.venta_detalle_producto_id',
+						'VentaDetallesReserva.cantidad_reservada',
+						'VentaDetallesReserva.bodega_id',
+						'VentaDetallesReserva.embalaje_id',
+					],
+					'conditions' => [
+						"VentaDetallesReserva.venta_detalle_id" 			=> $producto['detalle_id'] ,
+						"VentaDetallesReserva.venta_detalle_producto_id" 	=> $producto['producto_id'] ,
+						"VentaDetallesReserva.bodega_id" 					=> $producto['EmbalajeWarehouse']['bodega_id'] ,
+						"VentaDetallesReserva.cantidad_reservada"			=> $producto['cantidad_embalada'] ,
+						"VentaDetallesReserva.embalaje_id"					=> null
+					]
+				]);
+
+				// ! Si no retorna la VentaDetallesReserva es porque ya fue procesada y no hay que quitar la reserva
+				if (is_null($VentaDetallesReserva['VentaDetallesReserva']['id']) ) {
+					continue;
+				}
 
 				$log[] = array(
 					'Log' => array(
-						'administrador' => 'Inicia entregar producto ' . $producto['id'],
-						'modulo' => 'Ventas',
-						'modulo_accion' => json_encode($logProducto)
+						'administrador' => 'Se quita reserva usada en embalaje ' .$embalaje['id'],
+						'modulo' 		=> 'Ventas',
+						'modulo_accion' => json_encode(
+							[
+								'embalaje' 				=> $embalaje,
+								'detalle'  				=> $detalle,
+								'VentaDetallesReserva' 	=> $VentaDetallesReserva
+							]
+						)
 					)
 				);
+
+				$cantidad_pendiente_entrega = ( $detalle['VentaDetalle']['cantidad_pendiente_entrega'] - $producto['cantidad_embalada'] );
+
+				$actualizarDetalle = [ 
+					'VentaDetalle' => [
+						'id' 						 => $producto['detalle_id'],
+						'completo'					 => ($cantidad_pendiente_entrega == 0),
+						'fecha_completado'			 => ($cantidad_pendiente_entrega == 0) ? $fecha : null,
+						'cantidad_entregada'		 => ($detalle['VentaDetalle']['cantidad_entregada'] + $producto['cantidad_embalada']),
+						'cantidad_pendiente_entrega' => $cantidad_pendiente_entrega < 0 ? 0: $cantidad_pendiente_entrega,
+					]
+				];
 				
-				if ($producto['cantidad_reservada'] > 0)
-				{
-					# Seteamos el id
-					$detalles[$ip]['VentaDetalle']['id'] = $producto['id'];
+				$VentaDetallesReserva['VentaDetallesReserva']['cantidad_reservada'] = $VentaDetallesReserva['VentaDetallesReserva']['cantidad_reservada'] - $producto['cantidad_embalada'];
+				$VentaDetallesReserva['VentaDetallesReserva']['embalaje_id'] 		= $embalaje['id'];
 
-					# Se calcula la cantidad en espera
-					if ($producto['cantidad_en_espera'] > 0)
-					{
-						$detalles[$ip]['VentaDetalle']['cantidad_en_espera'] = ($producto['cantidad'] - $producto['cantidad_anulada']) - $producto['cantidad_reservada'];
-					}
-		
-					# Se saca el producto de la bodega
-					ClassRegistry::init('Bodega')->crearSalidaBodega($producto['venta_detalle_producto_id'], $venta['Venta']['bodega_id'], $producto['cantidad_reservada'], null, 'VT', null, $id);
-
-					# Se actualizan los valors de la linea de producto
-					$detalles[$ip]['VentaDetalle']['completo']         = ( ($producto['cantidad'] - $producto['cantidad_anulada']) == $producto['cantidad_reservada']) ? 1 : 0;
-					$detalles[$ip]['VentaDetalle']['fecha_completado'] = date('Y-m-d H:i:s');
-					
-					$detalles[$ip]['VentaDetalle']['cantidad_entregada'] = $cantidad_entregada + $producto['cantidad_reservada'];
-					$detalles[$ip]['VentaDetalle']['cantidad_reservada'] = 0;
-
-					# Se actualiza la cantidad pendiente de entrega
-					$detalles[$ip]['VentaDetalle']['cantidad_pendiente_entrega'] = $producto['cantidad_pendiente_entrega'] - $detalles[$ip]['VentaDetalle']['cantidad_entregada'];
-					
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'Procesa entregar producto aceptada ' . $producto['id'],
-							'modulo' => 'Ventas',
-							'modulo_accion' => json_encode($detalles[$ip])
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Se quita reserva usada en embalaje ' .$embalaje['id'],
+						'modulo' 		=> 'Ventas',
+						'modulo_accion' => json_encode(
+							[
+								'Despues de quitar reserva' 	=> $VentaDetallesReserva
+							]
 						)
-					);
-
-				}
-				else 
-				{
-
-					$detalles[$ip]['VentaDetalle'] = $producto; // Ya se entregó o está agendado
-
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'Procesa entregar producto ya entregado o agendado ' . $producto['id'],
-							'modulo' => 'Ventas',
-							'modulo_accion' => json_encode($detalles[$ip])
-						)
-					);
-
-					continue;
-
-				}
-				
+					)
+				);
 				# Nuevo stock virtual
-				if ($producto['reservado_virtual']) 
+				if ($detalle['VentaDetalle']['reservado_virtual']) 
 				{ 
-					ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($producto['venta_detalle_producto_id'], ($producto['cantidad'] - $producto['cantidad_anulada']) );
-					$detalles[$ip]['VentaDetalle']['reservado_virtual'] = 1;
+					ClassRegistry::init('VentaDetalleProducto')->actualizar_stock_virtual($producto['producto_id'], $producto['cantidad_embalada']  );
 				}
+
+				# Se saca el producto de la bodega
+				ClassRegistry::init('Bodega')->crearSalidaBodega($producto['producto_id'],  $producto['EmbalajeWarehouse']['bodega_id'] , $producto['cantidad_embalada'], null, 'VT', null, $id);
+				ClassRegistry::init('VentaDetallesReserva')->saveAll($VentaDetallesReserva);
+				ClassRegistry::init('VentaDetalle')->saveAll($actualizarDetalle);
+				$HuboCambios = true;
+				
 
 			}
-
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'Finaliza entregar venta ' . $id,
-					'modulo' => 'Ventas',
-					'modulo_accion' => json_encode($detalles)
-				)
-			);
-			
-			# Guardamos los cambios
-			ClassRegistry::init('VentaDetalle')->saveMany($detalles);
-
+		
 		}
 
-		# Pedido está entregado completo
-		$this->cambiar_estado_picking($id, 'empaquetado');
+		if($HuboCambios){
 
-		$this->saveField('subestado_oc', 'entregado');
-		$this->saveField('fecha_entregado', date('Y-m-d H:i:s'));		
+			$this->cambiar_estado_picking($id, 'empaquetado');
+			$this->saveField('subestado_oc', 'entregado');
+			$this->saveField('fecha_entregado',$fecha);		
+		}
 
 		# Guardamos el log
 		ClassRegistry::init('Log')->create();
@@ -1339,12 +1394,14 @@ class Venta extends AppModel
 		$ventaDetalles = ClassRegistry::init('VentaDetalle')->find('all', array(
 			'conditions' => array(
 				'venta_id' => $id
-			)
+			),
 		));	
-
 		foreach ($ventaDetalles as $ip => $producto) {
 			ClassRegistry::init('VentaDetalle')->id = $producto['VentaDetalle']['id'];
-			ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', 0);
+
+			// TODO Quitamos las reservas
+			ClassRegistry::init('VentaDetallesReserva')->updateAll(['VentaDetallesReserva.cantidad_reservada'=> 0 ], ['VentaDetallesReserva.venta_detalle_id'=> $producto['VentaDetalle']['id']]);
+
 			ClassRegistry::init('VentaDetalle')->saveField('cantidad_pendiente_entrega', $producto['VentaDetalle']['cantidad']);
 
 			# Nuevo stock virtual
@@ -1353,7 +1410,7 @@ class Venta extends AppModel
 				ClassRegistry::init('VentaDetalle')->saveField('reservado_virtual', 0);
 			}
 		}
-
+	
 		$this->cambiar_estado_picking($id, 'no_definido');
 		$this->saveField('subestado_oc', 'no_entregado');
 
@@ -1368,7 +1425,6 @@ class Venta extends AppModel
 	 */
 	public function reservar_stock_producto($id)
 	{	
-
 		$log = array();
 		
 		$ventaDetalle     = ClassRegistry::init('VentaDetalle')->find('first', array(
@@ -1379,13 +1435,22 @@ class Venta extends AppModel
 				'VentaDetalle.id',
 				'VentaDetalle.venta_id',
 				'VentaDetalle.venta_detalle_producto_id',
-				'VentaDetalle.cantidad_reservada',
 				'VentaDetalle.cantidad',
 				'VentaDetalle.cantidad_anulada',
 				'VentaDetalle.cantidad_entregada',
 				'VentaDetalle.cantidad_en_espera',
 				'VentaDetalle.fecha_llegada_en_espera'
-			)
+			),
+			'contain' => [
+				'VentaDetallesReserva'=>[
+					'fields'=>[ 
+							'VentaDetallesReserva.venta_detalle_id',
+							'VentaDetallesReserva.venta_detalle_producto_id',
+							'VentaDetallesReserva.cantidad_reservada',
+							'VentaDetallesReserva.bodega_id',
+						]
+					]
+				]
 		));
 
 		$log[] = array(
@@ -1413,8 +1478,15 @@ class Venta extends AppModel
 						'VentaDetalle.cantidad_anulada',
 						'VentaDetalle.cantidad_entregada',
 						'VentaDetalle.cantidad_en_espera',
-						'VentaDetalle.cantidad_reservada'
-					)
+					),
+					'VentaDetallesReserva'=>[
+						'fields'=>[ 
+								'VentaDetallesReserva.venta_detalle_id',
+								'VentaDetallesReserva.venta_detalle_producto_id',
+								'VentaDetallesReserva.cantidad_reservada',
+								'VentaDetallesReserva.bodega_id',
+							]
+						]
 					),
 				'VentaEstado' => array(
 					'VentaEstadoCategoria' => array(
@@ -1426,6 +1498,10 @@ class Venta extends AppModel
 						'VentaEstado.id'
 					)
 				),
+				'MetodoEnvio' => [
+					'fields' =>[ 'MetodoEnvio.permitir_reservar_stock_otra_bodega'],
+					'BodegasMetodoEnvio'
+					]
 			),
 			'fields' => array(
 				'Venta.id',
@@ -1451,7 +1527,8 @@ class Venta extends AppModel
 			return 0;
 		
 		}
-		$cant_reservada = $ventaDetalle['VentaDetalle']['cantidad_reservada'];
+		
+		$cant_reservada = array_sum( Hash::extract($ventaDetalle['VentaDetallesReserva'], "{n}.cantidad_reservada"));
 		$cant_vendida   = $ventaDetalle['VentaDetalle']['cantidad'] - $ventaDetalle['VentaDetalle']['cantidad_anulada'];
 		$cant_entregada = $ventaDetalle['VentaDetalle']['cantidad_entregada'];
 		$cant_en_espera = $ventaDetalle['VentaDetalle']['cantidad_en_espera'];
@@ -1461,16 +1538,69 @@ class Venta extends AppModel
 			return 0;
 		}
 
-		$reservar = $cant_vendida - $cant_reservada - $cant_entregada;
-		
-		$disponible = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], $reservar, ClassRegistry::init('Venta')->bodega_id($ventaDetalle['VentaDetalle']['venta_id']));
-		$reservado  = $cant_reservada + $disponible;
-		
+		$suma_cant_reservada_y_por_reservar = $cant_reservada;
 		# Solo se reserva si la cantidad reservada es distinta a la cantidad comprada por el cliente
+		
 		if ($cant_reservada != $cant_vendida) 
 		{
+			
+			$reservar 		      = $cant_vendida - $cant_reservada - $cant_entregada;
+			$bodega_a_reservar    = $venta['Venta']['bodega_id'];
+			$reservado 		      = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], $reservar, $bodega_a_reservar);
+			$VentaDetallesReserva = [];
+			
+			if ($reservado > 0) {
+
+				$suma_cant_reservada_y_por_reservar = $suma_cant_reservada_y_por_reservar + $reservado;
+				$VentaDetallesReserva [] = [
+					'VentaDetallesReserva' => 
+					[
+						'venta_detalle_id'	       	=> $ventaDetalle['VentaDetalle']['id'],
+						'bodega_id'			       	=> $bodega_a_reservar,
+						'cantidad_reservada'       	=> $reservado,
+						'venta_detalle_producto_id' => $ventaDetalle['VentaDetalle']['venta_detalle_producto_id'],
+						
+					]
+				];
+			}
+			// TODO Si aun no se termina de reservar el total y el metodo de envio permite buscar reserva en otras bodegas se procede a consultar stock en dichas
+			if ($venta['MetodoEnvio']['permitir_reservar_stock_otra_bodega'] && $suma_cant_reservada_y_por_reservar < $reservar ) {
+			
+				foreach ($venta['MetodoEnvio']['BodegasMetodoEnvio'] as $value) {
+	
+					$reservado = ClassRegistry::init('Bodega')->calcular_reserva_stock($ventaDetalle['VentaDetalle']['venta_detalle_producto_id'], ($reservar - $suma_cant_reservada_y_por_reservar ), $value['bodega_id']);
+					// TODO Si se encuentra stock en otras bodegas no se continua buscando 
+					if ($reservado > 0 ) {
+						$suma_cant_reservada_y_por_reservar = $suma_cant_reservada_y_por_reservar + $reservado;
+						$bodega_a_reservar 	  				= $value['bodega_id'];
+						$VentaDetallesReserva [] 			= [
+							'VentaDetallesReserva' => 
+							[
+								'venta_detalle_id'	       	=> $ventaDetalle['VentaDetalle']['id'],
+								'bodega_id'			       	=> $bodega_a_reservar,
+								'cantidad_reservada'       	=> $reservado,
+								'venta_detalle_producto_id' => $ventaDetalle['VentaDetalle']['venta_detalle_producto_id'],
+								
+							]
+						];
+						// TODO Si ya reserve el total se termina de recorrer bodegas
+						if ($suma_cant_reservada_y_por_reservar == $cant_vendida) {
+							break;
+						}
+						
+					}
+				}
+			}
 			$cant_vendida = $cant_vendida - $cant_entregada;
-			$ventaDetalle['VentaDetalle']['cantidad_reservada'] = $reservado;
+
+			// * Si hay para reservar se crean registros de reserva
+			if ($VentaDetallesReserva) {
+				ClassRegistry::init('VentaDetallesReserva')->create();
+				ClassRegistry::init('VentaDetallesReserva')->saveMany($VentaDetallesReserva);
+			}
+
+			// ! La reserva ya no se hace desde el VentaDetalle
+			// $ventaDetalle['VentaDetalle']['cantidad_reservada'] = $reservado;
 			$diff = $cant_vendida - $reservado;
 			
 			if ($diff >= $cant_en_espera) 
@@ -1498,7 +1628,6 @@ class Venta extends AppModel
 				$ventaDetalle['VentaDetalle']['cantidad_en_espera'] = 0;
 				$ventaDetalle['VentaDetalle']['fecha_llegada_en_espera'] = '';
 			}
-			
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Producto reservar finaliza ' . $id,
@@ -1526,8 +1655,15 @@ class Venta extends AppModel
 						'VentaDetalle.cantidad_anulada',
 						'VentaDetalle.cantidad_entregada',
 						'VentaDetalle.cantidad_en_espera',
-						'VentaDetalle.cantidad_reservada'
-					)
+					),
+				'VentaDetallesReserva'=>[
+					'fields'=>[ 
+							'VentaDetallesReserva.venta_detalle_id',
+							'VentaDetallesReserva.venta_detalle_producto_id',
+							'VentaDetallesReserva.cantidad_reservada',
+							'VentaDetallesReserva.bodega_id',
+						]
+					]
 				),
 				'VentaEstado' => array(
 					'fields' => array(
@@ -1547,9 +1683,9 @@ class Venta extends AppModel
 				'Venta.venta_estado_id'
 			)
 		));
-		
-		$total_cantidad = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
-		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_reservada'));
+
+		$total_cantidad  = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')) - array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
+		$total_reservado = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.VentaDetallesReserva.{n}.cantidad_reservada'));
 		
 		# Debe ser una venta de tipo venta para pasar a picking
 		if ( $total_reservado == $total_cantidad && $total_reservado > 0 && $venta['VentaEstado']['VentaEstadoCategoria']['venta']) 
@@ -1568,9 +1704,11 @@ class Venta extends AppModel
 		}
 		
 		# Preparamos los embalajes
-		ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($venta['Venta']['id']);
+		// ! Ya no se usara metodo desde modelo, solo desde componente
+		// ! Se debera instanciar el metodo "procesar_embalajes" posterior al del metodo "reservar_stock_producto" 
+		// ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($venta['Venta']['id']);
 
-		return $reservado;
+		return $suma_cant_reservada_y_por_reservar;
 	}
 
 
@@ -1659,38 +1797,40 @@ class Venta extends AppModel
 	 * @param  [type] $liberar [description]
 	 * @return [type]          [description]
 	 */
-	public function liberar_reserva_stock_producto($id, $liberar)
+	public function liberar_reserva_stock_producto($venta_detalle_reserva_id)
 	{
-		ClassRegistry::init('VentaDetalle')->id = $id;
-		if (!ClassRegistry::init('VentaDetalle')->exists()) {
+
+		ClassRegistry::init('VentaDetallesReserva')->id = $venta_detalle_reserva_id;
+
+		if (!ClassRegistry::init('VentaDetallesReserva')->exists()) {
 			return 0;
 		}
 
-		if ($liberar == 0 || $liberar < 0 || $liberar > ClassRegistry::init('VentaDetalle')->field('cantidad_reservada'))
-			return 0;
+		// TODO Se indica venta_detalle_id para encontrar venta y cantidad a liberar
+		ClassRegistry::init('VentaDetalle')->id = ClassRegistry::init('VentaDetallesReserva')->field('venta_detalle_id');
 
-		$nueva_cantidad = ClassRegistry::init('VentaDetalle')->field('cantidad_reservada') - (int) $liberar;
-			
-		if(ClassRegistry::init('VentaDetalle')->saveField('cantidad_reservada', $nueva_cantidad)) {
+		$liberar = ClassRegistry::init('VentaDetallesReserva')->field('cantidad_reservada');
 
-			ClassRegistry::init('VentaDetalle')->saveField('confirmado_app', 0);
+		// ! Se elimina reserva
+		ClassRegistry::init('VentaDetallesReserva')->updateAll(['VentaDetallesReserva.cantidad_reservada' => 0],['VentaDetallesReserva.id' => $venta_detalle_reserva_id]);
 
-			$this->id = ClassRegistry::init('VentaDetalle')->field('venta_id');
-			
-			$estado_actual = $this->field('picking_estado');
+		ClassRegistry::init('VentaDetalle')->saveField('confirmado_app', 0);
 
-			if (in_array($estado_actual, array('empaquetar', 'empaquetando', 'empaquetado')))
-			{
-				$this->cambiar_estado_picking($this->id, 'no_definido');
-			}
+		$this->id = ClassRegistry::init('VentaDetalle')->field('venta_id');
+		
+		$estado_actual = $this->field('picking_estado');
 
-			# Preparamos los embalajes
-			ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($this->id);
-
-			return $liberar;
-		}else{
-			return 0;
+		if (in_array($estado_actual, array('empaquetar', 'empaquetando', 'empaquetado')))
+		{
+			$this->cambiar_estado_picking($this->id, 'no_definido');
 		}
+		
+		// ! Ya no usaremos el metodo desde el modelo, si no desde el componente
+		// TODO Ahora se está instanciando el metodo del componente desde el metodo admin_liberar_stock_reservado, Controllador Ventas
+		# Preparamos los embalajes
+		// ClassRegistry::init('EmbalajeWarehouse')->procesar_embalajes($this->id);
+
+		return $liberar;
 	}
 
 

@@ -927,7 +927,20 @@ class AdministradoresController extends AppController
 				'Administrador' => array(
 					'Rol' => array(
 						'fields' => array(
-							'Rol.nombre', 'Rol.app_retiro', 'Rol.app_despacho', 'Rol.app_entrega', 'Rol.app_agencia', 'Rol.app_picking', 'Rol.app_perfil', 'Rol.app_embalajes', 'Rol.bodega_id', 'Rol.app_recepcion', 'Rol.app_zonificiacion' , 'Rol.app_ventas'
+							'Rol.nombre', 
+							'Rol.app_retiro', 
+							'Rol.app_despacho', 
+							'Rol.app_entrega', 
+							'Rol.app_agencia', 
+							'Rol.app_picking', 
+							'Rol.app_perfil', 
+							'Rol.app_embalajes', 
+							'Rol.bodega_id', 
+							'Rol.app_recepcion', 
+							'Rol.app_zonificiacion' , 
+							'Rol.app_ventas',
+							'Rol.app_trasladar_embalajes_a_otras_bodegas',
+							'Rol.app_recibir_embalajes_en_traslado'
 						)
 					),
 					'fields' => array(
@@ -966,15 +979,17 @@ class AdministradoresController extends AppController
                     'perfil' => (isset(ClassRegistry::init('Rol')->app[$tokenData['Administrador']['Rol']['app_perfil']])) ? ClassRegistry::init('Rol')->app[$tokenData['Administrador']['Rol']['app_perfil']] : ClassRegistry::init('Rol')->app['general']
                 ),
                 'Opciones' => array(
-                    'retirar_en_tienda' => $tokenData['Administrador']['Rol']['app_retiro'],
-                    'despachar'         => $tokenData['Administrador']['Rol']['app_despacho'],
-                    'entrega_domicilio' => $tokenData['Administrador']['Rol']['app_entrega'],
-                    'entrega_agencia'   => $tokenData['Administrador']['Rol']['app_agencia'],
-                    'picking'           => $tokenData['Administrador']['Rol']['app_picking'],
-                    'embalajes'         => $tokenData['Administrador']['Rol']['app_embalajes'],
-                    'recepcion'         => $tokenData['Administrador']['Rol']['app_recepcion'],
-                    'zonificiacion'     => $tokenData['Administrador']['Rol']['app_zonificiacion'],
-                    'ventas'     		=> $tokenData['Administrador']['Rol']['app_ventas'],
+                    'retirar_en_tienda' 					=> $tokenData['Administrador']['Rol']['app_retiro'],
+                    'despachar'         					=> $tokenData['Administrador']['Rol']['app_despacho'],
+                    'entrega_domicilio' 					=> $tokenData['Administrador']['Rol']['app_entrega'],
+                    'entrega_agencia'   					=> $tokenData['Administrador']['Rol']['app_agencia'],
+                    'picking'           					=> $tokenData['Administrador']['Rol']['app_picking'],
+                    'embalajes'         					=> $tokenData['Administrador']['Rol']['app_embalajes'],
+                    'recepcion'         					=> $tokenData['Administrador']['Rol']['app_recepcion'],
+                    'zonificiacion'     					=> $tokenData['Administrador']['Rol']['app_zonificiacion'],
+                    'ventas'     							=> $tokenData['Administrador']['Rol']['app_ventas'],
+                    'trasladar_embalajes_a_otras_bodegas'   => $tokenData['Administrador']['Rol']['app_trasladar_embalajes_a_otras_bodegas'],
+                    'recibir_embalajes_en_traslado'     	=> $tokenData['Administrador']['Rol']['app_recibir_embalajes_en_traslado'],
                 ),
                 'Ambientes' => array()
             );

@@ -33,12 +33,20 @@
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('permitir_reservar_stock_otra_bodega', 'Permitir reservas en otras bodegas'); ?></th>
+								<td><?= $this->Form->input('permitir_reservar_stock_otra_bodega', array('class' => 'icheckbox')); ?></td>
+							<tr>
+							<tr>
 								<th><?= $this->Form->label('embalado_venta_estado_id', 'Estado de la venta por defecto'); ?></th>
 								<td><?= $this->Form->select('embalado_venta_estado_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('embalado_venta_estado_parcial_id', 'Estado de la venta parcial por defecto'); ?></th>
 								<td><?= $this->Form->select('embalado_venta_estado_parcial_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('consolidacion_venta_estado_id', 'Estado de la venta en consolidación'); ?></th>
+								<td><?= $this->Form->select('consolidacion_venta_estado_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
 							</tr>
 							<tr id="generar_ot" class="hidden">
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>

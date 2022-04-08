@@ -248,7 +248,7 @@
 						
 						<?= $this->Form->button('<i class="fa fa-file" aria-hidden="true"></i> Facturar seleccionados (<span id="ventas-seleccionadas">0</span>)', array('type' => 'submit', 'escape' => false, 'class' => 'btn btn-warning btn-facturacion-masiva', 'disabled' => true)); ?>
 						
-
+						<!-- // ! Metodo obsoleto y en desuzo -->
 						<!--<a class="btn btn-success" onclick="$('#mb-confirmar-actualizacion').css('display', 'block');"><i class="fa fa-refresh"></i> Actualizar Ventas</a> -->
 						<? endif; ?>
 						<a class="btn btn-primary" onclick="VentasExportarExcel();"><i class="fa fa-file-excel-o"></i> Exportar a Excel</a>
@@ -460,7 +460,7 @@
 	</div>
 
 </div>
-
+<!-- // ! Metodo obsoleto y en desuzo -->
 <div id="mb-confirmar-actualizacion" class="message-box animated fadeIn" data-sound="alert">
 	<div class="mb-container">
 		<div class="mb-middle">

@@ -21,20 +21,20 @@ class WarehouseNodriza
      * @param  mixed $BX_CLIENT_ACCOUNT
      * @return void
      */
-    // TODO Se inializan las variables  
+    // * Se inializan las variables  
     public function __construct($BX_TOKEN, $API_ROOT_URL = 'local')
     {
         self::$API_ROOT_URL = $this->URLs[$API_ROOT_URL] ?? 'https://dev-warehouse.nodriza.cl';
         self::$BX_TOKEN     = $BX_TOKEN ?? '';
     }
 
-    // TODO Solo cambia estado del embalaje
+    // * Solo cambia estado del embalaje
     public function CambiarCancelado($embalajes)
     {
         return $this->cURL_POST('/api/v1/embalaje/cambiar-estado-a-cancelado', $embalajes);
     }
 
-    // TODO Metodo que ademas de cambiar estado cancela embalajes que no hayan sido cancelados ni finzalizados, y zonifica productos que se hayan estado embalando
+    // * Metodo que ademas de cambiar estado cancela embalajes que no hayan sido cancelados ni finzalizados, y zonifica productos que se hayan estado embalando
     public function CambiarCancelado_V2($venta_id, $responsable_id_cancelado, $devolucion, $motivo_cancelado = null)
     {
         return $this->cURL_POST(
@@ -47,7 +47,7 @@ class WarehouseNodriza
             ]
         );
     }
-    // TODO Cuando se anulan Items de una venta se vuelve a recrear embalaje
+    // * Cuando se anulan Items de una venta se vuelve a recrear embalaje
     public function RecrearEmbalajesPorItemAnulados($venta)
     {
         return $this->cURL_POST(
@@ -56,7 +56,7 @@ class WarehouseNodriza
         );
     }
 
-    // TODO Añade OT al embalaje
+    // * Añade OT al embalaje
     public function OrdenTransporteEmbalajes($orden_transporte)
     {
         // $ejemplo = [
@@ -76,7 +76,7 @@ class WarehouseNodriza
         );
     }
 
-    // TODO Crea un embalaje
+    // * Crea un embalaje
     public function CrearPedido($embalaje)
     {
         // [
@@ -107,7 +107,7 @@ class WarehouseNodriza
         );
     }
 
-    // TODO Obtenemos evidencia de los embalajes despachados
+    // * Obtenemos evidencia de los embalajes despachados
     public function ObtenerEvidencia($embalaje)
     {
         // [
@@ -125,7 +125,7 @@ class WarehouseNodriza
             $embalaje
         );
     }
-    
+
     /**
      * ObtenerEmbalajesVenta
      * Obtenemos todos los embalajes excepto los cancelados
@@ -147,12 +147,11 @@ class WarehouseNodriza
      * @return mixed    Embalajes
      */
     public function ObtenerEmbalajesVentaV2($venta_id, $filtro = [])
-    {   
+    {
 
         $path = "/api/v2/embalaje/embalaje-venta/{$venta_id}";
 
-        foreach($filtro as $param => $val)
-        {
+        foreach ($filtro as $param => $val) {
             $path = $path . "?{$param}=$val";
         }
 
@@ -199,7 +198,7 @@ class WarehouseNodriza
         return $this->cURL_POST("/api/v1/embalaje/eliminar-nota/{$id}", []);
     }
 
-    
+
     /**
      * ObtenerNotasDespacho
      *
@@ -207,18 +206,71 @@ class WarehouseNodriza
      * @return void
      */
     public function ObtenerNotasDespacho($filtro = [])
-    {   
+    {
         $path = "/api/v1/embalaje/notas-despacho";
 
-        foreach($filtro as $param => $val)
-        {
+        foreach ($filtro as $param => $val) {
             $path = $path . "?{$param}=$val";
         }
 
         return $this->cURL_GET($path);
     }
 
-    // TODO Abstraccion para hacer peticiones a endpoints por metodo POST
+    // * Obtenemos evidencia de los embalajes despachados
+    public function CrearEntradaSalidaZonificacion($zonificacion)
+    {
+        // [
+        //     [
+        //         "producto_id"            => "19411",
+        //         "cantidad"               => "10",
+        //         "responsable_id"         => "23",
+        //         "bodega_id"              => 1,
+        //         "embalaje_id"            => null,
+        //         "nueva_ubicacion_id"     => null,
+        //         "antigua_ubicacion_id"   => null,
+        //         "glosa"                  => null,
+        //         "orden_de_compra"        => null,
+        //         "movimiento"             => "item_devueltos_por_nota_de_credito",
+        //     ],
+        //     [
+        //         "producto_id"            => "19411",
+        //         "cantidad"               => "10",
+        //         "responsable_id"         => "23",
+        //         "bodega_id"              => 1,
+        //         "embalaje_id"            => null,
+        //         "nueva_ubicacion_id"     => null,
+        //         "antigua_ubicacion_id"   => null,
+        //         "glosa"                  => null,
+        //         "orden_de_compra"        => null,
+        //         "movimiento"             => "item_devueltos_por_nota_de_credito",
+        //     ],
+        // ];
+
+        return $this->cURL_POST(
+            '/api/v1/zonificacion/crear-entrada-salida',
+            $zonificacion
+        );
+    }
+
+    public function CambiarEstadoAEnTrasladoABodega($body)
+    {
+        // [
+        //     "id" => 12,
+        //     "responsable_id_en_traslado_a_bodega" => 12,
+        // ]
+        return $this->cURL_POST("/api/v1/embalaje/cambiar-estado-a-en-traslado-a-bodega", $body);
+    }
+
+    public function RecepcionarEmbalajeTrasladado($body)
+    {
+        // [
+        //     "id" => 12,
+        //     "responsable" => 12,
+        // ]
+        return $this->cURL_POST("/api/v1/embalaje/recepcionar-embalaje-trasladado", $body);
+    }
+
+    // * Abstraccion para hacer peticiones a endpoints por metodo POST
     private function cURL_POST($URL, $POSTFIELDS)
     {
         $curl = curl_init();
@@ -254,7 +306,7 @@ class WarehouseNodriza
         ];
     }
 
-    // TODO Abstraccion para hacer peticiones a endpoints por metodo GET
+    // * Abstraccion para hacer peticiones a endpoints por metodo GET
     private function cURL_GET($URL)
     {
 

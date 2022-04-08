@@ -139,8 +139,12 @@ class MetodoEnviosController extends AppController
 			
 			if ( $this->MetodoEnvio->save($this->request->data) )
 			{
+				ClassRegistry::init('BodegasMetodoEnvio')->deleteAll([
+					'BodegasMetodoEnvio.bodega_id'			=> $this->request->data['MetodoEnvio']['bodega_id'],
+					'BodegasMetodoEnvio.metodo_envio_id' 	=> $this->request->data['MetodoEnvio']['id']
+				]);
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
-				$this->redirect(array('action' => 'index'));
+				$this->redirect(array('action' => 'edit', $id));
 			}
 			else
 			{
@@ -154,12 +158,12 @@ class MetodoEnviosController extends AppController
 				array(
 					'conditions' => array(
 						'MetodoEnvio.id' => $id
-					)
+					),
+					'contain'=>['BodegasMetodoEnvio'=>['Bodega']]
 				)
 			);
 		}
 		
-
 		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
 
 		$dependencias  = $this->MetodoEnvio->dependencias();
@@ -424,7 +428,7 @@ class MetodoEnviosController extends AppController
 			# Creamos la OT
 			if ($this->Boosmap->generar_ot($venta)) {
 
-				$this->Boosmap->registrar_estados($venta['Venta']['id']);
+				// $this->Boosmap->registrar_estados($venta['Venta']['id']);
 
 				$resultado = true;
 
@@ -446,14 +450,14 @@ class MetodoEnviosController extends AppController
 			# Creamos la OT
 			if ($this->BlueExpress->generar_ot($venta)) {
 
-				$this->BlueExpress->registrar_estados($venta['Venta']['id']);
+				// $this->BlueExpress->registrar_estados($venta['Venta']['id']);
 
 				$resultado = true;
 
 				$logs[] = array(
 					'Log' => array(
 						'administrador' => 'Crear etiqueta BlueExpress venta ' . $id_venta,
-						'modulo' => 'MetodoEnvio',
+						'modulo' 		=> 'MetodoEnvio',
 						'modulo_accion' => 'Generada con éxito'
 					)
 				);
@@ -631,6 +635,68 @@ class MetodoEnviosController extends AppController
             'response' => $respuesta,
             '_serialize' => array('response')
 		));
+	}
+
+	public function admin_bodega_add($id)
+	{
+		
+		if ($this->request->is('post')) {
+
+			$relaciones = array_filter($this->request->data, function ($key, $value) {
+				return (!empty($key['bodega_id']));
+			}, ARRAY_FILTER_USE_BOTH);
+			$nuevas_relacion = [];
+			foreach ($relaciones as  $value) {
+				$nuevas_relacion[] = ['BodegasMetodoEnvio' => $value];
+			}
+			if (ClassRegistry::init('BodegasMetodoEnvio')->saveAll($nuevas_relacion)) {
+				$this->Session->setFlash(
+					'Registro agregado correctamente.',
+					null,
+					array(),
+					'success'
+				);
+			} else {
+				$this->Session->setFlash(
+					'Error al guardar la relación. Por favor intenta nuevamente.',
+					null,
+					array(),
+					'danger'
+				);
+			}
+		}
+
+		$this->redirect(array('action' => 'edit',$id));
+	
+		
+	}
+
+	public function admin_bodega_delete($id)
+	{
+		if ($this->request->is('post')) {
+
+			
+			if (ClassRegistry::init('BodegasMetodoEnvio')->delete(['BodegasMetodoEnvio.id' => $this->request->data['id']])) {
+
+				$this->Session->setFlash(
+					'Se ha eliminado relacion.',
+					null,
+					array(),
+					'success'
+				);
+			} else {
+
+				$this->Session->setFlash(
+					'No se han podido eliminar la relacion',
+					null,
+					array(),
+					'danger'
+				);
+			}
+		}
+
+		$this->redirect(array('action' => 'edit', $id));
+		
 	}
 		
 }

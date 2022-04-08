@@ -65,7 +65,7 @@ class EnviameComponent extends Component
 			return false;
 		}		
 		
-		$paquetes = $this->obtener_bultos_venta($venta, $volumenMaximo);
+		$paquetes = $this->LAFFPack->obtener_bultos_venta($venta, $volumenMaximo);
 		
 		# dimensiones de todos los paquetes unificado
 		$largoTotal = array_sum(Hash::extract(Hash::extract($paquetes, '{n}.paquete'), '{n}.length'));
@@ -175,65 +175,6 @@ class EnviameComponent extends Component
 		return ClassRegistry::init('Venta')->saveAll($nwVenta);
 
 	}
-
-
-	/**
-	 * Calcula a aproximacion de bltos que se deberían armar en base a los itemes
-	 * @param  array $venta         Detalle de la venta
-	 * @param  float $volumenMaximo volumen máximo para cada paquete
-	 * @return array
-	 */
-	public function obtener_bultos_venta($venta, $volumenMaximo)
-	{	
-		$bultos = array();
-
-		foreach ($venta['VentaDetalle'] as $ivd => $d) {
-
-			if ($d['cantidad_reservada'] == 0) {
-				continue;
-			}
-			
-			for ($i=0; $i < $d['cantidad_reservada']; $i++) {
-
-				$alto  = $d['VentaDetalleProducto']['alto'];
-				$ancho = $d['VentaDetalleProducto']['ancho'];
-				$largo = $d['VentaDetalleProducto']['largo'];
-				$peso  = $d['VentaDetalleProducto']['peso'];
-
-				$volumen = $this->calcular_volumen($alto, $ancho, $largo);
-				
-				$caja = array(
-					'id'     => $d['VentaDetalleProducto']['id'],
-					'width'  => $ancho,
-					'height' => $alto,
-					'length' => $largo,
-					'weight' => $peso
-				);
-
-				$unico = rand(1000, 100000);
-				
-				if ($volumen > $volumenMaximo) {
-					$bultos[$d['venta_id'] . $unico]['venta_id']    = $d['venta_id'];
-					$bultos[$d['venta_id'] . $unico]['cajas'][]     = $caja;
-				}else{
-					$bultos[$d['venta_id']]['venta_id']    = $d['venta_id'];
-					$bultos[$d['venta_id']]['cajas'][]     = $caja;
-				}	
-			}
-
-		}
-		
-		$resultado = array();
-		
-		foreach ($bultos as $ib => $b) {
-			$resultado[$ib]['paquete'] = $this->obtenerDimensionesPaquete($b['cajas']);
-			$resultado[$ib]['paquete']['weight'] = array_sum(Hash::extract($b['cajas'], '{n}.weight'));
-			$resultado[$ib]['items'] = $b['cajas'];
-		}
-
-		return $resultado;
-	}
-
 
 	/**
 	 * [calcular_volumen description]

@@ -364,8 +364,6 @@ class OrdenesController extends AppController
 
 			$this->request->data['DteReferencia'] = $this->clear($this->request->data['DteReferencia'], 'folio');
 
-			//prx($this->request->data);
-
 			# Guardar información del DTE en base de datos local
 			if($this->Orden->Dte->saveAll($this->request->data)) {
 
@@ -555,8 +553,6 @@ class OrdenesController extends AppController
 
 					if (!empty($mensajes[0])) {
 					}
-
-					prx($mensajes);
 
 				}
 				*/
@@ -788,8 +784,6 @@ class OrdenesController extends AppController
 
 				if (!empty($mensajes[0])) {
 				}
-
-				prx($mensajes);
 
 			}
 			*/

@@ -233,6 +233,10 @@
 										<td>Seleccione tipo de nota de crédito</td>
 										<td><?=$this->Form->select('tipo_ntc', $tipos_ndc, array('class' => 'form-control not-blank', 'empty' => 'Seleccione'))?></td>
 									</tr>
+									<tr class="bodega-devolucion hidden">
+										<td>Debe seleccionar bodega donde se recibe el o los producto.</td>
+										<td><?=$this->Form->select('bodegas', $bodegas, array('class' => 'form-control not-blank', 'empty' => 'Seleccione'))?></td>
+									</tr>
 								</table>
 							</div>
 						</div>
@@ -627,3 +631,22 @@
 	<!-- Fin Dte -->
 </div>
 <?= $this->Form->end(); ?>
+
+<script>
+	
+	
+	$(document).on('change', '#DteTipoNtc', function(){
+		const DteTipoNtc         = document.getElementById('DteTipoNtc').value;
+		const activeTR 		     = document.querySelector('.bodega-devolucion');
+		const requiredDteBodegas = document.querySelector('#DteBodegas');
+		if (DteTipoNtc == 'devolucion') {
+			activeTR.classList.remove('hidden');    
+			requiredDteBodegas.classList.add('required');          
+			
+		}else{
+			activeTR.classList.add('hidden');       
+			requiredDteBodegas.classList.remove('required')
+		}
+	
+	});
+</script>

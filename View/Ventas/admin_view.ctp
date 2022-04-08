@@ -241,7 +241,7 @@
 								
 								<? if ( ($venta['Venta']['picking_estado'] != 'empaquetado' || array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_en_espera')) > 0)  && $permisos['storage']) : ?>
 								<div class="panel-body">
-									<?=$this->Html->link('<i class="fa fa-hand-paper-o"></i> Reservar stock manualmente', array('action' => 'reservar_stock_venta', $venta['Venta']['id']), array('class' => 'btn btn-primary pull-right', 'escape' => false))?>
+									<?=$this->Html->link('<i class="fa fa-hand-paper-o"></i> Reservar stock manualmente', array('action' => 'reservar_stock_venta', $venta['Venta']['id']), array('class' => 'btn btn-primary pull-right start-loading-then-redirect', 'escape' => false))?>
 								</div>
 								<? endif; ?>
 
@@ -256,10 +256,10 @@
 												<th>Precio<br/> Bruto</th>
 												<th>Cantidad</th>
 												<th>Cantidad<br/> Entregada</th>
-												<th>Stock<br/> reservado</th>
-												<th>Cant<br/> anulada</th>
+												<th>Stock<br/> Reservado</th>
+												<th>Cant<br/> Anulada</th>
 												<th>Subtotal</th>
-												<th>Detalle <br> oc</th>
+												<th>Detalle <br> OC</th>
 												<th>Evidencia <br> Embalaje</th>
 												<th>Opciones</th>
 											</thead>
@@ -319,8 +319,20 @@
 														<td>
 															<?= number_format($detalle['cantidad_entregada'], 0, ".", "."); ?>
 														</td>
-														<td>
-															<?=$detalle['cantidad_reservada'];?>
+														<td >
+																<? $NoHayReservas = true?>
+																<? foreach($bodegas as $bodega_id => $bodega) : ?>
+																	<? $suma = array_sum(Hash::extract($detalle['VentaDetallesReserva'], "{n}[bodega_id={$bodega_id}].cantidad_reservada"))?>
+																	<? if ($suma > 0) : ?>
+																		<li style="width: 250px">
+																			<? $NoHayReservas = false?>
+																			<?= "Bodega {$bodega}: {$suma}";?>
+																		</li>
+																	<? endif; ?>
+																<? endforeach; ?>
+																<? if ($NoHayReservas) : ?>
+																		0
+																<? endif; ?>
 														</td>
 														<td>
 															<?=$detalle['cantidad_anulada'];?>
@@ -382,15 +394,15 @@
 																<?= $this->Html->link('<i class="fa fa-file-pdf-o"></i> Ver NTC', array('controller' => 'ordenes', 'action' => 'editar', $detalle['dte'], $this->request->data['Venta']['id']), array('class' => 'btn btn-danger btn-block btn-xs', 'data-toggle' => 'tooltip', 'title' => 'Ver nota de crédito', 'escape' => false, 'target' => '_blank')); ?>
 															<? endif; ?>
 
-															<? if ($permisos['storage'] && $detalle['cantidad_reservada'] > 0 ) : ?>
+															<? if ($permisos['storage'] && array_sum(Hash::extract($detalle['VentaDetallesReserva'], '{n}.cantidad_reservada')) > 0 ) : ?>
 																<?= $this->element('ventas/liberar-stock', array('venta' => $venta, 'detalle' => $detalle)); ?>
 															<? endif; ?>
 
 															<? if ($permisos['storage'] && $detalle['cantidad_en_espera'] > 0 ) : ?>
-																<?=$this->Html->link('<i class="fa fa-ban"></i> Quitar agendamiento', array('action' => 'quitar_en_espera', $venta['Venta']['id'], $detalle['id']), array('class' => 'btn btn-default btn-block btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Eliminar el agendamiento del producto'))?>
+																<?=$this->Html->link('<i class="fa fa-ban"></i> Quitar agendamiento', array('action' => 'quitar_en_espera', $venta['Venta']['id'], $detalle['id']), array('class' => 'btn btn-default btn-block btn-xs start-loading-then-redirect', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Eliminar el agendamiento del producto'))?>
 															<? endif; ?>
 
-															<? if ($permisos['storage'] && ($detalle['cantidad_reservada'] + $detalle['cantidad_entregada']) < ($detalle['cantidad'] - $detalle['cantidad_anulada'])) : ?>
+															<? if ($permisos['storage'] && (array_sum(Hash::extract($detalle['VentaDetallesReserva'], '{n}.cantidad_reservada')) + $detalle['cantidad_entregada']) < ($detalle['cantidad'] - $detalle['cantidad_anulada'])) : ?>
 																<button type="button" class="btn btn-info btn-xs btn-block" data-toggle="modal" data-target="#modal-en-espera-producto-<?=$detalle['id'];?>"><i class="fa fa-clock-o"></i> <?= ($detalle['cantidad_en_espera'] == 0) ? 'Agendar' : 'Re-agendar'; ?></button>
 
 																<!-- Modal -->
@@ -411,7 +423,7 @@
 																				<?=$this->Form->hidden(sprintf('%d.VentaDetalle.id', $detalle['id']), array('value' => $detalle['id'])); ?>
 																				<div class="form-group">
 																					<?=$this->Form->label(sprintf('%d.VentaDetalle.cantidad_en_espera', $detalle['id']), 'Cantidad a esperar'); ?>
-																					<?=$this->Form->input(sprintf('%d.VentaDetalle.cantidad_en_espera', $detalle['id']), array('type' => 'text', 'class' => 'form-control not-blank is-number', 'min' => 0, 'max' => ($detalle['cantidad'] - $detalle['cantidad_anulada'] - $detalle['cantidad_reservada']), 'placeholder' => 'Ingrese la cantidad a la espera', 'value' => $detalle['cantidad_en_espera'])); ?>
+																					<?=$this->Form->input(sprintf('%d.VentaDetalle.cantidad_en_espera', $detalle['id']), array('type' => 'text', 'class' => 'form-control not-blank is-number', 'min' => 0, 'max' => ($detalle['cantidad'] - $detalle['cantidad_anulada'] - array_sum(Hash::extract($detalle['VentaDetallesReserva'], '{n}.cantidad_reservada'))), 'placeholder' => 'Ingrese la cantidad a la espera', 'value' => $detalle['cantidad_en_espera'])); ?>
 																				</div>
 																				<div class="form-group">
 																					<?=$this->Form->label(sprintf('%d.VentaDetalle.fecha_llegada_en_espera', $detalle['id']), 'Ingrese una fecha de llegada'); ?>
@@ -420,7 +432,7 @@
 																			</div>
 																			<div class="modal-footer">
 																				<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-																				<button type="submit" class="btn btn-primary">Agendar llegada</button>
+																				<button type="submit" class="btn btn-primary start-loading-then-redirect">Agendar llegada</button>
 																			</div>
 																			<?= $this->Form->end(); ?>
 																		</div>

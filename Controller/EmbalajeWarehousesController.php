@@ -77,7 +77,8 @@ class EmbalajeWarehousesController extends AppController
 						'Comuna.id',
 						'Comuna.nombre'
 					)
-				)
+					),
+				"BodegaTrasladar"
 			)
 		));
 
@@ -165,7 +166,7 @@ class EmbalajeWarehousesController extends AppController
 
 		$this->paginate = $paginate;
 		
-		BreadcrumbComponent::add('Embalajes ');
+		BreadcrumbComponent::add('Embalajes');
 
 		$embalajes	= $this->paginate();
 
@@ -414,7 +415,9 @@ class EmbalajeWarehousesController extends AppController
 			$this->redirect(array('action' => 'index'));
 		}
 
-		if ( $this->EmbalajeWarehouse->cancelar_embalaje($id, $this->Auth->user('id')) )
+		$response = $this->WarehouseNodriza->CambiarCancelado($id,'');
+		
+		if ( $response['code'] == 200)
 		{
 			$this->Session->setFlash('Embalaje cancelado con éxito.', null, array(), 'success');
 		}
@@ -606,7 +609,13 @@ class EmbalajeWarehousesController extends AppController
 		{
 			$msjTexto .= $valor['mensaje'];
 		}
-		
+
+		if(!is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'] ?? null)){
+			ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'];
+			$msjTexto .= strtoupper(" Embalaje debe ser trasladado a la bodega ".ClassRegistry::init('Bodega')->field('nombre'));
+		}
+
+		$msjTexto= inflector::slug($msjTexto,' ');
 		$archivos = array();
 
 		foreach ($paquetes as $paquete) 
@@ -772,7 +781,73 @@ class EmbalajeWarehousesController extends AppController
             'response' => $response,
             '_serialize' => array('response')
         ));
-		
+	}
 
+	
+	public function admin_trasladar($id)
+	{	
+		$this->EmbalajeWarehouse->id = $id;
+
+		if ( ! $this->EmbalajeWarehouse->exists() )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+		
+		$response = $this->WarehouseNodriza->CambiarEstadoAEnTrasladoABodega($id , $this->Auth->user('id') );	
+	
+		ClassRegistry::init('Log')->save(
+			[
+				'Log' => array(
+					'administrador' => "Trasladar Embalaje",
+					'modulo'        => 'EmbalajeWarehouseController',
+					'modulo_accion' => json_encode(['Respuesta warehouse: ' => $response])
+				)
+			]
+		);
+
+		if ($response['code'] == 200 )
+		{
+			$this->Session->setFlash('Se ha cambiado el estado del embalaje con exito.', null, array(), 'success');
+		}
+		else
+		{
+			$this->Session->setFlash("{$response['response']['mensaje']}", null, array(), 'warning');
+		}
+	
+		$this->redirect(array('action' => 'index'));
+	}
+
+	public function admin_recepcionar($id)
+	{	
+		$this->EmbalajeWarehouse->id = $id;
+
+		if ( ! $this->EmbalajeWarehouse->exists() )
+		{
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+		
+		$response = $this->WarehouseNodriza->RecepcionarEmbalajeTrasladado($id , $this->Auth->user('id') );	
+
+		ClassRegistry::init('Log')->save(
+			[
+				'Log' => array(
+					'administrador' => "Recepcionar Embalaje",
+					'modulo'        => 'EmbalajeWarehouseController',
+					'modulo_accion' => json_encode(['Respuesta warehouse: ' => $response])
+				)
+			]
+		);
+		if ($response['code'] == 200 )
+		{
+			$this->Session->setFlash('Se ha cambiado el estado del embalaje con exito.', null, array(), 'success');
+		}
+		else
+		{
+			$this->Session->setFlash("{$response['response']['mensaje']}", null, array(), 'warning');
+		}
+	
+		$this->redirect(array('action' => 'index'));
 	}
 }

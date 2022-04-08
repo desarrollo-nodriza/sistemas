@@ -233,7 +233,7 @@ class Bodega extends AppModel
 
 		# Obtenemos la cantidad reservada o vendida no empaquetada
 		$reservado = ClassRegistry::init('VentaDetalleProducto')->obtener_cantidad_reservada($id_producto, null, $id_bodega);
-
+		
 		if ($total <= $reservado)
 			return 0; // No tenemos stock
 
