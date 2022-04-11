@@ -24,9 +24,9 @@
 
 					<li><a href="#tab-estados" data-toggle="tab"><i class="fa fa-list"></i> Historial de estados</a></li>
 			    	
-					<? if (!empty($venta['EmbalajeWarehouse'])) : ?>
-						<li><a href="#tab-embalajes" data-toggle="tab"><i class="fa fa-cube"></i> Embalajes y notas</a></li>
-					<? endif; ?>
+					
+					<li><a href="#tab-embalajes" data-toggle="tab"><i class="fa fa-cube"></i> Warehouse</a></li>
+					
 
 			    </ul>
 
@@ -1241,8 +1241,8 @@
 						
 					</div>
 
-					<? if ($venta['EmbalajeWarehouse']) : ?>
 					<div class="tab-pane panel-body" id="tab-embalajes">
+						<? if ($venta['EmbalajeWarehouse']) : ?>
 						<br>
 						<h4><i class="fa fa-cube"></i> Embalajes de la venta</h4>
 						
@@ -1310,6 +1310,7 @@
 
 							</table>
 						</div>
+						<? endif; ?>
 						
 						<br>
 									
@@ -1352,7 +1353,6 @@
 						<?= $this->Form->end(); ?> 
 						
 					</div>
-					<? endif; ?>
 
 			    </div>
 
