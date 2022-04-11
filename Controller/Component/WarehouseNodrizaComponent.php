@@ -123,6 +123,8 @@ class WarehouseNodrizaComponent extends Component
             )
         );
 
+        $embalajes_respuesta = [];
+
         switch ($venta['Venta']['picking_estado']) {
 
             case 'no_definido':
@@ -237,26 +239,8 @@ class WarehouseNodrizaComponent extends Component
                                     'modulo_accion' => json_encode(['Respuesta warehouse: ' => $response])
                                 )
                             );
-
-                            $embalaje_id                        = $response['response']['body']['id'];
-
-                            if ($trasladar_a_otra_bodega) {
-
-                                ClassRegistry::init('Bodega')->id   = $bodega_id_para_trasladar;
-                                $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
-                                $this->crearNotas($venta, "Trasladar", "El embalaje {$embalaje_id} requiere ser trasladado a la bodega {$nombre_bodega}.", $embalaje_id);
-
-                                if (count($reservas_separadas_por_bodega) > 1) {
-
-                                    $this->crearNotas($venta, "Reunir embalajes.", "Existen embalajes en otras bodegas que deben ser reunidos antes de ser despachados o entregados.", null);
-                                }
-                            }
-
-                            // * Cuando se crean más de un embalaje en distintas bodegas, al embalaje creado en la bodega de la venta se le indica que debe esperar al que esta en la otra.
-                            if (!$trasladar_a_otra_bodega && count($reservas_separadas_por_bodega) > 1) {
-
-                                $this->crearNotas($venta, "Esperar traslado de otros embalajes.", "El embalaje {$embalaje_id} no debe ser enviado o entregado hasta juntarlo con el o los embalajes creado en otras bodegas.", $embalaje_id);
-                            }
+                            $embalajes_respuesta[]    = $response['response']['body'];
+                           
                         } else {
 
                             $logs[] = array(
@@ -308,6 +292,38 @@ class WarehouseNodrizaComponent extends Component
                 break;
         }
 
+        if ($embalajes_respuesta) {
+
+            $embalaje_en_bodega_venta   = Hash::extract($embalajes_respuesta, "{n}[bodega_id={$venta['Venta']['bodega_id']}].id");
+            $embalaje_en_bodega_venta   = implode(",", $embalaje_en_bodega_venta);
+
+            $embalaje_en_otra_bodega   = Hash::extract($embalajes_respuesta, "{n}[bodega_id!={$venta['Venta']['bodega_id']}].id");
+            $embalaje_en_otra_bodega   = implode(",", $embalaje_en_otra_bodega);
+            $nombre_bodega = "";
+
+            foreach ($embalajes_respuesta as $embalaje) {
+                
+                if ($embalaje['trasladar_a_otra_bodega']) {
+
+                    ClassRegistry::init('Bodega')->id   = $embalaje['bodega_id_para_trasladar'];
+                    $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
+                    $this->crearNotas($venta, "Trasladar", "El embalaje {$embalaje['id']} requiere ser trasladado a la bodega {$nombre_bodega}.", $embalaje['id']);
+                    
+                }
+                
+                // * Cuando se crean más de un embalaje en distintas bodegas, al embalaje creado en la bodega de la venta se le indica que debe esperar al que esta en la otra.
+                if (!$embalaje['trasladar_a_otra_bodega'] && count($embalajes_respuesta) > 1) {
+                    ClassRegistry::init('Bodega')->id   = $embalaje['bodega_id'];
+                    $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
+                    $this->crearNotas($venta, "Esperar traslado de otros embalajes.", "El embalaje {$embalaje['id']} no debe ser enviado o entregado hasta juntarlo con {$embalaje_en_otra_bodega} en la bodega {$nombre_bodega}.", $embalaje['id']);
+                }
+            }
+
+            if (count($embalajes_respuesta) > 1) {
+
+                $this->crearNotas($venta, "Reunir embalajes.", "Los siguientes embalajes {$embalaje_en_bodega_venta}, {$embalaje_en_otra_bodega} deben ser reunidos en la bodega {$nombre_bodega} antes de ser entregados o enviados.", null);
+            }
+        }
         ClassRegistry::init('Log')->saveMany($logs);
 
         return;
@@ -390,7 +406,7 @@ class WarehouseNodrizaComponent extends Component
         return $this->WarehouseNodriza->RecepcionarEmbalajeTrasladado($body);
     }
 
-    
+
     private function crearNotas($venta, $nombre, $descripcion, $embalaje_id)
     {
 

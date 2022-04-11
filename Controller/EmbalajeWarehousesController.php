@@ -616,15 +616,23 @@ class EmbalajeWarehousesController extends AppController
 		}
 		$embalajesExceptoCancelados 		= $this->WarehouseNodriza->ObtenerEmbalajesVenta($embalaje['EmbalajeWarehouse']['venta_id']);		
 		
-		$ExisteEmbalajes_procesando 		= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=procesando]"));
-		$ExisteEmbalajes_listo_para_embalar	= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=listo_para_embalar]"));
-		$total_de_embalajes 				= ($ExisteEmbalajes_procesando + $ExisteEmbalajes_listo_para_embalar);
-
+		$ExisteEmbalajes_procesando 		= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=procesando].id");
+		$ExisteEmbalajes_listo_para_embalar	= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=listo_para_embalar].id");
+		$total_de_embalajes 				= ( count($ExisteEmbalajes_procesando) +  count($ExisteEmbalajes_listo_para_embalar));
+		$resultado 							= array_merge($ExisteEmbalajes_procesando, $ExisteEmbalajes_listo_para_embalar);
 		if( $total_de_embalajes > 1 ){
 
 			if(is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'])){
+				
+				$embalajes_a_Esperar = str_replace($id,"", implode(",", $resultado));
 				ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id'];
-				$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que todos los {$total_de_embalajes} embalajes sean reunidos en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
+				if ($total_de_embalajes > 2) {
+
+					$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que los embalajes {$embalajes_a_Esperar} sean reunidos en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
+				}else{
+					$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que el embalaje {$embalajes_a_Esperar} sea reunido en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
+				}
+			
 			}
 		}
 
