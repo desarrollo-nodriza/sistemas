@@ -238,68 +238,24 @@ class WarehouseNodrizaComponent extends Component
                                 )
                             );
 
+                            $embalaje_id                        = $response['response']['body']['id'];
+
                             if ($trasladar_a_otra_bodega) {
 
                                 ClassRegistry::init('Bodega')->id   = $bodega_id_para_trasladar;
                                 $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
-                                $embalaje_id                        = $response['response']['body']['id'];
+                                $this->crearNotas($venta, "Trasladar", "El embalaje {$embalaje_id} requiere ser trasladado a la bodega {$nombre_bodega}.", $embalaje_id);
 
-                                try {
+                                if (count($reservas_separadas_por_bodega) > 1) {
 
-                                    $nota = [
-                                        'venta_id'          => $venta['Venta']['id'],
-                                        'nombre'            => "Trasladar",
-                                        'descripcion'       => "El embalaje {$embalaje_id} requiere ser trasladado a la bodega {$nombre_bodega}.",
-                                        'id_usuario'        => CakeSession::read('Auth.Administrador.id') ?? 1,
-                                        'nombre_usuario'    => CakeSession::read('Auth.Administrador.nombre') ?? 'Automatico',
-                                        'mail_usuario'      => CakeSession::read('Auth.Administrador.email') ?? "cristian.rojas@nodriza.cl",
-                                        'embalajes'         => [
-                                            ["id_embalaje" => $embalaje_id]
-                                        ]
-                                    ];
-
-                                    $crearNotaDespacho = $this->crearNotaDespacho($nota);
-
-                                    $logs[] = array(
-                                        'Log' => array(
-                                            'administrador' => "Crear Notas",
-                                            'modulo'        => 'WarehouseNodrizaComponent',
-                                            'modulo_accion' => json_encode(['Respuesta warehouse: ' => $crearNotaDespacho])
-                                        )
-                                    );
-
-                                    if ($response['code'] != 200) {
-
-                                        try {
-                                            $nota = "{$venta['Venta']['nota_interna']} - El embalaje {$embalaje_id} requiere ser trasladado a la bodega {$nombre_bodega}.";
-                                        } catch (\Throwable $th) {
-                                            $nota = "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$nombre_bodega}.";
-                                        }
-
-                                        ClassRegistry::init('Venta')->save([
-                                            'Venta' =>
-                                            [
-                                                'nota_interna' => $nota,
-                                                'id'           => $venta['Venta']['id']
-                                            ]
-                                        ]);
-                                    }
-                                } catch (\Throwable $th) {
-
-                                    try {
-                                        $nota = "{$venta['Venta']['nota_interna']} - El embalaje {$embalaje_id} requiere ser trasladado a la bodega {$nombre_bodega}.";
-                                    } catch (\Throwable $th) {
-                                        $nota = "{$venta['Venta']['nota_interna']} - El embalaje requiere ser trasladado a la bodega {$nombre_bodega}.";
-                                    }
-
-                                    ClassRegistry::init('Venta')->save([
-                                        'Venta' =>
-                                        [
-                                            'nota_interna' => $nota,
-                                            'id'           => $venta['Venta']['id']
-                                        ]
-                                    ]);
+                                    $this->crearNotas($venta, "Reunir embalajes.", "Existen embalajes en otras bodegas que deben ser reunidos antes de ser despachados o entregados.", null);
                                 }
+                            }
+
+                            // * Cuando se crean más de un embalaje en distintas bodegas, al embalaje creado en la bodega de la venta se le indica que debe esperar al que esta en la otra.
+                            if (!$trasladar_a_otra_bodega && count($reservas_separadas_por_bodega) > 1) {
+
+                                $this->crearNotas($venta, "Esperar traslado de otros embalajes.", "El embalaje {$embalaje_id} no debe ser enviado o entregado hasta juntarlo con el o los embalajes creado en otras bodegas.", $embalaje_id);
                             }
                         } else {
 
@@ -432,5 +388,67 @@ class WarehouseNodrizaComponent extends Component
             ];
         $this->crearCliente();
         return $this->WarehouseNodriza->RecepcionarEmbalajeTrasladado($body);
+    }
+
+    
+    private function crearNotas($venta, $nombre, $descripcion, $embalaje_id)
+    {
+
+        try {
+
+            $nota = [
+                'venta_id'          => $venta['Venta']['id'],
+                'nombre'            => $nombre,
+                'descripcion'       => $descripcion,
+                'id_usuario'        => CakeSession::read('Auth.Administrador.id') ?? 1,
+                'nombre_usuario'    => CakeSession::read('Auth.Administrador.nombre') ?? 'Automatico',
+                'mail_usuario'      => CakeSession::read('Auth.Administrador.email') ?? "cristian.rojas@nodriza.cl",
+                'embalajes'         => [
+                    ["id_embalaje" => $embalaje_id]
+                ]
+            ];
+
+            $crearNotaDespacho = $this->crearNotaDespacho($nota);
+
+            ClassRegistry::init('Log')->save(array(
+                'Log' => array(
+                    'administrador' => "Crear Notas",
+                    'modulo'        => 'WarehouseNodrizaComponent',
+                    'modulo_accion' => json_encode(['Respuesta warehouse: ' => $crearNotaDespacho])
+                )
+            ));
+
+            if ($crearNotaDespacho['code'] != 200) {
+
+                try {
+                    $nota = "{$venta['Venta']['nota_interna']} - {$descripcion}";
+                } catch (\Throwable $th) {
+                    $nota = "{$venta['Venta']['nota_interna']} - {$descripcion}.";
+                }
+
+                ClassRegistry::init('Venta')->save([
+                    'Venta' =>
+                    [
+                        'nota_interna' => $nota,
+                        'id'           => $venta['Venta']['id']
+                    ]
+                ]);
+            }
+        } catch (\Throwable $th) {
+
+            try {
+                $nota = "{$venta['Venta']['nota_interna']} - {$descripcion}.";
+            } catch (\Throwable $th) {
+                $nota = "{$venta['Venta']['nota_interna']} - {$descripcion}.";
+            }
+
+            ClassRegistry::init('Venta')->save([
+                'Venta' =>
+                [
+                    'nota_interna' => $nota,
+                    'id'           => $venta['Venta']['id']
+                ]
+            ]);
+        }
     }
 }

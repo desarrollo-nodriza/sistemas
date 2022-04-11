@@ -610,13 +610,26 @@ class EmbalajeWarehousesController extends AppController
 			$msjTexto .= $valor['mensaje'];
 		}
 
-		if(!is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'] ?? null)){
+		if(!is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'])){
 			ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'];
 			$msjTexto .= strtoupper(" Embalaje debe ser trasladado a la bodega ".ClassRegistry::init('Bodega')->field('nombre'));
 		}
+		$embalajesExceptoCancelados 		= $this->WarehouseNodriza->ObtenerEmbalajesVenta($embalaje['EmbalajeWarehouse']['venta_id']);		
+		
+		$ExisteEmbalajes_procesando 		= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=procesando]"));
+		$ExisteEmbalajes_listo_para_embalar	= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=listo_para_embalar]"));
+		$total_de_embalajes 				= ($ExisteEmbalajes_procesando + $ExisteEmbalajes_listo_para_embalar);
 
-		$msjTexto= inflector::slug($msjTexto,' ');
-		$archivos = array();
+		if( $total_de_embalajes > 1 ){
+
+			if(is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'])){
+				ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id'];
+				$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que todos los embalajes( {$total_de_embalajes} ) sean reunidos en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
+			}
+		}
+
+		$msjTexto							= inflector::slug($msjTexto,' ');
+		$archivos 							= array();
 
 		foreach ($paquetes as $paquete) 
 		{
