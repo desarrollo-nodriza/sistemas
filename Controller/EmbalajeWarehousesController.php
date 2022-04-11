@@ -494,9 +494,9 @@ class EmbalajeWarehousesController extends AppController
 	public function obtener_etiqueta_envio_interna_url($id, $venta = array(), $orientacion = 'horizontal')
 	{	
 		# Componentes
-		$this->Etiquetas = $this->Components->load('Etiquetas');
-		$this->LAFFPack = $this->Components->load('LAFFPack');
-
+		$this->Etiquetas 		= $this->Components->load('Etiquetas');
+		$this->LAFFPack 		= $this->Components->load('LAFFPack');
+		$this->WarehouseNodriza = $this->Components->load('WarehouseNodriza');
 		# Bultos máximo de 2 metros
 		$volumenMaximo = (float) 8000000;
 
@@ -624,7 +624,7 @@ class EmbalajeWarehousesController extends AppController
 
 			if(is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'])){
 				ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id'];
-				$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que todos los embalajes( {$total_de_embalajes} ) sean reunidos en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
+				$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que todos los {$total_de_embalajes} embalajes sean reunidos en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
 			}
 		}
 
