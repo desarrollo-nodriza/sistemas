@@ -315,7 +315,7 @@ class WarehouseNodrizaComponent extends Component
                 if (!$embalaje['trasladar_a_otra_bodega'] && count($embalajes_respuesta) > 1) {
                     ClassRegistry::init('Bodega')->id   = $embalaje['bodega_id'];
                     $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
-                    $this->crearNotas($venta, "Esperar traslado de otros embalajes.", "El embalaje {$embalaje['id']} no debe ser enviado o entregado hasta juntarlo con {$embalaje_en_otra_bodega} en la bodega {$nombre_bodega}.", $embalaje['id']);
+                    $this->crearNotas($venta, "Esperar traslado de otros embalajes.", "Este embalaje no debe ser enviado o entregado hasta que el embalaje {$embalaje_en_otra_bodega} haya sido recibido en la bodega {$nombre_bodega}.", $embalaje['id']);
                 }
             }
 
