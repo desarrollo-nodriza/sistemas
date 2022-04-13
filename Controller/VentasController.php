@@ -12929,12 +12929,27 @@ class VentasController extends AppController {
 				'MetodoEnvio' =>[ 'fields' => ['MetodoEnvio.embalado_venta_estado_parcial_id','MetodoEnvio.embalado_venta_estado_id','MetodoEnvio.consolidacion_venta_estado_id','MetodoEnvio.retiro_local']]
 			]
 		));
+		$logs 		  		  		= [];
 
 		// * Se consultan embalajes finalizados para validar que estado colocar a la venta
-		$embalajesExceptoCancelados = $this->WarehouseNodriza->ObtenerEmbalajesVenta($id);		
+		$embalajesExceptoCancelados = $this->WarehouseNodriza->ObtenerEmbalajesVenta($id);	
+
+		$logs[] = [
+			'Log' =>
+			[
+				'administrador' => "Procesando cambio estado vid {$id}",
+				'modulo'        => 'VentasController api_cambiar_estado_desde_warehouse_v2',
+				'modulo_accion' => json_encode([
+					"venta"							=> $venta,
+					"embalajesExceptoCancelados"	=> $embalajesExceptoCancelados,
+					"tokeninfo"						=> $tokeninfo
+				])
+			]
+		];	
+		
 		$cambiar_estado 	  		= false;
 		$nuevo_estado   	  		= null;
-		$logs 		  		  		= [];
+	
 		try {
 
 			// *Si hay embalajes distinto a la bodega de la venta se considera el estado en consolidacion
