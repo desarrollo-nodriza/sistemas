@@ -111,7 +111,7 @@ class BlueExpress
             "extendedClaim" => false,
             "companyId" => $BULTO['companyId'],
             "userName" => $BULTO['credenciales'],
-            "comments" => $BULTO['venta']['referencia_despacho'],
+            "comments" => substr($BULTO['venta']['referencia_despacho'], 0, 100),
             "pickup" => [
                 "location" => [
                     "stateId" => $BULTO['pickup']['stateId'],
@@ -120,7 +120,7 @@ class BlueExpress
                     "name" =>  $BULTO['pickup']['name'],
                 ],
                 "contact" => [
-                    "fullname" =>  $BULTO['pickup']['fullname'],
+                    "fullname" =>  substr($BULTO['pickup']['fullname'], 0, 50),
                     "phone" =>  $BULTO['pickup']['phone'],
                 ]
             ],
@@ -218,7 +218,7 @@ class BlueExpress
             "code"     => $http_code,
             "request"  => $POSTFIELDS,
             "response" => json_decode($response, true)
-            
+
         ];
     }
 
