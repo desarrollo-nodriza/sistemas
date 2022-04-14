@@ -494,9 +494,9 @@ class EmbalajeWarehousesController extends AppController
 	public function obtener_etiqueta_envio_interna_url($id, $venta = array(), $orientacion = 'horizontal')
 	{	
 		# Componentes
-		$this->Etiquetas = $this->Components->load('Etiquetas');
-		$this->LAFFPack = $this->Components->load('LAFFPack');
-
+		$this->Etiquetas 		= $this->Components->load('Etiquetas');
+		$this->LAFFPack 		= $this->Components->load('LAFFPack');
+		$this->WarehouseNodriza = $this->Components->load('WarehouseNodriza');
 		# Bultos máximo de 2 metros
 		$volumenMaximo = (float) 8000000;
 
@@ -610,13 +610,34 @@ class EmbalajeWarehousesController extends AppController
 			$msjTexto .= $valor['mensaje'];
 		}
 
-		if(!is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'] ?? null)){
+		if(!is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'])){
 			ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'];
 			$msjTexto .= strtoupper(" Embalaje debe ser trasladado a la bodega ".ClassRegistry::init('Bodega')->field('nombre'));
 		}
+		$embalajesExceptoCancelados 		= $this->WarehouseNodriza->ObtenerEmbalajesVenta($embalaje['EmbalajeWarehouse']['venta_id']);		
+		
+		$ExisteEmbalajes_procesando 		= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=procesando].id");
+		$ExisteEmbalajes_listo_para_embalar	= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=listo_para_embalar].id");
+		$total_de_embalajes 				= ( count($ExisteEmbalajes_procesando) +  count($ExisteEmbalajes_listo_para_embalar));
+		$resultado 							= array_merge($ExisteEmbalajes_procesando, $ExisteEmbalajes_listo_para_embalar);
+		if( $total_de_embalajes > 1 ){
 
-		$msjTexto= inflector::slug($msjTexto,' ');
-		$archivos = array();
+			if(is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'])){
+				
+				$embalajes_a_Esperar = str_replace($id,"", implode(",", $resultado));
+				ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id'];
+				if ($total_de_embalajes > 2) {
+
+					$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que los embalajes {$embalajes_a_Esperar} sean reunidos en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
+				}else{
+					$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que el embalaje {$embalajes_a_Esperar} sea reunido en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
+				}
+			
+			}
+		}
+
+		$msjTexto							= inflector::slug($msjTexto,' ');
+		$archivos 							= array();
 
 		foreach ($paquetes as $paquete) 
 		{
