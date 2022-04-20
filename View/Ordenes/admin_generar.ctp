@@ -120,6 +120,22 @@
 								<?=$this->Form->input('giro_receptor', array('type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ingrese giro del receptor'));?>
 							</div>
 						</div>
+						<div class="col-xs-12  js-dte-factura">
+							<div class="form-group">
+								<br>
+								<label><?=__('Sucursal');?></label>
+								<?
+								$opts= [
+									'class' => 'form-control js-dte-tipo',
+									'empty' => 'Seleccione sucursal',
+									'escape' => false
+									];
+									if (count($sucursales) == 1) :
+										$opts = array_replace_recursive($opts,['value' => $bodega_inicial_cod]);
+									endif; ?>
+								<?=$this->Form->select('sucursal_sii', $sucursales,$opts);?>
+							</div>
+						</div>
 						<div class="col-xs-12 col-md-6 js-no-boleta">
 							<div class="form-group">
 								<br>
