@@ -3328,6 +3328,24 @@ class OrdenComprasController extends AppController
 			throw new CakeException($response);
 		}
 
+		# Obtenemos al/la admin del token
+		$tokenInfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+		
+		# Aisalmosids de la /las bodegas asignadas
+		$bodegas_admin = Hash::extract($tokenInfo, 'Administrador.Rol.Bodega.{n}.id');
+
+		if (empty($bodegas_admin))
+		{
+			$response = array(
+				'code'    => 500, 
+				'name' => 'error',
+				'message' => 'No tienes bodegas asignadas'
+			);
+			
+			$this->set($response);
+			return $this->set('_serialize', array_keys($response));
+		}
+
 		# No existe venta
 		if (!$this->OrdenCompra->exists($id)) {
 			$response = array(
@@ -3343,6 +3361,7 @@ class OrdenComprasController extends AppController
 		$oc = $this->OrdenCompra->find('first', array(
 			'conditions' => array(
 				'OrdenCompra.id' => $id,
+				'OrdenCompra.bodega_id IN' => $bodegas_admin,
 				'OrdenCompra.estado' => array(
 					'espera_recepcion',
 					'recepcion_incompleta',
@@ -3360,7 +3379,7 @@ class OrdenComprasController extends AppController
 				'OrdenComprasVentaDetalleProducto'
 			)
 		));
-
+		
 		if (empty($oc))
 		{
 			$response = array(
