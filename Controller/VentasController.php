@@ -7822,7 +7822,7 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['costo_envio']      = (float) 0;
 
 		# si es un estado pagado se reserva el stock disponible
-		if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) ) {
+		if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($NuevaVenta['Venta']['venta_estado_id']) ) {
 			#$ActualizarVenta['Venta']['prioritario'] = 1;
 		}
 
@@ -7907,7 +7907,7 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($this->Venta->id);
 				$this->actualizar_canales_stock($this->Venta->id, $excluirLinio);
 			}
@@ -7974,7 +7974,7 @@ class VentasController extends AppController {
 			$excluirLinio = array('Linio' => array($marketplace_id));
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($nw_estado_id) ) {
+			if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($nw_estado_id) ) {
 				$this->Venta->pagar_venta($venta['Venta']['id']);
 				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirLinio);
 			}
@@ -8065,7 +8065,7 @@ class VentasController extends AppController {
 		$ActualizarVenta['Venta']['venta_estado_responsable'] = 'Meli Webhook';
 
 		# si es un estado pagado se reserva el stock disponible
-		if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) ) {
+		if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($ActualizarVenta['Venta']['venta_estado_id']) ) {
 			#$ActualizarVenta['Venta']['prioritario'] = 1;
 		}
 
@@ -8115,7 +8115,7 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($venta['Venta']['id']);
 				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirMeli);
 			}
@@ -8359,7 +8359,7 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($this->Venta->id);
 				$this->actualizar_canales_stock($this->Venta->id, $excluirMeli);
 			}
@@ -8678,7 +8678,7 @@ class VentasController extends AppController {
 
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
 				# Flujo de venta pagda
 				$this->Venta->pagar_venta($this->Venta->id);
 
@@ -9016,7 +9016,7 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($venta['Venta']['id']);
 				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirPrestashop);
 			}
