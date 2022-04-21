@@ -7959,7 +7959,11 @@ class VentasController extends AppController {
 
 			$tienda = ClassRegistry::init('Tienda')->obtener_tienda($marketplace['Marketplace']['tienda_id'], array('Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
 
-			$respuesta = $this->cambiarEstado($venta['Venta']['id'], $id_externo, $nw_estado_id , $marketplace['Marketplace']['tienda_id'], null, '', '', 'Linio Webhook');
+			try {
+				$respuesta = $this->cambiarEstado($venta['Venta']['id'], $id_externo, $nw_estado_id , $marketplace['Marketplace']['tienda_id'], null, '', '', 'Linio Webhook');
+			} catch (\Throwable $th) {
+				$respuesta = false;
+			}
 
 			if ($respuesta  && $tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
 				$this->Pushalert = $this->Components->load('Pushalert');
@@ -8088,8 +8092,11 @@ class VentasController extends AppController {
 		if($this->Venta->saveAll($ActualizarVenta)){
 
 			$tienda = ClassRegistry::init('Tienda')->obtener_tienda($marketplace['Marketplace']['tienda_id'], array('Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
-
-			$respuesta = $this->cambiarEstado($ActualizarVenta['Venta']['id'], $id_externo, $nuevo_estado , $marketplace['Marketplace']['tienda_id'], null, '', '', 'Meli Webhook');
+			try {
+				$respuesta = $this->cambiarEstado($ActualizarVenta['Venta']['id'], $id_externo, $nuevo_estado , $marketplace['Marketplace']['tienda_id'], null, '', '', 'Meli Webhook');
+			} catch (\Throwable $th) {
+				$respuesta = false;
+			}
 			
 			if ($respuesta && $tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
 				
@@ -8969,9 +8976,11 @@ class VentasController extends AppController {
 		//se guarda la venta
 		if ( $this->Venta->saveAll($ActualizarVenta) ){
 
-			
-
-			$respuesta = $this->cambiarEstado($ActualizarVenta['Venta']['id'], $id_externo, $nuevo_estado_id , $tienda_id, null, '', '', 'Prestashop Webhook');
+			try {
+				$respuesta = $this->cambiarEstado($ActualizarVenta['Venta']['id'], $id_externo, $nuevo_estado_id , $tienda_id, null, '', '', 'Prestashop Webhook');
+			} catch (\Throwable $th) {
+				$respuesta = false;
+			}
 
 			if ($respuesta && $tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
 				$this->Pushalert = $this->Components->load('Pushalert');
