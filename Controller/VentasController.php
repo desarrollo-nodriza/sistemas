@@ -4558,7 +4558,7 @@ class VentasController extends AppController {
 				}
 
 				# si es un estado pagado se reserva el stock disponible
-				if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($this->request->data['Venta']['venta_estado_id'])) {
+				if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($this->request->data['Venta']['venta_estado_id'])) {
 					$this->Venta->pagar_venta($id);
 					$this->actualizar_canales_stock($id);
 				}
@@ -5069,7 +5069,7 @@ class VentasController extends AppController {
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Inicia cambio estado ' . $id_venta,
-				'modulo' => 'Ventas',
+				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($venta)
 			)
 		);
@@ -5120,294 +5120,12 @@ class VentasController extends AppController {
 			$apikeyprestashop = ClassRegistry::init('Tienda')->field('apikey_prestashop');
 		}
 
-		# Prestashop
-		if ( $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) 
-		{	
-			# Para la consola se carga el componente on the fly!
-			$this->Prestashop = $this->Components->load('Prestashop');
-			# Cliente Prestashop
-			$this->Prestashop->crearCliente( $apiurlprestashop, $apikeyprestashop );
-
-			# OBtenemos el ID prestashop del estado
-			$estadoPrestashop = $this->Prestashop->prestashop_obtener_estado_por_nombre($estado_nuevo_nombre);
-			
-			if (empty($estadoPrestashop)) {
-				throw new Exception("Error al cambiar el estado. No fue posible obtener el estado de Prestashop", 505);
-			}
-
-			if (Configure::read('ambiente') == 'dev') {
-				$resCambio = true;
-			}else{
-				$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
-			}
-
-			$log[] = array(
-				'Log' => array(
-					'administrador' => 'Respuesta cambio estado ' . $id_venta,
-					'modulo' 		=> 'Ventas',
-					'modulo_accion' => 'Resultado: ' . $resCambio . ' - Estado nuevo:' . json_encode($estadoPrestashop)
-				)
-			);
-			
-			if ($resCambio) {
-
-				# Enviar email al cliente
-				if (!empty($plantillaEmail) && $notificar) {
-					$notificado = $this->notificar_cambio_estado($id_venta, $plantillaEmail, $estado_nuevo_nombre);
-
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'Notificacion cambio estado ' . $id_venta,
-							'modulo' 		=> 'Ventas',
-							'modulo_accion' => 'Resultado: ' . json_encode(array(
-								'notificado' 	=> $notificado,
-								'plantilla' 	=> $plantillaEmail,
-								'nuevo_estado' 	=> $estado_nuevo_nombre
-							))
-						)
-					);
-
-				}
-
-				# si es un estado pagado se reserva el stock disponible
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
-					$this->Venta->pagar_venta($id_venta);
-					$this->actualizar_canales_stock($id_venta);
-
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'Pagar venta cambio estado ' . $id_venta,
-							'modulo' => 'Ventas',
-							'modulo_accion' => 'Resultado: ' . json_encode(array(
-								'nuevo_estado' => $estado_nuevo_nombre
-							))
-						)
-					);
-				}
-
-				# Se entrega la venta
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
-					
-					$this->Venta->entregar($id_venta);
-
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'Entregar venta cambio estado ' . $id_venta,
-							'modulo' => 'Ventas',
-							'modulo_accion' => 'Resultado: ' . json_encode(array(
-								'nuevo_estado' => $estado_nuevo_nombre
-							))
-						)
-					);
-				}
-
-				# si es un estado cancelado se devuelve el stock a la bodega
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
-					$this->Venta->cancelar_venta($id_venta);
-					$this->WarehouseNodriza->procesar_embalajes($id_venta);
-					$this->actualizar_canales_stock($id_venta);
-
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'Cancelar venta cambio estado ' . $id_venta,
-							'modulo' => 'Ventas',
-							'modulo_accion' => 'Resultado: ' . json_encode(array(
-								'nuevo_estado' => $estado_nuevo_nombre
-							))
-						)
-					);
-				}
-				
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id) ) {
-					$this->Venta->cancelar_venta($id_venta);
-					$this->WarehouseNodriza->procesar_embalajes($id_venta);
-					$this->actualizar_canales_stock($id_venta);
-
-					$log[] = array(
-						'Log' => array(
-							'administrador' => 'Cancelar venta cambio estado ' . $id_venta,
-							'modulo' => 'Ventas',
-							'modulo_accion' => 'Resultado: ' . json_encode(array(
-								'nuevo_estado' => $estado_nuevo_nombre
-							))
-						)
-					);
-				}
-				
-			}else{
-				throw new Exception('Error al cambiar el estado. No fue posible cambiar el estado en Prestashop.', 506);
-			}
-			
-		# Linio
-		}
-		elseif ( $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) 
-		{	
-			# Para la consola se carga el componente on the fly!
-			if ($this->shell) {
-				$this->Linio = $this->Components->load('Linio');
-			}
-			# cliente Linio
-			$this->Linio->crearCliente( $apiurllinio, $apiuserlinio, $apikeylinio );
-
-			$itemsVenta = $this->Linio->linio_obtener_venta_detalles($id_externo);
-
-			if (!isset($itemsVenta[0])) {
-				$itemsVenta = array(
-					0 => $itemsVenta
-				);
-			}
-
-
-			if (!array_key_exists($estado_nuevo_nombre, $this->Linio->estados)) {
-				throw new Exception('¡Error! El estado seleccionado no está disponible en Linio', 507);
-			}
-			
-			switch ($estado_nuevo_nombre) {
-				case 'canceled':
-
-					foreach ($itemsVenta as $ii => $item) {
-						# Cancelamos pedido en Linio
-						if(!$this->Linio->linio_cancelar_pedido($item['OrderItemId'], $razonCancelado, $detalleCancelado)){
-							throw new Exception('Imposible cambiar el estado. Intente cancelarla directamente en Seller Center.', 508);
-						}
-
-					}
-
-					break;
-				case 'ready_to_ship':
-					 
-					# Listo para envio pedido en Linio Por defecto se usa Blue Express
-					if(!$this->Linio->linio_listo_para_envio( Hash::extract($itemsVenta, '{n}.OrderItemId') )) {
-						throw new Exception('Imposible cambiar el estado. Intente cancelarla directamente en Seller Center.', 508);
-					}
-
-					break;
-			}
-
-			# si es un estado pagado se reserva el stock disponible
-			if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
-				$this->Venta->pagar_venta($id_venta);
-				$this->actualizar_canales_stock($id_venta);
-			}
-
-			# se entrega la venta
-			if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
-				$this->Venta->entregar($id_venta);
-			}
-
-			# si es un estado cancelado se devuelve el stock a la bodega
-			if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
-				$this->Venta->revertir_venta($id_venta);
-				$this->actualizar_canales_stock($id_venta);
-			}
-
-			if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
-				$this->Venta->cancelar_venta($id_venta);
-				$this->WarehouseNodriza->procesar_embalajes($id_venta);
-				$this->actualizar_canales_stock($id_venta);
-			}
-			
-		# Meli
-		}
-		elseif ( $esMercadolibre ) 
-		{	
-			#throw new Exception('¡Error! No está habilitada la opción de cambios de estado en Meli.', 501);
-			
-		}
-		elseif ( $venta['Venta']['venta_manual'])
-		{	
-			# Venta manual
-			# Enviar email al cliente
-			if (!empty($plantillaEmail) && $notificar) {
-				$notificado = $this->notificar_cambio_estado($id_venta, $plantillaEmail, $estado_nuevo_nombre);
-
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'Notificacion cambio estado ' . $id_venta,
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Resultado: ' . json_encode(array(
-							'notificado' => $notificado,
-							'plantilla' => $plantillaEmail,
-							'nuevo_estado' => $estado_nuevo_nombre
-						))
-					)
-				);
-			}
-
-			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
-				$this->Venta->pagar_venta($id_venta);
-				$this->actualizar_canales_stock($id_venta);
-
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'Pagar venta cambio estado ' . $id_venta,
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Resultado: ' . json_encode(array(
-							'nuevo_estado' => $estado_nuevo_nombre
-						))
-					)
-				);
-			}
-
-			# Se entrega la venta
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
-				$this->Venta->entregar($id_venta);
-
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'Entregar venta cambio estado ' . $id_venta,
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Resultado: ' . json_encode(array(
-							'nuevo_estado' => $estado_nuevo_nombre
-						))
-					)
-				);
-			}
-
-			# si es un estado cancelado se devuelve el stock a la bodega
-			if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
-				$this->Venta->cancelar_venta($id_venta);
-				$this->WarehouseNodriza->procesar_embalajes($id_venta);
-				$this->actualizar_canales_stock($id_venta);
-
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'Cancelar venta cambio estado ' . $id_venta,
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Resultado: ' . json_encode(array(
-							'nuevo_estado' => $estado_nuevo_nombre
-						))
-					)
-				);
-			}
-
-			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id) ) {
-				$this->Venta->cancelar_venta($id_venta);
-				$this->WarehouseNodriza->procesar_embalajes($id_venta);
-				$this->actualizar_canales_stock($id_venta);
-
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'Cancelar venta cambio estado ' . $id_venta,
-						'modulo' => 'Ventas',
-						'modulo_accion' => 'Resultado: ' . json_encode(array(
-							'nuevo_estado' => $estado_nuevo_nombre
-						))
-					)
-				);
-			}
-		}
-		else
-		{	
-			throw new Exception('¡Error! Se debe actualizar el estado actual por otro.', 501);
-		}
-
 		# se setea el id de la venta
 		$saveVenta['Venta']['id']                       = $venta['Venta']['id'];
+		$saveVenta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
 		$saveVenta['Venta']['venta_estado_id']          = $estado_nuevo_id;
 		$saveVenta['Venta']['venta_estado_responsable'] = (!empty($responsable)) ? $responsable : $this->Session->read('Auth.Administrador.nombre');
-		
+	
 		# Guardamos el estado anterior en la tabla pivot
 		$saveVenta['VentaEstado2'] = array(
 			array(
@@ -5420,18 +5138,271 @@ class VentasController extends AppController {
 		foreach ($venta['VentaEstado2'] as $ive => $ve) {
 			$saveVenta['VentaEstado2'][] = $ve['EstadosVenta'];
 		}
-
-		# Guardamos el log
-		ClassRegistry::init('Log')->create();
-		ClassRegistry::init('Log')->saveMany($log);
 		
 		if ($this->Venta->saveAll($saveVenta)) {
 
-			$this->WarehouseNodriza->procesar_embalajes($id_venta);	
+			# Prestashop
+			if ( $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) 
+			{	
+				# Para la consola se carga el componente on the fly!
+				$this->Prestashop = $this->Components->load('Prestashop');
+				# Cliente Prestashop
+				$this->Prestashop->crearCliente( $apiurlprestashop, $apikeyprestashop );
+
+				# OBtenemos el ID prestashop del estado
+				$estadoPrestashop = $this->Prestashop->prestashop_obtener_estado_por_nombre($estado_nuevo_nombre);
+				
+				if (empty($estadoPrestashop)) {
+					throw new Exception("Error al cambiar el estado. No fue posible obtener el estado de Prestashop", 505);
+				}
+
+				if (Configure::read('ambiente') == 'dev') {
+					$resCambio = true;
+				}else{
+					$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
+				}
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => 'Respuesta cambio estado ' . $id_venta,
+						'modulo' 		=> 'Ventas',
+						'modulo_accion' => 'Resultado: ' . $resCambio . ' - Estado nuevo:' . json_encode($estadoPrestashop)
+					)
+				);
+				
+				if ($resCambio) {
+
+					# Enviar email al cliente
+					if (!empty($plantillaEmail) && $notificar) {
+						$notificado = $this->notificar_cambio_estado($id_venta, $plantillaEmail, $estado_nuevo_nombre);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Notificacion cambio estado ' . $id_venta,
+								'modulo' 		=> 'Ventas',
+								'modulo_accion' => 'Resultado: ' . json_encode(array(
+									'notificado' 	=> $notificado,
+									'plantilla' 	=> $plantillaEmail,
+									'nuevo_estado' 	=> $estado_nuevo_nombre
+								))
+							)
+						);
+
+					}
+
+					# si es un estado pagado se reserva el stock disponible
+					if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
+						$this->Venta->pagar_venta($id_venta);
+						$this->WarehouseNodriza->procesar_embalajes($id_venta);	
+						$this->actualizar_canales_stock($id_venta);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Pagar venta cambio estado ' . $id_venta,
+								'modulo'	 	=> 'Ventas',
+								'modulo_accion' => 'Resultado: ' . json_encode(array(
+									'nuevo_estado' => $estado_nuevo_nombre
+								))
+							)
+						);
+					}
+
+					# Se entrega la venta
+					if (  ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
+						
+						$this->Venta->entregar($id_venta);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Entregar venta cambio estado ' . $id_venta,
+								'modulo' 		=> 'Ventas',
+								'modulo_accion' => 'Resultado: ' . json_encode(array(
+									'nuevo_estado' => $estado_nuevo_nombre
+								))
+							)
+						);
+					}
+
+					# si es un estado cancelado se devuelve el stock a la bodega
+					if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) || ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
+						$this->Venta->cancelar_venta($id_venta);
+						$this->WarehouseNodriza->procesar_embalajes($id_venta);
+						$this->actualizar_canales_stock($id_venta);
+
+						$log[] = array(
+							'Log' => array(
+								'administrador' => 'Cancelar venta cambio estado ' . $id_venta,
+								'modulo' 		=> 'Ventas',
+								'modulo_accion' => 'Resultado: ' . json_encode(array(
+									'nuevo_estado' => $estado_nuevo_nombre
+								))
+							)
+						);
+					}
+					
+				}else{
+
+					# Guardamos el log
+					ClassRegistry::init('Log')->create();
+					ClassRegistry::init('Log')->saveMany($log);
+					throw new Exception('Error al cambiar el estado. No fue posible cambiar el estado en Prestashop.', 506);
+				}
+				
+			# Linio
+			}
+			elseif ( $esLinio && !empty($apiurllinio) && !empty($apiuserlinio) && !empty($apikeylinio)) 
+			{	
+				# Para la consola se carga el componente on the fly!
+				if ($this->shell) {
+					$this->Linio = $this->Components->load('Linio');
+				}
+				# cliente Linio
+				$this->Linio->crearCliente( $apiurllinio, $apiuserlinio, $apikeylinio );
+
+				$itemsVenta = $this->Linio->linio_obtener_venta_detalles($id_externo);
+
+				if (!isset($itemsVenta[0])) {
+					$itemsVenta = array(
+						0 => $itemsVenta
+					);
+				}
+
+
+				if (!array_key_exists($estado_nuevo_nombre, $this->Linio->estados)) {
+					throw new Exception('¡Error! El estado seleccionado no está disponible en Linio', 507);
+				}
+				
+				switch ($estado_nuevo_nombre) {
+					case 'canceled':
+
+						foreach ($itemsVenta as $ii => $item) {
+							# Cancelamos pedido en Linio
+							if(!$this->Linio->linio_cancelar_pedido($item['OrderItemId'], $razonCancelado, $detalleCancelado)){
+								throw new Exception('Imposible cambiar el estado. Intente cancelarla directamente en Seller Center.', 508);
+							}
+
+						}
+
+						break;
+					case 'ready_to_ship':
+						
+						# Listo para envio pedido en Linio Por defecto se usa Blue Express
+						if(!$this->Linio->linio_listo_para_envio( Hash::extract($itemsVenta, '{n}.OrderItemId') )) {
+							throw new Exception('Imposible cambiar el estado. Intente cancelarla directamente en Seller Center.', 508);
+						}
+
+						break;
+				}
+
+				# si es un estado pagado se reserva el stock disponible
+				if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
+					$this->Venta->pagar_venta($id_venta);
+					$this->actualizar_canales_stock($id_venta);
+					$this->WarehouseNodriza->procesar_embalajes($id_venta);
+				}
+
+				# se entrega la venta
+				if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
+					$this->Venta->entregar($id_venta);
+				}
+
+				# si es un estado cancelado se devuelve el stock a la bodega
+				if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) || ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
+					$this->Venta->cancelar_venta($id_venta);
+					$this->WarehouseNodriza->procesar_embalajes($id_venta);
+					$this->actualizar_canales_stock($id_venta);
+				}
+
+				
+			# Meli
+			}
+			elseif ( $esMercadolibre ) 
+			{	
+				#throw new Exception('¡Error! No está habilitada la opción de cambios de estado en Meli.', 501);
+				
+			}
+			elseif ( $venta['Venta']['venta_manual'])
+			{	
+				# Venta manual
+				# Enviar email al cliente
+				if (!empty($plantillaEmail) && $notificar) {
+					$notificado = $this->notificar_cambio_estado($id_venta, $plantillaEmail, $estado_nuevo_nombre);
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' 	=> 'Notificacion cambio estado ' . $id_venta,
+							'modulo' 			=> 'Ventas',
+							'modulo_accion'	 	=> 'Resultado: ' . json_encode(array(
+								'notificado' 	=> $notificado,
+								'plantilla' 	=> $plantillaEmail,
+								'nuevo_estado' 	=> $estado_nuevo_nombre
+							))
+						)
+					);
+				}
+
+				# si es un estado pagado se reserva el stock disponible
+				if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
+					$this->Venta->pagar_venta($id_venta);
+					$this->WarehouseNodriza->procesar_embalajes($id_venta);	
+					$this->actualizar_canales_stock($id_venta);
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Pagar venta cambio estado ' . $id_venta,
+							'modulo' 		=> 'Ventas',
+							'modulo_accion' => 'Resultado: ' . json_encode(array(
+								'nuevo_estado' => $estado_nuevo_nombre
+							))
+						)
+					);
+				}
+
+				# Se entrega la venta
+				if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->estado_mueve_bodega($estado_nuevo_id)) {
+					$this->Venta->entregar($id_venta);
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Entregar venta cambio estado ' . $id_venta,
+							'modulo' 		=> 'Ventas',
+							'modulo_accion' => 'Resultado: ' . json_encode(array(
+								'nuevo_estado' => $estado_nuevo_nombre
+							))
+						)
+					);
+				}
+
+				# si es un estado cancelado se devuelve el stock a la bodega
+				if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) || ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
+					$this->Venta->cancelar_venta($id_venta);
+					$this->WarehouseNodriza->procesar_embalajes($id_venta);
+					$this->actualizar_canales_stock($id_venta);
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Cancelar venta cambio estado ' . $id_venta,
+							'modulo' 		=> 'Ventas',
+							'modulo_accion' => 'Resultado: ' . json_encode(array(
+								'nuevo_estado' => $estado_nuevo_nombre
+							))
+						)
+					);
+				}
+
+			}
+			
+			# Guardamos el log
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
 			return true;
 			
 		}else{
-			
+
+			# Guardamos el log
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
 			if ($notificar && !$notificado) {
 				throw new Exception('No fue posible notificar al cliente el cambio de estado.', 707);
 			}else{
@@ -7853,7 +7824,7 @@ class VentasController extends AppController {
 		$NuevaVenta['Venta']['costo_envio']      = (float) 0;
 
 		# si es un estado pagado se reserva el stock disponible
-		if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) ) {
+		if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($NuevaVenta['Venta']['venta_estado_id']) ) {
 			#$ActualizarVenta['Venta']['prioritario'] = 1;
 		}
 
@@ -7938,7 +7909,7 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($this->Venta->id);
 				$this->actualizar_canales_stock($this->Venta->id, $excluirLinio);
 			}
@@ -7976,12 +7947,12 @@ class VentasController extends AppController {
 
 		$nw_estado_id = $this->obtener_estado_id($nuevo_estado, $marketplace['Marketplace']['marketplace_tipo_id']);
 
-		$venta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
-		$venta['Venta']['venta_estado_id']          = $nw_estado_id;
-		$venta['Venta']['venta_estado_responsable'] = 'Linio Webhook';
+		// $venta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
+		// $venta['Venta']['venta_estado_id']          = $nw_estado_id;
+		// $venta['Venta']['venta_estado_responsable'] = 'Linio Webhook';
 
 		# si es un estado rechazo se devuelve el stock disponible
-		if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($venta['Venta']['venta_estado_id']) ) {
+		if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($nw_estado_id) ) {
 			$venta['Venta']['prioritario'] = 0;
 		}
 
@@ -7989,13 +7960,19 @@ class VentasController extends AppController {
 
 			$tienda = ClassRegistry::init('Tienda')->obtener_tienda($marketplace['Marketplace']['tienda_id'], array('Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
 
-			if ($tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
+			try {
+				$respuesta = $this->cambiarEstado($venta['Venta']['id'], $id_externo, $nw_estado_id , $marketplace['Marketplace']['tienda_id'], null, '', '', 'Linio Webhook');
+			} catch (\Throwable $th) {
+				$respuesta = false;
+			}
+
+			if ($respuesta  && $tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
 				$this->Pushalert = $this->Components->load('Pushalert');
 
 				$this->Pushalert::$api_key = $tienda['Tienda']['notificacion_apikey'];
 
 				$tituloPush = sprintf('Actualización de venta en %s', $marketplace['Marketplace']['nombre']);
-				$mensajePush = sprintf('La venta #%d cambió a %s', $venta['Venta']['id'], ClassRegistry::init('VentaEstado')->obtener_estado_por_id($venta['Venta']['venta_estado_id'])['VentaEstado']['nombre'] );
+				$mensajePush = sprintf('La venta #%d cambió a %s', $venta['Venta']['id'], ClassRegistry::init('VentaEstado')->obtener_estado_por_id($nw_estado_id)['VentaEstado']['nombre'] );
 				$urlPush = Router::url('/', true) . 'ventas/view/' . $venta['Venta']['id'];
 
 				$this->Pushalert->enviarNotificacion($tituloPush, $mensajePush, $urlPush);	
@@ -8004,23 +7981,7 @@ class VentasController extends AppController {
 			# Evitamos que se vuelva actualizar el stock en linio
 			$excluirLinio = array('Linio' => array($marketplace_id));
 
-			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($nw_estado_id) ) {
-				$this->Venta->pagar_venta($venta['Venta']['id']);
-				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirLinio);
-			}
-
-			# si es un estado rechazo se devuelve el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($nw_estado_id) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($nw_estado_id) ) {
-				$this->Venta->revertir_venta($venta['Venta']['id']);
-				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirLinio);
-			}
-
-			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($nw_estado_id) ) {
-				$this->Venta->cancelar_venta($venta['Venta']['id']);
-				$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id']);
-				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirLinio);
-			}
+			
 
 			return true;
 
@@ -8090,18 +8051,18 @@ class VentasController extends AppController {
 		
 		$ActualizarVenta['Venta']['id'] = $venta['Venta']['id'];
 
-		//se obtiene el estado de la venta
-		$ActualizarVenta['Venta']['estado_anterior'] = $venta['Venta']['venta_estado_id'];
-		$ActualizarVenta['Venta']['venta_estado_id'] = $this->obtener_estado_id($ventaMeli['status'], $marketplace['Marketplace']['marketplace_tipo_id']);
-		$ActualizarVenta['Venta']['venta_estado_responsable'] = 'Meli Webhook';
-
+		// //se obtiene el estado de la venta
+		// $ActualizarVenta['Venta']['estado_anterior'] = $venta['Venta']['venta_estado_id'];
+		// $ActualizarVenta['Venta']['venta_estado_id'] = $this->obtener_estado_id($ventaMeli['status'], $marketplace['Marketplace']['marketplace_tipo_id']);
+		// $ActualizarVenta['Venta']['venta_estado_responsable'] = 'Meli Webhook';
+		$nuevo_estado = $this->obtener_estado_id($ventaMeli['status'], $marketplace['Marketplace']['marketplace_tipo_id']);
 		# si es un estado pagado se reserva el stock disponible
-		if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) ) {
+		if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($nuevo_estado) ) {
 			#$ActualizarVenta['Venta']['prioritario'] = 1;
 		}
 
 		# si es un estado rechazo se devuelve el stock disponible
-		if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($ActualizarVenta['Venta']['venta_estado_id']) ) {
+		if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($nuevo_estado) ) {
 			$ActualizarVenta['Venta']['prioritario'] = 0;
 		}
 
@@ -8132,40 +8093,22 @@ class VentasController extends AppController {
 		if($this->Venta->saveAll($ActualizarVenta)){
 
 			$tienda = ClassRegistry::init('Tienda')->obtener_tienda($marketplace['Marketplace']['tienda_id'], array('Tienda.activar_notificaciones', 'Tienda.notificacion_apikey'));
-
-			if ($tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
+			try {
+				$respuesta = $this->cambiarEstado($ActualizarVenta['Venta']['id'], $id_externo, $nuevo_estado , $marketplace['Marketplace']['tienda_id'], null, '', '', 'Meli Webhook');
+			} catch (\Throwable $th) {
+				$respuesta = false;
+			}
+			
+			if ($respuesta && $tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
 				
 				$this->Pushalert = $this->Components->load('Pushalert');
 				$this->Pushalert::$api_key = $tienda['Tienda']['notificacion_apikey'];
 
 				$tituloPush = sprintf('Actualización de venta en %s', $marketplace['Marketplace']['nombre']);
-				$mensajePush = sprintf('La venta #%d cambió a %s', $venta['Venta']['id'], ClassRegistry::init('VentaEstado')->obtener_estado_por_id($ActualizarVenta['Venta']['venta_estado_id'])['VentaEstado']['nombre'] );
+				$mensajePush = sprintf('La venta #%d cambió a %s', $venta['Venta']['id'], ClassRegistry::init('VentaEstado')->obtener_estado_por_id($nuevo_estado)['VentaEstado']['nombre'] );
 				$urlPush = Router::url('/', true) . 'ventas/view/' . $venta['Venta']['id'];
 
 				$this->Pushalert->enviarNotificacion($tituloPush, $mensajePush, $urlPush);	
-			}
-
-			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
-				$this->Venta->pagar_venta($venta['Venta']['id']);
-				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirMeli);
-			}
-
-			# se entrega la venta
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) && ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
-				$this->Venta->entregar($venta['Venta']['id']);
-			}
-
-			# si es un estado rechazo se devuelve el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
-				$this->Venta->revertir_venta($venta['Venta']['id']);
-				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirMeli);
-			}
-
-			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
-				$this->Venta->cancelar_venta($venta['Venta']['id']);
-				$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id']);
-				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirMeli);
 			}
 
 			return true;
@@ -8390,7 +8333,7 @@ class VentasController extends AppController {
 			}
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
 				$this->Venta->pagar_venta($this->Venta->id);
 				$this->actualizar_canales_stock($this->Venta->id, $excluirMeli);
 			}
@@ -8709,7 +8652,7 @@ class VentasController extends AppController {
 
 
 			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
+			if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($NuevaVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($NuevaVenta['Venta']['venta_estado_id'])) {
 				# Flujo de venta pagda
 				$this->Venta->pagar_venta($this->Venta->id);
 
@@ -8779,8 +8722,8 @@ class VentasController extends AppController {
 	
 		$log[] = array(
 			'Log' => array(
-				'administrador' => 'Prestashop Crear Venta - Obtener venta',
-				'modulo' => 'Ventas',
+				'administrador' => "Prestashop Crear Venta - Obtener venta {$venta['Venta']['id']}",
+				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($nwVenta)
 			)
 		);
@@ -8840,8 +8783,8 @@ class VentasController extends AppController {
 
 		$log[] = array(
 			'Log' => array(
-				'administrador' => 'Prestashop Crear Venta - Direccion',
-				'modulo' => 'Ventas',
+				'administrador' => "Prestashop Crear Venta - Direccion {$ActualizarVenta['Venta']['id']}",
+				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($direccionEntrega)
 			)
 		);
@@ -8928,8 +8871,8 @@ class VentasController extends AppController {
 
 		$log[] = array(
 			'Log' => array(
-				'administrador' => 'Prestashop Crear Venta - Detalles',
-				'modulo' => 'Ventas',
+				'administrador' => "Prestashop Crear Venta - Detalles {$ActualizarVenta['Venta']['id']}",
+				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($VentaDetalles)
 			)
 		);
@@ -8990,17 +8933,17 @@ class VentasController extends AppController {
 			} //fin ciclo detalle de venta
 		}
 
-		$ActualizarVenta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
-		$ActualizarVenta['Venta']['venta_estado_id']          = $this->Prestashop->prestashop_obtener_venta_estado($nuevo_estado);
-		$ActualizarVenta['Venta']['venta_estado_responsable'] = 'Prestashop Webhook';
-
-		$ActualizarVenta['VentaEstado2'] = array(
-			array(
-				'venta_estado_id' => $ActualizarVenta['Venta']['venta_estado_id'],
-				'fecha'           => date('Y-m-d H:i:s'),
-				'responsable'     => 'origen'
-			)
-		);
+		// $ActualizarVenta['Venta']['estado_anterior']          = $venta['Venta']['venta_estado_id'];
+		// $ActualizarVenta['Venta']['venta_estado_id']          = $this->Prestashop->prestashop_obtener_venta_estado($nuevo_estado);
+		// $ActualizarVenta['Venta']['venta_estado_responsable'] = 'Prestashop Webhook';
+		$nuevo_estado_id = $this->Prestashop->prestashop_obtener_venta_estado($nuevo_estado);
+		// $ActualizarVenta['VentaEstado2'] = array(
+		// 	array(
+		// 		'venta_estado_id' => $ActualizarVenta['Venta']['venta_estado_id'],
+		// 		'fecha'           => date('Y-m-d H:i:s'),
+		// 		'responsable'     => 'origen'
+		// 	)
+		// );
 
 		
 
@@ -9022,8 +8965,8 @@ class VentasController extends AppController {
 
 		$log[] = array(
 			'Log' => array(
-				'administrador' => 'Prestashop Actualizar Venta',
-				'modulo' => 'Ventas',
+				'administrador' => "Prestashop Actualizar Venta {$ActualizarVenta['Venta']['id']}",
+				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($ActualizarVenta)
 			)
 		);
@@ -9034,39 +8977,22 @@ class VentasController extends AppController {
 		//se guarda la venta
 		if ( $this->Venta->saveAll($ActualizarVenta) ){
 
-			if ($tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
+			try {
+				$respuesta = $this->cambiarEstado($ActualizarVenta['Venta']['id'], $id_externo, $nuevo_estado_id , $tienda_id, null, '', '', 'Prestashop Webhook');
+			} catch (\Throwable $th) {
+				$respuesta = false;
+			}
+
+			if ($respuesta && $tienda['Tienda']['activar_notificaciones'] && !empty($tienda['Tienda']['notificacion_apikey'])) {
 				$this->Pushalert = $this->Components->load('Pushalert');
 
 				$this->Pushalert::$api_key = $tienda['Tienda']['notificacion_apikey'];
 
-				$tituloPush = sprintf('Actualización de venta en %s', $tienda['Tienda']['nombre']);
-				$mensajePush = sprintf('La venta #%d cambió a %s', $venta['Venta']['id'], ClassRegistry::init('VentaEstado')->obtener_estado_por_id($ActualizarVenta['Venta']['venta_estado_id'])['VentaEstado']['nombre'] );
-				$urlPush = Router::url('/', true) . 'ventas/view/' . $venta['Venta']['id'];
+				$tituloPush 	= sprintf('Actualización de venta en %s', $tienda['Tienda']['nombre']);
+				$mensajePush 	= sprintf('La venta #%d cambió a %s', $venta['Venta']['id'], ClassRegistry::init('VentaEstado')->obtener_estado_por_id($nuevo_estado_id)['VentaEstado']['nombre'] );
+				$urlPush 		= Router::url('/', true) . 'ventas/view/' . $venta['Venta']['id'];
 
 				$this->Pushalert->enviarNotificacion($tituloPush, $mensajePush, $urlPush);	
-			}
-
-			# si es un estado pagado se reserva el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
-				$this->Venta->pagar_venta($venta['Venta']['id']);
-				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirPrestashop);
-			}
-
-			# se entrega la venta
-			if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($ActualizarVenta['Venta']['venta_estado_id']) && ClassRegistry::init('VentaEstado')->es_estado_entregado($ActualizarVenta['Venta']['venta_estado_id'])) {
-				$this->Venta->entregar($venta['Venta']['id']);
-			}
-
-			# si es un estado rechazo se devuelve el stock disponible
-			if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($ActualizarVenta['Venta']['venta_estado_id']) && !ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
-				$this->Venta->revertir_venta($venta['Venta']['id']);
-				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirPrestashop);
-			}
-
-			if ( ClassRegistry::init('VentaEstado')->es_estado_cancelado($ActualizarVenta['Venta']['venta_estado_id']) ) {
-				$this->Venta->cancelar_venta($venta['Venta']['id']);
-				$this->WarehouseNodriza->procesar_embalajes($venta['Venta']['id']);
-				$this->actualizar_canales_stock($venta['Venta']['id'], $excluirPrestashop);
 			}
 
 			return true;

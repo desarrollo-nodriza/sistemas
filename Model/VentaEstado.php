@@ -249,5 +249,34 @@ class VentaEstado extends AppModel
 		
 	}
 
+	public function permite_reservar_stock($estado_id)
+	{
+		$est = $this->find('first', array(
+			'conditions' => array(
+				'VentaEstado.id' => $estado_id
+			),
+			'contain' => array(
+				'VentaEstadoCategoria' => array(
+					'fields' => array(
+						'VentaEstadoCategoria.id',
+						'VentaEstadoCategoria.reserva_stock'
+					)
+				)
+			),
+			'fields' => array(
+				'VentaEstado.id'
+			)
+		));
+		
+		if (empty($est))
+			return false;
+
+		if (empty($est['VentaEstadoCategoria']))
+			return false;
+
+		return $est['VentaEstadoCategoria']['reserva_stock'];
+
+	}
+
 
 }

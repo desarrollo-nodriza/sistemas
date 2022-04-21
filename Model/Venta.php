@@ -1055,19 +1055,30 @@ class Venta extends AppModel
 	 */
 	public function pagar_venta($id)
 	{	
+		$log = array();
+
 		$this->id = $id;
 		if (!$this->exists()) {
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => 'No existe venta con ID ' . $id,
+					'modulo' 		=> 'Ventas',
+					'modulo_accion' => ""
+				)
+			);
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+
 			return false;
 		}
-
-		$log = array();
 
 		$venta = $this->obtener_venta_por_id($id);	
 
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Inicia pagar venta ' . $id,
-				'modulo' => 'Ventas',
+				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($venta)
 			)
 		);
@@ -1195,7 +1206,7 @@ class Venta extends AppModel
 		$log[] = array(
 			'Log' => array(
 				'administrador' => 'Finaliza pagar venta ' . $id,
-				'modulo' => 'Ventas',
+				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($venta)
 			)
 		);
@@ -1204,9 +1215,9 @@ class Venta extends AppModel
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->saveMany($log);
 		
-		// ! Calculamos a partir de la nueva tabla para reservar stock
-		# Calculamos el total de unidades reservadas de la venta
-		$cant_reservada_sum = array_sum(Hash::extract($VentaDetallesReserva, '{n}.VentaDetallesReserva.cantidad_reservada'));
+		// * Calculamos a partir de la nueva tabla el total de unidades reservadas de la venta 
+		$venta 				= $this->obtener_venta_por_id($id);	
+		$cant_reservada_sum = array_sum(Hash::extract($venta, 'VentaDetalle.{n}.VentaDetallesReserva.{n}.cantidad_reservada'));
 		$cant_anulada_sum 	= array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_anulada'));
 		$cant_en_espera_sum = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_en_espera'));
 		$cant_entregada_sum = array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada'));
