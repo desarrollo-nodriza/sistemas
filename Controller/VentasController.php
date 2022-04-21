@@ -5295,18 +5295,19 @@ class VentasController extends AppController {
 				}
 
 				# si es un estado pagado se reserva el stock disponible
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->permite_reservar_stock($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
+				if ( ClassRegistry::init('VentaEstado')->permite_reservar_stock($estado_nuevo_id) && !ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
 					$this->Venta->pagar_venta($id_venta);
 					$this->actualizar_canales_stock($id_venta);
+					$this->WarehouseNodriza->procesar_embalajes($id_venta);
 				}
 
 				# se entrega la venta
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
+				if ( ClassRegistry::init('VentaEstado')->es_estado_pagado($estado_nuevo_id) && ClassRegistry::init('VentaEstado')->es_estado_entregado($estado_nuevo_id)) {
 					$this->Venta->entregar($id_venta);
 				}
 
 				# si es un estado cancelado se devuelve el stock a la bodega
-				if ( $estado_actual_nombre != $estado_nuevo_nombre && ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) || ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
+				if ( ClassRegistry::init('VentaEstado')->es_estado_rechazo($estado_nuevo_id) || ClassRegistry::init('VentaEstado')->es_estado_cancelado($estado_nuevo_id)) {
 					$this->Venta->cancelar_venta($id_venta);
 					$this->WarehouseNodriza->procesar_embalajes($id_venta);
 					$this->actualizar_canales_stock($id_venta);
