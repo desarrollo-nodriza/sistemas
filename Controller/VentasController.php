@@ -8822,6 +8822,34 @@ class VentasController extends AppController {
 		
 		$nuevo_estado_id = $this->Prestashop->prestashop_obtener_venta_estado($nuevo_estado);
 
+		$se_ha_registrado_el_estado = ClassRegistry::init('Venta')->find('first', [
+			"fields" 	=> ['Venta.id'],
+			'contain'  	=> [
+				"VentaEstado2" => [
+					"fields"     => 'VentaEstado2.id',
+					"conditions" => ['venta_estado_id'  => $nuevo_estado_id]
+				]
+			],
+			'conditions' => [
+			  'id'      => $venta['Venta']['id'],
+			],
+		]);
+
+		if ($se_ha_registrado_el_estado['VentaEstado2']) {
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "Prestashop Actualizar Venta {$ActualizarVenta['Venta']['id']}",
+					'modulo' 		=> 'Ventas',
+					'modulo_accion' => "La venta ya tiene registrado el estado {$nuevo_estado_id}"
+				)
+			);
+			
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+			return true;
+		}
+
 		$ActualizarVenta['Venta']['metodo_envio_id']  = $this->Prestashop->prestashop_obtener_transportista($nwVenta['id_carrier']);
 
 		$bodega 							          = ClassRegistry::init('Bodega')->obtener_bodega_principal();
