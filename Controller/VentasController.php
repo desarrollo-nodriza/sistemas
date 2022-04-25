@@ -5143,7 +5143,7 @@ class VentasController extends AppController {
 			# Prestashop
 			if ( $esPrestashop && !empty($apiurlprestashop) && !empty($apikeyprestashop)) 
 			{	
-				$resCambio = true;
+				$resCambio = false;
 
 				if($actualizarTienda){
 
@@ -5159,9 +5159,7 @@ class VentasController extends AppController {
 						throw new Exception("Error al cambiar el estado. No fue posible obtener el estado de Prestashop", 505);
 					}
 					
-					if (Configure::read('ambiente') != 'dev') {
-						$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
-					}
+					$resCambio = $this->Prestashop->prestashop_cambiar_estado_venta($id_externo, $estadoPrestashop['id']);
 
 					$log[] = array(
 						'Log' => array(
