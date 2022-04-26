@@ -116,24 +116,24 @@ class BlueExpress
                 "location" => [
                     "stateId" => $BULTO['pickup']['stateId'],
                     "districtId" =>  $BULTO['pickup']['districtId'],
-                    "address" => $BULTO['pickup']['address'],
-                    "name" =>  $BULTO['pickup']['name'],
+                    "address" => substr($BULTO['pickup']['address'], 0, 80),
+                    "name" =>  substr($BULTO['pickup']['name'], 0, 50),
                 ],
                 "contact" => [
                     "fullname" =>  substr($BULTO['pickup']['fullname'], 0, 50),
-                    "phone" =>  $BULTO['pickup']['phone'],
+                    "phone" =>  substr($BULTO['pickup']['phone'], 0, 20),
                 ]
             ],
             "dropoff" => [
                 "contact" => [
-                    "fullname" => $BULTO['dropoff']['nombre_receptor'],
-                    "phone" => $BULTO['dropoff']['fono_receptor'],
+                    "fullname" => substr($BULTO['dropoff']['nombre_receptor'], 0, 50),
+                    "phone" => substr($BULTO['dropoff']['fono_receptor'], 0, 20),
                 ],
                 "location" => [
                     "stateId" => $BULTO['dropoff']['stateId'],
                     "districtId" => $BULTO['dropoff']['districtId'],
-                    "address" => $BULTO['dropoff']['direccion'],
-                    "name" => $BULTO['dropoff']['name'],
+                    "address" => substr($BULTO['dropoff']['direccion'], 0, 80),
+                    "name" => substr($BULTO['dropoff']['name'], 0, 50),
                 ]
             ],
             "packages" => [

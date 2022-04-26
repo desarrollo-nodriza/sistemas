@@ -306,6 +306,7 @@ class BlueExpressComponent extends Component
         
         $exito = false;
         $log = array();
+        $transportes = array();
 
         if (!$embalajes) {
 
@@ -363,8 +364,6 @@ class BlueExpressComponent extends Component
 
                 continue;
             }
-
-            $transportes = array();
 
             $ruta_pdfs = null;
             $exito     = true;
