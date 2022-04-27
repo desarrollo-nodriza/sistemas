@@ -524,7 +524,8 @@ class Venta extends AppModel
 								'Bodega.fono',
 								'Bodega.direccion',
 								'Bodega.comuna_id',
-								'Bodega.codigo_sucursal'
+								'Bodega.codigo_sucursal',
+								'Bodega.principal'
 							],
 						],
 						'BodegasMetodoEnvio'
@@ -644,7 +645,8 @@ class Venta extends AppModel
 							'Bodega.nombre',
 							'Bodega.direccion',
 							'Bodega.horario_atencion',
-							'Bodega.codigo_sucursal'
+							'Bodega.codigo_sucursal',
+							'Bodega.principal'
 						)
 					)
 				),

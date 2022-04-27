@@ -1231,14 +1231,19 @@ class OrdenesController extends AppController
 		$tipos_ndc = $this->Orden->get_tipos_ndc();
 
 		$bodegas = ClassRegistry::init('Bodega')->obtener_bodegas();
-			
+
+		$bodegas_all = ClassRegistry::init('Bodega')->obtener_bodegas_sucursal();	
 		$bodegas_sucursal = $this->Session->read('Auth.Administrador.Bodega');
+		foreach ($bodegas_all as $key => $bodega) {
+			if ($bodega['Bodega']['principal'] == true) {
+
+				$bodega_principal_cod = $bodega['Bodega']['codigo_sucursal'];
+			}
+		}
+		
 		
 		foreach ($bodegas_sucursal as $key => $bodega) {
-			if ($bodega['nombre'] == 'Toolmania principal') {
-				$bodega_principal_cod = $bodega['codigo_sucursal'];
 			
-			}
 			if ($bodega['id'] == $venta['Venta']['bodega_id']) {
 				$bodega_inicial_cod = $bodega['codigo_sucursal'];	
 			} 

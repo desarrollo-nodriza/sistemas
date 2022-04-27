@@ -132,7 +132,7 @@
 									];
 									$opts = array_replace_recursive($opts,['value' => $bodega_inicial_cod,'empty' => 'Seleccione sucursal']);
 									if ($bodega_inicial_cod == $bodega_principal_cod) :
-										$opts = array_replace_recursive($opts,['value' => '','empty' => 'Toolmania principal',]);
+										$opts = array_replace_recursive($opts,['value' => '','empty' => 'Bodega principal']);
 									endif; ?>
 								<?=$this->Form->select('sucursal_sii', $sucursales,$opts);?>
 							</div>
