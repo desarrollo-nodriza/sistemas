@@ -1014,7 +1014,7 @@ class OrdenesController extends AppController
 					'fields' => array(
 						'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
 						'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.paquete_generado', 'Venta.direccion_entrega', 
-						'Venta.comuna_entrega', 'Venta.fono_receptor'
+						'Venta.comuna_entrega', 'Venta.fono_receptor','Venta.bodega_id',
 					)
 				)
 			);
@@ -1231,10 +1231,17 @@ class OrdenesController extends AppController
 		$tipos_ndc = $this->Orden->get_tipos_ndc();
 
 		$bodegas = ClassRegistry::init('Bodega')->obtener_bodegas();
-		
+			
 		$bodegas_sucursal = $this->Session->read('Auth.Administrador.Bodega');
-		$bodega_inicial_cod = $bodegas_sucursal[0]['codigo_sucursal'];
+		
 		foreach ($bodegas_sucursal as $key => $bodega) {
+			if ($bodega['nombre'] == 'Toolmania principal') {
+				$bodega_principal_cod = $bodega['codigo_sucursal'];
+			
+			}
+			if ($bodega['id'] == $venta['Venta']['bodega_id']) {
+				$bodega_inicial_cod = $bodega['codigo_sucursal'];	
+			} 
 			$sucursales[$bodega['codigo_sucursal']] = $bodega['nombre'];
 		}
 		# Se desactivan las opciones de ndc de devolución a stock si no han salido productos
@@ -1248,7 +1255,7 @@ class OrdenesController extends AppController
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');
 
-		$this->set(compact('venta', 'bodega_inicial_cod', 'comunas', 'sucursales', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc','bodegas'));
+		$this->set(compact('venta', 'bodega_inicial_cod','bodega_principal_cod', 'comunas', 'sucursales', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc','bodegas'));
 
 	}
 
@@ -1419,7 +1426,7 @@ class OrdenesController extends AppController
 						'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',
 						'Venta.venta_estado_id', 'Venta.tienda_id', 'Venta.marketplace_id', 'Venta.medio_pago_id', 'Venta.venta_cliente_id', 'Venta.paquete_generado', 'Venta.direccion_entrega', 
 						'Venta.comuna_entrega', 'Venta.fono_receptor'
-					)
+						)
 				)
 			);
 

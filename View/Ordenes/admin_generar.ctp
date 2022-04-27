@@ -127,11 +127,12 @@
 								<?
 								$opts= [
 									'class' => 'form-control js-dte-tipo',
-									'empty' => 'Seleccione sucursal',
-									'escape' => false
+									'escape' => false,
+									'disabled' => true,
 									];
-									if (count($sucursales) == 1) :
-										$opts = array_replace_recursive($opts,['value' => $bodega_inicial_cod]);
+									$opts = array_replace_recursive($opts,['value' => $bodega_inicial_cod,'empty' => 'Seleccione sucursal']);
+									if ($bodega_inicial_cod == $bodega_principal_cod) :
+										$opts = array_replace_recursive($opts,['value' => '','empty' => 'Toolmania principal',]);
 									endif; ?>
 								<?=$this->Form->select('sucursal_sii', $sucursales,$opts);?>
 							</div>

@@ -170,6 +170,12 @@ class Bodega extends AppModel
 		return $this->find('list', array('conditions' => array('Bodega.activo' => 1)));
 	}
 
+	public function obtener_bodegas_sucursal()
+	{
+		
+		return $this->find('all');
+	}
+
 
 	/**
 	 * [obtener_pmp_por_id description]
