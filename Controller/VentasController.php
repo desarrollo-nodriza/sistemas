@@ -5168,6 +5168,8 @@ class VentasController extends AppController {
 							'modulo_accion' => 'Resultado: ' . $resCambio . ' - Estado nuevo:' . json_encode($estadoPrestashop)
 						)
 					);
+				}else{
+					$resCambio = true;
 				}
 				
 				if ($resCambio) {
@@ -8822,20 +8824,8 @@ class VentasController extends AppController {
 		
 		$nuevo_estado_id = $this->Prestashop->prestashop_obtener_venta_estado($nuevo_estado);
 
-		$se_ha_registrado_el_estado = ClassRegistry::init('Venta')->find('first', [
-			"fields" 	=> ['Venta.id'],
-			'contain'  	=> [
-				"VentaEstado2" => [
-					"fields"     => 'VentaEstado2.id',
-					"conditions" => ['venta_estado_id'  => $nuevo_estado_id]
-				]
-			],
-			'conditions' => [
-			  'id'      => $venta['Venta']['id'],
-			],
-		]);
 
-		if ($se_ha_registrado_el_estado['VentaEstado2']) {
+		if ($venta['Venta']['venta_estado_id'] == $nuevo_estado_id) {
 
 			$log[] = array(
 				'Log' => array(
