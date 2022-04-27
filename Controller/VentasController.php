@@ -8571,6 +8571,9 @@ class VentasController extends AppController {
 	 */
 	public function actualizar_venta_prestashop($tienda_id, $id_externo, $nuevo_estado = '')
 	{
+
+		$log = [];
+
 		$tienda = ClassRegistry::init('Tienda')->find('first', array(
 			'conditions' => array(
 				'Tienda.id' => $tienda_id
@@ -8581,10 +8584,19 @@ class VentasController extends AppController {
 		));
 
 		if (empty($tienda)) {
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "Prestashop actualizar venta id_externo {$id_externo}",
+					'modulo' 		=> 'Ventas',
+					'modulo_accion' => "No posee tienda"
+				)
+			);
+			
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
 			return false;
 		}
-
-		$log = array();
 
 		#Vemos si existe en la BD
 		$venta = $this->Venta->find('first', array(
@@ -8600,7 +8612,6 @@ class VentasController extends AppController {
 				'VentaDetalle'
 			)
 		));
-
 		# componente on the fly!
 		$this->Prestashop = $this->Components->load('Prestashop');
 
@@ -8611,13 +8622,23 @@ class VentasController extends AppController {
 	
 		$log[] = array(
 			'Log' => array(
-				'administrador' => "Prestashop Crear Venta - Obtener venta {$venta['Venta']['id']}",
+				'administrador' => "Prestashop actualizar Venta - Obtener venta {$venta['Venta']['id']} id_externo {$id_externo}",
 				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($nwVenta)
 			)
 		);
 
 		if (empty($nwVenta)) {
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "Prestashop no existe venta {$venta['Venta']['id']} id_externo {$id_externo}",
+					'modulo' 		=> 'Ventas',
+					'modulo_accion' => "No hay venta en prestashop ".json_encode($nwVenta)
+				)
+			);
+			
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
 			return false;
 		}
 
@@ -8672,7 +8693,7 @@ class VentasController extends AppController {
 
 		$log[] = array(
 			'Log' => array(
-				'administrador' => "Prestashop Crear Venta - Direccion {$ActualizarVenta['Venta']['id']}",
+				'administrador' => "Prestashop actualizar Venta - Direccion {$ActualizarVenta['Venta']['id']} id_externo {$id_externo}",
 				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($direccionEntrega)
 			)
@@ -8760,7 +8781,7 @@ class VentasController extends AppController {
 
 		$log[] = array(
 			'Log' => array(
-				'administrador' => "Prestashop Crear Venta - Detalles {$ActualizarVenta['Venta']['id']}",
+				'administrador' => "Prestashop actualizar Venta - Detalles {$ActualizarVenta['Venta']['id']} id_externo {$id_externo}",
 				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($VentaDetalles)
 			)
@@ -8824,12 +8845,12 @@ class VentasController extends AppController {
 		
 		$nuevo_estado_id = $this->Prestashop->prestashop_obtener_venta_estado($nuevo_estado);
 
-
+		
 		if ($venta['Venta']['venta_estado_id'] == $nuevo_estado_id) {
 
 			$log[] = array(
 				'Log' => array(
-					'administrador' => "Prestashop Actualizar Venta {$ActualizarVenta['Venta']['id']}",
+					'administrador' => "Prestashop Actualizar Venta {$ActualizarVenta['Venta']['id']} id_externo {$id_externo}",
 					'modulo' 		=> 'Ventas',
 					'modulo_accion' => "La venta ya tiene registrado el estado {$nuevo_estado_id}"
 				)
@@ -8858,7 +8879,7 @@ class VentasController extends AppController {
 
 		$log[] = array(
 			'Log' => array(
-				'administrador' => "Prestashop Actualizar Venta {$ActualizarVenta['Venta']['id']}",
+				'administrador' => "Prestashop Actualizar Venta {$ActualizarVenta['Venta']['id']} id_externo {$id_externo}",
 				'modulo' 		=> 'Ventas',
 				'modulo_accion' => json_encode($ActualizarVenta)
 			)
