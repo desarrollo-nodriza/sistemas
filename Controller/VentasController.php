@@ -7025,7 +7025,7 @@ class VentasController extends AppController {
 		$dte['Dte']['externo']               = $venta['Venta']['id_externo'];
 		$dte['Dte']['administrador_id']      = $this->Auth->user('id');
 		$dte['Dte']['medio_de_pago']         = 1; // Contado por defecto
-		if ($venta['Bodega']['nombre'] != 'Toolmania principal') {
+		if ($venta['Bodega']['principal'] != 1) {
 		$dte['Dte']['sucursal_sii']          = $venta['Bodega']['codigo_sucursal'];
 		}
 
