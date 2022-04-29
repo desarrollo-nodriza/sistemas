@@ -2522,13 +2522,8 @@ class VentaDetalleProductosController extends AppController
             $stockPresta = (isset($stockProductoPrestashop['stock_available']['quantity'])) ? $stockProductoPrestashop['stock_available']['quantity'] : 0;
 
             # Volvemos a setear el stock de prestashop
-            $productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] = $stockPresta;
-
-            if (Configure::read('ambiente') == 'dev') {
-				$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = true;
-			} elseif (isset($stockProductoPrestashop['stock_available']['id'])) {
-				$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock[0]['stock_disponible']);
-			}
+            $productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] 				= $stockPresta;
+			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] 	= $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock[0]['stock_disponible']);
         }
 		
         if ($stock_virtual) {
