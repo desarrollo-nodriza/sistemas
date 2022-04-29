@@ -1207,7 +1207,8 @@ class OrdenCompraFacturasController extends AppController
 	 * @return void
 	 */
 	public function recepcionar_dte_compra($token, $cert, $pk, $facturas = [])
-	{
+	{	
+		$this->ApiLibreDte = $this->Components->load('ApiLibreDte');
 		$this->ApiLibreDte->crearCliente($token, ['cert' => $cert, 'pkey' => $pk]);
 
 		$docs = [];
