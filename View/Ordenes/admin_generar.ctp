@@ -128,7 +128,7 @@
 								$opts= [
 									'class' => 'form-control js-dte-tipo',
 									'escape' => false,
-									'disabled' => true,
+									'readonly' => true,
 									];
 									$opts = array_replace_recursive($opts,['value' => $bodega_inicial_cod,'empty' => 'Seleccione sucursal']);
 									if ($bodega_inicial_cod == $bodega_principal_cod) :

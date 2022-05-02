@@ -611,12 +611,23 @@ class LibreDteComponent extends Component
 		            'TipoDTE' => $data['Dte']['tipo_documento'],
 		        ),
 		        'Emisor' => array(
-					'CdgSIISucur'	=>$data['Dte']['sucursal_sii'],
 		            'RUTEmisor' => '76381142-5',
 		        )
 		    ),
 		      
 		);
+
+		# Sucurcal
+		if (isset($data['Dte']['sucursal_sii']))
+		{
+			$dte = array_replace_recursive($dte, array(
+				'Encabezado' => array(
+					'Emisor' => array(
+						'CdgSIISucur'	=>$data['Dte']['sucursal_sii']
+					)
+				)
+			));
+		}
 
 		# Glosa
 		if (!empty($data['Dte']['glosa'])) {
