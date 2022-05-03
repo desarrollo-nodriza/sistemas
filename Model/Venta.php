@@ -523,7 +523,9 @@ class Venta extends AppModel
 								'Bodega.nombre_contacto',
 								'Bodega.fono',
 								'Bodega.direccion',
-								'Bodega.comuna_id'
+								'Bodega.comuna_id',
+								'Bodega.codigo_sucursal',
+								'Bodega.principal'
 							],
 						],
 						'BodegasMetodoEnvio'
@@ -642,7 +644,9 @@ class Venta extends AppModel
 						'fields' => array(
 							'Bodega.nombre',
 							'Bodega.direccion',
-							'Bodega.horario_atencion'
+							'Bodega.horario_atencion',
+							'Bodega.codigo_sucursal',
+							'Bodega.principal'
 						)
 					)
 				),

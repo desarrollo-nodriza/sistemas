@@ -479,7 +479,8 @@ class VentasController extends AppController {
 				),
 				'Bodega' => array(
 					'fields' => array(
-						'Bodega.nombre'
+						'Bodega.nombre',
+						'Bodega.codigo_sucursal'
 					)
 				)
 			),
@@ -493,7 +494,6 @@ class VentasController extends AppController {
 
 		//----------------------------------------------------------------------------------------------------
 		$this->paginate = $paginate;
-
 		$ventas = $this->paginate();
 		
 		//----------------------------------------------------------------------------------------------------
@@ -6828,7 +6828,6 @@ class VentasController extends AppController {
 		
 	}
 
-
 	/**
 	 * [crearDteAutomatico description]
 	 * @param  [type] $venta [description]
@@ -6848,10 +6847,10 @@ class VentasController extends AppController {
 			return $respuesta;
 		}
 
-		# Ya tiene DTE valido
-		if ( ($tipo_documento == 33 || $tipo_documento == 39) && !DtesController::unicoDteValido($venta['Venta']['id'])) {
-			$respuesta['errors'] = sprintf('La venta #%d ya tien un DTE de venta válido.', $venta['Venta']['id']);
-			return $respuesta;
+		 # Ya tiene DTE valido
+		 if ( ($tipo_documento == 33 || $tipo_documento == 39) && !DtesController::unicoDteValido($venta['Venta']['id'])) {
+		 	$respuesta['errors'] = sprintf('La venta #%d ya tien un DTE de venta válido.', $venta['Venta']['id']);
+		 	return $respuesta;
 		}
 
 		# si no tiene items no se puede procesar
@@ -6886,6 +6885,9 @@ class VentasController extends AppController {
 		$dte['Dte']['externo']               = $venta['Venta']['id_externo'];
 		$dte['Dte']['administrador_id']      = $this->Auth->user('id');
 		$dte['Dte']['medio_de_pago']         = 1; // Contado por defecto
+		if ($venta['Bodega']['principal'] != 1) {
+		$dte['Dte']['sucursal_sii']          = $venta['Bodega']['codigo_sucursal'];
+		}
 
 		$dte['Dte']['glosa'] = __('Dte generado automáticamente para la venta # ') . $venta['Venta']['id'];
 
@@ -6954,7 +6956,7 @@ class VentasController extends AppController {
 		if($DteModel->saveAll($dte)) {
 
 			$this->LibreDte->crearCliente($venta['Tienda']['facturacion_apikey']);
-
+		
 			$nwDte  = $this->LibreDte->prepararDte($dte);
 			$id_dte = $DteModel->id;
 			
@@ -7055,7 +7057,6 @@ class VentasController extends AppController {
 		$venta = $this->Venta->obtener_venta_por_id($id);
 		$this->LibreDte = $this->Components->load('LibreDte');
 		$this->Prestashop = $this->Components->load('Prestashop');
-		
 		# Linio
 		if ($venta['Marketplace']['marketplace_tipo_id'] == 1) {
 			# Para la consola se carga el componente on the fly!
@@ -7355,7 +7356,6 @@ class VentasController extends AppController {
 		return $venta;
 	}
 
-
 	/**
 	 * [admin_crear_dte_one_click description]
 	 * @param  [type] $id [description]
@@ -7494,8 +7494,6 @@ class VentasController extends AppController {
 		}
 
 	}
-
-
 	/**
 	 * [admin_facturacion_masiva description]
 	 * @return [type] [description]
@@ -7516,7 +7514,7 @@ class VentasController extends AppController {
 		if ($this->request->is('post')) {
 			
 			foreach ($this->request->data['Venta'] as $iv => $v) {
-
+				
 				if ($iv == 'return_url')
 					continue;
 

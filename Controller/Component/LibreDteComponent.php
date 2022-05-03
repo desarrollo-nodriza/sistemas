@@ -150,14 +150,14 @@ class LibreDteComponent extends Component
 	 */
 	public function crearDteTemporal($dataDte, &$dteInterno = array())
 	{	
-		
+
 		CakeLog::write('debug', 'Dte temporal request: ' . json_encode($dataDte));
-
+	
 		// crear DTE temporal
-		$emitir = $this->ConexionLibreDte->post('/dte/documentos/emitir', $dataDte);
-
+		$emitir = $this->ConexionLibreDte->post('/dte/documentos/emitir', $dataDte);	
+		
 		CakeLog::write('debug', 'Dte temporal response: ' . json_encode($emitir));
-
+	
 		if ($emitir['status']['code'] != 200) {
 
 			# Guardamos el estado
@@ -167,9 +167,9 @@ class LibreDteComponent extends Component
 		    # Mensaje de retorno
 		    throw new Exception("Error al generar el DTE temporal: " . $emitir['body'], $emitir['status']['code']);
 		    return;
-
+	
 		}else{
-
+			
 			# Guardamos el estado
 			$dteInterno['Dte']['estado'] = 'dte_temporal_emitido';
 			$dteInterno['Dte']['dte_temporal'] = $emitir['body']['codigo'];
@@ -603,7 +603,7 @@ class LibreDteComponent extends Component
 
 
 	public function prepararDte ($data = array())
-	{
+	{		
 		# Arreglo Base
 		$dte = array(
 		    'Encabezado' => array(
@@ -616,6 +616,18 @@ class LibreDteComponent extends Component
 		    ),
 		      
 		);
+
+		# Sucurcal
+		if (isset($data['Dte']['sucursal_sii']))
+		{
+			$dte = array_replace_recursive($dte, array(
+				'Encabezado' => array(
+					'Emisor' => array(
+						'CdgSIISucur'	=>$data['Dte']['sucursal_sii']
+					)
+				)
+			));
+		}
 
 		# Glosa
 		if (!empty($data['Dte']['glosa'])) {
