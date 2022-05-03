@@ -7513,11 +7513,10 @@ class VentasController extends AppController {
 
 		if ($this->request->is('post')) {
 			
+			unset($this->request->data['Venta']['return_url']);
+
 			foreach ($this->request->data['Venta'] as $iv => $v) {
 				
-				if ($iv == 'return_url')
-					continue;
-
 				# No existe a venta
 				if (!$this->Venta->exists($v['id'])) {
 					$result['errors'][] = sprintf('La venta #%d no existe en los registros', $v['id']);
@@ -7525,9 +7524,9 @@ class VentasController extends AppController {
 				}
 
 				$venta = $this->preparar_venta($v['id']);
-				
+			
 				$result_dte = $this->crearDteAutomatico($venta);
-
+				
 				if (!empty($result_dte['success'])) {
 
 					$result['success'][] = $result_dte['success'];
