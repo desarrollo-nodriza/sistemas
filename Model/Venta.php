@@ -482,8 +482,8 @@ class Venta extends AppModel
 					'VentaEstado' => array(
 						'VentaEstadoCategoria' => array(
 							'fields' => array(
-								'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.plantilla', 'VentaEstadoCategoria.reserva_stock'
-							)
+								'VentaEstadoCategoria.id', 'VentaEstadoCategoria.nombre', 'VentaEstadoCategoria.estilo', 'VentaEstadoCategoria.plantilla', 'VentaEstadoCategoria.reserva_stock', 'VentaEstadoCategoria.generar_dte'
+								)
 						),
 						'fields' => array(
 							'VentaEstado.id', 'VentaEstado.venta_estado_categoria_id', 'VentaEstado.permitir_dte', 'VentaEstado.nombre', 'VentaEstado.notificacion_cliente'

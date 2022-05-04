@@ -5280,10 +5280,15 @@ class VentasController extends AppController {
 				$this->acciones_a_realiazar_segun_estado_venta($estado_nuevo_id, $id_venta);
 
 			}
-			
+
+			if ($venta['VentaEstado']['VentaEstadoCategoria']['generar_dte'] = 1) {
+				$this->admin_crear_dte_one_click($id_venta);
+			}
+
 			# Guardamos el log
 			ClassRegistry::init('Log')->create();
 			ClassRegistry::init('Log')->saveMany($log);
+
 			return true;
 			
 		}else{
@@ -6834,7 +6839,7 @@ class VentasController extends AppController {
 	 * @return [type]        [description]
 	 */
 	public function crearDteAutomatico($venta)
-	{	
+	{	prx('listo');
 		$respuesta =  array(
 			'success', 'errors'
 		);
