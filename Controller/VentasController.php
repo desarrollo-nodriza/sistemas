@@ -6839,7 +6839,7 @@ class VentasController extends AppController {
 	 * @return [type]        [description]
 	 */
 	public function crearDteAutomatico($venta)
-	{	prx('listo');
+	{	
 		$respuesta =  array(
 			'success', 'errors'
 		);
