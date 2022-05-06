@@ -5282,9 +5282,9 @@ class VentasController extends AppController {
 			}
 
 			if ($venta['VentaEstado']['VentaEstadoCategoria']['generar_dte'] = 1) {
-				$this->admin_crear_dte_one_click($id_venta);
+				$venta                = $this->preparar_venta($id_venta);
+				$this->crearDteAutomatico($venta);
 			}
-
 			# Guardamos el log
 			ClassRegistry::init('Log')->create();
 			ClassRegistry::init('Log')->saveMany($log);
@@ -6974,10 +6974,8 @@ class VentasController extends AppController {
 			}
 
 			try {
-				
 				// crear DTE temporal
 				$dte_temporal = $this->LibreDte->crearDteTemporal($nwDte, $dteInterno);
-
 				if (empty($dte_temporal)) {
 					$respuesta['errors'] = sprintf('No fue posible generar el DTE temporal para la venta #%d. Verifique los campos e intente nuevamente.', $venta['Venta']['id']);
 					return $respuesta;
@@ -6987,11 +6985,12 @@ class VentasController extends AppController {
 				{
 					// crear DTE test en base a dte temporal
 					$generar = $this->LibreDte->crearDteTest($dte_temporal, $dteInterno);
+					
 				}
 				else
 				{
 					// crear DTE real
-					$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
+				//	$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
 				}
 
 			} catch (Exception $e) {
