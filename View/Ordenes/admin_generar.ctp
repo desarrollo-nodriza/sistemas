@@ -123,18 +123,17 @@
 						<div class="col-xs-12  js-dte-factura">
 							<div class="form-group">
 								<br>
-								<label><?=__('Sucursal');?></label>
 								<?
 								$opts= [
 									'class' => 'form-control js-dte-tipo',
 									'escape' => false,
 									'readonly' => true,
 									];
-									$opts = array_replace_recursive($opts,['value' => $bodega_inicial_cod,'empty' => 'Seleccione sucursal']);
+									$opts = array_replace_recursive($opts,['value' => $bodega_inicial_cod]);
 									if ($bodega_inicial_cod == $bodega_principal_cod) :
-										$opts = array_replace_recursive($opts,['value' => '','empty' => 'Bodega principal']);
+										$opts = array_replace_recursive($opts,['value' => '']);
 									endif; ?>
-								<?=$this->Form->select('sucursal_sii', $sucursales,$opts);?>
+								<?=$this->Form->hidden('sucursal_sii',$opts);?>
 							</div>
 						</div>
 						<div class="col-xs-12 col-md-6 js-no-boleta">

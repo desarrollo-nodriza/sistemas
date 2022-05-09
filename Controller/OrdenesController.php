@@ -371,10 +371,10 @@ class OrdenesController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-			 if ( ($this->request->data['Dte']['tipo_documento'] == 33 || $this->request->data['Dte']['tipo_documento'] == 39) && !DtesController::unicoDteValido($id_orden)) {
-			 	$this->Session->setFlash('¡ERROR! No puedes generar 2 documentos válidos de venta. Debes solicitar una Nota de crédito.' , null, array(), 'danger');
-			 	$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
-			 }
+			  if ( ($this->request->data['Dte']['tipo_documento'] == 33 || $this->request->data['Dte']['tipo_documento'] == 39) && !DtesController::unicoDteValido($id_orden)) {
+			  	$this->Session->setFlash('¡ERROR! No puedes generar 2 documentos válidos de venta. Debes solicitar una Nota de crédito.' , null, array(), 'danger');
+			  	$this->redirect(array('controller' => 'ventas', 'action' => 'view', $id_orden));
+			  }
 
 			# Administrador
 			$this->request->data['Dte']['administrador_id'] = $this->Session->read('Auth.Administrador.id');
@@ -1236,18 +1236,15 @@ class OrdenesController extends AppController
 		$bodegas_sucursal = $this->Session->read('Auth.Administrador.Bodega');
 		foreach ($bodegas_all as $key => $bodega) {
 			if ($bodega['Bodega']['principal'] == true) {
-
 				$bodega_principal_cod = $bodega['Bodega']['codigo_sucursal'];
 			}
 		}
 		
 		
 		foreach ($bodegas_sucursal as $key => $bodega) {
-			
 			if ($bodega['id'] == $venta['Venta']['bodega_id']) {
 				$bodega_inicial_cod = $bodega['codigo_sucursal'];	
 			} 
-			$sucursales[$bodega['codigo_sucursal']] = $bodega['nombre'];
 		}
 		# Se desactivan las opciones de ndc de devolución a stock si no han salido productos
 		if (ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id']) && !array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')))
@@ -1260,7 +1257,7 @@ class OrdenesController extends AppController
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');
 
-		$this->set(compact('venta', 'bodega_inicial_cod','bodega_principal_cod', 'comunas', 'sucursales', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc','bodegas'));
+		$this->set(compact('venta', 'bodega_inicial_cod','bodega_principal_cod', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc','bodegas'));
 
 	}
 
@@ -1579,7 +1576,7 @@ class OrdenesController extends AppController
 	public function generarDte($id_dte = '')
 	{	
 		$dte = $this->LibreDte->prepararDte($this->request->data);
-	
+
 		if (!empty($id_dte)) 
 		{
 			# Obtener DTE interno por id
@@ -1610,7 +1607,7 @@ class OrdenesController extends AppController
 
 		// crear DTE temporal
 		$dte_temporal = $this->LibreDte->crearDteTemporal($dte, $dteInterno);
-	
+		
 		if (empty($dte_temporal)) 
 		{
 			return;
