@@ -5281,10 +5281,13 @@ class VentasController extends AppController {
 
 			}
 
-			if ($venta['VentaEstado']['VentaEstadoCategoria']['generar_dte'] = 1) {
-				$venta                = $this->preparar_venta($id_venta);
-				$this->crearDteAutomatico($venta);
+			# Se crea DTE automático si corresponde
+			$venta                = $this->preparar_venta($id_venta);
+			if ($venta['VentaEstado']['VentaEstadoCategoria']['generar_dte'] = 1) 
+			{
+				$log[] = $this->crearDteAutomatico($venta);
 			}
+			
 			# Guardamos el log
 			ClassRegistry::init('Log')->create();
 			ClassRegistry::init('Log')->saveMany($log);
