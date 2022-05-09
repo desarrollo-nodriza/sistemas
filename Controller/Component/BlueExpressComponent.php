@@ -11,6 +11,13 @@ class BlueExpressComponent extends Component
     public $components = array('LAFFPack', 'LibreDte', 'Etiquetas');
     private $intentos = 1;
 
+    public $tipo_servicio = [
+		"EX" => "Express.",
+		"PR" => "Premium.",
+		"PY" => "Prioritario.",
+		"MD" => "Same Day."
+	];
+    
     public function crearCliente($BX_TOKEN, $BX_USERCODE, $BX_CLIENT_ACCOUNT)
     {
         $this->blue_express = new BlueExpress($BX_TOKEN, $BX_USERCODE, $BX_CLIENT_ACCOUNT);

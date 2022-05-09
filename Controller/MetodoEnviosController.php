@@ -210,11 +210,14 @@ class MetodoEnviosController extends AppController
 			]
 		);
 		$estados = [];
+		
 		foreach ($estados_sin_procesar as  $value) {
 			$estados[$value['VentaEstado']['id']] = "Estado {$value['VentaEstado']['nombre']} | Categoría {$value['VentaEstadoCategoria']['nombre']}";
 		}
+
+		$cuentaCorrienteTransporte = ClassRegistry::init('CuentaCorrienteTransporte')->find('list',['conditions'=> ['activo'=>true]]);
 		
-		$this->set(compact('dependencias', 'dependenciasVars','bodegas','tipo_servicio','estados'));
+		$this->set(compact('dependencias', 'dependenciasVars','bodegas','tipo_servicio','estados','cuentaCorrienteTransporte'));
 
 	}
 

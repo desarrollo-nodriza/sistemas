@@ -40,15 +40,15 @@
 								<td><?= $this->Form->input('permitir_reservar_stock_otra_bodega', array('class' => 'icheckbox')); ?></td>
 							<tr>
 								<th><?= $this->Form->label('embalado_venta_estado_id', 'Estado de la venta por defecto'); ?></th>
-								<td><?= $this->Form->select('embalado_venta_estado_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
+								<td><?= $this->Form->select('embalado_venta_estado_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto', 'required')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('embalado_venta_estado_parcial_id', 'Estado de la venta parcial por defecto'); ?></th>
-								<td><?= $this->Form->select('embalado_venta_estado_parcial_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
+								<td><?= $this->Form->select('embalado_venta_estado_parcial_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto', 'required')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('consolidacion_venta_estado_id', 'Estado de la venta en consolidación'); ?></th>
-								<td><?= $this->Form->select('consolidacion_venta_estado_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
+								<td><?= $this->Form->select('consolidacion_venta_estado_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto', 'required')); ?></td>
 							</tr>
 							<tr id="generar_ot" class="">
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
@@ -331,8 +331,9 @@
 									<table id="sortable" class="table">
 										<thead>
 											<tr>
-												<th><?= 'Bodega' ?></th>
-												<th style="text-align: center;"> <?= 'Prioritario' ?></th>
+												<th>Bodega</th>
+												<th style="text-align: center;"> Prioritario</th>
+												<th>Cuenta corriente transporte</th>
 												<th style="text-align: center;"> Acciones</th>
 											</tr>
 										</thead>
@@ -348,34 +349,37 @@
 													<td align="center" style="vertical-align: middle; width: 100px;">
 														<?= $this->Form->checkbox(sprintf('%d.prioritaria', $indice), array('label' => '', 'default' =>  $bodega['prioritaria'])); ?>
 													</td>
+													<td align="center" style="vertical-align: middle;">
+														<?= $this->Form->select(sprintf('%d.cuenta_corriente_transporte_id', $indice), $cuentaCorrienteTransporte, array('empty' => 'Seleccione Cuenta corriente', 'class' => 'form-control', 'required', 'default' => $bodega['cuenta_corriente_transporte_id'])); ?>
+													</td>
 													<td class="hidden" align="center" style="vertical-align: middle; width: 100px;">
 														<?= $this->Form->input(sprintf('%d.orden', $indice), array('type' => 'text', 'label' => '',  'default' =>  $bodega['orden'] ?? 1, 'class' => 'form-control orden')); ?>
 													</td>
-													<td  align="center"  style="vertical-align: middle; width: 100px;">
+													<td align="center" style="vertical-align: middle; width: 100px;">
 														<button type="button" data-toggle="modal" data-target="#modal-eliminar-bodega-<?= $bodega['id'] ?>" class="btn btn-danger btn-block ">Eliminar</button>
 													</td>
 												</tr>
 											<? endforeach; ?>
-											<?if(count($this->request->data['BodegasMetodoEnvio']) < count($bodegas)):?>
+											<? if (count($this->request->data['BodegasMetodoEnvio']) < count($bodegas)) : ?>
 
-											<? for ($i = (count($this->request->data['BodegasMetodoEnvio']) + 1); $i <= (count($this->request->data['BodegasMetodoEnvio']) + count($bodegas)); $i++) : ?>
-												<tr class="fila hidden clone-tr">
-													<?= $this->Form->input(sprintf('%d.metodo_envio_id', $i), array('type' => 'text', 'label' => '', 'default' =>  $this->request->data['MetodoEnvio']['id'], 'class' => 'form-control hidden')); ?>
-													<td align="center" style="vertical-align: middle;">
-														<?= $this->Form->select(sprintf('%d.bodega_id', $i), $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control',)); ?>
-													</td>
-													<td align="center" style="vertical-align: middle; width: 100px;">
-														<?= $this->Form->checkbox(sprintf('%d.prioritaria', $i), array('label' => '', 'default' => 0)); ?>
-													</td>
-													<td class="hidden" align="center" style="vertical-align: middle">
-														<?= $this->Form->input(sprintf('%d.orden', $i), array('type' => 'text', 'label' => '', 'default' => $i, 'class' => 'form-control orden')); ?>
-													</td>
-													<td valign="center" align="center" style="vertical-align: middle; width: 100px;" w>
-														<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>
-													</td>
-												</tr>
-											<? endfor; ?>
-											<?endif?>
+												<? for ($i = (count($this->request->data['BodegasMetodoEnvio']) + 1); $i <= (count($this->request->data['BodegasMetodoEnvio']) + count($bodegas)); $i++) : ?>
+													<tr class="fila hidden clone-tr">
+														<?= $this->Form->input(sprintf('%d.metodo_envio_id', $i), array('type' => 'text', 'label' => '', 'default' =>  $this->request->data['MetodoEnvio']['id'], 'class' => 'form-control hidden')); ?>
+														<td align="center" style="vertical-align: middle;">
+															<?= $this->Form->select(sprintf('%d.bodega_id', $i), $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control',)); ?>
+														</td>
+														<td align="center" style="vertical-align: middle; width: 100px;">
+															<?= $this->Form->checkbox(sprintf('%d.prioritaria', $i), array('label' => '', 'default' => 0)); ?>
+														</td>
+														<td class="hidden" align="center" style="vertical-align: middle">
+															<?= $this->Form->input(sprintf('%d.orden', $i), array('type' => 'text', 'label' => '', 'default' => $i, 'class' => 'form-control orden')); ?>
+														</td>
+														<td valign="center" align="center" style="vertical-align: middle; width: 100px;" w>
+															<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>
+														</td>
+													</tr>
+												<? endfor; ?>
+											<? endif ?>
 										</tbody>
 									</table>
 								</div>
@@ -439,13 +443,14 @@
 <!-- Fin modal Eliminar Bodega -->
 
 <?= $this->Html->script(array(
-	'/backend/js/metodo_envios.js?v=' . rand())); ?>
+	'/backend/js/metodo_envios.js?v=' . rand()
+)); ?>
 <?= $this->fetch('script'); ?>
 
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script type="text/javascript">
-	jQuery(document).ready(function($){
+	jQuery(document).ready(function($) {
 		$(document).ready(function() {
 			$('.mi-selector').select2();
 		});
