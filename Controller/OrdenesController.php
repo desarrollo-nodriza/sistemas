@@ -1009,6 +1009,11 @@ class OrdenesController extends AppController
 								'Dte.total', 'Dte.fecha', 'Dte.estado'
 							),
 							'order' => 'Dte.fecha DESC'
+						),
+						'Bodega' => array(
+							'fields' => array(
+								'Bodega.id', 'Bodega.nombre', 'Bodega.codigo_sucursal', 'Bodega.principal'
+							)
 						)
 					),
 					'fields' => array(
@@ -1230,22 +1235,6 @@ class OrdenesController extends AppController
 				
 		$tipos_ndc = $this->Orden->get_tipos_ndc();
 
-		$bodegas = ClassRegistry::init('Bodega')->obtener_bodegas();
-
-		$bodegas_all = ClassRegistry::init('Bodega')->obtener_bodegas_sucursal();	
-		$bodegas_sucursal = $this->Session->read('Auth.Administrador.Bodega');
-		foreach ($bodegas_all as $key => $bodega) {
-			if ($bodega['Bodega']['principal'] == true) {
-				$bodega_principal_cod = $bodega['Bodega']['codigo_sucursal'];
-			}
-		}
-		
-		
-		foreach ($bodegas_sucursal as $key => $bodega) {
-			if ($bodega['id'] == $venta['Venta']['bodega_id']) {
-				$bodega_inicial_cod = $bodega['codigo_sucursal'];	
-			} 
-		}
 		# Se desactivan las opciones de ndc de devolución a stock si no han salido productos
 		if (ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id']) && !array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')))
 		{
@@ -1256,8 +1245,8 @@ class OrdenesController extends AppController
 		BreadcrumbComponent::add('Listado de ventas', '/ventas');
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');
-
-		$this->set(compact('venta', 'bodega_inicial_cod','bodega_principal_cod', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc','bodegas'));
+		
+		$this->set(compact('venta', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc'));
 
 	}
 
@@ -1576,7 +1565,7 @@ class OrdenesController extends AppController
 	public function generarDte($id_dte = '')
 	{	
 		$dte = $this->LibreDte->prepararDte($this->request->data);
-
+		
 		if (!empty($id_dte)) 
 		{
 			# Obtener DTE interno por id

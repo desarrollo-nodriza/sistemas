@@ -13,6 +13,10 @@
 <?= $this->Form->input('estado', array('type' => 'hidden', 'value' => __('no_generado'))); ?>
 <?= $this->Form->hidden('externo', array('value' => $venta['Venta']['id_externo'])); ?>
 
+<? if (!$this->request->data['Bodega']['principal'] && !empty($this->request->data['Bodega']['codigo_sucursal'])) : ?>
+	<?=$this->Form->hidden('sucursal_sii', array('value' => $this->request->data['Bodega']['codigo_sucursal']));?>
+<? endif; ?>
+
 <div class="page-content-wrap">
 	<div class="row">
 		<div class="col-xs-12 col-md-9">
@@ -118,22 +122,6 @@
 								<br>
 								<label><?=__('Giro Receptor');?></label>
 								<?=$this->Form->input('giro_receptor', array('type' => 'text', 'class' => 'form-control', 'placeholder' => 'Ingrese giro del receptor'));?>
-							</div>
-						</div>
-						<div class="col-xs-12  js-dte-factura">
-							<div class="form-group">
-								<br>
-								<?
-								$opts= [
-									'class' => 'form-control js-dte-tipo',
-									'escape' => false,
-									'readonly' => true,
-									];
-									$opts = array_replace_recursive($opts,['value' => $bodega_inicial_cod]);
-									if ($bodega_inicial_cod == $bodega_principal_cod) :
-										$opts = array_replace_recursive($opts,['value' => '']);
-									endif; ?>
-								<?=$this->Form->hidden('sucursal_sii',$opts);?>
 							</div>
 						</div>
 						<div class="col-xs-12 col-md-6 js-no-boleta">
