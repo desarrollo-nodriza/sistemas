@@ -68,7 +68,20 @@ class LAFFPackComponent extends Component
 		$resultado = array();
 		
 		foreach ($bultos as $ib => $b) {
-			$resultado[$ib]['paquete']             = $this->obtenerDimensionesPaquete($b['cajas']);
+
+            if (count($b['cajas']) == 1)
+            {
+                $resultado[$ib]['paquete'] = [
+                    'length' => $b['cajas'][0]['length'],
+                    'width' => $b['cajas'][0]['width'],
+                    'height' => $b['cajas'][0]['height']
+                ];
+            }
+            else
+            {
+                $resultado[$ib]['paquete']             = $this->obtenerDimensionesPaquete($b['cajas']);
+            }
+
 			$resultado[$ib]['paquete']['weight']   = array_sum(Hash::extract($b['cajas'], '{n}.weight'));
 			$resultado[$ib]['paquete']['venta_id'] = $b['venta_id'];
 			$resultado[$ib]['items']               = $b['cajas'];
@@ -224,9 +237,21 @@ class LAFFPackComponent extends Component
         }
 
         $resultado = array();
-
+        
         foreach ($bultos as $ib => $b) {
-            $resultado[$ib]['paquete']             = $this->obtenerDimensionesPaquete($b['cajas']);
+
+            if (count($b['cajas']) == 1)
+            {
+                $resultado[$ib]['paquete'] = [
+                    'length' => $b['cajas'][0]['length'],
+                    'width' => $b['cajas'][0]['width'],
+                    'height' => $b['cajas'][0]['height']
+                ];
+            }
+            else
+            {
+                $resultado[$ib]['paquete']             = $this->obtenerDimensionesPaquete($b['cajas']);
+            }
             $resultado[$ib]['paquete']['weight']   = array_sum(Hash::extract($b['cajas'], '{n}.weight'));
             $resultado[$ib]['paquete']['venta_id'] = $b['venta_id'];
             $resultado[$ib]['items']               = $b['cajas'];
