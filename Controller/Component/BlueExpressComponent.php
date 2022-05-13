@@ -428,7 +428,7 @@ class BlueExpressComponent extends Component
                         'name'              => $venta['Venta']['nombre_receptor'],
                     ],
                     'packages'      => [
-                        'peso'  => ceil($pesoTotal),
+                        'peso'  => ($pesoTotal > 1) ? round($pesoTotal, 0) : ceil($pesoTotal),
                         'largo' => ceil($largoTotal),
                         'ancho' => ceil($anchoTotal),
                         'alto'  => ceil($altoTotal),
