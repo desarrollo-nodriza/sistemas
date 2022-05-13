@@ -6842,7 +6842,7 @@ class VentasController extends AppController {
 	 * @return [type]        [description]
 	 */
 	public function crearDteAutomatico($venta)
-	{	
+	{
 		$respuesta =  array(
 			'success', 'errors'
 		);
@@ -6855,11 +6855,11 @@ class VentasController extends AppController {
 			return $respuesta;
 		}
 
-		 # Ya tiene DTE valido
-		 if ( ($tipo_documento == 33 || $tipo_documento == 39) && !DtesController::unicoDteValido($venta['Venta']['id'])) {
-		 	$respuesta['errors'] = sprintf('La venta #%d ya tien un DTE de venta válido.', $venta['Venta']['id']);
-		 	return $respuesta;
-		}
+		  # Ya tiene DTE valido
+		  if ( ($tipo_documento == 33 || $tipo_documento == 39) && !DtesController::unicoDteValido($venta['Venta']['id'])) {
+		  	$respuesta['errors'] = sprintf('La venta #%d ya tien un DTE de venta válido.', $venta['Venta']['id']);
+		  	return $respuesta;
+		 }
 
 		# si no tiene items no se puede procesar
 		if (empty($venta['VentaDetalle'])) {
@@ -6927,11 +6927,11 @@ class VentasController extends AppController {
 			if ($item['precio'] <= 0) {
 				continue;
 			}
-
+	
 			$dte['DteDetalle'][$k]['VlrCodigo'] = sprintf('COD-%d', $item['venta_detalle_producto_id']);
 			$dte['DteDetalle'][$k]['NmbItem'] = $item['VentaDetalleProducto']['nombre'];
 			$dte['DteDetalle'][$k]['QtyItem'] = $item['cantidad'] - $item['cantidad_anulada'];
-
+			
 			# Boleta valores brutos o con iva
 			if ($tipo_documento == 39) 
 			{ 
@@ -6943,7 +6943,7 @@ class VentasController extends AppController {
 			}
 
 		}
-
+	
 		// Descuento Bruto en boletas
 		if ($venta['Venta']['descuento'] > 0) 
 		{	
@@ -6957,20 +6957,20 @@ class VentasController extends AppController {
 				$dte['DscRcgGlobal']['ValorDR'] = monto_neto($venta['Venta']['descuento']);
 			}
 		}
-		
+
 		$DteModel = ClassRegistry::init('Dte');
 
 		# Guardar información del DTE en base de datos local
 		if($DteModel->saveAll($dte)) {
-
+	
 			$this->LibreDte->crearCliente($venta['Tienda']['facturacion_apikey']);
-		
+
 			$nwDte  = $this->LibreDte->prepararDte($dte);
 			$id_dte = $DteModel->id;
 			
 			if (!empty($id_dte)) {
 				# Obtener DTE interno por id
-				$dteInterno = ClassRegistry::init('Dte')->find('first', array('conditions' => array('id' => $id_dte)));
+				$dteInterno = ClassRegistry::init('Dte')->find('first', array('conditions' => array('id' => $id_dte),'contain' => array('DteDetalle')));
 			}else{
 				# Obtener último DTE guardado
 				$dteInterno = ClassRegistry::init('Dte')->find('first', array('order' => array('id' => 'DESC')));
@@ -6988,12 +6988,12 @@ class VentasController extends AppController {
 				{
 					// crear DTE test en base a dte temporal
 					$generar = $this->LibreDte->crearDteTest($dte_temporal, $dteInterno);
-					
+
 				}
 				else
 				{
 					// crear DTE real
-				//	$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
+					$generar = $this->LibreDte->crearDteReal($dte_temporal, $dteInterno);
 				}
 
 			} catch (Exception $e) {
@@ -8248,7 +8248,7 @@ class VentasController extends AppController {
 	public function crear_venta_prestashop($tienda_id, $id_externo, $nuevo_estado = '')
 	{	
 
-		
+
 		$tienda = ClassRegistry::init('Tienda')->find('first', array(
 			'conditions' => array(
 				'Tienda.id' => $tienda_id
@@ -8524,8 +8524,6 @@ class VentasController extends AppController {
 			)
 		);
 
-		ClassRegistry::init('Log')->create();
-		ClassRegistry::init('Log')->saveMany($log);
 		
 		//se guarda la venta
 		$this->Venta->create();
@@ -8551,8 +8549,18 @@ class VentasController extends AppController {
 
 				# Evitamos que se vuelva actualizar el stock en prestashop
 				$excluirPrestashop = array('Prestashop' => array($tienda_id));
-				$this->actualizar_canales_stock($this->Venta->id, $excluirPrestashop);
+				$this->actualizar_canales_stock($this->Venta->id, $excluirPrestashop);			
 			}
+
+					# Se crea DTE automático si corresponde
+			$venta = $this->preparar_venta($this->Venta->id);
+			if ($venta['VentaEstado']['VentaEstadoCategoria']['generar_dte'] = 1) 
+				{
+					$log[] = $this->crearDteAutomatico($venta);
+				}
+				
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
 
 			# Enviar email correspondiente
 			$this->notificar_cambio_estado($this->Venta->id);
