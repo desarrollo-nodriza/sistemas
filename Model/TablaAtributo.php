@@ -16,14 +16,11 @@ class TablaAtributo extends AppModel
             'counterCache' => true,
         )
     );
-    // public $belongsTo = array(
-    //     'ValorAtributoCuentaCorrienteTransporte' => array(
-    //         'className'    => 'ValorAtributoCuentaCorrienteTransporte',
-    //         'foreignKey'   => 'tabla_atributo_id',
-    //         'conditions'   => '',
-    //         'fields'       => '',
-    //         'order'        => '',
-    //         'counterCache' => true,
-    //     )
-    // );
+    public $belongsTo = array(
+
+        'TablaAtributoDinamico' => array(
+            'className' => 'TablaAtributoDinamico',
+            'foreignKey' => 'atributo_dinamico_id'
+        )
+    );
 }

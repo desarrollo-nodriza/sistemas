@@ -1079,83 +1079,20 @@ class VentasController extends AppController {
 			$this->Session->setFlash('El registro no es válido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
+		$metodoEnviosController = new MetodoEnviosController();
 
-		$venta = $this->Venta->obtener_venta_por_id($id);
-
-		$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
-
-		# Creamos pedido en enviame si corresponde
-		if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) {
-
-			$Enviame = $this->Components->load('Enviame');
-
-			# conectamos con enviame
-			$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
-
-			$resultadoEnviame = $Enviame->crearEnvio($venta);
-
-			if ($resultadoEnviame) {
-				$this->Session->setFlash('Envío creado con éxito en Starken.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('No fue posible crear el envío Starken.', null, array(), 'danger');
-			}
-		} elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
-			# Es una venta para starken
-
-			# Creamos cliente starken
-			$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
-
-			# Creamos la OT
-			if ($this->Starken->generar_ot($venta)) {
-
-				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
-			}
-		} elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot']) {
-			# Es una venta para conexxion
-
-			# Creamos cliente conexxion
-			$this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
-
-			# Creamos la OT
-			if ($this->Conexxion->generar_ot($venta)) {
-				$this->Session->setFlash('Envío creado con éxito en Conexxion.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('No fue posible crear el envío Conexxion.', null, array(), 'danger');
-			}
-		} elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
-			# Es una venta para boosmap
-
-			# Creamos cliente boosmap
-			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
-
-			# Creamos la OT
-			if ($this->Boosmap->generar_ot($venta)) {
-
-
-				$this->Session->setFlash('Envío creado con éxito en Boosmap.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('No fue posible crear el envío Boosmap.', null, array(), 'danger');
-			}
-		} elseif ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot']) {
-			# Es una venta para blueexpress
-
-			# Creamos cliente blueexpress
-			$this->BlueExpress->crearCliente($venta['MetodoEnvio']['token_blue_express'], $venta['MetodoEnvio']['cod_usuario_blue_express'], $venta['MetodoEnvio']['cta_corriente_blue_express']);
-
-			# Creamos la OT
-			if ($this->BlueExpress->generar_ot($venta)) {
-
-
-				$this->Session->setFlash('Envío creado con éxito en BlueExpress.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('No fue posible crear el envío BlueExpress.', null, array(), 'danger');
-			}
-		} else {
-			$this->Session->setFlash('La venta no aplica para usar un currier externo.', null, array(), 'danger');
+		if ($metodoEnviosController->generar_etiqueta_envio_externo($id)) {
+			$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
+		}else{
+			$this->Session->setFlash("
+			<ul>
+				<li>No fue posible crear el envío O.</li>
+				<li>La venta no aplica para usar un currier externo.</li>
+			</ul>
+			", null, array(), 'danger');
 		}
-
+	
+		
 		$this->redirect($this->referer('/', true));
 	}
 
@@ -12564,36 +12501,154 @@ class VentasController extends AppController {
 	 * 
 	 * @return bool
 	 */
+
 	public function actualizar_estados_envios($id)
 	{
-		$venta = $this->Venta->obtener_venta_por_id($id);
+		// $venta = $this->Venta->obtener_venta_por_id($id);
+		$venta = $this->Venta->find('first', [
+			'conditions' 	=> [['Venta.id' => $id]],
+			'fields'		=> ['Venta.id', 'Venta.metodo_envio_id'],
+			'contain'  		=> [
+				'TransportesVenta' => [
+					'fields' => [
+						'TransportesVenta.id',
+						'TransportesVenta.venta_id',
+						'TransportesVenta.embalaje_id',
+						'TransportesVenta.cod_seguimiento',
+					],
+					'EmbalajeWarehouse' => [
+						'fields' => [
+							'EmbalajeWarehouse.id',
+							'EmbalajeWarehouse.estado',
+							'EmbalajeWarehouse.bodega_id'
+						]
+					]
+				],
+				'MetodoEnvio' => array(
+					'fields' => array(
+						'MetodoEnvio.id',
+						'MetodoEnvio.bodega_id',
+						'MetodoEnvio.cuenta_corriente_transporte_id',
+					),
+					'Bodega' => [
+						'Comuna',
+						'fields' => [
+							'Bodega.fono',
+							'Bodega.nombre',
+							'Bodega.comuna_id',
+							'Bodega.direccion',
+							'Bodega.nombre_contacto',
+						],
+					],
+					'BodegasMetodoEnvio' => ['Bodega' => [
+						'Comuna',
+						'fields' => [
+							'Bodega.fono',
+							'Bodega.nombre',
+							'Bodega.direccion',
+							'Bodega.comuna_id',
+							'Bodega.nombre_contacto',
+						],
+					],]
+				),
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.id',
+						'VentaDetalle.cantidad_en_espera'
+					)
+				),
+			]
+		]);
 
-		# Registro de estados para Boosmap
-		if ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
-			$this->Boosmap = $this->Components->load('Boosmap');
-			# Creamos cliente boosmap
-			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
+		$logs				= [];
+		$return 			= false;
+		$total_en_espera 	= array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_en_espera'));
 
-			# Obtenemos y registramos los estados de los envios
-			return $this->Boosmap->registrar_estados($venta['Venta']['id']);
+		foreach ($venta['TransportesVenta'] as $TransportesVenta) {
+		
+			$cuenta_corriente_transporte_id = null;
+
+			if ($venta['MetodoEnvio']['bodega_id'] ==  $TransportesVenta['EmbalajeWarehouse']['bodega_id']) {
+				$cuenta_corriente_transporte_id = $venta['MetodoEnvio']['cuenta_corriente_transporte_id'];
+			} else {
+				$cuenta_corriente_transporte_id = Hash::extract($venta['MetodoEnvio']['BodegasMetodoEnvio'], "{n}[bodega_id={$TransportesVenta['EmbalajeWarehouse']['bodega_id']}].cuenta_corriente_transporte_id")[0] ?? null;
+			}
+
+			if (is_null($cuenta_corriente_transporte_id)) {
+
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => "Vid {$id} | El metodo no tiene una cuenta corriente asignada",
+						'modulo'     	=> 'MetodoEnviosController',
+						'modulo_accion' => json_decode($venta['MetodoEnvio'])
+					)
+				);
+				continue;
+			}
+
+			$CuentaCorrienteTransporte = ClassRegistry::init('CuentaCorrienteTransporte')->valor_atributos($cuenta_corriente_transporte_id);
+
+			if (!$CuentaCorrienteTransporte) {
+
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => "Vid {$id} | Cuenta corriente no tiene asignado valores {$cuenta_corriente_transporte_id}",
+						'modulo'     	=> 'MetodoEnviosController',
+						'modulo_accion' =>  json_decode($venta['MetodoEnvio'])
+					)
+				);
+				continue;
+			}
+
+			switch (ClassRegistry::init('CuentaCorrienteTransporte')->dependencia($cuenta_corriente_transporte_id)) {
+
+				case 'starken':
+
+					$this->Starken 	= $this->Components->load('Starken');
+					$this->Starken->crearCliente($CuentaCorrienteTransporte['rutApiRest'], $CuentaCorrienteTransporte['claveApiRest'], $CuentaCorrienteTransporte['rutEmpresaEmisora'], $CuentaCorrienteTransporte['rutUsuarioEmisor'], $CuentaCorrienteTransporte['claveUsuarioEmisor']);
+					$return	 		= $this->Starken->registrar_estados($TransportesVenta, $CuentaCorrienteTransporte, $total_en_espera);
+
+					break;
+
+				case 'conexxion':
+
+					// $this->Conexxion = $this->Components->load('Conexxion');
+					// $this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
+					// $return = $this->Conexxion->registrar_estados($id);
+					break;
+
+				case 'boosmap':
+
+					// $this->Boosmap = $this->Components->load('Boosmap');
+					// $this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
+					// $return = $this->Boosmap->registrar_estados($id);
+
+					break;
+
+				case 'blueexpress':
+
+					$this->BlueExpress 	= $this->Components->load('BlueExpress');
+					$this->BlueExpress->crearCliente($CuentaCorrienteTransporte['BX_TOKEN'], $CuentaCorrienteTransporte['BX_USERCODE'], $CuentaCorrienteTransporte['BX_CLIENT_ACCOUNT']);
+					$return 			= $this->BlueExpress->registrar_estados($TransportesVenta, $CuentaCorrienteTransporte, $total_en_espera);
+					break;
+
+				default:
+
+					break;
+			}
 		}
 
-		# Registro de estados para Starken
-		if ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
-			$this->Starken = $this->Components->load('Starken');
-			# Obtenemos y registramos los estados de los envios
-			return $this->Starken->registrar_estados($venta['Venta']['id']);
-		}
+		$logs[] = array(
+			'Log' => array(
+				'administrador' => "Vid {$id} | finaliza actualizar estado ot",
+				'modulo'     	=> 'MetodoEnviosController',
+				'modulo_accion' =>  null			
+				)
+		);
 
-		# Registro de estados para BlueExpress
-		if ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot']) {
-			
-			$this->BlueExpress = $this->Components->load('BlueExpress');
-			# Obtenemos y registramos los estados de los envios
-			return $this->BlueExpress->registrar_estados($venta['Venta']['id']);
-		}
-
-		return false;
+		ClassRegistry::init('Log')->saveMany($logs);
+		
+		return $return;
 	}
 
 

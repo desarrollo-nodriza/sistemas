@@ -31,300 +31,287 @@ class StarkenComponent extends Component
 	}
 
 
-	public function generar_ot($venta)
+	public function generar_ot($venta, $embalaje, $CuentaCorrienteTransporte)
 	{
-		$volumenMaximo = $venta['MetodoEnvio']['volumen_maximo'] ?? (float) 60;
 
+		$volumenMaximo 	= $venta['MetodoEnvio']['volumen_maximo'] ?? (float) 60;
+		$exito 			= false;
+		$log 			= [];
+		$paquetes 		= $this->LAFFPack->obtener_bultos_venta_por_embalaje_v2($embalaje, $volumenMaximo);
+		$exito 			= false;
 
-		$embalajes = Hash::extract($venta['EmbalajeWarehouse'], "{n}[estado=procesando]");
-		
-		$exito = false;
-		$log = array();		
-
-		if (!$embalajes) {
+		if (empty($paquetes)) {
 
 			$log[] = array(
 				'Log' => array(
-					'administrador' => 'Starken vid:' . $venta['Venta']['id'],
-					'modulo' 		=> 'StarkenComponent',
-					'modulo_accion' => json_encode(["No posee embalajes en procesando" => $venta])
+					'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}",
+					'modulo' 		=> 'Starken-Component',
+					'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
 				)
 			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+			return $exito;
 		}
-		foreach ($embalajes as $embalaje) {
 
-			$paquetes = $this->LAFFPack->obtener_bultos_venta_por_embalaje_v2($embalaje, $volumenMaximo);
+		# Si los paquetes no tienen dimensiones se setean con el valor default
+		foreach ($paquetes as $ip => $paquete) {
 
-			if (empty($paquetes)) {
+			$paquetes[$ip]['paquete']['length'] = $venta['MetodoEnvio']['largo_default'];
 
-				$log[] = array(
-					'Log' => array(
-						'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
-						'modulo' 		=> 'Starken-Component',
-						'modulo_accion' => 'No fue posible generar la OT ya que no hay paquetes disponibles'
+			$paquetes[$ip]['paquete']['width']  = $venta['MetodoEnvio']['ancho_default'];
+
+			$paquetes[$ip]['paquete']['height'] = $venta['MetodoEnvio']['alto_default'];
+
+			$paquetes[$ip]['paquete']['weight'] = $venta['MetodoEnvio']['peso_default'];
+		}
+
+		$peso_total            = array_sum(Hash::extract($paquetes, '{n}.paquete.weight'));
+		$peso_maximo_permitido = $venta['MetodoEnvio']['peso_maximo'];
+
+		if ($peso_total > $peso_maximo_permitido) {
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}",
+					'modulo' 		=> 'Starken-Component',
+					'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
+				)
+			);
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
+			return $exito;
+		}
+
+		$transportes = array();
+
+		$ruta_pdfs = array();
+
+		foreach ($paquetes as $paquete) {
+
+			# dimensiones de todos los paquetes unificado
+			$largoTotal = $paquete['paquete']['length'];
+			$anchoTotal = $paquete['paquete']['width'];
+			$altoTotal  = $paquete['paquete']['height'];
+			$pesoTotal  = $paquete['paquete']['weight'];
+
+
+			# Normalizamos el rut
+			$venta['Venta']['rut_receptor'] = str_replace('-', '', $venta['Venta']['rut_receptor']);
+			$venta['Venta']['rut_receptor'] = trim(str_replace('.', '', $venta['Venta']['rut_receptor']));
+
+			# separamos el rut
+			$rut_destinatario = substr($venta['Venta']['rut_receptor'], 0, (strlen($venta['Venta']['rut_receptor']) - 1));
+			$dv_destinatario  = substr($venta['Venta']['rut_receptor'], -1);
+
+			# creamos el arreglo para generar la OT
+			$data = array(
+				'rutEmpresaEmisora' 				=> $CuentaCorrienteTransporte['rutEmpresaEmisora'] ?? "",
+				'rutUsuarioEmisor'					=> $CuentaCorrienteTransporte['rutUsuarioEmisor'] ?? "",
+				'claveUsuarioEmisor'				=> $CuentaCorrienteTransporte['claveUsuarioEmisor'] ?? "",
+				'rutDestinatario'                   => $rut_destinatario,
+				'dvRutDestinatario'                 => $dv_destinatario,
+				'nombreRazonSocialDestinatario'     => substr($venta['VentaCliente']['nombre'], 0, 40),
+				'apellidoPaternoDestinatario'       => substr($venta['VentaCliente']['apellido'], 0, 20),
+				'apellidoMaternoDestinatario'       => '.',
+				'direccionDestinatario'             => substr(trim($venta['Venta']['direccion_entrega']), 0, 80),
+				'numeracionDireccionDestinatario'   => substr(trim($venta['Venta']['numero_entrega']), 0, 10),
+				'departamentoDireccionDestinatario' => substr(trim($venta['Venta']['otro_entrega']), 0, 10),
+				'comunaDestino'                     => trim($venta['Venta']['comuna_entrega']),
+				'telefonoDestinatario'              => substr(trim($venta['Venta']['fono_receptor']), 0, 20),
+				'emailDestinatario'                 => substr(trim($venta['VentaCliente']['email']), 0, 50),
+				'nombreContactoDestinatario'        => trim($venta['VentaCliente']['nombre']) . ' ' . trim($venta['VentaCliente']['apellido']),
+				'tipoEntrega'                       => $CuentaCorrienteTransporte['tipoEntrega'] ?? "",
+				'tipoPago'                       	=> $CuentaCorrienteTransporte['tipoPago'] ?? "",
+				'numeroCtaCte'                      => $CuentaCorrienteTransporte['numeroCtaCte'] ?? "",
+				'dvNumeroCtaCte'                    => $CuentaCorrienteTransporte['dvNumeroCtaCte'] ?? "",
+				'centroCostoCtaCte'                 => $CuentaCorrienteTransporte['centroCostoCtaCte'] ?? "",
+				'valorDeclarado'                    => round($venta['Venta']['total']),
+				'contenido'                         => substr(implode(' | ', Hash::extract($venta['VentaDetalle'], '{n}[venta_id=' . $paquete['paquete']['venta_id'] . '].VentaDetalleProducto.id')), 0, 50),
+				'kilosTotal'                        => round($pesoTotal, 2),
+				'alto'                              => $altoTotal,
+				'ancho'                             => $anchoTotal,
+				'largo'                             => $largoTotal,
+				'tipoServicio'                      => $CuentaCorrienteTransporte['tipoServicio'] ?? 0,
+				'ciudadOrigenNom'                   => trim($CuentaCorrienteTransporte['ciudadOrigenNom'] ?? ""),
+				'observacion'                       => 'OT generada automáticamente por ' . $venta['Tienda']['nombre'] . ' - Venta Ref: ' . $venta['Venta']['referencia'],
+				'encargos' => array(
+					0 => array(
+						'tipoEncargo' => 29, // bultos,
+						'cantidadEncargo' => 1 // simepre 1 bulto
 					)
-				);
+				)
+			);
+			# Se agregan documentos de referencia
+			if (!empty($venta['Dte'])) {
+				foreach ($venta['Dte'] as $id => $dte) {
 
-				continue;
-			}
-
-			# Si los paquetes no tienen dimensiones se setean con el valor default
-			foreach ($paquetes as $ip => $paquete) {
-
-				$paquetes[$ip]['paquete']['length'] = $venta['MetodoEnvio']['largo_default'];
-
-				$paquetes[$ip]['paquete']['width']  = $venta['MetodoEnvio']['ancho_default'];
-
-				$paquetes[$ip]['paquete']['height'] = $venta['MetodoEnvio']['alto_default'];
-
-				$paquetes[$ip]['paquete']['weight'] = $venta['MetodoEnvio']['peso_default'];
-			}
-
-			$peso_total            = array_sum(Hash::extract($paquetes, '{n}.paquete.weight'));
-			$peso_maximo_permitido = $venta['MetodoEnvio']['peso_maximo'];
-
-			if ($peso_total > $peso_maximo_permitido) {
-				$log[] = array(
-					'Log' => array(
-						'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
-						'modulo' 		=> 'Starken-Component',
-						'modulo_accion' => 'No fue posible generar la OT por restricción de peso: Peso bulto ' . $peso_total . ' kg - Peso máximo permitido ' . $peso_maximo_permitido
-					)
-				);
-				continue;
-			}
-
-			$transportes = array();
-			
-			$ruta_pdfs = array();
-
-			foreach ($paquetes as $paquete) {
-
-				# dimensiones de todos los paquetes unificado
-				$largoTotal = $paquete['paquete']['length'];
-				$anchoTotal = $paquete['paquete']['width'];
-				$altoTotal  = $paquete['paquete']['height'];
-				$pesoTotal  = $paquete['paquete']['weight'];
-
-
-				# Normalizamos el rut
-				$venta['Venta']['rut_receptor'] = str_replace('-', '', $venta['Venta']['rut_receptor']);
-				$venta['Venta']['rut_receptor'] = trim(str_replace('.', '', $venta['Venta']['rut_receptor']));
-
-				# separamos el rut
-				$rut_destinatario = substr($venta['Venta']['rut_receptor'], 0, (strlen($venta['Venta']['rut_receptor']) - 1));
-				$dv_destinatario  = substr($venta['Venta']['rut_receptor'], -1);
-
-				# creamos el arreglo para generar la OT
-				$data = array(
-					'rutEmpresaEmisora' 				=> $venta['MetodoEnvio']['rut_empresa_emisor'],
-					'rutUsuarioEmisor'					=> $venta['MetodoEnvio']['rut_usuario_emisor'],
-					'claveUsuarioEmisor'				=> $venta['MetodoEnvio']['clave_usuario_emisor'],
-					'rutDestinatario'                   => $rut_destinatario,
-					'dvRutDestinatario'                 => $dv_destinatario,
-					'nombreRazonSocialDestinatario'     => substr($venta['VentaCliente']['nombre'], 0, 40),
-					'apellidoPaternoDestinatario'       => substr($venta['VentaCliente']['apellido'], 0, 20),
-					'apellidoMaternoDestinatario'       => '.',
-					'direccionDestinatario'             => substr(trim($venta['Venta']['direccion_entrega']), 0, 80),
-					'numeracionDireccionDestinatario'   => substr(trim($venta['Venta']['numero_entrega']), 0, 10),
-					'departamentoDireccionDestinatario' => substr(trim($venta['Venta']['otro_entrega']), 0, 10),
-					'comunaDestino'                     => trim($venta['Venta']['comuna_entrega']),
-					'telefonoDestinatario'              => substr(trim($venta['Venta']['fono_receptor']), 0, 20),
-					'emailDestinatario'                 => substr(trim($venta['VentaCliente']['email']), 0, 50),
-					'nombreContactoDestinatario'        => trim($venta['VentaCliente']['nombre']) . ' ' . trim($venta['VentaCliente']['apellido']),
-					'tipoEntrega'                       => $venta['MetodoEnvio']['tipo_entrega'],
-					'tipoPago'                       	=> $venta['MetodoEnvio']['tipo_pago'],
-					'numeroCtaCte'                      => $venta['MetodoEnvio']['numero_cuenta_corriente'],
-					'dvNumeroCtaCte'                    => $venta['MetodoEnvio']['dv_numero_cuenta_corriente'],
-					'centroCostoCtaCte'                 => $venta['MetodoEnvio']['centro_costo_cuenta_corriente'],
-					'valorDeclarado'                    => round($venta['Venta']['total']),
-					'contenido'                         => substr(implode(' | ', Hash::extract($venta['VentaDetalle'], '{n}[venta_id=' . $paquete['paquete']['venta_id'] . '].VentaDetalleProducto.id')), 0, 50),
-					'kilosTotal'                        => round($pesoTotal, 2),
-					'alto'                              => $altoTotal,
-					'ancho'                             => $anchoTotal,
-					'largo'                             => $largoTotal,
-					'tipoServicio'                      => (empty($venta['MetodoEnvio']['tipo_servicio'])) ? '0' : $venta['MetodoEnvio']['tipo_servicio'],
-					'ciudadOrigenNom'                   => trim($venta['MetodoEnvio']['ciudad_origen']),
-					'observacion'                       => 'OT generada automáticamente por ' . $venta['Tienda']['nombre'] . ' - Venta Ref: ' . $venta['Venta']['referencia'],
-					'encargos' => array(
-						0 => array(
-							'tipoEncargo' => 29, // bultos,
-							'cantidadEncargo' => 1 // simepre 1 bulto
-						)
-					)
-				);
-
-				# Se agregan documentos de referencia
-				if (!empty($venta['Dte'])) {
-					foreach ($venta['Dte'] as $id => $dte) {
-
-						# Factura
-						if ($dte['tipo_documento'] == 33 && $dte['estado'] == 'dte_real_emitido' && !$dte['invalidado']) {
-							$data = array_replace_recursive($data, array(
-								'documentos' => array(
-									$id => array(
-										'tipoDocumento' => 26,
-										'numeroDocumento' => $dte['folio'],
-										'generaEtiquetaDocumento' => 'N'
-									)
+					# Factura
+					if ($dte['tipo_documento'] == 33 && $dte['estado'] == 'dte_real_emitido' && !$dte['invalidado']) {
+						$data = array_replace_recursive($data, array(
+							'documentos' => array(
+								$id => array(
+									'tipoDocumento' => 26,
+									'numeroDocumento' => $dte['folio'],
+									'generaEtiquetaDocumento' => 'N'
 								)
-							));
-						}
+							)
+						));
+					}
 
-						# Boleta
-						if ($dte['tipo_documento'] == 39 && $dte['estado'] == 'dte_real_emitido' && !$dte['invalidado']) {
-							$data = array_replace_recursive($data, array(
-								'documentos' => array(
-									$id => array(
-										'tipoDocumento' => 28,
-										'numeroDocumento' => $dte['folio'],
-										'generaEtiquetaDocumento' => 'N'
-									)
+					# Boleta
+					if ($dte['tipo_documento'] == 39 && $dte['estado'] == 'dte_real_emitido' && !$dte['invalidado']) {
+						$data = array_replace_recursive($data, array(
+							'documentos' => array(
+								$id => array(
+									'tipoDocumento' => 28,
+									'numeroDocumento' => $dte['folio'],
+									'generaEtiquetaDocumento' => 'N'
 								)
-							));
-						}
+							)
+						));
 					}
 				}
+			}
 
-				try {
+			try {
 
-					$response = json_decode($this->StarkenConexion->generarOrden(json_encode($data)), true);
-
-				} catch (\Throwable $th) {
-					$log[] = array(
-						'Log' => array(
-							'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
-							'modulo' 		=> 'Starken-Component',
-							'modulo_accion' => json_encode(
-								[
-									'Request para generar OT' => $data,
-									'Problemas al generar OT' => $th
-								]
-							)
-						)
-					);
-					continue;
-				}
-
+				$response = json_decode($this->StarkenConexion->generarOrden(json_encode($data)), true);
+			} catch (\Throwable $th) {
 				$log[] = array(
 					'Log' => array(
-						'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
+						'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}",
 						'modulo' 		=> 'Starken-Component',
 						'modulo_accion' => json_encode(
 							[
 								'Request para generar OT' => $data,
-								'Respuesta al genear OT'  => $response
+								'Problemas al generar OT' => $th
 							]
 						)
 					)
 				);
+				continue;
+			}
 
-				if ($response['code'] != 'success') {
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}",
+					'modulo' 		=> 'Starken-Component',
+					'modulo_accion' => json_encode(
+						[
+							'Request para generar OT' => $data,
+							'Respuesta al genear OT'  => $response
+						]
+					)
+				)
+			);
 
-					$log[] = array(
-						'Log' => array(
-							'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
-							'modulo' 		=> 'Starken-Component',
-							'modulo_accion' => 'Problemas al generar OT: ' . json_encode($response)
-						)
-					);
+			if ($response['code'] != 'success') {
 
-					continue;
-				}
-
-				if ($response['body']['codigoError'] != 0) {
-
-					$log[] = array(
-						'Log' => array(
-							'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}" ,
-							'modulo' 		=> 'Starken-Component',
-							'modulo_accion' => 'Problemas al generar OT: ' . json_encode($response)
-						)
-					);
-
-					continue;
-				}
-
-				#Generamos la etiqueta
-				$etiquetaZpl = $this->getEtiquetaEmision($response, $venta);
-
-				$etiquetaPdf = '';
-
-				$pathEtiquetas  = APP . 'webroot' . DS . 'img' . DS . 'ModuloStarken' . DS . $venta['Venta']['id'] . DS;
-				$nombreEtiqueta = $response['body']['nroOrdenFlete'] . '.pdf';
-
-
-				$curl = curl_init();
-				// adjust print density (8dpmm), label width (4 inches), label height (6 inches), and label index (0) as necessary
-				curl_setopt($curl, CURLOPT_URL, "http://api.labelary.com/v1/printers/8dpmm/labels/4x4/0/");
-				curl_setopt($curl, CURLOPT_POST, TRUE);
-				curl_setopt($curl, CURLOPT_POSTFIELDS, $etiquetaZpl);
-				curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-				curl_setopt($curl, CURLOPT_HTTPHEADER, array("Accept: application/pdf")); // omit this line to get PNG images back
-				$etiquetaPdf = curl_exec($curl);
-
-				if (!is_dir($pathEtiquetas)) {
-					@mkdir($pathEtiquetas, 0775, true);
-				}
-
-				if (curl_getinfo($curl, CURLINFO_HTTP_CODE) == 200) {
-					$file = fopen($pathEtiquetas . $nombreEtiqueta, "w"); // change file name for PNG images
-					fwrite($file, $etiquetaPdf);
-					fclose($file);
-
-					$rutaPublica = obtener_url_base() . 'img/ModuloStarken/' . $venta['Venta']['id'] . '/' . $nombreEtiqueta;
-					$ruta_pdfs[] = $pathEtiquetas . $nombreEtiqueta;
-				} else {
-					$rutaPublica = '';
-				}
-
-				curl_close($curl);
-
-				# Guardamos el transportista y el/los numeros de seguimiento
-				$carrier_name = 'STARKEN/TURBUS';
-				$carrier_opt = array(
-					'Transporte' => array(
-						'codigo' => 'STARKEN-TURBUS',
-						'url_seguimiento' => 'https://www.starken.cl/seguimiento' // Url de seguimiento starken
+				$log[] = array(
+					'Log' => array(
+						'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}",
+						'modulo' 		=> 'Starken-Component',
+						'modulo_accion' => 'Problemas al generar OT: ' . json_encode($response)
 					)
 				);
 
-				if (!empty($rutaPublica)) {
-					$carrier_opt = array_replace_recursive($carrier_opt, array(
-						'Transporte' => array(
-							'etiqueta' => $rutaPublica
-						)
-					));
-				}
-
-				$union = null;
-
-				if (!empty($ruta_pdfs)) {
-					$union = $this->unir_documentos($ruta_pdfs, $venta['Venta']['id']);
-
-					if (!empty($union['result'])) {
-						
-						$union = $union['result'][0]['document'];
-					}
-				}
-
-				$transportes[] = 
-                [
-                    'TransportesVenta'=>
-                        [
-                            'transporte_id'			 => ClassRegistry::init('Transporte')->obtener_transporte_por_nombre($carrier_name, true, $carrier_opt),
-                            'venta_id'               => $venta['Venta']['id'],
-                            'cod_seguimiento'        => $response['body']['nroOrdenFlete'],
-                            'etiqueta'               => $union,
-                            'entrega_aprox'          => $response['body']['fechaEstimadaEntrega'],
-                            'paquete_generado'       => count($paquetes),
-                            'costo_envio'            => null,
-                            'etiqueta_envio_externa' => $union,
-                            'embalaje_id'            => $embalaje["id"]
-                        ]
-                ];
+				continue;
 			}
+
+			if ($response['body']['codigoError'] != 0) {
+
+				$log[] = array(
+					'Log' => array(
+						'administrador' => "Starken vid: {$venta['Venta']['id']} embalaje: {$embalaje['id']}",
+						'modulo' 		=> 'Starken-Component',
+						'modulo_accion' => 'Problemas al generar OT: ' . json_encode($response)
+					)
+				);
+
+				continue;
+			}
+
+			#Generamos la etiqueta
+			$etiquetaZpl = $this->getEtiquetaEmision($response, $venta, $CuentaCorrienteTransporte);
+
+			$etiquetaPdf = '';
+
+			$pathEtiquetas  = APP . 'webroot' . DS . 'img' . DS . 'ModuloStarken' . DS . $venta['Venta']['id'] . DS;
+			$nombreEtiqueta = $response['body']['nroOrdenFlete'] . '.pdf';
+
+
+			$curl = curl_init();
+			// adjust print density (8dpmm), label width (4 inches), label height (6 inches), and label index (0) as necessary
+			curl_setopt($curl, CURLOPT_URL, "http://api.labelary.com/v1/printers/8dpmm/labels/4x4/0/");
+			curl_setopt($curl, CURLOPT_POST, TRUE);
+			curl_setopt($curl, CURLOPT_POSTFIELDS, $etiquetaZpl);
+			curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
+			curl_setopt($curl, CURLOPT_HTTPHEADER, array("Accept: application/pdf")); // omit this line to get PNG images back
+			$etiquetaPdf = curl_exec($curl);
+
+			if (!is_dir($pathEtiquetas)) {
+				@mkdir($pathEtiquetas, 0775, true);
+			}
+
+			if (curl_getinfo($curl, CURLINFO_HTTP_CODE) == 200) {
+				$file = fopen($pathEtiquetas . $nombreEtiqueta, "w"); // change file name for PNG images
+				fwrite($file, $etiquetaPdf);
+				fclose($file);
+
+				$rutaPublica = obtener_url_base() . 'img/ModuloStarken/' . $venta['Venta']['id'] . '/' . $nombreEtiqueta;
+				$ruta_pdfs[] = $pathEtiquetas . $nombreEtiqueta;
+			} else {
+				$rutaPublica = '';
+			}
+
+			curl_close($curl);
+
+			# Guardamos el transportista y el/los numeros de seguimiento
+			$carrier_name = 'STARKEN/TURBUS';
+			$carrier_opt = array(
+				'Transporte' => array(
+					'codigo' => 'STARKEN-TURBUS',
+					'url_seguimiento' => 'https://www.starken.cl/seguimiento' // Url de seguimiento starken
+				)
+			);
+
+			if (!empty($rutaPublica)) {
+				$carrier_opt = array_replace_recursive($carrier_opt, array(
+					'Transporte' => array(
+						'etiqueta' => $rutaPublica
+					)
+				));
+			}
+
+			$union = null;
+
+			if (!empty($ruta_pdfs)) {
+				$union = $this->unir_documentos($ruta_pdfs, $venta['Venta']['id']);
+
+				if (!empty($union['result'])) {
+
+					$union = $union['result'][0]['document'];
+				}
+			}
+
+			$transportes[] =
+				[
+					'TransportesVenta' =>
+					[
+						'transporte_id'			 => ClassRegistry::init('Transporte')->obtener_transporte_por_nombre($carrier_name, true, $carrier_opt),
+						'venta_id'               => $venta['Venta']['id'],
+						'cod_seguimiento'        => $response['body']['nroOrdenFlete'],
+						'etiqueta'               => $union,
+						'entrega_aprox'          => $response['body']['fechaEstimadaEntrega'],
+						'paquete_generado'       => count($paquetes),
+						'costo_envio'            => null,
+						'etiqueta_envio_externa' => $union,
+						'embalaje_id'            => $embalaje["id"]
+					]
+				];
 		}
+
 
 		if ($transportes) {
 			# Se guarda la información del tracking en la venta
@@ -338,14 +325,13 @@ class StarkenComponent extends Component
 				);
 
 				$exito = true;
-				
 			} else {
 				$log[] = array(
 					'Log' => array(
 						'administrador' => 'Starken, dificultades para guardar información ot vid:' . $venta['Venta']['id'],
 						'modulo'        => 'Starken-Component',
 						'modulo_accion' => 'No se encontraron transportes: ' . json_encode($transportes)
-					   
+
 					)
 				);
 			}
@@ -354,11 +340,6 @@ class StarkenComponent extends Component
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->saveMany($log);
 
-		try {
-			$this->registrar_estados($venta['Venta']['id']);
-		} catch (\Throwable $th) {
-
-		}
 		return $exito;
 	}
 
@@ -428,7 +409,7 @@ class StarkenComponent extends Component
 	{
 		return $this->tipoServicio;
 	}
-	
+
 	/**
 	 * [calcular_volumen description]
 	 * @param  float $largo cm
@@ -548,7 +529,7 @@ class StarkenComponent extends Component
 	}
 
 
-	public function getEtiquetaEmision($response, $venta)
+	public function getEtiquetaEmision($response, $venta, $CuentaCorrienteTransporte)
 	{
 
 		$etiqueta              = "";
@@ -584,8 +565,8 @@ class StarkenComponent extends Component
 			$direccionDestinatario = $direccionDestinatario . ' - ' . $response['body']['ciudadDestino'];
 		}
 
-		$tipo_servicio = (isset($this->tipoServicio[$venta['MetodoEnvio']['tipo_servicio']])) ? $this->tipoServicio[$venta['MetodoEnvio']['tipo_servicio']] : 'NORMAL';
-		$tipo_entrega = $this->tipoEntrega[$venta['MetodoEnvio']['tipo_entrega']];
+		$tipo_servicio = (isset($this->tipoServicio[$CuentaCorrienteTransporte['tipoServicio'] ?? null])) ? $this->tipoServicio[$CuentaCorrienteTransporte['tipoServicio']] : 'NORMAL';
+		$tipo_entrega = $this->tipoEntrega[$CuentaCorrienteTransporte['tipoEntrega'] ?? null];
 
 		$etiqueta .= "\020CT~~CD,~CC^~CT~";
 		$etiqueta .= "^XA~TA000~JSN^LT0^MNW^MTT^PON^PMN^LH0,0^JMA^PR5,5~SD30^JUS^LRN^CI0^XZ";
@@ -797,152 +778,108 @@ class StarkenComponent extends Component
 	}
 
 
-	public function registrar_estados($id)
+	public function registrar_estados($TransportesVenta, $CuentaCorrienteTransporte, $total_en_espera)
 	{
-
-		$log = [];
-
-		# Obtenemos los transportes de la venta
-		$v = ClassRegistry::init('Venta')->find('first', array(
-			'conditions' => array(
-				'Venta.id' => $id
-			),
-			'contain' => array(
-				'Transporte' => array(
-					'fields' => array(
-						'Transporte.id'
-					)
-				),
-				'VentaDetalle' => array(
-					'fields' => array(
-						'VentaDetalle.id',
-						'VentaDetalle.cantidad_en_espera'
-					)
-				),
-				'MetodoEnvio' => array(
-					'fields' => array(
-						'MetodoEnvio.api_key',
-						'MetodoEnvio.dependencia'
-					)
-				)
-			),
-			'fields' => array(
-				'Venta.id'
-			)
-		));
-
-		$log[] = array(
+		$log 	= [];
+		$log[] 	= array(
 			'Log' => array(
-				'administrador' => 'Información de la Venta - vid ' . $id,
+				'administrador' => 'Información de la Venta - vid ' . $TransportesVenta['venta_id'],
 				'modulo' 		=> 'StarkenComponent',
-				'modulo_accion' => json_encode($v)
+				'modulo_accion' => json_encode($TransportesVenta)
 			)
 		);
 
-		if ($v['MetodoEnvio']['dependencia'] != 'starken') {
+		if (is_null($CuentaCorrienteTransporte['api_key'])) {
 
 			$log[] = array(
 				'Log' => array(
-					'administrador' => "Venta {$id} no tiene dependencia con starken",
+					'administrador' => "Cuenta corriente no posee api key",
 					'modulo' 		=> 'StarkenComponent',
-					'modulo_accion' => json_encode($v['MetodoEnvio'])
+					'modulo_accion' => json_encode($CuentaCorrienteTransporte)
 				)
 			);
 			ClassRegistry::init('Log')->create();
 			ClassRegistry::init('Log')->saveMany($log);
+
 			return false;
 		}
 
-		if (is_null($v['MetodoEnvio']['api_key'])) {
-
-			$log[] = array(
-				'Log' => array(
-					'administrador' => "Metodo " . $v['MetodoEnvio']['id'] . " no posee api key",
-					'modulo' 		=> 'StarkenComponent',
-					'modulo_accion' => json_encode($v['MetodoEnvio'])
-				)
-			);
-			ClassRegistry::init('Log')->create();
-			ClassRegistry::init('Log')->saveMany($log);
-			return false;
-		}
-
-		$historicos = array();
-
-		$total_en_espera = array_sum(Hash::extract($v, 'VentaDetalle.{n}.cantidad_en_espera'));
+		$historicos = [];
 
 		# Registramos el estado de los bultos
-		foreach ($v['Transporte'] as $it => $trans) {
-			# Obtenemos los estados del bulto
+		# Obtenemos los estados del bulto
+		$estados = $this->seguimientoOFComercial($TransportesVenta['cod_seguimiento'], $CuentaCorrienteTransporte['api_key']);
 
-			$estados = $this->seguimientoOFComercial($trans['TransportesVenta']['cod_seguimiento'], $v['MetodoEnvio']['api_key']);
+		$estadosHistoricosParcial = ClassRegistry::init('EnvioHistorico')->find('count', array(
+			'conditions' => array(
+				'EnvioHistorico.transporte_venta_id' 	=> $TransportesVenta['id'],
+				'EnvioHistorico.nombre LIKE' 			=> '%parcial%'
+			)
+		));
 
-			$estadosHistoricosParcial = ClassRegistry::init('EnvioHistorico')->find('count', array(
-				'conditions' => array(
-					'EnvioHistorico.transporte_venta_id' => $trans['TransportesVenta']['id'],
-					'EnvioHistorico.nombre LIKE' => '%parcial%'
+		$es_envio_parcial = false;
+
+		# si la venta tiene productos en espera, quiere decir que es un envio parcial
+		# si tiene un registro de envio parcial, termina como envio parcial
+		if ($estadosHistoricosParcial > 0 || $total_en_espera > 0) {
+			$es_envio_parcial = true;
+		}
+
+		if ($estados['code'] != 200) {
+
+			$log[] = array(
+				'Log' => array(
+					'administrador' => "Venta {$TransportesVenta['venta_id']} tiene problemas con api Starken",
+					'modulo' 		=> 'StarkenComponent',
+					'modulo_accion' => 'Problemas con seguimiento: ' . json_encode($estados)
 				)
-			));
+			);
 
-			$es_envio_parcial = false;
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($log);
 
-			# si la venta tiene productos en espera, quiere decir que es un envio parcial
-			# si tiene un registro de envio parcial, termina como envio parcial
-			if ($estadosHistoricosParcial > 0 || $total_en_espera > 0) {
-				$es_envio_parcial = true;
-			}
+			return false;
+		}
 
-			if ($estados['code'] != 200) {
+		foreach ($estados['response']['history'] as $e) {
 
-				$log[] = array(
-					'Log' => array(
-						'administrador' => "Venta {$id} tiene problemas con api Starken",
-						'modulo' 		=> 'StarkenComponent',
-						'modulo_accion' => 'Problemas con seguimiento: ' . json_encode($estados)
-					)
-				);
+			if (!isset($e['status'])) {
 				continue;
 			}
 
-			foreach ($estados['response']['history'] as $e) {
-
-				if (!isset($e['status'])) {
-					continue;
-				}
-
-				if ($es_envio_parcial) {
-					$estado_nombre = $e['status'] . ' parcial';
-				} else {
-					$estado_nombre = $e['status'];
-				}
-
-				# Verificamos que el estado no exista en los registros
-				if (ClassRegistry::init('EnvioHistorico')->existe($estado_nombre, $trans['TransportesVenta']['id'])) {
-					continue;
-				}
-
-				$estado_existe = ClassRegistry::init('EstadoEnvio')->obtener_por_nombre($estado_nombre, 'Starken');
-
-				if (!$estado_existe) {
-					$estado_existe = ClassRegistry::init('EstadoEnvio')->crear($estado_nombre, null, 'Starken', " Paso: " . $e['step'] . ', ' . $e['status']);
-				}
-				# Sólo se crean los estados nuevos
-				$historicos[] = array(
-					'EnvioHistorico' => array(
-						'transporte_venta_id' => $trans['TransportesVenta']['id'],
-						'estado_envio_id' => $estado_existe['EstadoEnvio']['id'],
-						'nombre' => $estado_nombre,
-						'leyenda' => $estado_existe['EstadoEnvio']['leyenda'],
-						'canal' => 'Starken',
-						'created' =>  date("Y-m-d H:i", strtotime($e['created_at'])) . ":0" . $e['step']
-					)
-				);
+			if ($es_envio_parcial) {
+				$estado_nombre = $e['status'] . ' parcial';
+			} else {
+				$estado_nombre = $e['status'];
 			}
+
+			# Verificamos que el estado no exista en los registros
+			if (ClassRegistry::init('EnvioHistorico')->existe($estado_nombre, $TransportesVenta['id'])) {
+				continue;
+			}
+
+			$estado_existe = ClassRegistry::init('EstadoEnvio')->obtener_por_nombre($estado_nombre, 'Starken');
+
+			if (!$estado_existe) {
+				$estado_existe = ClassRegistry::init('EstadoEnvio')->crear($estado_nombre, null, 'Starken', " Paso: " . $e['step'] . ', ' . $e['status']);
+			}
+			# Sólo se crean los estados nuevos
+			$historicos[] = array(
+				'EnvioHistorico' => array(
+					'transporte_venta_id'	=> $TransportesVenta['id'],
+					'estado_envio_id' 		=> $estado_existe['EstadoEnvio']['id'],
+					'nombre'  				=> $estado_nombre,
+					'leyenda' 				=> $estado_existe['EstadoEnvio']['leyenda'],
+					'canal' 				=> 'Starken',
+					'created' 				=> date("Y-m-d H:i", strtotime($e['created_at'])) . ":0" . $e['step']
+				)
+			);
 		}
-		if (count($historicos)>0) {
+
+		if (count($historicos) > 0) {
 			$log[] = array(
 				'Log' => array(
-					'administrador' => count($historicos) . " nuevos historicos del vid - {$id}",
+					'administrador' => count($historicos) . " nuevos historicos del vid - {$TransportesVenta['venta_id']}",
 					'modulo' 		=> 'StarkenComponent',
 					'modulo_accion' => json_encode($historicos)
 				)
@@ -956,7 +893,6 @@ class StarkenComponent extends Component
 		}
 
 		ClassRegistry::init('EnvioHistorico')->create();
-
 		return ClassRegistry::init('EnvioHistorico')->saveMany($historicos);
 	}
 }

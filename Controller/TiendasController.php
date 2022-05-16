@@ -227,9 +227,18 @@ class TiendasController extends AppController
 			'starken' => (float) 0.00
 		);
 
-		# Creamos cliente starken
-		$this->Starken->crearCliente($tienda['Tienda']['starken_rut'], $tienda['Tienda']['starken_clave'], null, null, null);
-		
+		try {
+			$this->Starken->crearCliente($tienda['Tienda']['starken_rut'], $tienda['Tienda']['starken_clave'], null, null, null);
+		} catch (\Throwable $th) {
+
+			$response = array(
+				'code'    => 400, 
+				'message' => 'Hubo un error, intente más tarde'
+			);
+
+			throw new CakeException($response);
+		}
+
 		$ciudadOrigen  = $this->request->data['ciudadOrigen'];
 		$ciudadDestino = $this->request->data['ciudadDestino'];
 		$altoBulto     = (float) $this->request->data['altoBulto'];

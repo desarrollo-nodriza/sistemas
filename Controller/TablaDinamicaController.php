@@ -59,7 +59,6 @@ class TablaDinamicaController extends AppController
 			}
 		}
 
-
 		$dependencias 			= ClassRegistry::init('MetodoEnvio')->dependencias();
 
 		BreadcrumbComponent::add('Tabla dinámica', '/tablaDinamica');
@@ -92,11 +91,12 @@ class TablaDinamicaController extends AppController
 			'contain'		=> ['AtributoDinamico', 'CategoriaTablaDinamica']
 		]);
 		$dependencias 			= ClassRegistry::init('MetodoEnvio')->dependencias();
-		$atributos 				= ClassRegistry::init('AtributoDinamico')->find('list', ['conditios' => ['activo' => true]]);
+		$atributos 				= ClassRegistry::init('AtributoDinamico')->find('list', ['conditions' => ['activo' => true]]);
 		$categorias				= ClassRegistry::init('CategoriaTablaDinamica')->find('list', []);
+
 		BreadcrumbComponent::add('Tabla dinámica', '/tablaDinamica');
 		BreadcrumbComponent::add('Editar');
-		// prx($this->request->data);
+
 		$this->set(compact('dependencias', 'atributos', 'categorias'));
 	}
 

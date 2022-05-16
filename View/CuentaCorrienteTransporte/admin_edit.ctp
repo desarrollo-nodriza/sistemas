@@ -3,9 +3,13 @@
 </div>
 
 <div class="page-content-wrap">
-	<?= $this->Form->create('CuentaCorrienteTransporte', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-	<?= $this->Form->input('id'); ?>
+
 	<div class="row">
+		<?= $this->Form->create('CuentaCorrienteTransporte', array(
+			'class' => 'form-horizontal',
+			'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control')
+		)); ?>
+		<?= $this->Form->input('id'); ?>
 		<div class="col-xs-12 col-md-6">
 			<div class="panel panel-default">
 				<div class="panel-heading">
@@ -31,15 +35,23 @@
 				</div>
 				<div class="panel-footer">
 					<div class="pull-right">
-						<input type="submit" class="btn btn-primary start-loading-then-redirect" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<input type="submit" class="btn btn-primary start-loading-when-form-is-validate" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
 						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>
-		</div> <!-- end col -->
+			<?= $this->Form->end(); ?>
+		</div>
+
 		<div class="col-xs-12 col-md-6">
 
-			<? foreach ($tabla_dinamica as $formulario) : ?>
+			<? foreach ($tabla_dinamica as $key =>  $formulario) : ?>
+				<?= $this->Form->create('CuentaCorrienteTransporte', array(
+					'url'			=> array('controller' => 'cuentaCorrienteTransporte', 'action' => 'guardar_atributo', $this->request->data['CuentaCorrienteTransporte']['id']),
+					'class' 		=> 'form-horizontal',
+					'id'			=> "formularios-{$key}",
+					'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control')
+				)); ?>
 				<div class="panel panel-default js-panel-<?= $formulario['TablaDinamica']['dependencia'] ?> <?= ($this->request->data['CuentaCorrienteTransporte']['dependencia']  == $formulario['TablaDinamica']['dependencia']) ? '' : 'hidden'; ?>">
 
 					<div class="panel-heading">
@@ -54,7 +66,7 @@
 									<? if (isset($dependenciasVars[$formulario['TablaDinamica']['dependencia']][$input['TablaAtributo']['nombre_referencia']])) : ?>
 										<tr>
 											<th><?= $this->Form->label($input['TablaAtributo']['id'], ucwords($input['nombre']) . " ({$input['TablaAtributo']['nombre_referencia']})"); ?></th>
-											<td><?= $this->Form->select($input['TablaAtributo']['id'], $dependenciasVars[$formulario['TablaDinamica']['dependencia']][$input['TablaAtributo']['nombre_referencia']], array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'default' => $valor, 'empty' => 'Seleccione' ,'required' =>  $input['TablaAtributo']['requerido'])); ?></td>
+											<td><?= $this->Form->select($input['TablaAtributo']['id'], $dependenciasVars[$formulario['TablaDinamica']['dependencia']][$input['TablaAtributo']['nombre_referencia']], array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'default' => $valor, 'empty' => 'Seleccione', 'required' =>  $input['TablaAtributo']['requerido'])); ?></td>
 										</tr>
 									<? else : ?>
 										<tr>
@@ -71,17 +83,16 @@
 					</div>
 					<div class="panel-footer">
 						<div class="pull-right">
-							<input type="submit" class="btn btn-primary start-loading-then-redirect" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+							<input type="submit" class="btn btn-primary start-loading-when-form-is-validate" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
 							<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 						</div>
 					</div>
 				</div>
+				<?= $this->Form->end(); ?>
 			<? endforeach; ?>
+
 		</div>
-	</div> <!-- end row -->
-	<?= $this->Form->end(); ?>
-
-
+	</div>
 </div>
 
 <?= $this->Html->script(array(

@@ -2,9 +2,9 @@
 App::uses('AppModel', 'Model');
 class BodegasMetodoEnvio extends AppModel
 {
-    public $useTable = 'bodegas_metodo_envio';
+	public $useTable = 'bodegas_metodo_envio';
 
-    public $belongsTo = array(
+	public $belongsTo = array(
 		'Bodega' => array(
 			'className'				=> 'Bodega',
 			'foreignKey'			=> 'bodega_id',
@@ -13,9 +13,17 @@ class BodegasMetodoEnvio extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 		),
-        'MetodoEnvio' => array(
+		'MetodoEnvio' => array(
 			'className'				=> 'MetodoEnvio',
 			'foreignKey'			=> 'metodo_envio_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		),
+		'CuentaCorrienteTransporte' => array(
+			'className'				=> 'CuentaCorrienteTransporte',
+			'foreignKey'			=> 'cuenta_corriente_transporte_id',
 			'conditions'			=> '',
 			'fields'				=> '',
 			'order'					=> '',

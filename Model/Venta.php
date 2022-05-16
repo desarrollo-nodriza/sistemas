@@ -526,7 +526,16 @@ class Venta extends AppModel
 								'Bodega.comuna_id'
 							],
 						],
-						'BodegasMetodoEnvio'
+						'BodegasMetodoEnvio' =>['Bodega' => [
+							'Comuna',
+							'fields' => [
+								'Bodega.nombre',
+								'Bodega.nombre_contacto',
+								'Bodega.fono',
+								'Bodega.direccion',
+								'Bodega.comuna_id'
+							],
+						],]
 					),
 					'Mensaje' => array(
 						'conditions' => array(

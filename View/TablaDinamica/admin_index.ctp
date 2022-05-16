@@ -11,7 +11,6 @@
                     <h3 class="panel-title">Listado de tablas</h3>
                     <div class="btn-group pull-right">
                         <? if ($permisos['add']) : ?>
-                            <?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo atributo', array('action' => 'atributo_index'), array('class' => 'btn btn-success', 'escape' => false)); ?>
                             <?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo tabla', array('action' => 'add'), array('class' => 'btn btn-success', 'escape' => false)); ?>
                         <? endif; ?>
 

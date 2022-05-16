@@ -30,16 +30,33 @@ class AtributoDinamicoController extends AppController
 
         if ($this->request->is('post')) {
         }
-        // prx('hola');
         $this->paginate = [
             'recursive' => 0,
             'limit'     => 20,
             'order'     => ['id' => 'DESC']
         ];
+        $AtributoDinamico =  $this->paginate();
+        BreadcrumbComponent::add('Atributo Dinámicos');
 
-        $this->paginate();
+        $this->set(compact('AtributoDinamico'));
+    }
 
-        BreadcrumbComponent::add('Atributo Dinámicas');
-        $this->set(compact(''));
+    public function admin_atributo_create()
+    {
+
+        $atributos = array_filter($this->request->data, function ($v, $k) {
+            return !empty($v['nombre']) || !empty($v['id']);
+        }, ARRAY_FILTER_USE_BOTH);
+        // prx($atributos);
+        $datos_a_guardar = [];
+
+        foreach ($atributos as  $value) {
+            $datos_a_guardar[] = ['AtributoDinamico' => $value];
+        }
+
+        ClassRegistry::init('AtributoDinamico')->create();
+        ClassRegistry::init('AtributoDinamico')->saveAll($datos_a_guardar);
+
+        $this->redirect(array('action' => 'index'));
     }
 }
