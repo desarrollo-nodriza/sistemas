@@ -25,28 +25,7 @@ class BlueExpressComponent extends Component
 
     public function regenerar_etiqueta($trackingNumber, $venta_id)
     {
-        $credenciales = ClassRegistry::init('TransportesVenta')->find('first', [
-            'conditions' =>
-            [
-                ['TransportesVenta.cod_seguimiento' => $trackingNumber]
-            ],
-            'contain' => [
-                'Venta' => [
-                    'metodo_envio_id',
-                    'MetodoEnvio' => array(
-                        'fields' => array(
-                            'MetodoEnvio.dependencia',
-                            'MetodoEnvio.token_blue_express',
-                            'MetodoEnvio.cod_usuario_blue_express',
-                            'MetodoEnvio.cta_corriente_blue_express',
-                        )
-                    )
-                ]
-            ],
-            'fields' => ['TransportesVenta.id']
-        ]);
 
-        $this->crearCliente($credenciales['Venta']['MetodoEnvio']['token_blue_express'], $credenciales['Venta']['MetodoEnvio']['cod_usuario_blue_express'], $credenciales['Venta']['MetodoEnvio']['cta_corriente_blue_express']);
         $response           = $this->blue_express->BXLabel($trackingNumber);
         $response['url']    = null;
 

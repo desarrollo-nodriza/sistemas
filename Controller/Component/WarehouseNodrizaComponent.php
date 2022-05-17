@@ -186,8 +186,8 @@ class WarehouseNodrizaComponent extends Component
                     } else {
                         // * Si la bodega del embalaje es creada en otra bodega que no sea la principal y la venta posee metodo de envio con "despacho a domicilio", debe ser trasladado a la bodega principal
 
-                        $trasladar_a_otra_bodega    = $bodega_principal != $bodega_id;
-                        $bodega_id_para_trasladar   = ($bodega_principal != $bodega_id ? $bodega_principal : null);
+                        // $trasladar_a_otra_bodega    = $bodega_principal != $bodega_id;
+                        // $bodega_id_para_trasladar   = ($bodega_principal != $bodega_id ? $bodega_principal : null);
                     }
 
                     $embalaje = [

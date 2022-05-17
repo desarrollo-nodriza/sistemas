@@ -51,6 +51,10 @@
 								<th><?= $this->Form->label('cuenta_corriente_transporte_id', 'Cuenta corriente'); ?></th>
 								<td><?= $this->Form->select('cuenta_corriente_transporte_id', $cuentaCorrienteTransporte, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Seleccione Cuenta corriente', 'required')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('consolidacion_venta_estado_id', 'Estado de la venta en consolidación'); ?></th>
+								<td><?= $this->Form->select('consolidacion_venta_estado_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto', 'required')); ?></td>
+							</tr>
 							<tr id="generar_ot" class="">
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
 								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>

@@ -339,7 +339,7 @@ class MetodoEnviosController extends AppController
 		$logs[] = array(
 			'Log' => array(
 				'administrador' => "Crear etiqueta envio externo | Vid: {$id_venta}",
-				'modulo'     => 'MetodoEnviosController',
+				'modulo'     	=> 'MetodoEnviosController',
 				'modulo_accion' => json_encode($venta)
 			)
 		);
@@ -351,7 +351,7 @@ class MetodoEnviosController extends AppController
 			$logs[] = array(
 				'Log' => array(
 					'administrador' => 'Vid ' . $venta['Venta']['id'],
-					'modulo'     => 'MetodoEnviosController',
+					'modulo'    	=> 'MetodoEnviosController',
 					'modulo_accion' => json_encode(["No posee embalajes en procesando" => $venta])
 				)
 			);
@@ -366,7 +366,7 @@ class MetodoEnviosController extends AppController
 			$logs[] = array(
 				'Log' => array(
 					'administrador' => 'Crear etiqueta Enviame venta ' . $id_venta,
-					'modulo' => 'MetodoEnvio',
+					'modulo' 		=> 'MetodoEnviosController',
 					'modulo_accion' => json_encode($resultadoEnviame)
 				)
 			);
@@ -399,7 +399,7 @@ class MetodoEnviosController extends AppController
 					$logs[] = array(
 						'Log' => array(
 							'administrador' => "Vid {$id_venta} | El metodo no tiene una cuenta corriente asignada",
-							'modulo'     => 'MetodoEnviosController',
+							'modulo'     	=> 'MetodoEnviosController',
 							'modulo_accion' => json_decode($venta['MetodoEnvio'])
 						)
 					);
@@ -413,7 +413,7 @@ class MetodoEnviosController extends AppController
 					$logs[] = array(
 						'Log' => array(
 							'administrador' => "Vid {$id_venta} | Cuenta corriente no tiene asignado valores {$cuenta_corriente_transporte_id}",
-							'modulo'     => 'MetodoEnviosController',
+							'modulo'     	=> 'MetodoEnviosController',
 							'modulo_accion' =>  json_decode($venta['MetodoEnvio'])
 						)
 					);
@@ -435,7 +435,7 @@ class MetodoEnviosController extends AppController
 							$logs[] = array(
 								'Log' => array(
 									'administrador' => 'Crear etiqueta Starken venta ' . $id_venta,
-									'modulo'     => 'MetodoEnviosController',
+									'modulo'     	=> 'MetodoEnviosController',
 									'modulo_accion' => 'Generada con éxito'
 								)
 							);
@@ -454,7 +454,7 @@ class MetodoEnviosController extends AppController
 						// 	$logs[] = array(
 						// 		'Log' => array(
 						// 			'administrador' => 'Crear etiqueta Conexxion venta ' . $id_venta,
-						// 			'modulo' => 'MetodoEnvio',
+						// 			'modulo' 		=> 'MetodoEnviosController',
 						// 			'modulo_accion' => 'Generada con éxito'
 						// 		)
 						// 	);
@@ -473,7 +473,7 @@ class MetodoEnviosController extends AppController
 						// 	$logs[] = array(
 						// 		'Log' => array(
 						// 			'administrador' => 'Crear etiqueta Boosmap venta ' . $id_venta,
-						// 			'modulo' => 'MetodoEnvio',
+						// 			'modulo' 		=> 'MetodoEnviosController',
 						// 			'modulo_accion' => 'Generada con éxito'
 						// 		)
 						// 	);
@@ -491,7 +491,7 @@ class MetodoEnviosController extends AppController
 							$logs[] = array(
 								'Log' => array(
 									'administrador' => 'Crear etiqueta BlueExpress venta ' . $id_venta,
-									'modulo'     => 'MetodoEnvio',
+									'modulo'     	=> 'MetodoEnviosController',
 									'modulo_accion' => 'Generada con éxito'
 								)
 							);
@@ -506,7 +506,7 @@ class MetodoEnviosController extends AppController
 		}
 		$logs[] = array(
 			'Log' => array(
-				'administrador' => "Finaliza generar etiqueta externa venta { $id_venta}",
+				'administrador' => "Finaliza generar etiqueta externa venta $id_venta",
 				'modulo'     	=> 'MetodoEnviosController',
 				'modulo_accion' => 'Resultado de la operación: ' . $resultado ? 'Se completo':'No se completo'
 			)

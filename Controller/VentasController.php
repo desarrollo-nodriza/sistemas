@@ -12504,7 +12504,7 @@ class VentasController extends AppController {
 
 	public function actualizar_estados_envios($id)
 	{
-		// $venta = $this->Venta->obtener_venta_por_id($id);
+		
 		$venta = $this->Venta->find('first', [
 			'conditions' 	=> [['Venta.id' => $id]],
 			'fields'		=> ['Venta.id', 'Venta.metodo_envio_id'],
@@ -12579,8 +12579,8 @@ class VentasController extends AppController {
 				$logs[] = array(
 					'Log' => array(
 						'administrador' => "Vid {$id} | El metodo no tiene una cuenta corriente asignada",
-						'modulo'     	=> 'MetodoEnviosController',
-						'modulo_accion' => json_decode($venta['MetodoEnvio'])
+						'modulo'     	=> 'VentasController',
+						'modulo_accion' => json_encode($venta['MetodoEnvio'])
 					)
 				);
 				continue;
@@ -12593,8 +12593,8 @@ class VentasController extends AppController {
 				$logs[] = array(
 					'Log' => array(
 						'administrador' => "Vid {$id} | Cuenta corriente no tiene asignado valores {$cuenta_corriente_transporte_id}",
-						'modulo'     	=> 'MetodoEnviosController',
-						'modulo_accion' =>  json_decode($venta['MetodoEnvio'])
+						'modulo'     	=> 'VentasController',
+						'modulo_accion' =>  json_encode($venta['MetodoEnvio'])
 					)
 				);
 				continue;
@@ -12641,7 +12641,7 @@ class VentasController extends AppController {
 		$logs[] = array(
 			'Log' => array(
 				'administrador' => "Vid {$id} | finaliza actualizar estado ot",
-				'modulo'     	=> 'MetodoEnviosController',
+				'modulo'     	=> 'VentasController',
 				'modulo_accion' =>  null			
 				)
 		);
@@ -12976,62 +12976,169 @@ class VentasController extends AppController {
 	public function admin_regenerar_etiqueta($ot)
 	{
 
-		$transportes_venta =  ClassRegistry::init('TransportesVenta')->find('first',
-		[
-			'conditions' => [
-				'TransportesVenta.id' 		=> $ot,
-		],
-			'fields' => [
-				'TransportesVenta.venta_id',
-				'TransportesVenta.cod_seguimiento'
+		$transportes_venta =  ClassRegistry::init('TransportesVenta')->find(
+			'first',
+			[
+				'conditions' => [
+					'TransportesVenta.id' => $ot,
+				],
+				'fields' => [
+					'TransportesVenta.venta_id',
+					'TransportesVenta.embalaje_id',
+					'TransportesVenta.cod_seguimiento',
+				],
+				'contain' => [
+					'EmbalajeWarehouse' => [
+						'fields' => [
+							'EmbalajeWarehouse.id',
+							'EmbalajeWarehouse.estado',
+							'EmbalajeWarehouse.bodega_id'
+						]
+					],
+					"Venta" => [
+						'fields' => [
+							'Venta.id',
+							'Venta.metodo_envio_id'							
+						],
+						'MetodoEnvio' => array(
+							'fields' => array(
+								'MetodoEnvio.id',
+								'MetodoEnvio.bodega_id',
+								'MetodoEnvio.cuenta_corriente_transporte_id',
+							),
+							'Bodega' => [
+								'Comuna',
+								'fields' => [
+									'Bodega.fono',
+									'Bodega.nombre',
+									'Bodega.comuna_id',
+									'Bodega.direccion',
+									'Bodega.nombre_contacto',
+								],
+							],
+							'BodegasMetodoEnvio' => [
+								'Bodega' => [
+									'Comuna',
+									'fields' => [
+										'Bodega.fono',
+										'Bodega.nombre',
+										'Bodega.direccion',
+										'Bodega.comuna_id',
+										'Bodega.nombre_contacto',
+									],
+								],
+							]
+						),
+					]
+				]
 			]
-		]);
-		
-		$venta_id= $transportes_venta['TransportesVenta']['venta_id'];
+		);
 
-		$venta = ClassRegistry::init('Venta')->find('first',[
-			'conditions'=>[
-				'Venta.id' => $venta_id
-			],
-			'fields'=>['id'],
-			'contain' => array(
-				'MetodoEnvio' => array(
-					'fields' => array(
-						'MetodoEnvio.dependencia'
-					)
-				)
-				
+		$logs 							= [] ;
+		$venta_id 						= $transportes_venta['TransportesVenta']['venta_id'];
+		$cuenta_corriente_transporte_id = null;
+
+		$logs[] 						= array(
+			'Log' => array(
+				'administrador' => "Regenerar etiqueta de OT $ot | Vid $venta_id",
+				'modulo'     	=> 'VentasController',
+				'modulo_accion' =>  json_encode($transportes_venta)
 			)
-		]);
-		
-		switch ($venta['MetodoEnvio']['dependencia']) {
-			case 'blueexpress':
-				$etiqueta = $this->BlueExpress->regenerar_etiqueta($transportes_venta['TransportesVenta']['cod_seguimiento'],$venta_id);
+		);
+
+		if ($transportes_venta['Venta']['MetodoEnvio']['bodega_id'] ==  $transportes_venta['EmbalajeWarehouse']['bodega_id']) {
+			$cuenta_corriente_transporte_id = $transportes_venta['Venta']['MetodoEnvio']['cuenta_corriente_transporte_id'];
+		} else {
+			$cuenta_corriente_transporte_id = Hash::extract($transportes_venta['Venta']['MetodoEnvio']['BodegasMetodoEnvio'], "{n}[bodega_id={$transportes_venta['EmbalajeWarehouse']['bodega_id']}].cuenta_corriente_transporte_id")[0] ?? null;
+		}
+
+		if (is_null($cuenta_corriente_transporte_id)) {
+
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => "Vid $venta_id | El metodo no tiene una cuenta corriente asignada",
+					'modulo'     	=> 'VentasController',
+					'modulo_accion' => json_encode($transportes_venta)
+				)
+			);
+			ClassRegistry::init('Log')->saveMany($logs);
+			$this->Session->setFlash('No existe una cuenta de corriente asociada', null, array(), 'danger');
+			$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
+		}
+
+		$CuentaCorrienteTransporte = ClassRegistry::init('CuentaCorrienteTransporte')->valor_atributos($cuenta_corriente_transporte_id);
+
+		if (!$CuentaCorrienteTransporte) {
+
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => "Vid $venta_id | Cuenta corriente no tiene asignado valores $cuenta_corriente_transporte_id",
+					'modulo'     	=> 'VentasController',
+					'modulo_accion' =>  json_encode($transportes_venta)
+				)
+			);
+			ClassRegistry::init('Log')->saveMany($logs);
+			$this->Session->setFlash('La cuenta corriente de transportista no posee sus credenciales', null, array(), 'danger');
+			$this->redirect(array('action' => 'view', $venta_id , 'controller' => 'ventas'));
+		}
+
+		switch (ClassRegistry::init('CuentaCorrienteTransporte')->dependencia($cuenta_corriente_transporte_id)) {
+
+			case 'starken':
+
+				// $this->Starken 	= $this->Components->load('Starken');
+				// $this->Starken->crearCliente($CuentaCorrienteTransporte['rutApiRest'], $CuentaCorrienteTransporte['claveApiRest'], $CuentaCorrienteTransporte['rutEmpresaEmisora'], $CuentaCorrienteTransporte['rutUsuarioEmisor'], $CuentaCorrienteTransporte['claveUsuarioEmisor']);
 				break;
+
+			case 'conexxion':
+
+				// $this->Conexxion = $this->Components->load('Conexxion');
+				// $this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
+				break;
+
 			case 'boosmap':
-				$etiqueta = $this->Boosmap->regenerar_etiqueta($transportes_venta,$venta_id);
+
+				// $this->Boosmap = $this->Components->load('Boosmap');
+				// $this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
 				break;
+
+			case 'blueexpress':
+
+				$this->BlueExpress 	= $this->Components->load('BlueExpress');
+				$this->BlueExpress->crearCliente($CuentaCorrienteTransporte['BX_TOKEN'], $CuentaCorrienteTransporte['BX_USERCODE'], $CuentaCorrienteTransporte['BX_CLIENT_ACCOUNT']);
+				$etiqueta 			= $this->BlueExpress->regenerar_etiqueta($transportes_venta['TransportesVenta']['cod_seguimiento'], $venta_id);
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => "Vid $venta_id | blueexpress",
+						'modulo'     	=> 'VentasController',
+						'modulo_accion' => "Respuesta ".$etiqueta ? 'Exitosa':'No exitosa'
+					)
+				);
+				break;
+
 			default:
 
-				$this->Session->setFlash("La dependencia {$venta['MetodoEnvio']['dependencia']} no tiene configurada regenerar etiqueta", null, array(), 'danger');
+				$this->Session->setFlash("La cuenta corriente $cuenta_corriente_transporte_id no tiene asociada una dependencia", null, array(), 'danger');
 				$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
-
 				break;
 		}
+
+		
+		ClassRegistry::init('Log')->saveMany($logs);
 
 		if (!empty($etiqueta['url'])) {
 
 			$url_etiqueta = $etiqueta['url'];
 
-			if(ClassRegistry::init('TransportesVenta')->exists($ot) && ClassRegistry::init('Venta')->exists($venta_id)){
-				
+			if (ClassRegistry::init('TransportesVenta')->exists($ot) && ClassRegistry::init('Venta')->exists($venta_id)) {
+
 				ClassRegistry::init('TransportesVenta')->id = $ot;
 				ClassRegistry::init('Venta')->id			= $venta_id;
 
-				if(ClassRegistry::init('TransportesVenta')->saveField('etiqueta',$url_etiqueta) && ClassRegistry::init('Venta')->saveField('etiqueta_envio_externa',$url_etiqueta)){
-				
+				if (ClassRegistry::init('TransportesVenta')->saveField('etiqueta', $url_etiqueta) && ClassRegistry::init('Venta')->saveField('etiqueta_envio_externa', $url_etiqueta)) {
+
 					$this->Session->setFlash('Se creo etiqueta', null, array(), 'success');
-					$this->redirect(array('action' => 'view', $venta_id ,'controller' => 'ventas'));
+					$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
 				}
 			}
 		}
@@ -13039,7 +13146,6 @@ class VentasController extends AppController {
 		$this->Session->setFlash('No se pudo crear su etiqueta', null, array(), 'danger');
 		$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
 	}
-
 
 	/**	
 	 * Obtiene los estados de despacho de la venta
