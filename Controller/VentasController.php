@@ -5283,7 +5283,7 @@ class VentasController extends AppController {
 
 			# Se crea DTE automático si corresponde
 			$venta                = $this->preparar_venta($id_venta);
-			if ($venta['VentaEstado']['VentaEstadoCategoria']['generar_dte'] = 1) 
+			if ($venta['VentaEstado']['VentaEstadoCategoria']['generar_dte']) 
 			{
 				$log[] = $this->crearDteAutomatico($venta);
 			}
@@ -8554,7 +8554,7 @@ class VentasController extends AppController {
 
 					# Se crea DTE automático si corresponde
 			$venta = $this->preparar_venta($this->Venta->id);
-			if ($venta['VentaEstado']['VentaEstadoCategoria']['generar_dte'] = 1) 
+			if ($venta['VentaEstado']['VentaEstadoCategoria']['generar_dte']) 
 				{
 					$log[] = $this->crearDteAutomatico($venta);
 				}
