@@ -73,6 +73,13 @@
 										<span class="help-block">Las ventas que tengan esta categoría se les permitira reservar stock.</span>
 									</td>
 								</tr>
+								<tr>
+									<th><?= $this->Form->label('generar_dte', 'Generar DTE de forma autamatica'); ?></th>
+									<td>
+										<?= $this->Form->input('generar_dte', array('class' => 'icheckbox')); ?>
+										<span class="help-block">Las ventas que tengan esta categoría se les genera el dte de forma automatica.</span>
+									</td>
+								</tr>
 							</table>
 
 							<div class="pull-right">

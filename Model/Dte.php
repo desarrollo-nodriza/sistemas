@@ -37,15 +37,15 @@ class Dte extends AppModel
 	 * VALIDACIONES
 	 */
 	public $belongsTo = array(
-		'Orden' => array(
-			'className'				=> 'Orden',
-			'foreignKey'			=> 'id_order',
-			'conditions'			=> '',
-			'fields'				=> '',
-			'order'					=> '',
-			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
-		),
+		// 'Orden' => array(
+		// 	'className'				=> 'Orden',
+		// 	'foreignKey'			=> 'id_order',
+		// 	'conditions'			=> '',
+		// 	'fields'				=> '',
+		// 	'order'					=> '',
+		// 	'counterCache'			=> true,
+		// 	//'counterScope'			=> array('Asociado.modelo' => 'Plantilla')
+		// ),
 		'Administrador' => array(
 			'className'				=> 'Administrador',
 			'foreignKey'			=> 'administrador_id',
