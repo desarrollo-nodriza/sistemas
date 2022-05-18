@@ -265,6 +265,9 @@
 									</thead>
 									<tbody>
 										<? foreach ($this->request->data['VentaDetalle'] as $ivd => $vd) : ?>
+											
+															
+											<? if (!empty($vd['VentaDetallesReserva'])) : ?>
 											<? foreach ($vd['VentaDetallesReserva'] as $VentaDetallesReserva) : ?>
 												<tr>
 													<td><?= $this->Html->link($vd['venta_id'], array('controller' => 'ventas', 'action' => 'view', $vd['venta_id']), array('target' => '_blank')); ?></td>
@@ -295,6 +298,32 @@
 													</td>
 												</tr>
 											<? endforeach; ?>
+											<?else:?>
+												<tr>
+												<td><?= $this->Html->link($vd['venta_id'], array('controller' => 'ventas', 'action' => 'view', $vd['venta_id']), array('target' => '_blank')); ?></td>
+													<td><a data-toggle="tooltip" data-placement="top" title="" data-original-title="<?= $vd['Venta']['VentaEstado']['nombre']; ?>" class="btn btn-xs btn-<?= h($vd['Venta']['VentaEstado']['VentaEstadoCategoria']['estilo']); ?>"><?= h($vd['Venta']['VentaEstado']['VentaEstadoCategoria']['nombre']); ?></a>&nbsp;</td>
+													<td>
+														<?= date_format(date_create($vd['Venta']['fecha_venta']), 'd/m/Y H:i:s'); ?>
+														<? if ($vd['Venta']['picking_estado'] == 'no_definido' && $vd['Venta']['VentaEstado']['VentaEstadoCategoria']['venta'] && !$vd['Venta']['VentaEstado']['VentaEstadoCategoria']['final']) :
+
+															$retrasoMensaje = $this->Html->calcular_retraso(date_format(date_create($vd['Venta']['fecha_venta']), 'Y-m-d H:i:s'));
+
+															if (!empty($retrasoMensaje)) : ?>
+																<?= $retrasoMensaje; ?>
+														<?
+															endif;
+														endif; ?>
+													</td>
+													<td><?= $vd['cantidad']; ?></td>
+													<td>--</td>
+													<td>--</td>
+													<td>
+														<div class="btn-group">
+															<?= $this->Html->link('<i class="fa fa-hand-paper-o"></i> Reservar', array('controller' => 'VentaDetalleProductos', 'action' => 'reservar_stock', $vd['id']), array('class' => 'btn btn-success btn-xs', 'escape' => false, 'data-toggle' => 'tooltip', 'title' => 'Reservar stock')) ?>
+ 														</div>
+													</td>
+													</tr>
+											<? endif; ?>
 										<? endforeach; ?>
 									</tbody>
 								</table>
