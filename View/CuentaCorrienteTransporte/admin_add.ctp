@@ -16,7 +16,7 @@
 						<table class="table">
 							<tr>
 								<th><?= $this->Form->label('nombre', 'Nombre'); ?></th>
-								<td><?= $this->Form->input('nombre'); ?></td>
+								<td><?= $this->Form->input('nombre', array('required' =>  true)); ?></td>
 							</tr>
 
 							<th><?= $this->Form->label('dependencia', 'Dependencia o Plugin'); ?></th>
@@ -31,7 +31,7 @@
 				</div>
 				<div class="panel-footer">
 					<div class="pull-right">
-						<input type="submit" class="btn btn-primary start-loading-then-redirect" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<input type="submit" class="btn btn-primary start-loading-when-form-is-validate" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
 						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
@@ -71,7 +71,7 @@
 					</div>
 					<div class="panel-footer">
 						<div class="pull-right">
-							<input type="submit" class="btn btn-primary start-loading-then-redirect" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+							<input type="submit" class="btn btn-primary start-loading-when-form-is-validate" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
 							<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 						</div>
 					</div>

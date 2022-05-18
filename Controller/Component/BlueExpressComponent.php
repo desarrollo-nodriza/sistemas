@@ -51,7 +51,7 @@ class BlueExpressComponent extends Component
         return $response;
     }
 
-    public function registrar_estados($TransportesVenta, $CuentaCorrienteTransporte, $total_en_espera, $sleep = 5)
+    public function registrar_estados($TransportesVenta, $total_en_espera, $sleep = 5)
     {
         sleep($sleep);
 
@@ -168,7 +168,7 @@ class BlueExpressComponent extends Component
             // * Debido a problemas para recuperar los estados se hacen tres intentos
             if ($this->intentos <= 3) {
                 $this->intentos++;
-                $this->registrar_estados($TransportesVenta, $CuentaCorrienteTransporte, $total_en_espera, 2);
+                $this->registrar_estados($TransportesVenta, $total_en_espera, 2);
             }
 
             ClassRegistry::init('Log')->create();

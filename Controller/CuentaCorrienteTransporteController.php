@@ -109,7 +109,7 @@ class CuentaCorrienteTransporteController extends AppController
 
 		# Boosmap
 		$dependenciasVars['boosmap']['boosmap_pick_up_id']		= $this->Boosmap->obtener_pickups();
-		$dependenciasVars['boosmap']['boosmap_service'] 		= $this->Boosmap->obtener_tipo_servicios();
+		$dependenciasVars['boosmap']['delivery_service'] 		= $this->Boosmap->obtener_tipo_servicios();
 
 		# BlueExpress
 		$dependenciasVars['blueexpress']['serviceType'] 		= $this->BlueExpress->tipo_servicio;
@@ -178,7 +178,7 @@ class CuentaCorrienteTransporteController extends AppController
 
 		# Boosmap
 		$dependenciasVars['boosmap']['boosmap_pick_up_id']		= $this->Boosmap->obtener_pickups();
-		$dependenciasVars['boosmap']['boosmap_service'] 		= $this->Boosmap->obtener_tipo_servicios();
+		$dependenciasVars['boosmap']['delivery_service'] 		= $this->Boosmap->obtener_tipo_servicios();
 
 		# BlueExpress
 		$dependenciasVars['blueexpress']['serviceType'] 		= $this->BlueExpress->tipo_servicio;

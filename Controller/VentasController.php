@@ -1082,11 +1082,11 @@ class VentasController extends AppController {
 		$metodoEnviosController = new MetodoEnviosController();
 
 		if ($metodoEnviosController->generar_etiqueta_envio_externo($id)) {
-			$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
+			$this->Session->setFlash('Se creo la Orden de transporte.', null, array(), 'success');
 		}else{
 			$this->Session->setFlash("
 			<ul>
-				<li>No fue posible crear el envío O.</li>
+				<li>No fue posible crear la Orden de transporte O.</li>
 				<li>La venta no aplica para usar un currier externo.</li>
 			</ul>
 			", null, array(), 'danger');
@@ -12619,9 +12619,9 @@ class VentasController extends AppController {
 
 				case 'boosmap':
 
-					// $this->Boosmap = $this->Components->load('Boosmap');
-					// $this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
-					// $return = $this->Boosmap->registrar_estados($id);
+					$this->Boosmap 	= $this->Components->load('Boosmap');
+					$this->Boosmap->crearCliente($CuentaCorrienteTransporte['boosmap_token']);
+					$return 		= $this->Boosmap->registrar_estados($TransportesVenta, $total_en_espera);
 
 					break;
 
@@ -12629,7 +12629,7 @@ class VentasController extends AppController {
 
 					$this->BlueExpress 	= $this->Components->load('BlueExpress');
 					$this->BlueExpress->crearCliente($CuentaCorrienteTransporte['BX_TOKEN'], $CuentaCorrienteTransporte['BX_USERCODE'], $CuentaCorrienteTransporte['BX_CLIENT_ACCOUNT']);
-					$return 			= $this->BlueExpress->registrar_estados($TransportesVenta, $CuentaCorrienteTransporte, $total_en_espera);
+					$return 			= $this->BlueExpress->registrar_estados($TransportesVenta, $total_en_espera);
 					break;
 
 				default:
@@ -12988,13 +12988,27 @@ class VentasController extends AppController {
 					'TransportesVenta.cod_seguimiento',
 				],
 				'contain' => [
-					'EmbalajeWarehouse' => [
-						'fields' => [
-							'EmbalajeWarehouse.id',
-							'EmbalajeWarehouse.estado',
-							'EmbalajeWarehouse.bodega_id'
-						]
-					],
+					'EmbalajeWarehouse' => array(
+						'HistorialEmbalaje',
+						'Bodega' => array(
+							'fields' => array(
+								'Bodega.id',
+								'Bodega.nombre'
+							)
+						),
+						'EmbalajeProductoWarehouse' => array(
+							'VentaDetalleProducto' => array(
+								'fields' => array(
+									'VentaDetalleProducto.id',
+									'VentaDetalleProducto.nombre',
+									'VentaDetalleProducto.alto',
+									'VentaDetalleProducto.ancho',
+									'VentaDetalleProducto.largo',
+									'VentaDetalleProducto.peso'
+								)
+							),
+						)
+					),
 					"Venta" => [
 						'fields' => [
 							'Venta.id',
@@ -13033,7 +13047,7 @@ class VentasController extends AppController {
 				]
 			]
 		);
-
+		
 		$logs 							= [] ;
 		$venta_id 						= $transportes_venta['TransportesVenta']['venta_id'];
 		$cuenta_corriente_transporte_id = null;
@@ -13098,8 +13112,10 @@ class VentasController extends AppController {
 
 			case 'boosmap':
 
-				// $this->Boosmap = $this->Components->load('Boosmap');
-				// $this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
+				$this->Boosmap 	= $this->Components->load('Boosmap');
+				$this->Boosmap->crearCliente($CuentaCorrienteTransporte['boosmap_token']);
+				$etiqueta 		= $this->Boosmap->regenerar_etiqueta($transportes_venta['TransportesVenta']['cod_seguimiento'], $venta_id,$transportes_venta['EmbalajeWarehouse'], $CuentaCorrienteTransporte);
+
 				break;
 
 			case 'blueexpress':

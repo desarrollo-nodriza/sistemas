@@ -462,22 +462,21 @@ class MetodoEnviosController extends AppController
 						break;
 					case 'boosmap':
 
-						// # Creamos cliente boosmap
-						// $this->Boosmap = $this->Components->load('Boosmap');
-						// $this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
+						# Creamos cliente boosmap
+						$this->Boosmap = $this->Components->load('Boosmap');
+						$this->Boosmap->crearCliente($CuentaCorrienteTransporte['boosmap_token']);
+						# Creamos la OT
+						if ($this->Boosmap->generar_ot($venta, $embalaje, $CuentaCorrienteTransporte)) {
+							$resultado = true;
 
-						// # Creamos la OT
-						// if ($this->Boosmap->generar_ot($venta)) {
-						// 	$resultado = true;
-
-						// 	$logs[] = array(
-						// 		'Log' => array(
-						// 			'administrador' => 'Crear etiqueta Boosmap venta ' . $id_venta,
-						// 			'modulo' 		=> 'MetodoEnviosController',
-						// 			'modulo_accion' => 'Generada con éxito'
-						// 		)
-						// 	);
-						// }
+							$logs[] = array(
+								'Log' => array(
+									'administrador' => 'Crear etiqueta Boosmap venta ' . $id_venta,
+									'modulo' 		=> 'MetodoEnviosController',
+									'modulo_accion' => 'Generada con éxito'
+								)
+							);
+						}
 						break;
 
 					case 'blueexpress':

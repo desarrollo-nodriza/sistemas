@@ -20,7 +20,7 @@
 						<table class="table">
 							<tr>
 								<th><?= $this->Form->label('nombre', 'Nombre'); ?></th>
-								<td><?= $this->Form->input('nombre'); ?></td>
+								<td><?= $this->Form->input('nombre', array('required' =>  true)); ?></td>
 							</tr>
 
 							<th><?= $this->Form->label('dependencia', 'Dependencia o Plugin'); ?></th>
