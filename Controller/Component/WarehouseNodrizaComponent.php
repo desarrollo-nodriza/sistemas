@@ -314,17 +314,17 @@ class WarehouseNodrizaComponent extends Component
                 }
                 
                 // * Cuando se crean más de un embalaje en distintas bodegas, al embalaje creado en la bodega de la venta se le indica que debe esperar al que esta en la otra.
-                if (!$embalaje['trasladar_a_otra_bodega'] && count($embalajes_respuesta) > 1) {
-                    ClassRegistry::init('Bodega')->id   = $embalaje['bodega_id'];
-                    $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
-                    $this->crearNotas($venta, "Esperar traslado de otros embalajes.", "Este embalaje no debe ser enviado o entregado hasta que el embalaje {$embalaje_en_otra_bodega} haya sido recibido en la bodega {$nombre_bodega}.", $embalaje['id']);
-                }
+                // if (!$embalaje['trasladar_a_otra_bodega'] && count($embalajes_respuesta) > 1) {
+                //     ClassRegistry::init('Bodega')->id   = $embalaje['bodega_id'];
+                //     $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
+                //     $this->crearNotas($venta, "Esperar traslado de otros embalajes.", "Este embalaje no debe ser enviado o entregado hasta que el embalaje {$embalaje_en_otra_bodega} haya sido recibido en la bodega {$nombre_bodega}.", $embalaje['id']);
+                // }
             }
 
-            if (count($embalajes_respuesta) > 1) {
+            // if (count($embalajes_respuesta) > 1) {
 
-                $this->crearNotas($venta, "Reunir embalajes.", "Los siguientes embalajes {$embalaje_en_bodega_venta}, {$embalaje_en_otra_bodega} deben ser reunidos en la bodega {$nombre_bodega} antes de ser entregados o enviados.", null);
-            }
+            //     $this->crearNotas($venta, "Reunir embalajes.", "Los siguientes embalajes {$embalaje_en_bodega_venta}, {$embalaje_en_otra_bodega} deben ser reunidos en la bodega {$nombre_bodega} antes de ser entregados o enviados.", null);
+            // }
         }
         ClassRegistry::init('Log')->saveMany($logs);
 

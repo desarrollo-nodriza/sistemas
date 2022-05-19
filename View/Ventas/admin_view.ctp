@@ -1213,7 +1213,7 @@
 						<? elseif ($this->request->data['MetodoEnvio']['dependencia'] != '') : ?>
 							<div class="row mt-5">
 								<div class="col-xs-12">
-									<?= $this->Html->link('Crear Envio externo', array('action' => 'generar_envio_externo_manual', $venta['Venta']['id']), array('class' => 'btn btn-lg btn-success btn-block')); ?>
+									<?= $this->Html->link('Crear Envio externo', array('action' => 'generar_envio_externo_manual', $venta['Venta']['id']), array('class' => 'btn btn-lg btn-success btn-block start-loading-then-redirect')); ?>
 								</div>
 							</div>
 						<? else : ?>
