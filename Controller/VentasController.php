@@ -3602,31 +3602,31 @@ class VentasController extends AppController {
 
 		$starken_info = array(); 
 		# Starken
-		if ($venta['MetodoEnvio']['dependencia'] == 'starken') {
+		// if ($venta['MetodoEnvio']['dependencia'] == 'starken') {
 			
-			# Creamos cliente starken
-			$this->Starken->crearCliente($venta['Tienda']['starken_rut'], $venta['Tienda']['starken_clave'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
+		// 	# Creamos cliente starken
+		// 	$this->Starken->crearCliente($venta['Tienda']['starken_rut'], $venta['Tienda']['starken_clave'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
 			
-			$seguimientos = array();
+		// 	$seguimientos = array();
 
-			if (!empty($venta['Transporte'])) {
-				# creamos una lista con los n° de seguimiento
-				foreach ($venta['Transporte'] as $iv => $t) {
+		// 	if (!empty($venta['Transporte'])) {
+		// 		# creamos una lista con los n° de seguimiento
+		// 		foreach ($venta['Transporte'] as $iv => $t) {
 					
-					if (empty($t['TransportesVenta']['cod_seguimiento']))
-						continue;
+		// 			if (empty($t['TransportesVenta']['cod_seguimiento']))
+		// 				continue;
 
-					$seguimientos['listaSeguimientos'][]['numeroOrdenFlete'] = $t['TransportesVenta']['cod_seguimiento'];
+		// 			$seguimientos['listaSeguimientos'][]['numeroOrdenFlete'] = $t['TransportesVenta']['cod_seguimiento'];
 
-				}
+		// 		}
 
-				if (!empty($seguimientos)) {
-					# Consultamos por los envios
-					$res = $this->Starken->seguimiento($seguimientos);
-				}
-			}
+		// 		if (!empty($seguimientos)) {
+		// 			# Consultamos por los envios
+		// 			$res = $this->Starken->seguimiento($seguimientos);
+		// 		}
+		// 	}
 			
-		}
+		// }
 		
 		# Estados de envios
 		foreach ($venta['Transporte'] as $it => $t)
@@ -10023,6 +10023,7 @@ class VentasController extends AppController {
 			throw new CakeException($response);
 		}
 
+	
 		# Detalles de la venta
 		$venta = $this->Venta->find('first', array(
 			'conditions' => array(
@@ -10065,7 +10066,7 @@ class VentasController extends AppController {
 				'CanalVenta'
 			)
 		));
-
+		
 		# En ocaciones la BD registra duplicado los embalajes, por ende al procesar el primero de ellos, eliminaremos los duplicados
 		foreach ($venta['VentaDetalle'] as $detalle)
 		{
@@ -10175,19 +10176,20 @@ class VentasController extends AppController {
 		$etiqueta_externa = $venta['Venta']['etiqueta_envio_externa'];
 
 		# Obtenems la etiqueta externa si no está definida aun
-		if (empty($etiqueta_externa))
-		{
-			# Buscamos la última etiqueta generada en el transporte
-			foreach ($venta['Transporte'] as $it => $t) 
-			{
-				if ($t['TransportesVenta']['etiqueta'])
-				{
-					$etiqueta_externa = $t['TransportesVenta']['etiqueta'];
-					break;
+		if (empty($etiqueta_externa)) {
+
+			if ($this->request->query['embalaje_id'] ?? false) {
+				$etiqueta_externa = Hash::extract($venta['Transporte'], "{n}.TransportesVenta[embalaje_id={$this->request->query['embalaje_id']}]")[0]['etiqueta'] ?? null;
+			} else {
+				foreach ($venta['Transporte'] as $it => $t) {
+					if ($t['TransportesVenta']['etiqueta']) {
+						$etiqueta_externa = $t['TransportesVenta']['etiqueta'];
+						break;
+					}
 				}
 			}
 		}
-
+		
 		if ($venta['Venta']['canal_venta_id'])
 		{
 			$venta['Tienda']['nombre'] = $venta['CanalVenta']['nombre'] . ' - ' . $venta['Tienda']['nombre'];

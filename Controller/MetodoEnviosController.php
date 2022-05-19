@@ -382,6 +382,17 @@ class MetodoEnviosController extends AppController
 				$cuenta_corriente_transporte_id = null;
 				$informacion_bodega       		= [];
 
+				if ($embalaje['TransportesVenta']) {
+					$logs[] = array(
+						'Log' => array(
+							'administrador' => "Vid $id_venta | Embalaje {$embalaje['id']}",
+							'modulo'     	=> 'MetodoEnviosController',
+							'modulo_accion' => json_encode(["Ya posee OT creadas" => $embalaje['TransportesVenta']])
+						)
+					);
+					continue;
+				}
+
 				if ($venta['MetodoEnvio']['bodega_id'] ==  $embalaje['bodega_id']) {
 
 					$cuenta_corriente_transporte_id = $venta['MetodoEnvio']['cuenta_corriente_transporte_id'];
@@ -400,7 +411,7 @@ class MetodoEnviosController extends AppController
 						'Log' => array(
 							'administrador' => "Vid {$id_venta} | El metodo no tiene una cuenta corriente asignada",
 							'modulo'     	=> 'MetodoEnviosController',
-							'modulo_accion' => json_decode($venta['MetodoEnvio'])
+							'modulo_accion' => json_encode($venta['MetodoEnvio'])
 						)
 					);
 					continue;
@@ -414,7 +425,7 @@ class MetodoEnviosController extends AppController
 						'Log' => array(
 							'administrador' => "Vid {$id_venta} | Cuenta corriente no tiene asignado valores {$cuenta_corriente_transporte_id}",
 							'modulo'     	=> 'MetodoEnviosController',
-							'modulo_accion' =>  json_decode($venta['MetodoEnvio'])
+							'modulo_accion' =>  json_encode($venta['MetodoEnvio'])
 						)
 					);
 					continue;

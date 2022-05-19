@@ -33,7 +33,6 @@ Class EmbalajeWarehouse extends AppModel {
 			'fields'				=> '',
 			'order'					=> '',
 			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
         ),
         'Bodega' => array(
 			'className'				=> 'Bodega',
@@ -42,7 +41,6 @@ Class EmbalajeWarehouse extends AppModel {
 			'fields'				=> '',
 			'order'					=> '',
 			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
 		),
         'MetodoEnvio' => array(
 			'className'				=> 'MetodoEnvio',
@@ -51,7 +49,6 @@ Class EmbalajeWarehouse extends AppModel {
 			'fields'				=> '',
 			'order'					=> '',
 			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
 		),
         'Marketplace' => array(
 			'className'				=> 'Marketplace',
@@ -60,7 +57,6 @@ Class EmbalajeWarehouse extends AppModel {
 			'fields'				=> '',
 			'order'					=> '',
 			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
 		),
         'Comuna' => array(
 			'className'				=> 'Comuna',
@@ -69,7 +65,6 @@ Class EmbalajeWarehouse extends AppModel {
 			'fields'				=> '',
 			'order'					=> '',
 			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
 		),
 		'BodegaTrasladar' => array(
 			'className'				=> 'Bodega',
@@ -78,8 +73,8 @@ Class EmbalajeWarehouse extends AppModel {
 			'fields'				=> '',
 			'order'					=> '',
 			'counterCache'			=> true,
-			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
 		),
+		
 	);
 
 	public $hasMany = array(
@@ -104,7 +99,15 @@ Class EmbalajeWarehouse extends AppModel {
 			'fields'				=> '',
 			'order'					=> '',
 			'counterCache'			=> true,
-		)
+		),
+		'TransportesVenta' => array(
+			'className'				=> 'TransportesVenta',
+			'foreignKey'			=> 'embalaje_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		),
 	);
 
 

@@ -615,6 +615,7 @@ class Venta extends AppModel
 						)
 					),
 					'EmbalajeWarehouse' => array(
+						'TransportesVenta',
 						'HistorialEmbalaje',
 						'Bodega' => array(
 							'fields' => array(

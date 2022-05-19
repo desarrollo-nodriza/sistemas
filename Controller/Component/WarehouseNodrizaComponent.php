@@ -188,6 +188,8 @@ class WarehouseNodrizaComponent extends Component
 
                         // $trasladar_a_otra_bodega    = $bodega_principal != $bodega_id;
                         // $bodega_id_para_trasladar   = ($bodega_principal != $bodega_id ? $bodega_principal : null);
+                        $trasladar_a_otra_bodega    = false;
+                        $bodega_id_para_trasladar   = null;
                     }
 
                     $embalaje = [
