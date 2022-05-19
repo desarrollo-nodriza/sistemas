@@ -10062,11 +10062,11 @@ class VentasController extends AppController {
 				'VentaEstado' => array(
 					'VentaEstadoCategoria'
 				),
-				'EmbalajeWarehouse',
+				'EmbalajeWarehouse'=>[ 'conditions' => ['EmbalajeWarehouse.id'=> $this->request->query['embalaje_id']]],
 				'CanalVenta'
 			)
 		));
-		
+		// prx($venta );
 		# En ocaciones la BD registra duplicado los embalajes, por ende al procesar el primero de ellos, eliminaremos los duplicados
 		foreach ($venta['VentaDetalle'] as $detalle)
 		{
@@ -10076,18 +10076,18 @@ class VentasController extends AppController {
 			foreach ($detalle['EmbalajeProductoWarehouse'] as $embalaje_producto)
 			{	
 				$em = [
-					'id' => $embalaje_producto['id'],
-					'embalaje_id' => $embalaje_producto['embalaje_id'],
-					'producto_id' => $embalaje_producto['producto_id'],
-					'detalle_id' => $embalaje_producto['detalle_id'],
-					'cantidad_a_embalar' => $embalaje_producto['cantidad_a_embalar'],
-					'cantidad_embalada' => $embalaje_producto['cantidad_embalada'],
-					'fecha_creacion' => $embalaje_producto['fecha_creacion'],
-					'ultima_modifacion' => $embalaje_producto['ultima_modifacion'],
-					'cantidad_anulada' => $embalaje_producto['cantidad_anulada'],
-					'embalaje_bodega_id' => $embalaje_producto['EmbalajeWarehouse']['bodega_id'],
-					'embalaje_estado' => $embalaje_producto['EmbalajeWarehouse']['estado'],
-					'embalaje_fecha' => $embalaje_producto['EmbalajeWarehouse']['fecha_creacion']
+					'id' 					=> $embalaje_producto['id'],
+					'embalaje_id' 			=> $embalaje_producto['embalaje_id'],
+					'producto_id' 			=> $embalaje_producto['producto_id'],
+					'detalle_id' 			=> $embalaje_producto['detalle_id'],
+					'cantidad_a_embalar' 	=> $embalaje_producto['cantidad_a_embalar'],
+					'cantidad_embalada' 	=> $embalaje_producto['cantidad_embalada'],
+					'fecha_creacion' 		=> $embalaje_producto['fecha_creacion'],
+					'ultima_modifacion' 	=> $embalaje_producto['ultima_modifacion'],
+					'cantidad_anulada' 		=> $embalaje_producto['cantidad_anulada'],
+					'embalaje_bodega_id' 	=> $embalaje_producto['EmbalajeWarehouse']['bodega_id'],
+					'embalaje_estado' 		=> $embalaje_producto['EmbalajeWarehouse']['estado'],
+					'embalaje_fecha' 		=> $embalaje_producto['EmbalajeWarehouse']['fecha_creacion']
 				];
 
 				# Buscamos las diferencias entre los embalajes
@@ -10146,12 +10146,17 @@ class VentasController extends AppController {
 		# Creamos las etiquetas internas necesarias
 		foreach ($venta['EmbalajeWarehouse'] as $iem => $e) 
 		{
-			if ($e['estado'] == 'procesando')
-			{
-				$etiquetas_embalajes[] = $embalajesController->obtener_etiqueta_envio_interna_url($e['id'], $venta);
+		
+			if ( $e['id'] == $this->request->query['embalaje_id'] ) {
+				if ($e['estado'] == 'procesando')
+				{
+					$etiquetas_embalajes[] = $embalajesController->obtener_etiqueta_envio_interna_url($e['id'], $venta);
+					break;
+				}
 			}
+			
 		}
-
+		
 		# Cambiamos valor de la nota interna y le ponemos la referencia del despacho
 		$venta['Venta']['nota_interna'] = $venta['Venta']['referencia_despacho'];
 
@@ -10207,50 +10212,50 @@ class VentasController extends AppController {
 					'fono'     => $venta['VentaCliente']['telefono'],
 				),
 				'venta' => array(
-					'id'          => $venta['Venta']['id'],
-					'id_externo'  => $venta['Venta']['id_externo'],
-					'referencia'  => $venta['Venta']['referencia'],
-					'fecha_venta' => $venta['Venta']['fecha_venta'],
-					'estado'      => $venta['VentaEstado']['VentaEstadoCategoria']['nombre'],
-					'subestado'   => $venta['VentaEstado']['nombre'],
-					'canal_venta' => (!empty($venta['Marketplace']['id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'],
-					'nota_interna' => $venta['Venta']['nota_interna']
+					'id'          	=> $venta['Venta']['id'],
+					'id_externo'  	=> $venta['Venta']['id_externo'],
+					'referencia'  	=> $venta['Venta']['referencia'],
+					'fecha_venta' 	=> $venta['Venta']['fecha_venta'],
+					'estado'      	=> $venta['VentaEstado']['VentaEstadoCategoria']['nombre'],
+					'subestado'   	=> $venta['VentaEstado']['nombre'],
+					'canal_venta' 	=> (!empty($venta['Marketplace']['id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'],
+					'nota_interna' 	=> $venta['Venta']['nota_interna']
 				),
 				'etiquetas' => array(
-					'todos' => $documentos['result'],
-					'interna' => (empty($etiqueta_interna2)) ? $etiqueta_interna['public'] : $etiqueta_interna2,
-					'externa' => $etiqueta_externa,
-					'dtes' => $dtes 
+					'todos' 	=> $documentos['result'],
+					'interna' 	=> (empty($etiqueta_interna2)) ? $etiqueta_interna['public'] : $etiqueta_interna2,
+					'externa' 	=> $etiqueta_externa,
+					'dtes' 		=> $dtes 
 				),
 				'entrega' => array(
-					'metodo' => $venta['MetodoEnvio']['nombre'],
-					'fecha_entrega_estimada' => 'No definido',
-					'calle' => $venta['Venta']['direccion_entrega'],
-					'numero' => $venta['Venta']['numero_entrega'],
-					'otro' => $venta['Venta']['otro_entrega'],
-					'comuna' => $venta['Comuna']['nombre'],
-					'receptor' => $venta['Venta']['nombre_receptor'],
-					'rut' => $venta['Venta']['rut_receptor'],
-					'fono_receptor' => $venta['Venta']['fono_receptor']
+					'metodo' 					=> $venta['MetodoEnvio']['nombre'],
+					'fecha_entrega_estimada' 	=> 'No definido',
+					'calle' 					=> $venta['Venta']['direccion_entrega'],
+					'numero' 					=> $venta['Venta']['numero_entrega'],
+					'otro' 						=> $venta['Venta']['otro_entrega'],
+					'comuna' 					=> $venta['Comuna']['nombre'],
+					'receptor' 					=> $venta['Venta']['nombre_receptor'],
+					'rut' 						=> $venta['Venta']['rut_receptor'],
+					'fono_receptor' 			=> $venta['Venta']['fono_receptor']
 				),
-				'mensajes' => array(),
-				'transportes' => array(),
-				'itemes' => array(),
-				'embalajes' => $venta['EmbalajeWarehouse']
+				'mensajes' 		=> array(),
+				'transportes' 	=> array(),
+				'itemes' 		=> array(),
+				'embalajes' 	=> $venta['EmbalajeWarehouse']
 			)
 		);
 		
-		$mensajes = array();
-		$auxFechas = array();
+		$mensajes 	= array();
+		$auxFechas 	= array();
 
 		# Mensajes venta
 		foreach($venta['VentaMensaje'] as $mensaje)
 		{
 			$mensajes[] = array(
-				'emisor' => $mensaje['emisor'],
-				'fecha' => $mensaje['fecha'],
-				'asunto' => $mensaje['nombre'],
-				'mensaje' => $mensaje['mensaje']
+				'emisor' 	=> $mensaje['emisor'],
+				'fecha' 	=> $mensaje['fecha'],
+				'asunto' 	=> $mensaje['nombre'],
+				'mensaje' 	=> $mensaje['mensaje']
 			);
 		}
 
@@ -10258,10 +10263,10 @@ class VentasController extends AppController {
 		foreach ($venta['Mensaje'] as $mensaje2) 
 		{
 			$mensajes[] = array(
-				'emisor' => $venta['VentaCliente']['rut'],
-				'fecha' => $mensaje2['created'],
-				'asunto' => ($mensaje2['origen'] == 'cliente') ? 'Mensaje de cliente' : 'Mensaje interno',
-				'mensaje' => $mensaje2['mensaje']
+				'emisor' 	=> $venta['VentaCliente']['rut'],
+				'fecha' 	=> $mensaje2['created'],
+				'asunto' 	=> ($mensaje2['origen'] == 'cliente') ? 'Mensaje de cliente' : 'Mensaje interno',
+				'mensaje' 	=> $mensaje2['mensaje']
 			);
 		}
 
@@ -10282,15 +10287,19 @@ class VentasController extends AppController {
 		# Agregamos los transportes
 		foreach ($venta['Transporte'] as $transporte)
 		{
+			if ($transporte['TransportesVenta']['embalaje_id'] != $this->request->query['embalaje_id']) {
+				continue;
+			}
+
 			$respuesta['body']['transportes'][] =  array(
-				'transporte_id' => $transporte['id'],
-				'nombre' => $transporte['nombre'],
-				'codigo' => $transporte['codigo'],
-				'url_seguimiento_externa' => $transporte['url_seguimiento'],
-				'cod_seguimiento' => $transporte['TransportesVenta']['cod_seguimiento'],
-				'fecha_entrega_aprox' => $transporte['TransportesVenta']['entrega_aprox'],
-				'etiqueta' => $transporte['TransportesVenta']['etiqueta'],
-				'activo' => $transporte['activo'] 
+				'transporte_id' 			=> $transporte['id'],
+				'nombre' 					=> $transporte['nombre'],
+				'codigo' 					=> $transporte['codigo'],
+				'url_seguimiento_externa'	=> $transporte['url_seguimiento'],
+				'cod_seguimiento' 			=> $transporte['TransportesVenta']['cod_seguimiento'],
+				'fecha_entrega_aprox' 		=> $transporte['TransportesVenta']['entrega_aprox'],
+				'etiqueta' 					=> $transporte['TransportesVenta']['etiqueta'],
+				'activo' 					=> $transporte['activo'] 
 			);
 		}
 
@@ -10313,6 +10322,10 @@ class VentasController extends AppController {
 
 			foreach ($item['EmbalajeProductoWarehouse'] as $iemp => $emp) 
 			{	
+				if ($emp['embalaje_id'] != $this->request->query['embalaje_id']) {
+					continue;
+				}
+
 				if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado')
 					continue;
 
@@ -10323,22 +10336,22 @@ class VentasController extends AppController {
 				}
 
 				$respuesta['body']['itemes'][] = array(
-					'id' => $item['id'],
-					'producto_id' => $item['venta_detalle_producto_id'],
-					'nombre' => $item['VentaDetalleProducto']['nombre'],
-					'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
-					'cantidad_pendiente_entrega' => (int) $item['cantidad_pendiente_entrega'],
-					'cantidad_reservada' => (int) $item['cantidad_reservada'],
-					'cantidad_a_emabalar' => $emp['cantidad_a_embalar'] - $emp['cantidad_embalada'],
-					'imagen' => Hash::extract($imagen, '{n}[principal=1].url')[0],
-					'peso' => $pbodega['ProductoWarehouse']['peso'],
-					'ancho' => $pbodega['ProductoWarehouse']['ancho'],
-					'largo' => $pbodega['ProductoWarehouse']['largo'],
-					'alto' => $pbodega['ProductoWarehouse']['alto']
+					'id' 							=> $item['id'],
+					'producto_id' 					=> $item['venta_detalle_producto_id'],
+					'nombre' 						=> $item['VentaDetalleProducto']['nombre'],
+					'sku' 							=> $item['VentaDetalleProducto']['codigo_proveedor'],
+					'cantidad_pendiente_entrega'	=> (int) $item['cantidad_pendiente_entrega'],
+					'cantidad_reservada' 			=> (int) $item['cantidad_reservada'],
+					'cantidad_a_emabalar' 			=> $emp['cantidad_a_embalar'] - $emp['cantidad_embalada'],
+					'imagen' 						=> Hash::extract($imagen, '{n}[principal=1].url')[0],
+					'peso' 							=> $pbodega['ProductoWarehouse']['peso'],
+					'ancho' 						=> $pbodega['ProductoWarehouse']['ancho'],
+					'largo' 						=> $pbodega['ProductoWarehouse']['largo'],
+					'alto' 							=> $pbodega['ProductoWarehouse']['alto']
 				);
 
-				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['peso'] = $pbodega['ProductoWarehouse']['peso'];
-				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['alto'] = $pbodega['ProductoWarehouse']['alto'];
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['peso'] 	= $pbodega['ProductoWarehouse']['peso'];
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['alto'] 	= $pbodega['ProductoWarehouse']['alto'];
 				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['ancho'] = $pbodega['ProductoWarehouse']['ancho'];
 				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['largo'] = $pbodega['ProductoWarehouse']['largo'];
 			}
