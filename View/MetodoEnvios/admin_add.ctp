@@ -24,10 +24,10 @@
 								<th><?= $this->Form->label('retiro_local', 'Retiro en local'); ?></th>
 								<td><?= $this->Form->input('retiro_local', array('class' => 'icheckbox')); ?></td>
 							</tr>
-							<tr>
+							<!-- <tr>
 								<th><?= $this->Form->label('dependencia', 'Dependencia o Plugin'); ?></th>
 								<td><?= $this->Form->select('dependencia', $dependencias, array('class' => 'form-control js-select-dependencia', 'empty' => 'Sin dependencia')); ?></td>
-							</tr>
+							</tr> -->
 							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox', 'default' => true)); ?></td>
@@ -52,7 +52,7 @@
 								<th><?= $this->Form->label('consolidacion_venta_estado_id', 'Estado de la venta en consolidación'); ?></th>
 								<td><?= $this->Form->select('consolidacion_venta_estado_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto', 'required')); ?></td>
 							</tr>
-							<tr id="generar_ot" class="">
+							<tr>
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
 								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
 							</tr>
