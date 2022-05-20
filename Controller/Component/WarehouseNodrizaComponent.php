@@ -96,7 +96,12 @@ class WarehouseNodrizaComponent extends Component
                         ]
                     ]
                 ),
-                'MetodoEnvio' => ['fields' => ['MetodoEnvio.retiro_local']],
+                'MetodoEnvio' => [
+                    'fields' => [
+                        'MetodoEnvio.retiro_local',
+                        'MetodoEnvio.generar_ot',
+                    ]
+                ],
                 'Bodega'  => ['fields' => ['Bodega.nombre', 'Bodega.comuna_id']],
             ),
             'fields' => array(
@@ -186,10 +191,14 @@ class WarehouseNodrizaComponent extends Component
                     } else {
                         // * Si la bodega del embalaje es creada en otra bodega que no sea la principal y la venta posee metodo de envio con "despacho a domicilio", debe ser trasladado a la bodega principal
 
-                        // $trasladar_a_otra_bodega    = $bodega_principal != $bodega_id;
-                        // $bodega_id_para_trasladar   = ($bodega_principal != $bodega_id ? $bodega_principal : null);
-                        $trasladar_a_otra_bodega    = false;
-                        $bodega_id_para_trasladar   = null;
+                        if ($venta['MetodoEnvio']['generar_ot']) {
+
+                            $trasladar_a_otra_bodega    = false;
+                            $bodega_id_para_trasladar   = null;
+                        } else {
+                            $trasladar_a_otra_bodega    = $bodega_principal != $bodega_id;
+                            $bodega_id_para_trasladar   = ($bodega_principal != $bodega_id ? $bodega_principal : null);
+                        }
                     }
 
                     $embalaje = [
@@ -242,7 +251,6 @@ class WarehouseNodrizaComponent extends Component
                                 )
                             );
                             $embalajes_respuesta[]    = $response['response']['body'];
-                           
                         } else {
 
                             $logs[] = array(
@@ -304,27 +312,26 @@ class WarehouseNodrizaComponent extends Component
             $nombre_bodega = "";
 
             foreach ($embalajes_respuesta as $embalaje) {
-                
+
                 if ($embalaje['trasladar_a_otra_bodega']) {
 
                     ClassRegistry::init('Bodega')->id   = $embalaje['bodega_id_para_trasladar'];
                     $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
                     $this->crearNotas($venta, "Trasladar", "El embalaje {$embalaje['id']} requiere ser trasladado a la bodega {$nombre_bodega}.", $embalaje['id']);
-                    
                 }
-                
+
                 // * Cuando se crean más de un embalaje en distintas bodegas, al embalaje creado en la bodega de la venta se le indica que debe esperar al que esta en la otra.
-                // if (!$embalaje['trasladar_a_otra_bodega'] && count($embalajes_respuesta) > 1) {
-                //     ClassRegistry::init('Bodega')->id   = $embalaje['bodega_id'];
-                //     $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
-                //     $this->crearNotas($venta, "Esperar traslado de otros embalajes.", "Este embalaje no debe ser enviado o entregado hasta que el embalaje {$embalaje_en_otra_bodega} haya sido recibido en la bodega {$nombre_bodega}.", $embalaje['id']);
-                // }
+                if (!$embalaje['trasladar_a_otra_bodega'] && count($embalajes_respuesta) > 1 && (!$venta['MetodoEnvio']['generar_ot'] || $venta['MetodoEnvio']['retiro_local'])) {
+                    ClassRegistry::init('Bodega')->id   = $embalaje['bodega_id'];
+                    $nombre_bodega                      = ClassRegistry::init('Bodega')->field('nombre');
+                    $this->crearNotas($venta, "Esperar traslado de otros embalajes.", "Este embalaje no debe ser enviado o entregado hasta que el embalaje {$embalaje_en_otra_bodega} haya sido recibido en la bodega {$nombre_bodega}.", $embalaje['id']);
+                }
             }
 
-            // if (count($embalajes_respuesta) > 1) {
+            if (count($embalajes_respuesta) > 1 && (!$venta['MetodoEnvio']['generar_ot'] || $venta['MetodoEnvio']['retiro_local'])) {
 
-            //     $this->crearNotas($venta, "Reunir embalajes.", "Los siguientes embalajes {$embalaje_en_bodega_venta}, {$embalaje_en_otra_bodega} deben ser reunidos en la bodega {$nombre_bodega} antes de ser entregados o enviados.", null);
-            // }
+                $this->crearNotas($venta, "Reunir embalajes.", "Los siguientes embalajes {$embalaje_en_bodega_venta}, {$embalaje_en_otra_bodega} deben ser reunidos en la bodega {$nombre_bodega} antes de ser entregados o enviados.", null);
+            }
         }
         ClassRegistry::init('Log')->saveMany($logs);
 

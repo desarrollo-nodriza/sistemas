@@ -610,28 +610,30 @@ class EmbalajeWarehousesController extends AppController
 			$msjTexto .= $valor['mensaje'];
 		}
 
-		if(!is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'])){
+		if($embalaje['EmbalajeWarehouse']['trasladar_a_otra_bodega']){
 			ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'];
 			$msjTexto .= strtoupper(" Embalaje debe ser trasladado a la bodega ".ClassRegistry::init('Bodega')->field('nombre'));
 		}
-		$embalajesExceptoCancelados 		= $this->WarehouseNodriza->ObtenerEmbalajesVenta($embalaje['EmbalajeWarehouse']['venta_id']);		
 
+		$embalajesExceptoCancelados 		= $this->WarehouseNodriza->ObtenerEmbalajesVenta($embalaje['EmbalajeWarehouse']['venta_id']);		
 		$ExistenTraslados 					= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[trasladar_a_otra_bodega=1]");
 		
 		if ($ExistenTraslados) {
+			
 			$ExisteEmbalajes_procesando 		= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=procesando].id");
 			$ExisteEmbalajes_listo_para_embalar	= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=listo_para_embalar].id");
 		
 			$total_de_embalajes 				= ( count($ExisteEmbalajes_procesando) +  count($ExisteEmbalajes_listo_para_embalar));
 			$resultado 							= array_merge($ExisteEmbalajes_procesando, $ExisteEmbalajes_listo_para_embalar);
+
 			if( $total_de_embalajes > 1 ){
 
-				if(is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'])){
-					
-					$embalajes_a_Esperar = str_replace($id,"", implode(",", $resultado));
-					ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id'];
-					if ($total_de_embalajes > 2) {
+				if(!$embalaje['EmbalajeWarehouse']['trasladar_a_otra_bodega']){
 
+					$embalajes_a_Esperar 				= str_replace($id,"", implode(",", $resultado));
+					ClassRegistry::init('Bodega')->id 	= $embalaje['EmbalajeWarehouse']['bodega_id'];
+
+					if ($total_de_embalajes > 2) {
 						$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que los embalajes {$embalajes_a_Esperar} sean reunidos en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
 					}else{
 						$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que el embalaje {$embalajes_a_Esperar} sea reunido en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));

@@ -24,8 +24,12 @@
 								<td><?= $this->Form->input('tiempo_entrega_estimado'); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('bodega_id', 'Bodega para despachar'); ?></th>
+								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control', 'required')); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('retiro_local', 'Retiro en local'); ?></th>
-								<td><?= $this->Form->input('retiro_local', array('class' => 'icheckbox js-check-retiro-local')); ?></td>
+								<td><?= $this->Form->input('retiro_local', array('class' => ' js-check-retiro-local')); ?></td>
 							</tr>
 							<!-- <tr>
 								<th><?= $this->Form->label('dependencia', 'Dependencia o Plugin'); ?></th>
@@ -33,12 +37,12 @@
 							</tr> -->
 							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
-								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
+								<td><?= $this->Form->input('activo', array('class' => '')); ?></td>
 							</tr>
 
 							<tr>
 								<th><?= $this->Form->label('permitir_reservar_stock_otra_bodega', 'Permitir reservas en otras bodegas'); ?></th>
-								<td><?= $this->Form->input('permitir_reservar_stock_otra_bodega', array('class' => 'icheckbox')); ?></td>
+								<td><?= $this->Form->input('permitir_reservar_stock_otra_bodega', array('class' => '')); ?></td>
 							<tr>
 								<th><?= $this->Form->label('embalado_venta_estado_id', 'Estado de la venta por defecto'); ?></th>
 								<td><?= $this->Form->select('embalado_venta_estado_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto', 'required')); ?></td>
@@ -47,21 +51,18 @@
 								<th><?= $this->Form->label('embalado_venta_estado_parcial_id', 'Estado de la venta parcial por defecto'); ?></th>
 								<td><?= $this->Form->select('embalado_venta_estado_parcial_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto', 'required')); ?></td>
 							</tr>
-							<tr>
-								<th><?= $this->Form->label('cuenta_corriente_transporte_id', 'Cuenta corriente'); ?></th>
-								<td><?= $this->Form->select('cuenta_corriente_transporte_id', $cuentaCorrienteTransporte, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Seleccione Cuenta corriente', 'required')); ?></td>
-							</tr>
+
 							<tr>
 								<th><?= $this->Form->label('consolidacion_venta_estado_id', 'Estado de la venta en consolidación'); ?></th>
 								<td><?= $this->Form->select('consolidacion_venta_estado_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto', 'required')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
-								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
+								<td><?= $this->Form->input('generar_ot', array('class' => '')); ?></td>
 							</tr>
-							<tr>
-								<th><?= $this->Form->label('bodega_id', 'Bodega para despachar'); ?></th>
-								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control', 'required')); ?></td>
+							<tr class="cuenta_corriente_transporte_id hidden">
+								<th><?= $this->Form->label('cuenta_corriente_transporte_id', 'Cuenta corriente'); ?></th>
+								<td><?= $this->Form->select('cuenta_corriente_transporte_id', $cuentaCorrienteTransporte, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Seleccione Cuenta corriente', 'required')); ?></td>
 							</tr>
 
 							<tr>

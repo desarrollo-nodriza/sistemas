@@ -343,8 +343,10 @@ class MetodoEnviosController extends AppController
 				'modulo_accion' => json_encode($venta)
 			)
 		);
-
-		$embalajes = Hash::extract($venta['EmbalajeWarehouse'], "{n}[estado=procesando]");
+		
+		$procesando = Hash::extract($venta['EmbalajeWarehouse'], "{n}[estado=procesando]");
+		$finalizado = Hash::extract($venta['EmbalajeWarehouse'], "{n}[estado=finalizado]");
+		$embalajes	= array_merge($procesando, $finalizado);
 		
 		if (!$embalajes) {
 
