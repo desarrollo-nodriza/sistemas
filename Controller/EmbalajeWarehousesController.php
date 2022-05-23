@@ -647,42 +647,42 @@ class EmbalajeWarehousesController extends AppController
 		$archivos 							= array();
 		foreach ($paquetes as $paquete) 
 		{
-			$etiquetaArr = array(
-				'venta' => array(
-					'id' => $venta['Venta']['id'],
-					'metodo_envio' => $venta['MetodoEnvio']['nombre'],
-					'canal' => $canal_venta,
-					'externo' => $venta['Venta']['id_externo'],
+			$etiquetaArr 			= array(
+				'venta' 			=> array(
+					'id' 			=> $venta['Venta']['id'],
+					'metodo_envio' 	=> $venta['MetodoEnvio']['nombre'],
+					'canal' 		=> $canal_venta,
+					'externo' 		=> $venta['Venta']['id_externo'],
 					'medio_de_pago' => $venta['MedioPago']['nombre'],
-					'fecha_venta' => $venta['Venta']['fecha_venta']
+					'fecha_venta' 	=> $venta['Venta']['fecha_venta']
 				),
-				'embalaje' => array(
-					'id' => $paquete['paquete']['embalaje_id']
+				'embalaje' 			=> array(
+					'id' 			=> $paquete['paquete']['embalaje_id']
 				),
-				'transportista' => array(
-					'nombre' => ($venta['Transporte']) ? $venta['Transporte'][0]['nombre'] : '',
+				'transportista' 	=> array(
+					'nombre' 		=> ($venta['Transporte']) ? $venta['Transporte'][0]['nombre'] : '',
 				),
-				'destinatario' => array(
-					'nombre' => $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'],
-					'rut' => formato_rut($venta['VentaCliente']['rut']),
-					'fono' => $venta['VentaCliente']['telefono'],
-					'email' => $venta['VentaCliente']['email'],
-					'direccion' => $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega']  . ', ' . $venta['Venta']['otro_entrega'],
-					'comuna' => $venta['Comuna']['nombre']
+				'destinatario' 		=> array(
+					'nombre' 		=> $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'],
+					'rut' 			=> formato_rut($venta['VentaCliente']['rut']),
+					'fono' 			=> $venta['VentaCliente']['telefono'],
+					'email' 		=> $venta['VentaCliente']['email'],
+					'direccion' 	=> $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega']  . ', ' . $venta['Venta']['otro_entrega'],
+					'comuna' 		=> $venta['Comuna']['nombre']
 				),
-				'bulto' => array(
-					'referencia' => $paquete['paquete']['embalaje_id'],
-					'peso' => $paquete['paquete']['weight'],
-					'ancho' => (int) $paquete['paquete']['width'],
-					'alto' => (int) $paquete['paquete']['height'],
-					'largo' => (int) $paquete['paquete']['length'],
-					'n_items' => count($paquete['items'])
+				'bulto' 			=> array(
+					'referencia' 	=> $paquete['paquete']['embalaje_id'],
+					'peso' 			=> $paquete['paquete']['weight'],
+					'ancho' 		=> (int) $paquete['paquete']['width'],
+					'alto' 			=> (int) $paquete['paquete']['height'],
+					'largo' 		=> (int) $paquete['paquete']['length'],
+					'n_items' 		=> count($paquete['items'])
 				),
-				'mensajes' => array(
-					'texto' => $msjTexto
+				'mensajes' 			=> array(
+					'texto' 		=> $msjTexto
 				),
-				'pdf' => array(
-					'dir' => 'EmbalajeWarehouse/' . $paquete['paquete']['embalaje_id']
+				'pdf' 				=> array(
+					'dir' 			=> 'EmbalajeWarehouse/' . $paquete['paquete']['embalaje_id']
 				)
 			);
 

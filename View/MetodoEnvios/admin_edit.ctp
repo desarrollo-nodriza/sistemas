@@ -142,7 +142,7 @@
 														<?= $this->Form->checkbox(sprintf('%d.prioritaria', $indice), array('label' => '', 'default' =>  $bodega['prioritaria'])); ?>
 													</td>
 													<td align="center" style="vertical-align: middle;">
-														<?= $this->Form->select(sprintf('%d.cuenta_corriente_transporte_id', $indice), $cuentaCorrienteTransporte, array('empty' => 'Seleccione Cuenta corriente', 'class' => 'form-control', 'required', 'default' => $bodega['cuenta_corriente_transporte_id'])); ?>
+														<?= $this->Form->select(sprintf('%d.cuenta_corriente_transporte_id', $indice), $cuentaCorrienteTransporte, array('empty' => 'Seleccione Cuenta corriente', 'class' => 'form-control',  'default' => $bodega['cuenta_corriente_transporte_id'])); ?>
 													</td>
 													<td class="hidden" align="center" style="vertical-align: middle; width: 100px;">
 														<?= $this->Form->input(sprintf('%d.orden', $indice), array('type' => 'text', 'label' => '',  'default' =>  $bodega['orden'] ?? 1, 'class' => 'form-control orden')); ?>
@@ -165,7 +165,7 @@
 															<?= $this->Form->checkbox(sprintf('%d.prioritaria', $i), array('label' => '', 'default' => 0)); ?>
 														</td>
 														<td align="center" style="vertical-align: middle;">
-															<?= $this->Form->select(sprintf('%d.cuenta_corriente_transporte_id', $i), $cuentaCorrienteTransporte, array('empty' => 'Seleccione Cuenta corriente', 'class' => 'form-control', 'required')); ?>
+															<?= $this->Form->select(sprintf('%d.cuenta_corriente_transporte_id', $i), $cuentaCorrienteTransporte, array('empty' => 'Seleccione Cuenta corriente', 'class' => 'form-control')); ?>
 														</td>
 														<td class="hidden" align="center" style="vertical-align: middle">
 															<?= $this->Form->input(sprintf('%d.orden', $i), array('type' => 'text', 'label' => '', 'default' => $i, 'class' => 'form-control orden')); ?>
