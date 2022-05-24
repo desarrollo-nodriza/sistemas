@@ -22,6 +22,7 @@ class StarkenComponent extends Component
 	);
 
 	private $tipoServicio = array(
+		0 => 'NORMAL',
 		1 => 'EXPRESS'
 	);
 
