@@ -37,5 +37,11 @@ class TransportesVenta extends AppModel
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Tienda')
 		),
+		'EmbalajeWarehouse' => array(
+			'className'				=> 'EmbalajeWarehouse',
+			'foreignKey'			=> 'embalaje_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+		),
 	);
 }

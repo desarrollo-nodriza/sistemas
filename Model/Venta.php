@@ -528,7 +528,16 @@ class Venta extends AppModel
 								'Bodega.principal'
 							],
 						],
-						'BodegasMetodoEnvio'
+						'BodegasMetodoEnvio' =>['Bodega' => [
+							'Comuna',
+							'fields' => [
+								'Bodega.nombre',
+								'Bodega.nombre_contacto',
+								'Bodega.fono',
+								'Bodega.direccion',
+								'Bodega.comuna_id'
+							],
+						],]
 					),
 					'Mensaje' => array(
 						'conditions' => array(
@@ -608,6 +617,7 @@ class Venta extends AppModel
 						)
 					),
 					'EmbalajeWarehouse' => array(
+						'TransportesVenta',
 						'HistorialEmbalaje',
 						'Bodega' => array(
 							'fields' => array(

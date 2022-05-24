@@ -21,65 +21,70 @@
 								<td><?= $this->Form->input('tiempo_entrega_estimado'); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('retiro_local', 'Retiro en local'); ?></th>
-								<td><?= $this->Form->input('retiro_local', array('class' => 'icheckbox')); ?></td>
+								<th><?= $this->Form->label('bodega_id', 'Bodega para despachar'); ?></th>
+								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control', 'required')); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('retiro_local', 'Retiro en local'); ?></th>
+								<td><?= $this->Form->input('retiro_local', array('class' => '')); ?></td>
+							</tr>
+							<!-- <tr>
 								<th><?= $this->Form->label('dependencia', 'Dependencia o Plugin'); ?></th>
 								<td><?= $this->Form->select('dependencia', $dependencias, array('class' => 'form-control js-select-dependencia', 'empty' => 'Sin dependencia')); ?></td>
-							</tr>
+							</tr> -->
 							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
-								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
+								<td><?= $this->Form->input('activo', array('class' => '', 'default' => true)); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('permitir_reservar_stock_otra_bodega', 'Permitir reservas en otras bodegas'); ?></th>
-								<td><?= $this->Form->input('permitir_reservar_stock_otra_bodega', array('class' => 'icheckbox')); ?></td>
+								<td><?= $this->Form->input('permitir_reservar_stock_otra_bodega', array('class' => '')); ?></td>
 							<tr>
 							<tr>
 								<th><?= $this->Form->label('embalado_venta_estado_id', 'Estado de la venta por defecto'); ?></th>
-								<td><?= $this->Form->select('embalado_venta_estado_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto')); ?></td>
+								<td><?= $this->Form->select('embalado_venta_estado_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('embalado_venta_estado_parcial_id', 'Estado de la venta parcial por defecto'); ?></th>
-								<td><?= $this->Form->select('embalado_venta_estado_parcial_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto')); ?></td>
+								<td><?= $this->Form->select('embalado_venta_estado_parcial_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto')); ?></td>
 							</tr>
+
 							<tr>
 								<th><?= $this->Form->label('consolidacion_venta_estado_id', 'Estado de la venta en consolidación'); ?></th>
-								<td><?= $this->Form->select('consolidacion_venta_estado_id', $estados ,array('class' => 'form-control mi-selector','style'=>"width:100%;", 'empty' => 'Sin Estado por defecto' , 'required')); ?></td>
-							</tr>
-							<tr id="generar_ot" class="hidden">
-								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
-								<td><?= $this->Form->input('generar_ot', array('class' => 'icheckbox')); ?></td>
+								<td><?= $this->Form->select('consolidacion_venta_estado_id', $estados, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Sin Estado por defecto', 'required')); ?></td>
 							</tr>
 							<tr>
-								<th><?= $this->Form->label('bodega_id', 'Bodega para despachar'); ?></th>
-								<td><?= $this->Form->select('bodega_id', $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control','required')); ?></td>
+								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
+								<td><?= $this->Form->input('generar_ot', array('class' => ' generar_ot')); ?></td>
 							</tr>
-							<tr id="peso_maximo" class="hidden">
+							<tr class="cuenta_corriente_transporte_id hidden">
+								<th><?= $this->Form->label('cuenta_corriente_transporte_id', 'Cuenta corriente'); ?></th>
+								<td><?= $this->Form->select('cuenta_corriente_transporte_id', $cuentaCorrienteTransporte, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Seleccione Cuenta corriente')); ?></td>
+							</tr>
+
+							<tr>
 								<th><?= $this->Form->label('peso_maximo', 'Peso Máximo'); ?></th>
-								<td><?= $this->Form->input('peso_maximo'); ?></td>
+								<td><?= $this->Form->input('peso_maximo', array('class' => 'form-control', 'required')); ?></td>
 							</tr>
-							<tr id="peso_default" class="hidden">
+							<tr>
 								<th><?= $this->Form->label('peso_default', 'Peso por defecto'); ?></th>
-								<td><?= $this->Form->input('peso_default'); ?></td>
+								<td><?= $this->Form->input('peso_default', array('class' => 'form-control', 'required')); ?></td>
 							</tr>
-							<tr id="alto_default" class="hidden">
+							<tr>
 								<th><?= $this->Form->label('alto_default', 'Alto por defecto'); ?></th>
-								<td><?= $this->Form->input('alto_default'); ?></td>
+								<td><?= $this->Form->input('alto_default', array('class' => 'form-control', 'required')); ?></td>
 							</tr>
-							<tr id="ancho_default" class="hidden">
+							<tr>
 								<th><?= $this->Form->label('ancho_default', 'Ancho por defecto'); ?></th>
-								<td><?= $this->Form->input('ancho_default'); ?></td>
+								<td><?= $this->Form->input('ancho_default', array('class' => 'form-control', 'required')); ?></td>
 							</tr>
-							<tr id="largo_default" class="hidden">
+							<tr>
 								<th><?= $this->Form->label('largo_default', 'Largo por defecto'); ?></th>
-								<td><?= $this->Form->input('largo_default'); ?></td>
+								<td><?= $this->Form->input('largo_default', array('class' => 'form-control', 'required')); ?></td>
 							</tr>
-							
-							<tr id="volumen_maximo" class="hidden">
+							<tr>
 								<th><?= $this->Form->label('volumen_maximo', 'Volumen Máximo'); ?></th>
-								<td><?= $this->Form->input('volumen_maximo'); ?></td>
+								<td><?= $this->Form->input('volumen_maximo', array('class' => 'form-control', 'required')); ?></td>
 							</tr>
 						</table>
 					</div>
@@ -97,13 +102,14 @@
 <?= $this->Form->end(); ?>
 
 <?= $this->Html->script(array(
-	'/backend/js/metodo_envios_add.js?v=' . rand())); ?>
+	'/backend/js/metodo_envios_add.js?v=' . rand()
+)); ?>
 <?= $this->fetch('script'); ?>
 
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script type="text/javascript">
-	jQuery(document).ready(function($){
+	jQuery(document).ready(function($) {
 		$(document).ready(function() {
 			$('.mi-selector').select2();
 		});

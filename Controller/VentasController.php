@@ -1079,83 +1079,20 @@ class VentasController extends AppController {
 			$this->Session->setFlash('El registro no es válido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
+		$metodoEnviosController = new MetodoEnviosController();
 
-		$venta = $this->Venta->obtener_venta_por_id($id);
-
-		$metodo_envio_enviame = explode(',', $venta['Tienda']['meta_ids_enviame']);
-
-		# Creamos pedido en enviame si corresponde
-		if (in_array($venta['Venta']['metodo_envio_id'], $metodo_envio_enviame) && $venta['Tienda']['activo_enviame']) {
-
-			$Enviame = $this->Components->load('Enviame');
-
-			# conectamos con enviame
-			$Enviame->conectar($venta['Tienda']['apikey_enviame'], $venta['Tienda']['company_enviame'], $venta['Tienda']['apihost_enviame']);
-
-			$resultadoEnviame = $Enviame->crearEnvio($venta);
-
-			if ($resultadoEnviame) {
-				$this->Session->setFlash('Envío creado con éxito en Starken.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('No fue posible crear el envío Starken.', null, array(), 'danger');
-			}
-		} elseif ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
-			# Es una venta para starken
-
-			# Creamos cliente starken
-			$this->Starken->crearCliente($venta['MetodoEnvio']['rut_api_rest'], $venta['MetodoEnvio']['clave_api_rest'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
-
-			# Creamos la OT
-			if ($this->Starken->generar_ot($venta)) {
-
-				$this->Session->setFlash('Envío creado con éxito.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('No fue posible crear el envío.', null, array(), 'danger');
-			}
-		} elseif ($venta['MetodoEnvio']['dependencia'] == 'conexxion' && $venta['MetodoEnvio']['generar_ot']) {
-			# Es una venta para conexxion
-
-			# Creamos cliente conexxion
-			$this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
-
-			# Creamos la OT
-			if ($this->Conexxion->generar_ot($venta)) {
-				$this->Session->setFlash('Envío creado con éxito en Conexxion.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('No fue posible crear el envío Conexxion.', null, array(), 'danger');
-			}
-		} elseif ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
-			# Es una venta para boosmap
-
-			# Creamos cliente boosmap
-			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
-
-			# Creamos la OT
-			if ($this->Boosmap->generar_ot($venta)) {
-
-
-				$this->Session->setFlash('Envío creado con éxito en Boosmap.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('No fue posible crear el envío Boosmap.', null, array(), 'danger');
-			}
-		} elseif ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot']) {
-			# Es una venta para blueexpress
-
-			# Creamos cliente blueexpress
-			$this->BlueExpress->crearCliente($venta['MetodoEnvio']['token_blue_express'], $venta['MetodoEnvio']['cod_usuario_blue_express'], $venta['MetodoEnvio']['cta_corriente_blue_express']);
-
-			# Creamos la OT
-			if ($this->BlueExpress->generar_ot($venta)) {
-
-
-				$this->Session->setFlash('Envío creado con éxito en BlueExpress.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('No fue posible crear el envío BlueExpress.', null, array(), 'danger');
-			}
-		} else {
-			$this->Session->setFlash('La venta no aplica para usar un currier externo.', null, array(), 'danger');
+		if ($metodoEnviosController->generar_etiqueta_envio_externo($id)) {
+			$this->Session->setFlash('Se creo la Orden de transporte.', null, array(), 'success');
+		}else{
+			$this->Session->setFlash("
+			<ul>
+				<li>No fue posible crear la Orden de transporte O.</li>
+				<li>La venta no aplica para usar un currier externo.</li>
+			</ul>
+			", null, array(), 'danger');
 		}
-
+	
+		
 		$this->redirect($this->referer('/', true));
 	}
 
@@ -3665,31 +3602,31 @@ class VentasController extends AppController {
 
 		$starken_info = array(); 
 		# Starken
-		if ($venta['MetodoEnvio']['dependencia'] == 'starken') {
+		// if ($venta['MetodoEnvio']['dependencia'] == 'starken') {
 			
-			# Creamos cliente starken
-			$this->Starken->crearCliente($venta['Tienda']['starken_rut'], $venta['Tienda']['starken_clave'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
+		// 	# Creamos cliente starken
+		// 	$this->Starken->crearCliente($venta['Tienda']['starken_rut'], $venta['Tienda']['starken_clave'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
 			
-			$seguimientos = array();
+		// 	$seguimientos = array();
 
-			if (!empty($venta['Transporte'])) {
-				# creamos una lista con los n° de seguimiento
-				foreach ($venta['Transporte'] as $iv => $t) {
+		// 	if (!empty($venta['Transporte'])) {
+		// 		# creamos una lista con los n° de seguimiento
+		// 		foreach ($venta['Transporte'] as $iv => $t) {
 					
-					if (empty($t['TransportesVenta']['cod_seguimiento']))
-						continue;
+		// 			if (empty($t['TransportesVenta']['cod_seguimiento']))
+		// 				continue;
 
-					$seguimientos['listaSeguimientos'][]['numeroOrdenFlete'] = $t['TransportesVenta']['cod_seguimiento'];
+		// 			$seguimientos['listaSeguimientos'][]['numeroOrdenFlete'] = $t['TransportesVenta']['cod_seguimiento'];
 
-				}
+		// 		}
 
-				if (!empty($seguimientos)) {
-					# Consultamos por los envios
-					$res = $this->Starken->seguimiento($seguimientos);
-				}
-			}
+		// 		if (!empty($seguimientos)) {
+		// 			# Consultamos por los envios
+		// 			$res = $this->Starken->seguimiento($seguimientos);
+		// 		}
+		// 	}
 			
-		}
+		// }
 		
 		# Estados de envios
 		foreach ($venta['Transporte'] as $it => $t)
@@ -10109,6 +10046,7 @@ class VentasController extends AppController {
 			throw new CakeException($response);
 		}
 
+	
 		# Detalles de la venta
 		$venta = $this->Venta->find('first', array(
 			'conditions' => array(
@@ -10147,11 +10085,11 @@ class VentasController extends AppController {
 				'VentaEstado' => array(
 					'VentaEstadoCategoria'
 				),
-				'EmbalajeWarehouse',
+				'EmbalajeWarehouse'=>[ 'conditions' => ['EmbalajeWarehouse.id'=> $this->request->query['embalaje_id']]],
 				'CanalVenta'
 			)
 		));
-
+		// prx($venta );
 		# En ocaciones la BD registra duplicado los embalajes, por ende al procesar el primero de ellos, eliminaremos los duplicados
 		foreach ($venta['VentaDetalle'] as $detalle)
 		{
@@ -10161,18 +10099,18 @@ class VentasController extends AppController {
 			foreach ($detalle['EmbalajeProductoWarehouse'] as $embalaje_producto)
 			{	
 				$em = [
-					'id' => $embalaje_producto['id'],
-					'embalaje_id' => $embalaje_producto['embalaje_id'],
-					'producto_id' => $embalaje_producto['producto_id'],
-					'detalle_id' => $embalaje_producto['detalle_id'],
-					'cantidad_a_embalar' => $embalaje_producto['cantidad_a_embalar'],
-					'cantidad_embalada' => $embalaje_producto['cantidad_embalada'],
-					'fecha_creacion' => $embalaje_producto['fecha_creacion'],
-					'ultima_modifacion' => $embalaje_producto['ultima_modifacion'],
-					'cantidad_anulada' => $embalaje_producto['cantidad_anulada'],
-					'embalaje_bodega_id' => $embalaje_producto['EmbalajeWarehouse']['bodega_id'],
-					'embalaje_estado' => $embalaje_producto['EmbalajeWarehouse']['estado'],
-					'embalaje_fecha' => $embalaje_producto['EmbalajeWarehouse']['fecha_creacion']
+					'id' 					=> $embalaje_producto['id'],
+					'embalaje_id' 			=> $embalaje_producto['embalaje_id'],
+					'producto_id' 			=> $embalaje_producto['producto_id'],
+					'detalle_id' 			=> $embalaje_producto['detalle_id'],
+					'cantidad_a_embalar' 	=> $embalaje_producto['cantidad_a_embalar'],
+					'cantidad_embalada' 	=> $embalaje_producto['cantidad_embalada'],
+					'fecha_creacion' 		=> $embalaje_producto['fecha_creacion'],
+					'ultima_modifacion' 	=> $embalaje_producto['ultima_modifacion'],
+					'cantidad_anulada' 		=> $embalaje_producto['cantidad_anulada'],
+					'embalaje_bodega_id' 	=> $embalaje_producto['EmbalajeWarehouse']['bodega_id'],
+					'embalaje_estado' 		=> $embalaje_producto['EmbalajeWarehouse']['estado'],
+					'embalaje_fecha' 		=> $embalaje_producto['EmbalajeWarehouse']['fecha_creacion']
 				];
 
 				# Buscamos las diferencias entre los embalajes
@@ -10231,12 +10169,17 @@ class VentasController extends AppController {
 		# Creamos las etiquetas internas necesarias
 		foreach ($venta['EmbalajeWarehouse'] as $iem => $e) 
 		{
-			if ($e['estado'] == 'procesando')
-			{
-				$etiquetas_embalajes[] = $embalajesController->obtener_etiqueta_envio_interna_url($e['id'], $venta);
+		
+			if ( $e['id'] == $this->request->query['embalaje_id'] ) {
+				if ($e['estado'] == 'procesando')
+				{
+					$etiquetas_embalajes[] = $embalajesController->obtener_etiqueta_envio_interna_url($e['id'], $venta);
+					break;
+				}
 			}
+			
 		}
-
+		
 		# Cambiamos valor de la nota interna y le ponemos la referencia del despacho
 		$venta['Venta']['nota_interna'] = $venta['Venta']['referencia_despacho'];
 
@@ -10261,19 +10204,20 @@ class VentasController extends AppController {
 		$etiqueta_externa = $venta['Venta']['etiqueta_envio_externa'];
 
 		# Obtenems la etiqueta externa si no está definida aun
-		if (empty($etiqueta_externa))
-		{
-			# Buscamos la última etiqueta generada en el transporte
-			foreach ($venta['Transporte'] as $it => $t) 
-			{
-				if ($t['TransportesVenta']['etiqueta'])
-				{
-					$etiqueta_externa = $t['TransportesVenta']['etiqueta'];
-					break;
+		if (empty($etiqueta_externa)) {
+
+			if ($this->request->query['embalaje_id'] ?? false) {
+				$etiqueta_externa = Hash::extract($venta['Transporte'], "{n}.TransportesVenta[embalaje_id={$this->request->query['embalaje_id']}]")[0]['etiqueta'] ?? null;
+			} else {
+				foreach ($venta['Transporte'] as $it => $t) {
+					if ($t['TransportesVenta']['etiqueta']) {
+						$etiqueta_externa = $t['TransportesVenta']['etiqueta'];
+						break;
+					}
 				}
 			}
 		}
-
+		
 		if ($venta['Venta']['canal_venta_id'])
 		{
 			$venta['Tienda']['nombre'] = $venta['CanalVenta']['nombre'] . ' - ' . $venta['Tienda']['nombre'];
@@ -10291,50 +10235,50 @@ class VentasController extends AppController {
 					'fono'     => $venta['VentaCliente']['telefono'],
 				),
 				'venta' => array(
-					'id'          => $venta['Venta']['id'],
-					'id_externo'  => $venta['Venta']['id_externo'],
-					'referencia'  => $venta['Venta']['referencia'],
-					'fecha_venta' => $venta['Venta']['fecha_venta'],
-					'estado'      => $venta['VentaEstado']['VentaEstadoCategoria']['nombre'],
-					'subestado'   => $venta['VentaEstado']['nombre'],
-					'canal_venta' => (!empty($venta['Marketplace']['id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'],
-					'nota_interna' => $venta['Venta']['nota_interna']
+					'id'          	=> $venta['Venta']['id'],
+					'id_externo'  	=> $venta['Venta']['id_externo'],
+					'referencia'  	=> $venta['Venta']['referencia'],
+					'fecha_venta' 	=> $venta['Venta']['fecha_venta'],
+					'estado'      	=> $venta['VentaEstado']['VentaEstadoCategoria']['nombre'],
+					'subestado'   	=> $venta['VentaEstado']['nombre'],
+					'canal_venta' 	=> (!empty($venta['Marketplace']['id'])) ? $venta['Marketplace']['nombre'] : $venta['Tienda']['nombre'],
+					'nota_interna' 	=> $venta['Venta']['nota_interna']
 				),
 				'etiquetas' => array(
-					'todos' => $documentos['result'],
-					'interna' => (empty($etiqueta_interna2)) ? $etiqueta_interna['public'] : $etiqueta_interna2,
-					'externa' => $etiqueta_externa,
-					'dtes' => $dtes 
+					'todos' 	=> $documentos['result'],
+					'interna' 	=> (empty($etiqueta_interna2)) ? $etiqueta_interna['public'] : $etiqueta_interna2,
+					'externa' 	=> $etiqueta_externa,
+					'dtes' 		=> $dtes 
 				),
 				'entrega' => array(
-					'metodo' => $venta['MetodoEnvio']['nombre'],
-					'fecha_entrega_estimada' => 'No definido',
-					'calle' => $venta['Venta']['direccion_entrega'],
-					'numero' => $venta['Venta']['numero_entrega'],
-					'otro' => $venta['Venta']['otro_entrega'],
-					'comuna' => $venta['Comuna']['nombre'],
-					'receptor' => $venta['Venta']['nombre_receptor'],
-					'rut' => $venta['Venta']['rut_receptor'],
-					'fono_receptor' => $venta['Venta']['fono_receptor']
+					'metodo' 					=> $venta['MetodoEnvio']['nombre'],
+					'fecha_entrega_estimada' 	=> 'No definido',
+					'calle' 					=> $venta['Venta']['direccion_entrega'],
+					'numero' 					=> $venta['Venta']['numero_entrega'],
+					'otro' 						=> $venta['Venta']['otro_entrega'],
+					'comuna' 					=> $venta['Comuna']['nombre'],
+					'receptor' 					=> $venta['Venta']['nombre_receptor'],
+					'rut' 						=> $venta['Venta']['rut_receptor'],
+					'fono_receptor' 			=> $venta['Venta']['fono_receptor']
 				),
-				'mensajes' => array(),
-				'transportes' => array(),
-				'itemes' => array(),
-				'embalajes' => $venta['EmbalajeWarehouse']
+				'mensajes' 		=> array(),
+				'transportes' 	=> array(),
+				'itemes' 		=> array(),
+				'embalajes' 	=> $venta['EmbalajeWarehouse']
 			)
 		);
 		
-		$mensajes = array();
-		$auxFechas = array();
+		$mensajes 	= array();
+		$auxFechas 	= array();
 
 		# Mensajes venta
 		foreach($venta['VentaMensaje'] as $mensaje)
 		{
 			$mensajes[] = array(
-				'emisor' => $mensaje['emisor'],
-				'fecha' => $mensaje['fecha'],
-				'asunto' => $mensaje['nombre'],
-				'mensaje' => $mensaje['mensaje']
+				'emisor' 	=> $mensaje['emisor'],
+				'fecha' 	=> $mensaje['fecha'],
+				'asunto' 	=> $mensaje['nombre'],
+				'mensaje' 	=> $mensaje['mensaje']
 			);
 		}
 
@@ -10342,10 +10286,10 @@ class VentasController extends AppController {
 		foreach ($venta['Mensaje'] as $mensaje2) 
 		{
 			$mensajes[] = array(
-				'emisor' => $venta['VentaCliente']['rut'],
-				'fecha' => $mensaje2['created'],
-				'asunto' => ($mensaje2['origen'] == 'cliente') ? 'Mensaje de cliente' : 'Mensaje interno',
-				'mensaje' => $mensaje2['mensaje']
+				'emisor' 	=> $venta['VentaCliente']['rut'],
+				'fecha' 	=> $mensaje2['created'],
+				'asunto' 	=> ($mensaje2['origen'] == 'cliente') ? 'Mensaje de cliente' : 'Mensaje interno',
+				'mensaje' 	=> $mensaje2['mensaje']
 			);
 		}
 
@@ -10366,15 +10310,19 @@ class VentasController extends AppController {
 		# Agregamos los transportes
 		foreach ($venta['Transporte'] as $transporte)
 		{
+			if ($transporte['TransportesVenta']['embalaje_id'] != $this->request->query['embalaje_id']) {
+				continue;
+			}
+
 			$respuesta['body']['transportes'][] =  array(
-				'transporte_id' => $transporte['id'],
-				'nombre' => $transporte['nombre'],
-				'codigo' => $transporte['codigo'],
-				'url_seguimiento_externa' => $transporte['url_seguimiento'],
-				'cod_seguimiento' => $transporte['TransportesVenta']['cod_seguimiento'],
-				'fecha_entrega_aprox' => $transporte['TransportesVenta']['entrega_aprox'],
-				'etiqueta' => $transporte['TransportesVenta']['etiqueta'],
-				'activo' => $transporte['activo'] 
+				'transporte_id' 			=> $transporte['id'],
+				'nombre' 					=> $transporte['nombre'],
+				'codigo' 					=> $transporte['codigo'],
+				'url_seguimiento_externa'	=> $transporte['url_seguimiento'],
+				'cod_seguimiento' 			=> $transporte['TransportesVenta']['cod_seguimiento'],
+				'fecha_entrega_aprox' 		=> $transporte['TransportesVenta']['entrega_aprox'],
+				'etiqueta' 					=> $transporte['TransportesVenta']['etiqueta'],
+				'activo' 					=> $transporte['activo'] 
 			);
 		}
 
@@ -10397,6 +10345,10 @@ class VentasController extends AppController {
 
 			foreach ($item['EmbalajeProductoWarehouse'] as $iemp => $emp) 
 			{	
+				if ($emp['embalaje_id'] != $this->request->query['embalaje_id']) {
+					continue;
+				}
+
 				if ($emp['EmbalajeWarehouse']['estado'] == 'cancelado')
 					continue;
 
@@ -10407,22 +10359,22 @@ class VentasController extends AppController {
 				}
 
 				$respuesta['body']['itemes'][] = array(
-					'id' => $item['id'],
-					'producto_id' => $item['venta_detalle_producto_id'],
-					'nombre' => $item['VentaDetalleProducto']['nombre'],
-					'sku' => $item['VentaDetalleProducto']['codigo_proveedor'],
-					'cantidad_pendiente_entrega' => (int) $item['cantidad_pendiente_entrega'],
-					'cantidad_reservada' => (int) $item['cantidad_reservada'],
-					'cantidad_a_emabalar' => $emp['cantidad_a_embalar'] - $emp['cantidad_embalada'],
-					'imagen' => Hash::extract($imagen, '{n}[principal=1].url')[0],
-					'peso' => $pbodega['ProductoWarehouse']['peso'],
-					'ancho' => $pbodega['ProductoWarehouse']['ancho'],
-					'largo' => $pbodega['ProductoWarehouse']['largo'],
-					'alto' => $pbodega['ProductoWarehouse']['alto']
+					'id' 							=> $item['id'],
+					'producto_id' 					=> $item['venta_detalle_producto_id'],
+					'nombre' 						=> $item['VentaDetalleProducto']['nombre'],
+					'sku' 							=> $item['VentaDetalleProducto']['codigo_proveedor'],
+					'cantidad_pendiente_entrega'	=> (int) $item['cantidad_pendiente_entrega'],
+					'cantidad_reservada' 			=> (int) $item['cantidad_reservada'],
+					'cantidad_a_emabalar' 			=> $emp['cantidad_a_embalar'] - $emp['cantidad_embalada'],
+					'imagen' 						=> Hash::extract($imagen, '{n}[principal=1].url')[0],
+					'peso' 							=> $pbodega['ProductoWarehouse']['peso'],
+					'ancho' 						=> $pbodega['ProductoWarehouse']['ancho'],
+					'largo' 						=> $pbodega['ProductoWarehouse']['largo'],
+					'alto' 							=> $pbodega['ProductoWarehouse']['alto']
 				);
 
-				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['peso'] = $pbodega['ProductoWarehouse']['peso'];
-				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['alto'] = $pbodega['ProductoWarehouse']['alto'];
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['peso'] 	= $pbodega['ProductoWarehouse']['peso'];
+				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['alto'] 	= $pbodega['ProductoWarehouse']['alto'];
 				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['ancho'] = $pbodega['ProductoWarehouse']['ancho'];
 				$venta['VentaDetalle'][$i]['VentaDetalleProducto']['largo'] = $pbodega['ProductoWarehouse']['largo'];
 			}
@@ -12587,36 +12539,154 @@ class VentasController extends AppController {
 	 * 
 	 * @return bool
 	 */
+
 	public function actualizar_estados_envios($id)
 	{
-		$venta = $this->Venta->obtener_venta_por_id($id);
+		
+		$venta = $this->Venta->find('first', [
+			'conditions' 	=> [['Venta.id' => $id]],
+			'fields'		=> ['Venta.id', 'Venta.metodo_envio_id'],
+			'contain'  		=> [
+				'TransportesVenta' => [
+					'fields' => [
+						'TransportesVenta.id',
+						'TransportesVenta.venta_id',
+						'TransportesVenta.embalaje_id',
+						'TransportesVenta.cod_seguimiento',
+					],
+					'EmbalajeWarehouse' => [
+						'fields' => [
+							'EmbalajeWarehouse.id',
+							'EmbalajeWarehouse.estado',
+							'EmbalajeWarehouse.bodega_id'
+						]
+					]
+				],
+				'MetodoEnvio' => array(
+					'fields' => array(
+						'MetodoEnvio.id',
+						'MetodoEnvio.bodega_id',
+						'MetodoEnvio.cuenta_corriente_transporte_id',
+					),
+					'Bodega' => [
+						'Comuna',
+						'fields' => [
+							'Bodega.fono',
+							'Bodega.nombre',
+							'Bodega.comuna_id',
+							'Bodega.direccion',
+							'Bodega.nombre_contacto',
+						],
+					],
+					'BodegasMetodoEnvio' => ['Bodega' => [
+						'Comuna',
+						'fields' => [
+							'Bodega.fono',
+							'Bodega.nombre',
+							'Bodega.direccion',
+							'Bodega.comuna_id',
+							'Bodega.nombre_contacto',
+						],
+					],]
+				),
+				'VentaDetalle' => array(
+					'fields' => array(
+						'VentaDetalle.id',
+						'VentaDetalle.cantidad_en_espera'
+					)
+				),
+			]
+		]);
 
-		# Registro de estados para Boosmap
-		if ($venta['MetodoEnvio']['dependencia'] == 'boosmap' && $venta['MetodoEnvio']['generar_ot']) {
-			$this->Boosmap = $this->Components->load('Boosmap');
-			# Creamos cliente boosmap
-			$this->Boosmap->crearCliente($venta['MetodoEnvio']['boosmap_token']);
+		$logs				= [];
+		$return 			= false;
+		$total_en_espera 	= array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_en_espera'));
 
-			# Obtenemos y registramos los estados de los envios
-			return $this->Boosmap->registrar_estados($venta['Venta']['id']);
+		foreach ($venta['TransportesVenta'] as $TransportesVenta) {
+		
+			$cuenta_corriente_transporte_id = null;
+
+			if ($venta['MetodoEnvio']['bodega_id'] ==  $TransportesVenta['EmbalajeWarehouse']['bodega_id']) {
+				$cuenta_corriente_transporte_id = $venta['MetodoEnvio']['cuenta_corriente_transporte_id'];
+			} else {
+				$cuenta_corriente_transporte_id = Hash::extract($venta['MetodoEnvio']['BodegasMetodoEnvio'], "{n}[bodega_id={$TransportesVenta['EmbalajeWarehouse']['bodega_id']}].cuenta_corriente_transporte_id")[0] ?? null;
+			}
+
+			if (is_null($cuenta_corriente_transporte_id)) {
+
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => "Vid {$id} | El metodo no tiene una cuenta corriente asignada",
+						'modulo'     	=> 'VentasController',
+						'modulo_accion' => json_encode($venta['MetodoEnvio'])
+					)
+				);
+				continue;
+			}
+
+			$CuentaCorrienteTransporte = ClassRegistry::init('CuentaCorrienteTransporte')->valor_atributos($cuenta_corriente_transporte_id);
+
+			if (!$CuentaCorrienteTransporte) {
+
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => "Vid {$id} | Cuenta corriente no tiene asignado valores {$cuenta_corriente_transporte_id}",
+						'modulo'     	=> 'VentasController',
+						'modulo_accion' =>  json_encode($venta['MetodoEnvio'])
+					)
+				);
+				continue;
+			}
+
+			switch (ClassRegistry::init('CuentaCorrienteTransporte')->dependencia($cuenta_corriente_transporte_id)) {
+
+				case 'starken':
+
+					$this->Starken 	= $this->Components->load('Starken');
+					$this->Starken->crearCliente($CuentaCorrienteTransporte['rutApiRest'], $CuentaCorrienteTransporte['claveApiRest'], $CuentaCorrienteTransporte['rutEmpresaEmisora'], $CuentaCorrienteTransporte['rutUsuarioEmisor'], $CuentaCorrienteTransporte['claveUsuarioEmisor']);
+					$return	 		= $this->Starken->registrar_estados($TransportesVenta, $CuentaCorrienteTransporte, $total_en_espera);
+
+					break;
+
+				case 'conexxion':
+
+					// $this->Conexxion = $this->Components->load('Conexxion');
+					// $this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
+					// $return = $this->Conexxion->registrar_estados($id);
+					break;
+
+				case 'boosmap':
+
+					$this->Boosmap 	= $this->Components->load('Boosmap');
+					$this->Boosmap->crearCliente($CuentaCorrienteTransporte['boosmap_token']);
+					$return 		= $this->Boosmap->registrar_estados($TransportesVenta, $total_en_espera);
+
+					break;
+
+				case 'blueexpress':
+
+					$this->BlueExpress 	= $this->Components->load('BlueExpress');
+					$this->BlueExpress->crearCliente($CuentaCorrienteTransporte['BX_TOKEN'], $CuentaCorrienteTransporte['BX_USERCODE'], $CuentaCorrienteTransporte['BX_CLIENT_ACCOUNT']);
+					$return 			= $this->BlueExpress->registrar_estados($TransportesVenta, $total_en_espera);
+					break;
+
+				default:
+
+					break;
+			}
 		}
 
-		# Registro de estados para Starken
-		if ($venta['MetodoEnvio']['dependencia'] == 'starken' && $venta['MetodoEnvio']['generar_ot']) {
-			$this->Starken = $this->Components->load('Starken');
-			# Obtenemos y registramos los estados de los envios
-			return $this->Starken->registrar_estados($venta['Venta']['id']);
-		}
+		$logs[] = array(
+			'Log' => array(
+				'administrador' => "Vid {$id} | finaliza actualizar estado ot",
+				'modulo'     	=> 'VentasController',
+				'modulo_accion' =>  null			
+				)
+		);
 
-		# Registro de estados para BlueExpress
-		if ($venta['MetodoEnvio']['dependencia'] == 'blueexpress' && $venta['MetodoEnvio']['generar_ot']) {
-			
-			$this->BlueExpress = $this->Components->load('BlueExpress');
-			# Obtenemos y registramos los estados de los envios
-			return $this->BlueExpress->registrar_estados($venta['Venta']['id']);
-		}
-
-		return false;
+		ClassRegistry::init('Log')->saveMany($logs);
+		
+		return $return;
 	}
 
 
@@ -12805,7 +12875,9 @@ class VentasController extends AppController {
 		try {
 
 			// *Si hay embalajes distinto a la bodega de la venta se considera el estado en consolidacion
-			$embalajes_en_otras_bodegas 			= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[bodega_id!={$venta['Venta']['bodega_id']}]"));
+			$embalajes_detalle_en_otras_bodegas 	= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[bodega_id!={$venta['Venta']['bodega_id']}]");
+			$embalajes_en_otras_bodegas 			= count($embalajes_detalle_en_otras_bodegas);
+			$existenTraslados 						= Hash::extract($embalajes_detalle_en_otras_bodegas, "{n}[trasladar_a_otra_bodega=1]");
 			$cantidad	       						= array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad")) - array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_anulada"));
 			$cantidad_embalada 						= array_sum(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}.embalaje_producto.{n}.cantidad_embalada"));
 
@@ -12815,7 +12887,7 @@ class VentasController extends AppController {
 			$cantidad_pendiente_entrega 			= array_sum(Hash::extract($venta['VentaDetalle'], "{n}.cantidad_pendiente_entrega"));
 			$no_han_finalizado						= count(Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[fecha_finalizado=/^$/]"));
 			
-			if ($embalajes_en_otras_bodegas > 0 && $cantidadEmbalajes >= 1 && $cantidad_pendiente_entrega > 0 && $no_han_finalizado != 0) {
+			if ($embalajes_en_otras_bodegas > 0 && $cantidadEmbalajes >= 1 && $cantidad_pendiente_entrega > 0 && $no_han_finalizado != 0 && $existenTraslados ) {
 
 					// * Se valida que metodo tenga el estado a cambiar
 					if (is_null($venta['MetodoEnvio']['consolidacion_venta_estado_id'])) {
@@ -12944,62 +13016,185 @@ class VentasController extends AppController {
 	public function admin_regenerar_etiqueta($ot)
 	{
 
-		$transportes_venta =  ClassRegistry::init('TransportesVenta')->find('first',
-		[
-			'conditions' => [
-				'TransportesVenta.id' 		=> $ot,
-		],
-			'fields' => [
-				'TransportesVenta.venta_id',
-				'TransportesVenta.cod_seguimiento'
+		$transportes_venta =  ClassRegistry::init('TransportesVenta')->find(
+			'first',
+			[
+				'conditions' => [
+					'TransportesVenta.id' => $ot,
+				],
+				'fields' => [
+					'TransportesVenta.venta_id',
+					'TransportesVenta.embalaje_id',
+					'TransportesVenta.cod_seguimiento',
+				],
+				'contain' => [
+					'EmbalajeWarehouse' => array(
+						'HistorialEmbalaje',
+						'Bodega' => array(
+							'fields' => array(
+								'Bodega.id',
+								'Bodega.nombre'
+							)
+						),
+						'EmbalajeProductoWarehouse' => array(
+							'VentaDetalleProducto' => array(
+								'fields' => array(
+									'VentaDetalleProducto.id',
+									'VentaDetalleProducto.nombre',
+									'VentaDetalleProducto.alto',
+									'VentaDetalleProducto.ancho',
+									'VentaDetalleProducto.largo',
+									'VentaDetalleProducto.peso'
+								)
+							),
+						)
+					),
+					"Venta" => [
+						'fields' => [
+							'Venta.id',
+							'Venta.metodo_envio_id'							
+						],
+						'MetodoEnvio' => array(
+							'fields' => array(
+								'MetodoEnvio.id',
+								'MetodoEnvio.bodega_id',
+								'MetodoEnvio.cuenta_corriente_transporte_id',
+							),
+							'Bodega' => [
+								'Comuna',
+								'fields' => [
+									'Bodega.fono',
+									'Bodega.nombre',
+									'Bodega.comuna_id',
+									'Bodega.direccion',
+									'Bodega.nombre_contacto',
+								],
+							],
+							'BodegasMetodoEnvio' => [
+								'Bodega' => [
+									'Comuna',
+									'fields' => [
+										'Bodega.fono',
+										'Bodega.nombre',
+										'Bodega.direccion',
+										'Bodega.comuna_id',
+										'Bodega.nombre_contacto',
+									],
+								],
+							]
+						),
+					]
+				]
 			]
-		]);
+		);
 		
-		$venta_id= $transportes_venta['TransportesVenta']['venta_id'];
+		$logs 							= [] ;
+		$venta_id 						= $transportes_venta['TransportesVenta']['venta_id'];
+		$cuenta_corriente_transporte_id = null;
 
-		$venta = ClassRegistry::init('Venta')->find('first',[
-			'conditions'=>[
-				'Venta.id' => $venta_id
-			],
-			'fields'=>['id'],
-			'contain' => array(
-				'MetodoEnvio' => array(
-					'fields' => array(
-						'MetodoEnvio.dependencia'
-					)
-				)
-				
+		$logs[] 						= array(
+			'Log' => array(
+				'administrador' => "Regenerar etiqueta de OT $ot | Vid $venta_id",
+				'modulo'     	=> 'VentasController',
+				'modulo_accion' =>  json_encode($transportes_venta)
 			)
-		]);
-		
-		switch ($venta['MetodoEnvio']['dependencia']) {
-			case 'blueexpress':
-				$etiqueta = $this->BlueExpress->regenerar_etiqueta($transportes_venta['TransportesVenta']['cod_seguimiento'],$venta_id);
+		);
+
+		if ($transportes_venta['Venta']['MetodoEnvio']['bodega_id'] ==  $transportes_venta['EmbalajeWarehouse']['bodega_id']) {
+			$cuenta_corriente_transporte_id = $transportes_venta['Venta']['MetodoEnvio']['cuenta_corriente_transporte_id'];
+		} else {
+			$cuenta_corriente_transporte_id = Hash::extract($transportes_venta['Venta']['MetodoEnvio']['BodegasMetodoEnvio'], "{n}[bodega_id={$transportes_venta['EmbalajeWarehouse']['bodega_id']}].cuenta_corriente_transporte_id")[0] ?? null;
+		}
+
+		if (is_null($cuenta_corriente_transporte_id)) {
+
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => "Vid $venta_id | El metodo no tiene una cuenta corriente asignada",
+					'modulo'     	=> 'VentasController',
+					'modulo_accion' => json_encode($transportes_venta)
+				)
+			);
+			ClassRegistry::init('Log')->saveMany($logs);
+			$this->Session->setFlash('No existe una cuenta de corriente asociada', null, array(), 'danger');
+			$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
+		}
+
+		$CuentaCorrienteTransporte = ClassRegistry::init('CuentaCorrienteTransporte')->valor_atributos($cuenta_corriente_transporte_id);
+
+		if (!$CuentaCorrienteTransporte) {
+
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => "Vid $venta_id | Cuenta corriente no tiene asignado valores $cuenta_corriente_transporte_id",
+					'modulo'     	=> 'VentasController',
+					'modulo_accion' =>  json_encode($transportes_venta)
+				)
+			);
+			ClassRegistry::init('Log')->saveMany($logs);
+			$this->Session->setFlash('La cuenta corriente de transportista no posee sus credenciales', null, array(), 'danger');
+			$this->redirect(array('action' => 'view', $venta_id , 'controller' => 'ventas'));
+		}
+
+		switch (ClassRegistry::init('CuentaCorrienteTransporte')->dependencia($cuenta_corriente_transporte_id)) {
+
+			case 'starken':
+
+				// $this->Starken 	= $this->Components->load('Starken');
+				// $this->Starken->crearCliente($CuentaCorrienteTransporte['rutApiRest'], $CuentaCorrienteTransporte['claveApiRest'], $CuentaCorrienteTransporte['rutEmpresaEmisora'], $CuentaCorrienteTransporte['rutUsuarioEmisor'], $CuentaCorrienteTransporte['claveUsuarioEmisor']);
 				break;
+
+			case 'conexxion':
+
+				// $this->Conexxion = $this->Components->load('Conexxion');
+				// $this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
+				break;
+
 			case 'boosmap':
-				$etiqueta = $this->Boosmap->regenerar_etiqueta($transportes_venta,$venta_id);
+
+				$this->Boosmap 	= $this->Components->load('Boosmap');
+				$this->Boosmap->crearCliente($CuentaCorrienteTransporte['boosmap_token']);
+				$etiqueta 		= $this->Boosmap->regenerar_etiqueta($transportes_venta['TransportesVenta']['cod_seguimiento'], $venta_id,$transportes_venta['EmbalajeWarehouse'], $CuentaCorrienteTransporte);
+
 				break;
+
+			case 'blueexpress':
+
+				$this->BlueExpress 	= $this->Components->load('BlueExpress');
+				$this->BlueExpress->crearCliente($CuentaCorrienteTransporte['BX_TOKEN'], $CuentaCorrienteTransporte['BX_USERCODE'], $CuentaCorrienteTransporte['BX_CLIENT_ACCOUNT']);
+				$etiqueta 			= $this->BlueExpress->regenerar_etiqueta($transportes_venta['TransportesVenta']['cod_seguimiento'], $venta_id);
+				$logs[] = array(
+					'Log' => array(
+						'administrador' => "Vid $venta_id | blueexpress",
+						'modulo'     	=> 'VentasController',
+						'modulo_accion' => "Respuesta ".$etiqueta ? 'Exitosa':'No exitosa'
+					)
+				);
+				break;
+
 			default:
 
-				$this->Session->setFlash("La dependencia {$venta['MetodoEnvio']['dependencia']} no tiene configurada regenerar etiqueta", null, array(), 'danger');
+				$this->Session->setFlash("La cuenta corriente $cuenta_corriente_transporte_id no tiene asociada una dependencia", null, array(), 'danger');
 				$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
-
 				break;
 		}
+
+		
+		ClassRegistry::init('Log')->saveMany($logs);
 
 		if (!empty($etiqueta['url'])) {
 
 			$url_etiqueta = $etiqueta['url'];
 
-			if(ClassRegistry::init('TransportesVenta')->exists($ot) && ClassRegistry::init('Venta')->exists($venta_id)){
-				
+			if (ClassRegistry::init('TransportesVenta')->exists($ot) && ClassRegistry::init('Venta')->exists($venta_id)) {
+
 				ClassRegistry::init('TransportesVenta')->id = $ot;
 				ClassRegistry::init('Venta')->id			= $venta_id;
 
-				if(ClassRegistry::init('TransportesVenta')->saveField('etiqueta',$url_etiqueta) && ClassRegistry::init('Venta')->saveField('etiqueta_envio_externa',$url_etiqueta)){
-				
+				if (ClassRegistry::init('TransportesVenta')->saveField('etiqueta', $url_etiqueta) && ClassRegistry::init('Venta')->saveField('etiqueta_envio_externa', $url_etiqueta)) {
+
 					$this->Session->setFlash('Se creo etiqueta', null, array(), 'success');
-					$this->redirect(array('action' => 'view', $venta_id ,'controller' => 'ventas'));
+					$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
 				}
 			}
 		}
@@ -13007,7 +13202,6 @@ class VentasController extends AppController {
 		$this->Session->setFlash('No se pudo crear su etiqueta', null, array(), 'danger');
 		$this->redirect(array('action' => 'view', $venta_id, 'controller' => 'ventas'));
 	}
-
 
 	/**	
 	 * Obtiene los estados de despacho de la venta

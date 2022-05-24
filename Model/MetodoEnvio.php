@@ -28,6 +28,14 @@ class MetodoEnvio extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 		),
+		'CuentaCorrienteTransporte' => array(
+			'className'				=> 'CuentaCorrienteTransporte',
+			'foreignKey'			=> 'cuenta_corriente_transporte_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		),
 	);
 
 	public $hasMany = array(

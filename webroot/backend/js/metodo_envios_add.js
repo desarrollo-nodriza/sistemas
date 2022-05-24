@@ -1,105 +1,96 @@
-$(document).on('change', '.js-select-dependencia', function () {
-	mostrar_segun_dependencia();
-});
 
 
-let mostrar_segun_dependencia = function () {
+$(document).ready(function () {
+
 
 	$.app.formularios.bind('#MetodoEnvioAdminAddForm');
+	
+	$('#MetodoEnvioEmbaladoVentaEstadoId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
+	$('#MetodoEnvioEmbaladoVentaEstadoParcialId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
 
-	if ($('.js-select-dependencia').val() != '') {
+	$('#MetodoEnvioBodegaId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
 
-		$('#MetodoEnvioPesoMaximo').rules("add", {
-			required: true,
-			messages: {
-				required: 'Campo requerido'
-			}
-		});
-		$("#peso_maximo").removeClass('hidden');
+	$('#MetodoEnvioCuentaCorrienteTransporteId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
 
-		$('#MetodoEnvioPesoDefault').rules("add", {
-			required: true,
-			messages: {
-				required: 'Campo requerido'
-			}
-		});
-		$("#peso_default").removeClass('hidden');
+	$('#MetodoEnvioConsolidacionVentaEstadoId').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
 
-		$('#MetodoEnvioAltoDefault').rules("add", {
-			required: true,
-			messages: {
-				required: 'Campo requerido'
-			}
-		});
-		$("#alto_default").removeClass('hidden');
+	$('#MetodoEnvioPesoMaximo').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
 
-		$('#MetodoEnvioAnchoDefault').rules("add", {
-			required: true,
-			messages: {
-				required: 'Campo requerido'
-			}
-		});
-		$("#ancho_default").removeClass('hidden');
+	$('#MetodoEnvioPesoDefault').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
 
-		$('#MetodoEnvioLargoDefault').rules("add", {
-			required: true,
-			messages: {
-				required: 'Campo requerido'
-			}
-		});
-		$("#largo_default").removeClass('hidden');
+	$('#MetodoEnvioAltoDefault').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
 
-		$('#MetodoEnvioVolumenMaximo').rules("add", {
-			required: true,
-			messages: {
-				required: 'Campo requerido'
-			}
-		});
+	$('#MetodoEnvioAnchoDefault').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
 
-		$("#volumen_maximo").removeClass('hidden');
-		
+	$('#MetodoEnvioLargoDefault').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
 
-		$("#generar_ot").removeClass('hidden');
-	} else {
+	$('#MetodoEnvioVolumenMaximo').rules("add", {
+		required: true,
+		messages: {
+			required: 'Campo requerido'
+		}
+	});
 
-		$("#MetodoEnvioPesoMaximo").attr("required", false);
-		$("#MetodoEnvioPesoDefault").attr("required", false);
-		$("#MetodoEnvioAltoDefault").attr("required", false);
-		$("#MetodoEnvioAnchoDefault").attr("required", false);
-		$("#MetodoEnvioLargoDefault").attr("required", false);
-		$("#MetodoEnvioVolumenMaximo").attr("required", false);
+	$(document).on('change', '#MetodoEnvioGenerarOt', function () {
 
-		$("#peso_maximo").addClass('hidden');
-		$("#peso_default").addClass('hidden');
-		$("#alto_default").addClass('hidden');
-		$("#ancho_default").addClass('hidden');
-		$("#largo_default").addClass('hidden');
-		$("#volumen_maximo").addClass('hidden');
-		$("#generar_ot").addClass('hidden');
-	}
+		if ($('#MetodoEnvioGenerarOt').prop('checked')) {
 
-}
+			$(".cuenta_corriente_transporte_id").removeClass('hidden');
 
-$.app.formularios.bind('#MetodoEnvioAdminAddForm');
-$('#MetodoEnvioEmbaladoVentaEstadoId').rules("add", {
-	required: true,
-	messages: {
-		required: 'Campo requerido'
-	}
+		} else {
+			$(".cuenta_corriente_transporte_id").addClass('hidden');
+
+		}
+
+	});
 });
-$('#MetodoEnvioEmbaladoVentaEstadoParcialId').rules("add", {
-	required: true,
-	messages: {
-		required: 'Campo requerido'
-	}
-});
-
-$('#MetodoEnvioBodegaId').rules("add", {
-	required: true,
-	messages: {
-		required: 'Campo requerido'
-	}
-});
-
-
-

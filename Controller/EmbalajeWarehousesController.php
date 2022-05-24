@@ -486,7 +486,7 @@ class EmbalajeWarehousesController extends AppController
 	}
 
 	/**
-	 * Genera la etiqueta de envio intenra y retorna la url púbica y absoluta del archivo.
+	 * Genera la etiqueta de envio interna y retorna la url púbica y absoluta del archivo.
 	 * @param  int 		$id Identificador del embalaje
 	 * @param  string $orientacion horizontal/vertical
 	 * @return [type]        [description]
@@ -603,80 +603,86 @@ class EmbalajeWarehousesController extends AppController
 			array_multisort($auxFechas, SORT_DESC, $mensajes);
 		}
 
-		# formeteamos el mensaje a texto
+		# formateamos el mensaje a texto
 		$msjTexto = '';
 		foreach ($mensajes as $valor) 
 		{
 			$msjTexto .= $valor['mensaje'];
 		}
 
-		if(!is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'])){
+		if($embalaje['EmbalajeWarehouse']['trasladar_a_otra_bodega']){
 			ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'];
 			$msjTexto .= strtoupper(" Embalaje debe ser trasladado a la bodega ".ClassRegistry::init('Bodega')->field('nombre'));
 		}
+
 		$embalajesExceptoCancelados 		= $this->WarehouseNodriza->ObtenerEmbalajesVenta($embalaje['EmbalajeWarehouse']['venta_id']);		
+		$ExistenTraslados 					= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[trasladar_a_otra_bodega=1]");
 		
-		$ExisteEmbalajes_procesando 		= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=procesando].id");
-		$ExisteEmbalajes_listo_para_embalar	= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=listo_para_embalar].id");
-		$total_de_embalajes 				= ( count($ExisteEmbalajes_procesando) +  count($ExisteEmbalajes_listo_para_embalar));
-		$resultado 							= array_merge($ExisteEmbalajes_procesando, $ExisteEmbalajes_listo_para_embalar);
-		if( $total_de_embalajes > 1 ){
-
-			if(is_null($embalaje['EmbalajeWarehouse']['bodega_id_para_trasladar'])){
-				
-				$embalajes_a_Esperar = str_replace($id,"", implode(",", $resultado));
-				ClassRegistry::init('Bodega')->id = $embalaje['EmbalajeWarehouse']['bodega_id'];
-				if ($total_de_embalajes > 2) {
-
-					$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que los embalajes {$embalajes_a_Esperar} sean reunidos en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
-				}else{
-					$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que el embalaje {$embalajes_a_Esperar} sea reunido en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
-				}
+		if ($ExistenTraslados) {
 			
+			$ExisteEmbalajes_procesando 		= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=procesando].id");
+			$ExisteEmbalajes_listo_para_embalar	= Hash::extract($embalajesExceptoCancelados['response']['body'], "{n}[estado=listo_para_embalar].id");
+		
+			$total_de_embalajes 				= ( count($ExisteEmbalajes_procesando) +  count($ExisteEmbalajes_listo_para_embalar));
+			$resultado 							= array_merge($ExisteEmbalajes_procesando, $ExisteEmbalajes_listo_para_embalar);
+
+			if( $total_de_embalajes > 1 ){
+
+				if(!$embalaje['EmbalajeWarehouse']['trasladar_a_otra_bodega']){
+
+					$embalajes_a_Esperar 				= str_replace($id,"", implode(",", $resultado));
+					ClassRegistry::init('Bodega')->id 	= $embalaje['EmbalajeWarehouse']['bodega_id'];
+
+					if ($total_de_embalajes > 2) {
+						$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que los embalajes {$embalajes_a_Esperar} sean reunidos en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
+					}else{
+						$msjTexto .= strtoupper(" El embalaje {$id} no debe ser despachado o entregado hasta que el embalaje {$embalajes_a_Esperar} sea reunido en la bodega. ".ClassRegistry::init('Bodega')->field('nombre'));
+					}
+				
+				}
 			}
 		}
 
 		$msjTexto							= inflector::slug($msjTexto,' ');
 		$archivos 							= array();
-
 		foreach ($paquetes as $paquete) 
 		{
-			$etiquetaArr = array(
-				'venta' => array(
-					'id' => $venta['Venta']['id'],
-					'metodo_envio' => $venta['MetodoEnvio']['nombre'],
-					'canal' => $canal_venta,
-					'externo' => $venta['Venta']['id_externo'],
+			$etiquetaArr 			= array(
+				'venta' 			=> array(
+					'id' 			=> $venta['Venta']['id'],
+					'metodo_envio' 	=> $venta['MetodoEnvio']['nombre'],
+					'canal' 		=> $canal_venta,
+					'externo' 		=> $venta['Venta']['id_externo'],
 					'medio_de_pago' => $venta['MedioPago']['nombre'],
-					'fecha_venta' => $venta['Venta']['fecha_venta']
+					'fecha_venta' 	=> $venta['Venta']['fecha_venta']
 				),
-				'embalaje' => array(
-					'id' => $paquete['paquete']['embalaje_id']
+				'embalaje' 			=> array(
+					'id' 			=> $paquete['paquete']['embalaje_id']
 				),
-				'transportista' => array(
-					'nombre' => ($venta['Transporte']) ? $venta['Transporte'][0]['nombre'] : '',
+				'transportista' 	=> array(
+					'nombre' 		=> ($venta['Transporte']) ? $venta['Transporte'][0]['nombre'] : '',
 				),
-				'destinatario' => array(
-					'nombre' => $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'],
-					'rut' => formato_rut($venta['VentaCliente']['rut']),
-					'fono' => $venta['VentaCliente']['telefono'],
-					'email' => $venta['VentaCliente']['email'],
-					'direccion' => $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega']  . ', ' . $venta['Venta']['otro_entrega'],
-					'comuna' => $venta['Comuna']['nombre']
+				'destinatario' 		=> array(
+					'nombre' 		=> $venta['VentaCliente']['nombre'] . ' ' . $venta['VentaCliente']['apellido'],
+					'rut' 			=> formato_rut($venta['VentaCliente']['rut']),
+					'fono' 			=> $venta['VentaCliente']['telefono'],
+					'email' 		=> $venta['VentaCliente']['email'],
+					'direccion' 	=> $venta['Venta']['direccion_entrega'] . ' ' . $venta['Venta']['numero_entrega']  . ', ' . $venta['Venta']['otro_entrega'],
+					'comuna' 		=> $venta['Comuna']['nombre']
 				),
-				'bulto' => array(
-					'referencia' => $paquete['paquete']['embalaje_id'],
-					'peso' => $paquete['paquete']['weight'],
-					'ancho' => (int) $paquete['paquete']['width'],
-					'alto' => (int) $paquete['paquete']['height'],
-					'largo' => (int) $paquete['paquete']['length'],
-					'n_items' => count($paquete['items'])
+				'bulto' 			=> array(
+					'referencia' 	=> $paquete['paquete']['embalaje_id'],
+					'peso' 			=> $paquete['paquete']['weight'],
+					'ancho' 		=> (int) $paquete['paquete']['width'],
+					'alto' 			=> (int) $paquete['paquete']['height'],
+					'largo' 		=> (int) $paquete['paquete']['length'],
+					'n_items' 		=> count($paquete['items'])
 				),
-				'mensajes' => array(
-					'texto' => $msjTexto
+				'mensajes' 			=> array(
+					'texto' 		=> $msjTexto
 				),
-				'pdf' => array(
-					'dir' => 'EmbalajeWarehouse/' . $paquete['paquete']['embalaje_id']
+				'pdf' 				=> array(
+					'dir' 			=> 'EmbalajeWarehouse/' . $paquete['paquete']['embalaje_id']
 				)
 			);
 
