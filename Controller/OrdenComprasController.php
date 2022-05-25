@@ -4015,9 +4015,9 @@ class OrdenComprasController extends AppController
 		}
 
 
-		$this->Prestashop = $this->Components->load('Prestashop');
+		// $this->Prestashop = $this->Components->load('Prestashop');
 		# Agregamos las imagenes de prstashop al arreglo
-		$this->Prestashop->crearCliente($ocs[0]['Tienda']['apiurl_prestashop'], $ocs[0]['Tienda']['apikey_prestashop']);
+		// $this->Prestashop->crearCliente($ocs[0]['Tienda']['apiurl_prestashop'], $ocs[0]['Tienda']['apikey_prestashop']);
 
 
 		foreach($ocs as $i => $oc)
@@ -4045,13 +4045,14 @@ class OrdenComprasController extends AppController
 					continue;
 				}
 
-				$imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $ocs[$i]['Tienda']['apiurl_prestashop']);
+				// $imagen = $this->Prestashop->prestashop_obtener_imagenes_producto($d['venta_detalle_producto_id'], $ocs[$i]['Tienda']['apiurl_prestashop']);
 
 				$pWarehouse = $pLocal['VentaDetalleProducto'];
 				$pWarehouse['sku'] = $pLocal['VentaDetalleProducto']['codigo_proveedor'];
 				$pWarehouse['cod_barra'] = null;
 				$pWarehouse['permitir_ingreso_sin_barra'] = false;
-				$pWarehouse['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
+				// $pWarehouse['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
+				$pWarehouse['imagen'] = 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
 
 				if (!empty($pbodega))
 				{
