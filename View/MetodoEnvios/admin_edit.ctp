@@ -60,7 +60,7 @@
 								<th><?= $this->Form->label('generar_ot', 'Activar generación de OT'); ?></th>
 								<td><?= $this->Form->input('generar_ot', array('class' => '')); ?></td>
 							</tr>
-							<tr class="cuenta_corriente_transporte_id hidden">
+							<tr class="cuenta_corriente_transporte_id <?= $this->request->data['MetodoEnvio']['generar_ot'] ? '' : 'hidden' ?>">
 								<th><?= $this->Form->label('cuenta_corriente_transporte_id', 'Cuenta corriente'); ?></th>
 								<td><?= $this->Form->select('cuenta_corriente_transporte_id', $cuentaCorrienteTransporte, array('class' => 'form-control mi-selector', 'style' => "width:100%;", 'empty' => 'Seleccione Cuenta corriente', 'required')); ?></td>
 							</tr>
