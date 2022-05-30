@@ -658,7 +658,10 @@ class Venta extends AppModel
 							'Bodega.codigo_sucursal',
 							'Bodega.principal'
 						)
-					)
+						),
+					'TransportesVenta'=> [
+						'EmbalajeWarehouse',
+						'Transporte'		=> ['fields'=>['Transporte.url_seguimiento' , 'Transporte.nombre','Transporte.tiempo_entrega']]]
 				),
 				'fields' => array(
 					'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.atendida', 'Venta.activo', 'Venta.descuento', 'Venta.costo_envio',

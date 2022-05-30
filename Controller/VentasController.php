@@ -6693,6 +6693,7 @@ class VentasController extends AppController {
 	public function notificar_cambio_estado($id_venta = null, $plantillaEmail = null, $nombre_estado_nuevo = '')
 	{	
 		$venta = $this->Venta->obtener_venta_por_id($id_venta);
+	 	$pendientes = [] ;
 		
 		$plantillaDefault = @$venta['VentaEstado']['VentaEstadoCategoria']['plantilla'];
 		$estadoDefault    = @$venta['VentaEstado']['nombre'];
@@ -6760,16 +6761,52 @@ class VentasController extends AppController {
 			)
 		);
 		
+
 		if (Configure::read('ambiente') == 'dev') {
             $destinatarios = array(
 				array(
 					'email' => 'cristian.rojas@nodriza.cl',
 					'name' => 'Cristian rojas'
+				),
+				array(
+					'email' => 'diego.romero@nodriza.cl',
+					'name' => 'Diego Saitama'
 				)
 			);
+			
       	}
+		$return =  $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+		
+		if( $return )
+		{
+			switch ($plantillaDefault) {
+				case 'enviado':
 
-		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+					$TransportesVenta = [];
+					foreach ($venta['TransportesVenta'] as $detalle) {
+						if ($detalle['EmbalajeWarehouse']['estado'] == 'finalizado' && !$detalle['notificado']) {
+	
+							$TransportesVenta[]['TransportesVenta']= [
+								'id' 		 => $detalle['id'],
+								'notificado' => true
+							];
+						}
+					}
+	
+					if($TransportesVenta){
+						ClassRegistry::init('TransportesVenta')->create();
+						ClassRegistry::init('TransportesVenta')->saveAll($TransportesVenta);
+					}
+
+					break;
+				default:
+					# code...
+					break;
+			}
+			
+			// prx( json_encode($TransportesVenta) );
+		}
+		return  $return;
 		
 	}
 
@@ -12868,7 +12905,8 @@ class VentasController extends AppController {
 				])
 			]
 		];	
-		
+		// * Se envia desde warehouse el embalaje pero no se esta usando aun desde sistema
+		// $embalaje_id 				= $this->request->query['embalaje_id'];
 		$cambiar_estado 	  		= false;
 		$nuevo_estado   	  		= null;
 	
