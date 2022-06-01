@@ -2107,7 +2107,7 @@ class OrdenComprasController extends AppController
 	 * @return [type] [description]
 	 */
 	public function admin_obtener_ordenes_ajax()
-	{	
+	{
 
 		$this->layout = 'ajax';
 
@@ -2115,21 +2115,52 @@ class OrdenComprasController extends AppController
 
 
 		$fecha_actual = date("Y-m-d H:i:s");
-		$hace_dos_mes  = date("Y-m-d H:i:s",strtotime($fecha_actual."-2 month")); 
+		$hace_dos_mes  = date("Y-m-d H:i:s", strtotime($fecha_actual . "-2 month"));
 
 		$ventas          = $this->OrdenCompra->Venta->find('all', array(
 			'conditions' => array(
-				'Venta.fecha_venta >' => $hace_dos_mes,
-				'Venta.bodega_id' => Hash::extract($this->Auth->user('Bodega'), '{n}.id')
+				'Venta.fecha_venta >' 	=> $hace_dos_mes,
+				'Venta.bodega_id' 		=> Hash::extract($this->Auth->user('Bodega'), '{n}.id')
 			),
 			'fields' => array(
-				'Venta.id', 'Venta.id_externo', 'Venta.referencia', 'Venta.fecha_venta', 'Venta.total', 'Venta.prioritario', 'Venta.picking_estado'
+				'Venta.id',
+				'Venta.id_externo',
+				'Venta.referencia',
+				'Venta.fecha_venta',
+				'Venta.total',
+				'Venta.prioritario',
+				'Venta.picking_estado',
+
+				"(SELECT Sum(StockProducto.cantidad)
+					from rp_bodegas_venta_detalle_productos as StockProducto
+					where StockProducto.venta_detalle_producto_id in (select detalle.venta_detalle_producto_id
+																  from rp_venta_detalles as detalle
+																  where detalle.venta_id = `Venta`.`id`)
+				  and tipo <> 'GT') as Stock",
+
+				"(SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
+					from rp_venta_detalles_reservas as Reserva
+					where Reserva.venta_detalle_producto_id in (select detalle.venta_detalle_producto_id
+															from rp_venta_detalles as detalle
+															where detalle.venta_id = `Venta`.`id`))
+													   as StockReservadoDelProducto",
+
+				"(SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
+					from rp_venta_detalles_reservas as Reserva
+					where Reserva.venta_detalle_id in (select detalle.id
+											   from rp_venta_detalles as detalle
+											   where detalle.venta_id = `Venta`.`id`))
+												   as StockReservadoDeLaVenta",
+
+				"(SELECT Sum(detalle.cantidad - detalle.cantidad_anulada - detalle.cantidad_entregada - detalle.cantidad_reservada)
+					from rp_venta_detalles as detalle
+					where detalle.venta_id = `Venta`.`id`) as CantidadPendienteTotal"
 			),
 			'joins' => array(
 				array(
 					'table' => 'rp_venta_estados',
 					'alias' => 'venta_estados',
-					'type' => 'INNER',
+					'type' 	=> 'INNER',
 					'conditions' => array(
 						'venta_estados.id = Venta.venta_estado_id',
 						'venta_estados.permitir_oc = 1'
@@ -2138,49 +2169,28 @@ class OrdenComprasController extends AppController
 				array(
 					'table' => 'rp_venta_estado_categorias',
 					'alias' => 'venta_estados_cat',
-					'type' => 'INNER',
+					'type' 	=> 'INNER',
 					'conditions' => array(
 						'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
 						'venta_estados_cat.rechazo = 0',
 						'venta_estados_cat.cancelado = 0',
 						'venta_estados_cat.final = 0'
 					)
-				),
-				array(
-					'table' => 'rp_venta_detalles',
-					'alias' => 'venta_detalles',
-					'type' => 'INNER',
-					'conditions' => array(
-						'venta_detalles.venta_id = Venta.id',
-						
-					),
-					'joins' => [
-						'table' => 'rp_venta_detalles_reservas',
-						'alias' => 'VentaDetallesReserva',
-						'type' => 'LEFT',
-						'conditions' => array(
-							'VentaDetallesReserva.venta_detalle_id = venta_detalles.id',
-							'ifnull(Sum(VentaDetallesReserva.cantidad_reservada),0) < venta_detalles.cantidad',
-						),
-						'group' => array(
-							'VentaDetallesReserva.venta_detalle_id'
-						),
-					]
-				),
+				)
 			),
 			'contain' => array(
 				'Dte' => array(
 					'fields' => array('Dte.id', 'Dte.tipo_documento')
-				), 
+				),
 				'Marketplace' => array(
 					'fields' => array('Marketplace.nombre')
-				), 
+				),
 				'VentaCliente' => array(
 					'fields' => array('VentaCliente.nombre', 'VentaCliente.email', 'VentaCliente.apellido')
-				), 
+				),
 				'VentaDetalle' => array(
 					'fields' => array('VentaDetalle.id', 'VentaDetalle.venta_detalle_producto_id')
-				), 
+				),
 				'VentaEstado' => array(
 					'VentaEstadoCategoria' => array(
 						'fields' => array(
@@ -2199,16 +2209,18 @@ class OrdenComprasController extends AppController
 						'OrdenCompra.id'
 					)
 				),
-				'Bodega'=>['fields'=>'Bodega.nombre']
+				'Bodega' => ['fields' => 'Bodega.nombre']
 			),
 			'group' => array(
 				'Venta.id'
 			),
-			'limit' => $this->request->query['limit'],
-			'offset' => $this->request->query['offset'],
-			'order' => array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC')
+			'having' 	=> array('(CantidadPendienteTotal - StockReservadoDeLaVenta) > (Stock - StockReservadoDelProducto)','(CantidadPendienteTotal - StockReservadoDeLaVenta) > 0'),
+			'limit' 	=> $this->request->query['limit'] ?? 200,
+			'offset' 	=> $this->request->query['offset'] ?? 0,
+			'order' 	=> array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC')
 		));
-		
+		// prx($this->OrdenCompra->getDataSource()->getLog(false, false));
+		// prx($ventas );
 		if (empty($ventas)) {
 			echo 0;
 			exit;
@@ -2227,7 +2239,7 @@ class OrdenComprasController extends AppController
 			$obtenerRelacionados = Hash::extract($relacionados, '{n}.OrdenComprasVenta.venta_id');
 		}
 
-			
+
 
 		foreach ($ventas as $io => $orden) {
 
@@ -2238,19 +2250,18 @@ class OrdenComprasController extends AppController
 					$ventas[$io]['Venta']['selected'] = true;
 				}
 			}
-
 		}
 
-		$bodega_default = ClassRegistry::init('Bodega')->find('first',
+		$bodega_default = ClassRegistry::init('Bodega')->find(
+			'first',
 			[
-				'conditions'=>['Bodega.principal' => 1],
-				'fields' => ['Bodega.id','Bodega.nombre']
+				'conditions' => ['Bodega.principal' => 1],
+				'fields' => ['Bodega.id', 'Bodega.nombre']
 			]
 		);
-		
-		$this->set(compact('ventas','bodega_default'));
-	}
 
+		$this->set(compact('ventas', 'bodega_default'));
+	}
 
 	/**
 	 * [admin_calcularMontoPagar description]
