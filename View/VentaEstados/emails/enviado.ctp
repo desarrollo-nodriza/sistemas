@@ -156,44 +156,46 @@
                                               Hemos entregado su pedido al transportista correspondiente. Puede ver más detalles a continuación.
                                             </p>
                                             <!-- /Parrafo -->
-                                            <? foreach ($embalajes_finalizados as $t) : ?>
+                                            <? foreach ($venta['TransportesVenta'] as $t) : ?>
+                                              <? if ($t['EmbalajeWarehouse']['estado'] == "finalizado" && !$t['notificado']) : ?>
+                                                <table class="table" style="margin-bottom: 15px;padding:15px ;border-top: solid 0.5px;border-bottom: solid 0.5px;border-left: solid 0.5px;border-right: solid 0.5px;" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff" width="100%">
 
-                                              <table class="table" style="margin-bottom: 15px;padding:15px ;border-top: solid 0.5px;border-bottom: solid 0.5px;border-left: solid 0.5px;border-right: solid 0.5px;" border="0" cellpadding="0" cellspacing="0" bgcolor="#ffffff" width="100%">
+                                                  <tbody>
 
-                                                <tbody>
-                                                  <th colspan="4" align="center" style="font-size: 20px; padding-top: 10px;">
-                                                    Paquete nº <?= $t['embalaje_id'] ?>
-                                                  </th>
-                                                  <tr>
-                                                    <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">Enviado por</td>
-                                                    <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><?= $t['Transporte']['nombre']; ?></td>
-                                                  </tr>
-                                                  <tr>
-                                                    <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">N° de seguimiento</td>
-                                                    <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><?= $t['cod_seguimiento']; ?></td>
-                                                  </tr>
-                                                  <tr>
-                                                    <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">Fecha estimada de entrega</td>
-                                                    <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><?= (!empty($t['entrega_aprox'])) ? date("d-m-Y", strtotime($t['entrega_aprox'])) : date("d-m-Y", strtotime($t['Transporte']['tiempo_entrega'])); ?></td>
-                                                  </tr>
-
-                                                  <tr>
-                                                    <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">Seguimiento</td>
-                                                    <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><a href="<?= $t['Transporte']['url_seguimiento']; ?>">Ir a la página</a></td>
-                                                  </tr>
-                                                  <tr>
-                                                    <th colspan="4" align="center" style="font-size: 20px; padding-top: 10px; padding-bottom: 15px;">
-                                                      Productos enviados
+                                                    <th colspan="4" align="center" style="font-size: 20px; padding-top: 10px;">
+                                                      Paquete nº <?= $t['embalaje_id'] ?>
                                                     </th>
-                                                  </tr>
-                                                  <? foreach ($t['EmbalajeWarehouse']['EmbalajeProductoWarehouse'] as $detatalleEmbalaje) : ?>
                                                     <tr>
-                                                      <td colspan="3" style="font-size: 14px; line-height: 24px; padding-top: 10px; padding-bottom: 5px;" valign="center" align="left"> <?= $detatalleEmbalaje['VentaDetalleProducto']['nombre'] ?></td>
-                                                      <td style="font-size: 12px; line-height: 24px;" valign="center" align="center"> <span style="color: #F55A00; font-size: 14px; margin-right: 5px;position: relative; vertical-align: top">x<?= $detatalleEmbalaje['cantidad_a_embalar'] ?></span></td>
+                                                      <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">Enviado por</td>
+                                                      <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><?= $t['Transporte']['nombre']; ?></td>
                                                     </tr>
-                                                  <? endforeach; ?>
-                                                </tbody>
-                                              </table>
+                                                    <tr>
+                                                      <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">N° de seguimiento</td>
+                                                      <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><?= $t['cod_seguimiento']; ?></td>
+                                                    </tr>
+                                                    <tr>
+                                                      <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">Fecha estimada de entrega</td>
+                                                      <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><?= (!empty($t['entrega_aprox'])) ? date("d-m-Y", strtotime($t['entrega_aprox'])) : date("d-m-Y", strtotime($t['Transporte']['tiempo_entrega'])); ?></td>
+                                                    </tr>
+
+                                                    <tr>
+                                                      <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">Seguimiento</td>
+                                                      <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><a href="<?= $t['Transporte']['url_seguimiento']; ?>">Ir a la página</a></td>
+                                                    </tr>
+                                                    <tr>
+                                                      <th colspan="4" align="center" style="font-size: 20px; padding-top: 10px; padding-bottom: 15px;">
+                                                        Productos enviados
+                                                      </th>
+                                                    </tr>
+                                                    <? foreach ($t['EmbalajeWarehouse']['EmbalajeProductoWarehouse'] as $detatalleEmbalaje) : ?>
+                                                      <tr>
+                                                        <td colspan="3" style="font-size: 14px; line-height: 24px; padding-top: 10px; padding-bottom: 5px;" valign="center" align="left"> <?= $detatalleEmbalaje['VentaDetalleProducto']['nombre'] ?></td>
+                                                        <td style="font-size: 12px; line-height: 24px;" valign="center" align="center"> <span style="color: #F55A00; font-size: 14px; margin-right: 5px;position: relative; vertical-align: top">x<?= $detatalleEmbalaje['cantidad_a_embalar'] ?></span></td>
+                                                      </tr>
+                                                    <? endforeach; ?>
+                                                  </tbody>
+                                                </table>
+                                              <? endif; ?>
                                             <? endforeach; ?>
                                           <? endif; ?>
 
