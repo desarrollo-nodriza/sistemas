@@ -2152,7 +2152,9 @@ class OrdenComprasController extends AppController
 											   where detalle.venta_id = `Venta`.`id`))
 												   as StockReservadoDeLaVenta",
 
-				"(SELECT Sum(detalle.cantidad - detalle.cantidad_anulada - detalle.cantidad_entregada - detalle.cantidad_reservada)
+				"(select Sum(CAST(detalle.cantidad as signed) - CAST(detalle.cantidad_anulada as signed) -
+					CAST(detalle.cantidad_entregada as signed) -
+					CAST(detalle.cantidad_reservada as signed))
 					from rp_venta_detalles as detalle
 					where detalle.venta_id = `Venta`.`id`) as CantidadPendienteTotal"
 			),
