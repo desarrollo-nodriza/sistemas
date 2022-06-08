@@ -2304,7 +2304,6 @@ class Venta extends AppModel
 					'type' => 'INNER',
 					'conditions' => array(
 						'MetodoEnvio.id = Venta.metodo_envio_id',
-						'MetodoEnvio.dependencia' => 'boosmap',
 						'MetodoEnvio.generar_ot' => 1
 					)
 				),
@@ -2327,44 +2326,27 @@ class Venta extends AppModel
 						'VentaEstadoCategoria.rechazo' => 0,
 						'VentaEstadoCategoria.final' => 0
 					)
-				),
-				array(
-					'table' => 'rp_transportes_ventas',
-					'alias' => 'TransporteVenta',
-					'type' => 'INNER',
-					'conditions' => array(
-						'TransporteVenta.venta_id = Venta.id',
-						'TransporteVenta.cod_seguimiento !='  => ''
-					)
-				),
-				array(
-					'table' => 'rp_transportes',
-					'alias' => 't',
-					'type' => 'INNER',
-					'conditions' => array(
-						't.id = TransporteVenta.transporte_id',
-						't.codigo'  => 'BOOSMAP-WS'
-					)
-				),
-				array(
-					'table' => 'rp_envio_historicos',
-					'alias' => 'EnvioHistorico',
-					'type' => 'LEFT',
-					'conditions' => array(
-						'EnvioHistorico.transporte_venta_id = TransporteVenta.id',
-					)
 				)
 			),
 			'conditions' => array(
-				'EnvioHistorico.id' => NULL,
-				'Venta.fecha_venta >' => '2021-01-01 00:00:00'
+				'Venta.fecha_venta >  ADDDATE(NOW(), INTERVAL -3 Month)'
 			),
 			'contain' => array(
 				'Transporte'
 			),	
 			'fields' => array(
-				'Venta.id', 'Venta.fecha_venta', 'Venta.venta_estado_id'
+				'Venta.id', 'Venta.fecha_venta', 'Venta.venta_estado_id',
+				"(select count(Historico.id)
+					from rp_transportes_ventas as Transporte
+						 left join rp_envio_historicos as Historico on Historico.transporte_venta_id = Transporte.id
+					where Transporte.venta_id = `Venta`.`id`
+				  		and Transporte.cod_seguimiento != '')   as estados_OT",
+				" (select count(Transporte.id)
+					from rp_transportes_ventas as Transporte
+					where Transporte.venta_id = `Venta`.`id`) as tiene_OT"
+
 			),
+			'having' 	=> array('estados_OT = 0','tiene_OT > 0'),
 			'group' => array('Venta.id')
 		));
 	}
