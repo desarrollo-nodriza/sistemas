@@ -2195,7 +2195,7 @@ class OrdenComprasController extends AppController
 							 where detalle.id = rvd.id) - (SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
 														   from rp_venta_detalles_reservas as Reserva
 														   where Reserva.venta_detalle_id = rvd.id)) >
-						   ((SELECT Sum(StockProducto.cantidad)
+						   ((SELECT ifnull(Sum(StockProducto.cantidad),0)
 							 from rp_bodegas_venta_detalle_productos as StockProducto
 							 where StockProducto.venta_detalle_producto_id = rvd.venta_detalle_producto_id
 							   and tipo <> 'GT') - (SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
