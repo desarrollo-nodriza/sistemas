@@ -2108,20 +2108,11 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_obtener_ordenes_ajax()
 	{
-
 		$this->layout = 'ajax';
 
 		ini_set('memory_limit', -1);
-
-
-		$fecha_actual = date("Y-m-d H:i:s");
-		$hace_dos_mes  = date("Y-m-d H:i:s", strtotime($fecha_actual . "-2 month"));
-
 		$ventas          = $this->OrdenCompra->Venta->find('all', array(
-			'conditions' => array(
-				'Venta.fecha_venta >' 	=> $hace_dos_mes,
-				'Venta.bodega_id' 		=> Hash::extract($this->Auth->user('Bodega'), '{n}.id')
-			),
+		
 			'fields' => array(
 				'Venta.id',
 				'Venta.id_externo',
@@ -2129,34 +2120,7 @@ class OrdenComprasController extends AppController
 				'Venta.fecha_venta',
 				'Venta.total',
 				'Venta.prioritario',
-				'Venta.picking_estado',
-
-				"(SELECT Sum(StockProducto.cantidad)
-					from rp_bodegas_venta_detalle_productos as StockProducto
-					where StockProducto.venta_detalle_producto_id in (select detalle.venta_detalle_producto_id
-																  from rp_venta_detalles as detalle
-																  where detalle.venta_id = `Venta`.`id`)
-				  and tipo <> 'GT') as Stock",
-
-				"(SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
-					from rp_venta_detalles_reservas as Reserva
-					where Reserva.venta_detalle_producto_id in (select detalle.venta_detalle_producto_id
-															from rp_venta_detalles as detalle
-															where detalle.venta_id = `Venta`.`id`))
-													   as StockReservadoDelProducto",
-
-				"(SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
-					from rp_venta_detalles_reservas as Reserva
-					where Reserva.venta_detalle_id in (select detalle.id
-											   from rp_venta_detalles as detalle
-											   where detalle.venta_id = `Venta`.`id`))
-												   as StockReservadoDeLaVenta",
-
-				"(select Sum(CAST(detalle.cantidad as signed) - CAST(detalle.cantidad_anulada as signed) -
-					CAST(detalle.cantidad_entregada as signed) -
-					CAST(detalle.cantidad_reservada as signed))
-					from rp_venta_detalles as detalle
-					where detalle.venta_id = `Venta`.`id`) as CantidadPendienteTotal"
+				'Venta.picking_estado'
 			),
 			'joins' => array(
 				array(
@@ -2213,10 +2177,40 @@ class OrdenComprasController extends AppController
 				),
 				'Bodega' => ['fields' => 'Bodega.nombre']
 			),
-			'group' => array(
-				'Venta.id'
-			),
-			'having' 	=> array('(CantidadPendienteTotal - StockReservadoDeLaVenta) > (Stock - StockReservadoDelProducto)','(CantidadPendienteTotal - StockReservadoDeLaVenta) > 0'),
+			'conditions' => array(
+				"Venta.id in (SELECT Venta.id
+					FROM rp_ventas AS Venta
+							 INNER JOIN rp_venta_estados AS venta_estados
+										ON (venta_estados.id = Venta.venta_estado_id AND venta_estados.permitir_oc = 1)
+							 INNER JOIN rp_venta_estado_categorias AS venta_estados_cat
+										ON (venta_estados_cat.id = venta_estados.venta_estado_categoria_id AND
+											venta_estados_cat.rechazo = 0 AND venta_estados_cat.cancelado = 0 AND
+											venta_estados_cat.final = 0)
+							 INNER JOIN rp_venta_detalles rvd ON Venta.id = rvd.venta_id
+					WHERE Venta.fecha_venta > ADDDATE(NOW(), INTERVAL -2 Month)
+					having ((select Sum(CAST(detalle.cantidad as signed) - CAST(detalle.cantidad_anulada as signed) -
+										CAST(detalle.cantidad_entregada as signed) -
+										CAST(detalle.cantidad_reservada as signed))
+							 from rp_venta_detalles as detalle
+							 where detalle.id = rvd.id) - (SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
+														   from rp_venta_detalles_reservas as Reserva
+														   where Reserva.venta_detalle_id = rvd.id)) >
+						   ((SELECT Sum(StockProducto.cantidad)
+							 from rp_bodegas_venta_detalle_productos as StockProducto
+							 where StockProducto.venta_detalle_producto_id = rvd.venta_detalle_producto_id
+							   and tipo <> 'GT') - (SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
+													from rp_venta_detalles_reservas as Reserva
+													where Reserva.venta_detalle_producto_id = rvd.venta_detalle_producto_id))
+					   and ((select Sum(CAST(detalle.cantidad as signed) - CAST(detalle.cantidad_anulada as signed) -
+										CAST(detalle.cantidad_entregada as signed) -
+										CAST(detalle.cantidad_reservada as signed))
+							 from rp_venta_detalles as detalle
+							 where detalle.id = rvd.id) - (SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
+														   from rp_venta_detalles_reservas as Reserva
+														   where Reserva.venta_detalle_id = rvd.id)) > 0
+					ORDER BY Venta.prioritario DESC, Venta.fecha_venta DESC)",
+					'Venta.bodega_id' 		=> Hash::extract($this->Auth->user('Bodega'), '{n}.id')
+				),
 			'limit' 	=> $this->request->query['limit'] ?? 200,
 			'offset' 	=> $this->request->query['offset'] ?? 0,
 			'order' 	=> array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC')
