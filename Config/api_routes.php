@@ -660,6 +660,29 @@ Router::connect(
     )
 );
 
+Router::connect(
+    '/api/facturas-oc/recepcionar', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompraFacturas', 
+        'action' => 'recepcionar_dte_compras',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+
+Router::connect(
+    '/api/facturas-oc/recepcionar/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompraFacturas', 
+        'action' => 'recepcionar_dte_compra',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
 
 /**
  * Mensajes
