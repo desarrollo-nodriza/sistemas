@@ -75,19 +75,30 @@ class LibreDTEAPI
      * @return array
      */
     public function cambiarEstadoDteCompra($docs = [], $params = [])
-    {
-        # Requerido para autenticarse en el sii
-        $body = [
-            "auth" => [
-                "cert" => [
-                    "cert-data" => $this->cert_auth['cert'],
-                    "pkey-data" => $this->cert_auth['pkey']
-                ]
-            ],
-            "documentos" => $docs
-        ];
+    {   
+        # Se envian de a 10 documentos
+        $iteraciones = array_chunk($docs, 10);
+
+        $results = [];
         
-        return $this->post("/libredte/dte/intercambios/respuesta_sii", $body, $params);
+        foreach($iteraciones as $dtes)
+        {
+             # Requerido para autenticarse en el sii
+            $body = [
+                "auth" => [
+                    "cert" => [
+                        "cert-data" => $this->cert_auth['cert'],
+                        "pkey-data" => $this->cert_auth['pkey']
+                    ]
+                ],
+                "documentos" => $dtes
+            ];
+
+            $results[] = $this->post("/libredte/dte/intercambios/respuesta_sii", $body, $params);
+        }
+
+        return $results;
+
     }
 
 
@@ -228,6 +239,7 @@ class LibreDTEAPI
 
         $return["body"] = json_decode(curl_exec($ch), $assoc);
         $return["httpCode"] = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $return["error"] = curl_error($ch);
 
         curl_close($ch);
         

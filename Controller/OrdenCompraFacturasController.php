@@ -1345,4 +1345,178 @@ class OrdenCompraFacturasController extends AppController
         ));
 			
     }
+
+	public function api_recepcionar_dte_compras()
+	{   
+
+		$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 401, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 401, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$conf = ClassRegistry::init('Tienda')->tienda_principal(
+			array(
+				'Tienda.sii_public_key',
+				'Tienda.sii_private_key',
+				'Tienda.libredte_token'
+			)
+		);
+
+		$log = array();
+
+		$log[] = array('Log' => array(
+			'administrador' => 'Api',
+			'modulo' => 'OrdenCompraFactura',
+			'modulo_accion' => 'Inicia proceso de acuse de recibo: ' . date('Y-m-d H:i:s')
+		));
+
+		if (empty($conf['Tienda']['sii_public_key'])
+			|| empty($conf['Tienda']['sii_private_key'])
+			|| empty($conf['Tienda']['libredte_token'])) {
+			
+                $log[] = array('Log' => array(
+				'administrador' => 'Api',
+				'modulo' => 'OrdenCompraFactura',
+				'modulo_accion' => 'Error: La tienda no está configurada para recepcionar las compras desde el SII.'
+			));
+
+			ClassRegistry::init('Log')->saveMany($log);
+
+			$response = array(
+				'code'    => 501, 
+				'message' => 'Error: La tienda no está configurada para recepcionar las compras desde el SII.'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$qry = array(
+            'conditions' => array(
+                'OrdenCompraFactura.tipo_documento' => 33 // Sólo facturas
+            ),
+            'joins' => array(
+                array(
+					'table' => 'dte_compras',
+					'alias' => 'DteCompra',
+					'type'  => 'INNER',
+					'conditions' => array(
+                        'OrdenCompraFactura.folio = DteCompra.folio',
+                        'OrdenCompraFactura.emisor = DteCompra.rut_emisor',
+                        'DteCompra.estado' => 'PENDIENTE'
+                    )
+                ),
+                array(
+					'table' => 'proveedores',
+					'alias' => 'pp',
+					'type'  => 'inner',
+					'conditions' => array(
+                        'OrdenCompraFactura.proveedor_id = pp.id',
+                        'pp.aceptar_dte' => 1
+                    )
+				)
+            ),
+            'contain' => array(
+                'Proveedor' => array(
+                    'fields' => array(
+                        'Proveedor.id',
+                        'Proveedor.aceptar_dte',
+						'Proveedor.margen_aceptar_dte'
+					)
+				),
+				'OrdenCompra' => array(
+					'fields' => array(
+						'OrdenCompra.id',
+						'OrdenCompra.tienda_id',
+						'OrdenCompra.bodega_id'
+					),
+					'Tienda' => array(
+						'fields' => array(
+							'Tienda.id', 
+							'Tienda.rut'
+						)
+					),
+					'Bodega' => array(
+						'fields' => array(
+							'Bodega.id',
+							'Bodega.nombre'
+						)
+					)
+				)
+            ),
+            'fields' => array(
+                'OrdenCompraFactura.id',
+                'OrdenCompraFactura.folio',
+                'OrdenCompraFactura.proveedor_id',
+				'OrdenCompraFactura.orden_compra_id',
+				'OrdenCompraFactura.monto_facturado',
+                'DteCompra.*'
+            )
+		);
+	
+		# si viene el filtro de id lo aplicamos
+		if (isset($this->request->data['id']) && !empty($this->request->data['id'])) 
+		{
+			$qry = array_replace_recursive($qry, array(
+				'conditions' => array(
+					'OrdenCompraFactura.id' => $this->request->data['id']
+				)
+			));
+    	}
+
+		# Buscamos las facturas que no han sido recepcionadas
+        $dtes = ClassRegistry::init('OrdenCompraFactura')->find('all', $qry);
+		
+		if (empty($dtes))
+		{
+			$log[] = array('Log' => array(
+				'administrador' => 'Api',
+				'modulo' => 'OrdenCompraFactura',
+				'modulo_accion' => 'No se encontraron dtes de compra.'
+			));
+
+			ClassRegistry::init('Log')->saveMany($log);
+
+			$response = array(
+				'code'    => 404, 
+				'message' => 'No se encontraron dtes de compra.'
+			);
+
+			throw new CakeException($response);
+		}
+
+		$result = $this->recepcionar_dte_compra($conf['Tienda']['libredte_token'], $conf['Tienda']['sii_public_key'], $conf['Tienda']['sii_private_key'], $dtes);
+        
+		# Extraemos los resultados correctos
+		$ejecutados = Hash::extract($result, '{n}.[httpCode=200]');
+
+		$this->set(array(
+            'response' => array(
+				'code' => 200,
+            	'message' => sprintf('Se recepcionaron %n dtes de compra.', count($ejecutados))
+			),
+            '_serialize' => array('response')
+        ));
+
+	}
 }
