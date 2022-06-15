@@ -528,9 +528,9 @@
 													<? if (!empty($venta['Transporte'])) : ?>
 														<? foreach ($venta['Transporte'] as $it => $transporte) : ?>
 															<tr>
-																<td><?= $this->Form->select(sprintf('Transporte.%d.transporte_id', $it), $transportes, array('empty' => 'Seleccione', 'class' => 'form-control not-blank js-select-transporte', 'default' => $transporte['id'])) ?></td>
-																<td><?= $this->Form->input(sprintf('Transporte.%d.cod_seguimiento', $it), array('default' => $transporte['TransportesVenta']['cod_seguimiento'], 'class' => 'form-control not-blank', 'placeholder' => 'Ej: 9999999999')); ?></td>
-																<td><?= $transporte['TransportesVenta']['embalaje_id']; ?></td>
+																<td><?= $this->Form->select(sprintf('Transporte.%d.transporte_id', $it), $transportes, array( 'required','empty' => 'Seleccione', 'class' => 'form-control not-blank js-select-transporte', 'default' => $transporte['id'])) ?></td>
+																<td><?= $this->Form->input(sprintf('Transporte.%d.cod_seguimiento', $it), array('required','default' => $transporte['TransportesVenta']['cod_seguimiento'], 'class' => 'form-control not-blank', 'placeholder' => 'Ej: 9999999999')); ?></td>
+																<td><?= $this->Form->select(sprintf('Transporte.%d.embalaje_id', $it), $selector_embalaje, array('required','default' => $transporte['TransportesVenta']['embalaje_id'], 'class' => 'form-control not-blank')); ?></td>
 																<td>
 																	<? if (!empty($transporte['TransportesVenta']['etiqueta'])) : ?>
 																		<a href="<?= $transporte['TransportesVenta']['etiqueta'] ?>" class="btn btn-xs btn-primary" target="_blank"><i class="fa fa-file-pdf-o"></i> Ver</a>

@@ -4932,19 +4932,18 @@ class VentasController extends AppController {
 				'id' => $id
 			)
 		);
-
 		foreach ($this->request->data['Transporte'] as $it => $t) {
 
-			if (empty($t['transporte_id']) || empty($t['cod_seguimiento'])) {
+			if (empty($t['transporte_id']) || empty($t['cod_seguimiento'])  || empty($t['embalaje_id'])) {
 				continue;
 			}
-
+			
 			$dataToSave['Transporte'][$it]['transporte_id']   = $t['transporte_id'];
 			$dataToSave['Transporte'][$it]['cod_seguimiento'] = $t['cod_seguimiento'];
 			$dataToSave['Transporte'][$it]['embalaje_id'] 	  = $t['embalaje_id'];
 			$dataToSave['Transporte'][$it]['created']         = date('Y-m-d H:i:s');
 		}
-
+		
 		# Guardamos los códigos de seguimiento
 		if ($this->Venta->saveAll($dataToSave)) {
 			$this->Session->setFlash('N° seguimiento registrado con éxito.', null, array(), 'success');
