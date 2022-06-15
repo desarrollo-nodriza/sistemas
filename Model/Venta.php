@@ -2244,6 +2244,7 @@ class Venta extends AppModel
 	public function obtener_ventas_con_envios()
 	{
 		return $this->find('all', array(
+			'conditions'=> ["Venta.fecha_venta > ADDDATE(NOW(), INTERVAL -3 Month)"],
 			'joins' => array(
 				array(
 					'table' => 'rp_venta_estados',

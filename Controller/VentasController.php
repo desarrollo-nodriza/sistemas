@@ -3601,32 +3601,6 @@ class VentasController extends AppController {
 		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
 
 		$starken_info = array(); 
-		# Starken
-		// if ($venta['MetodoEnvio']['dependencia'] == 'starken') {
-			
-		// 	# Creamos cliente starken
-		// 	$this->Starken->crearCliente($venta['Tienda']['starken_rut'], $venta['Tienda']['starken_clave'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
-			
-		// 	$seguimientos = array();
-
-		// 	if (!empty($venta['Transporte'])) {
-		// 		# creamos una lista con los n° de seguimiento
-		// 		foreach ($venta['Transporte'] as $iv => $t) {
-					
-		// 			if (empty($t['TransportesVenta']['cod_seguimiento']))
-		// 				continue;
-
-		// 			$seguimientos['listaSeguimientos'][]['numeroOrdenFlete'] = $t['TransportesVenta']['cod_seguimiento'];
-
-		// 		}
-
-		// 		if (!empty($seguimientos)) {
-		// 			# Consultamos por los envios
-		// 			$res = $this->Starken->seguimiento($seguimientos);
-		// 		}
-		// 	}
-			
-		// }
 		
 		# Estados de envios
 		foreach ($venta['Transporte'] as $it => $t)
@@ -3690,9 +3664,12 @@ class VentasController extends AppController {
 				}
 			}
 		}
-
-		foreach ($venta['EmbalajeWarehouse'] as $key => $value ) {
+		$selector_embalaje = [];
 		
+		foreach ($venta['EmbalajeWarehouse'] as $key => $value ) {
+
+			$selector_embalaje[$value['id']] = $value['id'];
+			
 			foreach ($value['HistorialEmbalaje'] as $key2 => $value2) {
 				$existe = Hash::extract($response['response']['body'], "{n}[embalaje_id={$value2['embalaje_id']}]");
 
@@ -3701,7 +3678,7 @@ class VentasController extends AppController {
 				}
 			}
 		}
-
+		
 		# Obtener embalajes vía api y las notas relacionadas
 		$embalajes_req = $this->WarehouseNodriza->ObtenerEmbalajesVentaV2($id);	
 		$notas_req = $this->WarehouseNodriza->ObtenerNotasDespacho(['venta_id' => $id]);		
@@ -3724,7 +3701,7 @@ class VentasController extends AppController {
 		
 		$this->sort_array_by_key($notas_embalajes, 'fecha_creacion');
 		
-		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas', 'embalajes', 'notas_embalajes', 'notas_despacho','bodegas'));
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas', 'embalajes', 'notas_embalajes', 'notas_despacho','bodegas','selector_embalaje'));
 
 	}
 
@@ -4964,6 +4941,7 @@ class VentasController extends AppController {
 
 			$dataToSave['Transporte'][$it]['transporte_id']   = $t['transporte_id'];
 			$dataToSave['Transporte'][$it]['cod_seguimiento'] = $t['cod_seguimiento'];
+			$dataToSave['Transporte'][$it]['embalaje_id'] 	  = $t['embalaje_id'];
 			$dataToSave['Transporte'][$it]['created']         = date('Y-m-d H:i:s');
 		}
 
@@ -12581,7 +12559,7 @@ class VentasController extends AppController {
 	{
 		
 		$venta = $this->Venta->find('first', [
-			'conditions' 	=> [['Venta.id' => $id]],
+			'conditions' 	=> ['Venta.id' => $id],
 			'fields'		=> ['Venta.id', 'Venta.metodo_envio_id'],
 			'contain'  		=> [
 				'TransportesVenta' => [
