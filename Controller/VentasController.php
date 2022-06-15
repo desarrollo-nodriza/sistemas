@@ -12515,7 +12515,7 @@ class VentasController extends AppController {
 		
 		if (!$total)
 		{
-			$this->Session->setFlash('No hay ventas que actualizar.', null, array(), 'info');
+			$this->Session->setFlash('No hay ventas que actualizar.', null, array(), 'warning');
 		}
 		else
 		{
