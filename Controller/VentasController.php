@@ -12511,11 +12511,29 @@ class VentasController extends AppController {
 
 	public function admin_generar_historico_envios()
 	{
+		$total = $this->generar_historico_envios();
+		
+		if (!$total)
+		{
+			$this->Session->setFlash('No hay ventas que actualizar.', null, array(), 'info');
+		}
+		else
+		{
+			$this->Session->setFlash(sprintf('Se procesaron un total de %d ventas', $total), null, array(), 'success');
+		}
+
+		$this->redirect(array('controller' => 'ventas', 'action' => 'index'));
+
+	}
+
+
+	public function generar_historico_envios()
+	{
 		$ventas = $this->Venta->obtener_ventas_con_envios_sin_historico();
 		
 		if (empty($ventas))
 		{
-			$this->Session->setFlash('No hay ventas que actualizar.', null, array(), 'info');
+			return false;
 		}
 
 		$total = 0;
@@ -12528,9 +12546,7 @@ class VentasController extends AppController {
 			}
 		}
 
-		$this->Session->setFlash(sprintf('Se procesaron un total de %d ventas', $total), null, array(), 'success');
-
-		$this->redirect(array('action' => 'index'));
+		return $total;
 
 	}
 
