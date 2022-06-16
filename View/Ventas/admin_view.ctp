@@ -518,7 +518,7 @@
 													<tr class="hidden clone-tr">
 														<td><?= $this->Form->select('Transporte.999.transporte_id', $transportes, array('disabled' => true, 'empty' => 'Seleccione', 'class' => 'form-control not-blank js-select-transporte')) ?></td>
 														<td><?= $this->Form->input('Transporte.999.cod_seguimiento', array('disabled' => true, 'class' => 'form-control not-blank', 'placeholder' => 'Ej: 9999999999')); ?></td>
-														<td>No aplica</td>
+														<td><?= $this->Form->select('Transporte.999.embalaje_id', $selector_embalaje, array('disabled' => true, 'empty' => 'Seleccione', 'class' => 'form-control not-blank')); ?></td>
 														<td>No aplica</td>
 														<td><span class="js-fecha-entrega">Seleccione tranporte</span></td>
 														<td><span class="js-btn-seguimiento">Seleccione tranporte</span></td>
@@ -528,9 +528,9 @@
 													<? if (!empty($venta['Transporte'])) : ?>
 														<? foreach ($venta['Transporte'] as $it => $transporte) : ?>
 															<tr>
-																<td><?= $this->Form->select(sprintf('Transporte.%d.transporte_id', $it), $transportes, array('empty' => 'Seleccione', 'class' => 'form-control not-blank js-select-transporte', 'default' => $transporte['id'])) ?></td>
-																<td><?= $this->Form->input(sprintf('Transporte.%d.cod_seguimiento', $it), array('default' => $transporte['TransportesVenta']['cod_seguimiento'], 'class' => 'form-control not-blank', 'placeholder' => 'Ej: 9999999999')); ?></td>
-																<td><?= $transporte['TransportesVenta']['embalaje_id']; ?></td>
+																<td><?= $this->Form->select(sprintf('Transporte.%d.transporte_id', $it), $transportes, array( 'required','empty' => 'Seleccione', 'class' => 'form-control not-blank js-select-transporte', 'default' => $transporte['id'])) ?></td>
+																<td><?= $this->Form->input(sprintf('Transporte.%d.cod_seguimiento', $it), array('required','default' => $transporte['TransportesVenta']['cod_seguimiento'], 'class' => 'form-control not-blank', 'placeholder' => 'Ej: 9999999999')); ?></td>
+																<td><?= $this->Form->select(sprintf('Transporte.%d.embalaje_id', $it), $selector_embalaje, array('required','default' => $transporte['TransportesVenta']['embalaje_id'], 'class' => 'form-control not-blank')); ?></td>
 																<td>
 																	<? if (!empty($transporte['TransportesVenta']['etiqueta'])) : ?>
 																		<a href="<?= $transporte['TransportesVenta']['etiqueta'] ?>" class="btn btn-xs btn-primary" target="_blank"><i class="fa fa-file-pdf-o"></i> Ver</a>
@@ -556,7 +556,7 @@
 										</div>
 									</div>
 									<div class="panel-footer">
-										<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar">
+										<input type="submit" class="btn btn-primary esperar-carga start-loading-when-form-is-validate" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar">
 									</div>
 								</div>
 								<?= $this->Form->end(); ?>

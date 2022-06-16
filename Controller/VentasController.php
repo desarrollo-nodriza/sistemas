@@ -3601,32 +3601,6 @@ class VentasController extends AppController {
 		$comunas = ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
 
 		$starken_info = array(); 
-		# Starken
-		// if ($venta['MetodoEnvio']['dependencia'] == 'starken') {
-			
-		// 	# Creamos cliente starken
-		// 	$this->Starken->crearCliente($venta['Tienda']['starken_rut'], $venta['Tienda']['starken_clave'], $venta['MetodoEnvio']['rut_empresa_emisor'], $venta['MetodoEnvio']['rut_usuario_emisor'], $venta['MetodoEnvio']['clave_usuario_emisor']);
-			
-		// 	$seguimientos = array();
-
-		// 	if (!empty($venta['Transporte'])) {
-		// 		# creamos una lista con los n° de seguimiento
-		// 		foreach ($venta['Transporte'] as $iv => $t) {
-					
-		// 			if (empty($t['TransportesVenta']['cod_seguimiento']))
-		// 				continue;
-
-		// 			$seguimientos['listaSeguimientos'][]['numeroOrdenFlete'] = $t['TransportesVenta']['cod_seguimiento'];
-
-		// 		}
-
-		// 		if (!empty($seguimientos)) {
-		// 			# Consultamos por los envios
-		// 			$res = $this->Starken->seguimiento($seguimientos);
-		// 		}
-		// 	}
-			
-		// }
 		
 		# Estados de envios
 		foreach ($venta['Transporte'] as $it => $t)
@@ -3690,9 +3664,12 @@ class VentasController extends AppController {
 				}
 			}
 		}
-
-		foreach ($venta['EmbalajeWarehouse'] as $key => $value ) {
+		$selector_embalaje = [];
 		
+		foreach ($venta['EmbalajeWarehouse'] as $key => $value ) {
+
+			$selector_embalaje[$value['id']] = $value['id'];
+			
 			foreach ($value['HistorialEmbalaje'] as $key2 => $value2) {
 				$existe = Hash::extract($response['response']['body'], "{n}[embalaje_id={$value2['embalaje_id']}]");
 
@@ -3701,7 +3678,7 @@ class VentasController extends AppController {
 				}
 			}
 		}
-
+		
 		# Obtener embalajes vía api y las notas relacionadas
 		$embalajes_req = $this->WarehouseNodriza->ObtenerEmbalajesVentaV2($id);	
 		$notas_req = $this->WarehouseNodriza->ObtenerNotasDespacho(['venta_id' => $id]);		
@@ -3724,7 +3701,7 @@ class VentasController extends AppController {
 		
 		$this->sort_array_by_key($notas_embalajes, 'fecha_creacion');
 		
-		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas', 'embalajes', 'notas_embalajes', 'notas_despacho','bodegas'));
+		$this->set(compact('venta', 'ventaEstados', 'transportes', 'enviame_info', 'comunas','metodos_de_envios', 'canal_ventas', 'embalajes', 'notas_embalajes', 'notas_despacho','bodegas','selector_embalaje'));
 
 	}
 
@@ -4955,20 +4932,23 @@ class VentasController extends AppController {
 				'id' => $id
 			)
 		);
-
 		foreach ($this->request->data['Transporte'] as $it => $t) {
 
-			if (empty($t['transporte_id']) || empty($t['cod_seguimiento'])) {
+			if (empty($t['transporte_id']) || empty($t['cod_seguimiento'])  || empty($t['embalaje_id'])) {
 				continue;
 			}
-
+			
 			$dataToSave['Transporte'][$it]['transporte_id']   = $t['transporte_id'];
 			$dataToSave['Transporte'][$it]['cod_seguimiento'] = $t['cod_seguimiento'];
+			$dataToSave['Transporte'][$it]['embalaje_id'] 	  = $t['embalaje_id'];
 			$dataToSave['Transporte'][$it]['created']         = date('Y-m-d H:i:s');
 		}
-
+		
 		# Guardamos los códigos de seguimiento
 		if ($this->Venta->saveAll($dataToSave)) {
+
+			$this->actualizar_estados_envios( $id);
+			
 			$this->Session->setFlash('N° seguimiento registrado con éxito.', null, array(), 'success');
 			$this->redirect($this->referer('/', true));
 		}else{
@@ -12597,7 +12577,7 @@ class VentasController extends AppController {
 	{
 		
 		$venta = $this->Venta->find('first', [
-			'conditions' 	=> [['Venta.id' => $id]],
+			'conditions' 	=> ['Venta.id' => $id],
 			'fields'		=> ['Venta.id', 'Venta.metodo_envio_id'],
 			'contain'  		=> [
 				'TransportesVenta' => [
@@ -12691,41 +12671,46 @@ class VentasController extends AppController {
 				continue;
 			}
 
-			switch (ClassRegistry::init('CuentaCorrienteTransporte')->dependencia($cuenta_corriente_transporte_id)) {
+			try {
+				
+				switch (ClassRegistry::init('CuentaCorrienteTransporte')->dependencia($cuenta_corriente_transporte_id)) {
 
-				case 'starken':
+					case 'starken':
 
-					$this->Starken 	= $this->Components->load('Starken');
-					$this->Starken->crearCliente($CuentaCorrienteTransporte['rutApiRest'], $CuentaCorrienteTransporte['claveApiRest'], $CuentaCorrienteTransporte['rutEmpresaEmisora'], $CuentaCorrienteTransporte['rutUsuarioEmisor'], $CuentaCorrienteTransporte['claveUsuarioEmisor']);
-					$return	 		= $this->Starken->registrar_estados($TransportesVenta, $CuentaCorrienteTransporte, $total_en_espera);
+						$this->Starken 	= $this->Components->load('Starken');
+						$this->Starken->crearCliente($CuentaCorrienteTransporte['rutApiRest'], $CuentaCorrienteTransporte['claveApiRest'], $CuentaCorrienteTransporte['rutEmpresaEmisora'], $CuentaCorrienteTransporte['rutUsuarioEmisor'], $CuentaCorrienteTransporte['claveUsuarioEmisor']);
+						$return	 		= $this->Starken->registrar_estados($TransportesVenta, $CuentaCorrienteTransporte, $total_en_espera);
 
-					break;
+						break;
 
-				case 'conexxion':
+					case 'conexxion':
 
-					// $this->Conexxion = $this->Components->load('Conexxion');
-					// $this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
-					// $return = $this->Conexxion->registrar_estados($id);
-					break;
+						// $this->Conexxion = $this->Components->load('Conexxion');
+						// $this->Conexxion->crearCliente($venta['MetodoEnvio']['api_key']);
+						// $return = $this->Conexxion->registrar_estados($id);
+						break;
 
-				case 'boosmap':
+					case 'boosmap':
 
-					$this->Boosmap 	= $this->Components->load('Boosmap');
-					$this->Boosmap->crearCliente($CuentaCorrienteTransporte['boosmap_token']);
-					$return 		= $this->Boosmap->registrar_estados($TransportesVenta, $total_en_espera);
+						$this->Boosmap 	= $this->Components->load('Boosmap');
+						$this->Boosmap->crearCliente($CuentaCorrienteTransporte['boosmap_token']);
+						$return 		= $this->Boosmap->registrar_estados($TransportesVenta, $total_en_espera);
 
-					break;
+						break;
 
-				case 'blueexpress':
+					case 'blueexpress':
 
-					$this->BlueExpress 	= $this->Components->load('BlueExpress');
-					$this->BlueExpress->crearCliente($CuentaCorrienteTransporte['BX_TOKEN'], $CuentaCorrienteTransporte['BX_USERCODE'], $CuentaCorrienteTransporte['BX_CLIENT_ACCOUNT']);
-					$return 			= $this->BlueExpress->registrar_estados($TransportesVenta, $total_en_espera);
-					break;
+						$this->BlueExpress 	= $this->Components->load('BlueExpress');
+						$this->BlueExpress->crearCliente($CuentaCorrienteTransporte['BX_TOKEN'], $CuentaCorrienteTransporte['BX_USERCODE'], $CuentaCorrienteTransporte['BX_CLIENT_ACCOUNT']);
+						$return 			= $this->BlueExpress->registrar_estados($TransportesVenta, $total_en_espera);
+						break;
 
-				default:
+					default:
 
-					break;
+						break;
+				}
+			} catch (\Throwable $th) {
+				
 			}
 		}
 

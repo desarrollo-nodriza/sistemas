@@ -107,87 +107,95 @@ class BlueExpressComponent extends Component
             $es_envio_parcial = true;
         }
 
-        foreach ($estados['response']['data']['pinchazos'] as $e) {
-            try {
-                if ($es_envio_parcial) {
-                    $estado_nombre = $e['tipoMovimiento']['descripcion'] . ' parcial';
-                } else {
-                    $estado_nombre = $e['tipoMovimiento']['descripcion'];
+        $return = false;
+
+        try {
+
+            foreach ($estados['response']['data']['pinchazos'] ?? [] as $e) {
+                try {
+                    if ($es_envio_parcial) {
+                        $estado_nombre = $e['tipoMovimiento']['descripcion'] . ' parcial';
+                    } else {
+                        $estado_nombre = $e['tipoMovimiento']['descripcion'];
+                    }
+
+                    # Verificamos que el estado no exista en los registros
+                    if (ClassRegistry::init('EnvioHistorico')->existe($estado_nombre, $TransportesVenta['id'])) {
+                        continue;
+                    }
+
+                    $estado_existe = ClassRegistry::init('EstadoEnvio')->obtener_por_nombre($estado_nombre, 'BlueExpress');
+
+                    if (!$estado_existe) {
+                        $estado_existe = ClassRegistry::init('EstadoEnvio')->crear($estado_nombre, null, 'BlueExpress', "{$e['tipoMovimiento']['codigo']} - {$e['tipoMovimiento']['descripcion']}");
+                    }
+
+                    # Sólo se crean los estados nuevos
+                    $historicos[] = array(
+                        'EnvioHistorico' => array(
+                            'transporte_venta_id'   => $TransportesVenta['id'],
+                            'estado_envio_id'       => $estado_existe['EstadoEnvio']['id'],
+                            'nombre'                => $estado_nombre,
+                            'leyenda'               => $estado_existe['EstadoEnvio']['leyenda'],
+                            'canal'                 => 'BlueExpress',
+                            'created'               => $e['fechaHora'] ?? date("Y-m-d H:m:s")
+                        )
+                    );
+                } catch (\Throwable $th) {
+
+                    $log[] = array(
+                        'Log' => array(
+                            'administrador'     => "Problemas al recorrer response de BlueExpress vid - {$TransportesVenta['venta_id']}",
+                            'modulo'            => 'BlueExpressComponent',
+                            'modulo_accion'     => json_encode(['catch' => $th, 'response BlueExpress' => $estados])
+                        )
+                    );
                 }
+            }
 
-                # Verificamos que el estado no exista en los registros
-                if (ClassRegistry::init('EnvioHistorico')->existe($estado_nombre, $TransportesVenta['id'])) {
-                    continue;
-                }
 
-                $estado_existe = ClassRegistry::init('EstadoEnvio')->obtener_por_nombre($estado_nombre, 'BlueExpress');
-
-                if (!$estado_existe) {
-                    $estado_existe = ClassRegistry::init('EstadoEnvio')->crear($estado_nombre, null, 'BlueExpress', "{$e['tipoMovimiento']['codigo']} - {$e['tipoMovimiento']['descripcion']}");
-                }
-
-                # Sólo se crean los estados nuevos
-                $historicos[] = array(
-                    'EnvioHistorico' => array(
-                        'transporte_venta_id'   => $TransportesVenta['id'],
-                        'estado_envio_id'       => $estado_existe['EstadoEnvio']['id'],
-                        'nombre'                => $estado_nombre,
-                        'leyenda'               => $estado_existe['EstadoEnvio']['leyenda'],
-                        'canal'                 => 'BlueExpress',
-                        'created'               => $e['fechaHora'] ?? date("Y-m-d H:m:s")
-                    )
-                );
-            } catch (\Throwable $th) {
-
+            if ($historicos) {
                 $log[] = array(
                     'Log' => array(
-                        'administrador'     => "Problemas al recorrer response de BlueExpress vid - {$TransportesVenta['venta_id']}",
+                        'administrador'     => count($historicos) . " nuevos estados del vid - {$TransportesVenta['venta_id']}",
                         'modulo'            => 'BlueExpressComponent',
-                        'modulo_accion'     => json_encode(['catch' => $th, 'response BlueExpress' => $estados])
+                        'modulo_accion'     => json_encode($historicos)
                     )
                 );
-            }
-        }
-
-
-        if ($historicos) {
-            $log[] = array(
-                'Log' => array(
-                    'administrador'     => count($historicos) . " nuevos estados del vid - {$TransportesVenta['venta_id']}",
-                    'modulo'            => 'BlueExpressComponent',
-                    'modulo_accion'     => json_encode($historicos)
-                )
-            );
-        }
-
-        ClassRegistry::init('Log')->create();
-        ClassRegistry::init('Log')->saveMany($log);
-
-        if (empty($historicos)) {
-
-            // * Debido a problemas para recuperar los estados se hacen tres intentos
-            if ($this->intentos <= 3) {
-                $this->intentos++;
-                $this->registrar_estados($TransportesVenta, $total_en_espera, 2);
             }
 
             ClassRegistry::init('Log')->create();
-            ClassRegistry::init('Log')->save(array(
-                'Log' => array(
-                    'administrador' => "Venta {$TransportesVenta['venta_id']} obteniendo estados",
-                    'modulo'        => 'BlueExpressComponent',
-                    'modulo_accion' => "Número de intentos: {$this->intentos} para obtener estados de seguimiento."
-                )
-            ));
+            ClassRegistry::init('Log')->saveMany($log);
 
-            $this->intento = 1;
+            if (empty($historicos)) {
 
-            return false;
+                // * Debido a problemas para recuperar los estados se hacen tres intentos
+                if ($this->intentos <= 3) {
+                    $this->intentos++;
+                    $this->registrar_estados($TransportesVenta, $total_en_espera, 2);
+                }
+
+                ClassRegistry::init('Log')->create();
+                ClassRegistry::init('Log')->save(array(
+                    'Log' => array(
+                        'administrador' => "Venta {$TransportesVenta['venta_id']} obteniendo estados",
+                        'modulo'        => 'BlueExpressComponent',
+                        'modulo_accion' => "Número de intentos: {$this->intentos} para obtener estados de seguimiento."
+                    )
+                ));
+
+                $this->intento = 1;
+
+                return false;
+            }
+
+
+            ClassRegistry::init('EnvioHistorico')->create();
+            $return = ClassRegistry::init('EnvioHistorico')->saveMany($historicos);
+        } catch (\Throwable $th) {
         }
 
-        ClassRegistry::init('EnvioHistorico')->create();
-
-        return ClassRegistry::init('EnvioHistorico')->saveMany($historicos);
+        return $return;
     }
 
     public function obtener_costo_envio($venta, $largoTotal, $anchoTotal, $altoTotal, $pesoTotal, $CuentaCorrienteTransporte)
