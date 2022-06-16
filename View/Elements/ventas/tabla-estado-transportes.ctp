@@ -1,7 +1,7 @@
 <? foreach ($venta['Transporte'] as $ivt => $t) : ?>
 <div class="panel panel-primary">
     <div class="panel-heading">
-        <h3 class="panel-title"><?=$t['nombre'];?> - N° <?=$t['TransportesVenta']['cod_seguimiento']; ?></h3>
+        <h3 class="panel-title"><?=$t['nombre'];?> - N° <?=$t['TransportesVenta']['cod_seguimiento']; ?> | Embalaje <?=$t['TransportesVenta']['embalaje_id']; ?></h3>
     </div>
     <div class="panel-body panel-body-table">
         <div class="table-responsive">
