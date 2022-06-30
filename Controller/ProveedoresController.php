@@ -1,13 +1,65 @@
 <?php
 App::uses('AppController', 'Controller');
 class ProveedoresController extends AppController
-{	
+{
+
+	public $HORAS = [
+		"0:00:00" => "0:00:00",
+		"0:30:00" => "0:30:00",
+		"1:00:00" => "1:00:00",
+		"1:30:00" => "1:30:00",
+		"2:00:00" => "2:00:00",
+		"2:30:00" => "2:30:00",
+		"3:00:00" => "3:00:00",
+		"3:30:00" => "3:30:00",
+		"4:00:00" => "4:00:00",
+		"4:30:00" => "4:30:00",
+		"5:00:00" => "5:00:00",
+		"5:30:00" => "5:30:00",
+		"6:00:00" => "6:00:00",
+		"6:30:00" => "6:30:00",
+		"7:00:00" => "7:00:00",
+		"7:30:00" => "7:30:00",
+		"8:00:00" => "8:00:00",
+		"8:30:00" => "8:30:00",
+		"9:00:00" => "9:00:00",
+		"9:30:00" => "9:30:00",
+		"10:00:00" => "10:00:00",
+		"10:30:00" => "10:30:00",
+		"11:00:00" => "11:00:00",
+		"11:30:00" => "11:30:00",
+		"12:00:00" => "12:00:00",
+		"12:30:00" => "12:30:00",
+		"13:00:00" => "13:00:00",
+		"13:30:00" => "13:30:00",
+		"14:00:00" => "14:00:00",
+		"14:30:00" => "14:30:00",
+		"15:00:00" => "15:00:00",
+		"15:30:00" => "15:30:00",
+		"16:00:00" => "16:00:00",
+		"16:30:00" => "16:30:00",
+		"17:00:00" => "17:00:00",
+		"17:30:00" => "17:30:00",
+		"18:00:00" => "18:00:00",
+		"18:30:00" => "18:30:00",
+		"19:00:00" => "19:00:00",
+		"19:30:00" => "19:30:00",
+		"20:00:00" => "20:00:00",
+		"20:30:00" => "20:30:00",
+		"21:00:00" => "21:00:00",
+		"21:30:00" => "21:30:00",
+		"22:00:00" => "22:00:00",
+		"22:30:00" => "22:30:00",
+		"23:00:00" => "23:00:00",
+		"23:30:00" => "23:30:00",
+	];
+
 	public function admin_index()
 	{
 		$this->paginate		= array(
 			'recursive'			=> 0
 		);
-		
+
 		BreadcrumbComponent::add('Proveedores ');
 
 		$proveedores	= $this->paginate();
@@ -16,16 +68,12 @@ class ProveedoresController extends AppController
 
 	public function admin_add()
 	{
-		if ( $this->request->is('post') )
-		{
+		if ($this->request->is('post')) {
 			$this->Proveedor->create();
-			if ( $this->Proveedor->save($this->request->data) )
-			{
+			if ($this->Proveedor->save($this->request->data)) {
 				$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');
 				$this->redirect(array('action' => 'index'));
-			}
-			else
-			{
+			} else {
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
 		}
@@ -40,19 +88,16 @@ class ProveedoresController extends AppController
 
 		$this->Session->setFlash($this->crearAlertaUl($mensaje), null, array(), 'warning');
 		$this->redirect(array('action' => 'index'));
-
 	}
 
 	public function admin_edit($id = null)
-	{	
-		if ( ! $this->Proveedor->exists($id) )
-		{
+	{
+		if (!$this->Proveedor->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
 
-		if ( $this->request->is('post') || $this->request->is('put') )
-		{	
+		if ($this->request->is('post') || $this->request->is('put')) {
 
 			$this->Proveedor->MonedasProveedor->deleteAll(array('MonedasProveedor.proveedor_id' => $id));
 
@@ -60,26 +105,21 @@ class ProveedoresController extends AppController
 			if (isset($this->request->data['ProveedoresEmail'])) {
 				$this->request->data['Proveedor']['meta_emails'] = json_encode($this->request->data['ProveedoresEmail'], true);
 			}
-			
-			if ( $this->Proveedor->saveAll($this->request->data) )
-			{	
+
+			if ($this->Proveedor->saveAll($this->request->data)) {
 
 				if ($this->request->data['Proveedor']['actualizar_canales']) {
-					if ( ! $this->actualizar_proveedor($id, $this->request->data['Proveedor']['nombre']) ) {
+					if (!$this->actualizar_proveedor($id, $this->request->data['Proveedor']['nombre'])) {
 						$this->Session->setFlash('No fue posible actualizar el proveedor en Prestashop', null, array(), 'warning');
 					}
 				}
 
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
 				$this->redirect(array('action' => 'index'));
-			}
-			else
-			{
+			} else {
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
-		}
-		else
-		{
+		} else {
 			$this->request->data	= $this->Proveedor->find('first', array(
 				'conditions'	=> array('Proveedor.id' => $id),
 				'contain' => array(
@@ -92,30 +132,35 @@ class ProveedoresController extends AppController
 		}
 
 		$this->request->data['Proveedor']['saldo'] = ClassRegistry::init('Saldo')->obtener_saldo_total_proveedor($id);
-	
+
 		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
 
 		$tipo_email = $this->Proveedor->obtener_tipo_email();
 
+		$reglas 	= ClassRegistry::init('ReglasProveedor')->find(
+			'all',
+			['conditions' => ['ReglasProveedor.proveedor_id' => $id]]
+		);
+
+		$reglasGenerarOC = ClassRegistry::init('ReglasGenerarOC')->find('list', []);
+		$horas = $this->HORAS;
+		// debug($reglas);
 		BreadcrumbComponent::add('Proveedores ', '/roles');
 		BreadcrumbComponent::add('Editar ');
 
-		$this->set(compact('monedas', 'tipo_email'));
-
+		$this->set(compact('monedas', 'tipo_email', 'reglas', 'reglasGenerarOC', 'horas'));
 	}
 
 	public function admin_delete($id = null)
 	{
 		$this->Proveedor->id = $id;
-		if ( ! $this->Proveedor->exists() )
-		{
+		if (!$this->Proveedor->exists()) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
 
 		$this->request->onlyAllow('post', 'delete');
-		if ( $this->Proveedor->delete() )
-		{
+		if ($this->Proveedor->delete()) {
 			$this->Session->setFlash('Registro eliminado correctamente.', null, array(), 'success');
 			$this->redirect(array('action' => 'index'));
 		}
@@ -135,7 +180,7 @@ class ProveedoresController extends AppController
 	}
 
 
-	public function actualizar_proveedor($id, $nombre) 
+	public function actualizar_proveedor($id, $nombre)
 	{
 		# Se carga el componente directamente para ser usado por la consola
 		$this->Prestashop = $this->Components->load('Prestashop');
@@ -162,15 +207,14 @@ class ProveedoresController extends AppController
 		foreach ($tiendas as $it => $tienda) {
 
 			# Cliente Prestashop
-			$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
+			$this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
 
-			if( !$this->Prestashop->prestashop_actualizar_proveedor($id, $nombre) ) {
-				$return =  false;		
+			if (!$this->Prestashop->prestashop_actualizar_proveedor($id, $nombre)) {
+				$return =  false;
 			}
-
 		}
 
-		return $return;		
+		return $return;
 	}
 
 	/**
@@ -202,15 +246,15 @@ class ProveedoresController extends AppController
 		foreach ($tiendas as $it => $tienda) {
 
 			# Cliente Prestashop
-			$this->Prestashop->crearCliente( $tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop'] );
+			$this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
 
 			$proveedores = $this->Prestashop->prestashop_obtener_proveedores();
-			
+
 			$proveedoresLocales = array();
-			$arrMessage 	  = array( 'No hay cambios disponibles.' );
-			
+			$arrMessage 	  = array('No hay cambios disponibles.');
+
 			foreach ($proveedores['supplier'] as $ip => $p) {
-				
+
 				# Verificamos que exista en la BD local
 				$local = $this->Proveedor->find('first', array('conditions' => array('id' => $p['id']), 'fields' => array('id')));
 
@@ -220,19 +264,17 @@ class ProveedoresController extends AppController
 					$proveedoresLocales[$ip]['Proveedor']['nombre'] = $p['name'];
 				}
 			}
-
 		}
 
 		if (!empty($proveedoresLocales)) {
-				
-			if ($this->Proveedor->saveMany($proveedoresLocales))
-			{	
+
+			if ($this->Proveedor->saveMany($proveedoresLocales)) {
 
 				$this->relacionarProveedorProductos($this->Prestashop, $proveedoresLocales);
-				$arrMessage = array( sprintf('Se han creado/modificado %d proveedores', count($proveedoresLocales)) );
+				$arrMessage = array(sprintf('Se han creado/modificado %d proveedores', count($proveedoresLocales)));
 			}
 		}
-		
+
 		return $arrMessage;
 	}
 
@@ -250,7 +292,7 @@ class ProveedoresController extends AppController
 
 			$filtroProductos = array(
 				'filter[active]' => '[1]',
-				'filter[id_supplier]' => '['.$proveedor['Proveedor']['id'].']'
+				'filter[id_supplier]' => '[' . $proveedor['Proveedor']['id'] . ']'
 			);
 
 			$productos = $conexion->prestashop_obtener_productos($filtroProductos);
@@ -261,7 +303,7 @@ class ProveedoresController extends AppController
 					if (!isset($producto['id'])) {
 						continue;
 					}
-					
+
 					$data = array(
 						'VentaDetalleProducto' => array(
 							'id' => $producto['id'],
@@ -272,11 +314,10 @@ class ProveedoresController extends AppController
 						)
 					);
 
-					if (ClassRegistry::init('VentaDetalleProducto')->exists($producto['id'])){
+					if (ClassRegistry::init('VentaDetalleProducto')->exists($producto['id'])) {
 						$this->Proveedor->VentaDetalleProducto->save($data);
 					}
-
-				}	
+				}
 			}
 		}
 
@@ -285,7 +326,7 @@ class ProveedoresController extends AppController
 
 
 	public function admin_obtenerProveedor($id = null)
-	{	
+	{
 		$res = array(
 			'code' => 500,
 			'message' => 'Error al procesar la solicitud',
@@ -293,8 +334,7 @@ class ProveedoresController extends AppController
 		);
 
 		$this->Proveedor->id = $id;
-		if ( ! $this->Proveedor->exists() )
-		{
+		if (!$this->Proveedor->exists()) {
 			echo json_encode($res, true);
 			exit;
 		}

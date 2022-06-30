@@ -37,7 +37,8 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('email_contacto', 'Email de contacto'); ?></th>
-								<td><?= $this->Form->input('email_contacto'); ?><p class="form-control-static text-danger"><?=__('No es utilizado para enviar la cotización');?></p></td>
+								<td><?= $this->Form->input('email_contacto'); ?><p class="form-control-static text-danger"><?= __('No es utilizado para enviar la cotización'); ?></p>
+								</td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('fono_contacto', 'Fono de contacto'); ?></th>
@@ -64,12 +65,16 @@
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>
 							<tr>
+								<th><?= $this->Form->label('permitir_generar_oc', 'Permitir Generar OC'); ?></th>
+								<td><?= $this->Form->input('permitir_generar_oc', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
 								<th><?= $this->Form->label('aceptar_dte', 'Aceptar facturas de compra automática'); ?></th>
 								<td><?= $this->Form->input('aceptar_dte', array('class' => 'icheckbox')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('margen_aceptar_dte', 'Margen para aceptar facturas de compra'); ?></th>
-								<td><?= $this->Form->input('margen_aceptar_dte', array('class' => 'form-control', 'min' => 0)); ?></td>
+								<td><?= $this->Form->input('margen_aceptar_dte', array('class' => 'form-control select')); ?></td>
 							</tr>
 						</table>
 					</div>
@@ -77,15 +82,15 @@
 			</div>
 		</div>
 	</div>
-	
+
 	<div class="row">
 		<div class="col-xs-12">
 			<div class="panel panel-info">
 				<div class="panel-heading">
-					<h5 class="panel-title"><i class="fa fa-envelope" aria-hidden="true"></i> <?=__('Emails de destino');?></h5>
+					<h5 class="panel-title"><i class="fa fa-envelope" aria-hidden="true"></i> <?= __('Emails de destino'); ?></h5>
 					<ul class="panel-controls">
-                        <li><a href="#" class="copy_tr"><span class="fa fa-plus"></span></a></li>
-                    </ul>
+						<li><a href="#" class="copy_tr"><span class="fa fa-plus"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 
@@ -94,9 +99,9 @@
 							<caption><?= __('Indique el/la/los destinatarios que resivirán las OC.'); ?></caption>
 							<thead>
 								<tr>
-									<th><?= __('Email');?></th>
-									<th><?= __('Tipo');?></th>
-									<th><?= __('Activo');?></th>
+									<th><?= __('Email'); ?></th>
+									<th><?= __('Tipo'); ?></th>
+									<th><?= __('Activo'); ?></th>
 									<th>Acciones</th>
 								</tr>
 							</thead>
@@ -110,31 +115,31 @@
 									</td>
 									<td>
 										<?= $this->Form->input('ProveedoresEmail.999.activo', array('type' => 'checkbox', 'disabled' => true, 'class' => '', 'value' => 1)); ?>
-									</td>									
+									</td>
 									<td valign="center">
 										<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
 									</td>
 								</tr>
 
 								<? if (!empty($this->request->data['Proveedor']['meta_emails'])) :  ?>
-								<? foreach($this->request->data['Proveedor']['meta_emails'] as $ip => $email) : ?>
-								<tr>
-									<td>
-										<?= $this->Form->input(sprintf('ProveedoresEmail.%d.email', $ip), array('type' => 'text', 'class' => 'form-control is-email not-blank', 'placeholder' => 'Ej: pp@email.cl', 'value' => $email['email'])); ?>
-									</td>
-									<td>
-										<?= $this->Form->select(sprintf('ProveedoresEmail.%d.tipo', $ip), $tipo_email, array('class' => 'form-control not-blank', 'default' => $email['tipo'], 'empty' => false)); ?>
-									</td>
-									<td>
-										<?= $this->Form->input(sprintf('ProveedoresEmail.%d.activo', $ip), array('type' => 'checkbox', 'class' => '', 'checked' => $email['activo'])); ?>
-									</td>
-									<td valign="center">
-										<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
-									</td>
-								</tr>
-								<? endforeach; ?>
+									<? foreach ($this->request->data['Proveedor']['meta_emails'] as $ip => $email) : ?>
+										<tr>
+											<td>
+												<?= $this->Form->input(sprintf('ProveedoresEmail.%d.email', $ip), array('type' => 'text', 'class' => 'form-control is-email not-blank', 'placeholder' => 'Ej: pp@email.cl', 'value' => $email['email'])); ?>
+											</td>
+											<td>
+												<?= $this->Form->select(sprintf('ProveedoresEmail.%d.tipo', $ip), $tipo_email, array('class' => 'form-control not-blank', 'default' => $email['tipo'], 'empty' => false)); ?>
+											</td>
+											<td>
+												<?= $this->Form->input(sprintf('ProveedoresEmail.%d.activo', $ip), array('type' => 'checkbox', 'class' => '', 'checked' => $email['activo'])); ?>
+											</td>
+											<td valign="center">
+												<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
+											</td>
+										</tr>
+									<? endforeach; ?>
 								<? endif; ?>
-								
+
 							</tbody>
 						</table>
 					</div>
@@ -154,10 +159,10 @@
 		<div class="col-xs-12">
 			<div class="panel panel-info">
 				<div class="panel-heading">
-					<h5 class="panel-title"><i class="fa fa-percent" aria-hidden="true"></i> <?=__('Descuentos por medio de pago');?></h5>
+					<h5 class="panel-title"><i class="fa fa-percent" aria-hidden="true"></i> <?= __('Descuentos por medio de pago'); ?></h5>
 					<ul class="panel-controls">
-                        <li><a href="#" class="copy_tr"><span class="fa fa-plus"></span></a></li>
-                    </ul>
+						<li><a href="#" class="copy_tr"><span class="fa fa-plus"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 
@@ -166,8 +171,8 @@
 							<caption><?= __('Descuento en % que se aplica al total neto de la Orden de compra de éste proveedor.'); ?></caption>
 							<thead>
 								<tr>
-									<th><?= __('Medio de pago');?></th>
-									<th><?= __('Descuento');?></th>
+									<th><?= __('Medio de pago'); ?></th>
+									<th><?= __('Descuento'); ?></th>
 									<th>Acciones</th>
 								</tr>
 							</thead>
@@ -185,21 +190,21 @@
 								</tr>
 
 								<? if (!empty($this->request->data['Moneda'])) :  ?>
-								<? foreach($this->request->data['Moneda'] as $ip => $descuento) : ?>
-								<tr>
-									<td>
-										<?= $this->Form->select(sprintf('Moneda.%d.moneda_id', $ip), $monedas, array('type' => 'text', 'class' => 'form-control not-blank', 'default' => $descuento['MonedasProveedor']['moneda_id'])); ?>
-									</td>
-									<td>
-										<?= $this->Form->input(sprintf('Moneda.%d.descuento', $ip), array('type' => 'text', 'class' => 'form-control js-descuento-input', 'placeholder' => 'Ej: 10, 55990', 'value' => $descuento['MonedasProveedor']['descuento'])); ?>
-									</td>
-									<td valign="center">
-										<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
-									</td>
-								</tr>
-								<? endforeach; ?>
+									<? foreach ($this->request->data['Moneda'] as $ip => $descuento) : ?>
+										<tr>
+											<td>
+												<?= $this->Form->select(sprintf('Moneda.%d.moneda_id', $ip), $monedas, array('type' => 'text', 'class' => 'form-control not-blank', 'default' => $descuento['MonedasProveedor']['moneda_id'])); ?>
+											</td>
+											<td>
+												<?= $this->Form->input(sprintf('Moneda.%d.descuento', $ip), array('type' => 'text', 'class' => 'form-control js-descuento-input', 'placeholder' => 'Ej: 10, 55990', 'value' => $descuento['MonedasProveedor']['descuento'])); ?>
+											</td>
+											<td valign="center">
+												<button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
+											</td>
+										</tr>
+									<? endforeach; ?>
 								<? endif; ?>
-								
+
 							</tbody>
 						</table>
 					</div>
@@ -218,7 +223,9 @@
 	<div class="row">
 		<div class="col-xs-12">
 			<div class="panel panel-info">
-				<div class="panel-heading"><h3 class="panel-title"><i class="fa fa-list"></i> Movimientos de saldos</h3></div>
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-list"></i> Movimientos de saldos</h3>
+				</div>
 				<div class="panel-body">
 					<div class="row">
 						<div class="col-xs-12 col-md-8">
@@ -234,58 +241,215 @@
 										</tr>
 									</thead>
 									<tbody>
-									<? foreach($this->request->data['Saldo'] as $is => $saldo) : ?>
-										<tr>
-											<td><?=(!empty($saldo['orden_compra_id'])) ? '#' . $saldo['orden_compra_id'] : '--' ; ?></td>
-											<td><?=(!empty($saldo['orden_compra_factura_id'])) ? '#' . $saldo['orden_compra_factura_id'] : '--' ; ?></td>
-											<td><?=(!empty($saldo['pago_id'])) ? '#' . $saldo['pago_id'] : '--' ; ?></td>
-											<td><?=CakeNumber::currency($saldo['saldo'], 'CLP'); ?></td>
-										</tr>
-									<? endforeach; ?>
+										<? foreach ($this->request->data['Saldo'] as $is => $saldo) : ?>
+											<tr>
+												<td><?= (!empty($saldo['orden_compra_id'])) ? '#' . $saldo['orden_compra_id'] : '--'; ?></td>
+												<td><?= (!empty($saldo['orden_compra_factura_id'])) ? '#' . $saldo['orden_compra_factura_id'] : '--'; ?></td>
+												<td><?= (!empty($saldo['pago_id'])) ? '#' . $saldo['pago_id'] : '--'; ?></td>
+												<td><?= CakeNumber::currency($saldo['saldo'], 'CLP'); ?></td>
+											</tr>
+										<? endforeach; ?>
 									</tbody>
 								</table>
 							</div>
 						</div>
 						<div class="col-xs-12 col-md-4">
-							<div class="widget widget-<?=($this->request->data['Proveedor']['saldo'] < 0) ? 'danger' : 'success'; ?>">
-					            <div class="widget-title">Saldo disponible</div>
-					            <div class="widget-subtitle">bruto</div>
-					            <div class="widget-int"><?=($this->request->data['Proveedor']['saldo'] < 0) ? '-' . CakeNumber::currency($this->request->data['Proveedor']['saldo'], 'CLP') : CakeNumber::currency($this->request->data['Proveedor']['saldo'], 'CLP');?></div>
-					        </div>
+							<div class="widget widget-<?= ($this->request->data['Proveedor']['saldo'] < 0) ? 'danger' : 'success'; ?>">
+								<div class="widget-title">Saldo disponible</div>
+								<div class="widget-subtitle">bruto</div>
+								<div class="widget-int"><?= ($this->request->data['Proveedor']['saldo'] < 0) ? '-' . CakeNumber::currency($this->request->data['Proveedor']['saldo'], 'CLP') : CakeNumber::currency($this->request->data['Proveedor']['saldo'], 'CLP'); ?></div>
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-	
+
 	<!-- MESSAGE BOX-->
 	<div class="message-box message-box-info animated fadeIn" data-sound="alert" id="modal_alertas">
-	    <div class="mb-container">
-	        <div class="mb-middle">
-	            <div class="mb-title" id="modal_alertas_label"><i class="fa fa-alert"></i> ¿Actualizar Prestashop?</div>
-	            <div class="mb-content">
-	                <p id="mensajeModal">¿Desea actualizar el proveedor en prestashop?</p>
-	                <div class="form-group">
+		<div class="mb-container">
+			<div class="mb-middle">
+				<div class="mb-title" id="modal_alertas_label"><i class="fa fa-alert"></i> ¿Actualizar Prestashop?</div>
+				<div class="mb-content">
+					<p id="mensajeModal">¿Desea actualizar el proveedor en prestashop?</p>
+					<div class="form-group">
 						<div class="checkbox">
-	                        <label>
-	                            <?=$this->Form->input('actualizar_canales', array('type' => 'checkbox', 'class' => '')); ?>
-	                            Sí, actualizar
-	                        </label>
-	                    </div>
-	                </div>
-	                       
-	            </div>
-	            <div class="mb-footer">
-	                <div class="pull-right">
-	                	<input type="submit" class="btn btn-primary btn-lg esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
-	                	<button class="btn btn-default btn-lg mb-control-close">Cerrar</button>
-	                </div>
-	            </div>
-	        </div>
-	    </div>
+							<label>
+								<?= $this->Form->input('actualizar_canales', array('type' => 'checkbox', 'class' => '')); ?>
+								Sí, actualizar
+							</label>
+						</div>
+					</div>
+
+				</div>
+				<div class="mb-footer">
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary btn-lg esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<button class="btn btn-default btn-lg mb-control-close">Cerrar</button>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 	<!-- END MESSAGE BOX-->
-
 	<?= $this->Form->end(); ?>
+
+
+	<? if ($this->request->data['Proveedor']['permitir_generar_oc']) :  ?>
+		<?= $this->Form->create(false, array(
+			'class' => 'form-horizontal',
+			'url' 	=> array('controller' => 'proveedores', 'action' => 'regla_create',),
+			'id' 	=> 'ReglaCreate'
+		)); ?>
+		<div class="row">
+			<div class="col-xs-12">
+				<div class="panel panel-info">
+					<div class="panel-heading">
+						<h5 class="panel-title"><i class="fa fa-filter" aria-hidden="true"></i> <?= __('Reglas para generar Ordenes de compras'); ?></h5>
+						<ul class="panel-controls">
+							<li><a href="#" class="clone-boton"><span class="fa fa-plus"></span></a></li>
+						</ul>
+					</div>
+					<div class="panel-body">
+						<div class="table-responsive">
+							<table class="table">
+								<thead>
+									<tr class="sort">
+										<th>Id</th>
+										<th style="width: 400px;">
+											Regla
+										</th>
+										<th style="width: 400px;">
+											Hora de ejecucion
+										</th>
+										<th>Acciones</th>
+									</tr>
+								</thead>
+								<tbody>
+									<? if (count($reglas) < 3) :  ?>
+										<? for ($i = (count($reglas) + 1); $i <= (3 - count($reglas)); $i++) : ?>
+											<tr class="fila hidden clone-regla-tr">
+												<td align="center" style="vertical-align: bottom; max-width: 100px;">
+													<?= $this->Form->input(sprintf('%d.id', $i), array('type' => 'text', 'label' => '', 'default' => "", 'class' => 'form-control hidden ')); ?>
+												</td>
+												<td align="center" style="vertical-align: bottom;">
+													<?= $this->Form->select(
+														sprintf('%d.regla_generar_ot_id', $i),
+														$reglasGenerarOC,
+														array(
+															'type' 	=> 'text',
+															'label' => '',
+															'class' => 'form-control mi-selector',
+															'style' => "width: 400px",
+														)
+													); ?>
+												</td>
+												<td align="center" style="vertical-align: bottom;">
+													<?= $this->Form->select(
+														sprintf('%d.hora', $i),
+														$horas,
+														array(
+															'label' => '',
+															'class' => 'form-control mi-selector',
+															'style' => "width: 400px",
+														)
+													); ?>
+												</td>
+												<td align="center" style="vertical-align: bottom;">
+													<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>
+												</td>
+											</tr>
+										<? endfor; ?>
+									<? endif; ?>
+
+									<?php foreach ($reglas as $indice => $regla) : ?>
+										<tr>
+											<td align="center" style="vertical-align: bottom; max-width: 100px;">
+												<?= $this->Form->input(
+													sprintf('%d.id', $indice),
+													array(
+														'readonly',
+														'type' 		=> 'text',
+														'label' 	=> '',
+														'default' 	=> $regla['ReglasProveedor']['id'],
+														'class' 	=> 'form-control',
+
+													)
+												); ?>
+											</td>
+											<td align="center" style="vertical-align: bottom;">
+												<?= $this->Form->select(
+													sprintf('%d.regla_generar_ot_id', $indice),
+													$reglasGenerarOC,
+													array(
+														'label' 	=> '',
+														'default' 	=> $regla['ReglasProveedor']['regla_generar_ot_id'],
+														'class' 	=> 'mi-selector form-control',
+														'style' 	=> "width: 400px",
+													)
+												); ?>
+											</td>
+											<td align="center" style="vertical-align: bottom;">
+												<?= $this->Form->select(
+													sprintf('%d.hora', $indice),
+													$horas,
+													array(
+														'type' 		=> 'text',
+														'label' 	=> '',
+														'default' 	=> $regla['ReglasProveedor']['hora'],
+														'class' 	=> 'form-control mi-selector'
+													)
+												); ?>
+											</td>
+											<td align="center" style="vertical-align: bottom;">
+												-
+											</td>
+										</tr>
+
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+		<?= $this->Form->end(); ?>
+	<? endif; ?>
+
 </div>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script type="text/javascript">
+	$.app.formularios.bind('#ReglaCreate');
+	$(document).on('click', '.clone-boton', function(e) {
+		e.preventDefault();
+
+		let clone_tr = document.getElementsByClassName("clone-regla-tr");
+
+		if (clone_tr.length > 0) {
+			let elementoremoveClass = clone_tr.item(0);
+			elementoremoveClass.removeAttribute('class')
+			const classes_2 = elementoremoveClass.classList
+			classes_2.add("nuevo_elemento");
+			classes_2.add("fila");
+		}
+	});
+	$(document).on('click', '.remove-tr', function(e) {
+
+		e.preventDefault();
+		var $th = $(this).parents('tr').eq(0);
+
+		$th.fadeOut('slow', function() {
+			$th.remove();
+			ordenar();
+		});
+	});
+	jQuery(document).ready(function($) {
+		$(document).ready(function() {
+			$('.mi-selector').select2();
+		});
+	});
+</script>
