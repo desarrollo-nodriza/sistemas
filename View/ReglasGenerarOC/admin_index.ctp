@@ -41,7 +41,7 @@
 												</td>
 
 												<td align="center" style="vertical-align: bottom;">
-													<?= $this->Form->input(sprintf('%d.nombre', $i), array('type' => 'text', 'label' => '', 'class' => 'form-control', 'required')); ?>
+													<?= $this->Form->input(sprintf('%d.nombre', $i), array('type' => 'text', 'label' => '', 'class' => 'form-control nombre', 'required')); ?>
 												</td>
 
 												<td align="center" style="vertical-align: bottom;width: 400px;">
@@ -74,7 +74,7 @@
 												</td>
 
 												<td align="center" style="vertical-align: bottom;">
-													<?= $this->Form->input(sprintf('%d.nombre', $indice), array('type' => 'text', 'label' => '', 'default' => $regla['ReglasGenerarOC']['nombre'], 'class' => 'form-control')); ?>
+													<?= $this->Form->input(sprintf('%d.nombre', $indice), array('type' => 'text', 'label' => '', 'default' => $regla['ReglasGenerarOC']['nombre'], 'class' => ' nombre form-control')); ?>
 												</td>
 
 												<td align="center" style="vertical-align: bottom; width: 400px;">
@@ -150,35 +150,38 @@
 		});
 	});
 
-	$(document).on('click', '.select2-selection__rendered', function(e) {
-		e.preventDefault();
-		// var $ts = $(this);
-		// var $tr = $ts.parents('tr').eq(0);
-		// var medio_de_pago = $tr.children('td').eq(2).find('value');
-		// var mayor_que = $tr.children('td').eq(3).find('value');
-		// var menor_que = $tr.children('td').eq(4).find('value');
-		// console.log({
-		// 	"medio_de_pago": medio_de_pago,
-		// 	"mayor_que": mayor_que,
-		// 	"menor_que": menor_que
-		// });
-		var medio_de_pago = $(this).closest('tr').find('td:eq(2)').text();
-		var mayor_que = $(this).closest('tr').find('td:eq(3)').text();
-		var menor_que = $(this).closest('tr').find('td:eq(4)').text();
-		console.log({
-			"medio_de_pago": medio_de_pago.find('input').val(),
-			"mayor_que": mayor_que.find('input').val(),
-			"menor_que": menor_que.find('input').val(),
-		});
-		// if (clone_tr.length > 0) {
-		// 	let elementoremoveClass = clone_tr.item(0);
-		// 	elementoremoveClass.removeAttribute('class')
-		// 	const classes_2 = elementoremoveClass.classList
-		// 	classes_2.add("nuevo_elemento");
-		// 	classes_2.add("fila");
-		// }
+	$('.medio_pago_id').on('change', function(e) {
+		cambiarNombre($(this))
 	});
 
+	$('.mayor_que').on('change', function(e) {
+		cambiarNombre($(this))
+	});
+
+	$('.menor_que').on('change', function(e) {
+		cambiarNombre($(this))
+	});
+
+
+	function cambiarNombre(base) {
+
+
+		var medio_de_pago = base.closest('tr').find('.select2-selection__rendered').text();
+		var mayor_que = base.closest('tr').find('.mayor_que').val();
+		var nombre = base.closest('tr').find('.nombre').val();
+		var menor_que = base.closest('tr').find('.menor_que').val();
+		var rango = "Rango " + (menor_que.length > 0 ? menor_que : "")
+		" - " + (menor_que.length > 0 ? menor_que : "")
+		let _nombre = medio_de_pago + rango
+		base.closest('tr').find('.nombre').val(_nombre);
+		console.log({
+			"_nombre": _nombre,
+			"nombre": nombre,
+			"medio_de_pago": medio_de_pago,
+			"mayor_que": mayor_que,
+			"menor_que": menor_que,
+		});
+	}
 
 	jQuery(document).ready(function($) {
 		$(document).ready(function() {
