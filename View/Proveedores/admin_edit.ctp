@@ -299,7 +299,7 @@
 	<? if ($this->request->data['Proveedor']['permitir_generar_oc']) :  ?>
 		<?= $this->Form->create(false, array(
 			'class' => 'form-horizontal',
-			'url' 	=> array('controller' => 'proveedores', 'action' => 'regla_create',),
+			'url' 	=> array('controller' => 'proveedores', 'action' => 'regla_create', $this->request->data['Proveedor']['id']),
 			'id' 	=> 'ReglaCreate'
 		)); ?>
 		<div class="row">
@@ -307,20 +307,24 @@
 				<div class="panel panel-info">
 					<div class="panel-heading">
 						<h5 class="panel-title"><i class="fa fa-filter" aria-hidden="true"></i> <?= __('Reglas para generar Ordenes de compras'); ?></h5>
-						<ul class="panel-controls">
-							<li><a href="#" class="clone-boton"><span class="fa fa-plus"></span></a></li>
-						</ul>
+						<div class="btn-group pull-right">
+							<? if ($permisos['add']) : ?>
+								<? if (count($reglas) < 3) :  ?>
+									<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Regla', array('action' => '#'), array('class' => 'btn btn-success clone-boton', 'escape' => false)); ?>
+								<? endif; ?>
+								<button type="submit" class="btn btn-danger start-loading-when-form-is-validate"><i class="fa fa-save"></i>Guardar Información</button>
+							<? endif; ?>
+						</div>
 					</div>
 					<div class="panel-body">
 						<div class="table-responsive">
 							<table class="table">
 								<thead>
-									<tr class="sort">
-										<th>Id</th>
-										<th style="width: 400px;">
+									<tr>
+										<th style="width: 700px;">
 											Regla
 										</th>
-										<th style="width: 400px;">
+										<th style="width: 700px;">
 											Hora de ejecucion
 										</th>
 										<th>Acciones</th>
@@ -328,11 +332,8 @@
 								</thead>
 								<tbody>
 									<? if (count($reglas) < 3) :  ?>
-										<? for ($i = (count($reglas) + 1); $i <= (3 - count($reglas)); $i++) : ?>
+										<? for ($i =  count($reglas); $i < 3; $i++) : ?>
 											<tr class="fila hidden clone-regla-tr">
-												<td align="center" style="vertical-align: bottom; max-width: 100px;">
-													<?= $this->Form->input(sprintf('%d.id', $i), array('type' => 'text', 'label' => '', 'default' => "", 'class' => 'form-control hidden ')); ?>
-												</td>
 												<td align="center" style="vertical-align: bottom;">
 													<?= $this->Form->select(
 														sprintf('%d.regla_generar_ot_id', $i),
@@ -341,7 +342,8 @@
 															'type' 	=> 'text',
 															'label' => '',
 															'class' => 'form-control mi-selector',
-															'style' => "width: 400px",
+															'style' => "width: 700px",
+															'required'
 														)
 													); ?>
 												</td>
@@ -352,11 +354,14 @@
 														array(
 															'label' => '',
 															'class' => 'form-control mi-selector',
-															'style' => "width: 400px",
+															'style' => "width: 700px",
+															'required'
 														)
 													); ?>
 												</td>
 												<td align="center" style="vertical-align: bottom;">
+													<?= $this->Form->input(sprintf('%d.id', $i), array('type' => 'text', 'label' => '', 'default' => "", 'class' => 'form-control hidden ')); ?>
+													<?= $this->Form->input(sprintf('%d.proveedor_id', $i),  array('type' => 'text', 'label' => '', 'default' => $this->request->data['Proveedor']['id'], 'class' => 'form-control hidden ')); ?>
 													<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>
 												</td>
 											</tr>
@@ -365,19 +370,7 @@
 
 									<?php foreach ($reglas as $indice => $regla) : ?>
 										<tr>
-											<td align="center" style="vertical-align: bottom; max-width: 100px;">
-												<?= $this->Form->input(
-													sprintf('%d.id', $indice),
-													array(
-														'readonly',
-														'type' 		=> 'text',
-														'label' 	=> '',
-														'default' 	=> $regla['ReglasProveedor']['id'],
-														'class' 	=> 'form-control',
 
-													)
-												); ?>
-											</td>
 											<td align="center" style="vertical-align: bottom;">
 												<?= $this->Form->select(
 													sprintf('%d.regla_generar_ot_id', $indice),
@@ -386,7 +379,8 @@
 														'label' 	=> '',
 														'default' 	=> $regla['ReglasProveedor']['regla_generar_ot_id'],
 														'class' 	=> 'mi-selector form-control',
-														'style' 	=> "width: 400px",
+														'style' 	=> "width: 700px",
+														'required'
 													)
 												); ?>
 											</td>
@@ -398,11 +392,25 @@
 														'type' 		=> 'text',
 														'label' 	=> '',
 														'default' 	=> $regla['ReglasProveedor']['hora'],
-														'class' 	=> 'form-control mi-selector'
+														'class' 	=> 'form-control mi-selector',
+														'required',
+														'style' => "width: 700px",
 													)
 												); ?>
 											</td>
 											<td align="center" style="vertical-align: bottom;">
+												<?= $this->Form->input(
+													sprintf('%d.id', $indice),
+													array(
+														'readonly',
+														'type' 		=> 'text',
+														'label' 	=> '',
+														'default' 	=> $regla['ReglasProveedor']['id'],
+														'class' 	=> 'form-control hidden',
+
+													)
+												); ?>
+												<?= $this->Form->input(sprintf('%d.proveedor_id', $indice),  array('type' => 'text', 'label' => '', 'default' => $this->request->data['Proveedor']['id'], 'class' => 'form-control hidden')); ?>
 												-
 											</td>
 										</tr>
@@ -411,6 +419,7 @@
 								</tbody>
 							</table>
 						</div>
+
 					</div>
 
 				</div>

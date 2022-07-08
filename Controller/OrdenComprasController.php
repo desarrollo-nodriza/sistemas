@@ -1139,6 +1139,7 @@ class OrdenComprasController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
+			prx($this->request->data);
 			foreach ($this->request->data['OrdenesCompra'] as $ic => $d) {
 				
 				if (!isset($d['VentaDetalleProducto'])) {
@@ -1282,7 +1283,7 @@ class OrdenComprasController extends AppController
 		if (!empty($productosIncompletos)) {
 			$this->Session->setFlash(sprintf('Existen %d producto/s sin proveedor y/o marca asignado.', count($productosIncompletos)), null, array(), 'danger');
 		}
-
+		
 		# Obtenemos solo los proveedores que necesitamos
 		$proveedores = ClassRegistry::init('Proveedor')->find('all', array(
 			'joins' => array(
@@ -1324,7 +1325,7 @@ class OrdenComprasController extends AppController
 				$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento']; 
 			}
 		}
-		
+		prx($proveedores);
 		$proveedoresLista = ClassRegistry::init('Proveedor')->find('list', array(
 			'conditions' => array(
 				'Proveedor.activo' => 1
@@ -4289,5 +4290,257 @@ class OrdenComprasController extends AppController
 		}
 
 		return;
+	}
+
+	public function CrearOCAutomaticas()
+	{
+
+		$bodegas 		= ClassRegistry::init('Bodega')->obtener_bodegas();		
+		$ventas_bodega 	= [];
+
+		foreach ($bodegas as $bodega_id => $nombre) {
+
+			$venta_bodega	 = $this->OrdenCompra->Venta->find('all', array(
+				'fields' => array(
+					'vd_1.id as venta_detalles_id',
+					'vd_1.venta_id as venta_id',
+					'rpvdp.id as proveedores_venta_detalle_productos_id',
+					'rpvdp.venta_detalle_producto_id as producto_id',
+					'rpvdp.proveedor_id as proveedor_id',
+					"((vd_1.cantidad - vd_1.cantidad_anulada - vd_1.cantidad_entregada) - (vd_1.cantidad_entregada - (select ifnull(sum(rvdr.cantidad_reservada), 0)
+						from rp_venta_detalles_reservas rvdr
+						where rvdr.venta_detalle_id = vd_1.id and rvdr.bodega_id = $bodega_id))) cantidad",
+				),
+				'joins' => array(
+					array(
+						'table' => 'rp_venta_estados',
+						'alias' => 'venta_estados',
+						'type' 	=> 'INNER',
+						'conditions' => array(
+							'venta_estados.id = Venta.venta_estado_id',
+							'venta_estados.permitir_oc = 1'
+						)
+					),
+					array(
+						'table' => 'rp_venta_estado_categorias',
+						'alias' => 'venta_estados_cat',
+						'type' 	=> 'INNER',
+						'conditions' => array(
+							'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
+							'venta_estados_cat.rechazo = 0',
+							'venta_estados_cat.cancelado = 0',
+							'venta_estados_cat.final = 0'
+						)
+					),
+					array(
+						'table' => 'rp_venta_detalles',
+						'alias' => 'vd_1',
+						'type' 	=> 'INNER',
+						'conditions' => array(
+							'vd_1.venta_id = Venta.id'
+						),
+					),
+					array(
+						'table' => 'rp_proveedores_venta_detalle_productos',
+						'alias' => 'rpvdp',
+						'type' 	=> 'INNER',
+						'conditions' => array(
+							'vd_1.venta_detalle_producto_id = rpvdp.venta_detalle_producto_id'
+						)
+					),
+					array(
+						'table' => 'rp_proveedores',
+						'alias' => 'rp_1',
+						'type' 	=> 'INNER',
+						'conditions' => array(
+							'rpvdp.proveedor_id = rp_1.id',
+						)
+					),
+					array(
+						'table' => 'rp_venta_detalles_reservas',
+						'alias' => 'rvdr',
+						'type' 	=> 'LEFT',
+						'conditions' => array(
+							'rvdr.venta_detalle_id = vd_1.id',
+						)
+					),
+				),
+				'conditions' => array(
+					"Venta.id in (SELECT Venta.id
+						FROM rp_ventas AS Venta
+								 INNER JOIN rp_venta_estados AS venta_estados
+											ON (venta_estados.id = Venta.venta_estado_id AND venta_estados.permitir_oc = 1)
+								 INNER JOIN rp_venta_estado_categorias AS venta_estados_cat
+											ON (venta_estados_cat.id = venta_estados.venta_estado_categoria_id AND
+												venta_estados_cat.rechazo = 0 AND venta_estados_cat.cancelado = 0 AND
+												venta_estados_cat.final = 0)
+								 INNER JOIN rp_venta_detalles rvd ON Venta.id = rvd.venta_id
+						WHERE Venta.fecha_venta > ADDDATE(NOW(), INTERVAL -2 Month)
+						having ((select Sum(CAST(detalle.cantidad as signed) - CAST(detalle.cantidad_anulada as signed) -
+											CAST(detalle.cantidad_entregada as signed) -
+											CAST(detalle.cantidad_reservada as signed))
+								 from rp_venta_detalles as detalle
+								 where detalle.id = rvd.id) - (SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
+															   from rp_venta_detalles_reservas as Reserva
+															   where Reserva.venta_detalle_id = rvd.id)) >
+							   ((SELECT ifnull(Sum(StockProducto.cantidad),0)
+								 from rp_bodegas_venta_detalle_productos as StockProducto
+								 where StockProducto.venta_detalle_producto_id = rvd.venta_detalle_producto_id
+								   and tipo <> 'GT') - (SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
+														from rp_venta_detalles_reservas as Reserva
+														where Reserva.venta_detalle_producto_id = rvd.venta_detalle_producto_id))
+						   and ((select Sum(CAST(detalle.cantidad as signed) - CAST(detalle.cantidad_anulada as signed) -
+											CAST(detalle.cantidad_entregada as signed) -
+											CAST(detalle.cantidad_reservada as signed))
+								 from rp_venta_detalles as detalle
+								 where detalle.id = rvd.id) - (SELECT ifnull(Sum(Reserva.cantidad_reservada), 0)
+															   from rp_venta_detalles_reservas as Reserva
+															   where Reserva.venta_detalle_id = rvd.id)) > 0
+						ORDER BY Venta.prioritario DESC, Venta.fecha_venta DESC)",
+						"0 = (select count(*) from rp_orden_compras_ventas orv where orv.venta_id = Venta.id)",
+						'Venta.bodega_id' 			=> $bodega_id,
+						'rp_1.permitir_generar_oc'	=> true,
+						'rp_1.activo'				=> true,
+						"((vd_1.cantidad - vd_1.cantidad_anulada - vd_1.cantidad_entregada) - (vd_1.cantidad_entregada - (select ifnull(sum(rvdr.cantidad_reservada), 0)
+						from rp_venta_detalles_reservas rvdr
+						where rvdr.venta_detalle_id = vd_1.id and rvdr.bodega_id = $bodega_id))) > 0"
+					),
+				'order' 	=> array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC')
+			));
+
+			// prx($venta_bodega);
+			$proveedores = Hash::extract($venta_bodega, '{n}.rpvdp.proveedor_id');
+
+			foreach ($proveedores as $proveedor_id) {
+
+				$productos__oc = Hash::extract($venta_bodega, "{n}.rpvdp[proveedor_id={$proveedor_id}].producto_id");
+				
+				# Obtenemos solo los proveedores que necesitamos
+				$proveedor = ClassRegistry::init('Proveedor')->find('first', array(
+					'joins' => array(
+						array(
+							'table' => 'proveedores_venta_detalle_productos',
+							'alias' => 'ProveedoresVentaDetalleProducto',
+							'type'  => 'inner',
+							'conditions' => array(
+								'ProveedoresVentaDetalleProducto.proveedor_id = Proveedor.id',
+								'ProveedoresVentaDetalleProducto.venta_detalle_producto_id' => $productos__oc
+							)
+						)
+					),
+					'contain' => array(
+						'VentaDetalleProducto' => array(
+							'conditions' => array(
+								'VentaDetalleProducto.id' => $productos__oc
+							)
+						)
+					),
+					'conditions' => ["Proveedor.id" => $proveedor_id]
+				));
+				
+				$tienda = ClassRegistry::init('Tienda')->tienda_principal();
+				prx();
+				# Calculo de descuentos
+				$OC= [
+					"administrador_id" 			=> "",
+					"tienda_id" 				=> $tienda['Tienda']['id'],
+					"proveedor_id" 				=> $proveedor['Proveedor']['id'],
+					"estado" 					=> "validacion_comercial",
+					"rut_empresa" 				=> $proveedor['Proveedor']['rut_empresa'],
+					"razon_social_empresa" 		=> $proveedor['Proveedor']['nombre'],
+					"giro_empresa" 				=> $proveedor['Proveedor']['giro'],
+					"nombre_contacto_empresa" 	=> $proveedor['Proveedor']['nombre_encargado'],
+					"email_contacto_empresa" 	=> $proveedor['Proveedor']['email_contacto'],
+					"fono_contacto_empresa" 	=> $proveedor['Proveedor']['fono_contacto'],
+					"direccion_empresa" 		=> $proveedor['Proveedor']['direccion'],
+					"fecha"	 					=> date('y-m-s'),
+					"vendedor" 					=> "",
+					"tipo_entrega" 				=> "",
+					"receptor_informado" 		=> "",
+					"informacion_entrega" 		=> "",
+					"total_neto" 				=> "",
+					"iva" 						=> "",
+					"total" 					=> "",
+					"mensaje_final" 			=> "",
+				];
+
+				foreach ($proveedor['VentaDetalleProducto'] as $i => $p) {
+					
+					$total = array_sum(Hash::extract(array_filter($venta_bodega, function ($v, $k) use($p) {
+						return $v['rpvdp']['producto_id'] == $p['id'];
+					}, ARRAY_FILTER_USE_BOTH),"{n}.0.cantidad"));
+					// prx($p);
+
+					$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
+					$precio_unitario 	= $total * $p['precio_costo'];
+					$descuento_producto = $total * $descuentos['total_descuento'];
+					$producto_oc 		= [
+						'venta_detalle_producto_id' => $p['id'],
+						'codigo' 					=> $p['referencia'],
+						'descripcion' 				=> $p['nombre'],
+						'cantidad' 					=> $total,
+						'precio_unitario' 			=> $precio_unitario,
+						'descuento_producto' 		=> $descuento_producto,
+						'total_neto' 				=> $precio_unitario - $descuento_producto,
+					];
+				}
+			
+				prx($proveedor);
+			}
+			prx(array_unique( $proveedores, SORT_STRING));
+		}
+		// prx($this->OrdenCompra->getDataSource()->getLog(false, false));
+
+		return $proveedores = ClassRegistry::init('Proveedor')->find('all',['conditions'=>['Proveedor.activo'=>true,'Proveedor.permitir_generar_oc'=>true]]);
+
+
+		
+		
+		// # $proveedores = array_map("unserialize", array_unique(array_map("serialize", $proveedores)));
+		
+		// $tipoDescuento    = array(0 => '$', 1 => '%');
+
+		// $descuentosMarcaCompuestos = array();
+		// $descuentosMarcaEspecificos = array();
+
+		// # Calculo de descuentos
+		// foreach ($proveedores as $ip => $proveedor) {
+		// 	foreach ($proveedor['VentaDetalleProducto'] as $i => $p) {
+
+		// 		$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
+
+		// 		$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
+		// 		$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = $descuentos['nombre_descuento'];
+		// 		$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento']; 
+		// 	}
+		// }
+
+		// if (!isset($d['VentaDetalleProducto'])) {
+		// 	continue;
+		// }
+
+		// $d['OrdenCompraHistorico'] = array(
+		// 	array(
+		// 		'estado' => 'creada',
+		// 		'responsable' => $this->Auth->user('email'),
+		// 		'evidencia' => json_encode($d)
+		// 	)
+		// );
+
+		// $ventas = Hash::extract($d['Venta'], '{n}.venta_id');
+
+		// # Tomamos la bodega de la primera venta. Al permitir solo OC de ventas de una bodega en especifica, 
+		// # todas las ventas de este request pertenecen a la misma bodega
+		// $bodega_id = ClassRegistry::init('Venta')->field('bodega_id', array('id' => $ventas[0]));
+
+		// $d['OrdenCompra']['bodega_id'] = ($bodega_id) ? $bodega_id : $this->Session->read('Auth.Administrador.Rol.bodega_id');
+
+		// $d['Venta'] = unique_multidim_array($d['Venta'], 'venta_id');
+	
+		// if ( ! $this->OrdenCompra->saveAll($d, array('deep' => true)) ) {
+		// 	$this->Session->setFlash('Ocurrió un error al guardar la OC. Verifique la información.', null, array(), 'danger');
+		// 	$this->redirect(array('action' => 'validate', 'Venta' => $this->request->query['Venta']));
+		// }
+
 	}
 }

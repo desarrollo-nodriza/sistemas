@@ -2,6 +2,39 @@
 	<h2><span class="fa fa-filter"></span> Reglas Generar OT</h2>
 </div>
 <div class="page-content-wrap">
+
+
+	<div class="row">
+		<div class="col-xs-12">
+			<div class="page-content-wrap">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<h3 class="panel-title">Configuración</h3>
+						<div class="btn-group pull-right">
+							<!-- <? if ($permisos['add']) : ?>
+								<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Regla', array('action' => '#'), array('class' => 'btn btn-success clone-boton', 'escape' => false)); ?>
+								<button type="submit" class="btn btn-danger start-loading-when-form-is-validate"><i class="fa fa-save"></i>Guardar Información</button>
+							<? endif; ?> -->
+						</div>
+						<div class="panel-body">
+						
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-12">
+				<div class="pull-right">
+					<ul class="pagination">
+						<?= $this->Paginator->prev('« Anterior', array('tag' => 'li'), null, array('tag' => 'li', 'disabledTag' => 'a', 'class' => 'first disabled hidden')); ?>
+						<?= $this->Paginator->numbers(array('tag' => 'li', 'currentTag' => 'a', 'modulus' => 2, 'currentClass' => 'active', 'separator' => '')); ?>
+						<?= $this->Paginator->next('Siguiente »', array('tag' => 'li'), null, array('tag' => 'li', 'disabledTag' => 'a', 'class' => 'last disabled hidden')); ?>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
 	<?= $this->Form->create(false, array(
 		'class' => 'form-horizontal',
 		'url' 	=> array('controller' => 'reglasGenerarOC', 'action' => 'regla_create',),
@@ -27,8 +60,8 @@
 											<th><?= $this->Paginator->sort('id', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 											<th><?= $this->Paginator->sort('nombre', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 											<th><?= $this->Paginator->sort('medio de pago', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
-											<th><?= $this->Paginator->sort('mayor que', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 											<th><?= $this->Paginator->sort('menor que', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
+											<th><?= $this->Paginator->sort('mayor que', null, array('title' => 'Haz click para ordenar por este criterio')); ?></th>
 											<th>Acciones</th>
 										</tr>
 									</thead>
@@ -40,7 +73,7 @@
 													<?= $this->Form->input(sprintf('%d.id', $i), array('type' => 'text', 'label' => '', 'default' => "", 'class' => 'form-control hidden ')); ?>
 												</td>
 
-												<td align="center" style="vertical-align: bottom;">
+												<td align="center" style="vertical-align: bottom;width: 700px;">
 													<?= $this->Form->input(sprintf('%d.nombre', $i), array('type' => 'text', 'label' => '', 'class' => 'form-control nombre', 'required')); ?>
 												</td>
 
@@ -56,10 +89,10 @@
 													); ?>
 												</td>
 												<td align="center" style="vertical-align: bottom;">
-													<?= $this->Form->input(sprintf('%d.mayor_que', $i), array('type' => 'text', 'label' => '', 'class' => 'form-control mayor_que',)); ?>
+													<?= $this->Form->input(sprintf('%d.menor_que', $i), array('type' => 'text', 'label' => '', 'class' => 'form-control menor_que',)); ?>
 												</td>
 												<td align="center" style="vertical-align: bottom;">
-													<?= $this->Form->input(sprintf('%d.menor_que', $i), array('type' => 'text', 'label' => '', 'class' => 'form-control menor_que',)); ?>
+													<?= $this->Form->input(sprintf('%d.mayor_que', $i), array('type' => 'text', 'label' => '', 'class' => 'form-control mayor_que',)); ?>
 												</td>
 												<td align="center" style="vertical-align: bottom;">
 													<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>
@@ -69,11 +102,10 @@
 										<?php foreach ($reglasGenerarOC as $indice => $regla) : ?>
 											<tr>
 												<td align="center" style="vertical-align: bottom; max-width: 100px;">
-													<!-- <?= h($regla['ReglasGenerarOC']['id']); ?> -->
 													<?= $this->Form->input(sprintf('%d.id', $indice), array('readonly', 'type' => 'text', 'label' => '', 'default' => $regla['ReglasGenerarOC']['id'], 'class' => 'form-control')); ?>
 												</td>
 
-												<td align="center" style="vertical-align: bottom;">
+												<td align="center" style="vertical-align: bottom;width: 700px;">
 													<?= $this->Form->input(sprintf('%d.nombre', $indice), array('type' => 'text', 'label' => '', 'default' => $regla['ReglasGenerarOC']['nombre'], 'class' => ' nombre form-control')); ?>
 												</td>
 
@@ -84,15 +116,15 @@
 														array(
 															'style' => "width: 400px",
 															'default' => $regla['ReglasGenerarOC']['medio_pago_id'],
-															'class' => 'form-control hidden mi-selector medio_pago_id'
+															'class' => 'form-control mi-selector medio_pago_id'
 														)
 													); ?>
 												</td>
 												<td align="center" style="vertical-align: bottom;">
-													<?= $this->Form->input(sprintf('%d.mayor_que', $indice), array('type' => 'text', 'label' => '', 'default' => $regla['ReglasGenerarOC']['mayor_que'], 'class' => 'is-number form-control mayor_que', 'min' => 0)); ?>
+													<?= $this->Form->input(sprintf('%d.menor_que', $indice), array('type' => 'text', 'label' => '', 'default' => $regla['ReglasGenerarOC']['menor_que'], 'class' => 'is-number form-control menor_que', 'min' => 0)); ?>
 												</td>
 												<td align="center" style="vertical-align: bottom;">
-													<?= $this->Form->input(sprintf('%d.menor_que', $indice), array('type' => 'text', 'label' => '', 'default' => $regla['ReglasGenerarOC']['menor_que'], 'class' => 'is-number form-control menor_que', 'min' => 0)); ?>
+													<?= $this->Form->input(sprintf('%d.mayor_que', $indice), array('type' => 'text', 'label' => '', 'default' => $regla['ReglasGenerarOC']['mayor_que'], 'class' => 'is-number form-control mayor_que', 'min' => 0)); ?>
 												</td>
 												<td align="center" style="vertical-align: bottom;">
 													-
@@ -146,12 +178,17 @@
 
 		$th.fadeOut('slow', function() {
 			$th.remove();
-			ordenar();
+
 		});
 	});
 
 	$('.medio_pago_id').on('change', function(e) {
-		cambiarNombre($(this))
+
+		setTimeout(() => {
+			console.log("0.01 Segundo esperado")
+			cambiarNombre($(this))
+		}, 10);
+
 	});
 
 	$('.mayor_que').on('change', function(e) {
@@ -170,9 +207,9 @@
 		var mayor_que = base.closest('tr').find('.mayor_que').val();
 		var nombre = base.closest('tr').find('.nombre').val();
 		var menor_que = base.closest('tr').find('.menor_que').val();
-		var rango = "Rango " + (menor_que.length > 0 ? menor_que : "")
-		" - " + (menor_que.length > 0 ? menor_que : "")
-		let _nombre = medio_de_pago + rango
+		var rango = " | Rango : " + (menor_que.length > 0 ? menor_que : "#") +
+			" - " + (mayor_que.length > 0 ? mayor_que : "#")
+		let _nombre = "Medio pago : " + medio_de_pago + rango
 		base.closest('tr').find('.nombre').val(_nombre);
 		console.log({
 			"_nombre": _nombre,

@@ -39,9 +39,11 @@ class ReglasGenerarOCController extends AppController
 
         $medio_de_pago = ClassRegistry::init('MedioPago')->find('list', ['conditions' => ['MedioPago.activo' => true]]);
 
+        $tienda = ClassRegistry::init('Tienda')->find('all');
+
         // BreadcrumbComponent::add('Atributo Dinámicos');
 
-        $this->set(compact('reglasGenerarOC', 'medio_de_pago'));
+        $this->set(compact('reglasGenerarOC', 'medio_de_pago','tienda'));
     }
 
     public function admin_regla_create()
