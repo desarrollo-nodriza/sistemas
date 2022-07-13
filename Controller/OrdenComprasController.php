@@ -1027,7 +1027,7 @@ class OrdenComprasController extends AppController
 						'evidencia' => json_encode($this->request->data)
 					)
 				);
-
+				prx($this->request->data);
 				if ( $this->OrdenCompra->saveAll($this->request->data) && $this->guardarEmailAsignarPago($ocs, $emails) )
 				{	
 					$this->Session->setFlash('Estado actualizado con éxito.', null, array(), 'success');
@@ -1076,6 +1076,7 @@ class OrdenComprasController extends AppController
 
 		if ($this->request->is('post') || $this->request->is('put')) {
 			
+		
 			$this->request->data['OrdenCompraHistorico'] = array(
 				array(
 					'estado' => 'asignacion_metodo_pago',
@@ -1083,7 +1084,7 @@ class OrdenComprasController extends AppController
 					'evidencia' => json_encode($this->request->data)
 				)
 			);
-
+			prx($this->request->data);
 			if ($this->guardarEmailValidado($id) && $this->OrdenCompra->saveAll($this->request->data)) {
 				$this->Session->setFlash('Método de pago asignado con éxito.', null, array(), 'success');
 				$this->redirect(array('action' => 'index', 'sta' => 'asignacion_metodo_pago'));
@@ -1139,7 +1140,7 @@ class OrdenComprasController extends AppController
 
 		if ( $this->request->is('post') || $this->request->is('put') )
 		{	
-			prx($this->request->data);
+			
 			foreach ($this->request->data['OrdenesCompra'] as $ic => $d) {
 				
 				if (!isset($d['VentaDetalleProducto'])) {
@@ -1153,7 +1154,7 @@ class OrdenComprasController extends AppController
 						'evidencia' => json_encode($d)
 					)
 				);
-
+				prx($d);
 				$ventas = Hash::extract($d['Venta'], '{n}.venta_id');
 
 				# Tomamos la bodega de la primera venta. Al permitir solo OC de ventas de una bodega en especifica, 
@@ -1325,7 +1326,7 @@ class OrdenComprasController extends AppController
 				$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento']; 
 			}
 		}
-		prx($proveedores);
+		// prx($proveedores);
 		$proveedoresLista = ClassRegistry::init('Proveedor')->find('list', array(
 			'conditions' => array(
 				'Proveedor.activo' => 1
@@ -4294,16 +4295,20 @@ class OrdenComprasController extends AppController
 
 	public function CrearOCAutomaticas()
 	{
+		// * Obtenemos bodega para buscar ventas por bodegas
 
-		$bodegas 		= ClassRegistry::init('Bodega')->obtener_bodegas();		
-		$ventas_bodega 	= [];
+		$bodegas 		= ClassRegistry::init('Bodega')->obtener_bodegas();
+		$venta_bodega 	= [];
 
 		foreach ($bodegas as $bodega_id => $nombre) {
 
+			// * Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autmaticas
+			// * Ademas la Venta debe cumplir con las condiciones para generar OC
 			$venta_bodega	 = $this->OrdenCompra->Venta->find('all', array(
 				'fields' => array(
 					'vd_1.id as venta_detalles_id',
 					'vd_1.venta_id as venta_id',
+					'vd_1.venta_detalle_producto_id as producto_id',
 					'rpvdp.id as proveedores_venta_detalle_productos_id',
 					'rpvdp.venta_detalle_producto_id as producto_id',
 					'rpvdp.proveedor_id as proveedor_id',
@@ -4397,25 +4402,32 @@ class OrdenComprasController extends AppController
 															   from rp_venta_detalles_reservas as Reserva
 															   where Reserva.venta_detalle_id = rvd.id)) > 0
 						ORDER BY Venta.prioritario DESC, Venta.fecha_venta DESC)",
-						"0 = (select count(*) from rp_orden_compras_ventas orv where orv.venta_id = Venta.id)",
-						'Venta.bodega_id' 			=> $bodega_id,
-						'rp_1.permitir_generar_oc'	=> true,
-						'rp_1.activo'				=> true,
-						"((vd_1.cantidad - vd_1.cantidad_anulada - vd_1.cantidad_entregada) - (vd_1.cantidad_entregada - (select ifnull(sum(rvdr.cantidad_reservada), 0)
+					"0 = (select count(*) from rp_orden_compras_ventas orv where orv.venta_id = Venta.id)",
+					'Venta.bodega_id' 			=> $bodega_id,
+					'rp_1.permitir_generar_oc'	=> true,
+					'rp_1.activo'				=> true,
+					"((vd_1.cantidad - vd_1.cantidad_anulada - vd_1.cantidad_entregada) - (vd_1.cantidad_entregada - (select ifnull(sum(rvdr.cantidad_reservada), 0)
 						from rp_venta_detalles_reservas rvdr
 						where rvdr.venta_detalle_id = vd_1.id and rvdr.bodega_id = $bodega_id))) > 0"
-					),
+				),
 				'order' 	=> array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC')
 			));
 
 			// prx($venta_bodega);
-			$proveedores = Hash::extract($venta_bodega, '{n}.rpvdp.proveedor_id');
 
+			// * Extraen los identificadores de los proveedores para crear oc por cada proveedor
+
+			$proveedores = array_unique(Hash::extract($venta_bodega, '{n}.rpvdp.proveedor_id'));
+			
+			// * Se recorren los proveedores y se haran oc solo con sus productos asociados
 			foreach ($proveedores as $proveedor_id) {
 
-				$productos__oc = Hash::extract($venta_bodega, "{n}.rpvdp[proveedor_id={$proveedor_id}].producto_id");
-				
-				# Obtenemos solo los proveedores que necesitamos
+				$OC = [];
+
+				// * Obtenemos los productos de ese proveedor
+				$productos__oc = array_unique(Hash::extract($venta_bodega, "{n}.rpvdp[proveedor_id={$proveedor_id}].producto_id"));
+
+				// * Obtenemos toda la informacion para generar una OC
 				$proveedor = ClassRegistry::init('Proveedor')->find('first', array(
 					'joins' => array(
 						array(
@@ -4433,19 +4445,55 @@ class OrdenComprasController extends AppController
 							'conditions' => array(
 								'VentaDetalleProducto.id' => $productos__oc
 							)
-						)
+							),
+						'ReglasGenerarOC'
 					),
 					'conditions' => ["Proveedor.id" => $proveedor_id]
 				));
-				
-				$tienda = ClassRegistry::init('Tienda')->tienda_principal();
-				prx();
-				# Calculo de descuentos
-				$OC= [
-					"administrador_id" 			=> "",
+				// prx($proveedor);
+				$ventas_id = [];
+
+				// * Buscamos las venta_id asociadas a los productos relacionados al proveedor
+
+				foreach ($productos__oc as $producto_id) {
+					$ventas_id = array_unique(array_merge($ventas_id, array_unique(Hash::extract($venta_bodega, "{n}.vd_1[producto_id=$producto_id].venta_id"))));
+				}
+
+				// * Formatiamos las ventas para asociarlas a la OC
+
+				foreach ($ventas_id as $id) {
+
+					$OC['Venta'][] = [
+						'venta_id' => $id
+					];
+				}
+
+				$tienda = ClassRegistry::init('Tienda')->find('first', [
+					'fields' => [
+						'Tienda.id',
+						'Tienda.nombre',
+						'Tienda.administrador_id',
+						'Tienda.tipo_entrega',
+						'Tienda.receptor_informado',
+						'Tienda.informacion_entrega',
+					],
+					'contain' => [
+						'Administrador' => [
+							'nombre',
+							'email'
+						]
+					],
+					'conditions' => ['Tienda.principal' => true]
+				]);
+				// prx($tienda);
+				// "estado" 					=> "validacion_externa",
+				// "estado" 					=> "asignacion_metodo_pago",
+
+				$OC['OrdenCompra'] = [
+					"administrador_id" 			=> $tienda['Tienda']['administrador_id'],
 					"tienda_id" 				=> $tienda['Tienda']['id'],
 					"proveedor_id" 				=> $proveedor['Proveedor']['id'],
-					"estado" 					=> "validacion_comercial",
+					"estado" 					=> "asignacion_metodo_pago",
 					"rut_empresa" 				=> $proveedor['Proveedor']['rut_empresa'],
 					"razon_social_empresa" 		=> $proveedor['Proveedor']['nombre'],
 					"giro_empresa" 				=> $proveedor['Proveedor']['giro'],
@@ -4453,28 +4501,51 @@ class OrdenComprasController extends AppController
 					"email_contacto_empresa" 	=> $proveedor['Proveedor']['email_contacto'],
 					"fono_contacto_empresa" 	=> $proveedor['Proveedor']['fono_contacto'],
 					"direccion_empresa" 		=> $proveedor['Proveedor']['direccion'],
-					"fecha"	 					=> date('y-m-s'),
-					"vendedor" 					=> "",
-					"tipo_entrega" 				=> "",
-					"receptor_informado" 		=> "",
-					"informacion_entrega" 		=> "",
+					"fecha"	 					=> date('Y-m-d'),
+					"vendedor" 					=> $tienda['Administrador']['nombre'],
+					"tipo_entrega" 				=> $tienda['Tienda']['tipo_entrega'],
+					"receptor_informado" 		=> $tienda['Tienda']['receptor_informado'],
+					"informacion_entrega" 		=> $tienda['Tienda']['informacion_entrega'],
+					"moneda_id" 				=> null,
 					"total_neto" 				=> "",
 					"iva" 						=> "",
 					"total" 					=> "",
-					"mensaje_final" 			=> "",
+					"fecha_validado" 			=> date('Y-m-d h:m:s'),
+					"comentario_validar" 		=> "Esto es una OC generada Automaticamente",
+					"nombre_validado" 			=> $tienda['Administrador']['nombre'],
+					"email_comercial" 			=> $tienda['Administrador']['email'],
+					"validado_proveedor" 		=> 0,
 				];
 
-				foreach ($proveedor['VentaDetalleProducto'] as $i => $p) {
-					
-					$total = array_sum(Hash::extract(array_filter($venta_bodega, function ($v, $k) use($p) {
-						return $v['rpvdp']['producto_id'] == $p['id'];
-					}, ARRAY_FILTER_USE_BOTH),"{n}.0.cantidad"));
-					// prx($p);
+				$OC['OrdenCompraHistorico'][] = [
+					"estado" 		=> "creada",
+					"responsable" 	=> "diego.romero@nodriza.cl",
+					"evidencia" 	=> json_encode($OC)
+				];
 
-					$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
+				
+
+				$OC['OrdenCompraHistorico'][] = [
+					"estado" 		=> "asignacion_metodo_pago",
+					"responsable" 	=> "diego.romero@nodriza.cl",
+					"evidencia" 	=> json_encode($OC)
+				];
+
+				// * Formatiamos las los productos para registrarlo a la OC
+				
+				$producto_oc = [];
+				
+				foreach ($proveedor['VentaDetalleProducto'] as $p) {
+
+					$total = array_sum(Hash::extract(array_filter($venta_bodega, function ($v, $k) use ($p) {
+						return $v['rpvdp']['producto_id'] == $p['id'];
+					}, ARRAY_FILTER_USE_BOTH), "{n}.0.cantidad"));
+
+					$descuentos 		= ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
 					$precio_unitario 	= $total * $p['precio_costo'];
 					$descuento_producto = $total * $descuentos['total_descuento'];
-					$producto_oc 		= [
+					
+					$producto_oc[] = [
 						'venta_detalle_producto_id' => $p['id'],
 						'codigo' 					=> $p['referencia'],
 						'descripcion' 				=> $p['nombre'],
@@ -4484,63 +4555,45 @@ class OrdenComprasController extends AppController
 						'total_neto' 				=> $precio_unitario - $descuento_producto,
 					];
 				}
-			
-				prx($proveedor);
+
+				// * Totalizamos el neto, el total y el iva. Asignamos los productos formatiados
+
+				$OC['OrdenCompra']['total_neto'] 	= array_sum(Hash::extract($producto_oc, "{n}.total_neto"));
+				$OC['OrdenCompra']['total'] 		= $OC['OrdenCompra']['total_neto'] + round($OC['OrdenCompra']['total_neto'] * (Configure::read('iva_clp') / 100));
+				$OC['OrdenCompra']['iva'] 			= $OC['OrdenCompra']['total'] - $OC['OrdenCompra']['total_neto'];
+				$OC['VentaDetalleProducto'] 		= $producto_oc;
+				
+				// * Verificamos que medio de pago se le asignara. Si encaja en alguno se le asigna, sino queda en estado asignacion_metodo_pago
+				
+				$encontro_regla = false;
+				
+				try {
+					foreach ($proveedor['ReglasGenerarOC']  as $ReglasGenerarOC) {
+
+						if ($ReglasGenerarOC['mayor_que'] < $OC['OrdenCompra']['total']  or $ReglasGenerarOC['menor_que'] > $OC['OrdenCompra']['total']) {
+							
+							$OC['OrdenCompra']['moneda_id'] 			= $ReglasGenerarOC['medio_pago_id'];
+							$OC['OrdenCompra']['validacion_externa'] 	= "validacion_externa";
+
+							$OC['OrdenCompraHistorico'][] 				= [
+								"estado" 		=> "validacion_externa",
+								"responsable" 	=> "diego.romero@nodriza.cl",
+								"evidencia" 	=> json_encode($OC)
+							];
+							
+							$encontro_regla 							= true;
+
+							break;
+						}
+					}
+				} catch (\Throwable $th) {
+					prx($th);
+				}
+
+				
 			}
-			prx(array_unique( $proveedores, SORT_STRING));
+			prx($OC);
+			// prx(array_unique($proveedores, SORT_STRING));
 		}
-		// prx($this->OrdenCompra->getDataSource()->getLog(false, false));
-
-		return $proveedores = ClassRegistry::init('Proveedor')->find('all',['conditions'=>['Proveedor.activo'=>true,'Proveedor.permitir_generar_oc'=>true]]);
-
-
-		
-		
-		// # $proveedores = array_map("unserialize", array_unique(array_map("serialize", $proveedores)));
-		
-		// $tipoDescuento    = array(0 => '$', 1 => '%');
-
-		// $descuentosMarcaCompuestos = array();
-		// $descuentosMarcaEspecificos = array();
-
-		// # Calculo de descuentos
-		// foreach ($proveedores as $ip => $proveedor) {
-		// 	foreach ($proveedor['VentaDetalleProducto'] as $i => $p) {
-
-		// 		$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
-
-		// 		$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
-		// 		$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = $descuentos['nombre_descuento'];
-		// 		$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento']; 
-		// 	}
-		// }
-
-		// if (!isset($d['VentaDetalleProducto'])) {
-		// 	continue;
-		// }
-
-		// $d['OrdenCompraHistorico'] = array(
-		// 	array(
-		// 		'estado' => 'creada',
-		// 		'responsable' => $this->Auth->user('email'),
-		// 		'evidencia' => json_encode($d)
-		// 	)
-		// );
-
-		// $ventas = Hash::extract($d['Venta'], '{n}.venta_id');
-
-		// # Tomamos la bodega de la primera venta. Al permitir solo OC de ventas de una bodega en especifica, 
-		// # todas las ventas de este request pertenecen a la misma bodega
-		// $bodega_id = ClassRegistry::init('Venta')->field('bodega_id', array('id' => $ventas[0]));
-
-		// $d['OrdenCompra']['bodega_id'] = ($bodega_id) ? $bodega_id : $this->Session->read('Auth.Administrador.Rol.bodega_id');
-
-		// $d['Venta'] = unique_multidim_array($d['Venta'], 'venta_id');
-	
-		// if ( ! $this->OrdenCompra->saveAll($d, array('deep' => true)) ) {
-		// 	$this->Session->setFlash('Ocurrió un error al guardar la OC. Verifique la información.', null, array(), 'danger');
-		// 	$this->redirect(array('action' => 'validate', 'Venta' => $this->request->query['Venta']));
-		// }
-
 	}
 }

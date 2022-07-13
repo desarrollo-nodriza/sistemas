@@ -369,7 +369,7 @@ class ProveedoresController extends AppController
 	{
 		// prx($this->request->data);
 		$reglas = array_filter($this->request->data, function ($v, $k) {
-			return !empty($v['proveedor_id']) and !empty($v['regla_generar_ot_id']) and !empty($v['hora']);
+			return !empty($v['proveedor_id']) and !empty($v['regla_generar_oc_id']) and !empty($v['hora']);
 		}, ARRAY_FILTER_USE_BOTH);
 
 		$datos_a_guardar = [];

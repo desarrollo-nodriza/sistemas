@@ -107,7 +107,7 @@ class Proveedor extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
-		)
+		),
 		/*'Marca' => array(
 			'className'				=> 'Marca',
 			'joinTable'				=> 'proveedores_marcas',
@@ -139,6 +139,13 @@ class Proveedor extends AppModel
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
 		)*/
+		'ReglasGenerarOC' => array(
+			'className'				=> 'ReglasGenerarOC',
+			'joinTable'				=> 'reglas_proveedores',
+			'foreignKey'			=> 'proveedor_id',
+			'associationForeignKey'	=> 'regla_generar_oc_id',
+			'unique'				=> true,
+		)
 	);
 
 

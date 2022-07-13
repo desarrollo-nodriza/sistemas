@@ -20,7 +20,7 @@ class PruebasController extends AppController
 
   public function api_pruebas()
   {
-    $VentasController = new VentasController();
-    prx($VentasController->actualizar_ventas_por_envios());
+    $OrdenComprasController = new OrdenComprasController();
+    prx($OrdenComprasController->CrearOCAutomaticas());
   }
 }

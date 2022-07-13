@@ -39,11 +39,12 @@ class ReglasGenerarOCController extends AppController
 
         $medio_de_pago = ClassRegistry::init('MedioPago')->find('list', ['conditions' => ['MedioPago.activo' => true]]);
 
-        $tienda = ClassRegistry::init('Tienda')->find('all');
+        $tiendas = ClassRegistry::init('Tienda')->find('all');
 
         // BreadcrumbComponent::add('Atributo Dinámicos');
-
-        $this->set(compact('reglasGenerarOC', 'medio_de_pago','tienda'));
+        // prx($tienda);
+        $administradores = ClassRegistry::init('Administrador')->find('list', ['conditions' => ['Administrador.activo' => true]]);
+        $this->set(compact('reglasGenerarOC', 'medio_de_pago', 'tiendas', 'administradores'));
     }
 
     public function admin_regla_create()
@@ -62,6 +63,19 @@ class ReglasGenerarOCController extends AppController
         ClassRegistry::init('ReglasGenerarOC')->create();
         ClassRegistry::init('ReglasGenerarOC')->saveAll($datos_a_guardar);
 
+        $this->redirect(array('action' => 'index'));
+    }
+
+    public function admin_configuracion_tienda()
+    {
+
+        $datos_a_guardar = [];
+        foreach ($this->request->data as $tienda) {
+            $datos_a_guardar[] = ['Tienda' => $tienda];
+        }
+        // prx($datos_a_guardar);
+        ClassRegistry::init('Tienda')->create();
+        ClassRegistry::init('Tienda')->saveAll($datos_a_guardar);
         $this->redirect(array('action' => 'index'));
     }
 }

@@ -86,6 +86,18 @@ class Tienda extends AppModel
 	/**
 	 * ASOCIACIONES
 	 */
+
+	public $belongsTo = array(
+		'Administrador' => array(
+			'className'				=> 'Administrador',
+			'foreignKey'			=> 'administrador_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		),
+	);
+
 	public $hasMany = array(
 		'Reporte' => array(
 			'className'				=> 'Reporte',

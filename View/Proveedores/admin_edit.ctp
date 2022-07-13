@@ -336,7 +336,7 @@
 											<tr class="fila hidden clone-regla-tr">
 												<td align="center" style="vertical-align: bottom;">
 													<?= $this->Form->select(
-														sprintf('%d.regla_generar_ot_id', $i),
+														sprintf('%d.regla_generar_oc_id', $i),
 														$reglasGenerarOC,
 														array(
 															'type' 	=> 'text',
@@ -373,11 +373,11 @@
 
 											<td align="center" style="vertical-align: bottom;">
 												<?= $this->Form->select(
-													sprintf('%d.regla_generar_ot_id', $indice),
+													sprintf('%d.regla_generar_oc_id', $indice),
 													$reglasGenerarOC,
 													array(
 														'label' 	=> '',
-														'default' 	=> $regla['ReglasProveedor']['regla_generar_ot_id'],
+														'default' 	=> $regla['ReglasProveedor']['regla_generar_oc_id'],
 														'class' 	=> 'mi-selector form-control',
 														'style' 	=> "width: 700px",
 														'required'
