@@ -2423,11 +2423,8 @@ class VentaDetalleProductosController extends AppController
             'stock_default'
         ));
 
-		#Usamos la bodega principal para mantener actualizado el stock en prestashop
-		$bodega_principal = ClassRegistry::init('Bodega')->find('first', array('conditions' => array('Bodega.principal' => 1), 'limit' => 1, 'fields' => array('Bodega.id')))['Bodega']['id'];
-
 		# Preparamos ids para usarlos en la actualización
-        $id_actualizar = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible($bodega_principal);
+		$id_actualizar = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible_por_bodegas_v2();
 		
         $this->Onestock 	= $this->Components->load('Onestock');
         $this->Onestock->crearCliente($tienda['Tienda']['apiurl_onestock'], $tienda['Tienda']['cliente_id_onestock'], $tienda['Tienda']['onestock_correo'],    $tienda['Tienda']['onestock_clave'], $tienda['Tienda']['token_onestock']);
@@ -2443,10 +2440,11 @@ class VentaDetalleProductosController extends AppController
             );
         }
 
-        $ids = Hash::extract($id_actualizar, '{n}.id');
+        $ids = Hash::extract($id_actualizar, '{n}.VentaDetalleProducto.id');
         $ids = array_merge($ids, $productos_onestock['ids_con_stock']);
         $ids = array_merge($ids, $productos_onestock['ids_sin_stock']);
-        # Obtenemos los productos
+        
+		# Obtenemos los productos
         $productos = $this->VentaDetalleProducto->find(
             'all',
             array(
@@ -2469,13 +2467,14 @@ class VentaDetalleProductosController extends AppController
         $this->Prestashop->crearCliente($tienda['Tienda']['apiurl_prestashop'], $tienda['Tienda']['apikey_prestashop']);
         $HistorialOnestock = [];
         $stock_virtual     = [];
-
+		
         # comenzamos a actualizar el canal prestashop
         foreach ($productos as $i => $producto) {
 
-            $stock                                          = Hash::extract($id_actualizar, '{n}[id=' . $producto['VentaDetalleProducto']['id'] . ']');
-            $productos[$i]['VentaDetalleProducto']['canal'] = 'sistemas';
-
+            $stock = Hash::extract($id_actualizar, '{n}.VentaDetalleProducto[id=' . $producto['VentaDetalleProducto']['id'] . ']');
+			
+			$productos[$i]['VentaDetalleProducto']['canal'] = 'sistemas';
+		
             if (empty($stock)) {
 
                 $tiene_stock                                     = in_array($producto['VentaDetalleProducto']['id'], $productos_onestock['ids_con_stock']) ? 1 : 0;
@@ -2483,14 +2482,14 @@ class VentaDetalleProductosController extends AppController
                 $binario                                         = Hash::extract($productos_onestock, ($tiene_stock ? "conStock" : "sinStock") . ".{*}[id={$producto['VentaDetalleProducto']['id']}][binario=true]");
 				$total_stock 									 = array_sum(Hash::extract($productos_onestock, ($tiene_stock ? "conStock" : "sinStock") . ".{*}[id={$producto['VentaDetalleProducto']['id']}].stock"));
                 
-				$stock[0]['stock_disponible']                    = $binario ? (($total_stock <= 0) ? 0 : $tienda['Tienda']['stock_default']) : $total_stock;
-                $stock[0]['stock_disponible']                    = $stock[0]['stock_disponible'] < 0 ? 0 : $stock[0]['stock_disponible'];
-                $stock[0]['stock_disponible'] 					 = ($stock[0]['stock_disponible'] > 100) ? 100 : $stock[0]['stock_disponible'];
-				$stock[0]['stock_fisico']                        = $stock[0]['stock_disponible'];
+				$stock[0]['disponibilidad']['stock_disponible'] = $binario ? (($total_stock <= 0) ? 0 : $tienda['Tienda']['stock_default']) : $total_stock;
+                $stock[0]['disponibilidad']['stock_disponible'] = $stock[0]['disponibilidad']['stock_disponible'] < 0 ? 0 : $stock[0]['disponibilidad']['stock_disponible'];
+                $stock[0]['disponibilidad']['stock_disponible'] = ($stock[0]['disponibilidad']['stock_disponible'] > 100) ? 100 : $stock[0]['disponibilidad']['stock_disponible'];
+				$stock[0]['disponibilidad']['stock_fisico'] = $stock[0]['disponibilidad']['stock_disponible'];
 				
 				$productos[$i]['VentaDetalleProducto']['stock_onestock'] = $total_stock;
 				
-                if ($productos[$i]['VentaDetalleProducto']['cantidad_virtual'] != $stock[0]['stock_fisico']) {
+                if ($productos[$i]['VentaDetalleProducto']['cantidad_virtual'] != $stock[0]['disponibilidad']['stock_fisico']) {
 
                     $onestock            = Hash::extract($productos_onestock, ($tiene_stock ? "conStock" : "sinStock") . ".{*}[id={$producto['VentaDetalleProducto']['id']}]");
 					
@@ -2498,16 +2497,16 @@ class VentaDetalleProductosController extends AppController
                         [
                             'producto_id'        => $onestock[0]['id'],
                             'proveedor_id'       => $onestock[0]['proveedor_id'],
-                            'stock'              => $stock[0]['stock_fisico'],
+                            'stock'              => $stock[0]['disponibilidad']['stock_fisico'],
                             'disponible'         => $tiene_stock,
                             'fecha_modificacion' => $onestock[0]['fecha_modificacion'],
                         ];
                 }
             }
 
-            $productos[$i]['VentaDetalleProducto']['stock_fisico']                     = $stock[0]['stock_fisico'];
-            $productos[$i]['VentaDetalleProducto']['stock_reservado']                  = $stock[0]['stock_reservado'] ?? 0;
-            $productos[$i]['VentaDetalleProducto']['stock_fisico_disponible']          = $stock[0]['stock_disponible'];
+            $productos[$i]['VentaDetalleProducto']['stock_fisico']                     = $stock[0]['disponibilidad']['stock_fisico'];
+            $productos[$i]['VentaDetalleProducto']['stock_reservado']                  = $stock[0]['disponibilidad']['stock_reservado'] ?? 0;
+            $productos[$i]['VentaDetalleProducto']['stock_fisico_disponible']          = $stock[0]['disponibilidad']['stock_disponible'];
             $productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] = false;
 
 			# Actualizamos el stock virtual
@@ -2523,8 +2522,8 @@ class VentaDetalleProductosController extends AppController
 
             # Volvemos a setear el stock de prestashop
             $productos[$i]['VentaDetalleProducto']['stock_virtual_presta'] 				= $stockPresta;
-			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] 	= $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock[0]['stock_disponible']);
-        }
+			$productos[$i]['VentaDetalleProducto']['stock_virtual_presta_actualizado'] 	= $this->Prestashop->prestashop_actualizar_stock($stockProductoPrestashop['stock_available']['id'], $stock[0]['disponibilidad']['stock_disponible']);
+		}
 		
         if ($stock_virtual) {
 
@@ -3686,6 +3685,12 @@ class VentaDetalleProductosController extends AppController
 	    ));
 	}
 
+
+	/**
+	 * Obtiene la información de un producto dado su SKU
+	 * 
+	 * @return json
+	 */
 	public function api_view_by_reference2() {
     	
 		# Solo método POST
@@ -3794,6 +3799,135 @@ class VentaDetalleProductosController extends AppController
         ));
 			
     }
+
+
+	public function api_view_by_reference3() {
+    	
+		# Solo método POST
+		if (!$this->request->is('post')) {
+			$response = array(
+				'code'    => 501,
+				'name' => 'error',
+				'message' => 'Método no permitido'
+			);
+
+			throw new CakeException($response);
+		}
+
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			$response = array(
+				'code'    => 502, 
+				'message' => 'Expected Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			$response = array(
+				'code'    => 505, 
+				'message' => 'Invalid or expired Token'
+			);
+
+			throw new CakeException($response);
+		}
+
+		# Validamos los campo
+		
+        if (!isset($this->request->data['sku']))
+        {
+            $response = array(
+				'code'    => 401, 
+				'message' => 'sku es requerido'
+			);
+
+			throw new CakeException($response);
+        }
+
+		$producto = $this->VentaDetalleProducto->find('first', array(
+			'conditions' => array(
+				'VentaDetalleProducto.referencia' => $this->request->data['sku']
+			)
+		));
+
+		if(empty($producto))
+		{
+			$response = array(
+				'code'    => 404, 
+				'message' => 'Producto not found'
+			);
+
+			throw new CakeException($response);
+		}
+
+
+		$producto['VentaDetalleProducto']['stock_enbodega'] = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodegas($producto['VentaDetalleProducto']['id']);
+
+		if (isset($this->request->query['external'])) {
+
+			$canales = $this->verificar_canales($producto['VentaDetalleProducto']['id_externo']);
+
+			foreach ($canales as $ic => $canal) {
+				foreach ($canal as $i => $c) {
+
+					if (!$c['existe'])
+						continue;
+
+					$producto['VentaDetalleProducto'][$ic][$c['nombre']] = array(
+						'precio_venta'     => $c['item']['precio'],
+						'stock_disponible' => $c['item']['stock_disponible'],
+						'estado'           => $c['item']['estado']
+					);
+
+				}
+			}
+
+		}
+
+		# Etiqueta sec
+		if (!empty($producto['VentaDetalleProducto']['qr_sec'])) {
+			
+			$url_sec = obtener_url_base() . 'webroot/img/VentaDetalleProducto/' . $producto['VentaDetalleProducto']['qr_sec'];
+			$producto['VentaDetalleProducto']['qr_sec'] = $url_sec;
+
+		}
+
+		$producto['VentaDetalleProducto']['tiempo_entrega'] = $this->VentaDetalleProducto->obtener_tiempo_entrega($producto['VentaDetalleProducto']['id']);
+
+
+        $this->set(array(
+            'producto' => $producto['VentaDetalleProducto'],
+            '_serialize' => array('producto')
+        ));
+			
+    }
+
+
+	/**
+	 * Permite obtener un un json con todos los productos con 
+	 * stock fisico disponible para la venta
+	 * 
+	 * @return json
+	 */
+	public function admin_actualizar_atributo_canales() 
+	{
+		$productos = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible_por_bodegas_v2();
+	
+		if (!$productos)
+		{
+			return false;
+		}
+
+		prx($productos);
+	}
 
 	public function actualizar_canal_de_venta()
 	{
@@ -4338,8 +4472,33 @@ class VentaDetalleProductosController extends AppController
 		return ['code' => $code , 'total_disponible' => $total_disponible];
 	}
 
+
+	/**
+	 * Crea y/o regenera un archivo json con la información de los productos disponibles
+	 * para la venta
+	 * 
+	 * @return bool
+	 */
+	public function generar_json_productos_disponibles()
+	{	
+		$productos = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible_por_bodegas_v2();
 	
+		if (!$productos)
+		{
+			return false;
+		}
 
+		$data = json_encode($productos);
 
+		App::uses('Folder', 'Utility');
+		App::uses('File', 'Utility');
+
+		$dir = new Folder(WWW_ROOT . 'Disponibilidad');
+		$dir->chmod(WWW_ROOT . 'Disponibilidad', 0775, true);
+		$file = new File( WWW_ROOT . 'Disponibilidad' . DS . 'productos.json', true, 0664);
+		$file->append($data, true);
+		
+		return true;
+	}
 	
 }

@@ -14,6 +14,15 @@ class BodegasVentaDetalleProducto extends AppModel
 			'order'					=> '',
 			'counterCache'			=> true,
 			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
+		),
+		'Bodega' => array(
+			'className'				=> 'Bodega',
+			'foreignKey'			=> 'bodega_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+			//'counterScope'			=> array('Asociado.modelo' => 'Rol')
 		)
 	);
 }

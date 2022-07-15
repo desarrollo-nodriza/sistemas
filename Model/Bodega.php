@@ -268,10 +268,6 @@ class Bodega extends AppModel
 		$total = 0;
 
 		if (!empty($historico)) {
-			// Sumatoria de las cantidades
-			$inCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=IN].cantidad'));
-			$edCantidad = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto[io=ED].cantidad'));
-
 			$total = array_sum(Hash::extract($historico, '{n}.BodegasVentaDetalleProducto.cantidad'));		
 		}
 
