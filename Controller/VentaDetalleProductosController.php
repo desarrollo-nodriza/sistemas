@@ -4494,8 +4494,8 @@ class VentaDetalleProductosController extends AppController
 		App::uses('File', 'Utility');
 
 		$dir = new Folder(WWW_ROOT . 'Disponibilidad');
-		$dir->chmod(WWW_ROOT . 'Disponibilidad', 0755, true);
-		$file = new File( WWW_ROOT . 'Disponibilidad' . DS . 'productos.json', true, 0644);
+		$dir->chmod(WWW_ROOT . 'Disponibilidad', 0775, true);
+		$file = new File( WWW_ROOT . 'Disponibilidad' . DS . 'productos.json', true, 0664);
 		$file->append($data, true);
 		
 		return true;
