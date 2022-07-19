@@ -73,6 +73,19 @@ class Proveedor extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'FrecuenciaGenerarOC' => array(
+			'className'				=> 'FrecuenciaGenerarOC',
+			'foreignKey'			=> 'proveedor_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
@@ -145,7 +158,8 @@ class Proveedor extends AppModel
 			'foreignKey'			=> 'proveedor_id',
 			'associationForeignKey'	=> 'regla_generar_oc_id',
 			'unique'				=> true,
-		)
+		),
+		
 	);
 
 

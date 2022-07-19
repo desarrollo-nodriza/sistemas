@@ -21,6 +21,6 @@ class PruebasController extends AppController
   public function api_pruebas()
   {
     $OrdenComprasController = new OrdenComprasController();
-    prx($OrdenComprasController->CrearOCAutomaticas());
+    prx($OrdenComprasController->RecorrerProveedor());
   }
 }

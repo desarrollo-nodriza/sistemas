@@ -115,7 +115,7 @@ class ProveedoresController extends AppController
 				}
 
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
-				$this->redirect(array('action' => 'index'));
+				$this->redirect(array('action' => 'edit', $id));
 			} else {
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
@@ -126,29 +126,33 @@ class ProveedoresController extends AppController
 					'Moneda',
 					'Saldo' => array(
 						'order' => array('Saldo.id' => 'DESC')
-					)
+					),
+					'FrecuenciaGenerarOC',
+					'ReglasGenerarOC'=> [
+						'order' 	=> array('ReglasGenerarOC.mayor_que' => 'ASC')
+					]
 				)
 			));
 		}
-
+		// prx($this->request);
 		$this->request->data['Proveedor']['saldo'] = ClassRegistry::init('Saldo')->obtener_saldo_total_proveedor($id);
 
 		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
 
 		$tipo_email = $this->Proveedor->obtener_tipo_email();
 
-		$reglas 	= ClassRegistry::init('ReglasProveedor')->find(
-			'all',
-			['conditions' => ['ReglasProveedor.proveedor_id' => $id]]
-		);
-
 		$reglasGenerarOC = ClassRegistry::init('ReglasGenerarOC')->find('list', []);
+		$reglasGenerarOC_2 = $reglasGenerarOC;
+		foreach ($this->request->data['ReglasGenerarOC'] as $value) {
+			unset($reglasGenerarOC[$value['id']]);
+		}
+
 		$horas = $this->HORAS;
-		// debug($reglas);
-		BreadcrumbComponent::add('Proveedores ', '/roles');
+
+		BreadcrumbComponent::add('Proveedores ', '/proveedores');
 		BreadcrumbComponent::add('Editar ');
 
-		$this->set(compact('monedas', 'tipo_email', 'reglas', 'reglasGenerarOC', 'horas'));
+		$this->set(compact('monedas', 'tipo_email', 'reglas', 'reglasGenerarOC', 'horas', 'reglasGenerarOC_2'));
 	}
 
 	public function admin_delete($id = null)
@@ -367,9 +371,9 @@ class ProveedoresController extends AppController
 
 	public function admin_regla_create($proveedor_id)
 	{
-		// prx($this->request->data);
+		
 		$reglas = array_filter($this->request->data, function ($v, $k) {
-			return !empty($v['proveedor_id']) and !empty($v['regla_generar_oc_id']) and !empty($v['hora']);
+			return !empty($v['proveedor_id']) and !empty($v['regla_generar_oc_id']);
 		}, ARRAY_FILTER_USE_BOTH);
 
 		$datos_a_guardar = [];
@@ -377,10 +381,67 @@ class ProveedoresController extends AppController
 		foreach ($reglas as  $value) {
 			$datos_a_guardar[] = ['ReglasProveedor' => $value];
 		}
-		//  prx($datos_a_guardar);
+		
 		ClassRegistry::init('ReglasProveedor')->create();
 		ClassRegistry::init('ReglasProveedor')->saveAll($datos_a_guardar);
 
 		$this->redirect(array('action' => 'edit', $proveedor_id));
+	}
+
+	public function api_delete_regla($id)
+	{
+
+		if (!isset($this->request->query['token'])) {
+			
+			throw new UnauthorizedException('Requiere un token validado');
+		}
+		
+		ClassRegistry::init('ReglasProveedor')->id = $id;
+
+		if (!ClassRegistry::init('ReglasProveedor')->exists()) {
+			
+			throw new NotFoundException('No existe elemento');
+		}
+		
+		ClassRegistry::init('ReglasProveedor')->delete($id);
+
+		$response = array(
+			'code'    	=> 200, 
+			'name' 		=> "success $id",
+			'message' 	=> 'Eliminado con exito',
+		);
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
+	}
+
+	public function api_delete_frecuencia($id)
+	{
+		if (!isset($this->request->query['token'])) {
+			
+			throw new UnauthorizedException('Requiere un token validado');
+		}
+		
+		ClassRegistry::init('FrecuenciaGenerarOC')->id = $id;
+
+		if (!ClassRegistry::init('FrecuenciaGenerarOC')->exists()) {
+			
+			throw new NotFoundException('No existe elemento');
+		}
+		
+		ClassRegistry::init('FrecuenciaGenerarOC')->delete($id);
+
+		$response = array(
+			'code'    	=> 200, 
+			'name' 		=> "success $id",
+			'message' 	=> 'Eliminado con exito',
+		);
+
+		$this->set(array(
+            'response' => $response,
+            '_serialize' => array('response')
+        ));
 	}
 }

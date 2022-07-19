@@ -265,7 +265,101 @@
 			</div>
 		</div>
 	</div>
+	<? if ($this->request->data['Proveedor']['permitir_generar_oc']) :  ?>
+		<div class="row">
+			<div class="col-xs-12">
+				<div class="panel panel-info">
+					<div class="panel-heading">
+						<h5 class="panel-title"><i class="fa fa-filter" aria-hidden="true"></i> <?= __('Frecuencias para generar Ordenes de compra'); ?></h5>
+						<div class="btn-group pull-right">
+							<? if ($permisos['add']) : ?>
+								<? if (count($this->request->data['FrecuenciaGenerarOC']) < 3) :  ?>
+									<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo frecuencia', array('action' => '#'), array('class' => 'btn btn-success clone-frecuencia-boton', 'escape' => false)); ?>
+								<? endif; ?>
+								<button type="submit" class="btn btn-danger start-loading-when-form-is-validate"><i class="fa fa-save"></i>Guardar Información</button>
+							<? endif; ?>
+						</div>
+					</div>
+					<div class="panel-body">
+						<div class="table-responsive">
+							<table class="table">
+								<thead>
+									<tr>
+										<th style="width: 700px;">
+											Hora de ejecucion
+										</th>
+										<th style="text-align: center;">Acciones</th>
+									</tr>
+								</thead>
+								<tbody>
+									<? if (count($this->request->data['FrecuenciaGenerarOC']) < 3) :  ?>
+										<? for ($i =  count($this->request->data['FrecuenciaGenerarOC']); $i < 3; $i++) : ?>
+											<tr class="fila hidden clone-frecuencia-tr">
+												<td align="center" style="vertical-align: bottom;">
+													<?= $this->Form->select(
+														sprintf('FrecuenciaGenerarOC.%d.hora', $i),
+														$horas,
+														array(
+															'label' => '',
+															'class' => 'form-control mi-selector',
+															'style' => "width: 700px",
+															'required'
+														)
+													); ?>
+												</td>
+												<td align="center" style="vertical-align: bottom;">
+													<?= $this->Form->input(sprintf('FrecuenciaGenerarOC.%d.id', $i), array('type' => 'text', 'label' => '', 'default' => "", 'class' => 'form-control hidden ')); ?>
+													<button type="button" class="remove_tr remove-frecuencia-tr btn-danger"><i class="fa fa-minus"></i></button>
+												</td>
+											</tr>
+										<? endfor; ?>
+									<? endif; ?>
 
+									<?php foreach ($this->request->data['FrecuenciaGenerarOC'] as $indice => $frecuencia) : ?>
+										<tr id="remove-frecuencia-tr-<?= $frecuencia['id'] ?>">
+
+											<td align="center" style="vertical-align: bottom;">
+												<?= $this->Form->select(
+													sprintf('FrecuenciaGenerarOC.%d.hora', $indice),
+													$horas,
+													array(
+														'type' 		=> 'text',
+														'label' 	=> '',
+														'default' 	=> $frecuencia['hora'],
+														'class' 	=> 'form-control mi-selector',
+														'required',
+														'style' => "width: 700px",
+													)
+												); ?>
+											</td>
+											<td align="center" style="vertical-align: bottom;">
+												<?= $this->Form->input(
+													sprintf('FrecuenciaGenerarOC.%d.id', $indice),
+													array(
+														'readonly',
+														'type' 		=> 'text',
+														'label' 	=> '',
+														'default' 	=> $frecuencia['id'],
+														'class' 	=> 'form-control hidden',
+
+													)
+												); ?>
+
+												<button type="button" onclick="eliminar_frecuencia(<?= $frecuencia['id'] ?>,'<?= CakeSession::read('Auth.Administrador.token.token') ?>');" class="btn btn-danger start-loading-then-redirect"> Eliminar</button>
+											</td>
+										</tr>
+
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+
+					</div>
+
+				</div>
+			</div>
+		</div>
+	<? endif; ?>
 	<!-- MESSAGE BOX-->
 	<div class="message-box message-box-info animated fadeIn" data-sound="alert" id="modal_alertas">
 		<div class="mb-container">
@@ -309,9 +403,7 @@
 						<h5 class="panel-title"><i class="fa fa-filter" aria-hidden="true"></i> <?= __('Reglas para generar Ordenes de compras'); ?></h5>
 						<div class="btn-group pull-right">
 							<? if ($permisos['add']) : ?>
-								<? if (count($reglas) < 3) :  ?>
-									<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Regla', array('action' => '#'), array('class' => 'btn btn-success clone-boton', 'escape' => false)); ?>
-								<? endif; ?>
+								<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Regla', array('action' => '#'), array('class' => 'btn btn-success clone-boton', 'escape' => false)); ?>
 								<button type="submit" class="btn btn-danger start-loading-when-form-is-validate"><i class="fa fa-save"></i>Guardar Información</button>
 							<? endif; ?>
 						</div>
@@ -324,77 +416,50 @@
 										<th style="width: 700px;">
 											Regla
 										</th>
-										<th style="width: 700px;">
-											Hora de ejecucion
-										</th>
-										<th>Acciones</th>
+										<th style="text-align: center;">Acciones</th>
 									</tr>
 								</thead>
 								<tbody>
-									<? if (count($reglas) < 3) :  ?>
-										<? for ($i =  count($reglas); $i < 3; $i++) : ?>
-											<tr class="fila hidden clone-regla-tr">
-												<td align="center" style="vertical-align: bottom;">
-													<?= $this->Form->select(
-														sprintf('%d.regla_generar_oc_id', $i),
-														$reglasGenerarOC,
-														array(
-															'type' 	=> 'text',
-															'label' => '',
-															'class' => 'form-control mi-selector',
-															'style' => "width: 700px",
-															'required'
-														)
-													); ?>
-												</td>
-												<td align="center" style="vertical-align: bottom;">
-													<?= $this->Form->select(
-														sprintf('%d.hora', $i),
-														$horas,
-														array(
-															'label' => '',
-															'class' => 'form-control mi-selector',
-															'style' => "width: 700px",
-															'required'
-														)
-													); ?>
-												</td>
-												<td align="center" style="vertical-align: bottom;">
-													<?= $this->Form->input(sprintf('%d.id', $i), array('type' => 'text', 'label' => '', 'default' => "", 'class' => 'form-control hidden ')); ?>
-													<?= $this->Form->input(sprintf('%d.proveedor_id', $i),  array('type' => 'text', 'label' => '', 'default' => $this->request->data['Proveedor']['id'], 'class' => 'form-control hidden ')); ?>
-													<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>
-												</td>
-											</tr>
-										<? endfor; ?>
-									<? endif; ?>
 
-									<?php foreach ($reglas as $indice => $regla) : ?>
-										<tr>
+									<? for ($i =  count($this->request->data['ReglasGenerarOC']); $i < count($reglasGenerarOC_2); $i++) : ?>
+										<!-- <?= debug($reglasGenerarOC) ?>
+										<?= debug($i) ?> -->
+										<tr class="fila hidden clone-regla-tr">
+											<td align="center" style="vertical-align: bottom;">
+												<?= $this->Form->select(
+													sprintf('%d.regla_generar_oc_id', $i),
+													$reglasGenerarOC,
+													array(
+														'type' 	=> 'text',
+														'label' => '',
+														'class' => 'form-control mi-selector',
+														'style' => "width: 700px",
+														'required'
+													)
+												); ?>
+											</td>
+											<td align="center" style="vertical-align: bottom;">
+												<?= $this->Form->input(sprintf('%d.id', $i), array('type' => 'text', 'label' => '', 'default' => "", 'class' => 'form-control hidden ')); ?>
+												<?= $this->Form->input(sprintf('%d.proveedor_id', $i),  array('type' => 'text', 'label' => '', 'default' => $this->request->data['Proveedor']['id'], 'class' => 'form-control hidden ')); ?>
+												<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>
+											</td>
+										</tr>
+									<? endfor; ?>
 
+
+									<?php foreach ($this->request->data['ReglasGenerarOC'] as $indice => $regla) : ?>
+
+										<tr id="remove-tr-<?= $regla['ReglasProveedor']['id'] ?>">
 											<td align="center" style="vertical-align: bottom;">
 												<?= $this->Form->select(
 													sprintf('%d.regla_generar_oc_id', $indice),
-													$reglasGenerarOC,
+													$reglasGenerarOC_2,
 													array(
 														'label' 	=> '',
 														'default' 	=> $regla['ReglasProveedor']['regla_generar_oc_id'],
 														'class' 	=> 'mi-selector form-control',
 														'style' 	=> "width: 700px",
 														'required'
-													)
-												); ?>
-											</td>
-											<td align="center" style="vertical-align: bottom;">
-												<?= $this->Form->select(
-													sprintf('%d.hora', $indice),
-													$horas,
-													array(
-														'type' 		=> 'text',
-														'label' 	=> '',
-														'default' 	=> $regla['ReglasProveedor']['hora'],
-														'class' 	=> 'form-control mi-selector',
-														'required',
-														'style' => "width: 700px",
 													)
 												); ?>
 											</td>
@@ -411,10 +476,9 @@
 													)
 												); ?>
 												<?= $this->Form->input(sprintf('%d.proveedor_id', $indice),  array('type' => 'text', 'label' => '', 'default' => $this->request->data['Proveedor']['id'], 'class' => 'form-control hidden')); ?>
-												-
+												<button onclick="eliminar_regla(<?= $regla['ReglasProveedor']['id'] ?>,'<?= CakeSession::read('Auth.Administrador.token.token') ?>');" type="button" class="btn btn-danger start-loading-then-redirect">Eliminar</i></button>
 											</td>
 										</tr>
-
 									<?php endforeach; ?>
 								</tbody>
 							</table>
@@ -432,8 +496,8 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script type="text/javascript">
-	$.app.formularios.bind('#ReglaCreate');
 	$(document).on('click', '.clone-boton', function(e) {
+		$.app.formularios.bind('#ReglaCreate');
 		e.preventDefault();
 
 		let clone_tr = document.getElementsByClassName("clone-regla-tr");
@@ -447,7 +511,32 @@
 		}
 	});
 	$(document).on('click', '.remove-tr', function(e) {
+		$.app.formularios.bind('#ReglaCreate');
+		e.preventDefault();
+		var $th = $(this).parents('tr').eq(0);
 
+		$th.fadeOut('slow', function() {
+			$th.remove();
+			ordenar();
+		});
+	});
+
+	$(document).on('click', '.clone-frecuencia-boton', function(e) {
+		$.app.formularios.bind('#TiendaAdminEditForm');
+		e.preventDefault();
+
+		let clone_tr = document.getElementsByClassName("clone-frecuencia-tr");
+
+		if (clone_tr.length > 0) {
+			let elementoremoveClass = clone_tr.item(0);
+			elementoremoveClass.removeAttribute('class')
+			const classes_2 = elementoremoveClass.classList
+			classes_2.add("nuevo_elemento");
+			classes_2.add("fila");
+		}
+	});
+	$(document).on('click', '.remove-frecuencia-tr', function(e) {
+		$.app.formularios.bind('#TiendaAdminEditForm');
 		e.preventDefault();
 		var $th = $(this).parents('tr').eq(0);
 
@@ -461,4 +550,66 @@
 			$('.mi-selector').select2();
 		});
 	});
+
+	function eliminar_frecuencia(id, token) {
+		$.app.formularios.bind('#TiendaAdminEditForm');
+		var requestOptions = {
+			method: 'GET',
+			redirect: 'follow'
+		};
+		const {
+			origin
+		} = window.location;
+
+		$respuesta = fetch(`${origin}/api/proveedor/eliminar-frecuencia/${id}.json?token=${token}`, requestOptions)
+			.then(respuesta => {
+
+				noty({
+					text: respuesta.status == 200 ? 'Eliminado con Exito' : "Error al eliminar",
+					layout: 'topRight',
+					type: respuesta.status == 200 ? 'warning' : 'error'
+				})
+				if (respuesta.status == 200) {
+					console.log(`remove-frecuencia-tr-${id}`)
+					document.getElementById(`remove-frecuencia-tr-${id}`).remove();
+				}
+				$.app.loader.ocultar();
+			})
+			.catch(error => {
+				console.log('error', error)
+				$.app.loader.ocultar();
+			});
+	}
+
+	function eliminar_regla(id, token) {
+
+		$.app.formularios.bind('#ReglaCreate');
+		var requestOptions = {
+			method: 'GET',
+			redirect: 'follow'
+		};
+		const {
+			origin
+		} = window.location;
+
+		$respuesta = fetch(`${origin}/api/proveedor/eliminar-regla/${id}.json?token=${token}`, requestOptions)
+			.then(respuesta => {
+
+				noty({
+					text: respuesta.status == 200 ? 'Eliminado con Exito' : "Error al regla",
+					layout: 'topRight',
+					type: respuesta.status == 200 ? 'warning' : 'error'
+				})
+
+				if (respuesta.status == 200) {
+					console.log(`remove-tr-${id}`)
+					document.getElementById(`remove-tr-${id}`).remove();
+				}
+				$.app.loader.ocultar();
+			})
+			.catch(error => {
+				console.log('error', error)
+				$.app.loader.ocultar();
+			});
+	}
 </script>

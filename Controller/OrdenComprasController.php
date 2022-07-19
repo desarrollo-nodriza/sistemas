@@ -4,24 +4,24 @@ App::uses('VentaDetalleProductosController', 'Controller');
 App::uses('PagosController', 'Controller');
 
 class OrdenComprasController extends AppController
-{	
+{
 
 	public $components = array(
 		'WarehouseNodriza',
-	  );
+	);
 
 	/**
-     * Crea un redirect y agrega a la URL los parámetros del filtro
-     * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
-     * @param 		$accion 		String 		Nombre del método receptor de la petición
-     * @return 		void
-     */
-    public function filtrar($controlador = '', $accion = 'index')
-    {
-    	$redirect = array(
-    		'controller' => $controlador,
-    		'action' => $accion
-    		);
+	 * Crea un redirect y agrega a la URL los parámetros del filtro
+	 * @param 		$controlador 	String 		Nombre del controlador donde redirijirá la petición
+	 * @param 		$accion 		String 		Nombre del método receptor de la petición
+	 * @return 		void
+	 */
+	public function filtrar($controlador = '', $accion = 'index')
+	{
+		$redirect = array(
+			'controller' => $controlador,
+			'action' => $accion
+		);
 
 		foreach ($this->request->data['OrdenCompra'] as $campo => $valor) {
 			if (!empty($valor)) {
@@ -29,19 +29,18 @@ class OrdenComprasController extends AppController
 			}
 		}
 
-    	$this->redirect($redirect);
+		$this->redirect($redirect);
+	}
 
-    }
 
-
-    /**
-     * [reemplazar_filtro_recursivamente description]
-     * @param  [type] &$filtro [description]
-     * @return [type]          [description]
-     */
-    private function reemplazar_filtro_recursivamente(&$filtro)
-    {
-    	foreach ($this->request->params['named'] as $campo => $valor) {
+	/**
+	 * [reemplazar_filtro_recursivamente description]
+	 * @param  [type] &$filtro [description]
+	 * @return [type]          [description]
+	 */
+	private function reemplazar_filtro_recursivamente(&$filtro)
+	{
+		foreach ($this->request->params['named'] as $campo => $valor) {
 			switch ($campo) {
 				case 'id':
 
@@ -50,7 +49,7 @@ class OrdenComprasController extends AppController
 							'OrdenCompra.id' => trim($valor)
 						)
 					));
-					
+
 
 					break;
 				case 'venta':
@@ -88,7 +87,7 @@ class OrdenComprasController extends AppController
 
 					break;
 				case 'prod':
-			
+
 					$filtro = array_replace_recursive($filtro, array(
 						'joins' => array(
 							array(
@@ -107,8 +106,9 @@ class OrdenComprasController extends AppController
 				case 'sta':
 
 					$filtro = array_replace_recursive($filtro, array(
-						'conditions' => array('OrdenCompra.estado' => $valor)));
-					
+						'conditions' => array('OrdenCompra.estado' => $valor)
+					));
+
 					break;
 				case 'prov':
 
@@ -117,7 +117,7 @@ class OrdenComprasController extends AppController
 							'OrdenCompra.proveedor_id' => $valor
 						)
 					));
-					
+
 					break;
 				case 'bodega_id':
 
@@ -126,7 +126,7 @@ class OrdenComprasController extends AppController
 							'OrdenCompra.bodega_id' => $valor
 						)
 					));
-					
+
 					break;
 				case 'ret':
 
@@ -135,29 +135,30 @@ class OrdenComprasController extends AppController
 							'OrdenCompra.retiro' => ($valor == 'si') ? 1 : 0
 						)
 					));
-					
+
 					break;
 				case 'dtf':
 
 					$filtro = array_replace_recursive($filtro, array(
-					'conditions' => array('OrdenCompra.created >=' => trim($valor))));
-					
+						'conditions' => array('OrdenCompra.created >=' => trim($valor))
+					));
+
 					break;
 				case 'dtt':
 
 					$filtro = array_replace_recursive($filtro, array(
-					'conditions' => array('OrdenCompra.created <=' => trim($valor))));
-					
+						'conditions' => array('OrdenCompra.created <=' => trim($valor))
+					));
+
 					break;
 			}
 		}
+	}
 
-    }
 
-
-    private function paginacion_index($estado = array())
-    {	
-    	$qry = array(
+	private function paginacion_index($estado = array())
+	{
+		$qry = array(
 			'recursive'			=> -1,
 			'contain' => array(
 				'Administrador' => array(
@@ -207,34 +208,33 @@ class OrdenComprasController extends AppController
 			$qry['conditions']['OrdenCompra.estado'] = $estado;
 		}
 
-    	return $qry;
-    }
+		return $qry;
+	}
 
 
 	public function admin_index()
-	{	
+	{
 		$paginate = $this->paginacion_index();
 
 		$titulo_index = '<i class="fa fa-list"></i> Todas las Órdenes de Compra';
 
 		# Filtrar
-		if ( isset($this->request->params['named']) ) {
+		if (isset($this->request->params['named'])) {
 			$this->reemplazar_filtro_recursivamente($paginate);
 
 			if (isset($this->request->params['named']['sta'])) {
-				$titulo_index = sprintf('<i class="fa %s"></i> Órdenes de compra %s', $this->OrdenCompra->estadosColor[$this->request->params['named']['sta']]['ico'] , $this->OrdenCompra->estados[$this->request->params['named']['sta']]);	
+				$titulo_index = sprintf('<i class="fa %s"></i> Órdenes de compra %s', $this->OrdenCompra->estadosColor[$this->request->params['named']['sta']]['ico'], $this->OrdenCompra->estados[$this->request->params['named']['sta']]);
 			}
-
 		}
 
-		if ( $this->request->is('post') ) {
+		if ($this->request->is('post')) {
 			$this->filtrar('ordenCompras');
 		}
-	
+
 		$this->paginate = $paginate;
 
 		$ordenCompras	= $this->paginate();
-	
+
 		BreadcrumbComponent::add('Ordenes de compra ');
 
 		$estados = $this->OrdenCompra->estados;
@@ -247,8 +247,7 @@ class OrdenComprasController extends AppController
 
 		$bodegas = [];
 
-		foreach ($this->Auth->user('Bodega') as $b)
-		{
+		foreach ($this->Auth->user('Bodega') as $b) {
 			$bodegas[$b['id']] = $b['nombre'];
 		}
 
@@ -277,14 +276,14 @@ class OrdenComprasController extends AppController
 		$proveedores = $this->OrdenCompra->Proveedor->find('list');
 
 		$ocs = $this->OrdenCompra->find('all', $qry);
-		
+
 		$matriz = array();
-		
+
 		foreach ($proveedores as $idp => $p) {
 
 			$matriz['proveedor'][$idp]['nombre'] = $p;
-			
-			$ocsProveedor = Hash::extract($ocs, '{n}.OrdenCompra[proveedor_id='.$idp.']');
+
+			$ocsProveedor = Hash::extract($ocs, '{n}.OrdenCompra[proveedor_id=' . $idp . ']');
 
 			foreach ($estados as $slug => $e) {
 
@@ -292,18 +291,16 @@ class OrdenComprasController extends AppController
 
 				foreach ($ocsProveedor as $iocp => $oc) {
 					if ($oc['estado'] == $slug) {
-						$matriz['proveedor'][$idp]['total'][$slug] = $matriz['proveedor'][$idp]['total'][$slug]+1;	
+						$matriz['proveedor'][$idp]['total'][$slug] = $matriz['proveedor'][$idp]['total'][$slug] + 1;
 					}
 				}
 			}
-			
 		}
 
 		BreadcrumbComponent::add('Ordenes de compra', '/ordenCompras');
 		BreadcrumbComponent::add('Resumen');
 
 		$this->set(compact('matriz', 'estados'));
-
 	}
 
 
@@ -315,8 +312,7 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_reception($id)
 	{
-		if ( ! $this->OrdenCompra->exists($id) )
-		{
+		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index', 'sta' => 'espera_recepcion'));
 		}
@@ -338,7 +334,7 @@ class OrdenComprasController extends AppController
 				$this->Session->setFlash('No ha asignado pagos a esta OC.', null, array(), 'danger');
 				$this->redirect(array('action' => 'reception', $id));
 			}
-			
+
 			foreach ($this->request->data['VentaDetalleProducto'] as $key => $producto) {
 
 				# Calcula la cantidad  de productos que faltan por recibir.
@@ -350,41 +346,39 @@ class OrdenComprasController extends AppController
 					continue;
 				}
 
-				if ( $cantidadFaltante == $cantidadRecibidaAhora ) {
+				if ($cantidadFaltante == $cantidadRecibidaAhora) {
 					$res['completos'][] = sprintf('#%s - %s (agregados: %d)', $producto['id'], $producto['descripcion'], $cantidadRecibidaAhora);
 				}
 
-				if ( $cantidadFaltante > $cantidadRecibidaAhora ) {
-					$res['incompletos'][] = sprintf('#%s - %s (agregados: %d - faltantes: %d)', $producto['id'], $producto['descripcion'], $cantidadRecibidaAhora, ($cantidadFaltante - $cantidadRecibidaAhora) );
+				if ($cantidadFaltante > $cantidadRecibidaAhora) {
+					$res['incompletos'][] = sprintf('#%s - %s (agregados: %d - faltantes: %d)', $producto['id'], $producto['descripcion'], $cantidadRecibidaAhora, ($cantidadFaltante - $cantidadRecibidaAhora));
 				}
 
 				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->id = $producto['id_ocp'];
-				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->saveField('cantidad_recibida', ($cantidadRecibidaAhora + $producto['cantidad_recibida']) ); # Actualiamos la cantidad recibida
-				
+				ClassRegistry::init('OrdenComprasVentaDetalleProducto')->saveField('cantidad_recibida', ($cantidadRecibidaAhora + $producto['cantidad_recibida'])); # Actualiamos la cantidad recibida
+
 				# Se crea la entrada de productos
 				$precioCompra = round($producto['total_neto'] / $producto['cantidad_validada_proveedor'], 2);
-				
+
 				if (ClassRegistry::init('Bodega')->crearEntradaBodega($producto['id'], $bodegaDestino, $cantidadRecibidaAhora, $precioCompra, 'OC', $id)) {
 					$productosActualizado[] = $producto['id'];
-				}else{
+				} else {
 					$productosNoActualizado[] = $producto['id'];
 				}
-
 			}
 
 
 			$this->OrdenCompra->id = $id;
 			$oc_manual             = $this->OrdenCompra->field('oc_manual');
-			
+
 			# Reservamos los productos de las ventas relacionadas a la OC padre
 			if (!$oc_manual) {
 				// ! Se mueve metodo al controllador
 				// ! Queda en desuzo el metodo en el Modelo
 				// ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
 				$this->reservar_stock_por_oc($id);
-				
-			}else{
-				
+			} else {
+
 				# Reservamos las ventas mas antiguas
 				$ventasSinReserva = ClassRegistry::init('Venta')->obtener_ventas_sin_reserva();
 
@@ -395,10 +389,10 @@ class OrdenComprasController extends AppController
 							// * Se sigue misma logica de instanciar metodo que hay en metodo "reservar_stock_producto"
 							$this->WarehouseNodriza->procesar_embalajes($detalle['venta_id']);
 						}
-					}	
+					}
 				}
 			}
-			
+
 			if (!empty($res['completos'])) {
 				$this->Session->setFlash($this->crearAlertaUl($res['completos'], 'Completos'), null, array(), 'success');
 			}
@@ -413,7 +407,7 @@ class OrdenComprasController extends AppController
 
 			$ocSave = array(
 				'OrdenCompra' => array(
-					'id' => $id ,
+					'id' => $id,
 					'estado' => 'recepcion_completa',
 					'retiro' => 0
 				)
@@ -447,21 +441,20 @@ class OrdenComprasController extends AppController
 				# si ya es una factura creada, no se procesa
 				if (isset($ocf['id']))
 					continue;
-				
+
 				# si la factura ya existe, no se procesa
-				if (ClassRegistry::init('OrdenCompraFactura')->find_by_invoice($ocf['folio'], $ocf['proveedor_id']))
-				{	
+				if (ClassRegistry::init('OrdenCompraFactura')->find_by_invoice($ocf['folio'], $ocf['proveedor_id'])) {
 					# No se guarda
 					unset($this->request->data['OrdenCompraFactura'][$iocf]);
 					continue;
 				}
-				
+
 				# Se obtiene el dTE desde el sii y se verifican los datos
 				$emisor   = $this->rutSinDv($this->request->data['OrdenCompra']['rut_proveedor']);
 				$tipo_dte = $ocf['tipo_documento']; // Facturas
 				$folio    = $ocf['folio'];
 				$receptor = $this->rutSinDv($this->request->data['OrdenCompra']['rut_tienda']);
-				
+
 				if (empty($ocf['id'])) {
 					# Creamos el id antes de setear sus valores
 					$id_factura = ClassRegistry::init('OrdenCompraFactura')->crear(array(
@@ -469,8 +462,8 @@ class OrdenComprasController extends AppController
 							'orden_compra_id' => $id,
 							'proveedor_id'    => $ocf['proveedor_id']
 						)
-					));	
-				}else{
+					));
+				} else {
 					$id_factura = $ocf['id'];
 				}
 
@@ -483,23 +476,23 @@ class OrdenComprasController extends AppController
 				# Es factura
 				if ($tipo_dte == 33) {
 					# Descontamos el saldo usado solo al crearla
-					if (!isset($ocf['id'])) 
-						ClassRegistry::init('Saldo')->descontar($ocf['proveedor_id'], $id, $id_factura, null, $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']);	
+					if (!isset($ocf['id']))
+						ClassRegistry::init('Saldo')->descontar($ocf['proveedor_id'], $id, $id_factura, null, $this->request->data['OrdenCompraFactura'][$iocf]['monto_facturado']);
 				}
 			}
 
 			$total_oc = $this->OrdenCompra->field('total');
 
 			# OC queda en estado de espera de factura
-			if ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33]')) == 0 ) {
+			if ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && count(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33]')) == 0) {
 				$ocSave['OrdenCompra']['estado'] = 'espera_dte';
-			}elseif ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && array_sum(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33].monto_facturado')) < $total_oc ) {
+			} elseif ($ocSave['OrdenCompra']['estado'] == 'recepcion_completa' && array_sum(Hash::extract($this->request->data, 'OrdenCompraFactura.{n}[tipo_documento=33].monto_facturado')) < $total_oc) {
 				$ocSave['OrdenCompra']['estado'] = 'espera_dte';
 			}
 
 			$ocSave = array_replace_recursive($ocSave, array(
 				'OrdenCompraFactura' => $this->request->data['OrdenCompraFactura']
-			));	
+			));
 
 			$ocSave['OrdenCompraHistorico'] = array(
 				array(
@@ -508,7 +501,7 @@ class OrdenComprasController extends AppController
 					'evidencia' => json_encode($ocSave)
 				)
 			);
-			
+
 			# Al guardar relacionamos todas las facturas a los pagos que existan para ésta OC
 			if ($this->OrdenCompra->saveAll($ocSave)) {
 
@@ -537,7 +530,7 @@ class OrdenComprasController extends AppController
 					),
 					'fields' => array(
 						'OrdenCompraFactura.id'
-					), 
+					),
 				));
 
 				# Relacionamos pagos facturas
@@ -567,11 +560,9 @@ class OrdenComprasController extends AppController
 					foreach ($pagos as $ip => $p) {
 						$pagosController->guardarEmailPagoFactura($p['Pago']['id']);
 					}
-
 				}
-
 			}
-			
+
 
 			if (!empty($folios)) {
 				$this->Session->setFlash($this->crearAlertaUl($folios, 'Errores'), null, array(), 'warning');
@@ -579,7 +570,6 @@ class OrdenComprasController extends AppController
 			}
 
 			$this->redirect(array('action' => 'index', 'sta' => 'espera_recepcion'));
-
 		}
 
 		$this->request->data = $this->OrdenCompra->find('first', array(
@@ -617,15 +607,14 @@ class OrdenComprasController extends AppController
 				'OrdenCompra.id', 'OrdenCompra.estado', 'OrdenCompra.tienda_id', 'OrdenCompra.proveedor_id', 'OrdenCompra.total_neto', 'OrdenCompra.iva', 'OrdenCompra.descuento_monto', 'OrdenCompra.total', 'OrdenCompra.moneda_id'
 			)
 		));
-	
+
 		$bodegas = [];
 
-		foreach ($this->Auth->user('Bodega') as $b)
-		{
+		foreach ($this->Auth->user('Bodega') as $b) {
 			$bodegas[$b['id']] = $b['nombre'];
 		}
-		
-		$url_retorno = Router::url( $this->referer(), true );
+
+		$url_retorno = Router::url($this->referer(), true);
 
 		# Array de tipos de documentos
 		$libreDte = $this->Components->load('LibreDte');
@@ -633,13 +622,12 @@ class OrdenComprasController extends AppController
 			33 => 'Factura electrónica',
 			52 => 'Guia de despacho electrónica',
 			50 => 'Guia de despacho manual'
- 		);
+		);
 
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras/index/sta:' . $this->request->data['OrdenCompra']['estado']);
 		BreadcrumbComponent::add('Recepción OC');
 
 		$this->set(compact('bodegas', 'url_retorno', 'tipo_documento'));
-
 	}
 
 
@@ -649,16 +637,16 @@ class OrdenComprasController extends AppController
 	 * @return [type]     [description]
 	 */
 	public function admin_validateReception($id)
-	{	
+	{
 		$res = array(
 			'faltantes' => array(),
 			'completos' => array()
 		);
 
 		if ($this->request->is('put')) {
-			
+
 			foreach ($this->request->data['OrdenCompra'] as $key => $value) {
-				
+
 				$pedido = ClassRegistry::init('OrdenComprasVentaDetalleProducto')->find('first', array(
 					'conditions' => array(
 						'orden_compra_id'           => $id,
@@ -666,7 +654,7 @@ class OrdenComprasController extends AppController
 					)
 				));
 
-				if ( $value['Bodega'][0]['cantidad'] < $pedido['OrdenComprasVentaDetalleProducto']['cantidad'] ) {
+				if ($value['Bodega'][0]['cantidad'] < $pedido['OrdenComprasVentaDetalleProducto']['cantidad']) {
 					$res['faltantes'][] = array(
 						'producto_id'     => $value['VentaDetalleProducto']['id'],
 						'producto_nombre' => $pedido['OrdenComprasVentaDetalleProducto']['descripcion'],
@@ -674,21 +662,18 @@ class OrdenComprasController extends AppController
 					);
 				}
 
-				if ( $value['Bodega'][0]['cantidad'] == $pedido['OrdenComprasVentaDetalleProducto']['cantidad'] ) {
+				if ($value['Bodega'][0]['cantidad'] == $pedido['OrdenComprasVentaDetalleProducto']['cantidad']) {
 					$res['completos'][] = array(
 						'producto_id'     => $value['VentaDetalleProducto']['id'],
 						'producto_nombre' => $pedido['OrdenComprasVentaDetalleProducto']['descripcion'],
 						'cantidad'        => $pedido['OrdenComprasVentaDetalleProducto']['cantidad'] - $value['Bodega'][0]['cantidad']
 					);
 				}
-
 			}
-
 		}
 
 		echo json_encode($res);
 		exit;
-
 	}
 
 	/**
@@ -698,21 +683,18 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_view($id)
 	{
-		if ( ! $this->OrdenCompra->exists($id) )
-		{
+		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
 
-		if ( $this->request->is('post') || $this->request->is('put') )
-		{	
+		if ($this->request->is('post') || $this->request->is('put')) {
 			if ($this->OrdenCompra->save($this->request->data)) {
 				$this->Session->setFlash('Se ha cambiado bodega', null, array(), 'success');
-				$this->redirect(array('controller'=>'ordenCompras','action' => 'index'));
-			}else{
+				$this->redirect(array('controller' => 'ordenCompras', 'action' => 'index'));
+			} else {
 				$this->Session->setFlash('se ha podido cambiar bodega, intente nuevamente', null, array(), 'warning');
 			}
-			
 		}
 
 		$ocs = $this->OrdenCompra->find('all', array(
@@ -733,18 +715,16 @@ class OrdenComprasController extends AppController
 
 		$bodegas = [];
 
-		foreach ($this->Auth->user('Bodega') as $b)
-		{
+		foreach ($this->Auth->user('Bodega') as $b) {
 			$bodegas[$b['id']] = $b['nombre'];
 		}
-		
+
 		BreadcrumbComponent::add('Ordenes de compra ', array('action' => 'index'));
 		BreadcrumbComponent::add('Ver OC ');
-		
-		$estados = ["espera_dte","recepcion_incompleta","recepcion_completa"];
 
-		$this->set(compact('ocs','bodegas','estados'));
+		$estados = ["espera_dte", "recepcion_incompleta", "recepcion_completa"];
 
+		$this->set(compact('ocs', 'bodegas', 'estados'));
 	}
 
 
@@ -754,10 +734,9 @@ class OrdenComprasController extends AppController
 	 * @return [type]     [description]
 	 */
 	public function admin_generar_pdf($id)
-	{	
+	{
 
-		if ( ! $this->OrdenCompra->exists($id) )
-		{
+		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
 		}
@@ -778,20 +757,19 @@ class OrdenComprasController extends AppController
 			)
 		));
 
-		$nombreOC = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1,100) . '.pdf';
-		
+		$nombreOC = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1, 100) . '.pdf';
+
 		$this->generar_pdf($ocs, $nombreOC);
 
 		$this->OrdenCompra->id = $id;
 
-		if($this->OrdenCompra->saveField('pdf', $nombreOC)) {
+		if ($this->OrdenCompra->saveField('pdf', $nombreOC)) {
 			$this->Session->setFlash('OC generada en PDF con éxito.', null, array(), 'success');
-		}else{
+		} else {
 			$this->Session->setFlash('No fue posible generar el PDF.', null, array(), 'danger');
 		}
 
 		$this->redirect($this->referer('/', true));
-
 	}
 
 
@@ -802,8 +780,7 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_ready($id)
 	{
-		if ( ! $this->OrdenCompra->exists($id) )
-		{
+		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index_pagadas'));
 		}
@@ -829,16 +806,15 @@ class OrdenComprasController extends AppController
 			# si no se ha gnerado se intenta generar nuevamente
 			if (empty($this->request->data['OrdenCompra']['pdf'])) {
 
-				$nombreOC = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1,100) . '.pdf';
-				
+				$nombreOC = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1, 100) . '.pdf';
+
 				$this->generar_pdf($ocs, $nombreOC);
 
 				$this->OrdenCompra->id = $id;
 				$this->OrdenCompra->saveField('pdf', $nombreOC);
-				
 			}
 
-			
+
 			$rutaArchivos = array(
 				sprintf('order_compra_%d.pdf', rand(1000, 100000)) => array(
 					'file' => APP . 'webroot' . DS . 'Pdf' . DS . 'OrdenCompra' . DS . $id . DS . $this->request->data['OrdenCompra']['pdf'],
@@ -857,37 +833,37 @@ class OrdenComprasController extends AppController
 			}
 
 			$mensaje = $this->request->data['OrdenCompra']['mensaje_final'];
-			
+
 			$to  = Hash::extract($this->request->data, 'email_contacto_empresa.{n}[tipo=destinatario].email');
 			$cc  = Hash::extract($this->request->data, 'email_contacto_empresa.{n}[tipo=copia].email');
 			$bcc = Hash::extract($this->request->data, 'email_contacto_empresa.{n}[tipo=copia oculta].email');
 
 			App::uses('CakeEmail', 'Network/Email');
-		
+
 			$this->Email = new CakeEmail();
 			$this->Email
-			#->config('gmail')
-			->viewVars(compact('mensaje'))
-			->emailFormat('html')
-			->from(array($this->Session->read('Auth.Administrador.email') => 'Nodriza Spa') )
-			->replyTo(array($ocs['Administrador']['email'] => $ocs['Administrador']['nombre']))
-			->to($to)
-			->cc($cc)
-			->bcc($bcc)
-			->template('oc_proveedor')
-			->attachments($rutaArchivos)
-			->subject(sprintf('[OC] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id));
+				#->config('gmail')
+				->viewVars(compact('mensaje'))
+				->emailFormat('html')
+				->from(array($this->Session->read('Auth.Administrador.email') => 'Nodriza Spa'))
+				->replyTo(array($ocs['Administrador']['email'] => $ocs['Administrador']['nombre']))
+				->to($to)
+				->cc($cc)
+				->bcc($bcc)
+				->template('oc_proveedor')
+				->attachments($rutaArchivos)
+				->subject(sprintf('[OC] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id));
 
 
 			# Cambiar estado OC a enviado
 			$this->OrdenCompra->id = $id;
 			$this->OrdenCompra->saveField('fecha_enviado', date('Y-m-d H:i:s'));
 			$this->OrdenCompra->saveField('estado', 'enviado');
-			
-			if( $this->Email->send() ) {
+
+			if ($this->Email->send()) {
 				$this->Session->setFlash('Email y adjuntos enviados con éxito', null, array(), 'success');
 				$this->redirect(array('action' => 'index_pagadas'));
-			}else{
+			} else {
 				$this->Session->setFlash('Ocurrió un error al enviar el email. Intente nuevamente.', null, array(), 'danger');
 				$this->redirect(array('action' => 'index_pagadas'));
 			}
@@ -906,10 +882,9 @@ class OrdenComprasController extends AppController
 				'Proveedor'
 			)
 		));
-		
+
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
 		BreadcrumbComponent::add('Ver OC ');
-
 	}
 
 
@@ -920,8 +895,7 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_review($id)
 	{
-		if ( ! $this->OrdenCompra->exists($id) )
-		{
+		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index', 'sta' => 'validacion_comercial'));
 		}
@@ -986,7 +960,7 @@ class OrdenComprasController extends AppController
 				'OrdenCompra.id', 'OrdenCompra.rut_empresa', 'OrdenCompra.razon_social_empresa', 'OrdenCompra.giro_empresa', 'OrdenCompra.nombre_contacto_empresa', 'OrdenCompra.email_contacto_empresa', 'OrdenCompra.fono_contacto_empresa', 'OrdenCompra.direccion_comercial_empresa', 'OrdenCompra.fecha', 'OrdenCompra.vendedor', 'OrdenCompra.descuento', 'OrdenCompra.validado_proveedor', 'OrdenCompra.total_neto', 'OrdenCompra.iva', 'OrdenCompra.total', 'OrdenCompra.tienda_id', 'OrdenCompra.administrador_id'
 			)
 		));
-		
+
 		# Calculo de descuentos
 		foreach ($ocs['VentaDetalleProducto'] as $i => $p) {
 
@@ -994,14 +968,14 @@ class OrdenComprasController extends AppController
 
 			$ocs['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
 			$ocs['VentaDetalleProducto'][$i]['nombre_descuento'] = $descuentos['nombre_descuento'];
-			$ocs['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento']; 
+			$ocs['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento'];
 		}
 
-		
+
 		if ($this->request->is('post') || $this->request->is('put')) {
-			
+
 			if (isset($this->request->data['OrdenCompra']['estado'])) {
-				
+
 
 				$this->OrdenCompra->id = $id;
 				$this->OrdenCompra->saveField('estado', 'creada'); # Vacio vuelve a bodega
@@ -1010,8 +984,7 @@ class OrdenComprasController extends AppController
 				$emails = array($ocs['Administrador']['email']);
 
 				$this->guardarEmailRechazo($id, $emails);
-
-			}else{
+			} else {
 
 				$this->request->data['OrdenCompra']['estado']             = 'asignacion_metodo_pago'; # Pasa a finanzas
 				$this->request->data['OrdenCompra']['nombre_validado']    = $this->Session->read('Auth.Administrador.nombre'); # Guardamos el nombre de quien validó la OC
@@ -1027,16 +1000,13 @@ class OrdenComprasController extends AppController
 						'evidencia' => json_encode($this->request->data)
 					)
 				);
-				prx($this->request->data);
-				if ( $this->OrdenCompra->saveAll($this->request->data) && $this->guardarEmailAsignarPago($ocs, $emails) )
-				{	
+
+				if ($this->OrdenCompra->saveAll($this->request->data) && $this->guardarEmailAsignarPago($ocs, $emails)) {
 					$this->Session->setFlash('Estado actualizado con éxito.', null, array(), 'success');
 				}
-
 			}
 
 			$this->redirect(array('action' => 'index', 'sta' => 'validacion_comercial'));
-
 		}
 
 		if ($ocs['OrdenCompra']['validado_proveedor']) {
@@ -1044,39 +1014,37 @@ class OrdenComprasController extends AppController
 		}
 
 		$estados_proveedor = $this->OrdenCompra->estado_proveedor;
-		
+
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
 		BreadcrumbComponent::add('Revisar OC ');
 
 		$this->set(compact('ocs', 'estados_proveedor'));
 	}
 
-	
+
 	public function admin_notificar_proveedor($id)
 	{
 
 		if ($this->guardarEmailValidado($id)) {
 			$this->Session->setFlash('Notificado con éxito.', null, array(), 'success');
 			$this->redirect($this->referer('/', true));
-		}else{
+		} else {
 			$this->Session->setFlash('No fue posible notificar al proveedor.', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
 		}
-
 	}
 
 
 	public function admin_asignar_moneda($id)
 	{
-		if ( ! $this->OrdenCompra->exists($id) )
-		{
+		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
 		}
 
 		if ($this->request->is('post') || $this->request->is('put')) {
-			
-		
+
+
 			$this->request->data['OrdenCompraHistorico'] = array(
 				array(
 					'estado' => 'asignacion_metodo_pago',
@@ -1084,15 +1052,14 @@ class OrdenComprasController extends AppController
 					'evidencia' => json_encode($this->request->data)
 				)
 			);
-			prx($this->request->data);
+
 			if ($this->guardarEmailValidado($id) && $this->OrdenCompra->saveAll($this->request->data)) {
 				$this->Session->setFlash('Método de pago asignado con éxito.', null, array(), 'success');
 				$this->redirect(array('action' => 'index', 'sta' => 'asignacion_metodo_pago'));
-			}else{
+			} else {
 				$this->Session->setFlash('Ocurrió un error al asignar el método de pago o no fue posible enviar el email al proveedor.', null, array(), 'danger');
 				$this->redirect(array('action' => 'asignar_moneda', $id));
 			}
-
 		}
 
 		$this->request->data = $this->OrdenCompra->find('first', array(
@@ -1108,14 +1075,14 @@ class OrdenComprasController extends AppController
 						'Proveedor.id', 'Proveedor.nombre', 'Proveedor.rut_empresa'
 					)
 				)
-			), 
+			),
 			'fields' => array(
 				'OrdenCompra.id', 'OrdenCompra.descuento', 'OrdenCompra.descuento_monto', 'OrdenCompra.total'
 			)
 		));
 
 		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
-		
+
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
 		BreadcrumbComponent::add('Asignar metodo de pago ');
 
@@ -1131,18 +1098,16 @@ class OrdenComprasController extends AppController
 	 * @return [type]     [description]
 	 */
 	public function admin_validate()
-	{	
-		if ( empty($this->request->query['Venta']) )
-		{
+	{
+		if (empty($this->request->query['Venta'])) {
 			$this->Session->setFlash('Debe seleccionar una venta para continuar', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
 		}
 
-		if ( $this->request->is('post') || $this->request->is('put') )
-		{	
-			
+		if ($this->request->is('post') || $this->request->is('put')) {
+
 			foreach ($this->request->data['OrdenesCompra'] as $ic => $d) {
-				
+
 				if (!isset($d['VentaDetalleProducto'])) {
 					continue;
 				}
@@ -1154,7 +1119,7 @@ class OrdenComprasController extends AppController
 						'evidencia' => json_encode($d)
 					)
 				);
-				prx($d);
+
 				$ventas = Hash::extract($d['Venta'], '{n}.venta_id');
 
 				# Tomamos la bodega de la primera venta. Al permitir solo OC de ventas de una bodega en especifica, 
@@ -1164,12 +1129,11 @@ class OrdenComprasController extends AppController
 				$d['OrdenCompra']['bodega_id'] = ($bodega_id) ? $bodega_id : $this->Session->read('Auth.Administrador.Rol.bodega_id');
 
 				$d['Venta'] = unique_multidim_array($d['Venta'], 'venta_id');
-			
-				if ( ! $this->OrdenCompra->saveAll($d, array('deep' => true)) ) {
+
+				if (!$this->OrdenCompra->saveAll($d, array('deep' => true))) {
 					$this->Session->setFlash('Ocurrió un error al guardar la OC. Verifique la información.', null, array(), 'danger');
 					$this->redirect(array('action' => 'validate', 'Venta' => $this->request->query['Venta']));
 				}
-				
 			}
 
 			$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('revision_oc');
@@ -1190,17 +1154,17 @@ class OrdenComprasController extends AppController
 			'fields' => array(
 				'VentaDetalle.cantidad', 'VentaDetalle.venta_detalle_producto_id', 'VentaDetalle.venta_id'
 			),
-			'contain'=>[
-				'Venta'=>['fields'=>['Venta.bodega_id']],
-				'VentaDetallesReserva'=>[
-					'fields'=>[ 
-							'VentaDetallesReserva.venta_detalle_id',
-							'VentaDetallesReserva.venta_detalle_producto_id',
-							'VentaDetallesReserva.cantidad_reservada',
-							'VentaDetallesReserva.bodega_id',
-						]
+			'contain' => [
+				'Venta' => ['fields' => ['Venta.bodega_id']],
+				'VentaDetallesReserva' => [
+					'fields' => [
+						'VentaDetallesReserva.venta_detalle_id',
+						'VentaDetallesReserva.venta_detalle_producto_id',
+						'VentaDetallesReserva.cantidad_reservada',
+						'VentaDetallesReserva.bodega_id',
 					]
 				]
+			]
 		));
 
 		$productosSolicitar = array();
@@ -1215,36 +1179,34 @@ class OrdenComprasController extends AppController
 				continue;
 			}
 
-			if ( array_key_exists($venta['VentaDetalle']['venta_detalle_producto_id'], $productosTotales) ) {
+			if (array_key_exists($venta['VentaDetalle']['venta_detalle_producto_id'], $productosTotales)) {
 				$productosTotales[$venta['VentaDetalle']['venta_detalle_producto_id']] = $productosTotales[$venta['VentaDetalle']['venta_detalle_producto_id']] + $cantidad;
-			}else{
+			} else {
 				$productosTotales[$venta['VentaDetalle']['venta_detalle_producto_id']] = $cantidad;
 			}
-
 		}
 		# comprobamos el stock en bodegas para saber cuales productos se deben solicitar por OC
 		foreach ($productosTotales as $ip => $p) {
-			
-			$pedir = $p;			
+
+			$pedir = $p;
 
 			# Consultamos la cantiad que tenemos en la bodega principal
-			$enBodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($ip, $bodega_id[$ip]??null);
+			$enBodega = ClassRegistry::init('Bodega')->obtenerCantidadProductoBodega($ip, $bodega_id[$ip] ?? null);
 			# Calculamos la diferencia que se debe pedir segun lo que tenemos en bodega
 			if ($enBodega >= $p) {
 				$pedir = 0;
-			}else{
+			} else {
 				$pedir = $pedir - $enBodega;
 			}
-			
+
 			# Definimos lo que tenemos en bodega y lo que no
 			if ($pedir === 0) {
 				$productosNoSolicitar[$ip]['id'] = $ip;
 				$productosNoSolicitar[$ip]['cantidad_bodega'] = $enBodega;
-			}else{
+			} else {
 				$productosSolicitar[$ip]['id'] = $ip;
 				$productosSolicitar[$ip]['cantidad_oc'] = $pedir;
 			}
-
 		}
 		# Si no hay producto que pedir se cancela el paso
 		if (empty($productosSolicitar)) {
@@ -1271,7 +1233,7 @@ class OrdenComprasController extends AppController
 			)
 		));
 
-		
+
 		$productosIncompletos = array();
 		# Verificamos que todos los productos solicitados tengan proveedor y marca asociado
 		foreach ($productos as $ip => $p) {
@@ -1284,7 +1246,7 @@ class OrdenComprasController extends AppController
 		if (!empty($productosIncompletos)) {
 			$this->Session->setFlash(sprintf('Existen %d producto/s sin proveedor y/o marca asignado.', count($productosIncompletos)), null, array(), 'danger');
 		}
-		
+
 		# Obtenemos solo los proveedores que necesitamos
 		$proveedores = ClassRegistry::init('Proveedor')->find('all', array(
 			'joins' => array(
@@ -1294,7 +1256,7 @@ class OrdenComprasController extends AppController
 					'type'  => 'inner',
 					'conditions' => array(
 						'ProveedoresVentaDetalleProducto.proveedor_id = Proveedor.id',
-						'ProveedoresVentaDetalleProducto.venta_detalle_producto_id IN(' . implode(',',Hash::extract($productosSolicitar, '{n}.id')) . ')'
+						'ProveedoresVentaDetalleProducto.venta_detalle_producto_id IN(' . implode(',', Hash::extract($productosSolicitar, '{n}.id')) . ')'
 					)
 				)
 			),
@@ -1307,9 +1269,9 @@ class OrdenComprasController extends AppController
 			),
 			'group' => array('Proveedor.id')
 		));
-		
+
 		# $proveedores = array_map("unserialize", array_unique(array_map("serialize", $proveedores)));
-		
+
 		$tipoDescuento    = array(0 => '$', 1 => '%');
 
 		$descuentosMarcaCompuestos = array();
@@ -1323,7 +1285,7 @@ class OrdenComprasController extends AppController
 
 				$proveedores[$ip]['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
 				$proveedores[$ip]['VentaDetalleProducto'][$i]['nombre_descuento'] = $descuentos['nombre_descuento'];
-				$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento']; 
+				$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento'];
 			}
 		}
 		// prx($proveedores);
@@ -1344,10 +1306,9 @@ class OrdenComprasController extends AppController
 
 
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
-		BreadcrumbComponent::add('Revisión ');		
+		BreadcrumbComponent::add('Revisión ');
 
 		$this->set(compact('venta_detalles', 'monedas', 'productosNoSolicitar', 'productosSolicitar', 'productosIncompletos', 'productos', 'proveedores', 'proveedoresLista', 'tipoDescuento', 'marcas'));
-		
 	}
 
 
@@ -1358,8 +1319,7 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_pay($id = null)
 	{
-		if ( ! $this->OrdenCompra->exists($id) )
-		{
+		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index', 'sta' => 'pago_finanzas'));
 		}
@@ -1391,7 +1351,7 @@ class OrdenComprasController extends AppController
 		}
 
 		if ($this->request->is('post') || $this->request->is('put')) {
-			
+
 			$data = array(
 				'OrdenCompra' => array(
 					'id'                 => $id,
@@ -1406,7 +1366,7 @@ class OrdenComprasController extends AppController
 				),
 				'OrdenCompraAdjunto' 	 => (isset($this->request->data['OrdenCompraAdjunto'])) ? $this->request->data['OrdenCompraAdjunto'] : array(),
 			);
-			
+
 
 			$moneda = ClassRegistry::init('Moneda')->find('first', array(
 				'conditions' => array(
@@ -1419,7 +1379,7 @@ class OrdenComprasController extends AppController
 				$this->redirect(array('action' => 'pay', $id));
 			}
 
-			if (isset($this->request->query['update'])) { 
+			if (isset($this->request->query['update'])) {
 				unset($data['OrdenCompra']['estado']);
 			}
 
@@ -1430,7 +1390,7 @@ class OrdenComprasController extends AppController
 					'evidencia' => json_encode($data)
 				)
 			);
-			
+
 			if ($this->OrdenCompra->saveAll($data)) {
 
 				$ocs = $this->OrdenCompra->find('first', array(
@@ -1457,19 +1417,19 @@ class OrdenComprasController extends AppController
 						'Bodega'
 					)
 				));
-			
+
 
 				# Por cada adjunto creado se crea un pago
 				foreach ($ocs['OrdenCompraAdjunto'] as $ioca => $oca) {
-					
+
 					switch ($ocs['Moneda']['tipo']) {
 						case 'pagar':
 
 							// Se crea un pago al dia 
 							ClassRegistry::init('Pago')->crear($oca['identificador'], $id, $oca['id'], date('Y-m-d'), $ocs['OrdenCompra']['total'], array(), $ocs['OrdenCompra']['moneda_id'], $ocs['OrdenCompra']['proveedor_id']);
-							
+
 							break;
-						
+
 						case 'agendar':
 
 							// Se crea un pago sin fecha ni monto (se debe configurar una vez recibida la/las factura/s) 
@@ -1480,11 +1440,10 @@ class OrdenComprasController extends AppController
 							// Al moento de recibir la factura se crea y asigna el pago
 							break;
 					}
-					
 				}
 
 
-				$pdfOc = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1,100) . '.pdf';
+				$pdfOc = 'orden_compra_' . $ocs['OrdenCompra']['id'] . '_' . Inflector::slug($ocs['Proveedor']['nombre']) . '_' . rand(1, 100) . '.pdf';
 
 				$this->generar_pdf($ocs, $pdfOc);
 
@@ -1496,16 +1455,14 @@ class OrdenComprasController extends AppController
 				# Quitamos el envio de emails
 				$this->Session->setFlash('Estado actualizado con éxito.', null, array(), 'success');
 				$this->redirect(array('action' => 'index', 'sta' => 'pago_finanzas'));
-
-			}else{
+			} else {
 				$this->Session->setFlash('Ocurrió un error al actualizar estado de la OC. Verifique los campos e intente nuevamente', null, array(), 'danger');
 				$this->redirect(array('action' => 'pay', $id));
 			}
-
 		}
 
 		$monedas = $this->OrdenCompra->Moneda->find('list', array('conditions' => array('Moneda.activo' => 1)));
-		
+
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
 		BreadcrumbComponent::add('Pagar OC ');
 
@@ -1519,14 +1476,12 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_add()
 	{
-		if ( $this->request->is('post') )
-		{	
+		if ($this->request->is('post')) {
 
 			$this->request->data['OrdenCompra']['bodega_id'] = $this->Session->read('Auth.Administrador.Rol.bodega_id');
 
 			$this->OrdenCompra->create();
-			if ( $this->OrdenCompra->save($this->request->data) )
-			{	
+			if ($this->OrdenCompra->save($this->request->data)) {
 				$current = $this->OrdenCompra->find('first', array(
 					'order' => array(
 						'OrdenCompra.id' => 'DESC'
@@ -1535,12 +1490,10 @@ class OrdenComprasController extends AppController
 						'OrdenCompra.id'
 					)
 				));
-				
+
 				//$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');
 				$this->redirect(array('action' => 'validate', $current['OrdenCompra']['id']));
-			}
-			else
-			{
+			} else {
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
 		}
@@ -1560,8 +1513,7 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_add_manual()
 	{
-		if ( $this->request->is('post') )
-		{	
+		if ($this->request->is('post')) {
 			$this->request->data['OrdenCompraHistorico'] = array(
 				array(
 					'estado' => 'creada',
@@ -1570,11 +1522,10 @@ class OrdenComprasController extends AppController
 				)
 			);
 
-			$this->request->data['OrdenCompra']['bodega_id'] = $this->request->data['OrdenCompra']['bodega_id']?? $this->Session->read('Auth.Administrador.Rol.bodega_id');
-			
+			$this->request->data['OrdenCompra']['bodega_id'] = $this->request->data['OrdenCompra']['bodega_id'] ?? $this->Session->read('Auth.Administrador.Rol.bodega_id');
+
 			$this->OrdenCompra->create();
-			if ( $this->OrdenCompra->saveAll($this->request->data) )
-			{	
+			if ($this->OrdenCompra->saveAll($this->request->data)) {
 
 				$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('revision_oc');
 
@@ -1584,9 +1535,7 @@ class OrdenComprasController extends AppController
 
 				$this->Session->setFlash('¡Éxito! Se ha enviado a revisión la OC.', null, array(), 'success');
 				$this->redirect(array('action' => 'index'));
-			}
-			else
-			{
+			} else {
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
 		}
@@ -1598,15 +1547,14 @@ class OrdenComprasController extends AppController
 
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
 		BreadcrumbComponent::add('Agregar oc manual');
-		
+
 		$bodegas = [];
 
-		foreach ($this->Auth->user('Bodega') as $b)
-		{
+		foreach ($this->Auth->user('Bodega') as $b) {
 			$bodegas[$b['id']] = $b['nombre'];
 		}
 
-		$this->set(compact('monedas', 'proveedores', 'tipoDescuento','bodegas'));
+		$this->set(compact('monedas', 'proveedores', 'tipoDescuento', 'bodegas'));
 	}
 
 
@@ -1617,19 +1565,16 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_editsingle($id = null)
 	{
-		if ( ! $this->OrdenCompra->exists($id) )
-		{
+		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index', 'sta' => 'creada'));
 		}
 
-		if ( $this->request->is('post') || $this->request->is('put') )
-		{	
+		if ($this->request->is('post') || $this->request->is('put')) {
 			# Limpiar data
 			$this->OrdenCompra->OrdenComprasVentaDetalleProducto->deleteAll(array('OrdenComprasVentaDetalleProducto.orden_compra_id' => $id));
 
-			if ( $this->OrdenCompra->saveAll($this->request->data) )
-			{	
+			if ($this->OrdenCompra->saveAll($this->request->data)) {
 
 				$emailsNotificar = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('revision_oc');
 
@@ -1639,14 +1584,10 @@ class OrdenComprasController extends AppController
 
 				$this->Session->setFlash('¡Éxito! Se ha enviado a revisión la OC.', null, array(), 'success');
 				$this->redirect(array('action' => 'index', 'sta' => 'creada'));
-			}
-			else
-			{
+			} else {
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
-		}
-		else
-		{
+		} else {
 			$this->request->data	= $this->OrdenCompra->find('first', array(
 				'conditions' => array(
 					'OrdenCompra.id' => $id
@@ -1694,16 +1635,15 @@ class OrdenComprasController extends AppController
 			));
 
 			# Calculo de descuentos
-			
+
 			foreach ($this->request->data['VentaDetalleProducto'] as $i => $p) {
 
 				$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
 
 				$this->request->data['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
 				$this->request->data['VentaDetalleProducto'][$i]['nombre_descuento'] = $descuentos['nombre_descuento'];
-				$this->request->data['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento']; 
+				$this->request->data['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento'];
 			}
-			
 		}
 
 		$tipoDescuento    = array(0 => '$', 1 => '%');
@@ -1722,30 +1662,23 @@ class OrdenComprasController extends AppController
 	 * @return [type]     [description]
 	 */
 	public function admin_edit($id = null)
-	{	
-		if ( ! $this->OrdenCompra->exists($id) )
-		{
+	{
+		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
 		}
 
-		if ( $this->request->is('post') || $this->request->is('put') )
-		{	
+		if ($this->request->is('post') || $this->request->is('put')) {
 
 			$this->OrdenCompra->OrdenComprasVenta->deleteAll(array('OrdenComprasVenta.orden_compra_id' => $id));
 
-			if ( $this->OrdenCompra->saveAll($this->request->data) )
-			{	
+			if ($this->OrdenCompra->saveAll($this->request->data)) {
 				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
 				$this->redirect(array('action' => 'validate', $id));
-			}
-			else
-			{
+			} else {
 				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
 			}
-		}
-		else
-		{
+		} else {
 			$this->request->data	= $this->OrdenCompra->find('first', array(
 				'conditions'	=> array('OrdenCompra.id' => $id)
 			));
@@ -1753,15 +1686,13 @@ class OrdenComprasController extends AppController
 
 		BreadcrumbComponent::add('Ordenes de compa ', '/ordenCompras');
 		BreadcrumbComponent::add('Editar ');
-
 	}
 
 
 	public function admin_cancelar($id)
-	{	
+	{
 		$this->OrdenCompra->id = $id;
-		if ( ! $this->OrdenCompra->exists() )
-		{
+		if (!$this->OrdenCompra->exists()) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
 		}
@@ -1771,16 +1702,15 @@ class OrdenComprasController extends AppController
 			$this->redirect($this->referer('/', true));
 		}
 
-		$this->request->data['OrdenCompra']['razon_cancelada'] = $this->request->data['OrdenCompra']['razon_cancelada'] . ' <small class="text-muted">(Cancelada por: '.$this->Auth->user('email').')</small>';
+		$this->request->data['OrdenCompra']['razon_cancelada'] = $this->request->data['OrdenCompra']['razon_cancelada'] . ' <small class="text-muted">(Cancelada por: ' . $this->Auth->user('email') . ')</small>';
 
 		if ($this->OrdenCompra->saveAll($this->request->data)) {
 			$this->Session->setFlash('Orden de compra cancelada.', null, array(), 'success');
 			$this->redirect($this->referer('/', true));
-		}else{
+		} else {
 			$this->Session->setFlash('No fue posible cancelar la orden de compra. Verifique los campos e intente nuevamente.', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
 		}
-
 	}
 
 	/**
@@ -1791,15 +1721,13 @@ class OrdenComprasController extends AppController
 	public function admin_delete($id = null)
 	{
 		$this->OrdenCompra->id = $id;
-		if ( ! $this->OrdenCompra->exists() )
-		{
+		if (!$this->OrdenCompra->exists()) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
 		}
 
 		$this->request->onlyAllow('post', 'delete');
-		if ( $this->OrdenCompra->delete() )
-		{	
+		if ($this->OrdenCompra->delete()) {
 			$this->Session->setFlash('Registro eliminado correctamente.', null, array(), 'success');
 			$this->redirect($this->referer('/', true));
 		}
@@ -1817,15 +1745,14 @@ class OrdenComprasController extends AppController
 	public function admin_estado_retiro($id, $estado)
 	{
 		$this->OrdenCompra->id = $id;
-		if ( ! $this->OrdenCompra->exists() )
-		{
+		if (!$this->OrdenCompra->exists()) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
 		}
 
 		if ($this->OrdenCompra->saveField('retiro', $estado)) {
 			$this->Session->setFlash('Estado del retiro modificado con éxito.', null, array(), 'success');
-		}else{
+		} else {
 			$this->Session->setFlash('No fue posible actualizar el estado de retiro.', null, array(), 'danger');
 		}
 
@@ -1838,7 +1765,7 @@ class OrdenComprasController extends AppController
 	 * @return [type] [description]
 	 */
 	public function admin_exportar()
-	{	
+	{
 		ini_set('memory_limit', '-1');
 		set_time_limit(0);
 
@@ -1851,7 +1778,7 @@ class OrdenComprasController extends AppController
 				'OrdenCompra.id' => 'DESC'
 			)
 		);
-		
+
 		if (isset($this->request->params['named']['sta'])) {
 			$qry['conditions']['OrdenCompra.estado'] = $this->request->params['named']['sta'];
 		}
@@ -1868,8 +1795,7 @@ class OrdenComprasController extends AppController
 	public function admin_validar_stock_manual($id)
 	{
 		$this->OrdenCompra->id = $id;
-		if ( ! $this->OrdenCompra->exists() )
-		{
+		if (!$this->OrdenCompra->exists()) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
 		}
@@ -1897,7 +1823,7 @@ class OrdenComprasController extends AppController
 			$itemes = array();
 			$itemsAceptados  = array();
 			$itemsRechazados = array();
-			
+
 			foreach ($this->request->data['VentaDetalleProducto'] as $ip => $p) {
 
 				$cantidad          = $p['cantidad'];
@@ -1914,20 +1840,19 @@ class OrdenComprasController extends AppController
 					if ($cantidad_validada > 0) {
 
 						$itemsAceptados[$ip] = $p;
-						
-						$itemes[$p['estado_proveedor']][$ip] = $p;
 
+						$itemes[$p['estado_proveedor']][$ip] = $p;
 					}
-					
+
 					# Se guardan como rechazados as unidades sobrantes
 					$itemsRechazados[$ip]                                   = $p;
 					$itemsRechazados[$ip]['estado_proveedor']               = 'stockout';
 					$itemes['stockout'][$ip]                                = $p;
 				}
-			
+
 				$itemes[$p['estado_proveedor']][$ip] = $p;
 			}
-			
+
 			$total_rechazados  = array_sum(Hash::extract($itemsRechazados, '{n}.cantidad')) - array_sum(Hash::extract($itemsRechazados, '{n}.cantidad_validada_proveedor'));
 			$total_stockout    = count(Hash::extract($itemes, 'stockout.{n}.venta_detalle_producto_id'));
 			$total_solicitados = array_sum(Hash::extract($oc, 'VentaDetalleProducto.{n}.OrdenComprasVentaDetalleProducto.cantidad'));
@@ -1937,7 +1862,7 @@ class OrdenComprasController extends AppController
 			# sí es rechazo por stockout se notifica a servicio al cliente que la venta no tendrá su producto
 			$nuevaOC = array();
 			$ventasNotificar = array();
-			
+
 			$total_neto      = 0;
 
 			# recalculamos los montos
@@ -1960,16 +1885,16 @@ class OrdenComprasController extends AppController
 
 			if ($oc['OrdenCompra']['estado'] == 'espera_recepcion') {
 				$this->request->data['OrdenCompra']['estado'] = 'espera_recepcion';
-			}else if (count(Hash::extract($oc, 'OrdenCompraFactura.{n}[tipo_documento=33]')) == 0){
+			} else if (count(Hash::extract($oc, 'OrdenCompraFactura.{n}[tipo_documento=33]')) == 0) {
 				$this->request->data['OrdenCompra']['estado'] = 'espera_dte';
-			}else {
+			} else {
 				$this->request->data['OrdenCompra']['estado'] = 'recepcion_completa';
 			}
 
 			$this->request->data['OrdenCompra']['total_neto']      = $total_neto;
 			$this->request->data['OrdenCompra']['descuento']       = $this->OrdenCompra->obtener_descuento_oc($id);
 			$this->request->data['OrdenCompra']['iva']             = obtener_iva($total_neto);
-			$this->request->data['OrdenCompra']['descuento_monto'] = obtener_descuento_monto( ($total_neto + $this->request->data['OrdenCompra']['iva']) , $this->request->data['OrdenCompra']['descuento']);
+			$this->request->data['OrdenCompra']['descuento_monto'] = obtener_descuento_monto(($total_neto + $this->request->data['OrdenCompra']['iva']), $this->request->data['OrdenCompra']['descuento']);
 			$this->request->data['OrdenCompra']['total']           = ($total_neto - $this->request->data['OrdenCompra']['descuento_monto']) + $this->request->data['OrdenCompra']['iva'];
 
 
@@ -1987,15 +1912,13 @@ class OrdenComprasController extends AppController
 			);
 
 			$stockoutProductos = Hash::extract($this->request->data['VentaDetalleProducto'], '{n}[estado_proveedor=stockout]');
-			
+
 			# Bajamos de los canales de venta los productos sin stock
-			if ($stockoutProductos)
-			{	
+			if ($stockoutProductos) {
 				# Cambiamos stock canales
 				$productoscontroller = new VentaDetalleProductosController;
 
-				foreach ($stockoutProductos as $ps) 
-				{	
+				foreach ($stockoutProductos as $ps) {
 					$productoscontroller->actualizar_canales_stock($ps['venta_detalle_producto_id'], 0);
 
 					# Actualizamos stock virtual sistema
@@ -2008,7 +1931,6 @@ class OrdenComprasController extends AppController
 
 					ClassRegistry::init('VentaDetalleProducto')->save($ppp);
 				}
-
 			}
 			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 
@@ -2035,36 +1957,32 @@ class OrdenComprasController extends AppController
 					foreach ($ventasNotificar as $iv => $v) {
 
 						# No se notifica en dev
-						if (Configure::read('ambiente') == 'dev') 
+						if (Configure::read('ambiente') == 'dev')
 							break;
-						
+
 						$request		= $socket->get(
 							Router::url('/api/ventas/stockout/' . $v['Venta']['id'] . '.json?token=' . $this->Session->read('Auth.Administrador.token.token'), true)
 						);
-						
 					}
-					
 				}
 
 				$this->Session->setFlash('OC actualizada con éxito.', null, array(), 'success');
 
 				if ($this->request->data['OrdenCompra']['estado'] == 'espera_recepcion') {
 					$this->Session->setFlash('Ahora puede continuar con el flujo de esta OC.', null, array(), 'warning');
-					$this->redirect(array('action' => 'reception', $id));	
-				}else if($this->request->data['OrdenCompra']['estado'] == 'espera_dte'){
+					$this->redirect(array('action' => 'reception', $id));
+				} else if ($this->request->data['OrdenCompra']['estado'] == 'espera_dte') {
 					$this->Session->setFlash('Se requiere un DTE para continuar.', null, array(), 'warning');
 					$this->redirect(array('action' => 'reception', $id));
-				}else{
+				} else {
 					$this->redirect(array('action' => 'view', $id));
 				}
-
-			}else{
+			} else {
 
 				$this->Session->setFlash('No fue posible actualizar la OC.', null, array(), 'danger');
 				$this->redirect(array('action' => 'view', $id));
 			}
-
-		}else{
+		} else {
 
 			$qry = array(
 				'conditions' => array(
@@ -2077,19 +1995,16 @@ class OrdenComprasController extends AppController
 							'VentaDetalleProducto.id'
 						)
 					)
-				), 
+				),
 				'fields' => array(
 					'OrdenCompra.id'
 				)
 			);
 
 			$this->request->data = $this->OrdenCompra->find('first', $qry);
-
-			
 		}
 
-		if ( empty($this->request->data) )
-		{
+		if (empty($this->request->data)) {
 			$this->Session->setFlash('La OC ya no se encuentra en este apartado.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index', 'id' => $id));
 		}
@@ -2097,7 +2012,7 @@ class OrdenComprasController extends AppController
 
 		BreadcrumbComponent::add('Ordenes de compra ', array('action' => 'index'));
 		BreadcrumbComponent::add('Validar OC');
-		
+
 		$estados = $this->OrdenCompra->estado_proveedor;
 		unset($estados['price_error']);
 		$this->set(compact('estados'));
@@ -2114,7 +2029,7 @@ class OrdenComprasController extends AppController
 
 		ini_set('memory_limit', -1);
 		$ventas          = $this->OrdenCompra->Venta->find('all', array(
-		
+
 			'fields' => array(
 				'Venta.id',
 				'Venta.id_externo',
@@ -2211,8 +2126,8 @@ class OrdenComprasController extends AppController
 														   from rp_venta_detalles_reservas as Reserva
 														   where Reserva.venta_detalle_id = rvd.id)) > 0
 					ORDER BY Venta.prioritario DESC, Venta.fecha_venta DESC)",
-					'Venta.bodega_id' 		=> Hash::extract($this->Auth->user('Bodega'), '{n}.id')
-				),
+				'Venta.bodega_id' 		=> Hash::extract($this->Auth->user('Bodega'), '{n}.id')
+			),
 			'limit' 	=> $this->request->query['limit'] ?? 200,
 			'offset' 	=> $this->request->query['offset'] ?? 0,
 			'order' 	=> array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC')
@@ -2266,11 +2181,11 @@ class OrdenComprasController extends AppController
 	 * @return [type] [description]
 	 */
 	public function admin_calcularMontoPagar()
-	{	
+	{
 		$res = array(
 			'descuento_porcentaje'  => 0,
 			'descuento_monto'       => 0,
-			'descuento_monto_html'  => CakeNumber::currency(0 , 'CLP'),
+			'descuento_monto_html'  => CakeNumber::currency(0, 'CLP'),
 			'monto_pagar'           => 0,
 			'monto_pagar_html'      => CakeNumber::currency(0, 'CLP'),
 			'pago_adelantado'       => false,
@@ -2280,7 +2195,7 @@ class OrdenComprasController extends AppController
 		);
 
 		if ($this->request->is('post')) {
-			
+
 			$oc = $this->OrdenCompra->find('first', array(
 				'conditions' => array(
 					'OrdenCompra.id' => $this->request->data['orden_compra_id']
@@ -2321,18 +2236,16 @@ class OrdenComprasController extends AppController
 			}
 
 			# Descuentos por método de pago
-			if ( Hash::check($oc, 'Proveedor.Moneda.{n}[id=' . $this->request->data['moneda_id'] . ']') )
-			{
+			if (Hash::check($oc, 'Proveedor.Moneda.{n}[id=' . $this->request->data['moneda_id'] . ']')) {
 				$descuento = Hash::extract($oc, 'Proveedor.Moneda.{n}[id=' . $this->request->data['moneda_id'] . '].MonedasProveedor.descuento')[0];
-				
+
 				$res['descuento_porcentaje'] = $descuento;
 				$res['descuento_monto']      = $oc['OrdenCompra']['total'] * ($descuento / 100);
-				$res['descuento_monto_html'] = CakeNumber::currency($oc['OrdenCompra']['total'] * ($descuento / 100) , 'CLP');
+				$res['descuento_monto_html'] = CakeNumber::currency($oc['OrdenCompra']['total'] * ($descuento / 100), 'CLP');
 			}
 
 			$res['monto_pagar'] = round($oc['OrdenCompra']['total'] - $res['descuento_monto']);
-			$res['monto_pagar_html'] = CakeNumber::currency($oc['OrdenCompra']['total'] - $res['descuento_monto'] , 'CLP');
-
+			$res['monto_pagar_html'] = CakeNumber::currency($oc['OrdenCompra']['total'] - $res['descuento_monto'], 'CLP');
 		}
 
 		echo json_encode($res, true);
@@ -2346,20 +2259,20 @@ class OrdenComprasController extends AppController
 	 * @param  array  $emails [description]
 	 * @return [type]         [description]
 	 */
-	private function guardarEmailRevision($ocs = array(), $emails = array()) 
-    {	
+	private function guardarEmailRevision($ocs = array(), $emails = array())
+	{
 		/**
 		 * Clases requeridas
 		 */
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
+
 		$url = obtener_url_base();
 
 		$this->View->set(compact('ocs', 'url'));
 		$html						= $this->View->render('notificar_revision_oc');
-		
+
 		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $ocs['OrdenCompra']['tienda_id']));
 
 		if (empty($mandrill_apikey)) {
@@ -2370,13 +2283,13 @@ class OrdenComprasController extends AppController
 
 		$mandrill->conectar($mandrill_apikey);
 
-		$asunto = '[NDRZ] OC para '. strtolower($ocs['OrdenCompra']['razon_social_empresa']).' lista para revisión.';
+		$asunto = '[NDRZ] OC para ' . strtolower($ocs['OrdenCompra']['razon_social_empresa']) . ' lista para revisión.';
 
 		if (Configure::read('ambiente') == 'dev') {
-			$asunto = '[NDRZ-DEV] OC para '. strtolower($ocs['OrdenCompra']['razon_social_empresa']).' lista para revisión.';
+			$asunto = '[NDRZ-DEV] OC para ' . strtolower($ocs['OrdenCompra']['razon_social_empresa']) . ' lista para revisión.';
 		}
-		
-		
+
+
 		$remitente = array(
 			'email' => 'oc@nodriza.cl',
 			'nombre' => 'Sistema de Órdenes de compra Nodriza'
@@ -2389,7 +2302,6 @@ class OrdenComprasController extends AppController
 		}
 
 		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
-
 	}
 
 
@@ -2400,14 +2312,14 @@ class OrdenComprasController extends AppController
 	 * @return [type]         [description]
 	 */
 	private function guardarEmailRechazo($id, $emails = array())
-	{	
+	{
 		/**
 		 * Clases requeridas
 		 */
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
+
 		$url = obtener_url_base();
 
 		$this->View->set(compact('id', 'url'));
@@ -2433,7 +2345,7 @@ class OrdenComprasController extends AppController
 		$mandrill->conectar($mandrill_apikey);
 
 		$asunto = sprintf('[NDRZ] OC #%d rechazada', $id);
-		
+
 		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[NDRZ-DEV] OC #%d rechazada', $id);
 		}
@@ -2448,9 +2360,8 @@ class OrdenComprasController extends AppController
 		foreach ($emails as $im => $e) {
 			$destinatarios[$im]['email'] = $e;
 		}
-		
-		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 	}
 
 
@@ -2461,14 +2372,14 @@ class OrdenComprasController extends AppController
 	 * @return [type]         [description]
 	 */
 	private function guardarEmailRechazoProveedor($id, $emails = array())
-	{	
+	{
 		/**
 		 * Clases requeridas
 		 */
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
+
 		$url = obtener_url_base();
 
 		$this->View->set(compact('id', 'url'));
@@ -2494,7 +2405,7 @@ class OrdenComprasController extends AppController
 		$mandrill->conectar($mandrill_apikey);
 
 		$asunto = sprintf('[NDRZ] OC #%d rechazada por proveedor', $id);
-		
+
 		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[NDRZ-DEV] OC #%d rechazada por proveedor', $id);
 		}
@@ -2509,9 +2420,8 @@ class OrdenComprasController extends AppController
 		foreach ($emails as $im => $e) {
 			$destinatarios[$im]['email'] = $e;
 		}
-		
-		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 	}
 
 
@@ -2522,19 +2432,19 @@ class OrdenComprasController extends AppController
 	 * @return [type]         [description]
 	 */
 	private function guardarEmailStockout($id, $ventas, $productos, $emails = array())
-	{	
+	{
 		/**
 		 * Clases requeridas
 		 */
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
+
 		$url = obtener_url_base();
 
 		$this->View->set(compact('ventas', 'productos', 'url'));
 		$html						= $this->View->render('notificar_stockout_ventas');
-		
+
 		$oc = $this->OrdenCompra->find('first', array(
 			'conditions' => array(
 				'OrdenCompra.id' => $id
@@ -2556,7 +2466,7 @@ class OrdenComprasController extends AppController
 
 		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[NDRZ-DEV] Hay %d ventas con productos en stockout.', count($ventas));
-		}else{
+		} else {
 			$asunto = sprintf('[NDRZ] Hay %d ventas con productos en stockout.', count($ventas));
 		}
 
@@ -2570,9 +2480,8 @@ class OrdenComprasController extends AppController
 		foreach ($emails as $im => $e) {
 			$destinatarios[$im]['email'] = $e;
 		}
-		
-		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 	}
 
 
@@ -2583,7 +2492,7 @@ class OrdenComprasController extends AppController
 	 * @return [type]         [description]
 	 */
 	public function guardarEmailValidado($id, $recordatorio = false)
-	{	
+	{
 		$oc = $this->OrdenCompra->find('first', array(
 			'conditions' => array(
 				'OrdenCompra.id' => $id
@@ -2609,12 +2518,12 @@ class OrdenComprasController extends AppController
 				)
 			)
 		));
-		
+
 		$mensaje = sprintf('Estimados %s, la OC #%d emitida por "%s" se encuentra disponible para ser validada.', $oc['Proveedor']['nombre'], $oc['OrdenCompra']['id'], $oc['Tienda']['nombre']);
 
 		# Quitamos los emails inactivos
 		$oc['Proveedor']['meta_emails'] = @Hash::remove($oc['Proveedor']['meta_emails'], '{n}[activo=0]');
-		
+
 		# Asignamos los emails respectivos
 		$validadores = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=validador].email');
 		$receptores  = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=destinatario].email');
@@ -2622,7 +2531,7 @@ class OrdenComprasController extends AppController
 		$bcc         = Hash::extract($oc['Proveedor'], 'meta_emails.{n}[tipo=copia oculta].email');
 
 		$to = (!empty($validadores)) ? $validadores : $receptores;
-		
+
 		# Sin emails retornamos
 		if (empty($to))
 			return false;
@@ -2634,16 +2543,14 @@ class OrdenComprasController extends AppController
 			),
 			'order' => array('Token.created' => 'DESC')
 		));
-		
+
 		if (empty($gettoken)) {
 			# creamos un token de acceso vía email
 			$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];
-
-		}else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])){
+		} else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])) {
 			# creamos un token de acceso vía email
 			$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];
-
-		}else{
+		} else {
 			$token = $gettoken['Token']['token'];
 		}
 
@@ -2654,12 +2561,12 @@ class OrdenComprasController extends AppController
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
+
 		$url = obtener_url_base();
-		
+
 		$this->View->set(compact('mensaje', 'oc', 'url', 'token'));
 		$html						= $this->View->render('notificar_proveedor_oc');
-		
+
 		$mandrill_apikey = ClassRegistry::init('Tienda')->field('mandrill_apikey', array('id' => $oc['OrdenCompra']['tienda_id']));
 
 		if (empty($mandrill_apikey)) {
@@ -2672,19 +2579,19 @@ class OrdenComprasController extends AppController
 
 		if ($recordatorio) {
 			$asunto = sprintf('[OC-RECORDATORIO] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
-		}else{
+		} else {
 			$asunto = sprintf('[OC] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
 		}
-		
-		
+
+
 		if (Configure::read('ambiente') == 'dev') {
 			if ($recordatorio) {
 				$asunto = sprintf('[OC-DEV-RECORDATORIO] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
-			}else{
+			} else {
 				$asunto = sprintf('[OC-DEV] #%d Se ha creado una Orden de compra desde Nodriza Spa', $id);
 			}
 		}
-		
+
 		$remitente = array(
 			'email' => 'oc@nodriza.cl',
 			'nombre' => 'Sistema de Órdenes de compra Nodriza'
@@ -2716,9 +2623,8 @@ class OrdenComprasController extends AppController
 		$cabeceras = array(
 			'Reply-To' => $oc['Administrador']['email']
 		);
-		
-		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios, $cabeceras);
 
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios, $cabeceras);
 	}
 
 
@@ -2736,7 +2642,7 @@ class OrdenComprasController extends AppController
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
+
 		$url = obtener_url_base();
 
 		$id = $oc['OrdenCompra']['id'];
@@ -2755,7 +2661,7 @@ class OrdenComprasController extends AppController
 		$mandrill->conectar($mandrill_apikey);
 
 		$asunto = sprintf('[NDRZ] Asignar pago para OC #%d ', $id);
-		
+
 		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[NDRZ-DEV] Asignar pago para OC #%d ', $id);
 		}
@@ -2770,9 +2676,8 @@ class OrdenComprasController extends AppController
 		foreach ($emails as $im => $e) {
 			$destinatarios[$im]['email'] = $e;
 		}
-		
-		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 	}
 
 
@@ -2783,14 +2688,14 @@ class OrdenComprasController extends AppController
 	 * @return [type]         [description]
 	 */
 	private function guardarEmailValidadoProveedor($oc, $emails = array())
-	{	
+	{
 		/**
 		 * Clases requeridas
 		 */
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
+
 		$url = obtener_url_base();
 		$id = $oc['OrdenCompra']['id'];
 
@@ -2808,7 +2713,7 @@ class OrdenComprasController extends AppController
 		$mandrill->conectar($mandrill_apikey);
 
 		$asunto = sprintf('[NDRZ] OC #%d lista para pagar', $id);
-		
+
 		if (Configure::read('ambiente') == 'dev') {
 			$asunto = sprintf('[NDRZ-DEV] OC #%d lista para pagar', $id);
 		}
@@ -2823,9 +2728,8 @@ class OrdenComprasController extends AppController
 		foreach ($emails as $im => $e) {
 			$destinatarios[$im]['email'] = $e;
 		}
-		
-		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 
+		return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
 	}
 
 
@@ -2836,14 +2740,14 @@ class OrdenComprasController extends AppController
 	 * @return [type]         [description]
 	 */
 	private function guardarEmailPagado($id, $emails = array())
-	{	
+	{
 		/**
 		 * Clases requeridas
 		 */
 		$this->View					= new View();
 		$this->View->viewPath		= 'OrdenCompras' . DS . 'html';
 		$this->View->layoutPath		= 'Correos' . DS . 'html';
-		
+
 		$url = obtener_url_base();
 
 		$this->View->set(compact('id', 'url'));
@@ -2853,8 +2757,8 @@ class OrdenComprasController extends AppController
 		 * Guarda el email a enviar
 		 */
 		$this->Correo->create();
-		
-		if ( $this->Correo->save(array(
+
+		if ($this->Correo->save(array(
 			'estado'					=> 'Notificación pagado oc',
 			'html'						=> $html,
 			'asunto'					=> sprintf('[NDRZ] OC #%d lista para enviar', $id),
@@ -2870,7 +2774,7 @@ class OrdenComprasController extends AppController
 			'enviado'					=> 0,
 			'reintentos'				=> 0,
 			'atachado'					=> null
-		)) ) {
+		))) {
 			return true;
 		}
 
@@ -2884,7 +2788,8 @@ class OrdenComprasController extends AppController
 	 * @param  string $nombreOC [description]
 	 * @return [type]           [description]
 	 */
-	public function generar_pdf($oc = array(), $nombreOC = '') {
+	public function generar_pdf($oc = array(), $nombreOC = '')
+	{
 
 		App::uses('CakePdf', 'Plugin/CakePdf/Pdf');
 
@@ -2892,7 +2797,7 @@ class OrdenComprasController extends AppController
 			$this->CakePdf = new CakePdf();
 			$this->CakePdf->template('generar_oc', 'default');
 			$this->CakePdf->viewVars(compact('oc'));
-			@$this->CakePdf->write(APP . 'webroot' . DS . 'Pdf' . DS . 'OrdenCompra' . DS . $oc['OrdenCompra']['id'] . DS . $nombreOC);	
+			@$this->CakePdf->write(APP . 'webroot' . DS . 'Pdf' . DS . 'OrdenCompra' . DS . $oc['OrdenCompra']['id'] . DS . $nombreOC);
 		} catch (Exception $e) {
 			// Error
 		}
@@ -2901,21 +2806,20 @@ class OrdenComprasController extends AppController
 		$archivo = Router::url('/', true) . 'Pdf/OrdenCompra/' . $oc['OrdenCompra']['id'] . '/' . $nombreOC;
 
 		return;
-
 	}
 
 
 	/**
 	 * Socios/proveedores
 	 */
-	
+
 	/**
 	 * Permite validar una OC dese un email dado
 	 * @param  [type] $id [description]
 	 * @return [type]     [description]
 	 */
 	public function validate_supplier($id)
-	{	
+	{
 
 		$this->Auth->allow('view', 'validate_supplier');
 
@@ -2950,7 +2854,7 @@ class OrdenComprasController extends AppController
 			$itemes = array();
 			$itemsAceptados  = array();
 			$itemsRechazados = array();
-			
+
 			foreach ($this->request->data['VentaDetalleProducto'] as $ip => $p) {
 
 				$cantidad          = $p['cantidad'];
@@ -2967,11 +2871,10 @@ class OrdenComprasController extends AppController
 					if ($cantidad_validada > 0) {
 
 						$itemsAceptados[$ip] = $p;
-						
-						$itemes[$p['estado_proveedor']][$ip] = $p;
 
+						$itemes[$p['estado_proveedor']][$ip] = $p;
 					}
-					
+
 					# Se guardan como rechazados as unidades sobrantes
 					$itemsRechazados[$ip]                                   = $p;
 					$itemsRechazados[$ip]['estado_proveedor']               = 'stockout';
@@ -2982,10 +2885,10 @@ class OrdenComprasController extends AppController
 					$itemsRechazados[$ip] = $p;
 					$itemsRechazados[$ip]['cantidad_validada_proveedor'] = 0;
 				}
-			
+
 				$itemes[$p['estado_proveedor']][$ip] = $p;
 			}
-			
+
 			$total_rechazados  = array_sum(Hash::extract($itemsRechazados, '{n}.cantidad')) - array_sum(Hash::extract($itemsRechazados, '{n}.cantidad_validada_proveedor'));
 			$total_stockout    = count(Hash::extract($itemes, 'stockout.{n}.venta_detalle_producto_id'));
 			$total_price_error = count(Hash::extract($itemes, 'price_error.{n}.venta_detalle_producto_id'));
@@ -3003,12 +2906,12 @@ class OrdenComprasController extends AppController
 				$this->request->data['OrdenCompra']['estado'] = 'cancelada';
 			}
 
-			
+
 			# Error de precio en algunos productos de la oc
 			# pasan a una nueva oc que se envia a revisión comercial y la actual continua solo con los itemes aceptados.
 			if ($total_price_error > 0 && $total_rechazados != $total_solicitados) {
 				# Item se quita de la OC y se agrega a una nueva OC
-				
+
 				$nuevaOC['OrdenCompra'] = $oc['OrdenCompra'];
 
 				$total_neto = 0;
@@ -3021,7 +2924,7 @@ class OrdenComprasController extends AppController
 				$nuevaOC['OrdenCompra']['total_neto']         = $total_neto;
 				$nuevaOC['OrdenCompra']['descuento']          = $oc['OrdenCompra']['descuento'];
 				$nuevaOC['OrdenCompra']['iva']                = obtener_iva($total_neto);
-				$nuevaOC['OrdenCompra']['descuento_monto']    = obtener_descuento_monto( ($total_neto + $nuevaOC['OrdenCompra']['iva']) , $nuevaOC['OrdenCompra']['descuento']);
+				$nuevaOC['OrdenCompra']['descuento_monto']    = obtener_descuento_monto(($total_neto + $nuevaOC['OrdenCompra']['iva']), $nuevaOC['OrdenCompra']['descuento']);
 				$nuevaOC['OrdenCompra']['total']              = ($total_neto - $nuevaOC['OrdenCompra']['descuento_monto']) + $nuevaOC['OrdenCompra']['iva'];
 				$nuevaOC['OrdenCompra']['estado']             = 'validacion_comercial';
 				$nuevaOC['OrdenCompra']['fecha']              = date('Y-m-d');
@@ -3041,14 +2944,13 @@ class OrdenComprasController extends AppController
 				unset($nuevaOC['OrdenCompra']['created']);
 				unset($nuevaOC['OrdenCompra']['modified']);
 				unset($nuevaOC['OrdenCompra']['moneda_id']);
-
 			}
 
 			# OC completa con error de precio vuelve a validación
 			if ($total_price_error > 0 && $total_rechazados == $total_solicitados) {
 				$this->request->data['OrdenCompra']['estado'] = 'validacion_comercial';
 			}
-			
+
 
 			# Continuan sólo los itemes aceptados
 			if (count($itemsAceptados) > 0) {
@@ -3071,9 +2973,8 @@ class OrdenComprasController extends AppController
 				$this->request->data['OrdenCompra']['total_neto']      = $total_neto;
 				$this->request->data['OrdenCompra']['descuento']       = $this->OrdenCompra->obtener_descuento_oc($id);
 				$this->request->data['OrdenCompra']['iva']             = obtener_iva($total_neto);
-				$this->request->data['OrdenCompra']['descuento_monto'] = obtener_descuento_monto( ($total_neto + $this->request->data['OrdenCompra']['iva']) , $this->request->data['OrdenCompra']['descuento']);
+				$this->request->data['OrdenCompra']['descuento_monto'] = obtener_descuento_monto(($total_neto + $this->request->data['OrdenCompra']['iva']), $this->request->data['OrdenCompra']['descuento']);
 				$this->request->data['OrdenCompra']['total']           = ($total_neto - $this->request->data['OrdenCompra']['descuento_monto']) + $this->request->data['OrdenCompra']['iva'];
-
 			}
 
 			$this->request->data['OrdenCompraHistorico'] = array(
@@ -3083,17 +2984,15 @@ class OrdenComprasController extends AppController
 					'evidencia' => json_encode($this->request->data)
 				)
 			);
-			
+
 			$stockoutProductos = Hash::extract($this->request->data['VentaDetalleProducto'], '{n}[estado_proveedor=stockout]');
-			
+
 			# Bajamos de los canales de venta los productos sin stock
-			if ($stockoutProductos)
-			{	
+			if ($stockoutProductos) {
 				# Cambiamos stock canales
 				$productoscontroller = new VentaDetalleProductosController;
 
-				foreach ($stockoutProductos as $ps) 
-				{	
+				foreach ($stockoutProductos as $ps) {
 					$productoscontroller->actualizar_canales_stock($ps['venta_detalle_producto_id'], 0);
 
 					# Actualizamos stock virtual sistema
@@ -3106,11 +3005,9 @@ class OrdenComprasController extends AppController
 
 					ClassRegistry::init('VentaDetalleProducto')->save($ppp);
 				}
-
 			}
-			
-			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) 
-			{
+
+			if ($this->OrdenCompra->saveAll($this->request->data, array('deep' => true))) {
 				# Flujo para cuando un producto no tenga stock
 				if ($total_stockout > 0) {
 					# Notificar a ventas para que coordine con el cliente
@@ -3132,27 +3029,25 @@ class OrdenComprasController extends AppController
 
 					# Notificamos stockout a clientes
 					foreach ($ventasNotificar as $iv => $v) {
-						
+
 						# No se notifica en dev
-						if (Configure::read('ambiente') == 'dev') 
+						if (Configure::read('ambiente') == 'dev')
 							break;
 
 						$request		= $socket->get(
 							Router::url('/api/ventas/stockout/' . $v['Venta']['id'] . '.json?token=' . $this->request->query['access_token'], true)
 						);
-
 					}
-
 				}
 
 				# crear la nueva OC
 				if (!empty($nuevaOC)) {
-					
+
 					# Notificar nueva OC
 					$emailsNotificar = array($nuevaOC['OrdenCompra']['email_comercial']);
 
 					$this->OrdenCompra->create();
-					if ($this->OrdenCompra->saveAll($nuevaOC, array('deep' => true)) && !empty($emailsNotificar) ) {
+					if ($this->OrdenCompra->saveAll($nuevaOC, array('deep' => true)) && !empty($emailsNotificar)) {
 						$this->guardarEmailRevision($nuevaOC, $emailsNotificar);
 					}
 				}
@@ -3163,7 +3058,7 @@ class OrdenComprasController extends AppController
 					$this->guardarEmailRechazoProveedor($id, array($email_comercial));
 
 					# Mostramos mensaje de co guardada
-					$redirect = sprintf('%ssocio/oc/%d?access_token=%s&success=true',obtener_url_base(), $id, $this->request->query['access_token']);
+					$redirect = sprintf('%ssocio/oc/%d?access_token=%s&success=true', obtener_url_base(), $id, $this->request->query['access_token']);
 					$this->redirect($redirect);
 				}
 
@@ -3186,34 +3081,31 @@ class OrdenComprasController extends AppController
 							'Proveedor',
 							'Bodega'
 						)
-					));					
-					
+					));
+
 					# Notificar a finanzas (en espera)
 					$emailsFinanzas = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
 
 					if (!empty($emailsFinanzas)) {
 						$this->guardarEmailValidadoProveedor($oc, $emailsFinanzas);
 					}
-					
-					$pdfOc = 'orden_compra_' . $id . '_' . strtolower(Inflector::slug($oc['Proveedor']['nombre'])) . '_' . rand(1,100) . '.pdf';
+
+					$pdfOc = 'orden_compra_' . $id . '_' . strtolower(Inflector::slug($oc['Proveedor']['nombre'])) . '_' . rand(1, 100) . '.pdf';
 
 					$this->generar_pdf($oc, $pdfOc);
 
 					$this->OrdenCompra->id = $id;
 					$this->OrdenCompra->saveField('pdf', $pdfOc);
 					$this->OrdenCompra->saveField('estado', 'pago_finanzas');
-					
+
 					# Redirigimos al PDF
-					$redirect = sprintf('%ssocio/oc/pdf/%d/%d?access_token=%s',obtener_url_base(), $id, $oc['OrdenCompra']['proveedor_id'], $this->request->query['access_token']);
+					$redirect = sprintf('%ssocio/oc/pdf/%d/%d?access_token=%s', obtener_url_base(), $id, $oc['OrdenCompra']['proveedor_id'], $this->request->query['access_token']);
 					$this->redirect($redirect);
 				}
-
-
-			}else{
+			} else {
 				$this->redirect(array('action' => 'validate_supplier', $id, '?' => array('access_token' => $this->request->query['access_token'], 'success' => false), 'admin' => false, 'socio' => false, 'prefix' => null));
 			}
-
-		}else{
+		} else {
 
 			$qry = array(
 				'conditions' => array(
@@ -3243,9 +3135,8 @@ class OrdenComprasController extends AppController
 		}
 
 		$estados = $this->OrdenCompra->estado_proveedor;
-		
-		$this->set(compact('estados'));
 
+		$this->set(compact('estados'));
 	}
 
 
@@ -3277,19 +3168,19 @@ class OrdenComprasController extends AppController
 				)
 			),
 			'fields' => array(
-			 	'OrdenCompra.id', 'OrdenCompra.pdf', 'OrdenCompra.nombre_validado', 'OrdenCompra.email_comercial', 'OrdenCompra.tienda_id'
+				'OrdenCompra.id', 'OrdenCompra.pdf', 'OrdenCompra.nombre_validado', 'OrdenCompra.email_comercial', 'OrdenCompra.tienda_id'
 			)
 		));
 
 		if (empty($oc)) {
-			throw new Exception(sprintf("No es posible obtener la OC solicitada. Póngase en contacto con %s <%s> de %s", $oc['OrdenCompra']['nombre_validado'], $oc['OrdenCompra']['email_comercial'], $oc['Tienda']['nombre']) , 504);
+			throw new Exception(sprintf("No es posible obtener la OC solicitada. Póngase en contacto con %s <%s> de %s", $oc['OrdenCompra']['nombre_validado'], $oc['OrdenCompra']['email_comercial'], $oc['Tienda']['nombre']), 504);
 			exit;
 		}
-		
-		$url = obtener_url_base();		
+
+		$url = obtener_url_base();
 
 		$this->layout = 'backend/socio';
-		
+
 		$this->set(compact('oc', 'url'));
 	}
 
@@ -3307,7 +3198,7 @@ class OrdenComprasController extends AppController
 		# Sólo método Get
 		if (!$this->request->is('get')) {
 			$response = array(
-				'code'    => 501, 
+				'code'    => 501,
 				'message' => 'Only GET request allow'
 			);
 
@@ -3318,7 +3209,7 @@ class OrdenComprasController extends AppController
 		# Existe token
 		if (!isset($this->request->query['token'])) {
 			$response = array(
-				'code'    => 502, 
+				'code'    => 502,
 				'name' => 'error',
 				'message' => 'Token requerido'
 			);
@@ -3329,7 +3220,7 @@ class OrdenComprasController extends AppController
 		# Validamos token
 		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
 			$response = array(
-				'code'    => 505, 
+				'code'    => 505,
 				'name' => 'error',
 				'message' => 'Token de sesión expirado o invalido'
 			);
@@ -3339,18 +3230,17 @@ class OrdenComprasController extends AppController
 
 		# Obtenemos al/la admin del token
 		$tokenInfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
-		
+
 		# Aisalmosids de la /las bodegas asignadas
 		$bodegas_admin = Hash::extract($tokenInfo, 'Administrador.Rol.Bodega.{n}.id');
 
-		if (empty($bodegas_admin))
-		{
+		if (empty($bodegas_admin)) {
 			$response = array(
-				'code'    => 500, 
+				'code'    => 500,
 				'name' => 'error',
 				'message' => 'No tienes bodegas asignadas'
 			);
-			
+
 			$this->set($response);
 			return $this->set('_serialize', array_keys($response));
 		}
@@ -3358,11 +3248,11 @@ class OrdenComprasController extends AppController
 		# No existe venta
 		if (!$this->OrdenCompra->exists($id)) {
 			$response = array(
-				'code'    => 404, 
+				'code'    => 404,
 				'name' => 'error',
 				'message' => 'OC no encontrada'
 			);
-			
+
 			$this->set($response);
 			return $this->set('_serialize', array_keys($response));
 		}
@@ -3388,11 +3278,10 @@ class OrdenComprasController extends AppController
 				'OrdenComprasVentaDetalleProducto'
 			)
 		));
-		
-		if (empty($oc))
-		{
+
+		if (empty($oc)) {
 			$response = array(
-				'code'    => 401, 
+				'code'    => 401,
 				'name' => 'error',
 				'message' => 'La OC no está disponible para recepcionar'
 			);
@@ -3400,16 +3289,15 @@ class OrdenComprasController extends AppController
 			$this->set($response);
 			return $this->set('_serialize', array_keys($response));
 		}
-		
+
 		$this->Prestashop = $this->Components->load('Prestashop');
 
 		# Agregamos las imagenes de prstashop al arreglo
 		$this->Prestashop->crearCliente($oc['Tienda']['apiurl_prestashop'], $oc['Tienda']['apikey_prestashop']);
-		
+
 		$productos = array();
 
-		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iv => $d) 
-		{	
+		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iv => $d) {
 			// Producto
 			$pbodega = ClassRegistry::init('ProductoWarehouse')->find('first', array(
 				'conditions' => array(
@@ -3424,8 +3312,7 @@ class OrdenComprasController extends AppController
 			));
 
 			# No recibido
-			if (!$d['cantidad_validada_proveedor'])
-			{	
+			if (!$d['cantidad_validada_proveedor']) {
 				continue;
 			}
 
@@ -3437,14 +3324,13 @@ class OrdenComprasController extends AppController
 			$pWarehouse['permitir_ingreso_sin_barra'] = false;
 			$pWarehouse['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
 
-			if (!empty($pbodega))
-			{
+			if (!empty($pbodega)) {
 				$pWarehouse['sku'] = $pbodega['ProductoWarehouse']['sku'];
-				$pWarehouse['cod_barra'] = ($pbodega['ProductoWarehouse']['cod_barra']) ? $pbodega['ProductoWarehouse']['cod_barra'] : null ;
+				$pWarehouse['cod_barra'] = ($pbodega['ProductoWarehouse']['cod_barra']) ? $pbodega['ProductoWarehouse']['cod_barra'] : null;
 				$pWarehouse['permitir_ingreso_sin_barra'] = ($pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra']) ? true : false;
 			}
 
-			$precioBruto = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
+			$precioBruto = monto_bruto(round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
 			$descuentoOC = round(obtener_descuento_monto($precioBruto, $oc['OrdenCompra']['descuento']), 0);
 
 			# Asignamos a la variable p el contenido de d
@@ -3456,27 +3342,26 @@ class OrdenComprasController extends AppController
 			));
 
 			$productos[] = $p;
-
 		}
 
 		$oc['OrdenComprasVentaDetalleProducto'] = $productos;
 
 
 		$response = array(
-			'code'    => 200, 
+			'code'    => 200,
 			'name' => 'success',
 			'message' => 'Oc obtenida correctamente',
 			'data' => $oc
 		);
 
 		$this->set(array(
-            'response' => $response,
-            '_serialize' => array('response')
-        ));
+			'response' => $response,
+			'_serialize' => array('response')
+		));
 	}
 
 
-		
+
 	/**
 	 * api_reception
 	 *
@@ -3484,11 +3369,11 @@ class OrdenComprasController extends AppController
 	 * @return void
 	 */
 	public function api_reception($id)
-	{	
+	{
 		# Sólo método POST
 		if (!$this->request->is('post')) {
 			$response = array(
-				'code'    => 501, 
+				'code'    => 501,
 				'message' => 'Only POST request allow'
 			);
 
@@ -3499,7 +3384,7 @@ class OrdenComprasController extends AppController
 		# Existe token
 		if (!isset($this->request->query['token'])) {
 			$response = array(
-				'code'    => 502, 
+				'code'    => 502,
 				'name' => 'error',
 				'message' => 'Token requerido'
 			);
@@ -3510,7 +3395,7 @@ class OrdenComprasController extends AppController
 		# Validamos token
 		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
 			$response = array(
-				'code'    => 505, 
+				'code'    => 505,
 				'name' => 'error',
 				'message' => 'Token de sesión expirado o invalido'
 			);
@@ -3521,7 +3406,7 @@ class OrdenComprasController extends AppController
 		# No existe venta
 		if (!$this->OrdenCompra->exists($id)) {
 			$response = array(
-				'code'    => 404, 
+				'code'    => 404,
 				'name' => 'error',
 				'message' => 'Venta no encontrada'
 			);
@@ -3530,10 +3415,9 @@ class OrdenComprasController extends AppController
 			return $this->set('_serialize', array_keys($response));
 		}
 
-		if (empty($this->request->data['Dte']) || empty($this->request->data['ProductoOc']))
-		{
+		if (empty($this->request->data['Dte']) || empty($this->request->data['ProductoOc'])) {
 			$response = array(
-				'code'    => 401, 
+				'code'    => 401,
 				'name' => 'error',
 				'message' => 'Falta DTE o Producto'
 			);
@@ -3555,7 +3439,7 @@ class OrdenComprasController extends AppController
 				'Tienda'
 			)
 		));
-		
+
 		$log = array();
 
 		$log[] = array(
@@ -3574,8 +3458,7 @@ class OrdenComprasController extends AppController
 			)
 		);
 
-		if ($oc['OrdenCompra']['estado'] == 'recepcion_completa')
-		{
+		if ($oc['OrdenCompra']['estado'] == 'recepcion_completa') {
 			$log[] = array(
 				'Log' => array(
 					'administrador' => 'Recepción oc app - Ya recepcionada',
@@ -3588,7 +3471,7 @@ class OrdenComprasController extends AppController
 			ClassRegistry::init('Log')->saveMany($log);
 
 			$response = array(
-				'code'    => 401, 
+				'code'    => 401,
 				'name' => 'error',
 				'message' => 'Oc ya fue recepcionada'
 			);
@@ -3598,13 +3481,11 @@ class OrdenComprasController extends AppController
 		}
 
 		$productosRecepcionar = array();
-		
-		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $ioc => $ocp) 
-		{	
+
+		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $ioc => $ocp) {
 			$oc['OrdenComprasVentaDetalleProducto'][$ioc]['total_neto'] = $ocp['total_neto'];
 
-			foreach ($this->request->data['ProductoOc'] as $ip => $p) 
-			{	
+			foreach ($this->request->data['ProductoOc'] as $ip => $p) {
 				if ($p['id_detalle'] != $ocp['id'])
 					continue;
 
@@ -3620,23 +3501,21 @@ class OrdenComprasController extends AppController
 				$cantidadFaltante      = $ocp['cantidad_validada_proveedor'] - $ocp['cantidad_recibida'];
 				$cantidadRecibidaAhora = $p['cantidad_recibida'];
 
-				if (!$cantidadFaltante || !$cantidadRecibidaAhora) 
-				{
+				if (!$cantidadFaltante || !$cantidadRecibidaAhora) {
 					continue;
 				}
 
 				# La cantidad recibida es mayor a la permitida
-				if ($cantidadRecibidaAhora > $cantidadFaltante)
-				{
+				if ($cantidadRecibidaAhora > $cantidadFaltante) {
 					$response = array(
-						'code'    => 401, 
+						'code'    => 401,
 						'name' => 'error',
 						'message' => sprintf('Producto #%d: La cantidad recepcionada es mayor a la permitida', $ocp['id'])
 					);
 
 					ClassRegistry::init('Log')->create();
 					ClassRegistry::init('Log')->saveMany($log);
-		
+
 					$this->set($response);
 					return $this->set('_serialize', array_keys($response));
 				}
@@ -3667,10 +3546,9 @@ class OrdenComprasController extends AppController
 				'modulo_accion' => json_encode($productosRecepcionar)
 			)
 		);
-		
+
 		# Agregamos a la bodega las unidades recepcionadas
-		foreach ($productosRecepcionar as $ip => $p) 
-		{	
+		foreach ($productosRecepcionar as $ip => $p) {
 			# Actualiamos la cantidad recibida
 			$detalle = array(
 				'id' => $p['id'],
@@ -3680,19 +3558,16 @@ class OrdenComprasController extends AppController
 
 			# Guardamos
 			ClassRegistry::init('OrdenComprasVentaDetalleProducto')->save($detalle);
-			
-			if (ClassRegistry::init('Bodega')->crearEntradaBodega($p['producto_id'], $p['bodega_id'], $p['cantidad_recibida_ahora'], $p['precio_compra'], 'OC', $p['oc_id'], null, null, $tokenInfo['Administrador']['email'])) 
-			{
+
+			if (ClassRegistry::init('Bodega')->crearEntradaBodega($p['producto_id'], $p['bodega_id'], $p['cantidad_recibida_ahora'], $p['precio_compra'], 'OC', $p['oc_id'], null, null, $tokenInfo['Administrador']['email'])) {
 				$log[] = array(
 					'Log' => array(
 						'administrador' => 'Recepción oc app - Agregar a inventario',
 						'modulo' => 'OrdenCompras',
 						'modulo_accion' => json_encode($p)
 					)
-				);	
-			}
-			else
-			{
+				);
+			} else {
 				$log[] = array(
 					'Log' => array(
 						'administrador' => 'Recepción oc app - Error agregar a inventario',
@@ -3702,10 +3577,9 @@ class OrdenComprasController extends AppController
 				);
 			}
 		}
-		
+
 		# Reservamos los productos de las ventas relacionadas a la OC padre
-		if (!$oc['OrdenCompra']['oc_manual']) 
-		{
+		if (!$oc['OrdenCompra']['oc_manual']) {
 			// ! Se mueve metodo al controllador
 			// ! Queda en desuzo el metodo en el Modelo
 			// ClassRegistry::init('Venta')->reservar_stock_por_oc($id);
@@ -3714,15 +3588,14 @@ class OrdenComprasController extends AppController
 
 		$ocSave = array(
 			'OrdenCompra' => array(
-				'id' => $id ,
+				'id' => $id,
 				'estado' => 'recepcion_incompleta',
 				'retiro' => 0
 			)
 		);
 
 		# Guardamos la fecha de la primera recepción
-		if (empty($oc['OrdenCompra']['fecha_recibido'])) 
-		{
+		if (empty($oc['OrdenCompra']['fecha_recibido'])) {
 			$ocSave = array_replace_recursive($ocSave, array(
 				'OrdenCompra' => array(
 					'fecha_recibido' => date('Y-m-d H:i:s')
@@ -3736,8 +3609,7 @@ class OrdenComprasController extends AppController
 		$this->request->data['Dte'] = array_unique($this->request->data['Dte']);
 
 		# Guardamos los nuevos dtes
-		foreach ($this->request->data['Dte'] as $dte) 
-		{	
+		foreach ($this->request->data['Dte'] as $dte) {
 			$emisor   = $this->rutSinDv($oc['OrdenCompra']['rut_empresa']);
 			$tipo_dte = $dte['tipo_dte'];
 			$folio    = $dte['folio'];
@@ -3745,16 +3617,13 @@ class OrdenComprasController extends AppController
 			$id_factura = null;
 
 			# Obtenemos el factura id de los dte ya guardados
-			foreach ($oc['OrdenCompraFactura'] as $fact)
-			{	
-				if ($fact['folio'] == $folio && $fact['tipo_documento'] == $tipo_dte)
-				{
+			foreach ($oc['OrdenCompraFactura'] as $fact) {
+				if ($fact['folio'] == $folio && $fact['tipo_documento'] == $tipo_dte) {
 					$id_factura = $fact['id'];
 				}
 			}
 
-			if (!$id_factura)
-			{
+			if (!$id_factura) {
 				# Creamos el id antes de setear sus valores
 				$id_factura = ClassRegistry::init('OrdenCompraFactura')->crear(array(
 					'OrdenCompraFactura' => array(
@@ -3793,8 +3662,7 @@ class OrdenComprasController extends AppController
 		# Calculamos el total facturado
 		$yaFacturado = 0;
 
-		foreach ($oc['OrdenCompraFactura'] as $factura) 
-		{
+		foreach ($oc['OrdenCompraFactura'] as $factura) {
 			if ($factura['tipo_documento'] != 33)
 				continue;
 
@@ -3802,9 +3670,8 @@ class OrdenComprasController extends AppController
 		}
 
 		$total_oc = 0;
-		
-		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iocp => $p) 
-		{
+
+		foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iocp => $p) {
 			if ($p['cantidad_validada_proveedor'] == 0)
 				continue;
 
@@ -3817,22 +3684,18 @@ class OrdenComprasController extends AppController
 		# Facturado
 		$facturado_completo = false;
 
-		if ($total_facturado >= $total_oc_min)
-		{
+		if ($total_facturado >= $total_oc_min) {
 			$facturado_completo = true;
 		}
 
 		# Items recibidos
 		$total_recibidos = array_sum(Hash::extract($productosRecepcionar, '{n}.cantidad_recibida_total')) + array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.cantidad_recibida'));
 		$total_validados_proveedor = array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.cantidad_validada_proveedor'));
-		
+
 		# OC queda en estado de espera de factura
-		if ($total_recibidos == $total_validados_proveedor && !$facturado_completo ) 
-		{
+		if ($total_recibidos == $total_validados_proveedor && !$facturado_completo) {
 			$ocSave['OrdenCompra']['estado'] = 'espera_dte';
-		}
-		elseif ($total_recibidos == $total_validados_proveedor && $facturado_completo)
-		{
+		} elseif ($total_recibidos == $total_validados_proveedor && $facturado_completo) {
 			$ocSave['OrdenCompra']['estado'] = 'recepcion_completa';
 		}
 
@@ -3880,7 +3743,7 @@ class OrdenComprasController extends AppController
 				),
 				'fields' => array(
 					'OrdenCompraFactura.id'
-				), 
+				),
 			));
 
 			# Relacionamos pagos facturas
@@ -3910,29 +3773,26 @@ class OrdenComprasController extends AppController
 				foreach ($pagos as $ip => $p) {
 					$pagosController->guardarEmailPagoFactura($p['Pago']['id']);
 				}
-
 			}
-
 		}
 
 		ClassRegistry::init('Log')->create();
 		ClassRegistry::init('Log')->saveMany($log);
 
 		$response = array(
-			'code'    => 200, 
+			'code'    => 200,
 			'name' => 'success',
 			'message' => 'Oc recepcionada como ' . $ocSave['OrdenCompra']['estado'],
 			'data' => array()
 		);
 
 		$this->set(array(
-            'response' => $response,
-            '_serialize' => array('response')
-        ));
-
+			'response' => $response,
+			'_serialize' => array('response')
+		));
 	}
 
-	
+
 	/**
 	 * api_zonificar
 	 *
@@ -3946,7 +3806,7 @@ class OrdenComprasController extends AppController
 		# Existe token
 		if (!isset($this->request->query['token'])) {
 			$response = array(
-				'code'    => 502, 
+				'code'    => 502,
 				'name' => 'error',
 				'message' => 'Token requerido'
 			);
@@ -3957,7 +3817,7 @@ class OrdenComprasController extends AppController
 		# Validamos token
 		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
 			$response = array(
-				'code'    => 505, 
+				'code'    => 505,
 				'name' => 'error',
 				'message' => 'Token de sesión expirado o invalido'
 			);
@@ -3966,10 +3826,10 @@ class OrdenComprasController extends AppController
 		}
 
 		$tokenInfo = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
-		
+
 		# Tomamos las bodegas del rol
 		$bodegas_id = Hash::extract($tokenInfo, 'Administrador.Rol.Bodega.{n}.id');
-		
+
 		$ocs = $this->OrdenCompra->find('all', array(
 			'conditions' => array(
 				'OrdenCompra.estado IN' => array(
@@ -4011,16 +3871,15 @@ class OrdenComprasController extends AppController
 			)
 		));
 
-		
-		if (empty($ocs))
-		{
+
+		if (empty($ocs)) {
 			$response = array(
-				'code'    => 401, 
+				'code'    => 401,
 				'name' => 'error',
 				'message' => 'No hay Ocs disponibles para zonificar'
 			);
 
-			throw new CakeException($response);			
+			throw new CakeException($response);
 		}
 
 
@@ -4029,12 +3888,10 @@ class OrdenComprasController extends AppController
 		// $this->Prestashop->crearCliente($ocs[0]['Tienda']['apiurl_prestashop'], $ocs[0]['Tienda']['apikey_prestashop']);
 
 
-		foreach($ocs as $i => $oc)
-		{	
+		foreach ($ocs as $i => $oc) {
 			$productos = array();
 
-			foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iv => $d) 
-			{	
+			foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iv => $d) {
 				// Producto
 				$pbodega = ClassRegistry::init('ProductoWarehouse')->find('first', array(
 					'conditions' => array(
@@ -4049,8 +3906,7 @@ class OrdenComprasController extends AppController
 				));
 
 				# No recibido
-				if (!$d['cantidad_recibida'])
-				{
+				if (!$d['cantidad_recibida']) {
 					continue;
 				}
 
@@ -4063,14 +3919,13 @@ class OrdenComprasController extends AppController
 				// $pWarehouse['imagen'] = (isset(Hash::extract($imagen, '{n}[principal=1].url')[0])) ? Hash::extract($imagen, '{n}[principal=1].url')[0] : 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
 				$pWarehouse['imagen'] = 'https://dummyimage.com/400x400/f2f2f2/cfcfcf&text=No+photo';
 
-				if (!empty($pbodega))
-				{
+				if (!empty($pbodega)) {
 					$pWarehouse['sku'] = $pbodega['ProductoWarehouse']['sku'];
-					$pWarehouse['cod_barra'] = ($pbodega['ProductoWarehouse']['cod_barra']) ? $pbodega['ProductoWarehouse']['cod_barra'] : null ;
+					$pWarehouse['cod_barra'] = ($pbodega['ProductoWarehouse']['cod_barra']) ? $pbodega['ProductoWarehouse']['cod_barra'] : null;
 					$pWarehouse['permitir_ingreso_sin_barra'] = ($pbodega['ProductoWarehouse']['permitir_ingreso_sin_barra']) ? true : false;
 				}
 
-				$precioBruto = monto_bruto( round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
+				$precioBruto = monto_bruto(round($d['precio_unitario'], 0) - ($d['descuento_producto'] / $d['cantidad_validada_proveedor']), null, 0);
 				$descuentoOC = round(obtener_descuento_monto($precioBruto, $ocs[$i]['OrdenCompra']['descuento']), 0);
 
 				# Asignamos a la variable p el contenido de d
@@ -4082,27 +3937,26 @@ class OrdenComprasController extends AppController
 				));
 
 				$productos[] = $p;
-
 			}
 
 			$ocs[$i]['OrdenComprasVentaDetalleProducto'] = $productos;
 		}
 
 		$response = array(
-			'code'    => 200, 
+			'code'    => 200,
 			'name' => 'success',
 			'message' => 'Ocs obtenida correctamente',
 			'data' => $ocs
 		);
 
 		$this->set(array(
-            'response' => $response,
-            '_serialize' => array('response')
-        ));
+			'response' => $response,
+			'_serialize' => array('response')
+		));
 	}
 
 
-		
+
 	/**
 	 * api_detalle_zonificar
 	 * 
@@ -4116,7 +3970,7 @@ class OrdenComprasController extends AppController
 		# Existe token
 		if (!isset($this->request->query['token'])) {
 			$response = array(
-				'code'    => 404, 
+				'code'    => 404,
 				'name' => 'error',
 				'message' => 'Token requerido'
 			);
@@ -4127,7 +3981,7 @@ class OrdenComprasController extends AppController
 		# Validamos token
 		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
 			$response = array(
-				'code'    => 400, 
+				'code'    => 400,
 				'name' => 'error',
 				'message' => 'Token de sesión expirado o invalido'
 			);
@@ -4135,10 +3989,9 @@ class OrdenComprasController extends AppController
 			throw new CakeException($response);
 		}
 
-		if (!isset($this->request->data['cantidad_zonificada']))
-		{
+		if (!isset($this->request->data['cantidad_zonificada'])) {
 			$response = array(
-				'code'    => 400, 
+				'code'    => 400,
 				'name' => 'error',
 				'message' => 'cantidad_zonificada es requerido'
 			);
@@ -4167,10 +4020,9 @@ class OrdenComprasController extends AppController
 			)
 		));
 
-		if (empty($ocp))
-		{
+		if (empty($ocp)) {
 			$response = array(
-				'code'    => 404, 
+				'code'    => 404,
 				'name' => 'error',
 				'message' => 'Detalle oc no encontrado o la oc no está disponible para zonificar'
 			);
@@ -4179,12 +4031,11 @@ class OrdenComprasController extends AppController
 		}
 
 		$cantidad_pendiente_zonificar = $ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] - $ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'];
-		
+
 		# Ya esta zonificada
-		if ($ocp['OrdenComprasVentaDetalleProducto']['zonificado'])
-		{
+		if ($ocp['OrdenComprasVentaDetalleProducto']['zonificado']) {
 			$response = array(
-				'code'    => 400, 
+				'code'    => 400,
 				'name' => 'error',
 				'message' => sprintf('%s ya fue zonificado - Detalle id #%d', $ocp['OrdenComprasVentaDetalleProducto']['descripcion'], $id)
 			);
@@ -4193,10 +4044,9 @@ class OrdenComprasController extends AppController
 		}
 
 		# Se intenta zonificar mas unidades
-		if ($this->request->data['cantidad_zonificada'] > $cantidad_pendiente_zonificar)
-		{	
+		if ($this->request->data['cantidad_zonificada'] > $cantidad_pendiente_zonificar) {
 			$response = array(
-				'code'    => 400, 
+				'code'    => 400,
 				'name' => 'error',
 				'message' => sprintf('La cantidad a zonificar es mayor a la cantidad pendiente: Pendiente %d', $cantidad_pendiente_zonificar)
 			);
@@ -4205,10 +4055,9 @@ class OrdenComprasController extends AppController
 		}
 
 		# Menos a 0
-		if ($this->request->data['cantidad_zonificada'] <= 0)
-		{	
+		if ($this->request->data['cantidad_zonificada'] <= 0) {
 			$response = array(
-				'code'    => 400, 
+				'code'    => 400,
 				'name' => 'error',
 				'message' => 'La cantidad a zonificar debe ser mayor 0'
 			);
@@ -4218,17 +4067,15 @@ class OrdenComprasController extends AppController
 
 		$cantidad_zonificar = $ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'] + $this->request->data['cantidad_zonificada'];
 
-		if ($ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] == $cantidad_zonificar)
-		{
+		if ($ocp['OrdenComprasVentaDetalleProducto']['cantidad_recibida'] == $cantidad_zonificar) {
 			$ocp['OrdenComprasVentaDetalleProducto']['zonificado'] = 1;
 		}
 
 		$ocp['OrdenComprasVentaDetalleProducto']['cantidad_zonificada'] = $cantidad_zonificar;
 
-		if (!ClassRegistry::init('OrdenComprasVentaDetalleProducto')->save($ocp))
-		{
+		if (!ClassRegistry::init('OrdenComprasVentaDetalleProducto')->save($ocp)) {
 			$response = array(
-				'code'    => 500, 
+				'code'    => 500,
 				'name' => 'error',
 				'message' => 'No fue posible actualizar el detalle'
 			);
@@ -4237,17 +4084,16 @@ class OrdenComprasController extends AppController
 		}
 
 		$response = array(
-			'code'    => 200, 
+			'code'    => 200,
 			'name' => 'success',
 			'message' => sprintf('%s zonificado con éxito', $ocp['OrdenComprasVentaDetalleProducto']['descripcion']),
 			'data' => $ocp
 		);
 
 		$this->set(array(
-            'response' => $response,
-            '_serialize' => array('response')
-        ));
-
+			'response' => $response,
+			'_serialize' => array('response')
+		));
 	}
 
 	public function reservar_stock_por_oc($id_oc)
@@ -4273,11 +4119,11 @@ class OrdenComprasController extends AppController
 				'OrdenCompra.id'
 			)
 		));
-		
+
 		if (empty($ocVentas['Venta'])) {
 			return;
 		}
-		
+
 		foreach ($ocVentas['Venta'] as $iv => $venta) {
 			foreach ($venta['VentaDetalle'] as $id => $d) {
 
@@ -4293,7 +4139,37 @@ class OrdenComprasController extends AppController
 		return;
 	}
 
-	public function CrearOCAutomaticas()
+	public function RecorrerProveedor()
+	{
+		// debug(date('h:m:s'));
+		$proveedores = array_unique(Hash::extract(ClassRegistry::init('Proveedor')->find(
+			'all',
+			array(
+				'fields'		=> ['Proveedor.id'],
+				'conditions' 	=> array(
+					'Proveedor.permitir_generar_oc'	=> true,
+				),
+				'joins' 		=> array(
+					array(
+						'table' => 'frecuencia_generar_oc',
+						'alias' => 'FrecuenciaGenerarOC',
+						'type'  => 'inner',
+						'conditions' => array(
+							'FrecuenciaGenerarOC.proveedor_id = Proveedor.id',
+							'FrecuenciaGenerarOC.hora' =>  "14:00:00"
+						)
+					)
+				),
+			)
+		), "{n}.Proveedor.id"));
+		print_r($proveedores);
+		if ($proveedores) {
+			$this->CrearOCAutomaticas($proveedores);
+		}
+		
+	}
+
+	public function CrearOCAutomaticas(array $proveedores_id)
 	{
 		// * Obtenemos bodega para buscar ventas por bodegas
 
@@ -4302,7 +4178,7 @@ class OrdenComprasController extends AppController
 
 		foreach ($bodegas as $bodega_id => $nombre) {
 
-			// * Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autmaticas
+			// * La Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autmaticas
 			// * Ademas la Venta debe cumplir con las condiciones para generar OC
 			$venta_bodega	 = $this->OrdenCompra->Venta->find('all', array(
 				'fields' => array(
@@ -4312,9 +4188,9 @@ class OrdenComprasController extends AppController
 					'rpvdp.id as proveedores_venta_detalle_productos_id',
 					'rpvdp.venta_detalle_producto_id as producto_id',
 					'rpvdp.proveedor_id as proveedor_id',
-					"((vd_1.cantidad - vd_1.cantidad_anulada - vd_1.cantidad_entregada) - (vd_1.cantidad_entregada - (select ifnull(sum(rvdr.cantidad_reservada), 0)
-						from rp_venta_detalles_reservas rvdr
-						where rvdr.venta_detalle_id = vd_1.id and rvdr.bodega_id = $bodega_id))) cantidad",
+					"((vd_1.cantidad - vd_1.cantidad_anulada - vd_1.cantidad_entregada) - (select ifnull(sum(rvdr_1.cantidad_reservada), 0)
+						from rp_venta_detalles_reservas rvdr_1
+						where rvdr_1.venta_detalle_id = vd_1.id)) cantidad",
 				),
 				'joins' => array(
 					array(
@@ -4359,6 +4235,7 @@ class OrdenComprasController extends AppController
 						'type' 	=> 'INNER',
 						'conditions' => array(
 							'rpvdp.proveedor_id = rp_1.id',
+							'rp_1.id'	=> $proveedores_id
 						)
 					),
 					array(
@@ -4418,7 +4295,7 @@ class OrdenComprasController extends AppController
 			// * Extraen los identificadores de los proveedores para crear oc por cada proveedor
 
 			$proveedores = array_unique(Hash::extract($venta_bodega, '{n}.rpvdp.proveedor_id'));
-			
+
 			// * Se recorren los proveedores y se haran oc solo con sus productos asociados
 			foreach ($proveedores as $proveedor_id) {
 
@@ -4445,12 +4322,12 @@ class OrdenComprasController extends AppController
 							'conditions' => array(
 								'VentaDetalleProducto.id' => $productos__oc
 							)
-							),
+						),
 						'ReglasGenerarOC'
 					),
 					'conditions' => ["Proveedor.id" => $proveedor_id]
 				));
-				// prx($proveedor);
+
 				$ventas_id = [];
 
 				// * Buscamos las venta_id asociadas a los productos relacionados al proveedor
@@ -4485,9 +4362,6 @@ class OrdenComprasController extends AppController
 					],
 					'conditions' => ['Tienda.principal' => true]
 				]);
-				// prx($tienda);
-				// "estado" 					=> "validacion_externa",
-				// "estado" 					=> "asignacion_metodo_pago",
 
 				$OC['OrdenCompra'] = [
 					"administrador_id" 			=> $tienda['Tienda']['administrador_id'],
@@ -4511,7 +4385,7 @@ class OrdenComprasController extends AppController
 					"iva" 						=> "",
 					"total" 					=> "",
 					"fecha_validado" 			=> date('Y-m-d h:m:s'),
-					"comentario_validar" 		=> "Esto es una OC generada Automaticamente",
+					"comentario_validar" 		=> "Esto es una OC generada Automáticamente",
 					"nombre_validado" 			=> $tienda['Administrador']['nombre'],
 					"email_comercial" 			=> $tienda['Administrador']['email'],
 					"validado_proveedor" 		=> 0,
@@ -4523,7 +4397,7 @@ class OrdenComprasController extends AppController
 					"evidencia" 	=> json_encode($OC)
 				];
 
-				
+
 
 				$OC['OrdenCompraHistorico'][] = [
 					"estado" 		=> "asignacion_metodo_pago",
@@ -4532,9 +4406,9 @@ class OrdenComprasController extends AppController
 				];
 
 				// * Formatiamos las los productos para registrarlo a la OC
-				
+
 				$producto_oc = [];
-				
+
 				foreach ($proveedor['VentaDetalleProducto'] as $p) {
 
 					$total = array_sum(Hash::extract(array_filter($venta_bodega, function ($v, $k) use ($p) {
@@ -4544,7 +4418,7 @@ class OrdenComprasController extends AppController
 					$descuentos 		= ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
 					$precio_unitario 	= $total * $p['precio_costo'];
 					$descuento_producto = $total * $descuentos['total_descuento'];
-					
+
 					$producto_oc[] = [
 						'venta_detalle_producto_id' => $p['id'],
 						'codigo' 					=> $p['referencia'],
@@ -4562,38 +4436,56 @@ class OrdenComprasController extends AppController
 				$OC['OrdenCompra']['total'] 		= $OC['OrdenCompra']['total_neto'] + round($OC['OrdenCompra']['total_neto'] * (Configure::read('iva_clp') / 100));
 				$OC['OrdenCompra']['iva'] 			= $OC['OrdenCompra']['total'] - $OC['OrdenCompra']['total_neto'];
 				$OC['VentaDetalleProducto'] 		= $producto_oc;
-				
+
 				// * Verificamos que medio de pago se le asignara. Si encaja en alguno se le asigna, sino queda en estado asignacion_metodo_pago
-				
+
 				$encontro_regla = false;
-				
+
 				try {
 					foreach ($proveedor['ReglasGenerarOC']  as $ReglasGenerarOC) {
 
-						if ($ReglasGenerarOC['mayor_que'] < $OC['OrdenCompra']['total']  or $ReglasGenerarOC['menor_que'] > $OC['OrdenCompra']['total']) {
-							
+						if ($ReglasGenerarOC['mayor_que'] < $OC['OrdenCompra']['total']  && $ReglasGenerarOC['menor_que'] > $OC['OrdenCompra']['total'])
+							$encontro_regla	= true;
+
+						if (is_null($ReglasGenerarOC['mayor_que']) &&  $OC['OrdenCompra']['total'] < $ReglasGenerarOC['menor_que'])
+							$encontro_regla	= true;
+
+						if (is_null($ReglasGenerarOC['menor_que']) &&  $OC['OrdenCompra']['total'] > $ReglasGenerarOC['mayor_que'])
+							$encontro_regla	= true;
+
+						if ($encontro_regla) {
+
 							$OC['OrdenCompra']['moneda_id'] 			= $ReglasGenerarOC['medio_pago_id'];
-							$OC['OrdenCompra']['validacion_externa'] 	= "validacion_externa";
+							$OC['OrdenCompra']['estado'] 				= "validacion_externa";
 
 							$OC['OrdenCompraHistorico'][] 				= [
 								"estado" 		=> "validacion_externa",
 								"responsable" 	=> "diego.romero@nodriza.cl",
 								"evidencia" 	=> json_encode($OC)
 							];
-							
-							$encontro_regla 							= true;
-
 							break;
+						}
+					}
+
+					// * Guardamos la OC y segun el estado notificamos 
+
+					if ($this->OrdenCompra->saveAll($OC)) {
+
+						$OC['OrdenCompra']['id'] = $this->OrdenCompra->id;
+
+						if ($encontro_regla) {
+
+							$this->guardarEmailValidado($OC['OrdenCompra']['id']);
+						} else {
+
+							$emails = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
+							$this->guardarEmailAsignarPago($OC, $emails);
 						}
 					}
 				} catch (\Throwable $th) {
 					prx($th);
 				}
-
-				
 			}
-			prx($OC);
-			// prx(array_unique($proveedores, SORT_STRING));
 		}
 	}
 }
