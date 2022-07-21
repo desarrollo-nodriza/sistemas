@@ -963,7 +963,6 @@ class OrdenComprasController extends AppController
 
 		# Calculo de descuentos
 		foreach ($ocs['VentaDetalleProducto'] as $i => $p) {
-
 			$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
 
 			$ocs['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
@@ -1012,7 +1011,7 @@ class OrdenComprasController extends AppController
 		if ($ocs['OrdenCompra']['validado_proveedor']) {
 			$this->Session->setFlash('Esta OC fue reiniciada por el proveedor.', null, array(), 'success');
 		}
-
+		
 		$estados_proveedor = $this->OrdenCompra->estado_proveedor;
 
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
@@ -4177,7 +4176,7 @@ class OrdenComprasController extends AppController
 		$venta_bodega 	= [];
 
 		foreach ($bodegas as $bodega_id => $nombre) {
-
+		
 			// * La Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autmaticas
 			// * Ademas la Venta debe cumplir con las condiciones para generar OC
 			$venta_bodega	 = $this->OrdenCompra->Venta->find('all', array(
@@ -4283,15 +4282,14 @@ class OrdenComprasController extends AppController
 					'Venta.bodega_id' 			=> $bodega_id,
 					'rp_1.permitir_generar_oc'	=> true,
 					'rp_1.activo'				=> true,
-					"((vd_1.cantidad - vd_1.cantidad_anulada - vd_1.cantidad_entregada) - (vd_1.cantidad_entregada - (select ifnull(sum(rvdr.cantidad_reservada), 0)
-						from rp_venta_detalles_reservas rvdr
-						where rvdr.venta_detalle_id = vd_1.id and rvdr.bodega_id = $bodega_id))) > 0"
 				),
-				'order' 	=> array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC')
+				'order' 	=> array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC'),
+				'having' 	=> ['cantidad > 0'],
+				'group'		=> ['`vd_1`.`id`']
 			));
 
-			// prx($venta_bodega);
-
+			// debug($venta_bodega);
+			// prx($this->OrdenCompra->getDataSource()->getLog(false, false));
 			// * Extraen los identificadores de los proveedores para crear oc por cada proveedor
 
 			$proveedores = array_unique(Hash::extract($venta_bodega, '{n}.rpvdp.proveedor_id'));
@@ -4321,9 +4319,24 @@ class OrdenComprasController extends AppController
 						'VentaDetalleProducto' => array(
 							'conditions' => array(
 								'VentaDetalleProducto.id' => $productos__oc
+							),
+							'PrecioEspecificoProducto' => array(
+								'conditions' => array(
+									'PrecioEspecificoProducto.activo' => 1,
+									'OR' => array(
+										'PrecioEspecificoProducto.descuento_infinito' => 1,
+										'AND' => array(
+											array('PrecioEspecificoProducto.fecha_inicio <=' => date('Y-m-d')),
+											array('PrecioEspecificoProducto.fecha_termino >=' => date('Y-m-d')),
+										)
+									)
+								),
+								'order' => array(
+									'PrecioEspecificoProducto.id' => 'DESC'
+								)
 							)
 						),
-						'ReglasGenerarOC'
+						'ReglasGenerarOC',
 					),
 					'conditions' => ["Proveedor.id" => $proveedor_id]
 				));
@@ -4389,23 +4402,12 @@ class OrdenComprasController extends AppController
 					"nombre_validado" 			=> $tienda['Administrador']['nombre'],
 					"email_comercial" 			=> $tienda['Administrador']['email'],
 					"validado_proveedor" 		=> 0,
+					"bodega_id" 				=> $bodega_id,
 				];
 
-				$OC['OrdenCompraHistorico'][] = [
-					"estado" 		=> "creada",
-					"responsable" 	=> "diego.romero@nodriza.cl",
-					"evidencia" 	=> json_encode($OC)
-				];
+				
 
-
-
-				$OC['OrdenCompraHistorico'][] = [
-					"estado" 		=> "asignacion_metodo_pago",
-					"responsable" 	=> "diego.romero@nodriza.cl",
-					"evidencia" 	=> json_encode($OC)
-				];
-
-				// * Formatiamos las los productos para registrarlo a la OC
+				// * Formatiamos los productos para registrarlo a la OC
 
 				$producto_oc = [];
 
@@ -4414,28 +4416,54 @@ class OrdenComprasController extends AppController
 					$total = array_sum(Hash::extract(array_filter($venta_bodega, function ($v, $k) use ($p) {
 						return $v['rpvdp']['producto_id'] == $p['id'];
 					}, ARRAY_FILTER_USE_BOTH), "{n}.0.cantidad"));
-
+					
 					$descuentos 		= ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
-					$precio_unitario 	= $total * $p['precio_costo'];
-					$descuento_producto = $total * $descuentos['total_descuento'];
+					
+					$precio_unitario 	= $p['precio_costo'];
+					$total_neto 		= $total * $precio_unitario;
+					
+					// * Si el producto no posee un precio mayor a 0 no es considerado para la OC
+					
+					if ($precio_unitario > 0) {
 
-					$producto_oc[] = [
-						'venta_detalle_producto_id' => $p['id'],
-						'codigo' 					=> $p['referencia'],
-						'descripcion' 				=> $p['nombre'],
-						'cantidad' 					=> $total,
-						'precio_unitario' 			=> $precio_unitario,
-						'descuento_producto' 		=> $descuento_producto,
-						'total_neto' 				=> $precio_unitario - $descuento_producto,
-					];
+						$descuento_producto = $total * $descuentos['total_descuento'];
+						$total_neto 		= $total_neto - $descuento_producto;
+						$producto_oc[] 		= [
+							'venta_detalle_producto_id' => $p['id'],
+							'codigo' 					=> $p['referencia'],
+							'descripcion' 				=> $p['nombre'],
+							'cantidad' 					=> $total,
+							'precio_unitario' 			=> $precio_unitario,
+							'descuento_producto' 		=> $descuento_producto,
+							'total_neto' 				=> $total_neto,
+						];
+					}
+					
 				}
-
+				// * Si no hay productos para añadir a la OC se sale
+				if (!$producto_oc) {
+					continue;
+				}
+				
 				// * Totalizamos el neto, el total y el iva. Asignamos los productos formatiados
 
 				$OC['OrdenCompra']['total_neto'] 	= array_sum(Hash::extract($producto_oc, "{n}.total_neto"));
 				$OC['OrdenCompra']['total'] 		= $OC['OrdenCompra']['total_neto'] + round($OC['OrdenCompra']['total_neto'] * (Configure::read('iva_clp') / 100));
 				$OC['OrdenCompra']['iva'] 			= $OC['OrdenCompra']['total'] - $OC['OrdenCompra']['total_neto'];
 				$OC['VentaDetalleProducto'] 		= $producto_oc;
+
+				// * Creamos los estados de la OC
+				$OC['OrdenCompraHistorico'][] = [
+					"estado" 		=> "creada",
+					"responsable" 	=> "diego.romero@nodriza.cl",
+					"evidencia" 	=> json_encode($OC)
+				];
+
+				$OC['OrdenCompraHistorico'][] = [
+					"estado" 		=> "asignacion_metodo_pago",
+					"responsable" 	=> "diego.romero@nodriza.cl",
+					"evidencia" 	=> json_encode($OC)
+				];
 
 				// * Verificamos que medio de pago se le asignara. Si encaja en alguno se le asigna, sino queda en estado asignacion_metodo_pago
 

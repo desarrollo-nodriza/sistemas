@@ -105,7 +105,11 @@ class ProveedoresController extends AppController
 			if (isset($this->request->data['ProveedoresEmail'])) {
 				$this->request->data['Proveedor']['meta_emails'] = json_encode($this->request->data['ProveedoresEmail'], true);
 			}
-
+		
+			$this->request->data['FrecuenciaGenerarOC'] = array_filter($this->request->data['FrecuenciaGenerarOC'], function ($v, $k) {
+				return !empty($v['hora']);
+			}, ARRAY_FILTER_USE_BOTH);
+			
 			if ($this->Proveedor->saveAll($this->request->data)) {
 
 				if ($this->request->data['Proveedor']['actualizar_canales']) {
