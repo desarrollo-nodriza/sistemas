@@ -865,6 +865,7 @@ class VentaDetalleProducto extends AppModel
 				'BodegasVentaDetalleProducto.venta_detalle_producto_id',
 				'BodegasVentaDetalleProducto.bodega_id'
 			),
+			'conditions' => ['BodegasVentaDetalleProducto.tipo <>' => 'GT'],
 			'having' => array(
 				'SUM(BodegasVentaDetalleProducto.cantidad) > 0'
 			)
