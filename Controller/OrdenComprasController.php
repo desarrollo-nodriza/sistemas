@@ -4170,10 +4170,13 @@ class OrdenComprasController extends AppController
 
 	public function CrearOCAutomaticas(array $proveedores_id)
 	{
-		// * Obtenemos bodega para buscar ventas por bodegas
 
+		// * Obtenemos bodega para buscar ventas por bodegas
 		$bodegas 		= ClassRegistry::init('Bodega')->obtener_bodegas();
 		$venta_bodega 	= [];
+		$respuesta 		= false;
+		$OCCreadas	 	= [];
+		$log			= [];
 
 		foreach ($bodegas as $bodega_id => $nombre) {
 		
@@ -4405,8 +4408,6 @@ class OrdenComprasController extends AppController
 					"bodega_id" 				=> $bodega_id,
 				];
 
-				
-
 				// * Formatiamos los productos para registrarlo a la OC
 
 				$producto_oc = [];
@@ -4440,6 +4441,7 @@ class OrdenComprasController extends AppController
 					}
 					
 				}
+
 				// * Si no hay productos para añadir a la OC se sale
 				if (!$producto_oc) {
 					continue;
@@ -4498,8 +4500,10 @@ class OrdenComprasController extends AppController
 					// * Guardamos la OC y segun el estado notificamos 
 
 					if ($this->OrdenCompra->saveAll($OC)) {
-
-						$OC['OrdenCompra']['id'] = $this->OrdenCompra->id;
+						
+						$respuesta 					= true;
+						$OC['OrdenCompra']['id'] 	= $this->OrdenCompra->id;
+						$OCCreadas[] 				= $this->OrdenCompra->id;
 
 						if ($encontro_regla) {
 
@@ -4511,9 +4515,22 @@ class OrdenComprasController extends AppController
 						}
 					}
 				} catch (\Throwable $th) {
-					prx($th);
+					$log[] = array(
+						'Log' => array(
+							'administrador' => "Problemas para crear OCs a los Proveedores ". implode($proveedores_id) ,
+							'modulo' 		=> 'OrdenComprasController',
+							'modulo_accion' => json_encode($th)
+						)
+					);
+					ClassRegistry::init('Log')->create();
+					ClassRegistry::init('Log')->saveMany($log);
 				}
 			}
 		}
+
+		return [
+			'respuesta' => $respuesta,
+			'OCs' 		=> $OCCreadas,
+		];
 	}
 }

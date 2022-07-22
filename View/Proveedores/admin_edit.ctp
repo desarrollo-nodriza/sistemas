@@ -1,5 +1,14 @@
-<div class="page-title">
-	<h2><span class="fa fa-industry"></span> Proveedores</h2>
+<div class="panel-heading">
+	<div class="page-title">
+		<h2><span class="fa fa-industry"></span> Proveedores</h2>
+		<? if ($this->request->data['Proveedor']['permitir_generar_oc']) :  ?>
+			<div class="pull-right">
+				<?= $this->Html->link('Crear OC automaticas', array('action' => 'crearOcsAutomaticas', $this->request->data['Proveedor']['id']), array('class' => 'btn btn-success start-loading-then-redirect')); ?>
+			</div>
+		<? endif; ?>
+	</div>
+
+
 </div>
 
 <div class="page-content-wrap">

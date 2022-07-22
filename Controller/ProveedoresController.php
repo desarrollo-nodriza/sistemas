@@ -1,5 +1,6 @@
 <?php
 App::uses('AppController', 'Controller');
+App::uses('OrdenComprasController', 'Controller');
 class ProveedoresController extends AppController
 {
 
@@ -78,7 +79,7 @@ class ProveedoresController extends AppController
 			}
 		}
 
-		BreadcrumbComponent::add('Proveedores ', 'proveedores');
+		BreadcrumbComponent::add('Proveedores ', '/proveedores');
 		BreadcrumbComponent::add('Agregar ');
 	}
 
@@ -105,11 +106,11 @@ class ProveedoresController extends AppController
 			if (isset($this->request->data['ProveedoresEmail'])) {
 				$this->request->data['Proveedor']['meta_emails'] = json_encode($this->request->data['ProveedoresEmail'], true);
 			}
-		
+
 			$this->request->data['FrecuenciaGenerarOC'] = array_filter($this->request->data['FrecuenciaGenerarOC'], function ($v, $k) {
 				return !empty($v['hora']);
 			}, ARRAY_FILTER_USE_BOTH);
-			
+
 			if ($this->Proveedor->saveAll($this->request->data)) {
 
 				if ($this->request->data['Proveedor']['actualizar_canales']) {
@@ -132,7 +133,7 @@ class ProveedoresController extends AppController
 						'order' => array('Saldo.id' => 'DESC')
 					),
 					'FrecuenciaGenerarOC',
-					'ReglasGenerarOC'=> [
+					'ReglasGenerarOC' => [
 						'order' 	=> array('ReglasGenerarOC.mayor_que' => 'ASC')
 					]
 				)
@@ -375,7 +376,7 @@ class ProveedoresController extends AppController
 
 	public function admin_regla_create($proveedor_id)
 	{
-		
+
 		$reglas = array_filter($this->request->data, function ($v, $k) {
 			return !empty($v['proveedor_id']) and !empty($v['regla_generar_oc_id']);
 		}, ARRAY_FILTER_USE_BOTH);
@@ -385,7 +386,7 @@ class ProveedoresController extends AppController
 		foreach ($reglas as  $value) {
 			$datos_a_guardar[] = ['ReglasProveedor' => $value];
 		}
-		
+
 		ClassRegistry::init('ReglasProveedor')->create();
 		ClassRegistry::init('ReglasProveedor')->saveAll($datos_a_guardar);
 
@@ -396,56 +397,76 @@ class ProveedoresController extends AppController
 	{
 
 		if (!isset($this->request->query['token'])) {
-			
+
 			throw new UnauthorizedException('Requiere un token validado');
 		}
-		
+
 		ClassRegistry::init('ReglasProveedor')->id = $id;
 
 		if (!ClassRegistry::init('ReglasProveedor')->exists()) {
-			
+
 			throw new NotFoundException('No existe elemento');
 		}
-		
+
 		ClassRegistry::init('ReglasProveedor')->delete($id);
 
 		$response = array(
-			'code'    	=> 200, 
+			'code'    	=> 200,
 			'name' 		=> "success $id",
 			'message' 	=> 'Eliminado con exito',
 		);
 
 		$this->set(array(
-            'response' => $response,
-            '_serialize' => array('response')
-        ));
+			'response' => $response,
+			'_serialize' => array('response')
+		));
 	}
 
 	public function api_delete_frecuencia($id)
 	{
 		if (!isset($this->request->query['token'])) {
-			
+
 			throw new UnauthorizedException('Requiere un token validado');
 		}
-		
+
 		ClassRegistry::init('FrecuenciaGenerarOC')->id = $id;
 
 		if (!ClassRegistry::init('FrecuenciaGenerarOC')->exists()) {
-			
+
 			throw new NotFoundException('No existe elemento');
 		}
-		
+
 		ClassRegistry::init('FrecuenciaGenerarOC')->delete($id);
 
 		$response = array(
-			'code'    	=> 200, 
+			'code'    	=> 200,
 			'name' 		=> "success $id",
 			'message' 	=> 'Eliminado con exito',
 		);
 
 		$this->set(array(
-            'response' => $response,
-            '_serialize' => array('response')
-        ));
+			'response' => $response,
+			'_serialize' => array('response')
+		));
+	}
+
+	public function admin_crearOcsAutomaticas($proveedor_id)
+	{
+
+		if (!$this->Proveedor->exists($proveedor_id)) {
+			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		$OrdenComprasController = new OrdenComprasController();
+		$respuesta 				= $OrdenComprasController->CrearOCAutomaticas([$proveedor_id]);
+
+		if ($respuesta['respuesta']) {
+			$this->Session->setFlash($this->crearAlertaUl($respuesta['OCs'], 'Ordenes de compra creadas'), null, array(), 'success');
+		}else{
+			$this->Session->setFlash("No hay productos del proveedor para crear OC", null, array(), 'warning');
+		}
+
+		$this->redirect(array('action' => 'edit', $proveedor_id));
 	}
 }
