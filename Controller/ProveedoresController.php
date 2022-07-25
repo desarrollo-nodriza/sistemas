@@ -449,10 +449,15 @@ class ProveedoresController extends AppController
 			'_serialize' => array('response')
 		));
 	}
-
+	
+	/**
+	 * admin_crearOcsAutomaticas
+	 * Se crean OCs automaticas para el proveedor sin importar la frecuencia configurada
+	 * @param  mixed $proveedor_id
+	 * @return void
+	 */
 	public function admin_crearOcsAutomaticas($proveedor_id)
 	{
-
 		if (!$this->Proveedor->exists($proveedor_id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect(array('action' => 'index'));
@@ -460,10 +465,14 @@ class ProveedoresController extends AppController
 
 		$OrdenComprasController = new OrdenComprasController();
 		$respuesta 				= $OrdenComprasController->CrearOCAutomaticas([$proveedor_id]);
-
+		
 		if ($respuesta['respuesta']) {
-			$this->Session->setFlash($this->crearAlertaUl($respuesta['OCs'], 'Ordenes de compra creadas'), null, array(), 'success');
-		}else{
+			$OCs = [];
+			foreach ($respuesta['OCs'] as $value) {
+				$OCs[] = "<a href='/ordenCompras/view/$value' target='_blank' class='link'>Ir a Oc $value</a>";
+			}
+			$this->Session->setFlash($this->crearAlertaUl($OCs, 'Ordenes de compra creadas'), null, array(), 'success');
+		} else {
 			$this->Session->setFlash("No hay productos del proveedor para crear OC", null, array(), 'warning');
 		}
 

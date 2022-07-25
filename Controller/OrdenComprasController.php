@@ -4137,16 +4137,21 @@ class OrdenComprasController extends AppController
 
 		return;
 	}
-
+	
+	/**
+	 * RecorrerProveedor
+	 * Se crean OCs Automaticas a los proveedores que tienen frecuencia programada
+	 * @return void
+	 */
 	public function RecorrerProveedor()
 	{
-		// debug(date('h:m:s'));
 		$proveedores = array_unique(Hash::extract(ClassRegistry::init('Proveedor')->find(
 			'all',
 			array(
 				'fields'		=> ['Proveedor.id'],
 				'conditions' 	=> array(
 					'Proveedor.permitir_generar_oc'	=> true,
+					'Proveedor.activo'	=> true,
 				),
 				'joins' 		=> array(
 					array(
@@ -4155,23 +4160,30 @@ class OrdenComprasController extends AppController
 						'type'  => 'inner',
 						'conditions' => array(
 							'FrecuenciaGenerarOC.proveedor_id = Proveedor.id',
-							'FrecuenciaGenerarOC.hora' =>  "14:00:00"
+							'FrecuenciaGenerarOC.hora' =>  date('h:m:s')
 						)
 					)
 				),
 			)
 		), "{n}.Proveedor.id"));
-		print_r($proveedores);
+		
 		if ($proveedores) {
 			$this->CrearOCAutomaticas($proveedores);
 		}
 		
 	}
-
+	
+	/**
+	 * CrearOCAutomaticas
+	 *
+	 * Se envian los ids de los proveedores en un array
+	 * @param  mixed $proveedores_id
+	 * @return void
+	 */
 	public function CrearOCAutomaticas(array $proveedores_id)
 	{
 
-		// * Obtenemos bodega para buscar ventas por bodegas
+		// * Obtenemos bodega para buscar ventas
 		$bodegas 		= ClassRegistry::init('Bodega')->obtener_bodegas();
 		$venta_bodega 	= [];
 		$respuesta 		= false;
@@ -4180,8 +4192,8 @@ class OrdenComprasController extends AppController
 
 		foreach ($bodegas as $bodega_id => $nombre) {
 		
-			// * La Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autmaticas
-			// * Ademas la Venta debe cumplir con las condiciones para generar OC
+			// * La Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autamaticas
+			// * Adem{as la Venta debe cumplir con las condiciones para generar OC
 			$venta_bodega	 = $this->OrdenCompra->Venta->find('all', array(
 				'fields' => array(
 					'vd_1.id as venta_detalles_id',
@@ -4297,7 +4309,7 @@ class OrdenComprasController extends AppController
 
 			$proveedores = array_unique(Hash::extract($venta_bodega, '{n}.rpvdp.proveedor_id'));
 
-			// * Se recorren los proveedores y se haran oc solo con sus productos asociados
+			// * Se recorren los proveedores y se harán OC solo con sus productos asociados
 			foreach ($proveedores as $proveedor_id) {
 
 				$OC = [];
@@ -4425,27 +4437,27 @@ class OrdenComprasController extends AppController
 					
 					// * Si el producto no posee un precio mayor a 0 no es considerado para la OC
 					
-					if ($precio_unitario > 0) {
+					// if ($precio_unitario > 0) {
 
-						$descuento_producto = $total * $descuentos['total_descuento'];
-						$total_neto 		= $total_neto - $descuento_producto;
-						$producto_oc[] 		= [
-							'venta_detalle_producto_id' => $p['id'],
-							'codigo' 					=> $p['referencia'],
-							'descripcion' 				=> $p['nombre'],
-							'cantidad' 					=> $total,
-							'precio_unitario' 			=> $precio_unitario,
-							'descuento_producto' 		=> $descuento_producto,
-							'total_neto' 				=> $total_neto,
-						];
-					}
+					$descuento_producto = $total * $descuentos['total_descuento'];
+					$total_neto 		= $total_neto - $descuento_producto;
+					$producto_oc[] 		= [
+						'venta_detalle_producto_id' => $p['id'],
+						'codigo' 					=> $p['referencia'],
+						'descripcion' 				=> $p['nombre'],
+						'cantidad' 					=> $total,
+						'precio_unitario' 			=> $precio_unitario,
+						'descuento_producto' 		=> $descuento_producto,
+						'total_neto' 				=> $total_neto,
+					];
+					// }
 					
 				}
 
 				// * Si no hay productos para añadir a la OC se sale
-				if (!$producto_oc) {
-					continue;
-				}
+				// if (!$producto_oc) {
+				// 	continue;
+				// }
 				
 				// * Totalizamos el neto, el total y el iva. Asignamos los productos formatiados
 
