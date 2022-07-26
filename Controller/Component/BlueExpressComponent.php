@@ -347,8 +347,8 @@ class BlueExpressComponent extends Component
                     'ancho' => round($anchoTotal, 1),
                     'alto'  => round($altoTotal, 1),
                 ],
-                'credenciales' => $CuentaCorrienteTransporte['credenciales'] ?? "",
-                'extendedClaim'=> $CuentaCorrienteTransporte['extendedClaim'] ?? false,
+                'credenciales'  => $CuentaCorrienteTransporte['credenciales'] ?? "",
+                'extendedClaim' => $CuentaCorrienteTransporte['extendedClaim'] ? true : false ?? false,
             ];
 
             $response = $this->blue_express->BXEmission($data);
