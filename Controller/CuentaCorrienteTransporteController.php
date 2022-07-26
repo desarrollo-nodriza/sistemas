@@ -91,28 +91,7 @@ class CuentaCorrienteTransporteController extends AppController
 
 		$dependencias 			= ClassRegistry::init('MetodoEnvio')->dependencias();
 		$comunas 				= ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
-		$dependenciasVars 		= [];
-
-		# Starken
-		$dependenciasVars['starken']['tipoEntrega']  			= $this->Starken->getTipoEntregas();
-		$dependenciasVars['starken']['tipoPago']     			= $this->Starken->getTipoPagos();
-		$dependenciasVars['starken']['tipoServicio'] 			= $this->Starken->getTipoServicios();
-		$dependenciasVars['starken']['ciudadOrigenNom']        	= $comunas;
-
-
-		# Conexxion
-		$dependenciasVars['conexxion']['tipo_retornos']       	= $this->Conexxion->obtener_tipo_retornos();
-		$dependenciasVars['conexxion']['tipo_productos']      	= $this->Conexxion->obtener_tipo_productos();
-		$dependenciasVars['conexxion']['tipo_servicios']      	= $this->Conexxion->obtener_tipo_servicios();
-		$dependenciasVars['conexxion']['tipo_notificaciones'] 	= $this->Conexxion->obtener_tipo_notificaciones();
-		$dependenciasVars['conexxion']['comunas']             	= $comunas;
-
-		# Boosmap
-		$dependenciasVars['boosmap']['boosmap_pick_up_id']		= $this->Boosmap->obtener_pickups();
-		$dependenciasVars['boosmap']['delivery_service'] 		= $this->Boosmap->obtener_tipo_servicios();
-
-		# BlueExpress
-		$dependenciasVars['blueexpress']['serviceType'] 		= $this->BlueExpress->tipo_servicio;
+		$dependenciasVars 		= $this->valores_inputs();
 
 		$tabla_dinamica = ClassRegistry::init('TablaDinamica')->find('all', [
 			'contain' 	=> ['AtributoDinamico'],
@@ -160,28 +139,7 @@ class CuentaCorrienteTransporteController extends AppController
 		$dependencias 			= ClassRegistry::init('MetodoEnvio')->dependencias();
 		$comunas 				= ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
 		$this->request->data 	= ClassRegistry::init('CuentaCorrienteTransporte')->find('first', ['conditions' => ['id' => $id]]);
-		$dependenciasVars 		= [];
-
-		# Starken
-		$dependenciasVars['starken']['tipoEntrega']  			= $this->Starken->getTipoEntregas();
-		$dependenciasVars['starken']['tipoPago']     			= $this->Starken->getTipoPagos();
-		$dependenciasVars['starken']['tipoServicio'] 			= $this->Starken->getTipoServicios();
-		$dependenciasVars['starken']['ciudadOrigenNom']        	= $comunas;
-
-
-		# Conexxion
-		$dependenciasVars['conexxion']['tipo_retornos']       	= $this->Conexxion->obtener_tipo_retornos();
-		$dependenciasVars['conexxion']['tipo_productos']      	= $this->Conexxion->obtener_tipo_productos();
-		$dependenciasVars['conexxion']['tipo_servicios']      	= $this->Conexxion->obtener_tipo_servicios();
-		$dependenciasVars['conexxion']['tipo_notificaciones'] 	= $this->Conexxion->obtener_tipo_notificaciones();
-		$dependenciasVars['conexxion']['comunas']             	= $comunas;
-
-		# Boosmap
-		$dependenciasVars['boosmap']['boosmap_pick_up_id']		= $this->Boosmap->obtener_pickups();
-		$dependenciasVars['boosmap']['delivery_service'] 		= $this->Boosmap->obtener_tipo_servicios();
-
-		# BlueExpress
-		$dependenciasVars['blueexpress']['serviceType'] 		= $this->BlueExpress->tipo_servicio;
+		$dependenciasVars 		= $this->valores_inputs();
 
 		$tabla_dinamica = ClassRegistry::init('TablaDinamica')->find('all', [
 			'contain' 	=> ['AtributoDinamico'],
@@ -242,5 +200,44 @@ class CuentaCorrienteTransporteController extends AppController
 		}
 
 		$this->redirect(array('action' => 'edit', $id));
+	}
+
+	
+	/**
+	 * valores_inputs
+	 * Retorna valores definidos para completar las OT
+	 * @return void
+	 */
+	private function valores_inputs()
+	{
+		$dependenciasVars 	= [];
+		$comunas 			= ClassRegistry::init('Comuna')->find('list', array('fields' => array('Comuna.nombre', 'Comuna.nombre'), 'order' => array('Comuna.nombre' => 'ASC')));
+
+		# Starken
+		$dependenciasVars['starken']['tipoEntrega']  			= $this->Starken->getTipoEntregas();
+		$dependenciasVars['starken']['tipoPago']     			= $this->Starken->getTipoPagos();
+		$dependenciasVars['starken']['tipoServicio'] 			= $this->Starken->getTipoServicios();
+		$dependenciasVars['starken']['ciudadOrigenNom']        	= $comunas;
+
+
+		# Conexxion
+		$dependenciasVars['conexxion']['tipo_retornos']       	= $this->Conexxion->obtener_tipo_retornos();
+		$dependenciasVars['conexxion']['tipo_productos']      	= $this->Conexxion->obtener_tipo_productos();
+		$dependenciasVars['conexxion']['tipo_servicios']      	= $this->Conexxion->obtener_tipo_servicios();
+		$dependenciasVars['conexxion']['tipo_notificaciones'] 	= $this->Conexxion->obtener_tipo_notificaciones();
+		$dependenciasVars['conexxion']['comunas']             	= $comunas;
+
+		# Boosmap
+		$dependenciasVars['boosmap']['boosmap_pick_up_id']		= $this->Boosmap->obtener_pickups();
+		$dependenciasVars['boosmap']['delivery_service'] 		= $this->Boosmap->obtener_tipo_servicios();
+
+		# BlueExpress
+		$dependenciasVars['blueexpress']['serviceType'] 		= $this->BlueExpress->tipo_servicio;
+		$dependenciasVars['blueexpress']['extendedClaim'] 		= [
+			0 => "Sin garantia",
+			1 => "Con garantia",
+		];
+
+		return $dependenciasVars;
 	}
 }
