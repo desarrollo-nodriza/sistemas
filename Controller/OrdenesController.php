@@ -1235,6 +1235,12 @@ class OrdenesController extends AppController
 				
 		$tipos_ndc = $this->Orden->get_tipos_ndc();
 
+		$bodegas = ClassRegistry::init('Bodega')->find('list', array(
+			'conditions' => array(
+				'id' => Hash::extract($this->Auth->user('Bodega'), '{n}.id')
+			)
+		));
+
 		# Se desactivan las opciones de ndc de devolución a stock si no han salido productos
 		if (ClassRegistry::init('VentaEstado')->es_estado_pagado($venta['Venta']['venta_estado_id']) && !array_sum(Hash::extract($venta['VentaDetalle'], '{n}.cantidad_entregada')))
 		{
@@ -1246,7 +1252,7 @@ class OrdenesController extends AppController
 		BreadcrumbComponent::add('Venta #' . $id_orden, '/ventas/view/'.$id_orden);
 		BreadcrumbComponent::add('Generar Dte ');
 		
-		$this->set(compact('venta', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc'));
+		$this->set(compact('venta', 'bodegas', 'comunas', 'tipoDocumento', 'traslados', 'dteEmitidos', 'codigoReferencia', 'medioDePago', 'documentos', 'tipoDocumentosReferencias', 'tipos_ndc'));
 
 	}
 
