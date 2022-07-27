@@ -107,7 +107,7 @@ class BlueExpress
             "productType"       => "P",
             "productCategory"   => "PAQU",
             "currency"          => "CLP",
-            "shipmentCost"      => $BULTO['venta']['costo_envio'] * 1,
+            "shipmentCost"      => $BULTO['shipmentCost'],
             "extendedClaim"     => $BULTO['extendedClaim'],
             "companyId"         => $BULTO['companyId'],
             "userName"          => $BULTO['credenciales'],

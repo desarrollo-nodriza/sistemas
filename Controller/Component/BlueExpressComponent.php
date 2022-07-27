@@ -292,29 +292,6 @@ class BlueExpressComponent extends Component
             $altoTotal   = $paquete['paquete']['height'] * 1;
             $pesoTotal   = $paquete['paquete']['weight'] * 1;
 
-            $obtener_costo_envio = $this->obtener_costo_envio($venta, $largoTotal, $anchoTotal, $altoTotal, $pesoTotal, $CuentaCorrienteTransporte);
-
-            if ($obtener_costo_envio['code'] != 200) {
-
-                $log[] = array(
-                    'Log' => array(
-                        'administrador' => 'BlueExpress, dificultades para obtener costo de envio vid:' . $venta['Venta']['id'],
-                        'modulo'        => 'Ventas',
-                        'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $obtener_costo_envio])
-                    )
-                );
-
-                continue;
-            }
-
-            $log[] = array(
-                'Log' => array(
-                    'administrador' => 'BlueExpress retorno costo de envio vid:' . $venta['Venta']['id'],
-                    'modulo'        => 'BlueExpressComponent',
-                    'modulo_accion' => json_encode(["Paquete {$numero_paquete}" => $obtener_costo_envio])
-                )
-            );
-
             # creamos el arreglo para generar la OT
             $data = [
                 'serviceType'   => $CuentaCorrienteTransporte['serviceType'] ?? "",
@@ -323,7 +300,6 @@ class BlueExpressComponent extends Component
                     'id'                    => $venta['Venta']['id'],
                     'referencia'            => $venta['Venta']['referencia'],
                     'referencia_despacho'   => $venta['Venta']['referencia_despacho'],
-                    'costo_envio'           => $obtener_costo_envio['response']['data']['total']
                 ],
                 'pickup'        => [
                     'stateId'       => $CuentaCorrienteTransporte['informacion_bodega']['Comuna']['state_id_blue_express'] ?? "",
@@ -349,6 +325,7 @@ class BlueExpressComponent extends Component
                 ],
                 'credenciales'  => $CuentaCorrienteTransporte['credenciales'] ?? "",
                 'extendedClaim' => $CuentaCorrienteTransporte['extendedClaim'] ? true : false ?? false,
+                'shipmentCost'  => $CuentaCorrienteTransporte['extendedClaim'] ? $embalaje['coste_total_del_contenido'] : 0 ?? 0,
             ];
 
             $response = $this->blue_express->BXEmission($data);
