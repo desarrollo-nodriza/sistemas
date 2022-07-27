@@ -103,11 +103,6 @@ class WarehouseNodrizaComponent extends Component
                     ]
                 ],
                 'Bodega'  => ['fields' => ['Bodega.nombre', 'Bodega.comuna_id']],
-                'Tienda' => array(
-                    'fields' => array(
-                        'Tienda.id', 'Tienda.mandrill_apikey'
-                    )
-                ),
             ),
             'fields' => array(
                 'Venta.id',
@@ -120,8 +115,7 @@ class WarehouseNodrizaComponent extends Component
                 'Venta.picking_estado',
                 'Venta.prioritario',
                 'Venta.bodega_id',
-                'Venta.nota_interna',
-                'Venta.tienda_id',
+                'Venta.nota_interna'
             )
         ));
 
@@ -245,19 +239,7 @@ class WarehouseNodrizaComponent extends Component
                     # si hay productos para embalar y tiene dte válido pasa a embalaje
                     if (!empty($embalaje['productos']) && $dte_valido) {
 
-                        // * Se intenta al menos 4 veces la creacion de embalajes cuando da error
-                        $intentos       = 0;
-
-                        do {
-                            $response = $this->CrearPedido($embalaje);
-
-                            if ($response['code'] != 200) {
-                                sleep(5);
-                                $intentos++;
-                            } else {
-                                break;
-                            }
-                        } while ($intentos < 4);
+                        $response = $this->CrearPedido($embalaje);
 
                         if ($response['code'] == 200) {
 
@@ -270,30 +252,6 @@ class WarehouseNodrizaComponent extends Component
                             );
                             $embalajes_respuesta[]    = $response['response']['body'];
                         } else {
-
-                            $mandrill           = $this->Components->load('Mandrill');
-                            $mandrill_apikey    = $venta['Tienda']['mandrill_apikey'] ?? false;
-
-                            if ($mandrill_apikey) {
-
-                                $html       = json_encode($response);
-                                $asunto     = "Problemas para generar embalajes para la venta $id";
-
-                                $remitente  = array(
-                                    'email'     => 'no-reply@nodriza.cl',
-                                    'nombre'    => "WarehouseNodrizaComponent"
-                                );
-
-                                $destinatarios = array(
-                                    array(
-                                        'email' => 'desarrollo@nodriza.cl',
-                                        'name'  => 'Desarrollador '
-                                    )
-                                );
-                                $mandrill->conectar($mandrill_apikey);
-                                $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
-                            }
-
 
                             $logs[] = array(
                                 'Log' => array(
