@@ -1221,9 +1221,18 @@ class OrdenCompraFacturasController extends AppController
 			'modulo' => 'DteCompra',
 			'modulo_accion' => 'Init: ' . json_encode($facturas)
 		));
+		
+		$contador   = 0;
+    	$contador_2 = 0;
 
 		foreach ($facturas as $fac) 
-		{	# No tiene registro de facturas recibidas
+		{	
+			if ($contador == 10) {
+				$contador_2++;
+				$contador = 0;
+			  }
+
+			# No tiene registro de facturas recibidas
 			if (!$fac['DteCompra'])
 				continue;
 
@@ -1244,8 +1253,8 @@ class OrdenCompraFacturasController extends AppController
 			# Si el monto de la factura es diferente a la registrada en el SII no se recepciona. Se deja un margen de error
 			if($fac['DteCompra']['monto_total'] < $margen_min || $fac['DteCompra']['monto_total'] > $margen_max)
 				continue;
-
-			$docs[] = [
+			// * Se agrupan cada 10 para ser enviadas
+			$docs[$contador_2][] = [
 				'TipoDTE' => (int) $fac['DteCompra']['tipo_documento'],
 				'Folio' => $fac['DteCompra']['folio'],
 				'FchEmis' => $fac['DteCompra']['fecha_emision'],
@@ -1255,6 +1264,8 @@ class OrdenCompraFacturasController extends AppController
 				'EstadoRecepDTE' => 'ERM',
 				'RecepDTEGlosa' => sprintf('Recibido en bodega %s el %s a las %s', $fac['OrdenCompra']['Bodega']['nombre'], date('Y-m-d'), date('H:i:s'))
 			];
+
+			$contador++;
 			
 		}
 
@@ -1266,7 +1277,12 @@ class OrdenCompraFacturasController extends AppController
 		
 		if (!empty($docs))
 		{
-			$result = $this->ApiLibreDte->cambiarEstadoDteCompra($docs);
+			// * Se envian grupos hasta con 10 dte
+			foreach ($docs as $documentos_10) {
+				$result = $this->ApiLibreDte->cambiarEstadoDteCompra($documentos_10);
+				sleep(2);
+			}
+			
 		}
 
 		$log[] = array('Log' => array(
@@ -1504,7 +1520,7 @@ class OrdenCompraFacturasController extends AppController
 
 			throw new CakeException($response);
 		}
-
+		
 		$result = $this->recepcionar_dte_compra($conf['Tienda']['libredte_token'], $conf['Tienda']['sii_public_key'], $conf['Tienda']['sii_private_key'], $dtes);
         
 		# Extraemos los resultados correctos
