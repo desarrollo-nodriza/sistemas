@@ -394,7 +394,24 @@ class MetodoEnviosController extends AppController
 					);
 					continue;
 				}
+				
+				// * Se calcula costo del embalaje cuando es 0
 
+				if ($embalaje['coste_total_del_contenido'] == 0) {
+
+					$detalles_ids   = hash::extract($embalaje['EmbalajeProductoWarehouse'],'{n}.detalle_id');
+					$precios		= ClassRegistry::init('VentaDetalle')->find('list',[
+						'fields' 	=> array('VentaDetalle.id', 'VentaDetalle.precio_bruto'),
+						'conditions'=> ['VentaDetalle.id'=>$detalles_ids]
+					]);
+
+					$total			= 0;
+					foreach ($embalaje['EmbalajeProductoWarehouse'] as $embalaje_producto) {
+						$total = $total + ($precios[$embalaje_producto['detalle_id']] * $embalaje_producto['cantidad_a_embalar']);
+					}
+					$embalaje['coste_total_del_contenido'] = $total;
+				}
+				
 				if ($venta['MetodoEnvio']['bodega_id'] ==  $embalaje['bodega_id']) {
 
 					$cuenta_corriente_transporte_id = $venta['MetodoEnvio']['cuenta_corriente_transporte_id'];

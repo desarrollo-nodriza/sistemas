@@ -217,6 +217,7 @@ class WarehouseNodrizaComponent extends Component
                         'prioritario'               => ($venta['Venta']['prioritario']) ? 1 : 0,
                         'fecha_venta'               => $venta['Venta']['fecha_venta'],
                         'responsable'               => CakeSession::read('Auth.Administrador.id') ?? 1,
+                        'coste_total_del_contenido' => 0,
                         'productos'                 => []
                     ];
 
@@ -241,6 +242,20 @@ class WarehouseNodrizaComponent extends Component
                             );
                         }
                     }
+
+                    // * Calculamos el valor del bulto segun los productos a embalar
+                    $detalles_ids   = hash::extract($embalaje['productos'], '{n}.detalle_id');
+                    $precios        = ClassRegistry::init('VentaDetalle')->find('list', [
+                        'fields'        => array('VentaDetalle.id', 'VentaDetalle.precio_bruto'),
+                        'conditions'    => ['VentaDetalle.id' => $detalles_ids]
+                    ]);
+
+                    $total            = 0;
+                    foreach ($embalaje['productos'] as $embalaje_producto) {
+                        $total = $total + ($precios[$embalaje_producto['detalle_id']] * $embalaje_producto['cantidad_a_embalar']);
+                    }
+
+                    $embalaje['coste_total_del_contenido'] = $total;
 
                     # si hay productos para embalar y tiene dte válido pasa a embalaje
                     if (!empty($embalaje['productos']) && $dte_valido) {

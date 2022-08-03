@@ -98,60 +98,60 @@ class BlueExpress
     public function BXEmission($BULTO)
     {
         $OT = [
-            "printFormatCode" => 2,
-            "orderNumber" =>  $BULTO['venta']['id'],
-            "references" => [
+            "printFormatCode"   => 2,
+            "orderNumber"       =>  $BULTO['venta']['id'],
+            "references"        => [
                 $BULTO['venta']['referencia'],
             ],
-            "serviceType" => $BULTO['serviceType'],
-            "productType" => "P",
-            "productCategory" => "PAQU",
-            "currency" => "CLP",
-            "shipmentCost" => $BULTO['venta']['costo_envio'] * 1,
-            "extendedClaim" => false,
-            "companyId" => $BULTO['companyId'],
-            "userName" => $BULTO['credenciales'],
-            "comments" => substr($BULTO['venta']['referencia_despacho'], 0, 100),
-            "pickup" => [
-                "location" => [
-                    "stateId" => $BULTO['pickup']['stateId'],
-                    "districtId" =>  $BULTO['pickup']['districtId'],
-                    "address" => substr($BULTO['pickup']['address'], 0, 80),
-                    "name" =>  substr($BULTO['pickup']['name'], 0, 50),
+            "serviceType"       => $BULTO['serviceType'],
+            "productType"       => "P",
+            "productCategory"   => "PAQU",
+            "currency"          => "CLP",
+            "shipmentCost"      => $BULTO['shipmentCost'],
+            "extendedClaim"     => $BULTO['extendedClaim'],
+            "companyId"         => $BULTO['companyId'],
+            "userName"          => $BULTO['credenciales'],
+            "comments"          => substr($BULTO['venta']['referencia_despacho'], 0, 100),
+            "pickup"            => [
+                "location"      => [
+                    "stateId"       => $BULTO['pickup']['stateId'],
+                    "districtId"    =>  $BULTO['pickup']['districtId'],
+                    "address"       => substr($BULTO['pickup']['address'], 0, 80),
+                    "name"          =>  substr($BULTO['pickup']['name'], 0, 50),
                 ],
-                "contact" => [
-                    "fullname" =>  substr($BULTO['pickup']['fullname'], 0, 50),
-                    "phone" =>  substr($BULTO['pickup']['phone'], 0, 20),
+                "contact"       => [
+                    "fullname"      =>  substr($BULTO['pickup']['fullname'], 0, 50),
+                    "phone"         =>  substr($BULTO['pickup']['phone'], 0, 20),
                 ]
             ],
-            "dropoff" => [
-                "contact" => [
-                    "fullname" => substr($BULTO['dropoff']['nombre_receptor'], 0, 50),
-                    "phone" => substr($BULTO['dropoff']['fono_receptor'], 0, 20),
+            "dropoff"           => [
+                "contact"       => [
+                    "fullname"  => substr($BULTO['dropoff']['nombre_receptor'], 0, 50),
+                    "phone"     => substr($BULTO['dropoff']['fono_receptor'], 0, 20),
                 ],
-                "location" => [
-                    "stateId" => $BULTO['dropoff']['stateId'],
-                    "districtId" => $BULTO['dropoff']['districtId'],
-                    "address" => substr($BULTO['dropoff']['direccion'], 0, 80),
-                    "name" => substr($BULTO['dropoff']['name'], 0, 50),
+                "location"      => [
+                    "stateId"       => $BULTO['dropoff']['stateId'],
+                    "districtId"    => $BULTO['dropoff']['districtId'],
+                    "address"       => substr($BULTO['dropoff']['direccion'], 0, 80),
+                    "name"          => substr($BULTO['dropoff']['name'], 0, 50),
                 ]
             ],
             "packages" => [
                 [
-                    "weightUnit" => "KG",
-                    "lengthUnit" => "CM",
-                    "weight" => $BULTO['packages']['peso'],
-                    "length" => $BULTO['packages']['largo'],
-                    "width" => $BULTO['packages']['ancho'],
-                    "height" => $BULTO['packages']['alto'],
-                    "quantity" => 1
+                    "weightUnit"    => "KG",
+                    "lengthUnit"    => "CM",
+                    "weight"        => $BULTO['packages']['peso'],
+                    "length"        => $BULTO['packages']['largo'],
+                    "width"         => $BULTO['packages']['ancho'],
+                    "height"        => $BULTO['packages']['alto'],
+                    "quantity"      => 1
                 ]
             ],
-            "dangerousPackages" => null,
-            "returnDocuments" => null,
+            "dangerousPackages"     => null,
+            "returnDocuments"       => null,
             "collectionsOnDelivery" => null,
-            "notificationContacts" => null,
-            "extras" => null
+            "notificationContacts"  => null,
+            "extras"                => null
         ];
 
         return $this->cURL_POST('/bx-emission/v1', $OT);
