@@ -1271,7 +1271,7 @@ class OrdenCompraFacturasController extends AppController
 
 		$log[] = array('Log' => array(
 			'administrador' => 'OrdenCompraFactura',
-			'modulo' => 'DteCompra',
+			'modulo' 		=> 'DteCompra',
 			'modulo_accion' => 'Process: ' . json_encode($docs)
 		));
 		
@@ -1279,17 +1279,20 @@ class OrdenCompraFacturasController extends AppController
 		{
 			// * Se envian grupos hasta con 10 dte
 			foreach ($docs as $documentos_10) {
+
 				$result = $this->ApiLibreDte->cambiarEstadoDteCompra($documentos_10);
+				$log[] = array('Log' => array(
+					'administrador' => 'OrdenCompraFactura',
+					'modulo' 		=> 'DteCompra',
+					'modulo_accion' => 'Result: ' . json_encode($result)
+				));
+				
 				sleep(2);
 			}
 			
 		}
 
-		$log[] = array('Log' => array(
-			'administrador' => 'OrdenCompraFactura',
-			'modulo' => 'DteCompra',
-			'modulo_accion' => 'Result: ' . json_encode($result)
-		));
+		
 
 		# Guardamos los logs
 		ClassRegistry::init('Log')->saveMany($log);
