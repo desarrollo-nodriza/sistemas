@@ -13,6 +13,8 @@ services:
         - './docker/php/myphp.ini:/usr/local/etc/php/conf.d/custom.php.ini'
     networks:
         - sistemas-net
+volumes:
+  app:
 networks:
   sistemas-net:
     driver: bridge

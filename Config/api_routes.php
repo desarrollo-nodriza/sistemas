@@ -683,7 +683,6 @@ Router::connect(
     )
 );
 
-
 /**
  * Mensajes
  */
@@ -741,6 +740,26 @@ Router::connect(
         'controller' => 'DteCompras', 
         'action' => 'index',
         'api' => true,
+        'prefix' => 'api')
+);
+
+Router::connect(
+    '/api/compras/facturacion/obtener', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'DteCompras', 
+        'action' => 'obtener_compras',
+        'api' => true,
+        '[method]' => 'GET',
+        'prefix' => 'api')
+);
+
+Router::connect(
+    '/api/compras/facturacion/sincronizar', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'DteCompras', 
+        'action' => 'sincronizar_compras',
+        'api' => true,
+        '[method]' => 'POST',
         'prefix' => 'api')
 );
 
