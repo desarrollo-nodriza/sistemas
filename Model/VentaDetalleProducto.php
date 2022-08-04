@@ -941,34 +941,44 @@ class VentaDetalleProducto extends AppModel
 				{	
 					$b = Hash::extract($bodegas, '{n}.Bodega[id='.$sd['BodegasVentaDetalleProducto']['bodega_id'].']');
 
+					// * Las bodegas que no tienen stock disponible no se muestran
+					 if ($sd[0]['stock_disponible'] < 1 ) 
+					 	continue;	
+
 					$p['Disponibilidad']['Bodega'][] = array(
 						'venta_detalle_producto_id' => $sd['BodegasVentaDetalleProducto']['venta_detalle_producto_id'],
-						'bodega_id' => $sd['BodegasVentaDetalleProducto']['bodega_id'],
-						'stock_disponible' => $sd[0]['stock_disponible'],
-						'stock_fisico' => $sd[0]['stock_fisico'],
-						'stock_reservado' => $sd[0]['stock_reservado'],
-						'detalle_bodega' => $b[0]
+						'bodega_id' 				=> $sd['BodegasVentaDetalleProducto']['bodega_id'],
+						'stock_disponible' 			=> $sd[0]['stock_disponible'],
+						'stock_fisico' 				=> $sd[0]['stock_fisico'],
+						'stock_reservado' 			=> $sd[0]['stock_reservado'],
+						'detalle_bodega' 			=> $b[0]
 					);
 				}
 			}	
-
+			
 			# Arreglo general de disponibilidad
 			$p['Disponibilidad']['General'] = array(
-				'stock_fisico' => array_sum(Hash::extract($p, 'Disponibilidad.Bodega.{n}.stock_fisico')),
-				'stock_reservado' => array_sum(Hash::extract($p, 'Disponibilidad.Bodega.{n}.stock_reservado')),
-				'stock_disponible' => array_sum(Hash::extract($p, 'Disponibilidad.Bodega.{n}.stock_disponible')),
+				'stock_fisico' 		=> array_sum(Hash::extract($p, 'Disponibilidad.Bodega.{n}.stock_fisico')),
+				'stock_reservado' 	=> array_sum(Hash::extract($p, 'Disponibilidad.Bodega.{n}.stock_reservado')),
+				'stock_disponible' 	=> array_sum(Hash::extract($p, 'Disponibilidad.Bodega.{n}.stock_disponible')),
 			);
 
 			# Se agrega información general del producto para uso personalizado
 			$p['VentaDetalleProducto']['disponibilidad'] = array(
-				'stock_fisico' => $p['Disponibilidad']['General']['stock_fisico'],
-				'stock_reservado' => $p['Disponibilidad']['General']['stock_reservado'],
-				'stock_disponible' => $p['Disponibilidad']['General']['stock_disponible'],
+				'stock_fisico' 		=> $p['Disponibilidad']['General']['stock_fisico'],
+				'stock_reservado' 	=> $p['Disponibilidad']['General']['stock_reservado'],
+				'stock_disponible' 	=> $p['Disponibilidad']['General']['stock_disponible'],
 			);
 
 			return $p;
 
 		}, $productos);
+
+		// * Se Muestran solo los que tienen stock general
+		$productos = array_filter($productos, function($v,$k)
+		{
+			return $v['Disponibilidad']['General']['stock_disponible'] > 0;
+		}, ARRAY_FILTER_USE_BOTH);
 
 
 		return $productos;
