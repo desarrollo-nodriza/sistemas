@@ -297,11 +297,6 @@ class DteComprasController extends AppController
 		# Guardamos dtes registros
 		foreach ($compras_registro['body']['data'] as $i => $data) 
 		{
-			# si ya tenemos registado un folio
-			if (ClassRegistry::init('DteCompra')->existe_por_folio($data['detNroDoc'], $data['detTipoDoc'], $data['detRutDoc'])) {
-				continue;
-			}
-
 			$dteCompraSave[$ii] = array(
 				'DteCompra' => array(
 					'tipo_documento'      => $data['detTipoDoc'],
@@ -349,11 +344,6 @@ class DteComprasController extends AppController
 		# Guardamos dtes pendiente
 		foreach ($compras_pendientes['body']['data'] as $i => $data) 
 		{
-			# si ya tenemos registado un folio
-			if (ClassRegistry::init('DteCompra')->existe_por_folio($data['detNroDoc'], $data['detTipoDoc'], $data['detRutDoc'])) {
-				continue;
-			}
-
 			$dteCompraSave[] = array(
 				'DteCompra' => array(
 					'tipo_documento'      => $data['detTipoDoc'],
@@ -418,7 +408,7 @@ class DteComprasController extends AppController
 			$log[] = array('Log' => array(
 				'administrador' => 'Demonio',
 				'modulo' => 'DteCompra',
-				'modulo_accion' => 'Éxito: Se registraron ' . count($dteCompraSave) . ' compras.'
+				'modulo_accion' => 'Éxito: Se registraron ' . count($dteCompraSave) . ' compras. Json: ' . json_encode($dteCompraSave)
 			));	
 		}else{
 			$log[] = array('Log' => array(
