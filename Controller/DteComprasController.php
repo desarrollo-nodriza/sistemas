@@ -291,15 +291,13 @@ class DteComprasController extends AppController
 		# Obtenemos los dtes con estado de REGISTRO
 		$compras_registro   = $this->obtener_dte_compras_desde_sii($tienda['Tienda']['sii_private_key'], $tienda['Tienda']['sii_public_key'], $tienda['Tienda']['sii_rut'], $tienda['Tienda']['sii_clave'], $tienda['Tienda']['libredte_token'], 'REGISTRO', $periodo);
 		
+		# ITerador
+		$ii = 0;
+
 		# Guardamos dtes registros
 		foreach ($compras_registro['body']['data'] as $i => $data) 
 		{
-			# si ya tenemos registado un folio
-			if (ClassRegistry::init('DteCompra')->existe_por_folio($data['detNroDoc'], $data['detTipoDoc'], $data['detRutDoc'])) {
-				continue;
-			}
-
-			$dteCompraSave[] = array(
+			$dteCompraSave[$ii] = array(
 				'DteCompra' => array(
 					'tipo_documento'      => $data['detTipoDoc'],
 					'rut_emisor'          => $data['detRutDoc'],
@@ -316,6 +314,28 @@ class DteComprasController extends AppController
 
 				)
 			);
+
+			$qry_existen = ClassRegistry::init('DteCompra')->find('first', array(
+				'conditions' => array(
+					'rut_emisor' => $data['detRutdata'],
+					'folio' => $data['detNroDoc'],
+				),
+				'fields' => array(
+					'id'
+				)
+			));
+
+			# si existe, lo actualizamos si corresponde
+			if ($qry_existen)
+			{
+				$dteCompraSave[$ii] = array_replace_recursive($dteCompraSave[$ii], [
+					'DteCompra' => [
+						'id' => $qry_existen['DteCompra']['id']
+					]
+				]);
+			}
+
+			$ii++;
 		}
 		
 		# Obtenemos los dtes con estado PENDIENTE
@@ -324,12 +344,7 @@ class DteComprasController extends AppController
 		# Guardamos dtes pendiente
 		foreach ($compras_pendientes['body']['data'] as $i => $data) 
 		{
-			# si ya tenemos registado un folio
-			if (ClassRegistry::init('DteCompra')->existe_por_folio($data['detNroDoc'], $data['detTipoDoc'], $data['detRutDoc'])) {
-				continue;
-			}
-
-			$dteCompraSave[] = array(
+			$dteCompraSave[$ii] = array(
 				'DteCompra' => array(
 					'tipo_documento'      => $data['detTipoDoc'],
 					'rut_emisor'          => $data['detRutDoc'],
@@ -346,6 +361,28 @@ class DteComprasController extends AppController
 
 				)
 			);
+
+			$qry_existen = ClassRegistry::init('DteCompra')->find('first', array(
+				'conditions' => array(
+					'rut_emisor' => $data['detRutdata'],
+					'folio' => $data['detNroDoc'],
+				),
+				'fields' => array(
+					'id'
+				)
+			));
+
+			# si existe, lo actualizamos si corresponde
+			if ($qry_existen)
+			{
+				$dteCompraSave[$ii] = array_replace_recursive($dteCompraSave[$ii], [
+					'DteCompra' => [
+						'id' => $qry_existen['DteCompra']['id']
+					]
+				]);
+			}
+
+			$ii++;
 		}
 		
 		# No se obtuvieron resultados
@@ -371,7 +408,7 @@ class DteComprasController extends AppController
 			$log[] = array('Log' => array(
 				'administrador' => 'Demonio',
 				'modulo' => 'DteCompra',
-				'modulo_accion' => 'Éxito: Se registraron ' . count($dteCompraSave) . ' compras.'
+				'modulo_accion' => 'Éxito: Se registraron ' . count($dteCompraSave) . ' compras. Json: ' . json_encode($dteCompraSave)
 			));	
 		}else{
 			$log[] = array('Log' => array(
