@@ -344,7 +344,7 @@ class DteComprasController extends AppController
 		# Guardamos dtes pendiente
 		foreach ($compras_pendientes['body']['data'] as $i => $data) 
 		{
-			$dteCompraSave[] = array(
+			$dteCompraSave[$ii] = array(
 				'DteCompra' => array(
 					'tipo_documento'      => $data['detTipoDoc'],
 					'rut_emisor'          => $data['detRutDoc'],
