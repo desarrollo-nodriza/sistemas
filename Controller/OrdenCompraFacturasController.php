@@ -1278,13 +1278,13 @@ class OrdenCompraFacturasController extends AppController
 		if (!empty($docs))
 		{
 			// * Se envian grupos hasta con 10 dte
-			foreach ($docs as $documentos_10) {
+			foreach ($docs as $i => $documentos_10) {
 
 				$result = $this->ApiLibreDte->cambiarEstadoDteCompra($documentos_10);
 				$log[] = array('Log' => array(
 					'administrador' => 'OrdenCompraFactura',
 					'modulo' 		=> 'DteCompra',
-					'modulo_accion' => 'Result: ' . json_encode($result)
+					'modulo_accion' => 'Result lote '. $i . ': ' . json_encode($result)
 				));
 				
 				sleep(2);
