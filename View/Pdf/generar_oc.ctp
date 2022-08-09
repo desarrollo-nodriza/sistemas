@@ -30,7 +30,7 @@
 				</tr>
 			</table>
 		</td>
-		<td align="center" style="vertical-align: middle; font-size: 30px; font-weight: bold; text-align: center; line-height: 30px;">OC #<?= (Configure::read('ambiente') == 'dev') ? 'NO APLICA' : $oc['OrdenCompra']['id'];?></td>
+		<td align="center" style="vertical-align: middle; font-size: 30px; font-weight: bold; text-align: center; line-height: 30px;">OC<?= $oc['OrdenCompra']['tipo_orden'] == "inventario" ? "I-" : "V-"; ?><?= (Configure::read('ambiente') == 'dev') ? 'NO APLICA' : $oc['OrdenCompra']['id'];?></td>
 	</tr>
 	<tr>
 		<td>

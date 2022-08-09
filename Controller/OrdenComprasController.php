@@ -697,7 +697,7 @@ class OrdenComprasController extends AppController
 			}
 		}
 
-		$ocs = $this->OrdenCompra->find('all', array(
+		$oc = $this->OrdenCompra->find('first', array(
 			'conditions' => array(
 				'OrdenCompra.id' => $id
 			),
@@ -724,7 +724,7 @@ class OrdenComprasController extends AppController
 
 		$estados = ["espera_dte", "recepcion_incompleta", "recepcion_completa"];
 
-		$this->set(compact('ocs', 'bodegas', 'estados'));
+		$this->set(compact('oc', 'bodegas', 'estados'));
 	}
 
 
@@ -735,7 +735,7 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_generar_pdf($id)
 	{
-
+		
 		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
@@ -769,7 +769,7 @@ class OrdenComprasController extends AppController
 			$this->Session->setFlash('No fue posible generar el PDF.', null, array(), 'danger');
 		}
 
-		$this->redirect($this->referer('/', true));
+		$this->redirect(array('action' => 'view', $id));
 	}
 
 
@@ -1011,7 +1011,7 @@ class OrdenComprasController extends AppController
 		if ($ocs['OrdenCompra']['validado_proveedor']) {
 			$this->Session->setFlash('Esta OC fue reiniciada por el proveedor.', null, array(), 'success');
 		}
-		
+
 		$estados_proveedor = $this->OrdenCompra->estado_proveedor;
 
 		BreadcrumbComponent::add('Ordenes de compra ', '/ordenCompras');
@@ -4137,7 +4137,7 @@ class OrdenComprasController extends AppController
 
 		return;
 	}
-	
+
 	/**
 	 * RecorrerProveedor
 	 * Se crean OCs Automaticas a los proveedores que tienen frecuencia programada
@@ -4166,13 +4166,12 @@ class OrdenComprasController extends AppController
 				),
 			)
 		), "{n}.Proveedor.id"));
-		
+
 		if ($proveedores) {
 			$this->CrearOCAutomaticas($proveedores);
 		}
-		
 	}
-	
+
 	/**
 	 * CrearOCAutomaticas
 	 *
@@ -4205,7 +4204,7 @@ class OrdenComprasController extends AppController
 		]);
 
 		foreach ($bodegas as $bodega_id => $nombre) {
-		
+
 			// * La Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autamaticas
 			// * Adem{as la Venta debe cumplir con las condiciones para generar OC
 			$venta_bodega	 = $this->OrdenCompra->Venta->find('all', array(
@@ -4367,16 +4366,16 @@ class OrdenComprasController extends AppController
 						),
 						'ReglasGenerarOC',
 						'TipoEntregaProveedorOC' => [
-							'conditions'=> 
-								[
-									'TipoEntregaProveedorOC.tienda_id' => $tienda['Tienda']['id'],
-									'TipoEntregaProveedorOC.bodega_id' => $bodega_id,
-								]
+							'conditions' =>
+							[
+								'TipoEntregaProveedorOC.tienda_id' => $tienda['Tienda']['id'],
+								'TipoEntregaProveedorOC.bodega_id' => $bodega_id,
 							]
+						]
 					),
 					'conditions' => ["Proveedor.id" => $proveedor_id]
 				));
-			
+
 				$ventas_id = [];
 
 				// * Buscamos las venta_id asociadas a los productos relacionados al proveedor
@@ -4410,7 +4409,7 @@ class OrdenComprasController extends AppController
 					"fecha"	 					=> date('Y-m-d'),
 					"vendedor" 					=> $tienda['Administrador']['nombre'],
 					"tipo_entrega" 				=> $proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro',
-					"receptor_informado" 		=> ($proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro' == "retiro") ? $proveedor['TipoEntregaProveedorOC'][0]['receptor_informado']: "No definido",
+					"receptor_informado" 		=> ($proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro' == "retiro") ? $proveedor['TipoEntregaProveedorOC'][0]['receptor_informado'] : "No definido",
 					"informacion_entrega" 		=> $proveedor['TipoEntregaProveedorOC'][0]['informacion_entrega'],
 					"moneda_id" 				=> null,
 					"total_neto" 				=> "",
@@ -4423,7 +4422,7 @@ class OrdenComprasController extends AppController
 					"validado_proveedor" 		=> 0,
 					"bodega_id" 				=> $bodega_id,
 				];
-				
+
 				// prx($OC);
 				// * Formatiamos los productos para registrarlo a la OC
 
@@ -4434,14 +4433,14 @@ class OrdenComprasController extends AppController
 					$total = array_sum(Hash::extract(array_filter($venta_bodega, function ($v, $k) use ($p) {
 						return $v['rpvdp']['producto_id'] == $p['id'];
 					}, ARRAY_FILTER_USE_BOTH), "{n}.0.cantidad"));
-					
+
 					$descuentos 		= ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
-					
+
 					$precio_unitario 	= $p['precio_costo'];
 					$total_neto 		= $total * $precio_unitario;
-					
+
 					// * Si el producto no posee un precio mayor a 0 no es considerado para la OC
-					
+
 					// if ($precio_unitario > 0) {
 
 					$descuento_producto = $total * $descuentos['total_descuento'];
@@ -4456,14 +4455,14 @@ class OrdenComprasController extends AppController
 						'total_neto' 				=> $total_neto,
 					];
 					// }
-					
+
 				}
 
 				// * Si no hay productos para añadir a la OC se sale
 				// if (!$producto_oc) {
 				// 	continue;
 				// }
-				
+
 				// * Totalizamos el neto, el total y el iva. Asignamos los productos formatiados
 
 				$OC['OrdenCompra']['total_neto'] 	= array_sum(Hash::extract($producto_oc, "{n}.total_neto"));
@@ -4517,7 +4516,7 @@ class OrdenComprasController extends AppController
 					// * Guardamos la OC y segun el estado notificamos 
 
 					if ($this->OrdenCompra->saveAll($OC)) {
-						
+
 						$respuesta 					= true;
 						$OC['OrdenCompra']['id'] 	= $this->OrdenCompra->id;
 						$OCCreadas[] 				= $this->OrdenCompra->id;
@@ -4534,7 +4533,7 @@ class OrdenComprasController extends AppController
 				} catch (\Throwable $th) {
 					$log[] = array(
 						'Log' => array(
-							'administrador' => "Problemas para crear OCs a los Proveedores ". implode($proveedores_id) ,
+							'administrador' => "Problemas para crear OCs a los Proveedores " . implode($proveedores_id),
 							'modulo' 		=> 'OrdenComprasController',
 							'modulo_accion' => json_encode($th)
 						)
