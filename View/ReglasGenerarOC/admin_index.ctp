@@ -30,7 +30,7 @@
 												<table class="table">
 													<tr>
 														<th>
-															<?= $this->Form->label('administrador_id', 'Administrador'); ?>
+															<?= $this->Form->label('administrador_id', 'Administrador asignado a la creación de OC'); ?>
 														</th>
 														<td style="width: 100%;">
 
@@ -45,7 +45,7 @@
 															); ?>
 														</td>
 													</tr>
-													<tr>
+													<!-- <tr>
 														<th>
 															<?= $this->Form->label('tipo_entrega', 'Tipo entrega'); ?>
 														</th>
@@ -98,7 +98,7 @@
 																)
 															); ?>
 														</td>
-													</tr>
+													</tr> -->
 												</table>
 											</div>
 										</div>

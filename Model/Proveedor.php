@@ -86,6 +86,19 @@ class Proveedor extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'TipoEntregaProveedorOC' => array(
+			'className'				=> 'TipoEntregaProveedorOC',
+			'foreignKey'			=> 'proveedor_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 

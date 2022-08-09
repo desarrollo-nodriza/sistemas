@@ -101,6 +101,9 @@ class ProveedoresController extends AppController
 		if ($this->request->is('post') || $this->request->is('put')) {
 
 			$this->Proveedor->MonedasProveedor->deleteAll(array('MonedasProveedor.proveedor_id' => $id));
+			$this->Proveedor->FrecuenciaGenerarOC->deleteAll(array('proveedor_id' => $id));
+			$this->Proveedor->TipoEntregaProveedorOC->deleteAll(array('proveedor_id' => $id));
+			// $this->Proveedor->ReglasGenerarOC->deleteAll(array('proveedor_id' => $id));
 
 			# Guardamos los emails en un objeto json
 			if (isset($this->request->data['ProveedoresEmail'])) {
@@ -110,6 +113,17 @@ class ProveedoresController extends AppController
 			$this->request->data['FrecuenciaGenerarOC'] = array_filter($this->request->data['FrecuenciaGenerarOC'], function ($v, $k) {
 				return !empty($v['hora']);
 			}, ARRAY_FILTER_USE_BOTH);
+
+			$this->request->data['TipoEntregaProveedorOC'] = array_filter($this->request->data['TipoEntregaProveedorOC'], function ($v, $k) {
+				return !empty($v['bodega_id']) && !empty($v['tienda_id']) && !empty($v['tipo_entrega']);
+			}, ARRAY_FILTER_USE_BOTH);
+
+			$this->request->data['ReglasGenerarOC'] = array_filter($this->request->data['ReglasGenerarOC'], function ($v, $k) {
+				return !empty($v['regla_generar_oc_id']);
+			}, ARRAY_FILTER_USE_BOTH);
+			
+			// prx($this->request->data);
+
 
 			if ($this->Proveedor->saveAll($this->request->data)) {
 
@@ -133,13 +147,14 @@ class ProveedoresController extends AppController
 						'order' => array('Saldo.id' => 'DESC')
 					),
 					'FrecuenciaGenerarOC',
+					'TipoEntregaProveedorOC',
 					'ReglasGenerarOC' => [
 						'order' 	=> array('ReglasGenerarOC.mayor_que' => 'ASC')
 					]
 				)
 			));
 		}
-		// prx($this->request);
+		// prx($this->request->data);
 		$this->request->data['Proveedor']['saldo'] = ClassRegistry::init('Saldo')->obtener_saldo_total_proveedor($id);
 
 		$monedas = ClassRegistry::init('Moneda')->find('list', array('conditions' => array('activo' => 1)));
@@ -152,12 +167,30 @@ class ProveedoresController extends AppController
 			unset($reglasGenerarOC[$value['id']]);
 		}
 
-		$horas = $this->HORAS;
+		$horas 				= $this->HORAS;
+		$bodegas 			= ClassRegistry::init('Bodega')->obtener_bodegas();
+		$tiendas 			= ClassRegistry::init('Tienda')->obtener_activas();
+		// $administradores	= ClassRegistry::init('Administrador')->find('list', ['conditions' => ['Administrador.activo' => true]]);
+		$tipo_entrega 		=
+			[
+				'retiro' 	=> 'Retiro',
+				'despacho' 	=> 'Despacho'
+			];
 
 		BreadcrumbComponent::add('Proveedores ', '/proveedores');
 		BreadcrumbComponent::add('Editar ');
 
-		$this->set(compact('monedas', 'tipo_email', 'reglas', 'reglasGenerarOC', 'horas', 'reglasGenerarOC_2'));
+		$this->set(compact(
+			'monedas',
+			'tipo_email',
+			'reglas',
+			'reglasGenerarOC',
+			'horas',
+			'reglasGenerarOC_2',
+			'bodegas',
+			'tiendas',
+			'tipo_entrega'
+		));
 	}
 
 	public function admin_delete($id = null)
@@ -449,7 +482,35 @@ class ProveedoresController extends AppController
 			'_serialize' => array('response')
 		));
 	}
-	
+
+	public function api_delete_configuracion($id)
+	{
+		if (!isset($this->request->query['token'])) {
+
+			throw new UnauthorizedException('Requiere un token validado');
+		}
+
+		ClassRegistry::init('TipoEntregaProveedorOC')->id = $id;
+
+		if (!ClassRegistry::init('TipoEntregaProveedorOC')->exists()) {
+
+			throw new NotFoundException('No existe elemento');
+		}
+
+		ClassRegistry::init('TipoEntregaProveedorOC')->delete($id);
+
+		$response = array(
+			'code'    	=> 200,
+			'name' 		=> "success $id",
+			'message' 	=> 'Eliminado con exito',
+		);
+
+		$this->set(array(
+			'response' => $response,
+			'_serialize' => array('response')
+		));
+	}
+
 	/**
 	 * admin_crearOcsAutomaticas
 	 * Se crean OCs automaticas para el proveedor sin importar la frecuencia configurada
@@ -465,7 +526,7 @@ class ProveedoresController extends AppController
 
 		$OrdenComprasController = new OrdenComprasController();
 		$respuesta 				= $OrdenComprasController->CrearOCAutomaticas([$proveedor_id]);
-		
+
 		if ($respuesta['respuesta']) {
 			$OCs = [];
 			foreach ($respuesta['OCs'] as $value) {

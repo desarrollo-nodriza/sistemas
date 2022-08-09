@@ -4189,6 +4189,20 @@ class OrdenComprasController extends AppController
 		$respuesta 		= false;
 		$OCCreadas	 	= [];
 		$log			= [];
+		$tienda 		= ClassRegistry::init('Tienda')->find('first', [
+			'fields' => [
+				'Tienda.id',
+				'Tienda.nombre',
+				'Tienda.administrador_id'
+			],
+			'contain' => [
+				'Administrador' => [
+					'nombre',
+					'email'
+				]
+			],
+			'conditions' => ['Tienda.principal' => true]
+		]);
 
 		foreach ($bodegas as $bodega_id => $nombre) {
 		
@@ -4352,10 +4366,17 @@ class OrdenComprasController extends AppController
 							)
 						),
 						'ReglasGenerarOC',
+						'TipoEntregaProveedorOC' => [
+							'conditions'=> 
+								[
+									'TipoEntregaProveedorOC.tienda_id' => $tienda['Tienda']['id'],
+									'TipoEntregaProveedorOC.bodega_id' => $bodega_id,
+								]
+							]
 					),
 					'conditions' => ["Proveedor.id" => $proveedor_id]
 				));
-
+			
 				$ventas_id = [];
 
 				// * Buscamos las venta_id asociadas a los productos relacionados al proveedor
@@ -4373,24 +4394,7 @@ class OrdenComprasController extends AppController
 					];
 				}
 
-				$tienda = ClassRegistry::init('Tienda')->find('first', [
-					'fields' => [
-						'Tienda.id',
-						'Tienda.nombre',
-						'Tienda.administrador_id',
-						'Tienda.tipo_entrega',
-						'Tienda.receptor_informado',
-						'Tienda.informacion_entrega',
-					],
-					'contain' => [
-						'Administrador' => [
-							'nombre',
-							'email'
-						]
-					],
-					'conditions' => ['Tienda.principal' => true]
-				]);
-
+				// * En caso de que no haya tipo de entrega definido quedara por defecto retiro
 				$OC['OrdenCompra'] = [
 					"administrador_id" 			=> $tienda['Tienda']['administrador_id'],
 					"tienda_id" 				=> $tienda['Tienda']['id'],
@@ -4405,9 +4409,9 @@ class OrdenComprasController extends AppController
 					"direccion_empresa" 		=> $proveedor['Proveedor']['direccion'],
 					"fecha"	 					=> date('Y-m-d'),
 					"vendedor" 					=> $tienda['Administrador']['nombre'],
-					"tipo_entrega" 				=> $tienda['Tienda']['tipo_entrega'],
-					"receptor_informado" 		=> $tienda['Tienda']['receptor_informado'],
-					"informacion_entrega" 		=> $tienda['Tienda']['informacion_entrega'],
+					"tipo_entrega" 				=> $proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro',
+					"receptor_informado" 		=> ($proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro' == "retiro") ? $proveedor['TipoEntregaProveedorOC'][0]['receptor_informado']: "No definido",
+					"informacion_entrega" 		=> $proveedor['TipoEntregaProveedorOC'][0]['informacion_entrega'],
 					"moneda_id" 				=> null,
 					"total_neto" 				=> "",
 					"iva" 						=> "",
@@ -4419,7 +4423,8 @@ class OrdenComprasController extends AppController
 					"validado_proveedor" 		=> 0,
 					"bodega_id" 				=> $bodega_id,
 				];
-
+				
+				// prx($OC);
 				// * Formatiamos los productos para registrarlo a la OC
 
 				$producto_oc = [];

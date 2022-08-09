@@ -306,4 +306,10 @@ class Tienda extends AppModel
 
 		return $this->find('first', $qry);
 	}
+
+	public function obtener_activas()
+	{
+		return $this->find('list', array('conditions' => array('Tienda.activo' => 1)));
+	}
+
 }
