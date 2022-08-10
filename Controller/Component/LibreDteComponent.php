@@ -936,4 +936,23 @@ class LibreDteComponent extends Component
 		}
 	}
 
+	/**
+	 * DTERechazados
+	 * Ref: https://documenter.getpostman.com/view/5911929/SzKQxKjW#429f1688-1889-42af-8760-3069810e2f7c
+	 * @param  mixed $desde Formato yyyy-mm-dd
+	 * @param  mixed $hasta Formato yyyy-mm-dd
+	 * @param  mixed $emisor 
+	 * @return void
+	 */
+	public function DTERechazados($desde, $hasta, $emisor)
+	{
+		$dtes 		= $this->ConexionLibreDte->get("/dte/dte_emitidos/rechazados/$desde/$hasta/$emisor");
+		$respuesta 	= [];
+
+		if ($dtes['status']['code'] == 200) {
+			$respuesta = $dtes['body'];
+		}
+		return $respuesta;
+	}
+
 }

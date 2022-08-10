@@ -13450,4 +13450,29 @@ class VentasController extends AppController {
 		ClassRegistry::init('Log')->saveMany($log);
 	}
 
+	/**
+	 * VentasDTERechazado
+	 *
+	 * @param  mixed $diferencia La diferencia de meses con la fecha actual
+	 * @return void
+	 */
+	private function VentasDTERechazado(int $diferencia = 3)
+	{
+
+		$tienda = ClassRegistry::init('Tienda')->tienda_principal(['facturacion_apikey', 'sii_rut']);
+
+		$this->LibreDte 	= $this->Components->load('LibreDte');
+		$this->LibreDte->crearCliente($tienda['Tienda']['facturacion_apikey']);
+		$hasta  = date("Y-m-d");
+		$desde  = date("Y-m-d", strtotime($hasta . "-$diferencia month"));
+		$emisor = explode("-", $tienda['Tienda']['sii_rut'])[0] ?? "";
+
+		return $this->LibreDte->DTERechazados($desde, $hasta, $emisor);
+	}
+
+	public function ProcesarDteRechazados()
+	{
+		# code...
+	}
+
 }
