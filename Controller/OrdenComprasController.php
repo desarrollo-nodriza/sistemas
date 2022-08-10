@@ -4553,4 +4553,56 @@ class OrdenComprasController extends AppController
 			'OCs' 		=> $OCCreadas,
 		];
 	}
+
+	public function admin_oc_automatica($tiempo)
+	{
+		if (!isset($tiempo)) {
+			$this->Session->setFlash("Debes indicar tiempo", null, array(), 'warning');
+			$this->redirect(array('action' => 'index'));
+		}
+
+		if (strlen($tiempo) != 5 ) {
+			$this->Session->setFlash("Debes enviar hora y minutos. Los dos puntos reemplazar por guion bajo", null, array(), 'warning');
+			$this->redirect(array('action' => 'index'));
+		}
+		
+		$proveedores 	= array_unique(Hash::extract(
+			ClassRegistry::init('Proveedor')->find(
+				'all',
+				array(
+					'fields'		=> ['Proveedor.id'],
+					'conditions' 	=> array(
+						'Proveedor.permitir_generar_oc'	=> true,
+						'Proveedor.activo'	=> true,
+					),
+					'joins' 		=> array(
+						array(
+							'table' => 'frecuencia_generar_oc',
+							'alias' => 'FrecuenciaGenerarOC',
+							'type'  => 'inner',
+							'conditions' => array(
+								'FrecuenciaGenerarOC.proveedor_id = Proveedor.id',
+								'FrecuenciaGenerarOC.hora' =>  str_replace("_",":",$tiempo)  . ":00"
+							)
+						)
+					),
+				)
+			),
+			"{n}.Proveedor.id"
+		));
+
+		$respuesta 				= $this->CrearOCAutomaticas([$proveedores]);
+
+		if ($respuesta['respuesta']) {
+			$OCs = [];
+			foreach ($respuesta['OCs'] as $value) {
+				$OCs[] = "<a href='/ordenCompras/view/$value' target='_blank' class='link'>Ir a Oc $value</a>";
+			}
+			$this->Session->setFlash($this->crearAlertaUl($OCs, 'Ordenes de compra creadas'), null, array(), 'success');
+		} else {
+			$this->Session->setFlash("No hay productos de proveedores para crear OC", null, array(), 'warning');
+		}
+
+		$this->redirect(array('action' => 'index'));
+	}
 }
