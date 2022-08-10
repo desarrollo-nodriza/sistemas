@@ -735,7 +735,7 @@ class OrdenComprasController extends AppController
 	 */
 	public function admin_generar_pdf($id)
 	{
-		
+
 		if (!$this->OrdenCompra->exists($id)) {
 			$this->Session->setFlash('Registro inválido.', null, array(), 'danger');
 			$this->redirect($this->referer('/', true));
@@ -4145,31 +4145,38 @@ class OrdenComprasController extends AppController
 	 */
 	public function RecorrerProveedor()
 	{
-		$proveedores = array_unique(Hash::extract(ClassRegistry::init('Proveedor')->find(
-			'all',
-			array(
-				'fields'		=> ['Proveedor.id'],
-				'conditions' 	=> array(
-					'Proveedor.permitir_generar_oc'	=> true,
-					'Proveedor.activo'	=> true,
-				),
-				'joins' 		=> array(
-					array(
-						'table' => 'frecuencia_generar_oc',
-						'alias' => 'FrecuenciaGenerarOC',
-						'type'  => 'inner',
-						'conditions' => array(
-							'FrecuenciaGenerarOC.proveedor_id = Proveedor.id',
-							'FrecuenciaGenerarOC.hora' =>  date('h:m:s')
+		$respuesta 		= [];
+		$proveedores 	= array_unique(Hash::extract(
+			ClassRegistry::init('Proveedor')->find(
+				'all',
+				array(
+					'fields'		=> ['Proveedor.id'],
+					'conditions' 	=> array(
+						'Proveedor.permitir_generar_oc'	=> true,
+						'Proveedor.activo'	=> true,
+					),
+					'joins' 		=> array(
+						array(
+							'table' => 'frecuencia_generar_oc',
+							'alias' => 'FrecuenciaGenerarOC',
+							'type'  => 'inner',
+							'conditions' => array(
+								'FrecuenciaGenerarOC.proveedor_id = Proveedor.id',
+								// 'FrecuenciaGenerarOC.hora' =>  "14:00:00",
+								'FrecuenciaGenerarOC.hora' =>  date('h:m') . ":00"
+							)
 						)
-					)
-				),
-			)
-		), "{n}.Proveedor.id"));
+					),
+				)
+			),
+			"{n}.Proveedor.id"
+		));
 
 		if ($proveedores) {
-			$this->CrearOCAutomaticas($proveedores);
+			$respuesta = $this->CrearOCAutomaticas($proveedores);
 		}
+
+		return $respuesta;
 	}
 
 	/**
@@ -4206,7 +4213,7 @@ class OrdenComprasController extends AppController
 		foreach ($bodegas as $bodega_id => $nombre) {
 
 			// * La Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autamaticas
-			// * Adem{as la Venta debe cumplir con las condiciones para generar OC
+			// * Además la Venta debe cumplir con las condiciones para generar OC
 			$venta_bodega	 = $this->OrdenCompra->Venta->find('all', array(
 				'fields' => array(
 					'vd_1.id as venta_detalles_id',
@@ -4316,8 +4323,6 @@ class OrdenComprasController extends AppController
 				'group'		=> ['`vd_1`.`id`']
 			));
 
-			// debug($venta_bodega);
-			// prx($this->OrdenCompra->getDataSource()->getLog(false, false));
 			// * Extraen los identificadores de los proveedores para crear oc por cada proveedor
 
 			$proveedores = array_unique(Hash::extract($venta_bodega, '{n}.rpvdp.proveedor_id'));
@@ -4409,8 +4414,8 @@ class OrdenComprasController extends AppController
 					"fecha"	 					=> date('Y-m-d'),
 					"vendedor" 					=> $tienda['Administrador']['nombre'],
 					"tipo_entrega" 				=> $proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro',
-					"receptor_informado" 		=> ($proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro' == "retiro") ? $proveedor['TipoEntregaProveedorOC'][0]['receptor_informado'] : "No definido",
-					"informacion_entrega" 		=> $proveedor['TipoEntregaProveedorOC'][0]['informacion_entrega'],
+					"receptor_informado" 		=> ($proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro' == "retiro") ? $proveedor['TipoEntregaProveedorOC'][0]['receptor_informado'] ?? "No definido" : "",
+					"informacion_entrega" 		=> $proveedor['TipoEntregaProveedorOC'][0]['informacion_entrega'] ?? "",
 					"moneda_id" 				=> null,
 					"total_neto" 				=> "",
 					"iva" 						=> "",
@@ -4423,7 +4428,6 @@ class OrdenComprasController extends AppController
 					"bodega_id" 				=> $bodega_id,
 				];
 
-				// prx($OC);
 				// * Formatiamos los productos para registrarlo a la OC
 
 				$producto_oc = [];
