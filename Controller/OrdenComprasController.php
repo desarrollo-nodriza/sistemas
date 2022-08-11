@@ -1126,6 +1126,8 @@ class OrdenComprasController extends AppController
 				$bodega_id = ClassRegistry::init('Venta')->field('bodega_id', array('id' => $ventas[0]));
 
 				$d['OrdenCompra']['bodega_id'] = ($bodega_id) ? $bodega_id : $this->Session->read('Auth.Administrador.Rol.bodega_id');
+				
+				$d['OrdenCompra']['tipo_orden'] = "en_verde";
 
 				$d['Venta'] = unique_multidim_array($d['Venta'], 'venta_id');
 
@@ -4426,6 +4428,7 @@ class OrdenComprasController extends AppController
 					"email_comercial" 			=> $tienda['Administrador']['email'],
 					"validado_proveedor" 		=> 0,
 					"bodega_id" 				=> $bodega_id,
+					"tipo_orden" 				=> "en_verde"
 				];
 
 				// * Formatiamos los productos para registrarlo a la OC
