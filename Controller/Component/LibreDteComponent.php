@@ -942,9 +942,9 @@ class LibreDteComponent extends Component
 	 * @param  mixed $desde Formato yyyy-mm-dd
 	 * @param  mixed $hasta Formato yyyy-mm-dd
 	 * @param  mixed $emisor 
-	 * @return void
+	 * @return array
 	 */
-	public function DTERechazados($desde, $hasta, $emisor)
+	public function DTERechazados($desde, $hasta, $emisor): array
 	{
 		$dtes 		= $this->ConexionLibreDte->get("/dte/dte_emitidos/rechazados/$desde/$hasta/$emisor");
 		$respuesta 	= [];

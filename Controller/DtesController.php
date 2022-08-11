@@ -67,10 +67,10 @@ class DtesController extends AppController
     {
     	if (!empty($slug)) {
     		$estados = array(
-    			'no_generado' => 'DTE no emitido',
-    			'dte_temporal_no_emitido' => 'DTE Temporal no emitido',
-    			'dte_real_no_emitido' => 'DTE Real no emitido',
-    			'dte_real_emitido' => 'DTE Emitido'
+    			'no_generado' 				=> 'DTE no emitido',
+    			'dte_temporal_no_emitido' 	=> 'DTE Temporal no emitido',
+    			'dte_real_no_emitido' 		=> 'DTE Real no emitido',
+    			'dte_real_emitido' 			=> 'DTE Emitido'
     		);
 
     		return $estados[$slug];

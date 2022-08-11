@@ -13450,13 +13450,14 @@ class VentasController extends AppController {
 		ClassRegistry::init('Log')->saveMany($log);
 	}
 
+		
 	/**
 	 * VentasDTERechazado
 	 *
-	 * @param  mixed $diferencia La diferencia de meses con la fecha actual
-	 * @return void
+	 * @param  mixed $diferencia
+	 * @return array
 	 */
-	private function VentasDTERechazado(int $diferencia = 3)
+	public function VentasDTERechazado(int $diferencia = 6): array
 	{
 
 		$tienda = ClassRegistry::init('Tienda')->tienda_principal(['facturacion_apikey', 'sii_rut']);
@@ -13472,7 +13473,16 @@ class VentasController extends AppController {
 
 	public function ProcesarDteRechazados()
 	{
-		# code...
+		
+		$dts =	$this->VentasDTERechazado(12);
+
+		if ($dts) {
+			
+		}
+
+		foreach ( $dts as $dte) {
+			debug($dte['folio']);
+		}
 	}
 
 }
