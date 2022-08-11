@@ -4594,9 +4594,13 @@ class OrdenComprasController extends AppController
 			"{n}.Proveedor.id"
 		));
 
-		$respuesta 				= $this->CrearOCAutomaticas([$proveedores]);
+		$respuesta = [];
+		
+		if ($proveedores) {
+			$respuesta = $this->CrearOCAutomaticas($proveedores);
+		}
 
-		if ($respuesta['respuesta']) {
+		if ($respuesta['respuesta'] ?? false) {
 			$OCs = [];
 			foreach ($respuesta['OCs'] as $value) {
 				$OCs[] = "<a href='/ordenCompras/view/$value' target='_blank' class='link'>Ir a Oc $value</a>";
