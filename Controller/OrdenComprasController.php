@@ -963,8 +963,9 @@ class OrdenComprasController extends AppController
 
 		# Calculo de descuentos
 		foreach ($ocs['VentaDetalleProducto'] as $i => $p) {
+			
 			$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
-
+			
 			$ocs['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
 			$ocs['VentaDetalleProducto'][$i]['nombre_descuento'] = $descuentos['nombre_descuento'];
 			$ocs['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento'];
@@ -4355,6 +4356,23 @@ class OrdenComprasController extends AppController
 							'conditions' => array(
 								'VentaDetalleProducto.id' => $productos__oc
 							),
+							'Marca' => array(
+								'PrecioEspecificoMarca' => array(
+									'conditions' => array(
+										'PrecioEspecificoMarca.activo' => 1,
+										'OR' => array(
+											'PrecioEspecificoMarca.descuento_infinito' => 1,
+											'AND' => array(
+												array('PrecioEspecificoMarca.fecha_inicio <=' => date('Y-m-d')),
+												array('PrecioEspecificoMarca.fecha_termino >=' => date('Y-m-d')),
+											)
+										)
+									),
+									'order' => array(
+										'PrecioEspecificoMarca.id' => 'DESC'
+									)
+								)
+							),
 							'PrecioEspecificoProducto' => array(
 								'conditions' => array(
 									'PrecioEspecificoProducto.activo' => 1,
@@ -4439,16 +4457,15 @@ class OrdenComprasController extends AppController
 
 					$total = array_sum(Hash::extract(array_filter($venta_bodega, function ($v, $k) use ($p) {
 						return $v['rpvdp']['producto_id'] == $p['id'];
-					}, ARRAY_FILTER_USE_BOTH), "{n}.0.cantidad"));
-
+					},
+						ARRAY_FILTER_USE_BOTH
+					), "{n}.0.cantidad"));
 					$descuentos 		= ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
 
 					$precio_unitario 	= $p['precio_costo'];
 					$total_neto 		= $total * $precio_unitario;
 
 					// * Si el producto no posee un precio mayor a 0 no es considerado para la OC
-
-					// if ($precio_unitario > 0) {
 
 					$descuento_producto = $total * $descuentos['total_descuento'];
 					$total_neto 		= $total_neto - $descuento_producto;
@@ -4461,14 +4478,8 @@ class OrdenComprasController extends AppController
 						'descuento_producto' 		=> $descuento_producto,
 						'total_neto' 				=> $total_neto,
 					];
-					// }
-
 				}
 
-				// * Si no hay productos para añadir a la OC se sale
-				// if (!$producto_oc) {
-				// 	continue;
-				// }
 
 				// * Totalizamos el neto, el total y el iva. Asignamos los productos formatiados
 
