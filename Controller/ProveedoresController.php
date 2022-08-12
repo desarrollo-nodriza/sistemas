@@ -101,15 +101,15 @@ class ProveedoresController extends AppController
 		if ($this->request->is('post') || $this->request->is('put')) {
 
 			$this->Proveedor->MonedasProveedor->deleteAll(array('MonedasProveedor.proveedor_id' => $id));
-			$this->Proveedor->FrecuenciaGenerarOC->deleteAll(array('proveedor_id' => $id));
-			$this->Proveedor->TipoEntregaProveedorOC->deleteAll(array('proveedor_id' => $id));
-			// $this->Proveedor->ReglasGenerarOC->deleteAll(array('proveedor_id' => $id));
-
+			
 			# Guardamos los emails en un objeto json
 			if (isset($this->request->data['ProveedoresEmail'])) {
 				$this->request->data['Proveedor']['meta_emails'] = json_encode($this->request->data['ProveedoresEmail'], true);
 			}
 			if (isset($this->request->data['FrecuenciaGenerarOC'])) {
+
+				$this->Proveedor->FrecuenciaGenerarOC->deleteAll(array('proveedor_id' => $id));
+				$this->Proveedor->TipoEntregaProveedorOC->deleteAll(array('proveedor_id' => $id));
 				$this->request->data['FrecuenciaGenerarOC'] = array_filter($this->request->data['FrecuenciaGenerarOC'], function ($v, $k) {
 					return !empty($v['hora']);
 				}, ARRAY_FILTER_USE_BOTH);
