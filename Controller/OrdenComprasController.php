@@ -4149,6 +4149,7 @@ class OrdenComprasController extends AppController
 	public function RecorrerProveedor()
 	{
 		$respuesta 		= [];
+		$day 			= strtolower(date("l"));
 		$proveedores 	= array_unique(Hash::extract(
 			ClassRegistry::init('Proveedor')->find(
 				'all',
@@ -4157,6 +4158,7 @@ class OrdenComprasController extends AppController
 					'conditions' 	=> array(
 						'Proveedor.permitir_generar_oc'	=> true,
 						'Proveedor.activo'	=> true,
+						"Proveedor.$day"	=> true,
 					),
 					'joins' 		=> array(
 						array(
@@ -4174,7 +4176,7 @@ class OrdenComprasController extends AppController
 			),
 			"{n}.Proveedor.id"
 		));
-
+		
 		if ($proveedores) {
 			$respuesta = $this->CrearOCAutomaticas($proveedores);
 		}
@@ -4575,11 +4577,12 @@ class OrdenComprasController extends AppController
 			$this->redirect(array('action' => 'index'));
 		}
 
-		if (strlen($tiempo) != 5 ) {
+		if (strlen($tiempo) != 5) {
 			$this->Session->setFlash("Debes enviar hora y minutos. Los dos puntos reemplazar por guion bajo", null, array(), 'warning');
 			$this->redirect(array('action' => 'index'));
 		}
 		
+		$day 			= strtolower(date("l"));
 		$proveedores 	= array_unique(Hash::extract(
 			ClassRegistry::init('Proveedor')->find(
 				'all',
@@ -4588,6 +4591,7 @@ class OrdenComprasController extends AppController
 					'conditions' 	=> array(
 						'Proveedor.permitir_generar_oc'	=> true,
 						'Proveedor.activo'	=> true,
+						"Proveedor.$day"	=> true,
 					),
 					'joins' 		=> array(
 						array(
@@ -4596,7 +4600,7 @@ class OrdenComprasController extends AppController
 							'type'  => 'inner',
 							'conditions' => array(
 								'FrecuenciaGenerarOC.proveedor_id = Proveedor.id',
-								'FrecuenciaGenerarOC.hora' =>  str_replace("_",":",$tiempo)  . ":00"
+								'FrecuenciaGenerarOC.hora' =>  str_replace("_", ":", $tiempo)  . ":00"
 							)
 						)
 					),
@@ -4606,7 +4610,7 @@ class OrdenComprasController extends AppController
 		));
 
 		$respuesta = [];
-		
+
 		if ($proveedores) {
 			$respuesta = $this->CrearOCAutomaticas($proveedores);
 		}

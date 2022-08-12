@@ -36,7 +36,7 @@
                                     </div>
 								</td>
 							</tr>-->
-							<tr>
+							<tr >
 								<th><?= $this->Form->label('giro', 'Giro empresa'); ?></th>
 								<td><?= $this->Form->input('giro'); ?></td>
 							</tr>
@@ -85,11 +85,66 @@
 								<th><?= $this->Form->label('margen_aceptar_dte', 'Margen para aceptar facturas de compra'); ?></th>
 								<td><?= $this->Form->input('margen_aceptar_dte', array('class' => 'form-control select')); ?></td>
 							</tr>
+							<? if ($this->request->data['Proveedor']['permitir_generar_oc']) :  ?>
+								<tr>
+									<th>Seleccione días permitidos para generar OCs</th>
+									<td>
+										<div class="table-responsive">
+											<table class="table table-borderless align-middle">
+												<thead>
+
+													<th style="max-width: 1px;">Domingo</th>
+													<th style="max-width: 1px;">Lunes</th>
+													<th style="max-width: 1px;">Martes</th>
+													<th style="max-width: 1px;">Miercoles</th>
+													<th style="max-width: 1px;">Jueves</th>
+													<th style="max-width: 1px;">Viernes</th>
+													<th style="max-width: 1px;">Sábado</th>
+												</thead>
+												<tbody>
+													<tr>
+														<td>
+															<?= $this->Form->input('sunday', array('class' => 'form-control icheckbox')); ?>
+														</td>
+														<td>
+															<?= $this->Form->input('monday', array('class' => 'form-control icheckbox')); ?>
+														</td>
+														<td>
+															<?= $this->Form->input('tuesday', array('class' => 'form-control icheckbox')); ?>
+														</td>
+														<td>
+															<?= $this->Form->input('wednesday', array('class' => 'form-control icheckbox')); ?>
+														</td>
+														<td>
+															<?= $this->Form->input('thursday', array('class' => 'form-control icheckbox')); ?>
+														</td>
+														<td>
+															<?= $this->Form->input('friday', array('class' => 'form-control icheckbox')); ?>
+														</td>
+														<td>
+															<?= $this->Form->input('saturday', array('class' => 'form-control icheckbox')); ?>
+														</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
+
+									</td>
+
+								</tr>
+							<? endif; ?>
 						</table>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="pull-right">
+						<a type="button" class="btn btn-primary mb-control" data-box="#modal_alertas">Guardar cambios</a>
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
 					</div>
 				</div>
 			</div>
 		</div>
+
 	</div>
 
 	<div class="row">
@@ -652,14 +707,14 @@
 							<label>
 								<?= $this->Form->input('actualizar_canales', array('type' => 'checkbox', 'class' => '')); ?>
 								Sí, actualizar
-							</label>
+								</li>
 						</div>
 					</div>
 
 				</div>
 				<div class="mb-footer">
 					<div class="pull-right">
-						<input type="submit" class="btn btn-primary btn-lg esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<input type="submit" class="btn btn-primary btn-lg esperar-carga start-loading-then-redirect " autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
 						<button class="btn btn-default btn-lg mb-control-close">Cerrar</button>
 					</div>
 				</div>

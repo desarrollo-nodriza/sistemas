@@ -109,21 +109,19 @@ class ProveedoresController extends AppController
 			if (isset($this->request->data['ProveedoresEmail'])) {
 				$this->request->data['Proveedor']['meta_emails'] = json_encode($this->request->data['ProveedoresEmail'], true);
 			}
+			if (isset($this->request->data['FrecuenciaGenerarOC'])) {
+				$this->request->data['FrecuenciaGenerarOC'] = array_filter($this->request->data['FrecuenciaGenerarOC'], function ($v, $k) {
+					return !empty($v['hora']);
+				}, ARRAY_FILTER_USE_BOTH);
 
-			$this->request->data['FrecuenciaGenerarOC'] = array_filter($this->request->data['FrecuenciaGenerarOC'], function ($v, $k) {
-				return !empty($v['hora']);
-			}, ARRAY_FILTER_USE_BOTH);
+				$this->request->data['TipoEntregaProveedorOC'] = array_filter($this->request->data['TipoEntregaProveedorOC'], function ($v, $k) {
+					return !empty($v['bodega_id']) && !empty($v['tienda_id']) && !empty($v['tipo_entrega']);
+				}, ARRAY_FILTER_USE_BOTH);
 
-			$this->request->data['TipoEntregaProveedorOC'] = array_filter($this->request->data['TipoEntregaProveedorOC'], function ($v, $k) {
-				return !empty($v['bodega_id']) && !empty($v['tienda_id']) && !empty($v['tipo_entrega']);
-			}, ARRAY_FILTER_USE_BOTH);
-
-			$this->request->data['ReglasGenerarOC'] = array_filter($this->request->data['ReglasGenerarOC'], function ($v, $k) {
-				return !empty($v['regla_generar_oc_id']);
-			}, ARRAY_FILTER_USE_BOTH);
-			
-			// prx($this->request->data);
-
+				$this->request->data['ReglasGenerarOC'] = array_filter($this->request->data['ReglasGenerarOC'], function ($v, $k) {
+					return !empty($v['regla_generar_oc_id']);
+				}, ARRAY_FILTER_USE_BOTH);
+			}
 
 			if ($this->Proveedor->saveAll($this->request->data)) {
 
