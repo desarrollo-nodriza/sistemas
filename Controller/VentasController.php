@@ -13450,14 +13450,16 @@ class VentasController extends AppController {
 		ClassRegistry::init('Log')->saveMany($log);
 	}
 
+
 		
 	/**
 	 * VentasDTERechazado
-	 *
+	 *	Se consultan dtes rechazados.
+	 *	En el caso de que hayan nuevos estados se crean
 	 * @param  mixed $diferencia
 	 * @return array
 	 */
-	public function VentasDTERechazado(int $diferencia = 6): array
+	private function VentasDTERechazado(int $diferencia = 6): array
 	{
 
 		$tienda = ClassRegistry::init('Tienda')->tienda_principal(['facturacion_apikey', 'sii_rut']);
@@ -13467,22 +13469,135 @@ class VentasController extends AppController {
 		$hasta  = date("Y-m-d");
 		$desde  = date("Y-m-d", strtotime($hasta . "-$diferencia month"));
 		$emisor = explode("-", $tienda['Tienda']['sii_rut'])[0] ?? "";
+		$dts 	= $this->LibreDte->DTERechazados($desde, $hasta, $emisor);
 
-		return $this->LibreDte->DTERechazados($desde, $hasta, $emisor);
-	}
-
-	public function ProcesarDteRechazados()
-	{
-		
-		$dts =	$this->VentasDTERechazado(12);
-
+		// * En caso de que hayan estados nuevos se registran en la BD
 		if ($dts) {
-			
+
+			$data_estado 		= [];
+			$estados_existentes = ClassRegistry::init('DteEstado')->estadosExistentes();
+			$estados 			=  array_unique(Hash::extract($dts, '{*}.revision_estado'));
+
+			foreach ($estados as $estado) {
+				$estado_procesado = explode("-", $estado);
+
+				if (count($estado_procesado) > 1) {
+					$estado_dte 			= trim($estado_procesado[0]);
+					$nombre_dte 			= trim($estado_procesado[1]);
+
+					if (!array_key_exists($estado_dte, $estados_existentes)) {
+						$data_estado[] = [
+							'DteEstado' => [
+								'estado' =>  $estado_dte,
+								'nombre' =>  $nombre_dte,
+							]
+						];
+					}
+				}
+			}
+
+			if ($data_estado) {
+				ClassRegistry::init('DteEstado')->create();
+				ClassRegistry::init('DteEstado')->saveAll($data_estado);
+			}
 		}
 
-		foreach ( $dts as $dte) {
-			debug($dte['folio']);
-		}
+		return $dts;
 	}
+	
+	/**
+	 * ProcesarDteRechazados
+	 * Se procesan los dte con folios rechazados para cambiar estado si es distinto
+	 * @param  mixed $diferencia
+	 * @return array
+	 */
+	public function ProcesarDteRechazados(int $diferencia = 3)
+	{
 
+		$dts 	= $this->VentasDTERechazado($diferencia);
+		$folio 	= array_unique(Hash::extract($dts, '{*}.folio'));
+
+		$dtes_sistema = ClassRegistry::init('Dte')->find('all', [
+			'fields' 		=> [
+				'id',
+				'estado',
+				'revision_detalle',
+				'folio',
+				'venta_id'
+			],
+			'conditions'	=> ['folio' => $folio]
+		]);
+
+
+		$logs[] = ['Log' => [
+
+			'administrador' 	=> 'Demonio',
+			'modulo'    	 	=> 'ProcesarDteRechazados',
+			'modulo_accion' 	=> json_encode(array(
+				'dts_Sii' 		=> $dts,
+				'dts_sistema' 	=> $dtes_sistema,
+			))
+		]];
+
+		$dtes_para_cambiar_estados = [];
+
+		foreach ($dtes_sistema as $dte) {
+			$dte_desde_sii = Hash::extract($dts, "{*}[folio={$dte['Dte']['folio']}]")[0];
+
+			$estado_procesado = explode("-", $dte_desde_sii['revision_estado']);
+
+			if (trim($estado_procesado[0]) != $dte['Dte']['estado']) {
+
+				$dte['Dte']['estado'] 		 	=  trim($estado_procesado[0]);
+				$dte['Dte']['revision_detalle'] = "{$dte_desde_sii['revision_estado']} | {$dte_desde_sii['revision_detalle']}";
+				$dtes_para_cambiar_estados[] 	= $dte;
+			}
+		}
+
+		if ($dtes_para_cambiar_estados) {
+
+			$logs[] = ['Log' => [
+
+				'administrador' 	=> 'Demonio',
+				'modulo'    	 	=> 'ProcesarDteRechazados',
+				'modulo_accion' 	=> json_encode(array(
+					'dtes_para_cambiar_estados' 	=> $dtes_para_cambiar_estados,
+				))
+			]];
+
+			ClassRegistry::init('Dte')->create();
+			ClassRegistry::init('Dte')->saveAll($dtes_para_cambiar_estados);
+		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveAll($logs);
+
+		return $dtes_para_cambiar_estados;
+	}
+	
+	/**
+	 * admin_ventas_dte_rechazado
+	 * Se crea ruta para no esperar la ejecución del cronjob	
+	 * @param  mixed $diferencia
+	 * @return void
+	 */
+	public function admin_ventas_dte_rechazado($diferencia = 3)
+	{
+		$dtes = $this->ProcesarDteRechazados($diferencia);
+
+		if ($dtes) {
+			foreach ($dtes as $key => $value) {
+				if (!empty($value['Dte']['venta_id'])) {
+					$dtesHtml[] = "<a href='/ventas/view/{$value['Dte']['venta_id']}' target='_blank' class='link'>La venta #{$value['Dte']['venta_id']} tuvo cambio de estado en el folio {$value['Dte']['folio']}</a>";
+				} else {
+					$dtesHtml[] = "El folio {$value['Dte']['folio']} tuvo cambio de estado. No tiene una venta asociada.";
+				}
+			}
+			$this->Session->setFlash($this->crearAlertaUl($dtesHtml, 'Ventas con cambios de estado en sus folios'), null, array(), 'success');
+		} else {
+			$this->Session->setFlash("No hay ventas con cambios de estado en sus folios", null, array(), 'warning');
+		}
+
+		$this->redirect(array('action' => 'index'));
+	}
 }
