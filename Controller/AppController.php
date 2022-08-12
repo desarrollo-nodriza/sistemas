@@ -275,7 +275,34 @@ class AppController extends Controller
 		$this->set(compact('avatar', 'modulosDisponibles', 'permisos', 'tiendasList', 'showDashboard'));
 	}
 
+	
+	/**
+	 * api_response
+	 * 
+	 * Homologa la respuesta para las API
+	 *
+	 * @param  mixed $code Código http de respuesta
+	 * @param  mixed $message Mensaje de error/respuesta
+	 * @param  mixed $body Cuerpo de la respuesta
+	 * @return view
+	 */
+	public function api_response($code, $message, $body = [])
+	{
+		$this->response->statusCode($code);
+		
+		$response = [
+			'code' => $code,
+			'message' => $message,
+			'data' => $body,
+		];
 
+		return $this->set([
+			'response' => $response,
+			'_serialize' => ['response']
+		]);
+	}
+
+	
 	private function obtenerTiendas() {
 		$tiendas = ClassRegistry::init('Tienda')->find('list', array(
 			'conditions' => array('Tienda.activo' => 1)

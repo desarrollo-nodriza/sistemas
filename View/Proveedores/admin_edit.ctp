@@ -71,6 +71,10 @@
 								<th><?= $this->Form->label('margen_aceptar_dte', 'Margen para aceptar facturas de compra'); ?></th>
 								<td><?= $this->Form->input('margen_aceptar_dte', array('class' => 'form-control', 'min' => 0)); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('oc_via_api', 'Capturar OC vía API'); ?></th>
+								<td><?= $this->Form->input('oc_via_api', array('class' => 'icheckbox')); ?></td>
+							</tr>
 						</table>
 					</div>
 				</div>

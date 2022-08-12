@@ -172,4 +172,21 @@ class Proveedor extends AppModel
 			return self::$tipo_email;
 		}
 	}
+
+		
+	/**
+	 * permite_api_oc
+	 *
+	 * @param  mixed $id
+	 * @return void
+	 */
+	public function permite_api_oc($id)
+	{
+		return $this->find('count', array(
+			'conditions' => array(
+				'Proveedor.id' => $id,
+				'Proveedor.oc_via_api' => 1
+			)
+		));
+	}
 }

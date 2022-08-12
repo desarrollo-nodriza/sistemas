@@ -1084,9 +1084,22 @@ class OrdenComprasController extends AppController
 				)
 			);
 
-			if ($this->guardarEmailValidado($id) && $this->OrdenCompra->saveAll($this->request->data)) {
+			if ($this->OrdenCompra->saveAll($this->request->data)) {
+				
 				$this->Session->setFlash('Método de pago asignado con éxito.', null, array(), 'success');
+
+				# Obtenemos el id prpoveedor de la OC
+				$this->OrdenCompra->id = $id;
+				$oc_proveedor = $this->OrdenCompra->field('proveedor_id');
+				
+				# si no tiene activa la api oc se notifica vía email
+				if (!ClassRegistry::init('Proveedor')->permite_api_oc($oc_proveedor) && $this->guardarEmailValidado($id))
+				{
+					$this->Session->setFlash('Notificado con éxito.', null, array(), 'success');
+				}
+
 				$this->redirect(array('action' => 'index', 'sta' => 'asignacion_metodo_pago'));
+
 			}else{
 				$this->Session->setFlash('Ocurrió un error al asignar el método de pago o no fue posible enviar el email al proveedor.', null, array(), 'danger');
 				$this->redirect(array('action' => 'asignar_moneda', $id));
@@ -4098,8 +4111,6 @@ class OrdenComprasController extends AppController
             '_serialize' => array('response')
         ));
 	}
-
-
 		
 	/**
 	 * api_detalle_zonificar
@@ -4247,7 +4258,219 @@ class OrdenComprasController extends AppController
         ));
 
 	}
+	
+	/**
+	 * api_obtener_oc_validacion_externa
+	 * 
+	 * Obtiene las OCs que se encuentran disponibles para consultar
+	 * dado el token del proveedor. Método usado para los proveedores que tiene activa la opción de oc_via_api
+	 *
+	 * @return void
+	 */
+	public function api_obtener_oc_validacion_externa()
+	{
+		# Existe token
+		if (!isset($this->request->query['token'])) 
+		{
+			return $this->api_response(404, 'Token requerido');
+		}
 
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) 
+		{
+			return $this->api_response(401, 'Token de sesión expirado o invalido');
+		}
+
+		# Obtenemos propietario
+		$proveedor = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+
+		if (empty($proveedor['Proveedor']['id']))
+		{
+			return $this->api_response(401, 'Token de sesión no pertenece a proveedor');
+		}
+		
+		$ocs = $this->OrdenCompra->find('all', array(
+			'conditions' => array(
+				'OrdenCompra.validado_proveedor' => 0,
+				'OrdenCompra.estado' => 'validacion_externa',
+				'OrdenCompra.consultada' => 0,
+				'OrdenCompra.proveedor_id' => $proveedor['Proveedor']['id'],
+			),
+			'contain' => array(
+				'Proveedor',
+				'Tienda',
+				'VentaDetalleProducto',
+				'Moneda',
+				'Bodega'
+			)
+		));
+		
+		$result = [];
+
+		foreach ($ocs as $oc)
+		{
+			$oc_arr = [
+				'OrdenCompra' => [
+					'id' => $oc['OrdenCompra']['id'],
+					'codigo' => sprintf('OC%S-%d', ($oc['OrdenCompra']['tipo_orden'] == 'en_verde') ? 'V' : 'I' , $oc['OrdenCompra']['id']),
+					'Solicitante' => [
+						'nombre' => $oc['Tienda']['nombre_fantasia'],
+						'rut' => $oc['Tienda']['rut'],
+						'direccion' => $oc['Tienda']['direccion'],
+						'giro' => $oc['Tienda']['giro'],
+						'fono' => $oc['Tienda']['fono'],
+						'whatsapp' => $oc['Tienda']['whatsapp_numero']
+					],
+					'Proveedor' => [
+						'nombre' => $oc['Proveedor']['nombre'],
+						'rut' => $oc['OrdenCompra']['rut_empresa'],
+						'razon_social' => $oc['OrdenCompra']['razon_social_empresa'],
+						'giro' => $oc['OrdenCompra']['giro_empresa'],
+						'nombre_contacto' => $oc['OrdenCompra']['nombre_contacto_empresa'],
+						'email_contacto' => $oc['OrdenCompra']['email_contacto_empresa'],
+						'fono_contacto' => $oc['OrdenCompra']['fono_contacto_empresa'],
+						'direccion' => $oc['OrdenCompra']['direccion_comercial_empresa']
+					],
+					'Condiciones' => [
+						'fecha_creacion' => $oc['OrdenCompra']['created'],
+						'medio_de_pago' => $oc['Moneda']['nombre'],
+						'tipo_oc' => $oc['OrdenCompra']['tipo_orden'],
+						'vendedor' => $oc['OrdenCompra']['vendedor'],
+					],
+					'Entrega' => [
+						'tipo_entrega' => $oc['OrdenCompra']['tipo_entrega'],
+						'receptor' => $oc['OrdenCompra']['receptor_informado'],
+						'bodega' => $oc['Bodega']['nombre'],
+						'direccion' => $oc['Bodega']['direccion'],
+						'fono' => $oc['Bodega']['fono'],
+						'horario_atencion' => $oc['Bodega']['horario_atencion'],
+						'informacion_adicional' => $oc['OrdenCompra']['informacion_entrega'],
+					],
+					'Productos' => [],
+					'Totales' => [
+						'total_neto' => (int) $oc['OrdenCompra']['total_neto'],
+						'descuento_monto' => (int) $oc['OrdenCompra']['descuento_monto'],
+						'iva' => (int) $oc['OrdenCompra']['iva'],
+						'total' => (int) $oc['OrdenCompra']['total'],
+					],
+				]
+			];
+			
+			foreach($oc['VentaDetalleProducto'] as $p)
+			{
+				$oc_arr['OrdenCompra']['Productos'][] = [
+					'id' => $p['id'],
+					'codigo_proveedor' => $p['codigo_proveedor'],
+					'referencia' => $p['referencia'],
+					'nombre' => $p['nombre'],
+					'cantidad_solicitada' => $p['OrdenComprasVentaDetalleProducto']['cantidad'],
+					'precio_unitario' => (int) $p['OrdenComprasVentaDetalleProducto']['precio_unitario'],
+					'descuento_unitario' => (int) ($p['OrdenComprasVentaDetalleProducto']['descuento_producto'] / $p['OrdenComprasVentaDetalleProducto']['cantidad']),
+					'total_neto' => (int) $p['OrdenComprasVentaDetalleProducto']['total_neto']
+				];
+			}
+
+			$result[] = $oc_arr;
+		}
+
+		return $this->api_response(200, sprintf('Se obtuvieron %d órdenes de compra', count($ocs)), $result);
+
+	}
+
+	
+	/**
+	 * api_actualizar_oc_validacion_externa
+	 * 
+	 * Actualiza el estado de las OC a consultada y envía al proveedor la OC para la validación manual.
+	 * 
+	 * disponible unicamente para los proveeedores que tengan activa la opción de oc_via_api
+	 *
+	 * @return void
+	 */
+	public function api_actualizar_oc_validacion_externa()
+	{	
+		# Existe body
+		if (empty($this->request->data))
+		{	
+			return $this->api_response(500, 'Debe incluir al menos una oc en el cuerpo del request');
+		}
+
+		# Existe token
+		if (!isset($this->request->query['token'])) 
+		{
+			return $this->api_response(404, 'Token requerido');
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) 
+		{
+			return $this->api_response(401, 'Token de sesión expirado o invalido');
+		}
+
+		# Obtenemos propietario
+		$proveedor = ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
+
+		if (empty($proveedor['Proveedor']['id']))
+		{
+			return $this->api_response(401, 'Token de sesión no pertenece a proveedor');
+		}
+		
+		$ocs = $this->OrdenCompra->find('all', array(
+			'conditions' => array(
+				'OrdenCompra.validado_proveedor' => 0,
+				'OrdenCompra.estado' => 'validacion_externa',
+				'OrdenCompra.consultada' => 0,
+				'OrdenCompra.proveedor_id' => $proveedor['Proveedor']['id'],
+				'OrdenCompra.id' => $this->request->data
+			),
+			'fields' => array(
+				'OrdenCompra.id',
+				'OrdenCompra.consultada',
+				'OrdenCompra.fecha_consultada'
+			),
+			'joins' => array(
+				array(
+					'table' => 'proveedores',
+					'alias' => 'Proveedor',
+					'type'  => 'inner',
+					'conditions' => array(
+						'OrdenCompra.proveedor_id = Proveedor.id',
+						'Proveedor.oc_via_api' => 1
+					)
+				)
+			)
+		));
+		
+		$result = [];
+
+		foreach ($ocs as $i => $oc)
+		{	
+			# Enviamos el email correspondiente a esta OC para validación de proveedor.
+			$this->guardarEmailValidado($oc['OrdenCompra']['id']);
+			
+			# Indicamos la OC como consultada
+			$ocs[$i]['OrdenCompra']['consultada'] = 1;
+			$ocs[$i]['OrdenCompra']['fecha_consultada'] = date('Y-m-d H:i:s');
+		}
+		
+		if ($this->OrdenCompra->saveMany($ocs))
+		{
+			return $this->api_response(200, 'Oc actualizadas con éxito.', $ocs);
+		}
+		else
+		{
+			return $this->api_response(500, 'No fue posible actualizar las OCs.', $ocs);
+		}
+
+	}
+	
+	/**
+	 * reservar_stock_por_oc
+	 * 
+	 *
+	 * @param  mixed $id_oc
+	 * @return void
+	 */
 	public function reservar_stock_por_oc($id_oc)
 	{
 		$ocVentas = ClassRegistry::init('OrdenCompra')->find('first', array(
