@@ -4442,7 +4442,7 @@ class OrdenComprasController extends AppController
 					"total_neto" 				=> "",
 					"iva" 						=> "",
 					"total" 					=> "",
-					"fecha_validado" 			=> date('Y-m-d h:m:s'),
+					"fecha_validado" 			=> date('Y-m-d H:i:s'),
 					"comentario_validar" 		=> "Esto es una OC generada Automáticamente",
 					"nombre_validado" 			=> $tienda['Administrador']['nombre'],
 					"email_comercial" 			=> $tienda['Administrador']['email'],
