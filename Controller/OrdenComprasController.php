@@ -4168,7 +4168,7 @@ class OrdenComprasController extends AppController
 							'conditions' => array(
 								'FrecuenciaGenerarOC.proveedor_id = Proveedor.id',
 								// 'FrecuenciaGenerarOC.hora' =>  "14:00:00",
-								'FrecuenciaGenerarOC.hora' =>  date('h:m') . ":00"
+								'FrecuenciaGenerarOC.hora' =>  date('H:i') . ":00"
 							)
 						)
 					),
