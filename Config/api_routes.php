@@ -810,17 +810,38 @@ Router::connect(
 );
 
 Router::connect(
-    '/api/ordenes-de-compra/detalle/zonificar/:id_detalle', // E.g. /blog/3-CakePHP_Rocks
+    '/api/ordenes-de-compra/validacion-externa', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'OrdenCompras', 
-        'action' => 'detalle_zonificar',
-        '[method]' => 'POST',
+        'action' => 'obtener_oc_validacion_externa',
+        '[method]' => 'GET',
         'api' => true,
         'prefix' => 'api'
-    ),
+    )
+);
+
+Router::connect(
+    '/api/ordenes-de-compra/validacion-externa/actualizar', // E.g. /blog/3-CakePHP_Rocks
     array(
-        'pass' => array('id_detalle'),
-        'id_detalle' => '[0-9]+'
+        'controller' => 'OrdenCompras', 
+        'action' => 'actualizar_oc_validacion_externa',
+        '[method]' => 'PUT',
+        'api' => true,
+        'prefix' => 'api'
+    )
+);
+
+
+Router::connect(
+    '/api/ordenes-de-compra/recepcionar/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompras', 
+        'action' => 'reception',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
     )
 );
 
