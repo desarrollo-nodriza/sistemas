@@ -107,7 +107,15 @@ class Token extends AppModel
 		}
 	}
 
-
+	
+	/**
+	 * crear_token_proveedor
+	 *
+	 * @param  mixed $proveedor_id  Identificador del proveedor
+	 * @param  mixed $tienda_id Identificador de la tienda
+	 * @param  mixed $duracion Duración en horas del token
+	 * @return token
+	 */
 	public function crear_token_proveedor($proveedor_id, $tienda_id = '', $duracion = 240)
 	{	
 		$expira = new DateTime(date('Y-m-d H:i:s'));
@@ -118,7 +126,8 @@ class Token extends AppModel
 		$token['Token'] = array(
 			'proveedor_id' => $proveedor_id,
 			'token'            => $token_acceso,
-			'expires'          => $expira->format('Y-m-d H:i:s')
+			'expires'          => $expira->format('Y-m-d H:i:s'),
+			'tipo'			   => 'proveedor'
 		);
 
 		if (!empty($tienda_id)) {
@@ -153,7 +162,15 @@ class Token extends AppModel
 		}
 	}
 
-
+	
+	/**
+	 * crear_token_cliente
+	 *
+	 * @param  mixed $cliente_id  Identificador del cliente
+	 * @param  mixed $tienda_id Identificador de la tienda
+	 * @param  mixed $duracion Duración en horas del token
+	 * @return token
+	 */
 	public function crear_token_cliente($cliente_id, $tienda_id = '', $duracion = 48)
 	{	
 		$expira = new DateTime(date('Y-m-d H:i:s'));
@@ -164,7 +181,8 @@ class Token extends AppModel
 		$token['Token'] = array(
 			'venta_cliente_id' => $cliente_id,
 			'token'            => $token_acceso,
-			'expires'          => $expira->format('Y-m-d H:i:s')
+			'expires'          => $expira->format('Y-m-d H:i:s'),
+			'tipo'			   => 'cliente'
 		);
 
 		if (!empty($tienda_id)) {
@@ -199,24 +217,33 @@ class Token extends AppModel
 		}
 	}
 
-
+	
+	/**
+	 * generar_token
+	 *
+	 * @param  mixed $largo largo en bytes del hash
+	 * @return hash
+	 */
 	public function generar_token($largo = 24)
 	{
 		return bin2hex(openssl_random_pseudo_bytes($largo));
 	}
 
 
+		
 	/**
-	 * [validar_token description]
-	 * @param  [type] $token [description]
-	 * @return [type]        [description]
+	 * validar_token
+	 *
+	 * @param  mixed $token Token string
+	 * @param  mixed $tipo admin-proveedor-cliente
+	 * @return bool
 	 */
-	public function validar_token($token)
+	public function validar_token($token, $tipo = 'admin')
 	{
-
 		$token = $this->find('first', array(
 			'conditions' => array(
-				'Token.token' => trim($token)
+				'Token.token' => trim($token),
+				'Token.tipo' => $tipo
 			),
 			'fields' => array(
 				'Token.expires'
@@ -238,8 +265,15 @@ class Token extends AppModel
 		}
 
 	}
-
-
+	
+	/**
+	 * obtener_propietario_token
+	 * 
+	 * Obtiene información básica del usuario
+	 *
+	 * @param  mixed $token
+	 * @return void
+	 */
 	public function obtener_propietario_token($token)
 	{
 		$token = $this->find('first', array(
@@ -305,6 +339,8 @@ class Token extends AppModel
 
 	/**
 	 * obtener_propietario_token_full
+	 * 
+	 * Obtiene toda la finromación del propietario del token
 	 *
 	 * @param  mixed $token
 	 * @return void
