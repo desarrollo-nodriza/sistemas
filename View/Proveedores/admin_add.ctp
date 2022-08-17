@@ -54,6 +54,10 @@
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
 								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('oc_via_api', 'Capturar OC vía API'); ?></th>
+								<td><?= $this->Form->input('oc_via_api', array('class' => 'icheckbox')); ?></td>
+							</tr>
 						</table>
 					</div>
 				</div>
