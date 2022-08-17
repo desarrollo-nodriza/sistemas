@@ -13523,7 +13523,8 @@ class VentasController extends AppController {
 				'estado',
 				'revision_detalle',
 				'folio',
-				'venta_id'
+				'venta_id',
+				'tipo_documento'
 			],
 			'conditions'	=> ['folio' => $folio]
 		]);
@@ -13546,7 +13547,7 @@ class VentasController extends AppController {
 
 			$estado_procesado = explode("-", $dte_desde_sii['revision_estado']);
 
-			if (trim($estado_procesado[0]) != $dte['Dte']['estado']) {
+			if (trim($estado_procesado[0]) != $dte['Dte']['estado'] && $dte['Dte']['tipo_documento'] == $dte_desde_sii['dte']) {
 
 				$dte['Dte']['estado'] 		 	=  trim($estado_procesado[0]);
 				$dte['Dte']['revision_detalle'] = "{$dte_desde_sii['revision_estado']} | {$dte_desde_sii['revision_detalle']}";
@@ -13574,7 +13575,7 @@ class VentasController extends AppController {
 
 		return $dtes_para_cambiar_estados;
 	}
-	
+
 	/**
 	 * admin_ventas_dte_rechazado
 	 * Se crea ruta para no esperar la ejecución del cronjob	
