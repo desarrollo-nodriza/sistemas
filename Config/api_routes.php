@@ -810,6 +810,21 @@ Router::connect(
 );
 
 Router::connect(
+    '/api/ordenes-de-compra/detalle/zonificar/:id_detalle', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompras', 
+        'action' => 'detalle_zonificar',
+        '[method]' => 'POST',
+        'api' => true,
+        'prefix' => 'api'
+    ),
+    array(
+        'pass' => array('id_detalle'),
+        'id_detalle' => '[0-9]+'
+    )
+);
+
+Router::connect(
     '/api/ordenes-de-compra/validacion-externa', // E.g. /blog/3-CakePHP_Rocks
     array(
         'controller' => 'OrdenCompras', 
