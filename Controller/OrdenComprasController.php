@@ -963,9 +963,9 @@ class OrdenComprasController extends AppController
 
 		# Calculo de descuentos
 		foreach ($ocs['VentaDetalleProducto'] as $i => $p) {
-			
+
 			$descuentos = ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
-			
+
 			$ocs['VentaDetalleProducto'][$i]['total_descuento']  = $descuentos['total_descuento'];
 			$ocs['VentaDetalleProducto'][$i]['nombre_descuento'] = $descuentos['nombre_descuento'];
 			$ocs['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento'];
@@ -1127,7 +1127,7 @@ class OrdenComprasController extends AppController
 				$bodega_id = ClassRegistry::init('Venta')->field('bodega_id', array('id' => $ventas[0]));
 
 				$d['OrdenCompra']['bodega_id'] = ($bodega_id) ? $bodega_id : $this->Session->read('Auth.Administrador.Rol.bodega_id');
-				
+
 				$d['OrdenCompra']['tipo_orden'] = "en_verde";
 
 				$d['Venta'] = unique_multidim_array($d['Venta'], 'venta_id');
@@ -1290,7 +1290,7 @@ class OrdenComprasController extends AppController
 				$proveedores[$ip]['VentaDetalleProducto'][$i]['valor_descuento']  = $descuentos['valor_descuento'];
 			}
 		}
-		// prx($proveedores);
+
 		$proveedoresLista = ClassRegistry::init('Proveedor')->find('list', array(
 			'conditions' => array(
 				'Proveedor.activo' => 1
@@ -2134,8 +2134,8 @@ class OrdenComprasController extends AppController
 			'offset' 	=> $this->request->query['offset'] ?? 0,
 			'order' 	=> array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC')
 		));
-		// prx($this->OrdenCompra->getDataSource()->getLog(false, false));
-		// prx($ventas );
+
+
 		if (empty($ventas)) {
 			echo 0;
 			exit;
@@ -4176,7 +4176,7 @@ class OrdenComprasController extends AppController
 			),
 			"{n}.Proveedor.id"
 		));
-		
+
 		if ($proveedores) {
 			$respuesta = $this->CrearOCAutomaticas($proveedores);
 		}
@@ -4398,7 +4398,8 @@ class OrdenComprasController extends AppController
 								'TipoEntregaProveedorOC.tienda_id' => $tienda['Tienda']['id'],
 								'TipoEntregaProveedorOC.bodega_id' => $bodega_id,
 							]
-						]
+						],
+						'Moneda'
 					),
 					'conditions' => ["Proveedor.id" => $proveedor_id]
 				));
@@ -4457,9 +4458,11 @@ class OrdenComprasController extends AppController
 
 				foreach ($proveedor['VentaDetalleProducto'] as $p) {
 
-					$total = array_sum(Hash::extract(array_filter($venta_bodega, function ($v, $k) use ($p) {
-						return $v['rpvdp']['producto_id'] == $p['id'];
-					},
+					$total = array_sum(Hash::extract(array_filter(
+						$venta_bodega,
+						function ($v, $k) use ($p) {
+							return $v['rpvdp']['producto_id'] == $p['id'];
+						},
 						ARRAY_FILTER_USE_BOTH
 					), "{n}.0.cantidad"));
 					$descuentos 		= ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
@@ -4524,11 +4527,23 @@ class OrdenComprasController extends AppController
 							$OC['OrdenCompra']['moneda_id'] 			= $ReglasGenerarOC['medio_pago_id'];
 							$OC['OrdenCompra']['estado'] 				= "validacion_externa";
 
+							# Descuentos por método de pago
+
+							if (Hash::check($proveedor, 'Moneda.{n}[id=' . $OC['OrdenCompra']['moneda_id'] . ']')) {
+
+								$descuento 								= Hash::extract($proveedor, 'Moneda.{n}[id=' . $OC['OrdenCompra']['moneda_id'] . '].MonedasProveedor.descuento')[0];
+
+								$OC['OrdenCompra']['descuento'] 		= $descuento;
+								$OC['OrdenCompra']['descuento_monto']  	= $OC['OrdenCompra']['total'] * ($descuento / 100);
+								$OC['OrdenCompra']['total'] 			= round($OC['OrdenCompra']['total'] - $OC['OrdenCompra']['descuento_monto']);
+							}
+
 							$OC['OrdenCompraHistorico'][] 				= [
 								"estado" 		=> "validacion_externa",
 								"responsable" 	=> "diego.romero@nodriza.cl",
 								"evidencia" 	=> json_encode($OC)
 							];
+
 							break;
 						}
 					}
@@ -4581,7 +4596,7 @@ class OrdenComprasController extends AppController
 			$this->Session->setFlash("Debes enviar hora y minutos. Los dos puntos reemplazar por guion bajo", null, array(), 'warning');
 			$this->redirect(array('action' => 'index'));
 		}
-		
+
 		$day 			= strtolower(date("l"));
 		$proveedores 	= array_unique(Hash::extract(
 			ClassRegistry::init('Proveedor')->find(
