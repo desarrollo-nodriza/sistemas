@@ -767,7 +767,7 @@ class ContactosController extends AppController
         $token = $this->request->query['access_token'];
 
         try {
-            $token_valido = ClassRegistry::init('Token')->validar_token($token);
+            $token_valido = ClassRegistry::init('Token')->validar_token($token, 'cliente');
         } catch (Exception $e) {
             $token_valido = 0;
         }

@@ -2650,7 +2650,7 @@ class OrdenComprasController extends AppController
 			# creamos un token de acceso vía email
 			$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];
 
-		}else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])){
+		}else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'], 'proveedor')){
 			# creamos un token de acceso vía email
 			$token = ClassRegistry::init('Token')->crear_token_proveedor($oc['Proveedor']['id'], $oc['Tienda']['id'])['token'];
 
@@ -2930,7 +2930,7 @@ class OrdenComprasController extends AppController
 
 		$this->Auth->allow('view', 'validate_supplier');
 
-		if (!isset($this->request->query['access_token']) || !ClassRegistry::init('Token')->validar_token($this->request->query['access_token'])) {
+		if (!isset($this->request->query['access_token']) || !ClassRegistry::init('Token')->validar_token($this->request->query['access_token'], 'proveedor')) {
 			throw new Exception("El token de acceso no es válido", 404);
 			exit;
 		}
@@ -3270,7 +3270,7 @@ class OrdenComprasController extends AppController
 	{
 		$this->Auth->allow('view', 'view_oc_pdf');
 
-		if (!isset($this->request->query['access_token']) || !ClassRegistry::init('Token')->validar_token($this->request->query['access_token'])) {
+		if (!isset($this->request->query['access_token']) || !ClassRegistry::init('Token')->validar_token($this->request->query['access_token'], 'proveedor')) {
 			throw new Exception("El token de acceso no es válido", 404);
 			exit;
 		}
@@ -4276,7 +4276,7 @@ class OrdenComprasController extends AppController
 		}
 
 		# Validamos token
-		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) 
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'], 'proveedor')) 
 		{
 			return $this->api_response(401, 'Token de sesión expirado o invalido');
 		}
@@ -4402,7 +4402,7 @@ class OrdenComprasController extends AppController
 		}
 
 		# Validamos token
-		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) 
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'], 'proveedor')) 
 		{
 			return $this->api_response(401, 'Token de sesión expirado o invalido');
 		}

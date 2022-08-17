@@ -582,7 +582,7 @@ class VentaClientesController extends AppController
 			# creamos un token de acceso vía email
 			$token = ClassRegistry::init('Token')->crear_token_cliente($cliente_id)['token'];
 
-		}else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])){
+		}else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'], 'cliente')){
 			# creamos un token de acceso vía email
 			$token = ClassRegistry::init('Token')->crear_token_cliente($cliente_id)['token'];
 
@@ -747,7 +747,7 @@ class VentaClientesController extends AppController
 				# creamos un token de acceso vía email
 				$token = ClassRegistry::init('Token')->crear_token_cliente($cliente['VentaCliente']['id'])['token'];
 
-			}else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'])){
+			}else if (!ClassRegistry::init('Token')->validar_token($gettoken['Token']['token'], 'cliente')){
 				# creamos un token de acceso vía email
 				$token = ClassRegistry::init('Token')->crear_token_cliente($cliente['VentaCliente']['id'])['token'];
 
@@ -851,7 +851,7 @@ class VentaClientesController extends AppController
 		$token = $this->request->query['access_token'];
 
 		# Validamos el token
-		if (!ClassRegistry::init('Token')->validar_token($token)) {
+		if (!ClassRegistry::init('Token')->validar_token($token, 'cliente')) {
 			$this->Session->setFlash('El link de acceso no es válido o ya caducó. Intenta solicitando un link nuevo.', null, array(), 'danger');
 			$this->redirect(array('action' => 'login'));
 		}
@@ -934,7 +934,7 @@ class VentaClientesController extends AppController
 
 		# Validamos el token
 		try {
-			$token_valido = ClassRegistry::init('Token')->validar_token($token);
+			$token_valido = ClassRegistry::init('Token')->validar_token($token, 'cliente');
 		} catch (Exception $e) {
 			$error = 'La llave de acceso no es correcta. Por favor ponte en contacto con nuestro equipo.';
 		}

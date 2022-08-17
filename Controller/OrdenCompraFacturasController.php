@@ -1364,7 +1364,14 @@ class OrdenCompraFacturasController extends AppController
         ));
 			
     }
-
+	
+	/**
+	 * api_recepcionar_dte_compras
+	 * 
+	 * Busca los DTE de compra PENDIENTES y actualiza los DTE de compra a repecionado en el SII
+	 *
+	 * @return void
+	 */
 	public function api_recepcionar_dte_compras()
 	{   
 
