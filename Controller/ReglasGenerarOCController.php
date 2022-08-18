@@ -37,14 +37,14 @@ class ReglasGenerarOCController extends AppController
         ];
         $reglasGenerarOC =  $this->paginate();
 
-        $medio_de_pago = ClassRegistry::init('MedioPago')->find('list', ['conditions' => ['MedioPago.activo' => true]]);
+        $moneda = ClassRegistry::init('Moneda')->find('list', ['conditions' => ['Moneda.activo' => true]]);
 
         $tiendas = ClassRegistry::init('Tienda')->find('all');
 
         // BreadcrumbComponent::add('Atributo Dinámicos');
         // prx($tienda);
         $administradores = ClassRegistry::init('Administrador')->find('list', ['conditions' => ['Administrador.activo' => true]]);
-        $this->set(compact('reglasGenerarOC', 'medio_de_pago', 'tiendas', 'administradores'));
+        $this->set(compact('reglasGenerarOC', 'moneda', 'tiendas', 'administradores'));
     }
 
     public function admin_regla_create()
