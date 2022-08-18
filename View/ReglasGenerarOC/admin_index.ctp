@@ -161,7 +161,7 @@
 											<td align="center" style="vertical-align: bottom;width: 400px;">
 												<?= $this->Form->select(
 													sprintf('%d.medio_pago_id', $i),
-													$medio_de_pago,
+													$moneda,
 													array(
 														'class' => 'form-control mi-selector medio_pago_id',
 														'style' => "width: 400px",
@@ -193,7 +193,7 @@
 											<td align="center" style="vertical-align: bottom; width: 400px;">
 												<?= $this->Form->select(
 													sprintf('%d.medio_pago_id', $indice),
-													$medio_de_pago,
+													$moneda,
 													array(
 														'style' => "width: 400px",
 														'default' => $regla['ReglasGenerarOC']['medio_pago_id'],
