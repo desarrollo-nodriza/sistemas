@@ -1281,6 +1281,10 @@ class OrdenCompraFacturasController extends AppController
 			foreach ($docs as $i => $documentos_10) {
 
 				$result = $this->ApiLibreDte->cambiarEstadoDteCompra($documentos_10);
+				
+				# añadimos una pausa para que el sii no bloquee la petición
+				sleep(10);
+
 				$log[] = array('Log' => array(
 					'administrador' => 'OrdenCompraFactura',
 					'modulo' 		=> 'DteCompra',
