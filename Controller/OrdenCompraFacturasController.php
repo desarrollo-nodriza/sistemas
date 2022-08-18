@@ -1227,7 +1227,7 @@ class OrdenCompraFacturasController extends AppController
 
 		foreach ($facturas as $fac) 
 		{	
-			if ($contador == 10) {
+			if ($contador == 20) {
 				$contador_2++;
 				$contador = 0;
 			  }
@@ -1253,7 +1253,7 @@ class OrdenCompraFacturasController extends AppController
 			# Si el monto de la factura es diferente a la registrada en el SII no se recepciona. Se deja un margen de error
 			if($fac['DteCompra']['monto_total'] < $margen_min || $fac['DteCompra']['monto_total'] > $margen_max)
 				continue;
-			// * Se agrupan cada 10 para ser enviadas
+			// * Se agrupan cada 20 para ser enviadas
 			$docs[$contador_2][] = [
 				'TipoDTE' => (int) $fac['DteCompra']['tipo_documento'],
 				'Folio' => $fac['DteCompra']['folio'],
