@@ -86,6 +86,18 @@ class Tienda extends AppModel
 	/**
 	 * ASOCIACIONES
 	 */
+
+	public $belongsTo = array(
+		'Administrador' => array(
+			'className'				=> 'Administrador',
+			'foreignKey'			=> 'administrador_id',
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'counterCache'			=> true,
+		),
+	);
+
 	public $hasMany = array(
 		'Reporte' => array(
 			'className'				=> 'Reporte',
@@ -294,4 +306,10 @@ class Tienda extends AppModel
 
 		return $this->find('first', $qry);
 	}
+
+	public function obtener_activas()
+	{
+		return $this->find('list', array('conditions' => array('Tienda.activo' => 1)));
+	}
+
 }

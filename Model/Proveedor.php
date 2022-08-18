@@ -73,6 +73,32 @@ class Proveedor extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'FrecuenciaGenerarOC' => array(
+			'className'				=> 'FrecuenciaGenerarOC',
+			'foreignKey'			=> 'proveedor_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
+		),
+		'TipoEntregaProveedorOC' => array(
+			'className'				=> 'TipoEntregaProveedorOC',
+			'foreignKey'			=> 'proveedor_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 
@@ -107,7 +133,7 @@ class Proveedor extends AppModel
 			'finderQuery'			=> '',
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
-		)
+		),
 		/*'Marca' => array(
 			'className'				=> 'Marca',
 			'joinTable'				=> 'proveedores_marcas',
@@ -139,6 +165,14 @@ class Proveedor extends AppModel
 			'deleteQuery'			=> '',
 			'insertQuery'			=> ''
 		)*/
+		'ReglasGenerarOC' => array(
+			'className'				=> 'ReglasGenerarOC',
+			'joinTable'				=> 'reglas_proveedores',
+			'foreignKey'			=> 'proveedor_id',
+			'associationForeignKey'	=> 'regla_generar_oc_id',
+			'unique'				=> true,
+		),
+		
 	);
 
 

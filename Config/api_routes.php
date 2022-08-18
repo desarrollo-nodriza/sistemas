@@ -993,3 +993,57 @@ Router::connect(
         'api'           => true,
         'prefix'        => 'api')
 );
+
+Router::connect(
+    '/api/proveedor/eliminar-frecuencia/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'Proveedores',
+        'action'        => 'delete_frecuencia',
+        'api'           => true,
+        'prefix'        => 'api'
+
+    ),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/api/proveedor/eliminar-regla/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'Proveedores',
+        'action'        => 'delete_regla',
+        'api'           => true,
+        'prefix'        => 'api'
+
+    ),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/api/proveedor/eliminar-configuracion/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'Proveedores',
+        'action'        => 'delete_configuracion',
+        'api'           => true,
+        'prefix'        => 'api'
+
+    ),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
+);
+
+Router::connect(
+    '/api/pruebas', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'Pruebas', 
+        'action'        => 'pruebas',
+        'api'           => true,
+        'prefix'        => 'api')
+);

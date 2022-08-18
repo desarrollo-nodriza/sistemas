@@ -34,6 +34,16 @@ class OrdenCompra extends AppModel
 		'cancelada'              => 'Canceladas',
 	);
 
+	public $tipo_orden = [
+		'inventario' 	=> 'Para abastecimiento',
+		'en_verde' 		=> 'Para ventas en verdes',
+	];
+
+	public $tipo_orden_abreviacion = [
+		'inventario' 	=> 'I',
+		'en_verde' 		=> 'V',
+	];
+
 
 	public $estadosColor = array(
 		/*''                  => 'danger',

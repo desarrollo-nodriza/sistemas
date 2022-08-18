@@ -20,10 +20,7 @@ class PruebasController extends AppController
 
   public function api_pruebas()
   {
-    $VentasController = new VentasController();
-    prx($VentasController->actualizar_estados_envios(79818));
-    // $metodoEnviosController = new MetodoEnviosController();
-    // prx($metodoEnviosController->generar_etiqueta_envio_externo(79818));
+    $OrdenComprasController = new OrdenComprasController();
+    prx($OrdenComprasController->RecorrerProveedor());
   }
- 
 }

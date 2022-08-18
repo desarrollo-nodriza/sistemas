@@ -11,13 +11,14 @@
 					<h3 class="panel-title">Editar Proveedor</h3>
 				</div>
 				<div class="panel-body">
-					<div class="table-responsive">
+				<div class="table-responsive">
 						<table class="table">
+							<?= $this->Form->input('id'); ?>
 							<tr>
 								<th><?= $this->Form->label('nombre', 'Nombre'); ?></th>
 								<td><?= $this->Form->input('nombre'); ?></td>
 							</tr>
-							<tr>
+							<!--<tr>
 								<th><?= $this->Form->label('descuento_base', 'Descuento base'); ?></th>
 								<td>
 									<div class="input-group" style="max-width: 100%;">
@@ -25,10 +26,19 @@
                                         <span class="input-group-addon">%</span>
                                     </div>
 								</td>
+							</tr>-->
+							<tr>
+								<th><?= $this->Form->label('giro', 'Giro empresa'); ?></th>
+								<td><?= $this->Form->input('giro'); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('direccion', 'Dirección comercial'); ?></th>
+								<td><?= $this->Form->input('direccion'); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('email_contacto', 'Email de contacto'); ?></th>
-								<td><?= $this->Form->input('email_contacto'); ?></td>
+								<td><?= $this->Form->input('email_contacto'); ?><p class="form-control-static text-danger"><?= __('No es utilizado para enviar la cotización'); ?></p>
+								</td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('fono_contacto', 'Fono de contacto'); ?></th>
@@ -52,7 +62,19 @@
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('activo', 'Activo'); ?></th>
-								<td><?= $this->Form->input('activo', array('class' => 'icheckbox')); ?></td>
+								<td><?= $this->Form->input('activo', array('class' => 'icheckbox','default'=>true)); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('permitir_generar_oc', 'Permitir Generar OC'); ?></th>
+								<td><?= $this->Form->input('permitir_generar_oc', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('aceptar_dte', 'Aceptar facturas de compra automática'); ?></th>
+								<td><?= $this->Form->input('aceptar_dte', array('class' => 'icheckbox')); ?></td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('margen_aceptar_dte', 'Margen para aceptar facturas de compra'); ?></th>
+								<td><?= $this->Form->input('margen_aceptar_dte', array('class' => 'form-control select')); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('oc_via_api', 'Capturar OC vía API'); ?></th>
