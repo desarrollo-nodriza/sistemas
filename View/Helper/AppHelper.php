@@ -71,32 +71,41 @@ class AppHelper extends Helper
     }
 
 
-    public function dteEstado($slug = '', $lista = false)
-    {
-    	if (!empty($slug)) {
-    		$estados = array(
-    			'no_generado' => '<label class="label label-warning">DTE no emitido</label>',
-    			'dte_temporal_no_emitido' => '<label class="label label-info">DTE Temporal no emitido</label>',
-    			'dte_real_no_emitido' => '<label class="label label-warning">DTE Real no emitido</label>',
-    			'dte_real_emitido' => '<label class="label label-success">DTE Emitido</label>'
-    		);
+	public function dteEstado($slug = '', $lista = false)
+	{
+		if (!empty($slug)) {
 
-    		return $estados[$slug];
-    	}
+			$estados = array(
+				'no_generado' 				=> '<label class="label label-warning">DTE no emitido</label>',
+				'dte_temporal_no_emitido' 	=> '<label class="label label-info">DTE Temporal no emitido</label>',
+				'dte_real_no_emitido' 		=> '<label class="label label-warning">DTE Real no emitido</label>',
+				'dte_real_emitido' 			=> '<label class="label label-success">DTE Emitido</label>'
+			);
 
-    	if ($lista) {
-    		$listaEstados = array(
-    			'no_generado' => 'DTE No Emitido',
-    			'dte_temporal_no_emitido' => 'DTE Temporal no emitido',
-    			'dte_real_no_emitido' => 'DTE Real no emitido',
-    			'dte_real_emitido' => 'DTE Emitido'
-    		);
+			$estados_existentes = ClassRegistry::init('DteEstado')->estadosExistentes();
 
-    		return $listaEstados;
-    	}
+			foreach ($estados_existentes as $key => $estado) {
+				$estados_existentes[$key]  = $estados[$key] ?? "<label class='label label-warning'>$estado</label>";
+			}
 
-    	return '<label class="label label-warning">DTE no emitido</label>';
-    }
+			
+			return $estados_existentes[$slug];
+		}
+
+		if ($lista) {
+
+			// $listaEstados = array(
+			// 	'no_generado' 				=> 'DTE No Emitido',
+			// 	'dte_temporal_no_emitido' 	=> 'DTE Temporal no emitido',
+			// 	'dte_real_no_emitido' 		=> 'DTE Real no emitido',
+			// 	'dte_real_emitido' 			=> 'DTE Emitido'
+			// );
+
+			return ClassRegistry::init('DteEstado')->estadosExistentes();
+		}
+
+		return '<label class="label label-warning">DTE no emitido</label>';
+	}
 
     public $tipoDocumento = array(
 		#30 => 'factura',

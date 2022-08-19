@@ -66,14 +66,16 @@ class DtesController extends AppController
 	public function dteEstado($slug = '')
     {
     	if (!empty($slug)) {
-    		$estados = array(
-    			'no_generado' => 'DTE no emitido',
-    			'dte_temporal_no_emitido' => 'DTE Temporal no emitido',
-    			'dte_real_no_emitido' => 'DTE Real no emitido',
-    			'dte_real_emitido' => 'DTE Emitido'
-    		);
 
-    		return $estados[$slug];
+			return ClassRegistry::init('DteEstado')->estadosExistentes()[$slug] ?? 'DTE no emitido';
+			// $estados = array(
+			// 	'no_generado' 				=> 'DTE no emitido',
+			// 	'dte_temporal_no_emitido' 	=> 'DTE Temporal no emitido',
+			// 	'dte_real_no_emitido' 		=> 'DTE Real no emitido',
+			// 	'dte_real_emitido' 			=> 'DTE Emitido'
+			// );
+
+    		// return $estados[$slug];
     	}
 
     	return 'DTE no emitido';
