@@ -754,6 +754,10 @@ class AppController extends Controller
 				'onestock_correo',
 				'onestock_clave',
 				'stock_default',
+				'administrador_id',
+				'tipo_entrega',
+				'receptor_informado',
+				'informacion_entrega'
 			); 
 			
 			# Verificar que la tienda esté configurada
