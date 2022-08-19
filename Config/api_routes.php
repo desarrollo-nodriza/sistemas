@@ -645,45 +645,6 @@ Router::connect(
 );
 
 /**
- * Orden compra facturas
- */
-Router::connect(
-    '/api/facturas-oc/delete/:id', // E.g. /blog/3-CakePHP_Rocks
-    array(
-        'controller' => 'OrdenCompraFacturas', 
-        'action' => 'delete',
-        'api' => true,
-        'prefix' => 'api'),
-    array(
-        'pass' => array('id'),
-        'id' => '[0-9]+'
-    )
-);
-
-Router::connect(
-    '/api/facturas-oc/recepcionar', // E.g. /blog/3-CakePHP_Rocks
-    array(
-        'controller' => 'OrdenCompraFacturas', 
-        'action' => 'recepcionar_dte_compras',
-        'api' => true,
-        'prefix' => 'api')
-);
-
-
-Router::connect(
-    '/api/facturas-oc/recepcionar/:id', // E.g. /blog/3-CakePHP_Rocks
-    array(
-        'controller' => 'OrdenCompraFacturas', 
-        'action' => 'recepcionar_dte_compra',
-        'api' => true,
-        'prefix' => 'api'),
-    array(
-        'pass' => array('id'),
-        'id' => '[0-9]+'
-    )
-);
-
-/**
  * Mensajes
  */
 Router::connect(
@@ -732,7 +693,7 @@ Router::connect(
 
 
 /**
- * Dte  comrpas
+ * Dte  compras
  */
 Router::connect(
     '/api/compras/documentos', // E.g. /blog/3-CakePHP_Rocks
@@ -761,6 +722,30 @@ Router::connect(
         'api' => true,
         '[method]' => 'POST',
         'prefix' => 'api')
+);
+
+Router::connect(
+    '/api/compras/facturacion/recepcionar', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'DteCompras', 
+        'action' => 'recepcionar_dte_compras',
+        '[method]' => 'POST',
+        'api' => true,
+        'prefix' => 'api')
+);
+
+
+Router::connect(
+    '/api/facturas-oc/delete/:id', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'OrdenCompraFacturas', 
+        'action' => 'delete',
+        'api' => true,
+        'prefix' => 'api'),
+    array(
+        'pass' => array('id'),
+        'id' => '[0-9]+'
+    )
 );
 
 

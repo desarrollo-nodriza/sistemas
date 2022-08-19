@@ -1,7 +1,7 @@
 <?php 
 
 App::uses('Controller', 'Controller');
-App::uses('OrdenCompraFacturasController', 'Controller');
+App::uses('DteComprasController', 'Controller');
 
 class RecepcionarComprasShell extends AppShell {
 
@@ -39,6 +39,9 @@ class RecepcionarComprasShell extends AppShell {
 			return;
 		}
 
+		$limite_fecha = new DateTime(date('Y-m-d'));
+		$limite_fecha->modify('-8 days');
+
 		# Buscamos las facturas que no han sido recepcionadas
         $dtes = ClassRegistry::init('OrdenCompraFactura')->find('all', array(
             'conditions' => array(
@@ -52,7 +55,9 @@ class RecepcionarComprasShell extends AppShell {
 					'conditions' => array(
                         'OrdenCompraFactura.folio = DteCompra.folio',
                         'OrdenCompraFactura.emisor = DteCompra.rut_emisor',
-                        'DteCompra.estado' => 'PENDIENTE'
+                        'DteCompra.estado' => 'PENDIENTE',
+						'DteCompra.fecha_emision >' => $limite_fecha->format('Y-m-d'),
+						'DteCompra.fecha_emision >=' => date('Y-m-d')
                     )
                 ),
                 array(
@@ -103,7 +108,7 @@ class RecepcionarComprasShell extends AppShell {
             )
         ));
 
-		$controller = new OrdenCompraFacturasController();
+		$controller = new DteComprasController();
 		$result = $controller->recepcionar_dte_compra($conf['Tienda']['libredte_token'], $conf['Tienda']['sii_public_key'], $conf['Tienda']['sii_private_key'], $dtes);
         
 		

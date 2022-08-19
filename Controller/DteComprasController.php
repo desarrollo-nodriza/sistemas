@@ -433,6 +433,168 @@ class DteComprasController extends AppController
 
 
 	/**
+	 * api_recepcionar_dte_compras
+	 * 
+	 * Busca los DTE de compra PENDIENTES y actualiza los DTE de compra a repecionado en el SII
+	 *
+	 * @return void
+	 */
+	public function api_recepcionar_dte_compras()
+	{   
+
+		$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+
+    	# Existe token
+		if (!isset($token)) {
+			return $this->api_response(404, 'Expected Token');
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			return $this->api_response(401, 'Invalid or expired Token');
+		}
+
+		$conf = ClassRegistry::init('Tienda')->tienda_principal(
+			array(
+				'Tienda.sii_public_key',
+				'Tienda.sii_private_key',
+				'Tienda.libredte_token'
+			)
+		);
+
+		$log = array();
+
+		$log[] = array('Log' => array(
+			'administrador' => 'Api',
+			'modulo' => 'OrdenCompraFactura',
+			'modulo_accion' => 'Inicia proceso de acuse de recibo: ' . date('Y-m-d H:i:s')
+		));
+
+		if (empty($conf['Tienda']['sii_public_key'])
+			|| empty($conf['Tienda']['sii_private_key'])
+			|| empty($conf['Tienda']['libredte_token'])) {
+			
+                $log[] = array('Log' => array(
+				'administrador' => 'Api',
+				'modulo' => 'OrdenCompraFactura',
+				'modulo_accion' => 'Error: La tienda no está configurada para recepcionar las compras desde el SII.'
+			));
+
+			ClassRegistry::init('Log')->saveMany($log);
+
+			return $this->api_response(501, 'Error: La tienda no está configurada para recepcionar las compras desde el SII.');
+
+		}
+
+		$limite_fecha = new DateTime(date('Y-m-d'));
+		$limite_fecha->modify('-8 days');
+
+		$qry = array(
+            'conditions' => array(
+                'OrdenCompraFactura.tipo_documento' => 33 // Sólo facturas
+            ),
+            'joins' => array(
+                array(
+					'table' => 'dte_compras',
+					'alias' => 'DteCompra',
+					'type'  => 'INNER',
+					'conditions' => array(
+                        'OrdenCompraFactura.folio = DteCompra.folio',
+                        'OrdenCompraFactura.emisor = DteCompra.rut_emisor',
+                        'DteCompra.estado' => 'PENDIENTE',
+						'DteCompra.fecha_emision >' => $limite_fecha->format('Y-m-d'),
+						'DteCompra.fecha_emision >=' => date('Y-m-d')
+                    )
+                ),
+                array(
+					'table' => 'proveedores',
+					'alias' => 'pp',
+					'type'  => 'inner',
+					'conditions' => array(
+                        'OrdenCompraFactura.proveedor_id = pp.id',
+                        'pp.aceptar_dte' => 1
+                    )
+				)
+            ),
+            'contain' => array(
+                'Proveedor' => array(
+                    'fields' => array(
+                        'Proveedor.id',
+                        'Proveedor.aceptar_dte',
+						'Proveedor.margen_aceptar_dte'
+					)
+				),
+				'OrdenCompra' => array(
+					'fields' => array(
+						'OrdenCompra.id',
+						'OrdenCompra.tienda_id',
+						'OrdenCompra.bodega_id'
+					),
+					'Tienda' => array(
+						'fields' => array(
+							'Tienda.id', 
+							'Tienda.rut'
+						)
+					),
+					'Bodega' => array(
+						'fields' => array(
+							'Bodega.id',
+							'Bodega.nombre'
+						)
+					)
+				)
+            ),
+            'fields' => array(
+                'OrdenCompraFactura.id',
+                'OrdenCompraFactura.folio',
+                'OrdenCompraFactura.proveedor_id',
+				'OrdenCompraFactura.orden_compra_id',
+				'OrdenCompraFactura.monto_facturado',
+                'DteCompra.*'
+            )
+		);
+		
+		# si viene el filtro de id lo aplicamos
+		if (isset($this->request->data['id']) && !empty($this->request->data['id'])) 
+		{
+			$qry = array_replace_recursive($qry, array(
+				'conditions' => array(
+					'OrdenCompraFactura.id' => $this->request->data['id']
+				)
+			));
+    	}
+
+		# Buscamos las facturas que no han sido recepcionadas
+        $dtes = ClassRegistry::init('OrdenCompraFactura')->find('all', $qry);
+		
+		if (empty($dtes))
+		{
+			$log[] = array('Log' => array(
+				'administrador' => 'Api',
+				'modulo' => 'OrdenCompraFactura',
+				'modulo_accion' => 'No se encontraron dtes de compra.'
+			));
+
+			ClassRegistry::init('Log')->saveMany($log);
+
+			return $this->api_response(404, 'No se encontraron dtes de compra.');
+		}
+		
+		$result = $this->recepcionar_dte_compra($conf['Tienda']['libredte_token'], $conf['Tienda']['sii_public_key'], $conf['Tienda']['sii_private_key'], $dtes);
+        
+		# Extraemos los resultados correctos
+		$ejecutados = Hash::extract($result, '{n}.[httpCode=200]');
+
+		return $this->api_response(200, sprintf('Se recepcionaron %n dtes de compra.', count($ejecutados)), $ejecutados);
+
+	}
+
+
+	/**
 	 * obtener_dte_compras_desde_sii
 	 * 
 	 * Obtiene los DTE de compra directamente desde libredte según su estado
@@ -471,5 +633,113 @@ class DteComprasController extends AppController
 
 		return $this->ApiLibreDte->obtenerDocumentosCompras(formato_rut($rut), $periodo, 33, $tipo, $pars);
 		
+	}
+
+
+	/**
+	 * recepcionar_dte_compra
+	 *
+	 * @param  mixed $token LibreDTE Token
+	 * @param  mixed $cert Datos del certificvado público del SII
+	 * @param  mixed $pk Datos de la llave privada del SII 
+	 * @param  mixed $facturas Modelo OrdenCompraFactura. Debe incluir OC, Bodega y Tienda.
+	 * @return void
+	 */
+	public function recepcionar_dte_compra($token, $cert, $pk, $facturas = [])
+	{	
+		$this->ApiLibreDte = $this->Components->load('ApiLibreDte');
+		$this->ApiLibreDte->crearCliente($token, ['cert' => $cert, 'pkey' => $pk]);
+
+		$docs = [];
+		$logs = [];
+		$result = [];
+		
+
+		$log[] = array('Log' => array(
+			'administrador' => 'OrdenCompraFactura',
+			'modulo' => 'DteCompra',
+			'modulo_accion' => 'Init: ' . json_encode($facturas)
+		));
+		
+		$contador   = 0;
+    	$contador_2 = 0;
+
+		foreach ($facturas as $fac) 
+		{	
+			if ($contador == 20) {
+				$contador_2++;
+				$contador = 0;
+			  }
+
+			# No tiene registro de facturas recibidas
+			if (!$fac['DteCompra'])
+				continue;
+
+			# El proveedor no permite recepción automática
+			if(!$fac['Proveedor']['aceptar_dte'])
+				continue;
+
+			# si la factura de compra ya esta registrada se omite
+			if ($fac['DteCompra']['estado'] == 'REGISTRO')
+				continue;
+			
+
+			$margen_proveedor = ($fac['Proveedor']['margen_aceptar_dte']) ? $fac['Proveedor']['margen_aceptar_dte'] : 500;
+
+			$margen_min = $fac['OrdenCompraFactura']['monto_facturado'] - $margen_proveedor;
+			$margen_max = $fac['OrdenCompraFactura']['monto_facturado'] + $margen_proveedor;
+
+			# Si el monto de la factura es diferente a la registrada en el SII no se recepciona. Se deja un margen de error
+			if($fac['DteCompra']['monto_total'] < $margen_min || $fac['DteCompra']['monto_total'] > $margen_max)
+				continue;
+			// * Se agrupan cada 20 para ser enviadas
+			$docs[$contador_2][] = [
+				'TipoDTE' => (int) $fac['DteCompra']['tipo_documento'],
+				'Folio' => $fac['DteCompra']['folio'],
+				'FchEmis' => $fac['DteCompra']['fecha_emision'],
+				'RUTEmisor' => sprintf('%s-%s', $fac['DteCompra']['rut_emisor'], $fac['DteCompra']['dv_emisor']),
+				'RUTRecep' => formato_rut($fac['OrdenCompra']['Tienda']['rut']),
+				'MntTotal' => $fac['DteCompra']['monto_total'],
+				'EstadoRecepDTE' => 'ERM',
+				'RecepDTEGlosa' => sprintf('Recibido en bodega %s el %s a las %s', $fac['OrdenCompra']['Bodega']['nombre'], date('Y-m-d'), date('H:i:s'))
+			];
+
+			$contador++;
+			
+		}
+
+		$log[] = array('Log' => array(
+			'administrador' => 'OrdenCompraFactura',
+			'modulo' 		=> 'DteCompra',
+			'modulo_accion' => 'Process: ' . json_encode($docs)
+		));
+		
+		if (!empty($docs))
+		{
+			// * Se envian grupos hasta con 10 dte
+			foreach ($docs as $i => $documentos_10) {
+
+				$result = $this->ApiLibreDte->cambiarEstadoDteCompra($documentos_10);
+				
+				# añadimos una pausa para que el sii no bloquee la petición
+				sleep(10);
+
+				$log[] = array('Log' => array(
+					'administrador' => 'OrdenCompraFactura',
+					'modulo' 		=> 'DteCompra',
+					'modulo_accion' => 'Result lote '. $i . ': ' . json_encode($result)
+				));
+				
+				sleep(2);
+			}
+			
+		}
+
+		
+
+		# Guardamos los logs
+		ClassRegistry::init('Log')->saveMany($log);
+
+		return $result;
 	}
 }
