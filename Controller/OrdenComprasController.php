@@ -4699,7 +4699,7 @@ class OrdenComprasController extends AppController
 					$total_neto 		= $total_neto - $descuento_producto;
 					$producto_oc[] 		= [
 						'venta_detalle_producto_id' => $p['id'],
-						'codigo' 					=> $p['referencia'],
+						'codigo' 					=> $p['codigo_proveedor'],
 						'descripcion' 				=> $p['nombre'],
 						'cantidad' 					=> $total,
 						'precio_unitario' 			=> $precio_unitario,
