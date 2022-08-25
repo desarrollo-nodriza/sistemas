@@ -1436,4 +1436,93 @@ class PrestashopComponent extends Component
 		return $marca;
 	}
 
+	public function prestashop_obtener_productos_v2($filter = array('filter[active]' => '[1]'))
+	{	
+		ini_set('max_execution_time', 0);
+
+		$opt             	= array();
+		$opt['display'] 	= 'full';
+		$opt['resource'] 	= 'products';
+
+		foreach ($filter as $field => $value) {
+			$opt = array_replace_recursive($opt, array($field => $value));
+		}
+		
+		$productos = array();
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+		
+			$PrestashopResources = $xml->children()->children();
+			
+			$productos = to_array($PrestashopResources);
+
+		} catch (Exception $e) {
+			// No existe en prestashop
+		}
+		
+		return $productos;
+	}
+
+	public function prestashop_obtener_descuento_producto_array($id, $monto = 0) 
+	{
+		$opt                       = array();
+		$opt['resource']           = 'specific_prices';
+		$opt['filter[id_product]'] = $id;
+		$opt['display']            = 'full';
+
+		$descuentos = array();
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+		
+			$PrestashopResources = $xml->children()->children();
+			
+			$descuentos = to_array($PrestashopResources);
+
+				
+		} catch (Exception $e) {
+			// No existe en prestashop
+		}
+	
+
+		return $descuentos;
+	}
+
+	/**
+	 * [prestashop_obtener_proveedores description]
+	 * @return [type] [description]
+	 */
+	public function prestashop_obtener_categorias_v2( $filter = array('filter[active]' => '[1]'))
+	{	
+		ini_set('max_execution_time', 0);
+
+		$opt             	= array();
+		$opt['display'] 	= 'full';
+		$opt['resource'] 	= 'categories';
+
+		// if (!empty($id_padre)) {
+		// 	$opt['filter[id_parent]'] = $id_padre;
+		// }
+
+		foreach ($filter as $field => $value) {
+			$opt = array_replace_recursive($opt, array($field => $value));
+		}
+
+		$proveedores = array();
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+		
+			$PrestashopResources = $xml->children()->children();
+			
+			$proveedores = to_array($PrestashopResources);
+
+		} catch (Exception $e) {
+			// No existe en prestashop
+		}
+		
+		return $proveedores;
+	}
+
 }
