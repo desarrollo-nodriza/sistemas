@@ -4440,77 +4440,80 @@ class OrdenComprasController extends AppController
 
 		foreach ($bodegas as $bodega_id => $nombre) {
 
-			// * La Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autamaticas
-			// * Además la Venta debe cumplir con las condiciones para generar OC
-			$venta_bodega	 = $this->OrdenCompra->Venta->find('all', array(
-				'fields' => array(
-					'vd_1.id as venta_detalles_id',
-					'vd_1.venta_id as venta_id',
-					'vd_1.venta_detalle_producto_id as producto_id',
-					'rpvdp.id as proveedores_venta_detalle_productos_id',
-					'rpvdp.venta_detalle_producto_id as producto_id',
-					'rpvdp.proveedor_id as proveedor_id',
-					"((vd_1.cantidad - vd_1.cantidad_anulada - vd_1.cantidad_entregada) - (select ifnull(sum(rvdr_1.cantidad_reservada), 0)
+			
+			foreach ($proveedores_id as $proveedor_id) {
+
+				// * La Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autamaticas
+				// * Además la Venta debe cumplir con las condiciones para generar OC
+				$venta_bodega	 = $this->OrdenCompra->Venta->find('all', array(
+					'fields' => array(
+						'vd_1.id as venta_detalles_id',
+						'vd_1.venta_id as venta_id',
+						'vd_1.venta_detalle_producto_id as producto_id',
+						'rpvdp.id as proveedores_venta_detalle_productos_id',
+						'rpvdp.venta_detalle_producto_id as producto_id',
+						'rpvdp.proveedor_id as proveedor_id',
+						"((vd_1.cantidad - vd_1.cantidad_anulada - vd_1.cantidad_entregada) - (select ifnull(sum(rvdr_1.cantidad_reservada), 0)
 						from rp_venta_detalles_reservas rvdr_1
 						where rvdr_1.venta_detalle_id = vd_1.id)) cantidad",
-				),
-				'joins' => array(
-					array(
-						'table' => 'rp_venta_estados',
-						'alias' => 'venta_estados',
-						'type' 	=> 'INNER',
-						'conditions' => array(
-							'venta_estados.id = Venta.venta_estado_id',
-							'venta_estados.permitir_oc = 1'
-						)
 					),
-					array(
-						'table' => 'rp_venta_estado_categorias',
-						'alias' => 'venta_estados_cat',
-						'type' 	=> 'INNER',
-						'conditions' => array(
-							'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
-							'venta_estados_cat.rechazo = 0',
-							'venta_estados_cat.cancelado = 0',
-							'venta_estados_cat.final = 0'
-						)
-					),
-					array(
-						'table' => 'rp_venta_detalles',
-						'alias' => 'vd_1',
-						'type' 	=> 'INNER',
-						'conditions' => array(
-							'vd_1.venta_id = Venta.id'
+					'joins' => array(
+						array(
+							'table' => 'rp_venta_estados',
+							'alias' => 'venta_estados',
+							'type' 	=> 'INNER',
+							'conditions' => array(
+								'venta_estados.id = Venta.venta_estado_id',
+								'venta_estados.permitir_oc = 1'
+							)
+						),
+						array(
+							'table' => 'rp_venta_estado_categorias',
+							'alias' => 'venta_estados_cat',
+							'type' 	=> 'INNER',
+							'conditions' => array(
+								'venta_estados_cat.id = venta_estados.venta_estado_categoria_id',
+								'venta_estados_cat.rechazo = 0',
+								'venta_estados_cat.cancelado = 0',
+								'venta_estados_cat.final = 0'
+							)
+						),
+						array(
+							'table' => 'rp_venta_detalles',
+							'alias' => 'vd_1',
+							'type' 	=> 'INNER',
+							'conditions' => array(
+								'vd_1.venta_id = Venta.id'
+							),
+						),
+						array(
+							'table' => 'rp_proveedores_venta_detalle_productos',
+							'alias' => 'rpvdp',
+							'type' 	=> 'INNER',
+							'conditions' => array(
+								'vd_1.venta_detalle_producto_id = rpvdp.venta_detalle_producto_id'
+							)
+						),
+						array(
+							'table' => 'rp_proveedores',
+							'alias' => 'rp_1',
+							'type' 	=> 'INNER',
+							'conditions' => array(
+								'rpvdp.proveedor_id = rp_1.id',
+								'rp_1.id'	=> $proveedor_id
+							)
+						),
+						array(
+							'table' => 'rp_venta_detalles_reservas',
+							'alias' => 'rvdr',
+							'type' 	=> 'LEFT',
+							'conditions' => array(
+								'rvdr.venta_detalle_id = vd_1.id',
+							)
 						),
 					),
-					array(
-						'table' => 'rp_proveedores_venta_detalle_productos',
-						'alias' => 'rpvdp',
-						'type' 	=> 'INNER',
-						'conditions' => array(
-							'vd_1.venta_detalle_producto_id = rpvdp.venta_detalle_producto_id'
-						)
-					),
-					array(
-						'table' => 'rp_proveedores',
-						'alias' => 'rp_1',
-						'type' 	=> 'INNER',
-						'conditions' => array(
-							'rpvdp.proveedor_id = rp_1.id',
-							'rp_1.id'	=> $proveedores_id
-						)
-					),
-					array(
-						'table' => 'rp_venta_detalles_reservas',
-						'alias' => 'rvdr',
-						'type' 	=> 'LEFT',
-						'conditions' => array(
-							'rvdr.venta_detalle_id = vd_1.id',
-						)
-					),
-				),
-				'conditions' => array(
-					"Venta.id in (SELECT Venta.id
+					'conditions' => array(
+						"Venta.id in (SELECT Venta.id
 						FROM rp_ventas AS Venta
 								 INNER JOIN rp_venta_estados AS venta_estados
 											ON (venta_estados.id = Venta.venta_estado_id AND venta_estados.permitir_oc = 1)
@@ -4541,23 +4544,25 @@ class OrdenComprasController extends AppController
 															   from rp_venta_detalles_reservas as Reserva
 															   where Reserva.venta_detalle_id = rvd.id)) > 0
 						ORDER BY Venta.prioritario DESC, Venta.fecha_venta DESC)",
-					"0 = (select count(*) from rp_orden_compras_ventas orv where orv.venta_id = Venta.id)",
-					'Venta.bodega_id' 			=> $bodega_id,
-					'rp_1.permitir_generar_oc'	=> true,
-					'rp_1.activo'				=> true,
-				),
-				'order' 	=> array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC'),
-				'having' 	=> ['cantidad > 0'],
-				'group'		=> ['`vd_1`.`id`']
-			));
+						"0 = (
+						select count(*) from rp_orden_compras_ventas orv
+							inner join rp_orden_compras or_2 on or_2.id = orv.orden_compra_id
+						where orv.venta_id = Venta.id and or_2.proveedor_id = $proveedor_id
+					
+					)",
+						'Venta.bodega_id' 			=> $bodega_id,
+						'rp_1.permitir_generar_oc'	=> true,
+						'rp_1.activo'				=> true,
+					),
+					'order' 	=> array('Venta.prioritario' => 'DESC', 'Venta.fecha_venta' => 'DESC'),
+					'having' 	=> ['cantidad > 0'],
+					'group'		=> ['`vd_1`.`id`']
+				));
 
-			// * Extraen los identificadores de los proveedores para crear oc por cada proveedor
-
-			$proveedores = array_unique(Hash::extract($venta_bodega, '{n}.rpvdp.proveedor_id'));
-
-			// * Se recorren los proveedores y se harán OC solo con sus productos asociados
-			foreach ($proveedores as $proveedor_id) {
-
+				// * Si no hay ventas no se procesa y continua con el otro proveedor.
+				if (!$venta_bodega) {
+					continue;
+				}
 				$OC = [];
 
 				// * Obtenemos los productos de ese proveedor
@@ -4737,13 +4742,13 @@ class OrdenComprasController extends AppController
 					foreach ($proveedor['ReglasGenerarOC']  as $ReglasGenerarOC) {
 
 						if ($ReglasGenerarOC['mayor_que'] < $OC['OrdenCompra']['total']  && $ReglasGenerarOC['menor_que'] > $OC['OrdenCompra']['total'])
-							$encontro_regla	= true;
+						$encontro_regla	= true;
 
 						if (is_null($ReglasGenerarOC['mayor_que']) &&  $OC['OrdenCompra']['total'] < $ReglasGenerarOC['menor_que'])
-							$encontro_regla	= true;
+						$encontro_regla	= true;
 
 						if (is_null($ReglasGenerarOC['menor_que']) &&  $OC['OrdenCompra']['total'] > $ReglasGenerarOC['mayor_que'])
-							$encontro_regla	= true;
+						$encontro_regla	= true;
 
 						if ($encontro_regla) {
 
