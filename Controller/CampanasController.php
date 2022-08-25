@@ -172,7 +172,7 @@ Class CampanasController extends AppController {
 
 
 	public function google_feed($id_tienda, $id_campana)
-	{	
+	{
 
 		if (!ClassRegistry::init('Tienda')->exists($id_tienda) || !$this->Campana->exists($id_campana)) {
 			return;
@@ -207,7 +207,10 @@ Class CampanasController extends AppController {
 			)
 		));
 
-		
+		if (!$campana) {
+			return;
+		}
+
 		# Almacenará los productos que iran en el feed
 		$productostodos = array();
 
@@ -217,137 +220,46 @@ Class CampanasController extends AppController {
 		# si no tiene etiqueta, se usa la categoria principal
 		if (empty($campana['CampanaEtiqueta'])) {
 
-			$id_productos = ClassRegistry::init('Productotienda')->query(sprintf('SELECT * FROM %scategory_product WHERE id_category = %d', $tienda['Tienda']['prefijo'], $campana['Campana']['categoria_id'])); 
-			$id_productos = Hash::extract($id_productos, '{n}.tm_category_product.id_product');
-			
-			// Buscamos los productos que cumplan con el criterio
-			$productos	= ClassRegistry::init('Productotienda')->find('all', array(
-				'fields' => array(
-					'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-home_default.jpg\' ) AS url_image_thumb',
-					'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'.jpg\' ) AS url_image_large',
-					'Productotienda.id_product',
-					'Productotienda.id_category_default',
-					'pl.name', 
-					'pl.description_short',
-					'Productotienda.price', 
-					'pl.link_rewrite', 
-					'Productotienda.reference', 
-					'Productotienda.show_price',
-					'Productotienda.quantity',
-					'Productotienda.id_manufacturer',
-					'Productotienda.condition',
-					'Productotienda.supplier_reference',
-					'Marca.id_manufacturer',
-					'Marca.name',
-					'Stockdisponible.quantity'
-				),
-				'joins' => array(
-					array(
-			            'table' => sprintf('%sproduct_lang', $tienda['Tienda']['prefijo']),
-			            'alias' => 'pl',
-			            'type'  => 'LEFT',
-			            'conditions' => array(
-			                'Productotienda.id_product=pl.id_product'
-			            )
-
-		        	),
-		        	array(
-			            'table' => sprintf('%simage', $tienda['Tienda']['prefijo']),
-			            'alias' => 'im',
-			            'type'  => 'LEFT',
-			            'conditions' => array(
-			                'Productotienda.id_product = im.id_product',
-	                		'im.cover' => 1
-			            )
-		        	),
-		        	array(
-			            'table' => sprintf('%smanufacturer', $tienda['Tienda']['prefijo']),
-			            'alias' => 'Marca',
-			            'type'  => 'LEFT',
-			            'conditions' => array(
-			                'Productotienda.id_manufacturer = Marca.id_manufacturer'
-			            )
-		        	),
-		        	array(
-			            'table' => sprintf('%sstock_available', $tienda['Tienda']['prefijo']),
-			            'alias' => 'Stockdisponible',
-			            'type'  => 'LEFT',
-			            'conditions' => array(
-			                'Productotienda.id_product = Stockdisponible.id_product'
-			            )
-		        	)
-				),
-				'contain' => array(
-					'TaxRulesGroup' => array(
-						'TaxRule' => array(
-							'Tax'
-						)
-					),
-					'SpecificPrice' => array(
-						'conditions' => array(
-							'AND' => array(
-								'SpecificPrice.from_quantity > 0' 
-							),
-							'OR' => array(
-								array(
-									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
-									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
-								),
-								array(
-									'SpecificPrice.from' => '0000-00-00 00:00:00',
-									'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
-								),
-								array(
-									'SpecificPrice.from' => '0000-00-00 00:00:00',
-									'SpecificPrice.to' => '0000-00-00 00:00:00'
-								),
-								array(
-									'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
-									'SpecificPrice.to' => '0000-00-00 00:00:00'
-								)
-							)
-						)
-					),
-					'SpecificPricePriority'
-				),
-				'conditions' => array(
-					'Productotienda.id_product' => $id_productos,
-					'Productotienda.active' => 1,
-					'Productotienda.available_for_order' => 1,
-					'Productotienda.id_shop_default' => 1
+			$categoria = $this->Prestashop->prestashop_obtener_categorias_v2(
+				array(
+					'filter[id]' 		=> "[{$campana['Campana']['categoria_id']}]",
+					'filter[active]'	=> "[1]",
 				)
-			));
+			);
+			$producto_ids = Hash::extract($categoria['category']['associations']['products'], 'product.{*}.id');
+			$producto_ids = (implode("|", $producto_ids));
+
+			$productos = $this->Prestashop->prestashop_obtener_productos_v2(
+				array(
+					'filter[id]' 					=> "[$producto_ids]",
+					'filter[active]' 				=> "[1]",
+					'filter[available_for_order]' 	=> "[1]",
+					'filter[id_shop_default]' 		=> "[1]",
+				)
+			);
 
 			# agregamos a los productos la etiqueta de la campaña
-			foreach ($productos as $ip => $p) {
-				
-				if (!isset($productostodos[$p['Productotienda']['id_product']])) {
-					$productostodos[$p['Productotienda']['id_product']] = $p;
+			foreach ($productos['product'] as $_producto) {
+
+				if (!array_key_exists($_producto['id'], $productostodos)) {
+					$productostodos[$_producto['id']] = $_producto;
+				} else {
+					continue;
 				}
-				
 			}
-		}else{
+		} else {
 
 			# Se agregan las etiquetas correspondientes
 			foreach ($campana['CampanaEtiqueta'] as $ic => $c) {
-				// pr($campana);
-				// if ($c['categoria_id'] == 1000000000) {
-				// 	$id_productos = ClassRegistry::init('Productotienda')->query(sprintf('SELECT * FROM %scategory_product', $tienda['Tienda']['prefijo']));
-				// } else {
-				// 	$id_productos = ClassRegistry::init('Productotienda')->query(sprintf('SELECT * FROM %scategory_product WHERE id_category = %d', $tienda['Tienda']['prefijo'], $c['categoria_id']));
-				// }
 
-				// $id_productos = Hash::extract($id_productos, '{n}.tm_category_product.id_product');
-				// pr($id_productos);
 				$categoria = $this->Prestashop->prestashop_obtener_categorias_v2(
 					array(
-						'filter[id]' 	=> "[{$c['categoria_id']}]",
-						'filter[active]' 		=> "[1]",
+						'filter[id]' 		=> "[{$c['categoria_id']}]",
+						'filter[active]'	=> "[1]",
 					)
 				);
-				$producto_ids = Hash::extract($categoria['category']['associations']['products'],'product.{*}.id');
+				$producto_ids = Hash::extract($categoria['category']['associations']['products'], 'product.{*}.id');
 				$producto_ids = (implode("|", $producto_ids));
-				// pr($producto_ids);
 
 				$productos = $this->Prestashop->prestashop_obtener_productos_v2(
 					array(
@@ -355,109 +267,11 @@ Class CampanasController extends AppController {
 						'filter[active]' 				=> "[1]",
 						'filter[available_for_order]' 	=> "[1]",
 						'filter[id_shop_default]' 		=> "[1]",
-						)
+					)
 				);
-			
-				// Buscamos los productos que cumplan con el criterio
-				// $productos_2	= ClassRegistry::init('Productotienda')->find('all', array(
-				// 	'fields' => array(
-				// 		'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'-home_default.jpg\' ) AS url_image_thumb',
-				// 		'concat(\'https://' . $tienda['Tienda']['url'] . '/img/p/\',mid(im.id_image,1,1),\'/\', if (length(im.id_image)>1,concat(mid(im.id_image,2,1),\'/\'),\'\'),if (length(im.id_image)>2,concat(mid(im.id_image,3,1),\'/\'),\'\'),if (length(im.id_image)>3,concat(mid(im.id_image,4,1),\'/\'),\'\'),if (length(im.id_image)>4,concat(mid(im.id_image,5,1),\'/\'),\'\'), im.id_image, \'.jpg\' ) AS url_image_large',
-				// 		'Productotienda.id_product',
-				// 		'Productotienda.id_category_default',
-				// 		'pl.name',
-				// 		'pl.description_short',
-				// 		'Productotienda.price',
-				// 		'pl.link_rewrite', 
-				// 		'Productotienda.reference', 
-				// 		'Productotienda.show_price',
-				// 		'Productotienda.quantity',
-				// 		'Productotienda.id_manufacturer',
-				// 		'Productotienda.condition',
-				// 		'Productotienda.supplier_reference',
-				// 		'Marca.id_manufacturer',
-				// 		'Marca.name',
-				// 		'Stockdisponible.quantity'
-				// 	),
-				// 	'joins' => array(
-				// 		array(
-				//             'table' => sprintf('%sproduct_lang', $tienda['Tienda']['prefijo']),
-				//             'alias' => 'pl',
-				//             'type'  => 'LEFT',
-				//             'conditions' => array(
-				//                 'Productotienda.id_product=pl.id_product'
-				//             )
-
-			    //     	),
-			    //     	array(
-				//             'table' => sprintf('%simage', $tienda['Tienda']['prefijo']),
-				//             'alias' => 'im',
-				//             'type'  => 'LEFT',
-				//             'conditions' => array(
-				//                 'Productotienda.id_product = im.id_product',
-		        //         		'im.cover' => 1
-				//             )
-			    //     	),
-			    //     	array(
-				//             'table' => sprintf('%smanufacturer', $tienda['Tienda']['prefijo']),
-				//             'alias' => 'Marca',
-				//             'type'  => 'LEFT',
-				//             'conditions' => array(
-				//                 'Productotienda.id_manufacturer = Marca.id_manufacturer'
-				//             )
-			    //     	),
-			    //     	array(
-				//             'table' => sprintf('%sstock_available', $tienda['Tienda']['prefijo']),
-				//             'alias' => 'Stockdisponible',
-				//             'type'  => 'LEFT',
-				//             'conditions' => array(
-				//                 'Productotienda.id_product = Stockdisponible.id_product'
-				//             )
-			    //     	)
-				// 	),
-				// 	'contain' => array(
-				// 		'TaxRulesGroup' => array(
-				// 			'TaxRule' => array(
-				// 				'Tax'
-				// 			)
-				// 		),
-				// 		'SpecificPrice' => array(
-				// 			'conditions' => array(
-				// 				'AND' => array(
-				// 					'SpecificPrice.from_quantity > 0' 
-				// 				),
-				// 				'OR' => array(
-				// 					array(
-				// 						'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
-				// 						'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
-				// 					),
-				// 					array(
-				// 						'SpecificPrice.from' => '0000-00-00 00:00:00',
-				// 						'SpecificPrice.to >= "' . date('Y-m-d H:i:s') . '"'
-				// 					),
-				// 					array(
-				// 						'SpecificPrice.from' => '0000-00-00 00:00:00',
-				// 						'SpecificPrice.to' => '0000-00-00 00:00:00'
-				// 					),
-				// 					array(
-				// 						'SpecificPrice.from <= "' . date('Y-m-d H:i:s') . '"',
-				// 						'SpecificPrice.to' => '0000-00-00 00:00:00'
-				// 					)
-				// 				)
-				// 			)
-				// 		),
-				// 		'SpecificPricePriority'
-				// 	),
-				// 	'conditions' => array(
-				// 		'Productotienda.id_product' => $id_productos,
-				// 		'Productotienda.active' => 1,
-				// 		'Productotienda.available_for_order' => 1,
-				// 		'Productotienda.id_shop_default' => 1
-				// 	)
-				// ));
 
 				# agregamos a los productos la etiqueta de la campaña
-				
+
 				foreach ($productos['product'] as $_producto) {
 
 					if (!array_key_exists($_producto['id'], $productostodos)) {
@@ -465,9 +279,9 @@ Class CampanasController extends AppController {
 					} else {
 						continue;
 					}
-					
-					if($c['categoria_id'] == 1000000000 && !empty($_producto['reference'])) {
-						
+
+					if ($c['categoria_id'] == 1000000000 && !empty($_producto['reference'])) {
+
 						$prisync = $this->obtener_productos_mejor_precio($_producto['reference']);
 
 						if (!empty($prisync)) {
@@ -480,15 +294,11 @@ Class CampanasController extends AppController {
 								$productostodos[$_producto['id']]['custom_label_' . $ic] = 'Mejor precio mercado';
 							}
 						}
-
-					}else{
+					} else {
 						$productostodos[$_producto['id']]['custom_label_' . $ic] = $c['nombre'];
 					}
-
 				}
 			}
-			// prx('fin');
-
 		}
 
 		# Campana de Google
@@ -497,45 +307,27 @@ Class CampanasController extends AppController {
 		GoogleShopping::description('Feed generado por Nodriza Spa [cristian.rojas@nodriza.cl]');
 		GoogleShopping::setIso4217CountryCode('CLP');
 
-		
+
 		$google = array();
 
 		$productoTienda = new ProductotiendasController();
 
-		$sitioUrl = $this->formatear_url($tienda['Tienda']['url'], true);
-
 		foreach ($productostodos as $ip => $producto) {
-			
+
 			# Se excluyen los productos sin stock
 			if ($producto['quantity'] < 1 && $campana['Campana']['excluir_stockout'])
-				continue;
+			continue;
 
 			$cate = $productoTienda->getParentCategory($producto['id_category_default'], $tienda['Tienda']['prefijo']);
-			
+
 			if (!empty($cate)) {
 				$cate = $productoTienda->categoriesTree($cate);
 			}
 
-			$producto['valor_iva'] = $producto['price'];	
-			// if ( !isset($producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']) ) {
-			// 	$producto['valor_iva'] = $producto['price'];	
-			// }else{
-			// 	$producto['valor_iva'] = $productoTienda->precio($producto['price'], $producto['TaxRulesGroup']['TaxRule'][0]['Tax']['rate']);
-			// }
-			
-			$SpecificPrice = $this->Prestashop->prestashop_obtener_descuento_producto_array($producto['id']);
+			$producto['valor_iva'] 		= is_null($producto['id_tax_rules_group']) ? $producto['price'] : $productoTienda->precio($producto['price'], Configure::read('iva_clp'));
+			$producto['valor_final'] 	= $producto['valor_iva'];
+			$producto['valor_final'] 	= $producto['valor_final'] - $this->Prestashop->prestashop_obtener_descuento_producto($producto['id'], $producto['valor_final']);
 
-			$producto['valor_final'] = $producto['valor_iva'];
-			// prx($producto);
-			// Retornar último precio espeficico según criterio del producto
-			foreach ($SpecificPrice as $precio) {
-				if ( $precio['reduction'] == 0 ) {
-					$producto['valor_final'] = $producto['valor_iva'];
-				} else {
-					$producto['valor_final'] = $productoTienda->precio($producto['valor_iva'], ($precio['reduction'] * 100 * -1));
-					$producto['descuento'] = ($precio['reduction'] * 100 * -1);
-				}
-			}
 			$google[$ip]['g:id']           = $producto['id'];
 			$google[$ip]['g:title']        = $producto['name']['language'];
 			$google[$ip]['g:description']  = strip_tags(!is_array($producto['description_short']['language']) ? $producto['description_short']['language'] : "") . '';
@@ -589,19 +381,9 @@ Class CampanasController extends AppController {
 			if (isset($producto['custom_label_4'])) {
 				$item->custom_label_4($producto['custom_label_4']);
 			}
-			
-			
 		}
 
-		$out = $google;
-		
-
 		GoogleShopping::asRss(true);
-		#$salida = GoogleShopping::asRss();
-		
-		
-		#file_put_contents('google_campana2.xml', $salida);
-		
 		exit;
 	}
 

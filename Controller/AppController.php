@@ -555,7 +555,7 @@ class AppController extends Controller
 		ClassRegistry::init('ClienteMensaje')->useDbConfig                    = $tiendaConf;
 		ClassRegistry::init('Empleado')->useDbConfig                          = $tiendaConf;
 		ClassRegistry::init('Fabricante')->useDbConfig                        = $tiendaConf;
-		ClassRegistry::init('WebpayStore')->useDbConfig                        	  = $tiendaConf;
+		ClassRegistry::init('WebpayStore')->useDbConfig                       = $tiendaConf;
     }
 	
 	/**

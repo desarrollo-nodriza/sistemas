@@ -1436,8 +1436,14 @@ class PrestashopComponent extends Component
 		return $marca;
 	}
 
+	/**
+	 * prestashop_obtener_productos_v2
+	 * * Retorna todo los display
+	 * @param  mixed $filter
+	 * @return void
+	 */
 	public function prestashop_obtener_productos_v2($filter = array('filter[active]' => '[1]'))
-	{	
+	{
 		ini_set('max_execution_time', 0);
 
 		$opt             	= array();
@@ -1447,82 +1453,145 @@ class PrestashopComponent extends Component
 		foreach ($filter as $field => $value) {
 			$opt = array_replace_recursive($opt, array($field => $value));
 		}
-		
-		$productos = array();
+
+		$informacion = array();
 
 		try {
 			$xml = $this->ConexionPrestashop->get($opt);
-		
-			$PrestashopResources = $xml->children()->children();
-			
-			$productos = to_array($PrestashopResources);
 
+			$PrestashopResources = $xml->children()->children();
+
+			$informacion = to_array($PrestashopResources);
 		} catch (Exception $e) {
 			// No existe en prestashop
 		}
-		
-		return $productos;
+
+		return $informacion;
 	}
 
-	public function prestashop_obtener_descuento_producto_array($id, $monto = 0) 
+	/**
+	 * prestashop_obtener_descuento_producto_array
+	 *
+	 * @param  mixed $id
+	 * @param  mixed $monto
+	 * @return void
+	 */
+	public function prestashop_obtener_descuento_producto_array($id, $monto = 0)
 	{
 		$opt                       = array();
 		$opt['resource']           = 'specific_prices';
 		$opt['filter[id_product]'] = $id;
 		$opt['display']            = 'full';
 
-		$descuentos = array();
+		$informacion = array();
 
 		try {
 			$xml = $this->ConexionPrestashop->get($opt);
-		
-			$PrestashopResources = $xml->children()->children();
-			
-			$descuentos = to_array($PrestashopResources);
 
-				
+			$PrestashopResources = $xml->children()->children();
+
+			$informacion = to_array($PrestashopResources);
 		} catch (Exception $e) {
 			// No existe en prestashop
 		}
-	
 
-		return $descuentos;
+
+		return $informacion;
 	}
 
+
 	/**
-	 * [prestashop_obtener_proveedores description]
-	 * @return [type] [description]
+	 * prestashop_obtener_categorias_v2
+	 * Retorna todas las categorias y puedo filtrar segun se antoje
+	 * @param  mixed $filter
+	 * @return void
 	 */
-	public function prestashop_obtener_categorias_v2( $filter = array('filter[active]' => '[1]'))
-	{	
+	public function prestashop_obtener_categorias_v2($filter = array('filter[active]' => '[1]'))
+	{
 		ini_set('max_execution_time', 0);
 
 		$opt             	= array();
 		$opt['display'] 	= 'full';
 		$opt['resource'] 	= 'categories';
 
-		// if (!empty($id_padre)) {
-		// 	$opt['filter[id_parent]'] = $id_padre;
-		// }
+		foreach ($filter as $field => $value) {
+			$opt = array_replace_recursive($opt, array($field => $value));
+		}
+
+		$informacion = array();
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+
+			$PrestashopResources = $xml->children()->children();
+
+			$informacion = to_array($PrestashopResources);
+		} catch (Exception $e) {
+			// No existe en prestashop
+		}
+
+		return $informacion;
+	}
+
+	/**
+	 * prestashop_obtener_tax_rules
+	 * *Se uso para saber las reglas, pero no se implemento
+	 * @param  mixed $filter
+	 * @return void
+	 */
+	public function prestashop_obtener_tax_rules($filter = array('filter[id_country]' => '[68]'))
+	{
+		ini_set('max_execution_time', 0);
+
+		$opt             	= array();
+		$opt['display'] 	= 'full';
+		$opt['resource'] 	= 'tax_rules';
 
 		foreach ($filter as $field => $value) {
 			$opt = array_replace_recursive($opt, array($field => $value));
 		}
 
-		$proveedores = array();
+		$informacion = array();
 
 		try {
 			$xml = $this->ConexionPrestashop->get($opt);
-		
-			$PrestashopResources = $xml->children()->children();
-			
-			$proveedores = to_array($PrestashopResources);
 
+			$PrestashopResources = $xml->children()->children();
+
+			$informacion = to_array($PrestashopResources);
 		} catch (Exception $e) {
 			// No existe en prestashop
 		}
-		
-		return $proveedores;
+
+		return $informacion;
+	}
+
+	/**
+	 * prestashop_obtener_countries
+	 * *Se uso para sabe id del pais Chile
+	 * @return void
+	 */
+	public function prestashop_obtener_countries()
+	{
+		ini_set('max_execution_time', 0);
+
+		$opt             	= array();
+		$opt['display'] 	= 'full';
+		$opt['resource'] 	= 'countries';
+
+		$informacion = array();
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+
+			$PrestashopResources = $xml->children()->children();
+
+			$informacion = to_array($PrestashopResources);
+		} catch (Exception $e) {
+			// No existe en prestashop
+		}
+
+		return $informacion;
 	}
 
 }
