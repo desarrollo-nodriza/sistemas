@@ -4440,7 +4440,7 @@ class OrdenComprasController extends AppController
 
 		foreach ($bodegas as $bodega_id => $nombre) {
 
-			
+
 			foreach ($proveedores_id as $proveedor_id) {
 
 				// * La Query busca traer las ventas que tengan productos asociados a un proveedor que permita genenear OC autamaticas
@@ -4632,177 +4632,193 @@ class OrdenComprasController extends AppController
 					'conditions' => ["Proveedor.id" => $proveedor_id]
 				));
 
-				$ventas_id = [];
-
-				// * Buscamos las venta_id asociadas a los productos relacionados al proveedor
-
-				foreach ($productos__oc as $producto_id) {
-					$ventas_id = array_unique(array_merge($ventas_id, array_unique(Hash::extract($venta_bodega, "{n}.vd_1[producto_id=$producto_id].venta_id"))));
+				if (count($proveedor['VentaDetalleProducto']) > $proveedor['Proveedor']['maximo_de_item_por_oc'] && $proveedor['Proveedor']['maximo_de_item_por_oc'] > 0) {
+					foreach (array_chunk($proveedor['VentaDetalleProducto'], $proveedor['Proveedor']['maximo_de_item_por_oc']) as $key => $value) {
+						$productos_agrupados[] = $value;
+					}
+				} else {
+					$productos_agrupados[] = $proveedor['VentaDetalleProducto'];
 				}
+				foreach ($productos_agrupados as $productos) {
 
-				// * Formatiamos las ventas para asociarlas a la OC
+					$OC 		= [];
+					$ventas_id 	= [];
 
-				foreach ($ventas_id as $id) {
+					// * Buscamos las venta_id asociadas a los productos relacionados al proveedor
 
-					$OC['Venta'][] = [
-						'venta_id' => $id
+					$producto_ids_del_grupo = Hash::extract($productos, '{n}.id');
+
+					foreach ($productos__oc as $producto_id) {
+
+						//* Solo colocamos las ventas de los poductos que vienen en el grupo
+						if (in_array($producto_id, $producto_ids_del_grupo)) {
+							$ventas_id = array_unique(array_merge($ventas_id, array_unique(Hash::extract($venta_bodega, "{n}.vd_1[producto_id=$producto_id].venta_id"))));
+						}
+					}
+
+					// * Formatiamos las ventas para asociarlas a la OC
+					foreach ($ventas_id as $id) {
+
+						$OC['Venta'][] = [
+							'venta_id' => $id
+						];
+					}
+
+					// * En caso de que no haya tipo de entrega definido quedara por defecto retiro
+					$OC['OrdenCompra'] = [
+						"administrador_id" 			=> $tienda['Tienda']['administrador_id'],
+						"tienda_id" 				=> $tienda['Tienda']['id'],
+						"proveedor_id" 				=> $proveedor['Proveedor']['id'],
+						"estado" 					=> "asignacion_metodo_pago",
+						"rut_empresa" 				=> $proveedor['Proveedor']['rut_empresa'],
+						"razon_social_empresa" 		=> $proveedor['Proveedor']['nombre'],
+						"giro_empresa" 				=> $proveedor['Proveedor']['giro'],
+						"nombre_contacto_empresa" 	=> $proveedor['Proveedor']['nombre_encargado'],
+						"email_contacto_empresa" 	=> $proveedor['Proveedor']['email_contacto'],
+						"fono_contacto_empresa" 	=> $proveedor['Proveedor']['fono_contacto'],
+						"direccion_empresa" 		=> $proveedor['Proveedor']['direccion'],
+						"fecha"	 					=> date('Y-m-d'),
+						"vendedor" 					=> $tienda['Administrador']['nombre'],
+						"tipo_entrega" 				=> $proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro',
+						"receptor_informado" 		=> ($proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro' == "retiro") ? $proveedor['TipoEntregaProveedorOC'][0]['receptor_informado'] ?? "No definido" : "",
+						"informacion_entrega" 		=> $proveedor['TipoEntregaProveedorOC'][0]['informacion_entrega'] ?? "",
+						"moneda_id" 				=> null,
+						"total_neto" 				=> "",
+						"iva" 						=> "",
+						"total" 					=> "",
+						"fecha_validado" 			=> date('Y-m-d H:i:s'),
+						"comentario_validar" 		=> "Esto es una OC generada Automáticamente",
+						"nombre_validado" 			=> $tienda['Administrador']['nombre'],
+						"email_comercial" 			=> $tienda['Administrador']['email'],
+						"validado_proveedor" 		=> 0,
+						"bodega_id" 				=> $bodega_id,
+						"tipo_orden" 				=> "en_verde"
 					];
-				}
 
-				// * En caso de que no haya tipo de entrega definido quedara por defecto retiro
-				$OC['OrdenCompra'] = [
-					"administrador_id" 			=> $tienda['Tienda']['administrador_id'],
-					"tienda_id" 				=> $tienda['Tienda']['id'],
-					"proveedor_id" 				=> $proveedor['Proveedor']['id'],
-					"estado" 					=> "asignacion_metodo_pago",
-					"rut_empresa" 				=> $proveedor['Proveedor']['rut_empresa'],
-					"razon_social_empresa" 		=> $proveedor['Proveedor']['nombre'],
-					"giro_empresa" 				=> $proveedor['Proveedor']['giro'],
-					"nombre_contacto_empresa" 	=> $proveedor['Proveedor']['nombre_encargado'],
-					"email_contacto_empresa" 	=> $proveedor['Proveedor']['email_contacto'],
-					"fono_contacto_empresa" 	=> $proveedor['Proveedor']['fono_contacto'],
-					"direccion_empresa" 		=> $proveedor['Proveedor']['direccion'],
-					"fecha"	 					=> date('Y-m-d'),
-					"vendedor" 					=> $tienda['Administrador']['nombre'],
-					"tipo_entrega" 				=> $proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro',
-					"receptor_informado" 		=> ($proveedor['TipoEntregaProveedorOC'][0]['tipo_entrega'] ?? 'retiro' == "retiro") ? $proveedor['TipoEntregaProveedorOC'][0]['receptor_informado'] ?? "No definido" : "",
-					"informacion_entrega" 		=> $proveedor['TipoEntregaProveedorOC'][0]['informacion_entrega'] ?? "",
-					"moneda_id" 				=> null,
-					"total_neto" 				=> "",
-					"iva" 						=> "",
-					"total" 					=> "",
-					"fecha_validado" 			=> date('Y-m-d H:i:s'),
-					"comentario_validar" 		=> "Esto es una OC generada Automáticamente",
-					"nombre_validado" 			=> $tienda['Administrador']['nombre'],
-					"email_comercial" 			=> $tienda['Administrador']['email'],
-					"validado_proveedor" 		=> 0,
-					"bodega_id" 				=> $bodega_id,
-					"tipo_orden" 				=> "en_verde"
-				];
+					// * Formatiamos los productos para registrarlo a la OC
 
-				// * Formatiamos los productos para registrarlo a la OC
+					$producto_oc = [];
 
-				$producto_oc = [];
+					foreach ($productos as $p) {
 
-				foreach ($proveedor['VentaDetalleProducto'] as $p) {
+						$total = array_sum(Hash::extract(array_filter(
+							$venta_bodega,
+							function ($v, $k) use ($p) {
+								return $v['rpvdp']['producto_id'] == $p['id'];
+							},
+							ARRAY_FILTER_USE_BOTH
+						), "{n}.0.cantidad"));
+						$descuentos 		= ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
 
-					$total = array_sum(Hash::extract(array_filter(
-						$venta_bodega,
-						function ($v, $k) use ($p) {
-							return $v['rpvdp']['producto_id'] == $p['id'];
-						},
-						ARRAY_FILTER_USE_BOTH
-					), "{n}.0.cantidad"));
-					$descuentos 		= ClassRegistry::init('VentaDetalleProducto')::obtener_descuento_por_producto($p);
+						$precio_unitario 	= $p['precio_costo'];
+						$total_neto 		= $total * $precio_unitario;
 
-					$precio_unitario 	= $p['precio_costo'];
-					$total_neto 		= $total * $precio_unitario;
+						// * Si el producto no posee un precio mayor a 0 no es considerado para la OC
 
-					// * Si el producto no posee un precio mayor a 0 no es considerado para la OC
+						$descuento_producto = $total * $descuentos['total_descuento'];
+						$total_neto 		= $total_neto - $descuento_producto;
+						$producto_oc[] 		= [
+							'venta_detalle_producto_id' => $p['id'],
+							'codigo' 					=> $p['codigo_proveedor'],
+							'descripcion' 				=> $p['nombre'],
+							'cantidad' 					=> $total,
+							'precio_unitario' 			=> $precio_unitario,
+							'descuento_producto' 		=> $descuento_producto,
+							'total_neto' 				=> $total_neto,
+						];
+					}
 
-					$descuento_producto = $total * $descuentos['total_descuento'];
-					$total_neto 		= $total_neto - $descuento_producto;
-					$producto_oc[] 		= [
-						'venta_detalle_producto_id' => $p['id'],
-						'codigo' 					=> $p['codigo_proveedor'],
-						'descripcion' 				=> $p['nombre'],
-						'cantidad' 					=> $total,
-						'precio_unitario' 			=> $precio_unitario,
-						'descuento_producto' 		=> $descuento_producto,
-						'total_neto' 				=> $total_neto,
+
+					// * Totalizamos el neto, el total y el iva. Asignamos los productos formatiados
+
+					$OC['OrdenCompra']['total_neto'] 	= array_sum(Hash::extract($producto_oc, "{n}.total_neto"));
+					$OC['OrdenCompra']['total'] 		= $OC['OrdenCompra']['total_neto'] + round($OC['OrdenCompra']['total_neto'] * (Configure::read('iva_clp') / 100));
+					$OC['OrdenCompra']['iva'] 			= $OC['OrdenCompra']['total'] - $OC['OrdenCompra']['total_neto'];
+					$OC['VentaDetalleProducto'] 		= $producto_oc;
+
+					// * Creamos los estados de la OC
+					$OC['OrdenCompraHistorico'][] = [
+						"estado" 		=> "creada",
+						"responsable" 	=> "diego.romero@nodriza.cl",
+						"evidencia" 	=> json_encode($OC)
 					];
-				}
 
+					$OC['OrdenCompraHistorico'][] = [
+						"estado" 		=> "asignacion_metodo_pago",
+						"responsable" 	=> "diego.romero@nodriza.cl",
+						"evidencia" 	=> json_encode($OC)
+					];
 
-				// * Totalizamos el neto, el total y el iva. Asignamos los productos formatiados
+					// * Verificamos que medio de pago se le asignara. Si encaja en alguno se le asigna, sino queda en estado asignacion_metodo_pago
 
-				$OC['OrdenCompra']['total_neto'] 	= array_sum(Hash::extract($producto_oc, "{n}.total_neto"));
-				$OC['OrdenCompra']['total'] 		= $OC['OrdenCompra']['total_neto'] + round($OC['OrdenCompra']['total_neto'] * (Configure::read('iva_clp') / 100));
-				$OC['OrdenCompra']['iva'] 			= $OC['OrdenCompra']['total'] - $OC['OrdenCompra']['total_neto'];
-				$OC['VentaDetalleProducto'] 		= $producto_oc;
+					$encontro_regla = false;
 
-				// * Creamos los estados de la OC
-				$OC['OrdenCompraHistorico'][] = [
-					"estado" 		=> "creada",
-					"responsable" 	=> "diego.romero@nodriza.cl",
-					"evidencia" 	=> json_encode($OC)
-				];
+					try {
+						foreach ($proveedor['ReglasGenerarOC']  as $ReglasGenerarOC) {
 
-				$OC['OrdenCompraHistorico'][] = [
-					"estado" 		=> "asignacion_metodo_pago",
-					"responsable" 	=> "diego.romero@nodriza.cl",
-					"evidencia" 	=> json_encode($OC)
-				];
+							if ($ReglasGenerarOC['mayor_que'] < $OC['OrdenCompra']['total']  && $ReglasGenerarOC['menor_que'] > $OC['OrdenCompra']['total'])
+							$encontro_regla	= true;
 
-				// * Verificamos que medio de pago se le asignara. Si encaja en alguno se le asigna, sino queda en estado asignacion_metodo_pago
+							if (is_null($ReglasGenerarOC['mayor_que']) &&  $OC['OrdenCompra']['total'] < $ReglasGenerarOC['menor_que'])
+							$encontro_regla	= true;
 
-				$encontro_regla = false;
+							if (is_null($ReglasGenerarOC['menor_que']) &&  $OC['OrdenCompra']['total'] > $ReglasGenerarOC['mayor_que'])
+							$encontro_regla	= true;
 
-				try {
-					foreach ($proveedor['ReglasGenerarOC']  as $ReglasGenerarOC) {
+							if ($encontro_regla) {
 
-						if ($ReglasGenerarOC['mayor_que'] < $OC['OrdenCompra']['total']  && $ReglasGenerarOC['menor_que'] > $OC['OrdenCompra']['total'])
-						$encontro_regla	= true;
+								$OC['OrdenCompra']['moneda_id'] 			= $ReglasGenerarOC['medio_pago_id'];
+								$OC['OrdenCompra']['estado'] 				= "validacion_externa";
 
-						if (is_null($ReglasGenerarOC['mayor_que']) &&  $OC['OrdenCompra']['total'] < $ReglasGenerarOC['menor_que'])
-						$encontro_regla	= true;
+								# Descuentos por método de pago
 
-						if (is_null($ReglasGenerarOC['menor_que']) &&  $OC['OrdenCompra']['total'] > $ReglasGenerarOC['mayor_que'])
-						$encontro_regla	= true;
+								if (Hash::check($proveedor, 'Moneda.{n}[id=' . $OC['OrdenCompra']['moneda_id'] . ']')) {
 
-						if ($encontro_regla) {
+									$descuento 								= Hash::extract($proveedor, 'Moneda.{n}[id=' . $OC['OrdenCompra']['moneda_id'] . '].MonedasProveedor.descuento')[0];
 
-							$OC['OrdenCompra']['moneda_id'] 			= $ReglasGenerarOC['medio_pago_id'];
-							$OC['OrdenCompra']['estado'] 				= "validacion_externa";
+									$OC['OrdenCompra']['descuento'] 		= $descuento;
+									$OC['OrdenCompra']['descuento_monto']  	= $OC['OrdenCompra']['total'] * ($descuento / 100);
+									$OC['OrdenCompra']['total'] 			= round($OC['OrdenCompra']['total'] - $OC['OrdenCompra']['descuento_monto']);
+								}
 
-							# Descuentos por método de pago
+								$OC['OrdenCompraHistorico'][] 				= [
+									"estado" 		=> "validacion_externa",
+									"responsable" 	=> "diego.romero@nodriza.cl",
+									"evidencia" 	=> json_encode($OC)
+								];
 
-							if (Hash::check($proveedor, 'Moneda.{n}[id=' . $OC['OrdenCompra']['moneda_id'] . ']')) {
-
-								$descuento 								= Hash::extract($proveedor, 'Moneda.{n}[id=' . $OC['OrdenCompra']['moneda_id'] . '].MonedasProveedor.descuento')[0];
-
-								$OC['OrdenCompra']['descuento'] 		= $descuento;
-								$OC['OrdenCompra']['descuento_monto']  	= $OC['OrdenCompra']['total'] * ($descuento / 100);
-								$OC['OrdenCompra']['total'] 			= round($OC['OrdenCompra']['total'] - $OC['OrdenCompra']['descuento_monto']);
+								break;
 							}
-
-							$OC['OrdenCompraHistorico'][] 				= [
-								"estado" 		=> "validacion_externa",
-								"responsable" 	=> "diego.romero@nodriza.cl",
-								"evidencia" 	=> json_encode($OC)
-							];
-
-							break;
 						}
-					}
 
-					// * Guardamos la OC y segun el estado notificamos 
+						// * Guardamos la OC y segun el estado notificamos 
 
-					if ($this->OrdenCompra->saveAll($OC)) {
+						if ($this->OrdenCompra->saveAll($OC)) {
 
-						$respuesta 					= true;
-						$OC['OrdenCompra']['id'] 	= $this->OrdenCompra->id;
-						$OCCreadas[] 				= $this->OrdenCompra->id;
+							$respuesta 					= true;
+							$OC['OrdenCompra']['id'] 	= $this->OrdenCompra->id;
+							$OCCreadas[] 				= $this->OrdenCompra->id;
 
-						if ($encontro_regla) {
+							if ($encontro_regla) {
 
-							$this->guardarEmailValidado($OC['OrdenCompra']['id']);
-						} else {
+								$this->guardarEmailValidado($OC['OrdenCompra']['id']);
+							} else {
 
-							$emails = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
-							$this->guardarEmailAsignarPago($OC, $emails);
+								$emails = ClassRegistry::init('Administrador')->obtener_email_por_tipo_notificacion('pagar_oc');
+								$this->guardarEmailAsignarPago($OC, $emails);
+							}
 						}
+					} catch (\Throwable $th) {
+						$log[] = array(
+							'Log' => array(
+								'administrador' => "Problemas para crear OCs al proveedor  {$proveedor['Proveedor']['id']}",
+								'modulo' 		=> 'OrdenComprasController',
+								'modulo_accion' => json_encode($th)
+							)
+						);
+						ClassRegistry::init('Log')->create();
+						ClassRegistry::init('Log')->saveMany($log);
 					}
-				} catch (\Throwable $th) {
-					$log[] = array(
-						'Log' => array(
-							'administrador' => "Problemas para crear OCs a los Proveedores " . implode($proveedores_id),
-							'modulo' 		=> 'OrdenComprasController',
-							'modulo_accion' => json_encode($th)
-						)
-					);
-					ClassRegistry::init('Log')->create();
-					ClassRegistry::init('Log')->saveMany($log);
 				}
 			}
 		}
