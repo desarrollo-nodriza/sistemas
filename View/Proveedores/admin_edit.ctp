@@ -89,6 +89,10 @@
 								<th><?= $this->Form->label('oc_via_api', 'Capturar OC vía API'); ?></th>
 								<td><?= $this->Form->input('oc_via_api', array('class' => 'icheckbox')); ?></td>
 							</tr>
+							<tr>
+								<th><?= $this->Form->label('maximo_de_item_por_oc', 'Máximo de item por orden de compra'); ?></th>
+								<td><?= $this->Form->input('maximo_de_item_por_oc'); ?><p class="form-control-static text-danger"><?= __('0 indica que no tiene hay limite'); ?></p></td>
+							</tr>
 							<? if ($this->request->data['Proveedor']['permitir_generar_oc']) :  ?>
 								<tr>
 									<th>Seleccione días permitidos para generar OCs</th>
@@ -343,7 +347,7 @@
 						<div class="btn-group pull-right">
 							<? if ($permisos['add']) : ?>
 								<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo configuración', array('action' => '#'), array('class' => 'btn btn-success clone-configuracion-boton', 'escape' => false)); ?>
-								<button type="submit" class="btn btn-danger start-loading-when-form-is-validate"><i class="fa fa-save"></i>Guardar Información</button>
+								<a type="button" class="btn btn-primary mb-control" data-box="#modal_alertas">Guardar cambios</a>
 							<? endif; ?>
 						</div>
 					</div>
@@ -535,7 +539,7 @@
 								<? if (count($this->request->data['FrecuenciaGenerarOC']) < 3) :  ?>
 									<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo frecuencia', array('action' => '#'), array('class' => 'btn btn-success clone-frecuencia-boton', 'escape' => false)); ?>
 								<? endif; ?>
-								<button type="submit" class="btn btn-danger start-loading-when-form-is-validate"><i class="fa fa-save"></i>Guardar Información</button>
+								<a type="button" class="btn btn-primary mb-control" data-box="#modal_alertas">Guardar cambios</a>
 							<? endif; ?>
 						</div>
 					</div>
@@ -630,7 +634,7 @@
 						<div class="btn-group pull-right">
 							<? if ($permisos['add']) : ?>
 								<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo Regla', array('action' => '#'), array('class' => 'btn btn-success clone-boton', 'escape' => false)); ?>
-								<button type="submit" class="btn btn-danger start-loading-when-form-is-validate"><i class="fa fa-save"></i>Guardar Información</button>
+								<a type="button" class="btn btn-primary mb-control" data-box="#modal_alertas">Guardar cambios</a>
 							<? endif; ?>
 						</div>
 					</div>
@@ -718,7 +722,7 @@
 				</div>
 				<div class="mb-footer">
 					<div class="pull-right">
-						<input type="submit" class="btn btn-primary btn-lg esperar-carga start-loading-then-redirect " autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<input type="submit" class="btn btn-primary btn-lg esperar-carga start-loading-when-form-is-validate" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
 						<button class="btn btn-default btn-lg mb-control-close">Cerrar</button>
 					</div>
 				</div>

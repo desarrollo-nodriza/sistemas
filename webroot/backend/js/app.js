@@ -1034,6 +1034,8 @@ $.extend({
 			$(document).on('click', '.start-loading-when-form-is-validate', function(){
 				if($(this).parents('form').eq(0).valid()){
 					$.app.loader.mostrar();
+				}else{
+					noty({text: 'Hay campos que no se han completado', layout: 'topRight', type: 'error'});	
 				}
 			});
 			
