@@ -392,9 +392,7 @@ class BlueExpressComponent extends Component
                         'venta_id'                  => $venta['Venta']['id'],
                         'cod_seguimiento'           => $response['response']['data']['trackingNumber'],
                         'etiqueta'                  => $ruta_pdfs,
-                        'entrega_aprox'             => date("Y-m-d", strtotime($obtener_costo_envio['response']['data']['fechaEstimadaEntrega'])),
                         'paquete_generado'          => count($paquetes),
-                        'costo_envio'               => $obtener_costo_envio['response']['data']['total'],
                         'etiqueta_envio_externa'    => $ruta_pdfs,
                         'embalaje_id'               => $embalaje["id"]
                     ]
