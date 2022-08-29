@@ -319,9 +319,9 @@ class BlueExpressComponent extends Component
                 ],
                 'packages'      => [
                     'peso'  => round($pesoTotal, 1),
-                    'largo' => round($largoTotal, 1),
-                    'ancho' => round($anchoTotal, 1),
-                    'alto'  => round($altoTotal, 1),
+                    'largo' => 1,
+                    'ancho' => 1,
+                    'alto'  => 1,
                 ],
                 'credenciales'  => $CuentaCorrienteTransporte['credenciales'] ?? "",
                 'extendedClaim' => $CuentaCorrienteTransporte['extendedClaim'] ? true : false ?? false,
