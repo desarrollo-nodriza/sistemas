@@ -1032,3 +1032,22 @@ Router::connect(
         'api'           => true,
         'prefix'        => 'api')
 );
+
+
+Router::connect(
+    '/api/registrar-token-push-administrador', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'NotificacionesPush', 
+        'action'        => 'registrar_token_administrador',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+
+Router::connect(
+    '/api/crear-requerimiento-problemas-recepcion-productos', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'NotificacionesPush', 
+        'action'        => 'crear_requerimiento_problemas_recepcion_productos',
+        'api'           => true,
+        'prefix'        => 'api')
+);
