@@ -89,10 +89,10 @@
 								<th><?= $this->Form->label('oc_via_api', 'Capturar OC vía API'); ?></th>
 								<td><?= $this->Form->input('oc_via_api', array('class' => 'icheckbox')); ?></td>
 							</tr>
-							<tr>
+							<!-- <tr>
 								<th><?= $this->Form->label('maximo_de_item_por_oc', 'Máximo de item por orden de compra'); ?></th>
 								<td><?= $this->Form->input('maximo_de_item_por_oc'); ?><p class="form-control-static text-danger"><?= __('0 indica que no tiene hay limite'); ?></p></td>
-							</tr>
+							</tr> -->
 							<? if ($this->request->data['Proveedor']['permitir_generar_oc']) :  ?>
 								<tr>
 									<th>Seleccione días permitidos para generar OCs</th>
