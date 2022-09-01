@@ -83,24 +83,27 @@ class NotificacionesPushController extends AppController
 			throw new UnauthorizedException("Token de sesión expirado o invalido");
 		}
 
+		$nombre_administrador = ClassRegistry::init('Administrador')->find('first', [
+			'fields' 		=> ['nombre'],
+			'conditions' 	=> ['id' => $this->request->query['administrador_id']]
+		])['Administrador']['nombre'];
+
+		$nombre_producto = ClassRegistry::init('VentaDetalleProducto')->find('first', [
+			'fields' 		=> ['nombre'],
+			'conditions' 	=> ['id' => $this->request->query['producto_id']]
+		])['VentaDetalleProducto']['nombre'] ?? "Hubo un porblema para obtener el nombre del producto {$this->request->query['producto_id']}";
+
 		$requerimiento = [
 			'title'		=> "nz Warehouse",
 			'message'	=> "Se require permiso para recepcionar OC",
 			'data'		=> [
 				"accion"							=> "problemas_recepcion_productos",
 				"orden_compra_id"					=> $this->request->query['orden_compra_id'],
-				// info producto
 				"producto_id"						=> $this->request->query['producto_id'],
-				"nombre_producto"					=> ClassRegistry::init('VentaDetalleProducto')->find('first', [
-					'fields' 		=> ['nombre'],
-					'conditions' 	=> ['id' => $this->request->query['producto_id']]
-				])['VentaDetalleProducto']['nombre'] ?? "Hubo un porblema para obtener el nombre del producto {$this->request->query['producto_id']}",
-				// info administrador
+				"nombre_producto"					=> $nombre_producto,
 				"administrador_requerimiento_id"	=> $this->request->query['administrador_id'],
-				"nombre_administrador"				=> ClassRegistry::init('Administrador')->find('first', [
-					'fields' 		=> ['nombre'],
-					'conditions' 	=> ['id' => $this->request->query['administrador_id']]
-				])['Administrador']['nombre'],
+				"nombre_administrador"				=> $nombre_administrador,
+				'requerimiento'						=> "Se require permiso para recepcionar OC",
 			]
 		];
 
@@ -112,7 +115,7 @@ class NotificacionesPushController extends AppController
 				'requerimiento'					 => json_encode($requerimiento),
 			]
 		]);
-		$requerimiento['data']['requerimiento_id'] = $respuesta['Requerimiento']['id'];
+		$requerimiento['data']['requerimiento_id'] 	= $respuesta['Requerimiento']['id'];
 
 		$respuesta = array_replace_recursive($respuesta, ClassRegistry::init('Requerimiento')->save([
 			'Requerimiento' => [
