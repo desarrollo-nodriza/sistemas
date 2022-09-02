@@ -1051,3 +1051,21 @@ Router::connect(
         'api'           => true,
         'prefix'        => 'api')
 );
+
+Router::connect(
+    '/api/eliminar-token-push-administrador', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'NotificacionesPush', 
+        'action'        => 'eliminar_token_administrador',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+
+Router::connect(
+    '/api/responder-requerimiento-problemas-recepcion-productos', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'NotificacionesPush', 
+        'action'        => 'respuesta_requerimiento_problemas_recepcion_productos',
+        'api'           => true,
+        'prefix'        => 'api')
+);
