@@ -128,10 +128,15 @@ class NotificacionesPushController extends AppController
 			'fields' 		=> ['nombre'],
 			'conditions' 	=> ['id' => $this->request->query['producto_id']]
 		])['VentaDetalleProducto']['nombre'] ?? "Hubo un problema para obtener el nombre del producto {$this->request->query['producto_id']}";
-		// * Se envia con la fecha para que tome las notificaciones como distintas y no se sobrepongan en el telefono
-		$requerimiento = [
+
+		ClassRegistry::init('Requerimiento')->create;
+		$requerimiento = ClassRegistry::init('Requerimiento')->save([
+			'Requerimiento' => []
+		]);
+		// * Se envia con número del requerimiento para que tome las notificaciones como distintas y no se sobrepongan en el telefono
+		$requerimientoPush = [
 			'title'		=> "nz Warehouse",
-			'message'	=> "Se require permiso para recepcionar OC 						|" . date('Y-m-d H:i:s'),
+			'message'	=> "Se require permiso para recepcionar OC | Rº {$requerimiento['Requerimiento']['id']}",
 			'data'		=> [
 				"accion"							=> "problemas_recepcion_productos",
 				"orden_compra_id"					=> $this->request->query['orden_compra_id'],
@@ -141,25 +146,14 @@ class NotificacionesPushController extends AppController
 				"nombre_administrador"				=> $nombre_administrador,
 				'requerimiento'						=> "Se require permiso para recepcionar OC",
 				'token_push'						=> $this->request->query['token_push'],
+				'requerimiento_id'					=> $requerimiento['Requerimiento']['id']
 			]
 		];
 
-		ClassRegistry::init('Requerimiento')->create;
+		$requerimiento['Requerimiento']['administrador_requerimiento_id'] 	= $this->request->query['administrador_id'];
+		$requerimiento['Requerimiento']['requerimiento'] 					= json_encode($requerimientoPush);
 
-		$respuesta = ClassRegistry::init('Requerimiento')->save([
-			'Requerimiento' => [
-				'administrador_requerimiento_id' => $this->request->query['administrador_id'],
-				'requerimiento'					 => json_encode($requerimiento),
-			]
-		]);
-		$requerimiento['data']['requerimiento_id'] 	= $respuesta['Requerimiento']['id'];
-
-		$respuesta = array_replace_recursive($respuesta, ClassRegistry::init('Requerimiento')->save([
-			'Requerimiento' => [
-				'requerimiento'					 => json_encode($requerimiento),
-			]
-		]));
-
+		$requerimiento = ClassRegistry::init('Requerimiento')->save($requerimiento);
 		$administradores = ClassRegistry::init('Administrador')->find('all', [
 			'fields' 		=> ['Administrador.id', 'Administrador.rol_id'],
 			'contain' 		=> ['Rol', 'TokenNotificacionPush'],
@@ -172,16 +166,16 @@ class NotificacionesPushController extends AppController
 		$response = array(
 			'name' 		=> 'success',
 			'message' 	=> 'Requerimiento creado pero no pudo ser notificado',
-			'data' 		=> $respuesta
+			'data' 		=> $requerimiento
 		);
 
 		if ($token) {
 			try {
-				$this->Pushy->sendPushNotification($requerimiento, implode(',', $token));
+				$this->Pushy->sendPushNotification($requerimientoPush, implode(',', $token));
 				$response = array(
 					'name' 		=> 'success',
 					'message' 	=> 'Requerimiento creado y enviado',
-					'data' 		=> $respuesta
+					'data' 		=> $requerimiento
 				);
 			} catch (\Throwable $th) {
 			}
@@ -239,7 +233,7 @@ class NotificacionesPushController extends AppController
 		// * Se envia con la fecha para que tome las notificaciones como distintas y no se sobrepongan en el telefono
 		$respuestaRequerimiento = [
 			'title'		=> "nz Warehouse",
-			'message'	=> "Han respondido tu requerimiento 						|" . date('Y-m-d H:i:s'),
+			'message'	=> "Han respondido tu requerimiento | Rº {$respuesta['Requerimiento']['id']}",
 			'data'		=> [
 				"accion"							=> "respuesta_problemas_recepcion_productos",
 				"orden_compra_id"					=> $this->request->query['orden_compra_id'],
