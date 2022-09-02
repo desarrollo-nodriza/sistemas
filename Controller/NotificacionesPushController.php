@@ -128,10 +128,10 @@ class NotificacionesPushController extends AppController
 			'fields' 		=> ['nombre'],
 			'conditions' 	=> ['id' => $this->request->query['producto_id']]
 		])['VentaDetalleProducto']['nombre'] ?? "Hubo un problema para obtener el nombre del producto {$this->request->query['producto_id']}";
-
+		// * Se envia con la fecha para que tome las notificaciones como distintas y no se sobrepongan en el telefono
 		$requerimiento = [
 			'title'		=> "nz Warehouse",
-			'message'	=> "Se require permiso para recepcionar OC",
+			'message'	=> "Se require permiso para recepcionar OC 						|" . date('Y-m-d H:i:s'),
 			'data'		=> [
 				"accion"							=> "problemas_recepcion_productos",
 				"orden_compra_id"					=> $this->request->query['orden_compra_id'],
@@ -236,9 +236,10 @@ class NotificacionesPushController extends AppController
 			'conditions' 	=> ['id' => $this->request->query['administrador_id']]
 		])['Administrador']['nombre'];
 
+		// * Se envia con la fecha para que tome las notificaciones como distintas y no se sobrepongan en el telefono
 		$respuestaRequerimiento = [
 			'title'		=> "nz Warehouse",
-			'message'	=> "Han respondido tu requerimiento",
+			'message'	=> "Han respondido tu requerimiento 						|" . date('Y-m-d H:i:s'),
 			'data'		=> [
 				"accion"							=> "respuesta_problemas_recepcion_productos",
 				"orden_compra_id"					=> $this->request->query['orden_compra_id'],
