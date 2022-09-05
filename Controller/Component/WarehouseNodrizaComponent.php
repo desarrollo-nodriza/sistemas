@@ -533,4 +533,18 @@ class WarehouseNodrizaComponent extends Component
             ]);
         }
     }
+
+        
+    /**
+     * Editarproducto
+     * Se debe enviar un array de productos
+     * @param  mixed $productos
+     * @return void
+     */
+    public function Editarproducto(array $productos)
+    {
+        $body['productos'] = $productos;
+        $this->crearCliente();
+        return $this->WarehouseNodriza->Editarproducto($body);
+    }
 }

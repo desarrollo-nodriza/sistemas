@@ -6,7 +6,8 @@ App::uses('AppController', 'Controller');
 class NotificacionesPushController extends AppController
 {
 	public $components = array(
-		'Pushy'
+		'Pushy',
+		'WarehouseNodriza'
 	);
 
 	public function api_registrar_token_administrador()
@@ -133,7 +134,9 @@ class NotificacionesPushController extends AppController
 		$requerimiento = ClassRegistry::init('Requerimiento')->save([
 			'Requerimiento' => []
 		]);
-		// * Se envia con número del requerimiento para que tome las notificaciones como distintas y no se sobrepongan en el telefono
+
+		// * Se envia con numero de requerimiento para que las notificaciones sean distintas y no se sobrepongan
+
 		$requerimientoPush = [
 			'title'		=> "nz Warehouse",
 			'message'	=> "Se require permiso para recepcionar OC | Rº {$requerimiento['Requerimiento']['id']}",
@@ -230,7 +233,8 @@ class NotificacionesPushController extends AppController
 			'conditions' 	=> ['id' => $this->request->query['administrador_id']]
 		])['Administrador']['nombre'];
 
-		// * Se envia con la fecha para que tome las notificaciones como distintas y no se sobrepongan en el telefono
+		// * Se envia con numero de requerimiento para que las notificaciones sean distintas y no se sobrepongan
+
 		$respuestaRequerimiento = [
 			'title'		=> "nz Warehouse",
 			'message'	=> "Han respondido tu requerimiento | Rº {$respuesta['Requerimiento']['id']}",
@@ -254,10 +258,34 @@ class NotificacionesPushController extends AppController
 
 		$respuesta = ClassRegistry::init('Requerimiento')->save($respuesta);
 
+		if ($this->request->query['respuesta']) {
+			$respuestaWarehouse = $this->WarehouseNodriza->Editarproducto([
+				[
+					"id" 							=> $this->request->query['producto_id'],
+					"permitir_ingreso_sin_barra" 	=> true,
+				]
+			]);
+
+			$logs[] = array('Log' => array(
+				'administrador' => 'Se actualiza producto por notificación',
+				'modulo' 		=> 'api_respuesta_requerimiento_problemas_recepcion_productos',
+				'modulo_accion' => json_encode($respuestaWarehouse)
+			));
+		}
+
+		$logs[] = array('Log' => array(
+			'administrador' => 'Notificacion Push',
+			'modulo' 		=> 'api_respuesta_requerimiento_problemas_recepcion_productos',
+			'modulo_accion' => json_encode($respuesta)
+		));
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveAll($logs);
+
 		$response = array(
 			'name' 		=> 'success',
 			'message' 	=> 'Respuesta fue guardada pero no pudo ser notificado',
-			'data' 		=> $respuesta
+			'data' 		=> json_encode($respuesta)
 		);
 
 

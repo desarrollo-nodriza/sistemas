@@ -268,6 +268,24 @@ class WarehouseNodriza
         //     "responsable" => 12,
         // ]
         return $this->cURL_POST("/api/v1/embalaje/recepcionar-embalaje-trasladado", $body);
+    }    
+    /**
+     * EditarProducto
+     *  https://nodrizaspa.postman.co/workspace/API-Nodriza~9880e216-60c2-431c-be9f-72bc4e5551fc/request/2480566-0df6995a-dee3-433d-bc7f-03fea4a80af8
+     * @param  mixed $body
+     * @return void
+     */
+    public function EditarProducto($body)
+    {
+        
+        // "productos": [
+        //     {
+        //         "id": "39",
+        //         "cod_barra": "7804647174604"
+        //     }
+        // ]
+
+        return $this->cURL_POST("/api/v1/productos/editar-masivo", $body);
     }
 
     // * Abstraccion para hacer peticiones a endpoints por metodo POST
