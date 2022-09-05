@@ -4017,8 +4017,6 @@ class OrdenComprasController extends AppController
 			));
 		}
 		if (!empty($this->request->data['Dte'])) {
-			# Dtes para descontar saldo
-			$dtesDescontar = array();
 
 			$this->request->data['Dte'] = array_unique($this->request->data['Dte']);
 
@@ -4059,19 +4057,6 @@ class OrdenComprasController extends AppController
 					'receptor' 			=> $receptor,
 					'monto_facturado' 	=> round($dte['total'], 0)
 				);
-
-				# Dtes que deben descontar saldo
-				if ($tipo_dte != 33)
-					continue;
-
-				$dtesDescontar[] = array(
-					'tipo_dte' 			=> $tipo_dte,
-					'folio' 			=> $folio,
-					'monto_facturado' 	=> round($dte['total'], 2),
-					'proveedor_id' 		=> $oc['OrdenCompra']['proveedor_id'],
-					'emisor' 			=> $emisor,
-					'receptor' 			=> $receptor
-				);
 			}
 
 			# Calculamos el total facturado
@@ -4084,14 +4069,14 @@ class OrdenComprasController extends AppController
 				$yaFacturado = $yaFacturado + $factura['monto_facturado'];
 			}
 
-			$total_oc = 0;
+			$total_oc = $oc['OrdenCompra']['total'];
 
-			foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iocp => $p) {
-				if ($p['cantidad_validada_proveedor'] == 0)
-					continue;
+			// foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iocp => $p) {
+			// 	if ($p['cantidad_validada_proveedor'] == 0)
+			// 		continue;
 
-				$total_oc = $total_oc + monto_bruto($p['total_neto']);
-			}
+			// 	$total_oc = $total_oc + monto_bruto($p['total_neto']);
+			// }
 
 			$total_oc_min 		= $total_oc - 100;
 			$total_facturado 	= array_sum(Hash::extract($ocSave['OrdenCompraFactura'], '{n}[tipo_documento=33].monto_facturado')) + $yaFacturado;
