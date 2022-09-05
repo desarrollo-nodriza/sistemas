@@ -3896,17 +3896,10 @@ class OrdenComprasController extends AppController
 					)
 				);
 
-				# Calcula la cantidad  de productos que faltan por recibir.
-				$cantidadFaltante      = $ocp['cantidad_validada_proveedor'] - $ocp['cantidad_recibida'];
 				$cantidadRecibidaAhora = $p['cantidad_recibida'];
 
-				// if (!$cantidadFaltante || !$cantidadRecibidaAhora) {
-				if (!$cantidadFaltante) {
-					continue;
-				}
-
 				# La cantidad recibida es mayor a la permitida
-				if ($cantidadRecibidaAhora > $cantidadFaltante) {
+				if ($cantidadRecibidaAhora > $ocp['cantidad_validada_proveedor']) {
 
 					ClassRegistry::init('Log')->create();
 					ClassRegistry::init('Log')->saveMany($log);
@@ -3923,7 +3916,7 @@ class OrdenComprasController extends AppController
 				}else{
 					$cantidad_cambio = $cantidadRecibidaAhora - $ocp['cantidad_recibida'];
 				}
-				
+
 				$productosRecepcionar[] = array(
 					'id' 						=> $p['id_detalle'],
 					'cantidad_recibida_total' 	=> $cantidadRecibidaAhora,
