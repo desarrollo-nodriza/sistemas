@@ -4069,27 +4069,18 @@ class OrdenComprasController extends AppController
 				$yaFacturado = $yaFacturado + $factura['monto_facturado'];
 			}
 
-			$total_oc = $oc['OrdenCompra']['total'];
-
-			// foreach ($oc['OrdenComprasVentaDetalleProducto'] as $iocp => $p) {
-			// 	if ($p['cantidad_validada_proveedor'] == 0)
-			// 		continue;
-
-			// 	$total_oc = $total_oc + monto_bruto($p['total_neto']);
-			// }
-
+			$total_oc 			= $oc['OrdenCompra']['total'];
 			$total_oc_min 		= $total_oc - 100;
 			$total_facturado 	= array_sum(Hash::extract($ocSave['OrdenCompraFactura'], '{n}[tipo_documento=33].monto_facturado')) + $yaFacturado;
-
 			# Facturado
 			$facturado_completo = false;
 
 			if ($total_facturado >= $total_oc_min) {
 				$facturado_completo = true;
 			}
-
+		
 			# Items recibidos
-			$total_recibidos 			= array_sum(Hash::extract($productosRecepcionar, '{n}.cantidad_recibida_total')) + array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.cantidad_recibida'));
+			$total_recibidos 			= array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.cantidad_recibida'));
 			$total_validados_proveedor 	= array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.cantidad_validada_proveedor'));
 
 			# OC queda en estado de espera de factura
@@ -4098,7 +4089,7 @@ class OrdenComprasController extends AppController
 			} elseif ($total_recibidos == $total_validados_proveedor && $facturado_completo) {
 				$ocSave['OrdenCompra']['estado'] = 'recepcion_completa';
 			}
-
+			
 			$ocSave['OrdenCompraHistorico'] = array(
 				array(
 					'estado' 		=> $ocSave['OrdenCompra']['estado'],
