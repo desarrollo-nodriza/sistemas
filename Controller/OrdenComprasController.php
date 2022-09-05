@@ -3973,7 +3973,7 @@ class OrdenComprasController extends AppController
 				}
 			} else if ($p['cantidad_cambio'] < 0) {
 
-				if (ClassRegistry::init('Bodega')->crearSalidaBodega($p['producto_id'], $p['bodega_id'], $p['cantidad_cambio'], $p['precio_compra'], 'OC', $p['oc_id'], null, null, $tokenInfo['Administrador']['email'])) {
+				if (ClassRegistry::init('Bodega')->crearSalidaBodega($p['producto_id'], $p['bodega_id'], ($p['cantidad_cambio'] * -1), $p['precio_compra'], 'OC', $p['oc_id'], null, null, $tokenInfo['Administrador']['email'])) {
 					$log[] = array(
 						'Log' => array(
 							'administrador' => 'Recepción oc app - Agregar a inventario',
