@@ -1248,6 +1248,55 @@ class PrestashopComponent extends Component
 		return $imagenes;
 		
 	}
+	
+	/**
+	 * prestashop_obtener_imagenes_de_productos
+	 * * Se busca la imagen del o los productos
+	 * * Se retorna como key el id del producto y como value la url
+	 * @param  array $producto_ids
+	 * @return array
+	 */
+	public function prestashop_obtener_imagenes_de_productos(array $producto_ids = [])
+	{
+
+		$filtro = array(
+			'filter[id]' 	=> '[' . implode("|", $producto_ids) . ']',
+			'display' 		=> 'full'
+		);
+
+		$imagenes 	= array();
+		$res 		= $this->prestashop_obtener_productos($filtro);
+
+		if (!$res) {
+			return $imagenes;
+		}
+
+		if (count($producto_ids) == 1) {
+
+			foreach ($res['product']['associations']['images']['image'] as $image_id) {
+
+				$id = (isset($image_id['id'])) ? $image_id['id'] : $image_id;
+
+				if ($id == $res['product']['id_default_image']) {
+					$imagenes[$res['product']['id']] = $this->ConexionPrestashop->get_url() . $id . '-full_default/' . $res['product']['link_rewrite']['language'] . '.jpg';
+				}
+			}
+
+		} else {
+			foreach ($res['product'] as $producto) {
+
+				foreach ($producto['associations']['images']['image'] as $image_id) {
+					$id = (isset($image_id['id'])) ? $image_id['id'] : $image_id;
+
+					if ($id == $producto['id_default_image']) {
+						$imagenes[$producto['id']] = $this->ConexionPrestashop->get_url() . $id . '-full_default/' . $producto['link_rewrite']['language'] . '.jpg';
+					}
+				}
+			}
+		}
+
+		return $imagenes;
+	}
 
 	/**
 	 * [prestashop_crear_imagen_url description]

@@ -833,15 +833,15 @@ Router::connect(
 
 
 Router::connect(
-    '/api/ordenes-de-compra/recepcionar/:id', // E.g. /blog/3-CakePHP_Rocks
+    '/api/ordenes-de-compra/v2/recepcionar/:id', // E.g. /blog/3-CakePHP_Rocks
     array(
-        'controller' => 'OrdenCompras', 
-        'action' => 'reception',
-        'api' => true,
-        'prefix' => 'api'),
+        'controller'    => 'OrdenCompras', 
+        'action'        => 'receptionV2',
+        'api'           => true,
+        'prefix'        => 'api'),
     array(
-        'pass' => array('id'),
-        'id' => '[0-9]+'
+        'pass'          => array('id'),
+        'id'            => '[0-9]+'
     )
 );
 
