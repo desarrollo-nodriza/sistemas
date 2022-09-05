@@ -3900,7 +3900,8 @@ class OrdenComprasController extends AppController
 				$cantidadFaltante      = $ocp['cantidad_validada_proveedor'] - $ocp['cantidad_recibida'];
 				$cantidadRecibidaAhora = $p['cantidad_recibida'];
 
-				if (!$cantidadFaltante || !$cantidadRecibidaAhora) {
+				// if (!$cantidadFaltante || !$cantidadRecibidaAhora) {
+				if (!$cantidadFaltante) {
 					continue;
 				}
 
@@ -3915,10 +3916,18 @@ class OrdenComprasController extends AppController
 
 				$precio_compra_oc 		= round($ocp['precio_unitario'] - ($ocp['descuento_producto'] / $ocp['cantidad_validada_proveedor']), 0);
 				$bodega_id 				= ($oc['OrdenCompra']['bodega_id']) ? $oc['OrdenCompra']['bodega_id'] : ClassRegistry::init('Bodega')->obtener_bodega_principal()['Bodega']['id'];
+				$cantidad_cambio 		= 0;
+
+				if ($cantidadRecibidaAhora < $ocp['cantidad_recibida']) {
+					$cantidad_cambio = $cantidadRecibidaAhora == 0 ?  $ocp['cantidad_recibida'] * -1 : ($ocp['cantidad_recibida']  - $cantidadRecibidaAhora) * -1;
+				}else{
+					$cantidad_cambio = $cantidadRecibidaAhora - $ocp['cantidad_recibida'];
+				}
+				
 				$productosRecepcionar[] = array(
 					'id' 						=> $p['id_detalle'],
-					'cantidad_recibida_total' 	=> ($cantidadRecibidaAhora + $ocp['cantidad_recibida']),
-					'cantidad_recibida_ahora' 	=> $cantidadRecibidaAhora,
+					'cantidad_recibida_total' 	=> $cantidadRecibidaAhora,
+					'cantidad_cambio' 			=> $cantidad_cambio,
 					'bodega_id' 				=> $bodega_id,
 					'producto_id' 				=> $ocp['venta_detalle_producto_id'],
 					'precio_compra' 			=> $precio_compra_oc,
@@ -3926,7 +3935,7 @@ class OrdenComprasController extends AppController
 					'diferencia_precio' 		=> $p['error_de_precio']
 				);
 
-				$oc['OrdenComprasVentaDetalleProducto'][$ioc]['total_neto'] = ($precio_compra_oc * ($cantidadRecibidaAhora + $ocp['cantidad_recibida']));
+				$oc['OrdenComprasVentaDetalleProducto'][$ioc]['total_neto'] = ($precio_compra_oc * $cantidadRecibidaAhora);
 			}
 		}
 
@@ -3950,22 +3959,46 @@ class OrdenComprasController extends AppController
 			# Guardamos
 			ClassRegistry::init('OrdenComprasVentaDetalleProducto')->save($detalle);
 
-			if (ClassRegistry::init('Bodega')->crearEntradaBodega($p['producto_id'], $p['bodega_id'], $p['cantidad_recibida_ahora'], $p['precio_compra'], 'OC', $p['oc_id'], null, null, $tokenInfo['Administrador']['email'])) {
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'Recepción oc app - Agregar a inventario',
-						'modulo' 		=> 'OrdenCompras',
-						'modulo_accion' => json_encode($p)
-					)
-				);
+			if ($p['cantidad_cambio'] > 0) {
+				if (ClassRegistry::init('Bodega')->crearEntradaBodega($p['producto_id'], $p['bodega_id'], $p['cantidad_cambio'], $p['precio_compra'], 'OC', $p['oc_id'], null, null, $tokenInfo['Administrador']['email'])) {
+
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Recepción oc app - Agregar a inventario',
+							'modulo' 		=> 'OrdenCompras',
+							'modulo_accion' => json_encode($p)
+						)
+					);
+				} else {
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Recepción oc app - Error agregar a inventario',
+							'modulo' 		=> 'OrdenCompras',
+							'modulo_accion' => json_encode($p)
+						)
+					);
+				}
+			} else if ($p['cantidad_cambio'] < 0) {
+
+				if (ClassRegistry::init('Bodega')->crearSalidaBodega($p['producto_id'], $p['bodega_id'], $p['cantidad_cambio'], $p['precio_compra'], 'OC', $p['oc_id'], null, null, $tokenInfo['Administrador']['email'])) {
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Recepción oc app - Agregar a inventario',
+							'modulo' 		=> 'OrdenCompras',
+							'modulo_accion' => json_encode($p)
+						)
+					);
+				} else {
+					$log[] = array(
+						'Log' => array(
+							'administrador' => 'Recepción oc app - Error agregar a inventario',
+							'modulo' 		=> 'OrdenCompras',
+							'modulo_accion' => json_encode($p)
+						)
+					);
+				}
 			} else {
-				$log[] = array(
-					'Log' => array(
-						'administrador' => 'Recepción oc app - Error agregar a inventario',
-						'modulo' 		=> 'OrdenCompras',
-						'modulo_accion' => json_encode($p)
-					)
-				);
+				continue;
 			}
 		}
 
