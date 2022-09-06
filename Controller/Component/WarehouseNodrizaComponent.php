@@ -547,4 +547,15 @@ class WarehouseNodrizaComponent extends Component
         $this->crearCliente();
         return $this->WarehouseNodriza->Editarproducto($body);
     }
+    
+    /**
+     * UltimaApk
+     *  Retorna la ultima apk disponible
+     * @return void
+     */
+    public function UltimaApk()
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->UltimaApk();
+    }
 }

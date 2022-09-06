@@ -7,7 +7,8 @@ class NotificacionesPushController extends AppController
 {
 	public $components = array(
 		'Pushy',
-		'WarehouseNodriza'
+		'WarehouseNodriza',
+		'Mandrill',
 	);
 
 	public function api_registrar_token_administrador()
@@ -136,10 +137,10 @@ class NotificacionesPushController extends AppController
 		]);
 
 		// * Se envia con numero de requerimiento para que las notificaciones sean distintas y no se sobrepongan
-
-		$requerimientoPush = [
+		$message 			=  "Se require permiso para recepcionar OC | Rº {$requerimiento['Requerimiento']['id']}";
+		$requerimientoPush 	= [
 			'title'		=> "nz Warehouse",
-			'message'	=> "Se require permiso para recepcionar OC | Rº {$requerimiento['Requerimiento']['id']}",
+			'message'	=> $message,
 			'data'		=> [
 				"accion"							=> "problemas_recepcion_productos",
 				"orden_compra_id"					=> $this->request->query['orden_compra_id'],
@@ -158,13 +159,55 @@ class NotificacionesPushController extends AppController
 
 		$requerimiento = ClassRegistry::init('Requerimiento')->save($requerimiento);
 		$administradores = ClassRegistry::init('Administrador')->find('all', [
-			'fields' 		=> ['Administrador.id', 'Administrador.rol_id'],
+			'fields' 		=> [
+				'Administrador.id',
+				'Administrador.rol_id',
+				'Administrador.email',
+				'Administrador.nombre',
+			],
 			'contain' 		=> ['Rol', 'TokenNotificacionPush'],
 			'conditions'	=> [
 				'Rol.app_administrar' 		=> true,
 			]
 		]);
-		$token = Hash::extract($administradores, '{*}.TokenNotificacionPush.{*}.token');
+
+		$tokens 	= Hash::extract($administradores, '{*}.TokenNotificacionPush.{*}.token');
+	
+		try {
+			$response 	= $this->WarehouseNodriza->UltimaApk();
+			$tienda 	= ClassRegistry::init('Tienda')->tienda_principal(array(
+				'mandrill_apikey', 'nombre'
+			));
+
+			$mandrill_apikey = $tienda['Tienda']['mandrill_apikey'];
+
+			$remitente = array(
+				'email' 	=> 'no-reply@nodriza.cl',
+				'nombre' 	=> 'Nodriza Spa'
+			);
+
+			$html = $response['response']['body']['ruta_descarga'] ?? false ?
+				"<div>
+				<p>Revisa nuestra App nz Warehouse para atender requerimientos de los usuarios</p>
+				<a href='{$response['response']['body']['ruta_descarga']}'>¡Si no la tienes la puedes descargar ACÁ!</a>
+			</div>"
+				:
+				"<div>
+				<p>Revisa nuestra App nz Warehouse para atender requerimientos de los usuarios</p>
+			</div>";
+
+			foreach ($administradores as $correo) {
+				$destinatarios[] = [
+					'email' 	=> $correo['Administrador']['email'],
+					'nombre' 	=> $correo['Administrador']['nombre']
+				];
+			}
+			$this->Mandrill->conectar($mandrill_apikey);
+			$this->Mandrill->enviar_email($html, $message, $remitente, $destinatarios);
+
+		} catch (\Throwable $th) {
+			
+		}
 
 		$response = array(
 			'name' 		=> 'success',
@@ -172,15 +215,26 @@ class NotificacionesPushController extends AppController
 			'data' 		=> $requerimiento
 		);
 
-		if ($token) {
-			try {
-				$this->Pushy->sendPushNotification($requerimientoPush, implode(',', $token));
-				$response = array(
-					'name' 		=> 'success',
-					'message' 	=> 'Requerimiento creado y enviado',
-					'data' 		=> $requerimiento
-				);
-			} catch (\Throwable $th) {
+		if ($tokens) {
+			foreach ($tokens as $token) {
+				try {
+					$this->Pushy->sendPushNotification($requerimientoPush, $token);
+					$response = array(
+						'name' 		=> 'success',
+						'message' 	=> 'Requerimiento creado y enviado',
+						'data' 		=> $requerimiento
+					);
+				} catch (\Throwable $th) {
+
+					$logs[] = array('Log' => array(
+						'administrador' => 'Problemas para notificar',
+						'modulo' 		=> 'api_crear_requerimiento_problemas_recepcion_productos',
+						'modulo_accion' => json_encode($th)
+					));
+
+					ClassRegistry::init('Log')->create();
+					ClassRegistry::init('Log')->saveAll($logs);
+				}
 			}
 		}
 
@@ -279,8 +333,7 @@ class NotificacionesPushController extends AppController
 			'modulo_accion' => json_encode($respuesta)
 		));
 
-		ClassRegistry::init('Log')->create();
-		ClassRegistry::init('Log')->saveAll($logs);
+
 
 		$response = array(
 			'name' 		=> 'success',
@@ -297,8 +350,53 @@ class NotificacionesPushController extends AppController
 				'data' 		=> $respuesta
 			);
 		} catch (\Throwable $th) {
+
+			$logs[] = array('Log' => array(
+				'administrador' => 'Problemas para notificar',
+				'modulo' 		=> 'api_respuesta_requerimiento_problemas_recepcion_productos',
+				'modulo_accion' => json_encode($respuesta)
+			));
 		}
 
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveAll($logs);
+
+		$this->set(array(
+			'response' => $response,
+			'_serialize' => array('response')
+		));
+	}
+
+
+	public function api_requerimientos_sin_atender()
+	{
+		# Existe token
+		if (!isset($this->request->query['token'])) {
+
+			throw new UnauthorizedException("Token requerido");
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) {
+
+			throw new UnauthorizedException("Token de sesión expirado o invalido");
+		}
+
+		$respuesta = ClassRegistry::init('Requerimiento')->find('all', [
+			'conditions' => [
+				'atendido' 	=> 0
+			]
+		]);
+
+		if (!$respuesta) {
+			throw new NotFoundException('No hay requerimientos por atender');
+		}
+
+		$response = array(
+			'name' 		=> 'success',
+			'message' 	=> 'Se han encontrado requerimientos sin atender',
+			'data' 		=> $respuesta
+		);
 
 		$this->set(array(
 			'response' => $response,

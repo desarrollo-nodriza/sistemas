@@ -1069,3 +1069,13 @@ Router::connect(
         'api'           => true,
         'prefix'        => 'api')
 );
+
+
+Router::connect(
+    '/api/requerimientos-sin-atender', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'NotificacionesPush', 
+        'action'        => 'requerimientos_sin_atender',
+        'api'           => true,
+        'prefix'        => 'api')
+);
