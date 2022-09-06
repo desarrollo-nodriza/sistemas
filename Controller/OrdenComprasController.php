@@ -4005,7 +4005,8 @@ class OrdenComprasController extends AppController
 				'id' 		=> $id,
 				'estado' 	=> 'recepcion_incompleta',
 				'retiro' 	=> 0
-			)
+			),
+			'OrdenCompraFactura' => []
 		);
 
 		# Guardamos la fecha de la primera recepción
@@ -4016,9 +4017,8 @@ class OrdenComprasController extends AppController
 				)
 			));
 		}
-		// if (!empty($this->request->data['Dte'])) {
 
-		$this->request->data['Dte'] = array_unique($this->request->data['Dte']);
+		$this->request->data['Dte'] = array_unique($this->request->data['Dte'] ?? []);
 
 		# Guardamos los nuevos dtes
 		foreach ($this->request->data['Dte'] as $dte) {
@@ -4060,20 +4060,11 @@ class OrdenComprasController extends AppController
 				'monto_facturado' 	=> round($dte['total'], 0)
 			);
 		}
-
-		# Calculamos el total facturado
-		$yaFacturado = 0;
-
-		foreach ($oc['OrdenCompraFactura'] as $factura) {
-			if ($factura['tipo_documento'] != 33)
-			continue;
-
-			$yaFacturado = $yaFacturado + $factura['monto_facturado'];
-		}
-
+		
+	
 		$total_oc 			= $oc['OrdenCompra']['total'];
 		$total_oc_min 		= $total_oc - 100;
-		$total_facturado 	= array_sum(Hash::extract($ocSave['OrdenCompraFactura'], '{n}[tipo_documento=33].monto_facturado')) + $yaFacturado;
+		$total_facturado 	= array_sum(Hash::extract($ocSave['OrdenCompraFactura'], '{n}[tipo_documento=33].monto_facturado'));
 		# Facturado
 		$facturado_completo = false;
 
@@ -4088,8 +4079,7 @@ class OrdenComprasController extends AppController
 		$total_validados_proveedor 	= array_sum(Hash::extract($oc['OrdenComprasVentaDetalleProducto'], '{n}.cantidad_validada_proveedor'));
 
 		# OC queda en estado de espera de factura
-		if (
-			$total_recibidos == $total_validados_proveedor && !$facturado_completo
+		if ($total_recibidos == $total_validados_proveedor && !$facturado_completo
 		) {
 			$ocSave['OrdenCompra']['estado'] = 'espera_dte';
 		} elseif ($total_recibidos == $total_validados_proveedor && $facturado_completo) {
@@ -4103,8 +4093,6 @@ class OrdenComprasController extends AppController
 				'evidencia' 	=> json_encode($ocSave)
 			)
 		);
-		// }
-
 
 		$log[] = array(
 			'Log' => array(
