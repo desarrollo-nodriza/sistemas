@@ -3290,7 +3290,14 @@ class OrdenComprasController extends AppController
 						'Tienda.apikey_prestashop'
 					)
 				),
-				'OrdenComprasVentaDetalleProducto'
+				'OrdenComprasVentaDetalleProducto',
+				'OrdenCompraFactura' => [
+					'fields' => [
+						'OrdenCompraFactura.tipo_documento',
+						'OrdenCompraFactura.folio',
+						'OrdenCompraFactura.monto_facturado',
+					]
+				]
 			)
 		));
 
@@ -4060,8 +4067,8 @@ class OrdenComprasController extends AppController
 				'monto_facturado' 	=> round($dte['total'], 0)
 			);
 		}
+
 		
-	
 		$total_oc 			= $oc['OrdenCompra']['total'];
 		$total_oc_min 		= $total_oc - 100;
 		$total_facturado 	= array_sum(Hash::extract($ocSave['OrdenCompraFactura'], '{n}[tipo_documento=33].monto_facturado'));
