@@ -198,11 +198,13 @@ class MetodoEnviosController extends AppController
 			$estados[$value['VentaEstado']['id']] = "Estado {$value['VentaEstado']['nombre']} | Categoría {$value['VentaEstadoCategoria']['nombre']}";
 		}
 
+		$venta_estado_categorias = ClassRegistry::init('VentaEstadoCategoria')->find('list', array('conditions' => array('activo' => 1, 'final' => 0, 'venta' => 1)));
+		
 		$cuentaCorrienteTransporte = ClassRegistry::init('CuentaCorrienteTransporte')->selector();
 	
 		BreadcrumbComponent::add('Métodos de envio', '/metodoEnvios');
 		BreadcrumbComponent::add('Editar Método de envio');
-		$this->set(compact('dependencias', 'dependenciasVars','bodegas','tipo_servicio','estados','cuentaCorrienteTransporte'));
+		$this->set(compact('dependencias', 'dependenciasVars','bodegas','tipo_servicio','estados','cuentaCorrienteTransporte', 'venta_estado_categorias'));
 		
 
 	}

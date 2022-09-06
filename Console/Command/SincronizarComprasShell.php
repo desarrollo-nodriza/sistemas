@@ -59,6 +59,14 @@ class SincronizarComprasShell extends AppShell {
 		# Obtenemos los dtes con estado de REGISTRO
 		$compras_registro   = $controller->obtener_dte_compras_desde_sii($conf['Tienda']['sii_private_key'], $conf['Tienda']['sii_public_key'], $conf['Tienda']['sii_rut'], $conf['Tienda']['sii_clave'], $conf['Tienda']['libredte_token'], 'REGISTRO', $periodo);
 		
+		$log[] = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'DteCompra',
+			'modulo_accion' => [
+				"Compras registro" => $compras_registro
+			]
+		));
+
 		# Guardamos dtes registros
 		foreach ($compras_registro['body']['data'] as $i => $data) 
 		{
@@ -88,6 +96,14 @@ class SincronizarComprasShell extends AppShell {
 		
 		# Obtenemos los dtes con estado PENDIENTE
 		$compras_pendientes = $controller->obtener_dte_compras_desde_sii($conf['Tienda']['sii_private_key'], $conf['Tienda']['sii_public_key'], $conf['Tienda']['sii_rut'], $conf['Tienda']['sii_clave'], $conf['Tienda']['libredte_token'], 'PENDIENTE', $periodo);
+
+		$log[] = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' => 'DteCompra',
+			'modulo_accion' => [
+				"Compras pendientes" => $compras_pendientes
+			]
+		));
 
 		# Guardamos dtes pendiente
 		foreach ($compras_pendientes['body']['data'] as $i => $data) 

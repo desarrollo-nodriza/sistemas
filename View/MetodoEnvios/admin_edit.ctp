@@ -102,101 +102,140 @@
 			</div>
 			<?= $this->Form->end(); ?>
 		</div>
-		<? if ($this->request->data['MetodoEnvio']['permitir_reservar_stock_otra_bodega']) : ?>
+		<div class="col-xs-12 col-md-6">
+			<? if ($this->request->data['MetodoEnvio']['permitir_reservar_stock_otra_bodega']) : ?>
 			<?= $this->Form->create(false, array(
 				'class' => 'form-horizontal',
 				'url' => array('controller' => 'metodoEnvios', 'action' => 'bodega_add', $this->request->data['MetodoEnvio']['id']),
 				'id' => 'BodegaAdd'
 			)); ?>
-			<div class="col-xs-12 col-md-6">
-				<div class="page-content-wrap">
-					<div class="panel panel-default">
-						<div class="panel-heading">
-							<h3 class="panel-title">Otras bodegas para reservar stock</h3>
-							<ul class="panel-controls">
-								<li><a href="#" class="clone-boton"><span class="fa fa-plus"></span></a></li>
-							</ul>
-						</div>
-						<div class="panel-body">
-							<div class="table-responsive" style="max-height: 600px;">
-								<div class="table-responsive">
-									<table id="sortable" class="table">
-										<thead>
-											<tr>
-												<th>Bodega</th>
-												<th style="text-align: center;"> Prioritario</th>
-												<th>Cuenta corriente transporte</th>
-												<th style="text-align: center;"> Acciones</th>
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Otras bodegas para reservar stock</h3>
+					<ul class="panel-controls">
+						<li><a href="#" class="clone-boton"><span class="fa fa-plus"></span></a></li>
+					</ul>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive" style="max-height: 600px;">
+						<div class="table-responsive">
+							<table id="sortable" class="table">
+								<thead>
+									<tr>
+										<th>Bodega</th>
+										<th style="text-align: center;"> Prioritario</th>
+										<th>Cuenta corriente transporte</th>
+										<th style="text-align: center;"> Acciones</th>
+									</tr>
+								</thead>
+								<tbody>
+									<? foreach ($this->request->data['BodegasMetodoEnvio'] as $indice => $bodega) : ?>
+										<? if ($this->request->data['MetodoEnvio']['bodega_id'] == $bodega['id'])
+											continue;?>
+										<tr class="fila">
+											<?= $this->Form->input(sprintf('%d.id', $indice), array('type' => 'text', 'label' => '', 'default' =>  $bodega['id'] ?? 1, 'class' => 'form-control hidden')); ?>
+											<?= $this->Form->input(sprintf('%d.metodo_envio_id', $indice), array('type' => 'text', 'label' => '', 'default' =>  $this->request->data['MetodoEnvio']['id'], 'class' => 'form-control hidden')); ?>
+											<td align="center" style="vertical-align: middle;">
+												<?= $this->Form->select(sprintf('%d.bodega_id', $indice), $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control', 'required', 'default' => $bodega['bodega_id'])); ?>
+											</td>
+											<td align="center" style="vertical-align: middle; width: 100px;">
+												<?= $this->Form->checkbox(sprintf('%d.prioritaria', $indice), array('label' => '', 'default' =>  $bodega['prioritaria'])); ?>
+											</td>
+											<td align="center" style="vertical-align: middle;">
+												<?= $this->Form->select(sprintf('%d.cuenta_corriente_transporte_id', $indice), $cuentaCorrienteTransporte, array('empty' => 'Seleccione Cuenta corriente', 'class' => 'form-control',  'default' => $bodega['cuenta_corriente_transporte_id'])); ?>
+											</td>
+											<td class="hidden" align="center" style="vertical-align: middle; width: 100px;">
+												<?= $this->Form->input(sprintf('%d.orden', $indice), array('type' => 'text', 'label' => '',  'default' =>  $bodega['orden'] ?? 1, 'class' => 'form-control orden')); ?>
+											</td>
+											<td align="center" style="vertical-align: middle; width: 100px;">
+												<button type="button" data-toggle="modal" data-target="#modal-eliminar-bodega-<?= $bodega['id'] ?>" class="btn btn-danger btn-block ">Eliminar</button>
+											</td>
+										</tr>
+									<? endforeach; ?>
+									<? if (count($this->request->data['BodegasMetodoEnvio']) < count($bodegas)) : ?>
+
+										<? for ($i = (count($this->request->data['BodegasMetodoEnvio']) + 1); $i <= (count($this->request->data['BodegasMetodoEnvio']) + count($bodegas)); $i++) : ?>
+											<tr class="fila hidden clone-tr">
+												<?= $this->Form->input(sprintf('%d.metodo_envio_id', $i), array('type' => 'text', 'label' => '', 'default' =>  $this->request->data['MetodoEnvio']['id'], 'class' => 'form-control hidden')); ?>
+												<td align="center" style="vertical-align: middle;">
+													<?= $this->Form->select(sprintf('%d.bodega_id', $i), $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control',)); ?>
+												</td>
+
+												<td align="center" style="vertical-align: middle; width: 100px;">
+													<?= $this->Form->checkbox(sprintf('%d.prioritaria', $i), array('label' => '', 'default' => 0)); ?>
+												</td>
+												<td align="center" style="vertical-align: middle;">
+													<?= $this->Form->select(sprintf('%d.cuenta_corriente_transporte_id', $i), $cuentaCorrienteTransporte, array('empty' => 'Seleccione Cuenta corriente', 'class' => 'form-control')); ?>
+												</td>
+												<td class="hidden" align="center" style="vertical-align: middle">
+													<?= $this->Form->input(sprintf('%d.orden', $i), array('type' => 'text', 'label' => '', 'default' => $i, 'class' => 'form-control orden')); ?>
+												</td>
+												<td valign="center" align="center" style="vertical-align: middle; width: 100px;" w>
+													<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>
+												</td>
 											</tr>
-										</thead>
-										<tbody>
-											<? unset($bodegas[$this->request->data['MetodoEnvio']['bodega_id']]); ?>
-											<? foreach ($this->request->data['BodegasMetodoEnvio'] as $indice => $bodega) : ?>
-												<tr class="fila">
-													<?= $this->Form->input(sprintf('%d.id', $indice), array('type' => 'text', 'label' => '', 'default' =>  $bodega['id'] ?? 1, 'class' => 'form-control hidden')); ?>
-													<?= $this->Form->input(sprintf('%d.metodo_envio_id', $indice), array('type' => 'text', 'label' => '', 'default' =>  $this->request->data['MetodoEnvio']['id'], 'class' => 'form-control hidden')); ?>
-													<td align="center" style="vertical-align: middle;">
-														<?= $this->Form->select(sprintf('%d.bodega_id', $indice), $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control', 'required', 'default' => $bodega['bodega_id'])); ?>
-													</td>
-													<td align="center" style="vertical-align: middle; width: 100px;">
-														<?= $this->Form->checkbox(sprintf('%d.prioritaria', $indice), array('label' => '', 'default' =>  $bodega['prioritaria'])); ?>
-													</td>
-													<td align="center" style="vertical-align: middle;">
-														<?= $this->Form->select(sprintf('%d.cuenta_corriente_transporte_id', $indice), $cuentaCorrienteTransporte, array('empty' => 'Seleccione Cuenta corriente', 'class' => 'form-control',  'default' => $bodega['cuenta_corriente_transporte_id'])); ?>
-													</td>
-													<td class="hidden" align="center" style="vertical-align: middle; width: 100px;">
-														<?= $this->Form->input(sprintf('%d.orden', $indice), array('type' => 'text', 'label' => '',  'default' =>  $bodega['orden'] ?? 1, 'class' => 'form-control orden')); ?>
-													</td>
-													<td align="center" style="vertical-align: middle; width: 100px;">
-														<button type="button" data-toggle="modal" data-target="#modal-eliminar-bodega-<?= $bodega['id'] ?>" class="btn btn-danger btn-block ">Eliminar</button>
-													</td>
-												</tr>
-											<? endforeach; ?>
-											<? if (count($this->request->data['BodegasMetodoEnvio']) < count($bodegas)) : ?>
-
-												<? for ($i = (count($this->request->data['BodegasMetodoEnvio']) + 1); $i <= (count($this->request->data['BodegasMetodoEnvio']) + count($bodegas)); $i++) : ?>
-													<tr class="fila hidden clone-tr">
-														<?= $this->Form->input(sprintf('%d.metodo_envio_id', $i), array('type' => 'text', 'label' => '', 'default' =>  $this->request->data['MetodoEnvio']['id'], 'class' => 'form-control hidden')); ?>
-														<td align="center" style="vertical-align: middle;">
-															<?= $this->Form->select(sprintf('%d.bodega_id', $i), $bodegas, array('empty' => 'Seleccione Bodega', 'class' => 'form-control',)); ?>
-														</td>
-
-														<td align="center" style="vertical-align: middle; width: 100px;">
-															<?= $this->Form->checkbox(sprintf('%d.prioritaria', $i), array('label' => '', 'default' => 0)); ?>
-														</td>
-														<td align="center" style="vertical-align: middle;">
-															<?= $this->Form->select(sprintf('%d.cuenta_corriente_transporte_id', $i), $cuentaCorrienteTransporte, array('empty' => 'Seleccione Cuenta corriente', 'class' => 'form-control')); ?>
-														</td>
-														<td class="hidden" align="center" style="vertical-align: middle">
-															<?= $this->Form->input(sprintf('%d.orden', $i), array('type' => 'text', 'label' => '', 'default' => $i, 'class' => 'form-control orden')); ?>
-														</td>
-														<td valign="center" align="center" style="vertical-align: middle; width: 100px;" w>
-															<button type="button" class="remove_tr remove-tr btn-danger"><i class="fa fa-minus"></i></button>
-														</td>
-													</tr>
-												<? endfor; ?>
-											<? endif ?>
-										</tbody>
-									</table>
-								</div>
-							</div>
-
+										<? endfor; ?>
+									<? endif ?>
+								</tbody>
+							</table>
 						</div>
+					</div>
 
-						<div id="guardar-bodega" class="row">
-							<div class="col-xs-12">
-								<div class="pull-right pagination">
-									<button type="submit" class="btn btn-success btn-block start-loading-when-form-is-validate ">Guardar Información</button>
-								</div>
-							</div>
+				</div>
+
+				<div id="guardar-bodega" class="row">
+					<div class="col-xs-12">
+						<div class="pull-right pagination">
+							<button type="submit" class="btn btn-success btn-block start-loading-when-form-is-validate ">Guardar Información</button>
 						</div>
-
 					</div>
 				</div>
+
 			</div>
 			<?= $this->Form->end(); ?>
+			<? endif ?>
 
-		<? endif ?>
+			<div class="panel panel-default js-clone-wrapper">
+			<?= $this->Form->create('MetodoEnvio', array('url' => array('action' => 'retrasos_add'), 'class' => 'form-horizontal', 'id' => 'MetodoEnvioNotificaciones', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
+			<?= $this->Form->input('id'); ?>
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-bell"></i> Retraso de ventas</h3>
+					<ul class="panel-controls">
+						<li><a href="#" class="copy_tr"><span class="fa fa-plus"></span></a></li>
+					</ul>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered table-xl">
+							<tr>
+								<th>¿Activar notificación a cliente?</th>
+								<td><?=$this->Form->input('notificar_restraso', array('class' => ''));?></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<div class="panel-body">
+					<div class="table-responsive">
+						<table class="table table-bordered table-xl">
+							<th>Bodega</th>
+							<th>Estado de la venta</th>
+							<th>Horas <i data-container="body" data-toggle="tooltip" data-placement="top" title="Se notificará al cliente cuando la venta se mantenga en el mismo estado durante las horas que usted indique." class="fa fa-info-circle"></i></th>
+							<th>Activo</th>
+							<tbody class="">
+								<?=$this->element('metodoEnvios/metodo_envio_retrasos', array('bodegas' => $bodegas, 'venta_estado_categorias' => $venta_estado_categorias));?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<div class="panel-footer">
+					<div class="pull-right">
+						<input type="submit" class="btn btn-primary esperar-carga start-loading-when-form-is-validate" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
+						<?= $this->Html->link('Cancelar', array('action' => 'index'), array('class' => 'btn btn-danger')); ?>
+					</div>
+				</div>
+				<?= $this->Form->end(); ?>
+			</div>
+		</div>
 	</div>
 	< </div>
 
