@@ -172,7 +172,7 @@ class NotificacionesPushController extends AppController
 		]);
 
 		$tokens 	= Hash::extract($administradores, '{*}.TokenNotificacionPush.{*}.token');
-	
+
 		try {
 			$response 	= $this->WarehouseNodriza->UltimaApk();
 			$tienda 	= ClassRegistry::init('Tienda')->tienda_principal(array(
@@ -204,9 +204,7 @@ class NotificacionesPushController extends AppController
 			}
 			$this->Mandrill->conectar($mandrill_apikey);
 			$this->Mandrill->enviar_email($html, $message, $remitente, $destinatarios);
-
 		} catch (\Throwable $th) {
-			
 		}
 
 		$response = array(
@@ -390,6 +388,10 @@ class NotificacionesPushController extends AppController
 
 		if (!$respuesta) {
 			throw new NotFoundException('No hay requerimientos por atender');
+		}
+
+		foreach ($respuesta as $key => $value) {
+			$respuesta[$key]['Requerimiento']['requerimiento'] = json_decode($value['Requerimiento']['requerimiento']);
 		}
 
 		$response = array(
