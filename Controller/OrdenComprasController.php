@@ -3837,10 +3837,22 @@ class OrdenComprasController extends AppController
 			throw new NotFoundException("Orden de compra no encontrada");
 		}
 
-		if (empty($this->request->data['ProductoOc'])) {
+		if (!isset($this->request->data['Dte']) ) {
+
+			throw new BadRequestException("Debe enviar Dte");
+		}
+
+		if (!isset($this->request->data['ProductoOc']) ) {
+
+			throw new BadRequestException("Debe enviar ProductoOc");
+		}
+		
+		if (empty($this->request->data['ProductoOc']) ) {
 
 			throw new BadRequestException("Debes enviar productos");
 		}
+
+		
 
 		# Información del token y propietario
 		$tokenInfo 	= ClassRegistry::init('Token')->obtener_propietario_token_full($this->request->query['token']);
@@ -4025,8 +4037,8 @@ class OrdenComprasController extends AppController
 			));
 		}
 
-		$this->request->data['Dte'] = array_unique($this->request->data['Dte'] ?? []);
-
+		$this->request->data['Dte'] = array_unique($this->request->data['Dte'], SORT_REGULAR);
+		
 		# Guardamos los nuevos dtes
 		foreach ($this->request->data['Dte'] as $dte) {
 
