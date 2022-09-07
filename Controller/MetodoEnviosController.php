@@ -466,7 +466,11 @@ class MetodoEnviosController extends AppController
 								'Log' => array(
 									'administrador' => 'Crear etiqueta Starken venta ' . $id_venta,
 									'modulo'     	=> 'MetodoEnviosController',
-									'modulo_accion' => 'Generada con éxito'
+									'modulo_accion' => [
+										"venta" => $venta,
+										"embalaje" => $embalaje,
+										"ctacorriente" => $CuentaCorrienteTransporte
+									]
 								)
 							);
 						}
@@ -503,7 +507,11 @@ class MetodoEnviosController extends AppController
 								'Log' => array(
 									'administrador' => 'Crear etiqueta Boosmap venta ' . $id_venta,
 									'modulo' 		=> 'MetodoEnviosController',
-									'modulo_accion' => 'Generada con éxito'
+									'modulo_accion' => [
+										"venta" => $venta,
+										"embalaje" => $embalaje,
+										"ctacorriente" => $CuentaCorrienteTransporte
+									]
 								)
 							);
 						}
@@ -521,7 +529,11 @@ class MetodoEnviosController extends AppController
 								'Log' => array(
 									'administrador' => 'Crear etiqueta BlueExpress venta ' . $id_venta,
 									'modulo'     	=> 'MetodoEnviosController',
-									'modulo_accion' => 'Generada con éxito'
+									'modulo_accion' => [
+										"venta" => $venta,
+										"embalaje" => $embalaje,
+										"ctacorriente" => $CuentaCorrienteTransporte
+									]
 								)
 							);
 						}

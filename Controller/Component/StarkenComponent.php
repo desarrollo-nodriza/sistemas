@@ -308,7 +308,11 @@ class StarkenComponent extends Component
 						'paquete_generado'       => count($paquetes),
 						'costo_envio'            => null,
 						'etiqueta_envio_externa' => $union,
-						'embalaje_id'            => $embalaje["id"]
+						'embalaje_id'            => $embalaje["id"],
+						'embalaje_largo'         => $largoTotal,
+                        'embalaje_ancho'         => $anchoTotal,
+                        'embalaje_alto'          => $altoTotal,
+                        'embalaje_peso'          => $pesoTotal
 					]
 				];
 		}

@@ -394,7 +394,11 @@ class BlueExpressComponent extends Component
                         'etiqueta'                  => $ruta_pdfs,
                         'paquete_generado'          => count($paquetes),
                         'etiqueta_envio_externa'    => $ruta_pdfs,
-                        'embalaje_id'               => $embalaje["id"]
+                        'embalaje_id'               => $embalaje["id"],
+                        'embalaje_largo'            => $largoTotal,
+                        'embalaje_ancho'            => $anchoTotal,
+                        'embalaje_alto'             => $altoTotal,
+                        'embalaje_peso'             => $pesoTotal
                     ]
                 ];
 
