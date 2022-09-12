@@ -215,14 +215,21 @@
 					</div>
 				</div>
 				<div class="panel-body">
+					
+					<p>Configure las reglas para el envio de notificaciones al cliente.</p>
 					<div class="table-responsive">
-						<table class="table table-bordered table-xl">
-							<th>Bodega</th>
-							<th>Estado de la venta</th>
-							<th>Horas <i data-container="body" data-toggle="tooltip" data-placement="top" title="Se notificará al cliente cuando la venta se mantenga en el mismo estado durante las horas que usted indique." class="fa fa-info-circle"></i></th>
-							<th>Activo</th>
+						<table id="tabla-reglas-notificaciones" class="table table-bordered table-xl">
+							<thead>
+								<th>Bodega</th>
+								<th>Estado de la venta</th>
+								<th>Horas <i data-container="body" data-toggle="tooltip" data-placement="top" title="Se notificará al cliente cuando la venta se mantenga en el mismo estado durante las horas que usted indique." class="fa fa-info-circle"></i></th>
+								<th>Activo</th>
+							</thead>
 							<tbody class="">
-								<?=$this->element('metodoEnvios/metodo_envio_retrasos', array('bodegas' => $bodegas, 'venta_estado_categorias' => $venta_estado_categorias));?>
+								<?=$this->element('metodoEnvios/nuevo_metodo_envio_retrasos', array('bodegas' => $bodegas, 'venta_estado_categorias' => $venta_estado_categorias));?>
+								<? foreach ($this->request->data['MetodoEnvioRetraso'] as $imer => $regla_retraso) : ?>
+									<?=$this->element('metodoEnvios/editar_metodo_envio_retrasos', array('bodegas' => $bodegas, 'venta_estado_categorias' => $venta_estado_categorias, 'regla_retraso' => $regla_retraso));?>
+								<? endforeach; ?>
 							</tbody>
 						</table>
 					</div>

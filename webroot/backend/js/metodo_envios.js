@@ -1,7 +1,9 @@
 
 
 $.extend({
-	metodo_envios: {		
+	metodo_envios: {	
+		regla_combinaciones : [],
+		combinacion_actual : {},
 		clonarElemento: function($ths){
 
 			var $contexto = $ths.parents('.panel').eq(0).find('.clone-tr').eq(0);
@@ -65,6 +67,7 @@ $.extend({
 				e.preventDefault();
 
 				$.metodo_envios.clonarElemento($(this));
+				$.metodo_envios.rellenar_combinaciones_reglas($('#tabla-reglas-notificaciones'));
 				page_content_onresize();
 
 			});
@@ -78,14 +81,93 @@ $.extend({
 
 				$th.fadeOut('slow', function() {
 					$th.remove();
+					$.metodo_envios.rellenar_combinaciones_reglas($('#tabla-reglas-notificaciones'));
 					page_content_onresize();
 				});
 
 			});
 		},
+		rellenar_combinaciones_reglas: function($tabla)
+		{
+			$.metodo_envios.regla_combinaciones = [];
+			
+			$tabla.find('tbody>tr:not(.hidden)').each(function($i, $tr){
+				let $estado = $(this).find('.js-estado-regla-noti'),
+					$bodega = $(this).find('.js-bodega-regla-noti'),
+					$horas  = $(this).find('.js-hora-regla-noti'),
+					$combi  = {
+						"bodega" : $bodega.val(),
+						"estado" : $estado.val(),
+						"horas"  : $horas.val()
+					};
+				
+				if ($estado.val().length > 0 && 
+					$bodega.val().length > 0 && 
+					$horas.val().length > 0)
+				{
+					$.metodo_envios.regla_combinaciones.push($combi);
+				}
+				
+			});
+
+			console.info($.metodo_envios.regla_combinaciones);
+
+			return;
+			
+		},
+		validar_notificaciones_reglas: function($combi)
+		{		
+			return JSON.stringify($combi) === JSON.stringify($.metodo_envios.combinacion_actual);
+		},
 		init: function(){
 			if ( $('#MetodoEnvioNotificaciones').length ) {
 				$.metodo_envios.clonar();
+			}
+
+			// Se valida la relga de las noficiaciones de retraso de ventas
+			$(document).on('change', '.js-estado-regla-noti, .js-bodega-regla-noti, .js-hora-regla-noti', function()
+			{
+				let $tr = $(this).parents('tr').eq(0),
+					$estado = $tr.find('.js-estado-regla-noti').eq(0),
+					$bodega = $tr.find('.js-bodega-regla-noti').eq(0),
+					$horas  = $tr.find('.js-hora-regla-noti').eq(0),
+					$combi  = {
+						"bodega" : $bodega.val(),
+						"estado" : $estado.val(),
+						"horas"  : $horas.val()
+					};
+
+				if ($estado.val().length > 0 && 
+					$bodega.val().length > 0 && 
+					$horas.val().length > 0)
+				{	
+					
+					$.metodo_envios.combinacion_actual = $combi;
+
+					if($.metodo_envios.regla_combinaciones.find($.metodo_envios.validar_notificaciones_reglas))
+					{	
+						$estado.val('');
+						$bodega.val('');
+						$horas.val('');
+						
+						noty({text: 'La regla indicada ya está creada. Elija otra', layout: 'topRight', type: 'error'});
+						setTimeout(function(){
+							$.noty.closeAll();
+						}, 3000);
+					}
+					else
+					{
+						// Se limpia reglas para setearlas nuevamente
+						$.metodo_envios.rellenar_combinaciones_reglas($('#tabla-reglas-notificaciones'));
+					}
+					
+				}
+			});
+
+			if ($('.js-estado-regla-noti').length)
+			{	
+				// Se limpia reglas para setearlas nuevamente
+				$.metodo_envios.rellenar_combinaciones_reglas($('#tabla-reglas-notificaciones'));
 			}
 		}
 	}
