@@ -940,7 +940,8 @@ class AdministradoresController extends AppController
 							'Rol.app_zonificiacion' , 
 							'Rol.app_ventas',
 							'Rol.app_trasladar_embalajes_a_otras_bodegas',
-							'Rol.app_recibir_embalajes_en_traslado'
+							'Rol.app_recibir_embalajes_en_traslado',
+							'Rol.app_administrar'
 						)
 					),
 					'fields' => array(
@@ -963,10 +964,10 @@ class AdministradoresController extends AppController
 
         $response = array(
             'Usuario' => array(
-                'id' => $tokenData['Administrador']['id'],
-                'nombre' => $tokenData['Administrador']['nombre'],
-                'email'  => $tokenData['Administrador']['email'],
-                'avatar' => (!empty($tokenData['Administrador']['google_imagen'])) ? $tokenData['Administrador']['google_imagen'] : 'https://ui-avatars.com/api/?size=50&background=fff&color=771D97&name=' . urlencode($tokenData['Administrador']['nombre']),
+                'id' 					=> $tokenData['Administrador']['id'],
+                'nombre' 				=> $tokenData['Administrador']['nombre'],
+                'email'  				=> $tokenData['Administrador']['email'],
+                'avatar' 				=> (!empty($tokenData['Administrador']['google_imagen'])) ? $tokenData['Administrador']['google_imagen'] : 'https://ui-avatars.com/api/?size=50&background=fff&color=771D97&name=' . urlencode($tokenData['Administrador']['nombre']),
                 'bodega_predeterminada' => ($tokenData['Administrador']['Rol']['bodega_id']) ? $tokenData['Administrador']['Rol']['bodega_id'] : null
             )
         );
@@ -990,6 +991,7 @@ class AdministradoresController extends AppController
                     'ventas'     							=> $tokenData['Administrador']['Rol']['app_ventas'],
                     'trasladar_embalajes_a_otras_bodegas'   => $tokenData['Administrador']['Rol']['app_trasladar_embalajes_a_otras_bodegas'],
                     'recibir_embalajes_en_traslado'     	=> $tokenData['Administrador']['Rol']['app_recibir_embalajes_en_traslado'],
+                    'administrar'     						=> $tokenData['Administrador']['Rol']['app_administrar'],
                 ),
                 'Ambientes' => array()
             );

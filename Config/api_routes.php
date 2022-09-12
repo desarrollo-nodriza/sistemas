@@ -833,15 +833,15 @@ Router::connect(
 
 
 Router::connect(
-    '/api/ordenes-de-compra/recepcionar/:id', // E.g. /blog/3-CakePHP_Rocks
+    '/api/ordenes-de-compra/v2/recepcionar/:id', // E.g. /blog/3-CakePHP_Rocks
     array(
-        'controller' => 'OrdenCompras', 
-        'action' => 'reception',
-        'api' => true,
-        'prefix' => 'api'),
+        'controller'    => 'OrdenCompras', 
+        'action'        => 'receptionV2',
+        'api'           => true,
+        'prefix'        => 'api'),
     array(
-        'pass' => array('id'),
-        'id' => '[0-9]+'
+        'pass'          => array('id'),
+        'id'            => '[0-9]+'
     )
 );
 
@@ -1029,6 +1029,53 @@ Router::connect(
     array(
         'controller'    => 'Pruebas', 
         'action'        => 'pruebas',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+
+
+Router::connect(
+    '/api/registrar-token-push-administrador', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'NotificacionesPush', 
+        'action'        => 'registrar_token_administrador',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+
+Router::connect(
+    '/api/crear-requerimiento-problemas-recepcion-productos', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'NotificacionesPush', 
+        'action'        => 'crear_requerimiento_problemas_recepcion_productos',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+
+Router::connect(
+    '/api/eliminar-token-push-administrador', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'NotificacionesPush', 
+        'action'        => 'eliminar_token_administrador',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+
+Router::connect(
+    '/api/responder-requerimiento-problemas-recepcion-productos', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'NotificacionesPush', 
+        'action'        => 'respuesta_requerimiento_problemas_recepcion_productos',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+
+
+Router::connect(
+    '/api/requerimientos-sin-atender', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller'    => 'NotificacionesPush', 
+        'action'        => 'requerimientos_sin_atender',
         'api'           => true,
         'prefix'        => 'api')
 );
