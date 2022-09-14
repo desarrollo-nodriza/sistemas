@@ -383,7 +383,7 @@ class Bodega extends AppModel
 	 * @param  [string] $glosa
 	 * @return [type]              [description]
 	 */
-	public function crearSalidaBodega($id_producto, $bodega_id = null, $cantidad, $valor = 0, $tipo, $id_oc = null, $id_venta = null, $glosa = '')
+	public function crearSalidaBodega($id_producto, $bodega_id = null, $cantidad, $valor = 0, $tipo, $id_oc = null, $id_venta = null, $glosa = '', $responsable = '')
 	{	
 		if ($cantidad <= 0) {
 			return false;
@@ -410,7 +410,7 @@ class Bodega extends AppModel
 				'valor'                     => round(-$valor, 2),
 				'total'                     => round($valor * -$cantidad, 2),
 				'fecha'                     => date('Y-m-d H:i:s'),
-				'responsable'               => CakeSession::read('Auth.Administrador.email'),
+				'responsable'               => ($responsable) ? $responsable : CakeSession::read('Auth.Administrador.email'),
 				'glosa'						=> (empty($glosa)) ? $this->tipoMovimientos[$tipo]['ED'] : $glosa,
 				'orden_compra_id'			=> $id_oc,
 				'venta_id'     				=> $id_venta

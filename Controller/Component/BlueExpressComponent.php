@@ -319,9 +319,9 @@ class BlueExpressComponent extends Component
                 ],
                 'packages'      => [
                     'peso'  => round($pesoTotal, 1),
-                    'largo' => round($largoTotal, 1),
-                    'ancho' => round($anchoTotal, 1),
-                    'alto'  => round($altoTotal, 1),
+                    'largo' => 1,
+                    'ancho' => 1,
+                    'alto'  => 1,
                 ],
                 'credenciales'  => $CuentaCorrienteTransporte['credenciales'] ?? "",
                 'extendedClaim' => $CuentaCorrienteTransporte['extendedClaim'] ? true : false ?? false,
@@ -392,11 +392,13 @@ class BlueExpressComponent extends Component
                         'venta_id'                  => $venta['Venta']['id'],
                         'cod_seguimiento'           => $response['response']['data']['trackingNumber'],
                         'etiqueta'                  => $ruta_pdfs,
-                        'entrega_aprox'             => date("Y-m-d", strtotime($obtener_costo_envio['response']['data']['fechaEstimadaEntrega'])),
                         'paquete_generado'          => count($paquetes),
-                        'costo_envio'               => $obtener_costo_envio['response']['data']['total'],
                         'etiqueta_envio_externa'    => $ruta_pdfs,
-                        'embalaje_id'               => $embalaje["id"]
+                        'embalaje_id'               => $embalaje["id"],
+                        'embalaje_largo'            => $largoTotal,
+                        'embalaje_ancho'            => $anchoTotal,
+                        'embalaje_alto'             => $altoTotal,
+                        'embalaje_peso'             => $pesoTotal
                     ]
                 ];
 

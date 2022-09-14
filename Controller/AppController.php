@@ -757,7 +757,8 @@ class AppController extends Controller
 				'administrador_id',
 				'tipo_entrega',
 				'receptor_informado',
-				'informacion_entrega'
+				'informacion_entrega',
+				'api_key_pushy'
 			); 
 			
 			# Verificar que la tienda esté configurada
