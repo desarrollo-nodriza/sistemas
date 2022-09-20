@@ -1531,7 +1531,7 @@ class PrestashopComponent extends Component
 		$opt['resource']           = 'specific_prices';
 		$opt['filter[id_product]'] = $id;
 		$opt['display']            = 'full';
-
+		// prx($opt);
 		$informacion = array();
 
 		try {
@@ -1643,4 +1643,64 @@ class PrestashopComponent extends Component
 		return $informacion;
 	}
 
+
+	public function prestashop_arbol_categorias($categoria_id)
+	{
+		$arbol_categoria    = null;
+		
+		do {
+			$categoria 			= $this->prestashop_obtener_categorias_v2(
+				array(
+					'filter[id]' 		=> "[{$categoria_id}]",
+					'filter[active]'	=> "[1]",
+				)
+			);
+			// prx($categoria );
+			if ($categoria['category']['is_root_category'] ?? true) {
+				break;
+			}
+
+			$categoria_id 		= $categoria['category']['id_parent'] ?? null;
+			$nombre_categoria[] = $categoria['category']['name']['language'];
+
+		} while (!is_null($categoria_id));
+
+		if ($nombre_categoria) {
+			$arbol_categoria =  (implode(" > ", array_reverse($nombre_categoria)));
+		}
+
+		return $arbol_categoria;
+	}
+	
+
+	public function prestashop_obtener_stock_productos($producto_ids)
+	{
+		//se obtiene el stock de prestashop
+		$opt = array();
+		$opt['resource'] 			= 'stock_availables';
+		$opt['display'] 			= 'full';
+		$opt['filter[id_product]'] 	= '[' . $producto_ids . ']';
+
+		$stock_procesado 			= [];
+
+		try {
+			$xml = $this->ConexionPrestashop->get($opt);
+
+			$PrestashopResources = $xml->children()->children();
+
+			$stocks = to_array($PrestashopResources);
+
+			if (isset($stocks['stock_available'][1]) ? false :  true) {
+				$stock_procesado[$stocks['stock_available']['id_product']] = $stocks['stock_available']['quantity'];
+
+			} else {
+				foreach ($stocks['stock_available'] as $stock) {
+					$stock_procesado[$stock['id_product']] = $stock['quantity'];
+				}
+			}
+		} catch (Exception $e) {
+		}
+
+		return $stock_procesado;
+	}
 }
