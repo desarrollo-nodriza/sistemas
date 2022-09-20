@@ -640,7 +640,7 @@ Class CampanasController extends AppController {
 		$producosProcesados = [];
 		# usar DB
 		$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
-
+		
 		# si no tiene etiqueta, se usa la categoria principal
 		if (empty($campana['CampanaEtiqueta'])) {
 

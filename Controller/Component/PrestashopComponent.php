@@ -1555,12 +1555,15 @@ class PrestashopComponent extends Component
 	 * @param  mixed $filter
 	 * @return array
 	 */
-	public function prestashop_obtener_categorias_v2($filter = array('filter[active]' => '[1]'))
+	public function prestashop_obtener_categorias_v2(
+		array $filter = array('filter[active]' => '[1]'),
+		$display = "full"
+		)
 	{
 		ini_set('max_execution_time', 0);
 
 		$opt             	= array();
-		$opt['display'] 	= 'full';
+		$opt['display'] 	= $display;
 		$opt['resource'] 	= 'categories';
 
 		foreach ($filter as $field => $value) {
@@ -1659,9 +1662,10 @@ class PrestashopComponent extends Component
 				array(
 					'filter[id]' 		=> "[{$categoria_id}]",
 					'filter[active]'	=> "[1]",
-				)
+				),
+				"[id,id_parent,is_root_category,name]"
 			);
-			// prx($categoria );
+			
 			if ($categoria['category']['is_root_category'] ?? true) {
 				break;
 			}
@@ -1682,27 +1686,10 @@ class PrestashopComponent extends Component
 	public function prestashop_arbol_categorias_muchas_categorias(array $categoria_ids)
 	{
 		$arbol_categorias	= [];
-		$ids 				= implode("|", $categoria_ids);
-		$categorias 		= $this->prestashop_obtener_categorias_v2(
-			array(
-				'filter[id]' 		=> "[{$ids}]",
-				'filter[active]'	=> "[1]",
-			)
-		);
-		
-		try {
-			if (count($categoria_ids) > 1) {
-				foreach ($categorias['category'] as $category) {
-					$arbol_categorias[$category['id']] = $this->prestashop_arbol_categorias($category['id']);
-				}
-			}else{
-				$arbol_categorias[$categoria_ids] = $this->prestashop_arbol_categorias($categoria_ids);
-			}
 
-		} catch (\Throwable $th) {
-			
+		foreach ($categoria_ids as $id) {
+			$arbol_categorias[$id] = $this->prestashop_arbol_categorias($id);
 		}
-		
 
 		return $arbol_categorias;
 	}
