@@ -1656,7 +1656,9 @@ class PrestashopComponent extends Component
 	public function prestashop_arbol_categorias($categoria_id)
 	{
 		$arbol_categoria    = null;
-		
+		$nombre 			= null;
+		$primer_nombre		= true; 
+		$principal_id 		= $categoria_id;
 		do {
 			$categoria 			= $this->prestashop_obtener_categorias_v2(
 				array(
@@ -1669,7 +1671,12 @@ class PrestashopComponent extends Component
 			if ($categoria['category']['is_root_category'] ?? true) {
 				break;
 			}
+			
+			if ($primer_nombre) {
 
+				$nombre 		= $categoria['category']['name']['language'];
+				$primer_nombre	= false;
+			}
 			$categoria_id 		= $categoria['category']['id_parent'] ?? null;
 			$nombre_categoria[] = $categoria['category']['name']['language'];
 
@@ -1678,6 +1685,18 @@ class PrestashopComponent extends Component
 		if ($nombre_categoria) {
 			$arbol_categoria =  (implode(" > ", array_reverse($nombre_categoria)));
 		}
+		try {
+			ClassRegistry::init('CategoriaPrestashop')->create();
+			ClassRegistry::init('CategoriaPrestashop')->save([
+				'CategoriaPrestashop' => [
+					'id'		=>	$principal_id,
+					'nombre'	=>	$nombre,
+					'arbol'		=>	$arbol_categoria,
+				]
+			]);
+		} catch (\Throwable $th) {
+		}
+		
 
 		return $arbol_categoria;
 	}
@@ -1685,10 +1704,25 @@ class PrestashopComponent extends Component
 
 	public function prestashop_arbol_categorias_muchas_categorias(array $categoria_ids)
 	{
-		$arbol_categorias	= [];
+		$categorias_faltantes 	= [];
+		$arbol_categorias 		= ClassRegistry::init('CategoriaPrestashop')->find('list', [
+			'fields' 		=> ['id', 'arbol'],
+			'conditions' 	=> ['id' => $categoria_ids]
+		]);
 
-		foreach ($categoria_ids as $id) {
-			$arbol_categorias[$id] = $this->prestashop_arbol_categorias($id);
+		// * Si en la base de datos no existe la categoria se consulta en prestashop y luego lo añadimos al array que retorna la funcion
+		if (count($arbol_categorias) != count($categoria_ids)) {
+
+			foreach ($categoria_ids as $id) {
+				if(!isset($arbol_categorias[$id])){
+					$categorias_faltantes[] = $id;
+				}
+			}
+
+			foreach ($categorias_faltantes as $f_id) {
+				$arbol_categorias[$f_id] = $this->prestashop_arbol_categorias($f_id);
+			}
+
 		}
 
 		return $arbol_categorias;
