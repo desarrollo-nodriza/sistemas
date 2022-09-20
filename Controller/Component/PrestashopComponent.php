@@ -1553,7 +1553,7 @@ class PrestashopComponent extends Component
 	 * prestashop_obtener_categorias_v2
 	 * Retorna todas las categorias y puedo filtrar segun se antoje
 	 * @param  mixed $filter
-	 * @return void
+	 * @return array
 	 */
 	public function prestashop_obtener_categorias_v2($filter = array('filter[active]' => '[1]'))
 	{
@@ -1643,7 +1643,13 @@ class PrestashopComponent extends Component
 		return $informacion;
 	}
 
-
+	
+	/**
+	 * prestashop_arbol_categorias
+	 * Solo una Categoria ID
+	 * @param  mixed $categoria_id
+	 * @return void
+	 */
 	public function prestashop_arbol_categorias($categoria_id)
 	{
 		$arbol_categoria    = null;
@@ -1670,6 +1676,35 @@ class PrestashopComponent extends Component
 		}
 
 		return $arbol_categoria;
+	}
+
+
+	public function prestashop_arbol_categorias_muchas_categorias(array $categoria_ids)
+	{
+		$arbol_categorias	= [];
+		$ids 				= implode("|", $categoria_ids);
+		$categorias 		= $this->prestashop_obtener_categorias_v2(
+			array(
+				'filter[id]' 		=> "[{$ids}]",
+				'filter[active]'	=> "[1]",
+			)
+		);
+		
+		try {
+			if (count($categoria_ids) > 1) {
+				foreach ($categorias['category'] as $category) {
+					$arbol_categorias[$category['id']] = $this->prestashop_arbol_categorias($category['id']);
+				}
+			}else{
+				$arbol_categorias[$categoria_ids] = $this->prestashop_arbol_categorias($categoria_ids);
+			}
+
+		} catch (\Throwable $th) {
+			
+		}
+		
+
+		return $arbol_categorias;
 	}
 	
 

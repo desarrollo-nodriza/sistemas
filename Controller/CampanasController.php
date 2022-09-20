@@ -170,7 +170,7 @@ Class CampanasController extends AppController {
 		$this->set(compact('datos', 'campos', 'modelo'));
 	}
 
-	public function google_feed_1($id_tienda, $id_campana)
+	public function google_feed_old($id_tienda, $id_campana)
 	{	
 
 		if (!ClassRegistry::init('Tienda')->exists($id_tienda) || !$this->Campana->exists($id_campana)) {
@@ -631,7 +631,7 @@ Class CampanasController extends AppController {
 		if (!$campana) {
 			return;
 		}
-// prx($campana);
+
 		# Almacenará los productos que iran en el feed
 		$productostodos 	= [];
 		$producto_ids 		= [];
@@ -643,6 +643,7 @@ Class CampanasController extends AppController {
 
 		# si no tiene etiqueta, se usa la categoria principal
 		if (empty($campana['CampanaEtiqueta'])) {
+
 			$categoria_id 	= $campana['Campana']['categoria_id'];
 			$categoria 		= $this->Prestashop->prestashop_obtener_categorias_v2(
 				array(
@@ -664,15 +665,15 @@ Class CampanasController extends AppController {
 			)['product'] ?? [];
 
 			$stocks				= $this->Prestashop->prestashop_obtener_stock_productos($producto_ids);
-			$arbol_categoria	= $this->Prestashop->prestashop_arbol_categorias($categoria_id);
+			$categorias_ids 	= array_unique(Hash::extract($productostodos,'{*}.id_category_default'));
+			$arbol_categoria	= $this->Prestashop->prestashop_arbol_categorias_muchas_categorias($categorias_ids);
 
-			// pr($stocks	);
-			foreach ($productostodos as $key => $producto) {
+			foreach ($productostodos as $producto) {
 				$producto['quantity']		= $stocks[$producto['id']] ?? 0;
-				$producto['product_type']	= $arbol_categoria;
+				$producto['product_type']	= $arbol_categoria[$producto['id_category_default']];
 				$producosProcesados[]		= $producto;
 			}
-			// prx($producosProcesados	);
+
 		} else {
 
 			# Se agregan las etiquetas correspondientes
@@ -697,19 +698,15 @@ Class CampanasController extends AppController {
 				)['product'] ?? [];
 
 				$stocks				= $this->Prestashop->prestashop_obtener_stock_productos($producto_ids);
+				$categorias_ids 	= array_unique(Hash::extract($productostodos,'{*}.id_category_default'));
+				$arbol_categoria	= $this->Prestashop->prestashop_arbol_categorias_muchas_categorias($categorias_ids);
+
 				# agregamos a los productos la etiqueta de la campaña
 
 				foreach ($productostodos as $producto) {
 
-					$arbol_categoria	= $this->Prestashop->prestashop_arbol_categorias($producto['id_category_default']);
-					// prx($producto);
-					// if (!array_key_exists($_producto['id'], $productostodos)) {
-					// 	$productostodos[$_producto['id']] = $_producto;
-					// } else {
-					// 	continue;
-					// }
 					$producto['quantity']		= $stocks[$producto['id']] ?? 0;
-					$producto['product_type']	= $arbol_categoria;
+					$producto['product_type']	= $arbol_categoria[$producto['id_category_default']];
 				
 					if ($c['categoria_id'] == 1000000000 && !empty($_producto['reference'])) {
 
@@ -762,7 +759,7 @@ Class CampanasController extends AppController {
 			$google[$ip]["g:image_link"]   	= Hash::extract($this->Prestashop->prestashop_obtener_imagenes_producto($producto['id']), "{*}.url")[0] ?? "";
 			$google[$ip]['g:availability'] 	= ($producto['quantity'] > 0) ? 'in stock' : 'out of stock';
 			$google[$ip]['g:price']        	= $producto['valor_iva'];
-			$google[$ip]['g:sale_price']   	= $producto['valor_final'];
+			$google[$ip]['g:sale_price']   	= round($producto['valor_final']);
 			$google[$ip]['g:product_type'] 	= $producto['product_type'] ?? 'Sin categoría';
 			$google[$ip]['g:brand']        	= (empty($producto['id_manufacturer'])) ? 'No especificado' : $producto['manufacturer_name'];
 			$google[$ip]['g:mpn']          	= $producto['reference'];
