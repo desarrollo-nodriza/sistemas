@@ -209,7 +209,7 @@
 						<table class="table table-bordered table-xl">
 							<tr>
 								<th>¿Activar notificación a cliente?</th>
-								<td><?=$this->Form->input('notificar_restraso', array('class' => ''));?></td>
+								<td><?=$this->Form->input('notificar_retraso', array('class' => ''));?></td>
 							</tr>
 						</table>
 					</div>

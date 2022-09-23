@@ -9,7 +9,7 @@
         <?= $this->Form->input('MetodoEnvioRetraso.999.horas_retraso', array('type' => 'text', 'disabled' => true, 'class' => 'form-control js-digits js-hora-regla-noti', 'placeholder' => 'Ej: 10, 5, 24', 'min' => 1, 'max' => 240)); ?>
     </td>
     <td>
-        <?= $this->Form->input('MetodoEnvioRetraso.999.notificar_restraso', array('type' => 'checkbox', 'disabled' => true, 'class' => '', 'checked' => false)); ?>
+        <?= $this->Form->input('MetodoEnvioRetraso.999.notificar_retraso', array('type' => 'checkbox', 'disabled' => true, 'class' => '', 'checked' => false)); ?>
     </td>
     <td valign="center">
         <button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>
