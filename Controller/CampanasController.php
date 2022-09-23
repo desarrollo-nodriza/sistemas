@@ -660,6 +660,7 @@ Class CampanasController extends AppController {
 			);
 
 			$producto_ids 	= Hash::extract($categoria['category']['associations']['products'] ?? [], 'product.{*}.id');
+			$imagenes			= $this->Prestashop->prestashop_obtener_imagenes_de_productos($producto_ids);	
 			$producto_ids 	= (implode("|", $producto_ids));
 
 			$productostodos = $this->Prestashop->prestashop_obtener_productos_v2(
@@ -678,6 +679,7 @@ Class CampanasController extends AppController {
 			foreach ($productostodos as $producto) {
 				$producto['quantity']		= $stocks[$producto['id']] ?? 0;
 				$producto['product_type']	= $arbol_categoria[$producto['id_category_default']];
+				$producto['image_link']		= $imagenes[$producto['id']] ?? "";
 				$producosProcesados[]		= $producto;
 			}
 
@@ -694,6 +696,7 @@ Class CampanasController extends AppController {
 					)
 				);
 				$producto_ids 	= Hash::extract($categoria['category']['associations']['products'], 'product.{*}.id');
+				$imagenes			= $this->Prestashop->prestashop_obtener_imagenes_de_productos($producto_ids);
 				$producto_ids 	= (implode("|", $producto_ids));
 				$productostodos = $this->Prestashop->prestashop_obtener_productos_v2(
 					array(
@@ -714,7 +717,7 @@ Class CampanasController extends AppController {
 
 					$producto['quantity']		= $stocks[$producto['id']] ?? 0;
 					$producto['product_type']	= $arbol_categoria[$producto['id_category_default']];
-				
+					$producto['image_link']		= $imagenes[$producto['id']] ?? "";
 					if ($c['categoria_id'] == 1000000000 && !empty($_producto['reference'])) {
 
 						$prisync = $this->obtener_productos_mejor_precio($_producto['reference']);
@@ -762,7 +765,7 @@ Class CampanasController extends AppController {
 			$google[$ip]['g:title']        	= $producto['name']['language'];
 			$google[$ip]['g:description']  	= strip_tags(!is_array($producto['description_short']['language']) ? $producto['description_short']['language'] : "") . '';
 			$google[$ip]['g:link']         	= sprintf('%s%s-%s.html', $api_url, $producto['link_rewrite']['language'], $producto['id']);
-			$google[$ip]["g:image_link"]   	= Hash::extract($this->Prestashop->prestashop_obtener_imagenes_producto($producto['id']), "{*}.url")[0] ?? "";
+			$google[$ip]["g:image_link"]   	= $producto['image_link'];
 			$google[$ip]['g:availability'] 	= ($producto['quantity'] > 0) ? 'in stock' : 'out of stock';
 			$google[$ip]['g:price']        	= $producto['valor_iva'];
 			$google[$ip]['g:sale_price']   	= round($producto['valor_final']);

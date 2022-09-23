@@ -1184,7 +1184,7 @@ class PrestashopComponent extends Component
 
 		$opt             = array();
 		$opt['display'] = '[id,name,price,active,quantity,supplier_reference,id_manufacturer,id_supplier,id_default_image,link_rewrite,width,height,depth,weight]';
-		
+
 		$opt['resource'] = 'products';
 
 		foreach ($filter as $field => $value) {
@@ -1271,30 +1271,23 @@ class PrestashopComponent extends Component
 			return $imagenes;
 		}
 
-		if (count($producto_ids) == 1) {
+		if (!isset($res['product'][0])) {
 
-			foreach ($res['product']['associations']['images']['image'] as $image_id) {
-
-				$id = (isset($image_id['id'])) ? $image_id['id'] : $image_id;
-
-				if ($id == $res['product']['id_default_image']) {
-					$imagenes[$res['product']['id']] = $this->ConexionPrestashop->get_url() . $id . '-full_default/' . $res['product']['link_rewrite']['language'] . '.jpg';
-				}
+			if (!is_array($res['product']['id_default_image'])) {
+				$imagenes[$res['product']['id']] = $this->ConexionPrestashop->get_url() . $res['product']['id_default_image'] . '-full_default/' . $res['product']['link_rewrite']['language'] . '.jpg';
+			} else {
+				$imagenes[$res['product']['id']] = "";
 			}
-
 		} else {
 			foreach ($res['product'] as $producto) {
 
-				foreach ($producto['associations']['images']['image'] as $image_id) {
-					$id = (isset($image_id['id'])) ? $image_id['id'] : $image_id;
-
-					if ($id == $producto['id_default_image']) {
-						$imagenes[$producto['id']] = $this->ConexionPrestashop->get_url() . $id . '-full_default/' . $producto['link_rewrite']['language'] . '.jpg';
-					}
+				if (!is_array($producto['id_default_image'])) {
+					$imagenes[$producto['id']] = $this->ConexionPrestashop->get_url() . $producto['id_default_image'] . '-full_default/' . $producto['link_rewrite']['language'] . '.jpg';
+				} else {
+					$imagenes[$producto['id']] = "";
 				}
 			}
 		}
-
 		return $imagenes;
 	}
 
@@ -1701,7 +1694,13 @@ class PrestashopComponent extends Component
 		return $arbol_categoria;
 	}
 
-
+	
+	/**
+	 * prestashop_arbol_categorias_muchas_categorias
+	 * * Se retorna un array donde el key es la categoria_id y su valor es un string del arbol de categoria
+	 * @param  array $categoria_ids
+	 * @return array
+	 */
 	public function prestashop_arbol_categorias_muchas_categorias(array $categoria_ids)
 	{
 		$categorias_faltantes 	= [];
@@ -1714,7 +1713,7 @@ class PrestashopComponent extends Component
 		if (count($arbol_categorias) != count($categoria_ids)) {
 
 			foreach ($categoria_ids as $id) {
-				if(!isset($arbol_categorias[$id])){
+				if (!isset($arbol_categorias[$id])) {
 					$categorias_faltantes[] = $id;
 				}
 			}
@@ -1722,13 +1721,18 @@ class PrestashopComponent extends Component
 			foreach ($categorias_faltantes as $f_id) {
 				$arbol_categorias[$f_id] = $this->prestashop_arbol_categorias($f_id);
 			}
-
 		}
 
 		return $arbol_categorias;
 	}
 	
-
+	
+	/**
+	 * prestashop_obtener_stock_productos
+	 * *Se retorna un array donde las key es el producto_id y su valor es el stock
+	 * @param  string $producto_ids
+	 * @return array
+	 */
 	public function prestashop_obtener_stock_productos($producto_ids)
 	{
 		//se obtiene el stock de prestashop
@@ -1748,7 +1752,6 @@ class PrestashopComponent extends Component
 
 			if (isset($stocks['stock_available'][1]) ? false :  true) {
 				$stock_procesado[$stocks['stock_available']['id_product']] = $stocks['stock_available']['quantity'];
-
 			} else {
 				foreach ($stocks['stock_available'] as $stock) {
 					$stock_procesado[$stock['id_product']] = $stock['quantity'];
