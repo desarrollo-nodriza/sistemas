@@ -1706,35 +1706,6 @@ class PrestashopComponent extends Component
 			'conditions' 	=> ['id' => $categoria_ids]
 		]);
 
-		$nombre_categoria 		= ClassRegistry::init('CategoriaPrestashop')->find('list', [
-			'fields' 		=> ['id', 'nombre'],
-			'conditions' 	=> ['id' => $categoria_ids]
-		]);
-
-		$categorias 			= $this->prestashop_obtener_categorias_v2(
-			array(
-				'filter[id]' 		=> "[".implode('|', $categoria_ids)."]",
-				'filter[active]'	=> "[1]",
-				'display'			=> "[id,id_parent,is_root_category,name]"
-			)
-		);
-		
-		// *Si el nombre que esta en bd es distinto al de prestashop se quita del arreglo para que se vuelva a generar el arbol para dicha categoria
-		
-		if (isset($categorias['category'][0])) {
-			foreach ($nombre_categoria as $categoria_id => $nombre) {
-
-				if (Hash::extract($categorias, "category.{*}[id=$categoria_id]")[0]['name']['language'] != $nombre) {
-					unset($arbol_categorias[$categoria_id]);
-				}
-			}
-		} else {
-			
-			if ($nombre_categoria[$categorias['category']['id']] != $categorias['category']['name']['language']) {
-				unset($arbol_categorias[$categorias['category']['id']]);
-			}
-		}
-
 		// * Si en la base de datos no existe la categoria se consulta en prestashop y luego lo añadimos al array que retorna la funcion
 		if (count($arbol_categorias) != count($categoria_ids)) {
 
