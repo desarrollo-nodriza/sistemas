@@ -591,8 +591,17 @@ Class CampanasController extends AppController {
 		
 		exit;
 	}
-
-	public function google_feed($id_tienda, $id_campana)
+	
+	/**
+	 * google_feed
+	 * 
+	 * Genera un xml con los productos de la tienda prestashop para goolge shopping
+	 *
+	 * @param  int $id_tienda 
+	 * @param  int $id_campana
+	 * @return xml
+	 */
+	public function google_feed(int $id_tienda, int $id_campana)
 	{
 
 		if (!ClassRegistry::init('Tienda')->exists($id_tienda) || !$this->Campana->exists($id_campana)) {
@@ -638,8 +647,6 @@ Class CampanasController extends AppController {
 		$categoria_id 		= "";
 		$arbol_categoria    = null;
 		$producosProcesados = [];
-		# usar DB
-		$this->cambiarConfigDB($tienda['Tienda']['configuracion']);
 		
 		# si no tiene etiqueta, se usa la categoria principal
 		if (empty($campana['CampanaEtiqueta'])) {
@@ -715,7 +722,7 @@ Class CampanasController extends AppController {
 						if (!empty($prisync)) {
 
 							if (!isset($prisync['PrisyncProducto'])) {
-								prx($prisyn);
+								continue;
 							}
 
 							if ($prisync['PrisyncProducto']['mejor_precio']) {
@@ -734,7 +741,7 @@ Class CampanasController extends AppController {
 		# Campana de Google
 		GoogleShopping::title('Feed Google Shopping');
 		GoogleShopping::link(FULL_BASE_URL);
-		GoogleShopping::description('Feed generado por Nodriza Spa [cristian.rojas@nodriza.cl]');
+		GoogleShopping::description('Feed generado por Nodriza Spa [desarrollo@nodriza.cl]');
 		GoogleShopping::setIso4217CountryCode('CLP');
 
 
@@ -743,7 +750,6 @@ Class CampanasController extends AppController {
 		$productoTienda = new ProductotiendasController();
 
 		foreach ($producosProcesados as $ip => $producto) {
-			
 			# Se excluyen los productos sin stock
 			if ($producto['quantity'] < 1 && $campana['Campana']['excluir_stockout'])
 				continue;
@@ -811,7 +817,16 @@ Class CampanasController extends AppController {
 		exit;
 	}
 
-
+	
+	/**
+	 * obtener_productos_mejor_precio
+	 * 
+	 * Obtener los productos con mejor precio de mercado según prisync
+	 *
+	 * @param  mixed $ref
+	 * @param  mixed $micompania
+	 * @return array 
+	 */
 	public function obtener_productos_mejor_precio($ref = '', $micompania = 'toolmania')
 	{	
 
