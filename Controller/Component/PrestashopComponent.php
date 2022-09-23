@@ -1548,21 +1548,18 @@ class PrestashopComponent extends Component
 	 * @param  mixed $filter
 	 * @return array
 	 */
-	public function prestashop_obtener_categorias_v2(
-		array $filter = array('filter[active]' => '[1]'),
-		$display = "full"
-		)
+	public function prestashop_obtener_categorias_v2(array $filter = array('filter[active]' => '[1]'))
 	{
 		ini_set('max_execution_time', 0);
 
 		$opt             	= array();
-		$opt['display'] 	= $display;
+		$opt['display'] 	= "full";
 		$opt['resource'] 	= 'categories';
-
+		
 		foreach ($filter as $field => $value) {
 			$opt = array_replace_recursive($opt, array($field => $value));
 		}
-
+		
 		$informacion = array();
 
 		try {
@@ -1657,8 +1654,8 @@ class PrestashopComponent extends Component
 				array(
 					'filter[id]' 		=> "[{$categoria_id}]",
 					'filter[active]'	=> "[1]",
-				),
-				"[id,id_parent,is_root_category,name]"
+					'display'			=> "[id,id_parent,is_root_category,name]"
+				)
 			);
 			
 			if ($categoria['category']['is_root_category'] ?? true) {
@@ -1709,6 +1706,35 @@ class PrestashopComponent extends Component
 			'conditions' 	=> ['id' => $categoria_ids]
 		]);
 
+		$nombre_categoria 		= ClassRegistry::init('CategoriaPrestashop')->find('list', [
+			'fields' 		=> ['id', 'nombre'],
+			'conditions' 	=> ['id' => $categoria_ids]
+		]);
+
+		$categorias 			= $this->prestashop_obtener_categorias_v2(
+			array(
+				'filter[id]' 		=> "[".implode('|', $categoria_ids)."]",
+				'filter[active]'	=> "[1]",
+				'display'			=> "[id,id_parent,is_root_category,name]"
+			)
+		);
+		
+		// *Si el nombre que esta en bd es distinto al de prestashop se quita del arreglo para que se vuelva a generar el arbol para dicha categoria
+		
+		if (isset($categorias['category'][0])) {
+			foreach ($nombre_categoria as $categoria_id => $nombre) {
+
+				if (Hash::extract($categorias, "category.{*}[id=$categoria_id]")[0]['name']['language'] != $nombre) {
+					unset($arbol_categorias[$categoria_id]);
+				}
+			}
+		} else {
+			
+			if ($nombre_categoria[$categorias['category']['id']] != $categorias['category']['name']['language']) {
+				unset($arbol_categorias[$categorias['category']['id']]);
+			}
+		}
+
 		// * Si en la base de datos no existe la categoria se consulta en prestashop y luego lo añadimos al array que retorna la funcion
 		if (count($arbol_categorias) != count($categoria_ids)) {
 
@@ -1722,7 +1748,7 @@ class PrestashopComponent extends Component
 				$arbol_categorias[$f_id] = $this->prestashop_arbol_categorias($f_id);
 			}
 		}
-
+		
 		return $arbol_categorias;
 	}
 	
