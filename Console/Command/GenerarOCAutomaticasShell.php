@@ -14,7 +14,7 @@ class GenerarOCAutomaticasShell extends AppShell
 		$log[] = array('Log' => array(
 			'administrador' => 'Demonio',
 			'modulo' 		=> 'GenerarOCAutomaticasShell',
-			'modulo_accion' => 'Inicia proceso de crear OC automativas: ' . date('Y-m-d H:i:s')
+			'modulo_accion' => 'Inicia proceso de crear OC automaticas: ' . date('Y-m-d H:i:s')
 		));
 
 		$OrdenComprasController = new OrdenComprasController();;
@@ -26,7 +26,7 @@ class GenerarOCAutomaticasShell extends AppShell
 				'modulo' 		=> 'GenerarOCAutomaticasShell',
 				'modulo_accion' => json_encode(
 					[
-						'Finaliza proceso de crear OC automativas: ' . date('Y-m-d H:i:s') => $respuesa
+						'Finaliza proceso de crear OC automaticas: ' . date('Y-m-d H:i:s') => $respuesa
 					]
 				)
 			));

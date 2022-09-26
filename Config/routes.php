@@ -282,6 +282,20 @@ Router::connect(
     )
 );
 
+Router::connect(
+    '/feed/google/crear-feed/:tienda/:feed', // E.g. /blog/3-CakePHP_Rocks
+    array(
+        'controller' => 'campanas', 
+        'action' => 'generar_xml_feed',
+        'google' => true,
+        'prefix' => 'google'),
+    array(
+        'pass' => array('tienda', 'feed'),
+        'tienda' => '[0-9]+',
+        'feed' => '[0-9]+',
+    )
+);
+
 
 Router::connect(
     '/Campana/google/:tienda/:feed', // E.g. /blog/3-CakePHP_Rocks
