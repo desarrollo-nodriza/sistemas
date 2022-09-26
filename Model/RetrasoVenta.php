@@ -1,6 +1,6 @@
 <?php
 App::uses('AppModel', 'Model');
-class RetrasoEmbalaje extends AppModel
+class RetrasoVenta extends AppModel
 {
     public $belongsTo = array(
 		'Venta' => array(

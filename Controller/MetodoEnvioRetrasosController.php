@@ -98,95 +98,81 @@ class MetodoEnvioRetrasosController extends AppController
      * @param  int $retraso Horas de retraso de las ventas que queremos obtener 
      * @return array
      */
-    public function obtener_ventas_por_retraso(int $bodega, int $retraso)
-    {   
+    public function obtener_ventas_por_retraso()
+    {
         # consultamos las reglas
         $reglas = $this->MetodoEnvioRetraso->find('all', array(
-            'conditions' => array(
-                'bodega_id' => $bodega,
-                'horas_retraso' => $retraso,
-                'notificar_retraso' => 1
-            )
-        ));
-        
-        $ids_estados = array_unique(Hash::extract($reglas, '{n}.MetodoEnvioRetraso.venta_estado_categoria_id'));
-        $ids_metodo_envios = array_unique(Hash::extract($reglas, '{n}.MetodoEnvioRetraso.metodo_envio_id'));
-        
-        # Obtenemos las ventas filtradas
-        $ventas = ClassRegistry::init('Venta')->find('all', array(
             'joins' => array(
                 array(
                     'table' => 'rp_metodo_envios',
-                    'alias' => 'metodo_envios',
+                    'alias' => 'MetodoEnvio',
                     'type' => 'INNER',
                     'conditions' => array(
-                        'metodo_envios.id = Venta.metodo_envio_id',
-                        'metodo_envios.notificar_retraso' => 1
+                        'MetodoEnvioRetraso.metodo_envio_id = MetodoEnvio.id',
                     )
                 ),
-                array(
-                    'table' => 'rp_venta_estados',
-                    'alias' => 'venta_estados',
-                    'type' => 'INNER',
-                    'conditions' => array(
-                        'venta_estados.id = Venta.venta_estado_id',
-                        'venta_estados.venta_estado_categoria_id' => $ids_estados
-                    )
-                ),
-                array(
-                    'table' => 'rp_estados_ventas',
-                    'alias' => 'estados_ventas',
-                    'type' => 'INNER',
-                    'conditions' => array(
-                        'estados_ventas.venta_id = Venta.id'
-                    )
-                )
             ),
             'conditions' => array(
-                'Venta.bodega_id' => $bodega,
-                'Venta.marketplace_id' => null,
-                'Venta.metodo_envio_id' => $ids_metodo_envios
+                'MetodoEnvio.notificar_retraso' => 1,
+                'MetodoEnvio.activo' => 1,
             ),
-            'contain' => array(
-                'VentaEstado2' => array(
-                    'fields' => array(
-                        'VentaEstado2.id',
-                        'VentaEstado2.nombre'
-                    ),
-                    'order' => array(
-                        'EstadosVenta.fecha DESC'
-                    )
-                )
-            ),
-            'fields' => array(
-                'Venta.id',
-                'Venta.venta_estado_id',
-                'Venta.fecha_venta',
-            ),
-            'group' => array('Venta.id'),
-            'order' => array(
-                'estados_ventas.fecha ASC'
-            )
         ));
 
-        $result = array();
+        $ventas =   [];
+        foreach ($reglas as $regla) {
 
-        # Comparamos las fechas
-        foreach ($ventas as $v)
-        {      
-            # si el ultimo historico no es igual al estado actual de la venta, se omite
-            if ($v['Venta']['venta_estado_id'] != $v['VentaEstado2'][0]['EstadosVenta']['venta_estado_id'])
-                continue;
+            $ventas = array_replace_recursive($ventas, ClassRegistry::init('Venta')->find('all', array(
+                'joins' => array(
+                    array(
+                        'table' => 'rp_metodo_envios',
+                        'alias' => 'metodo_envios',
+                        'type'  => 'INNER',
+                        'conditions' => array(
+                            'metodo_envios.id = Venta.metodo_envio_id',
+                            'metodo_envios.notificar_retraso' => 1
+                        )
+                    ),
+                    array(
+                        'table' => 'rp_venta_estados',
+                        'alias' => 'venta_estados',
+                        'type'  => 'INNER',
+                        'conditions' => array(
+                            'venta_estados.id = Venta.venta_estado_id',
+                            'venta_estados.venta_estado_categoria_id' => $regla['MetodoEnvioRetraso']['venta_estado_categoria_id']
+                        )
+                    ),
+                    array(
+                        'table' => 'rp_estados_ventas',
+                        'alias' => 'estados_ventas',
+                        'type'  => 'INNER',
+                        'conditions' => array(
+                            'estados_ventas.venta_id = Venta.id',
+                            'estados_ventas.venta_estado_id' => $regla['MetodoEnvioRetraso']['venta_estado_categoria_id'],
+                        )
+                    )
+                ),
+                'conditions' => array(
+                    'Venta.bodega_id'       => $regla['MetodoEnvioRetraso']['bodega_id'],
+                    'Venta.marketplace_id'  => null,
+                    'Venta.metodo_envio_id' => $regla['MetodoEnvioRetraso']['metodo_envio_id'],
+                    "(SELECT TIMESTAMPDIFF(HOUR ,ev.fecha,NOW()) from rp_estados_ventas ev where ev.venta_id = Venta.id  and ev.venta_estado_id = estados_ventas.venta_estado_id) >= {$regla['MetodoEnvioRetraso']['horas_retraso']}"
+                ),
 
-            $horas_desde_el_cambio = $this->calcular_horas_retraso($v['VentaEstado2'][0]['EstadosVenta']['fecha']); 
-            
-            if ($horas_desde_el_cambio > $retraso)
-            {
-                $result[] = $v;
-            }
+                'fields' => array(
+                    'Venta.id',
+                    'Venta.venta_estado_id',
+                    'Venta.fecha_venta',
+                ),
+                'group' => array('Venta.id'),
+                'order' => array(
+                    'estados_ventas.fecha ASC'
+                )
+            )));
+
+            prx(ClassRegistry::init('Venta')->getDataSource()->getLog(false, false));
         }
 
-        return $result;
+        return $ventas;
     }
     
     /**
@@ -241,7 +227,7 @@ class MetodoEnvioRetrasosController extends AppController
 
                 # Se crea un registro por cada embalaje retrasado
                 $registros[] = array(
-                    'RetrasoEmbalaje' => array(
+                    'RetrasoVenta' => array(
                         'venta_id' => $venta_id,
                         'embalaje_id' => $embalaje['id'],
                         'venta_estado_id' => $venta['Venta']['venta_estado_id'],
@@ -257,7 +243,7 @@ class MetodoEnvioRetrasosController extends AppController
         if (empty($registros))
         {
             $registros[] = array(
-                'RetrasoEmbalaje' => array(
+                'RetrasoVenta' => array(
                     'venta_id' => $venta_id,
                     'embalaje_id' => null,
                     'venta_estado_id' => $venta['Venta']['venta_estado_id'],
@@ -272,13 +258,13 @@ class MetodoEnvioRetrasosController extends AppController
 
     public function admin_index()
     {
-        $ventas = $this->obtener_ventas_por_retraso(1, 240);
-        $embalajes = [];
-        foreach($ventas as $venta)
-        {
-            $embalajes[] = $this->crear_registro_retraso($venta['Venta']['id']);
-        }
-        prx($embalajes);
+        $ventas = $this->obtener_ventas_por_retraso();
+        // $embalajes = [];
+        // foreach($ventas as $venta)
+        // {
+        //     $embalajes[] = $this->crear_registro_retraso($venta['Venta']['id']);
+        // }
+        prx($ventas);
     }
 
 }
