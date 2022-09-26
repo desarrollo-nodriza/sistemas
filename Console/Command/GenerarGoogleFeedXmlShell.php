@@ -18,27 +18,27 @@ class GenerarGoogleFeedXmlShell extends AppShell
 		));
 
 		$CampanasController = new CampanasController();
-		$campana 			= $this->Campana->find('list', array(
-			'fields' => ['Campana.id', 'Campana.id'],
+		$campana 			= ClassRegistry::init('Campana')->find('list', array(
+			'fields' => ['Campana.id'],
 			'conditions' => array(
 				'Campana.activo' => true
 			),
 
 		));
-		$respuesa = [];
+		$respuesta = [];
 
 		foreach ($campana as $id) {
-			$respuesa[$id] = $CampanasController->google_generar_xml_feed(ClassRegistry::init('Tienda')->tienda_principal()['Tienda']['id'], $id, true);
+			$respuesta[$id] = $CampanasController->google_generar_xml_feed(ClassRegistry::init('Tienda')->tienda_principal()['Tienda']['id'], $id, true);
 		}
 
 
-		if ($respuesa) {
+		if ($respuesta) {
 			$log[] = array('Log' => array(
 				'administrador' => 'Demonio',
 				'modulo' 		=> 'GenerarGoogleFeedXmlShell',
 				'modulo_accion' => json_encode(
 					[
-						'Finaliza proceso de crear GoogleFeedXml automaticas: ' . date('Y-m-d H:i:s') => $respuesa
+						'Finaliza proceso de crear GoogleFeedXml automaticas: ' . date('Y-m-d H:i:s') => $respuesta
 					]
 				)
 			));
