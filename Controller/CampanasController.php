@@ -277,8 +277,7 @@ Class CampanasController extends AppController {
 			$categoria_id 	= $campana['Campana']['categoria_id'];
 			$categoria 		= $this->Prestashop->prestashop_obtener_categorias_v2(
 				array(
-					'filter[id]' 		=> "[{$categoria_id}]",
-					'filter[active]'	=> "[1]",
+					'filter[id]' 		=> "[{$categoria_id}]"
 				)
 			);
 
@@ -314,8 +313,7 @@ Class CampanasController extends AppController {
 				$categoria_id 	= $c['categoria_id'];
 				$categoria 		= $this->Prestashop->prestashop_obtener_categorias_v2(
 					array(
-						'filter[id]' 		=> "[{$categoria_id}]",
-						'filter[active]'	=> "[1]",
+						'filter[id]' 		=> "[{$categoria_id}]"
 					)
 				);
 				$producto_ids 	= Hash::extract($categoria['category']['associations']['products'], 'product.{*}.id');

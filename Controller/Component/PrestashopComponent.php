@@ -1653,7 +1653,6 @@ class PrestashopComponent extends Component
 			$categoria 			= $this->prestashop_obtener_categorias_v2(
 				array(
 					'filter[id]' 		=> "[{$categoria_id}]",
-					'filter[active]'	=> "[1]",
 					'display'			=> "[id,id_parent,is_root_category,name]"
 				)
 			);
