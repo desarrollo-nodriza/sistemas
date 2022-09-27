@@ -1658,7 +1658,7 @@ class PrestashopComponent extends Component
 			);
 			
 			if ($categoria['category']['is_root_category'] ?? true) {
-				break;
+				continue;
 			}
 			
 			if ($primer_nombre) {
