@@ -311,6 +311,13 @@ Class CampanasController extends AppController {
 			foreach ($campana['CampanaEtiqueta'] as $ic => $c) {
 				
 				$categoria_id 	= $c['categoria_id'];
+
+				# si es categoria "mejor precio" se usa la categoría padre
+				if ($categoria_id == 1000000000)
+				{
+					$categoria_id 	= $campana['Campana']['categoria_id'];
+				}
+
 				$categoria 		= $this->Prestashop->prestashop_obtener_categorias_v2(
 					array(
 						'filter[id]' 		=> "[{$categoria_id}]"
@@ -339,9 +346,10 @@ Class CampanasController extends AppController {
 					$producto['quantity']		= $stocks[$producto['id']] ?? 0;
 					$producto['product_type']	= $arbol_categoria[$producto['id_category_default']];
 					$producto['image_link']		= $imagenes[$producto['id']] ?? "";
-					if ($c['categoria_id'] == 1000000000 && !empty($_producto['reference'])) {
+					
+					if ($c['categoria_id'] == 1000000000 && !empty($producto['reference'])) {
 
-						$prisync = $this->obtener_productos_mejor_precio($_producto['reference']);
+						$prisync = $this->obtener_productos_mejor_precio($producto['reference']);
 
 						if (!empty($prisync)) {
 
@@ -350,14 +358,14 @@ Class CampanasController extends AppController {
 							}
 
 							if ($prisync['PrisyncProducto']['mejor_precio']) {
-								$productostodos[$_producto['id']]['custom_label_' . $ic] = 'Mejor precio mercado';
+								$producto['custom_label_' . $ic] = 'Mejor precio mercado';
 							}
 						}
 					} else {
 						$producto['custom_label_' . $ic] = $c['nombre'];
 					}
 
-					$producosProcesados[]		= $producto;
+					$producosProcesados[$producto['id']] = $producto;
 				}
 			}
 		}
