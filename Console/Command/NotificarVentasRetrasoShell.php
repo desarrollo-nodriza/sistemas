@@ -21,12 +21,12 @@ class NotificarVentasRetrasoShell extends AppShell
 		$MetodoEnvioRetrasosController = new MetodoEnvioRetrasosController();
 
 		# crear_registro_retrasos la base de datos con los cambios en los envios
-		$notificar_restaso = $MetodoEnvioRetrasosController->notificar_restaso();
+		$notificar_retraso = $MetodoEnvioRetrasosController->notificar_retraso();
 
 		$log[] = array('Log' => array(
 			'administrador' => 'Demonio',
 			'modulo' 		=> 'VentasRetrasoShell',
-			'modulo_accion' => 'Finaliza proceso de notificar ventas con retraso: ' . json_encode($notificar_restaso)
+			'modulo_accion' => 'Finaliza proceso de notificar ventas con retraso: ' . json_encode($notificar_retraso)
 		));
 
 		# Guardamos el log
