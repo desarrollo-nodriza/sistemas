@@ -202,7 +202,8 @@ class MetodoEnvioRetrasosController extends AppController
         $url = obtener_url_base();
         $this->View->set(compact('retraso', 'url', 'tienda'));
         $html = $this->View->render('retraso');
-        $this->Mandrill->conectar($mandrill_apikey);
+        $mandrill = $this->Components->load('Mandrill');
+        $mandrill->conectar($mandrill_apikey);
         $asunto = sprintf("%sInformación importante de tu compra #{$retraso['Venta']['referencia']} %s", Configure::read('ambiente') == 'dev' ? "[DEV] " : "", date('Y-m-d H:i:s'));
 
         $remitente = array(
@@ -230,6 +231,6 @@ class MetodoEnvioRetrasosController extends AppController
         }
 
 
-        return $this->Mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+        return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
     }
 }
