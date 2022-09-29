@@ -669,3 +669,8 @@ tr.expanded-div {
 .table-middle>tbody>tr>td, .table-middle>tbody>tr>th, .table-middle>tfoot>tr>td, .table-middle>tfoot>tr>th, .table-middle>thead>tr>td, .table-middle>thead>tr>th {
     vertical-align: middle !important;
 }
+
+.table-xl > thead > tr > th, .table-xl> tbody > tr > th, .table-xl> tfoot > tr > th, .table-xl> thead > tr > td, .table-xl> tbody > tr > td, .table-xl> tfoot > tr > td {
+    padding: 16px 20px;
+    font-size: 13px;
+}

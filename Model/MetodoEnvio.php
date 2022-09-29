@@ -64,6 +64,19 @@ class MetodoEnvio extends AppModel
 			'exclusive'				=> '',
 			'finderQuery'			=> '',
 			'counterQuery'			=> ''
+		),
+		'MetodoEnvioRetraso' => array(
+			'className'				=> 'MetodoEnvioRetraso',
+			'foreignKey'			=> 'metodo_envio_id',
+			'dependent'				=> false,
+			'conditions'			=> '',
+			'fields'				=> '',
+			'order'					=> '',
+			'limit'					=> '',
+			'offset'				=> '',
+			'exclusive'				=> '',
+			'finderQuery'			=> '',
+			'counterQuery'			=> ''
 		)
 	);
 

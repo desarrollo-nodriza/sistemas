@@ -1,0 +1,3 @@
+<? if ($parrafo) : ?>
+<p class="text-muted text-center <?=($parrafo['custom_class']) ? $parrafo['custom_class'] : ''; ?>" style="color: #636c72; font-size: 16px; font-weight: 500; line-height: 22px; margin-bottom: 10px; margin-top: 0px; text-align: center; vertical-align: baseline; <?=($parrafo['style']) ? $parrafo['style'] : ''; ?>"><?=($parrafo['texto']) ? $parrafo['texto'] : ''; ?></p>
+<? endif; ?>

@@ -1,0 +1,3 @@
+<? if (!empty($subtitulo)) :?>
+    <h5 class="text-center <?=($subtitulo['custom_class']) ? $subtitulo['custom_class'] : ''; ?>" style="color: inherit; font-size: 20px; font-weight: 700; line-height: 22px; margin-bottom: 20px; margin-top: 10px; text-align: center; vertical-align: baseline; <?=($subtitulo['style']) ? $subtitulo['style'] : ''; ?>"><?=($subtitulo['texto']) ? $subtitulo['texto'] : ''; ?></h5>
+<? endif; ?>

@@ -1,8 +1,185 @@
 
 
+$.extend({
+	metodo_envios: {	
+		regla_combinaciones : [],
+		combinacion_actual : {},
+		clonarElemento: function($ths){
+
+			var $contexto = $ths.parents('.panel').eq(0).find('.clone-tr').eq(0);
+			var limite    = $ths.parents('.js-clone-wrapper').eq(0).data('filas');
+			var filas     = $ths.parents('.js-clone-wrapper').eq(0).find('tbody').find('tr:not(.hidden)').length;
+
+			if (typeof(limite) == 'undefined') {
+				limite = 200;
+			}
+
+			if ( filas == limite ) {
+				noty({text: 'No puede agregar más de ' + limite + ' filas.', layout: 'topRight', type: 'error'});
+				setTimeout(function(){
+					$.noty.closeAll();
+				}, 10000);
+				return;
+			}
+
+			var newTr = $contexto.clone();
+
+			newTr.removeClass('hidden');
+			newTr.removeClass('clone-tr');
+			newTr.find('input, select, textarea').each(function(){
+				$(this).removeAttr('disabled');
+			});
+
+			// Agregar nuevo campo
+			$contexto.parents('tbody').eq(0).append(newTr);
+
+			// Re indexar
+			$contexto.parents('tbody').eq(0).find('tr:not(.hidden)').each(function(indx){
+				
+				$(this).find('input, select, textarea').each(function() {
+					
+					var $that = $(this);
+
+					if ( typeof($that.attr('name')) != 'undefined' ) {
+
+						nombre		= $that.attr('name').replace(/(999)/g, (indx));
+						$that.attr('name', nombre);
+
+					}
+
+					if ($that.hasClass('not-blank')) {
+						$that.rules("add", {
+					        required: true,
+					        messages: {
+					        	required: 'Campo requerido'
+					        }
+					    });
+					}
+
+				});
+
+			});
+		},
+		clonar: function() {		
+
+			$(document).on('click', '.duplicate_tr, .copy_tr',function(e){
+
+				e.preventDefault();
+
+				$.metodo_envios.clonarElemento($(this));
+				$.metodo_envios.rellenar_combinaciones_reglas($('#tabla-reglas-notificaciones'));
+				page_content_onresize();
+
+			});
+
+
+			$(document).on('click', '.remove_tr', function(e){
+
+				e.preventDefault();
+
+				var $th = $(this).parents('tr').eq(0);
+
+				$th.fadeOut('slow', function() {
+					$th.remove();
+					$.metodo_envios.rellenar_combinaciones_reglas($('#tabla-reglas-notificaciones'));
+					page_content_onresize();
+				});
+
+			});
+		},
+		rellenar_combinaciones_reglas: function($tabla)
+		{
+			$.metodo_envios.regla_combinaciones = [];
+			
+			$tabla.find('tbody>tr:not(.hidden)').each(function($i, $tr){
+				let $estado = $(this).find('.js-estado-regla-noti'),
+					$bodega = $(this).find('.js-bodega-regla-noti'),
+					$horas  = $(this).find('.js-hora-regla-noti'),
+					$combi  = {
+						"bodega" : $bodega.val(),
+						"estado" : $estado.val(),
+						"horas"  : $horas.val()
+					};
+				
+				if ($estado.val().length > 0 && 
+					$bodega.val().length > 0 && 
+					$horas.val().length > 0)
+				{
+					$.metodo_envios.regla_combinaciones.push($combi);
+				}
+				
+			});
+
+			console.info($.metodo_envios.regla_combinaciones);
+
+			return;
+			
+		},
+		validar_notificaciones_reglas: function($combi)
+		{		
+			return JSON.stringify($combi) === JSON.stringify($.metodo_envios.combinacion_actual);
+		},
+		init: function(){
+			if ( $('#MetodoEnvioNotificaciones').length ) {
+				$.metodo_envios.clonar();
+			}
+
+			// Se valida la relga de las noficiaciones de retraso de ventas
+			$(document).on('change', '.js-estado-regla-noti, .js-bodega-regla-noti, .js-hora-regla-noti', function()
+			{
+				let $tr = $(this).parents('tr').eq(0),
+					$estado = $tr.find('.js-estado-regla-noti').eq(0),
+					$bodega = $tr.find('.js-bodega-regla-noti').eq(0),
+					$horas  = $tr.find('.js-hora-regla-noti').eq(0),
+					$combi  = {
+						"bodega" : $bodega.val(),
+						"estado" : $estado.val(),
+						"horas"  : $horas.val()
+					};
+
+				if ($estado.val().length > 0 && 
+					$bodega.val().length > 0 && 
+					$horas.val().length > 0)
+				{	
+					
+					$.metodo_envios.combinacion_actual = $combi;
+
+					if($.metodo_envios.regla_combinaciones.find($.metodo_envios.validar_notificaciones_reglas))
+					{	
+						$estado.val('');
+						$bodega.val('');
+						$horas.val('');
+						
+						noty({text: 'La regla indicada ya está creada. Elija otra', layout: 'topRight', type: 'error'});
+						setTimeout(function(){
+							$.noty.closeAll();
+						}, 3000);
+					}
+					else
+					{
+						// Se limpia reglas para setearlas nuevamente
+						$.metodo_envios.rellenar_combinaciones_reglas($('#tabla-reglas-notificaciones'));
+					}
+					
+				}
+			});
+
+			if ($('.js-estado-regla-noti').length)
+			{	
+				// Se limpia reglas para setearlas nuevamente
+				$.metodo_envios.rellenar_combinaciones_reglas($('#tabla-reglas-notificaciones'));
+			}
+		}
+	}
+});
+
+
 $(document).ready(function () {
 
+	$.metodo_envios.init();
+
 	$.app.formularios.bind('#MetodoEnvioAdminEditForm');
+	$.app.formularios.bind('#MetodoEnvioNotificaciones');
 
 	$('#MetodoEnvioEmbaladoVentaEstadoId').rules("add", {
 		required: true,
