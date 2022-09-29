@@ -37,6 +37,7 @@ class MetodoEnvioRetraso extends AppModel
 			'conditions' => array(
 				'MetodoEnvio.notificar_retraso' => 1,
 				'MetodoEnvio.activo' => 1,
+				'MetodoEnvioRetraso.notificar_retraso' => 1,
 			),
 		));
 	}

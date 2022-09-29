@@ -6,10 +6,10 @@
         <?= $this->Form->select('MetodoEnvioRetraso.999.venta_estado_categoria_id', $venta_estado_categorias, array('disabled' => true, 'class' => 'form-control not-blank js-estado-regla-noti', 'empty' => 'Seleccione')); ?>
     </td>
     <td>
-        <?= $this->Form->input('MetodoEnvioRetraso.999.horas_retraso', array('type' => 'text', 'disabled' => true, 'class' => 'form-control js-digits js-hora-regla-noti', 'placeholder' => 'Ej: 10, 5, 24', 'min' => 1, 'max' => 240)); ?>
+        <?= $this->Form->input('MetodoEnvioRetraso.999.horas_retraso', array('type' => 'text', 'disabled' => true, 'class' => 'form-control js-digits js-hora-regla-noti', 'placeholder' => 'Ej: 10, 5, 24', 'min' => 1,)); ?>
     </td>
     <td>
-        <?= $this->Form->input('MetodoEnvioRetraso.999.notificar_retraso', array('type' => 'checkbox', 'disabled' => true, 'class' => '', 'checked' => false)); ?>
+        <?= $this->Form->input('MetodoEnvioRetraso.999.notificar_retraso', array('type' => 'checkbox', 'disabled' => true, 'class' => '', 'checked' => true)); ?>
     </td>
     <td valign="center">
         <button class="remove_tr btn-danger"><i class="fa fa-minus"></i></button>

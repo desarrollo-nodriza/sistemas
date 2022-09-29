@@ -1,94 +1,48 @@
 <?php
 App::uses('AppController', 'Controller');
 class MetodoEnvioRetrasosController extends AppController
-{   
+{
     public $components = array(
-		'RequestHandler',
-		'WarehouseNodriza',
+        'RequestHandler',
         'Mandrill'
-	);
-    
-    /**
-     * calcular_horas_retraso
-     *
-     * @param  mixed $fecha_cambio_estado
-     * @return int horas de retrasos
-     */
-    public function calcular_horas_retraso($fecha_cambio_estado)
+    );
+
+    public function admin_index()
     {
-        $ahora  = date_create(date('Y-m-d H:i:s'));
-        $f_estado = date_create($fecha_cambio_estado);
 
-        $diferencia = date_diff($ahora, $f_estado);
-
-        return (int) ($diferencia->days * 24) + (int) $diferencia->h; 
+        $retrasos_sin_motificar = ClassRegistry::init('RetrasoVenta')->find('all', [
+            'contain' => [
+                'VentaCliente',
+                'Venta'
+            ]
+        ]);
+        prx($retrasos_sin_motificar);
     }
-
-
-    public function enviar_email($embalaje_id)
+    public function crear_registro_retrasos()
     {
-        $embalaje = $this->WarehouseNodriza->ObtenerEmbalaje($embalaje_id);
-        prx($embalaje);
+        $ventas     = $this->obtener_ventas_por_retraso();
+        $retrasos   = [];
 
-        $this->View             = new View();
-        $this->View->viewPath   = 'MetodoEnvioRetraso' . DS . 'emails';
-        $this->View->layoutPath = 'Correos' . DS . 'html';
+        foreach ($ventas as $venta) {
 
-        $url = obtener_url_base();
-       
-        $this->View->set(compact('contacto', 'url', 'token'));
-        $html = $this->View->render('confirmar_contacto');
-
-        $mandrill_apikey = $contacto['Tienda']['mandrill_apikey'];
-
-        if (empty($mandrill_apikey)) {
-            return false;
+            $retrasos[] = array(
+                'RetrasoVenta' => array(
+                    'venta_id'          => $venta['Venta']['id'],
+                    'venta_estado_id'   => $venta['Venta']['venta_estado_id'],
+                    'venta_cliente_id'  => $venta['Venta']['venta_cliente_id'],
+                    'horas_retraso'     => $venta[0]['horas_retraso'],
+                )
+            );
         }
 
-        $mandrill = $this->Components->load('Mandrill');
-
-        $mandrill->conectar($mandrill_apikey);
-
-        $asunto = sprintf('[CS %s] ¿Resolvimos tu requerimiento? - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
-
-        if (Configure::read('ambiente') == 'dev') {
-            $asunto = sprintf('[CS %s - DEV] ¿Resolvimos tu requerimiento? - id #%d - %s', $contacto['Tienda']['nombre'], $contacto['Contacto']['id'], date('Y-m-d H:i:s'));
+        if ($retrasos) {
+            ClassRegistry::init('RetrasoVenta')->create();
+            ClassRegistry::init('RetrasoVenta')->saveAll($retrasos);
         }
 
-        $remitente = array(
-            'email' => 'clientes@nodriza.cl',
-            'nombre' => 'Servicio al cliente ' . $contacto['Tienda']['nombre']
-        );
-
-        $destinatarios = array();
-        $destinatarios[] = array(
-            'email' => $contacto['Contacto']['email_contacto'],
-            'type' => 'to'
-        );
-        
-        return $mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
+        return $retrasos;
     }
 
-    public function api_enviar_notificacion_prueba()
-    {
-        # Existe token
-		if (!isset($this->request->query['token'])) 
-            return $this->api_response(401, 'Expected Token');
-
-		# Validamos token
-		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token']))
-			return $this->api_response(401, 'Invalid or expired Token');
-
-        $tienda = ClassRegistry::init('Tienda')->tienda_principal(array(
-            'mandrill_apikey', 
-            'nombre'
-        ));
-
-        prx($tienda);
-    }
-
-    
-      
     /**
      * obtener_ventas_por_retraso
      * Obtenemos las ventas de todas las reglas que tengan retraso
@@ -101,49 +55,9 @@ class MetodoEnvioRetrasosController extends AppController
         $ventas =   [];
         foreach ($reglas as $regla) {
             $ventas = array_merge($ventas, $this->consultar_ventas_por_regla_de_retraso($regla));
-           
         }
 
         return $ventas;
-    }
-    
-      
-    /**
-     * crear_registro_retraso
-     * retorna el modelo para ser guardado dsps
-     * @param  array $venta
-     * @return array
-     */
-    public function crear_registro_retraso(array $venta)
-    {
-        return array(
-            'RetrasoVenta' => array(
-                'venta_id'          => $venta['Venta']['id'],
-                'venta_estado_id'   => $venta['Venta']['venta_estado_id'],
-                'venta_cliente_id'  => $venta['Venta']['venta_cliente_id'],
-                'horas_retraso'     => $venta[0]['horas_retraso'],
-            )
-        );
-    }
-
-    public function admin_index()
-    {
-        $ventas     = $this->obtener_ventas_por_retraso();
-        prx($ventas);
-
-        $retrasos   = [];
-        foreach ($ventas as $venta) {
-            $retrasos[] = $this->crear_registro_retraso($venta);
-        }
-       
-        if ($retrasos) {
-            ClassRegistry::init('RetrasoVenta')->create();
-            ClassRegistry::init('RetrasoVenta')->saveAll($retrasos);
-        }
-
-        prx($retrasos);
-
-        
     }
 
     /**
@@ -210,5 +124,95 @@ class MetodoEnvioRetrasosController extends AppController
             'group'     => ['Venta.id'],
 
         ));
+    }
+
+    public function notificar_restaso()
+    {
+        $retrasos_sin_motificar = ClassRegistry::init('RetrasoVenta')->find('all', [
+            'conditions' => [
+                'notificado' => false,
+            ],
+            'contain' => [
+                'VentaCliente'  => [
+                    'id',
+                    'email',
+                    'nombre',
+                    'apellido',
+                ],
+                'Venta'         => [
+                    'id',
+                    'referencia',
+                ],
+            ]
+        ]);
+
+        $notificado = [];
+
+        foreach ($retrasos_sin_motificar as $retraso) {
+
+            $respuesta = $this->enviar_email($retraso);
+            if ($respuesta) {
+                $notificado[] = [
+                    'RetrasoVenta' => [
+                        'id'            => $retraso['RetrasoVenta']['id'],
+                        'notificado'    => $respuesta
+                    ]
+                ];
+            }
+        }
+
+        if ($notificado) {
+            ClassRegistry::init('RetrasoVenta')->create();
+            ClassRegistry::init('RetrasoVenta')->saveAll($notificado);
+        }
+
+        return $notificado;
+    }
+
+    public function enviar_email($retraso)
+    {
+
+        $this->View             = new View();
+        $this->View->viewPath   = 'RetrasoVenta' . DS . 'emails';
+        $this->View->layoutPath = 'Correos' . DS . 'html';
+        $tienda = ClassRegistry::init('Tienda')->tienda_principal();
+        $mandrill_apikey = $tienda['Tienda']['mandrill_apikey'] ?? null;
+
+        if (empty($mandrill_apikey)) {
+            return false;
+        }
+
+        $url = obtener_url_base();
+        $this->View->set(compact('retraso', 'url', 'tienda'));
+        $html = $this->View->render('retraso');
+        $this->Mandrill->conectar($mandrill_apikey);
+        $asunto = sprintf("%sInformación importante de tu compra #{$retraso['Venta']['referencia']} %s", Configure::read('ambiente') == 'dev' ? "[DEV] " : "", date('Y-m-d H:i:s'));
+
+        $remitente = array(
+            'email'     => 'no-reply@nodriza.cl',
+            'nombre'    => 'Ventas Toolmanía'
+        );
+
+        $destinatarios = array();
+        if (Configure::read('ambiente') == 'dev') {
+            $destinatarios = [
+                // [
+                //     'email' => "diego.romero@nodriza.cl",
+                //     'type' => 'to'
+                // ],
+                [
+                    'email' => "desarrollo@nodriza.cl",
+                    'type' => 'to'
+                ]
+            ];
+        } else {
+            $destinatarios[] = array(
+                'email' => $retraso['VentaCliente']['email'],
+                'type' => 'to'
+            );
+        }
+
+
+        return $this->Mandrill->enviar_email($html, $asunto, $remitente, $destinatarios);
     }
 }

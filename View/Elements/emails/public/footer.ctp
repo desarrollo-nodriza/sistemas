@@ -12,7 +12,7 @@
                     </div>
                     
                     <!-- Links de interés -->
-                    <?=$this->element('emails/links_interes', array(
+                    <?=$this->element('emails/public/links_interes', array(
                       'link' => array(
                         'url' => $footer['tienda_url'],
                         'texto' => 'Ir a la tienda'
@@ -21,7 +21,7 @@
                     <!-- /Links de interés -->
 
                     <!-- Información de la tienda -->
-                    <?=$this->element('emails/tienda_info', array(
+                    <?=$this->element('emails/public/tienda_info', array(
                       'tienda' => array(
                         'direccion' => $footer['bodega_direccion'],
                         'fono' => $footer['bodega_fono'],
@@ -33,12 +33,12 @@
                     <!-- /Información de la tienda -->
 
                     <!-- RRSS -->
-                    <?= $this->element('emails/rrss'); ?>
+                    <?= $this->element('emails/public/rrss'); ?>
                     <!-- /RRSS -->
                   
 
                     <!-- RRSS -->
-                    <?= $this->element('emails/no_responder'); ?>
+                    <?= $this->element('emails/public/no_responder'); ?>
                     <!-- /RRSS -->
 
                   </td>
