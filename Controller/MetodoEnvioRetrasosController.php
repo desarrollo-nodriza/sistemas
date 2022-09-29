@@ -9,7 +9,7 @@ class MetodoEnvioRetrasosController extends AppController
 
     public function admin_index()
     {
-
+        prx($this->notificar_retraso());
         $retrasos_sin_motificar = ClassRegistry::init('RetrasoVenta')->find('all', [
             'contain' => [
                 'VentaCliente',
@@ -17,7 +17,7 @@ class MetodoEnvioRetrasosController extends AppController
             ]
         ]);
         prx($retrasos_sin_motificar);
-    }    
+    }
     /**
      * crear_registro_retrasos
      * Busca las ventas que tengan retraso respecto a una regla y crea un registro para que después sea notificado
@@ -130,7 +130,7 @@ class MetodoEnvioRetrasosController extends AppController
 
         ));
     }
-    
+
     /**
      * notificar_retraso
      * Busca los retraso que se han creado pero que no han sido notificados
@@ -156,16 +156,17 @@ class MetodoEnvioRetrasosController extends AppController
             ]
         ]);
 
-        $notificado = [];
-
+        $notificado         = [];
+        $fecha_notificado   = date('Y-m-d H:i:s');
         foreach ($retrasos_sin_motificar as $retraso) {
 
             $respuesta = $this->enviar_email($retraso);
             if ($respuesta) {
                 $notificado[] = [
                     'RetrasoVenta' => [
-                        'id'            => $retraso['RetrasoVenta']['id'],
-                        'notificado'    => $respuesta
+                        'id'                => $retraso['RetrasoVenta']['id'],
+                        'notificado'        => $respuesta,
+                        'fecha_notificado'  => $fecha_notificado,
                     ]
                 ];
             }
@@ -178,7 +179,7 @@ class MetodoEnvioRetrasosController extends AppController
 
         return $notificado;
     }
-    
+
     /**
      * enviar_email
      * Notifica al cliente un retraso en su venta 

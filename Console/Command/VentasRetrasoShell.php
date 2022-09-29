@@ -1,7 +1,4 @@
 <?php
-
-App::uses('CakeRequest', 'Network');
-App::uses('CakeResponse', 'Network');
 App::uses('Controller', 'Controller');
 App::uses('MetodoEnvioRetrasosController', 'Controller');
 

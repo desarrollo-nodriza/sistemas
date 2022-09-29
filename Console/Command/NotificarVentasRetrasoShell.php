@@ -1,7 +1,4 @@
 <?php
-
-App::uses('CakeRequest', 'Network');
-App::uses('CakeResponse', 'Network');
 App::uses('Controller', 'Controller');
 App::uses('MetodoEnvioRetrasosController', 'Controller');
 
@@ -14,7 +11,7 @@ class NotificarVentasRetrasoShell extends AppShell
 		$log = array();
 		$log[] = array('Log' => array(
 			'administrador' => 'Demonio',
-			'modulo' 		=> 'VentasRetrasoShell',
+			'modulo' 		=> 'NotificarVentasRetrasoShell',
 			'modulo_accion' => 'Inicia proceso de notificar ventas con retraso: ' . date('Y-m-d H:i:s')
 		));
 
@@ -25,7 +22,7 @@ class NotificarVentasRetrasoShell extends AppShell
 
 		$log[] = array('Log' => array(
 			'administrador' => 'Demonio',
-			'modulo' 		=> 'VentasRetrasoShell',
+			'modulo' 		=> 'NotificarVentasRetrasoShell',
 			'modulo_accion' => 'Finaliza proceso de notificar ventas con retraso: ' . json_encode($notificar_retraso)
 		));
 
