@@ -226,7 +226,9 @@ Class CampanasController extends AppController {
 	 */
 	public function google_generar_xml_feed(int $id_tienda, int $id_campana, bool $retornar = false)
 	{
-		
+		ini_set('max_execution_time', 0);
+		ini_set('memory_limit', -1);
+
 		if (!ClassRegistry::init('Tienda')->exists($id_tienda) || !$this->Campana->exists($id_campana)) {
 			return;
 		}
@@ -265,46 +267,16 @@ Class CampanasController extends AppController {
 		}
 
 		# Almacenará los productos que iran en el feed
-		$productostodos 	= [];
-		$producto_ids 		= [];
+		
 		$categoria_id 		= "";
-		$arbol_categoria    = null;
+		
 		$producosProcesados = [];
 		
 		# si no tiene etiqueta, se usa la categoria principal
 		if (empty($campana['CampanaEtiqueta'])) {
 
 			$categoria_id 	= $campana['Campana']['categoria_id'];
-			$categoria 		= $this->Prestashop->prestashop_obtener_categorias_v2(
-				array(
-					'filter[id]' 		=> "[{$categoria_id}]",
-					'filter[active]'	=> "[1]",
-				)
-			);
-
-			$producto_ids 	= Hash::extract($categoria['category']['associations']['products'] ?? [], 'product.{*}.id');
-			$imagenes			= $this->Prestashop->prestashop_obtener_imagenes_de_productos($producto_ids);	
-			$producto_ids 	= (implode("|", $producto_ids));
-
-			$productostodos = $this->Prestashop->prestashop_obtener_productos_v2(
-				array(
-					'filter[id]' 					=> "[$producto_ids]",
-					'filter[active]' 				=> "[1]",
-					'filter[available_for_order]' 	=> "[1]",
-					'filter[id_shop_default]' 		=> "[1]",
-				)
-			)['product'] ?? [];
-
-			$stocks				= $this->Prestashop->prestashop_obtener_stock_productos($producto_ids);
-			$categorias_ids 	= array_unique(Hash::extract($productostodos,'{*}.id_category_default'));
-			$arbol_categoria	= $this->Prestashop->prestashop_arbol_categorias_muchas_categorias($categorias_ids);
-
-			foreach ($productostodos as $producto) {
-				$producto['quantity']		= $stocks[$producto['id']] ?? 0;
-				$producto['product_type']	= $arbol_categoria[$producto['id_category_default']];
-				$producto['image_link']		= $imagenes[$producto['id']] ?? "";
-				$producosProcesados[]		= $producto;
-			}
+			$producosProcesados = $this->productosProcesadoParaGoogle($categoria_id);
 
 		} else {
 
@@ -312,55 +284,14 @@ Class CampanasController extends AppController {
 			foreach ($campana['CampanaEtiqueta'] as $ic => $c) {
 				
 				$categoria_id 	= $c['categoria_id'];
-				$categoria 		= $this->Prestashop->prestashop_obtener_categorias_v2(
-					array(
-						'filter[id]' 		=> "[{$categoria_id}]",
-						'filter[active]'	=> "[1]",
-					)
-				);
-				$producto_ids 	= Hash::extract($categoria['category']['associations']['products'], 'product.{*}.id');
-				$imagenes			= $this->Prestashop->prestashop_obtener_imagenes_de_productos($producto_ids);
-				$producto_ids 	= (implode("|", $producto_ids));
-				$productostodos = $this->Prestashop->prestashop_obtener_productos_v2(
-					array(
-						'filter[id]' 					=> "[$producto_ids]",
-						'filter[active]' 				=> "[1]",
-						'filter[available_for_order]' 	=> "[1]",
-						'filter[id_shop_default]' 		=> "[1]",
-					)
-				)['product'] ?? [];
 
-				$stocks				= $this->Prestashop->prestashop_obtener_stock_productos($producto_ids);
-				$categorias_ids 	= array_unique(Hash::extract($productostodos,'{*}.id_category_default'));
-				$arbol_categoria	= $this->Prestashop->prestashop_arbol_categorias_muchas_categorias($categorias_ids);
-
-				# agregamos a los productos la etiqueta de la campaña
-
-				foreach ($productostodos as $producto) {
-
-					$producto['quantity']		= $stocks[$producto['id']] ?? 0;
-					$producto['product_type']	= $arbol_categoria[$producto['id_category_default']];
-					$producto['image_link']		= $imagenes[$producto['id']] ?? "";
-					if ($c['categoria_id'] == 1000000000 && !empty($_producto['reference'])) {
-
-						$prisync = $this->obtener_productos_mejor_precio($_producto['reference']);
-
-						if (!empty($prisync)) {
-
-							if (!isset($prisync['PrisyncProducto'])) {
-								continue;
-							}
-
-							if ($prisync['PrisyncProducto']['mejor_precio']) {
-								$productostodos[$_producto['id']]['custom_label_' . $ic] = 'Mejor precio mercado';
-							}
-						}
-					} else {
-						$producto['custom_label_' . $ic] = $c['nombre'];
-					}
-
-					$producosProcesados[]		= $producto;
+				# si es categoria "mejor precio" se usa la categoría padre
+				if ($categoria_id == 1000000000)
+				{
+					$categoria_id 	= $campana['Campana']['categoria_id'];
 				}
+
+				$producosProcesados = array_merge($producosProcesados, $this->productosProcesadoParaGoogle($categoria_id, true, $ic, $c));
 			}
 		}
 
@@ -439,6 +370,8 @@ Class CampanasController extends AppController {
 			}
 		}
 
+		// $salida = GoogleShopping::asRss(true);
+		// exit;
 		$salida = GoogleShopping::asRss();
 		if (!is_dir("FeedGoogle")) mkdir("FeedGoogle");
 		$ruta = "FeedGoogle/{$campana['Campana']['id']}.xml";
@@ -463,7 +396,78 @@ Class CampanasController extends AppController {
 		}
 		
 	}
+	public function productosProcesadoParaGoogle($categoria_id, bool $es_etiqueta = false, $ic = null, $c = [])
+	{
+		ini_set('max_execution_time', 0);
+		ini_set('memory_limit', -1);
+		$productos_todos 	= [];
+		
 
+		$categoria 			= $this->Prestashop->prestashop_obtener_categorias_v2(
+			array(
+				'filter[id]' 		=> "[{$categoria_id}]"
+			)
+		);
+
+		$producto_ids_original 	= Hash::extract($categoria['category']['associations']['products'], 'product.{*}.id');
+		foreach (array_chunk($producto_ids_original, 500) as $producto_ids) {
+			
+			$producosProcesados = [];
+			$imagenes	 		= [];
+			$productostodos		= [];
+			$stocks 			= [];
+			$categorias_ids 	= [];
+			$arbol_categoria    = null;
+
+			$imagenes			= $this->Prestashop->prestashop_obtener_imagenes_de_productos($producto_ids);
+			$producto_ids 		= (implode("|", $producto_ids));
+			$productostodos 	= $this->Prestashop->prestashop_obtener_productos_v2(
+				array(
+					'filter[id]' 					=> "[$producto_ids]",
+					'filter[active]' 				=> "[1]",
+					'filter[available_for_order]' 	=> "[1]",
+					'filter[id_shop_default]' 		=> "[1]",
+				)
+			)['product'] ?? [];
+
+			$stocks				= $this->Prestashop->prestashop_obtener_stock_productos($producto_ids);
+			$categorias_ids 	= array_unique(Hash::extract($productostodos, '{*}.id_category_default'));
+			$arbol_categoria	= $this->Prestashop->prestashop_arbol_categorias_muchas_categorias($categorias_ids);
+
+			foreach ($productostodos as $producto) {
+
+				$producto['quantity']		= $stocks[$producto['id']] ?? 0;
+				$producto['product_type']	= $arbol_categoria[$producto['id_category_default']];
+				$producto['image_link']		= $imagenes[$producto['id']] ?? "";
+
+				if ($es_etiqueta) {
+					if ($c['categoria_id'] == 1000000000 && !empty($producto['reference'])) {
+
+						$prisync = $this->obtener_productos_mejor_precio($producto['reference']);
+
+						if (!empty($prisync)) {
+
+							if (!isset($prisync['PrisyncProducto'])) {
+								continue;
+							}
+
+							if ($prisync['PrisyncProducto']['mejor_precio']) {
+								$producto['custom_label_' . $ic] = 'Mejor precio mercado';
+							}
+						}
+					} else {
+						$producto['custom_label_' . $ic] = $c['nombre'];
+					}
+				}
+
+				$producosProcesados[]		= $producto;
+			}
+
+			$productos_todos = array_merge($productos_todos,$producosProcesados);
+		}
+
+		return $productos_todos;
+	}
 	
 	/**
 	 * obtener_productos_mejor_precio

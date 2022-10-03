@@ -426,6 +426,13 @@ class WarehouseNodrizaComponent extends Component
     }
 
 
+    public function ObtenerEmbalaje($embalaje_id)
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->ObtenerEmbalaje($embalaje_id);
+    }
+
+
     public function ObtenerEmbalajesVentaV2($venta_id, $filtro = [])
     {
         $this->crearCliente();

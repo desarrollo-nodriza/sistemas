@@ -137,6 +137,18 @@ class WarehouseNodriza
         return $this->cURL_GET("/api/v1/embalaje/embalaje-venta/{$venta_id}");
     }
 
+    
+    /**
+     * ObtenerEmbalaje desde warehouse
+     *
+     * @param  mixed $embalaje_id
+     * @return void
+     */
+    public function ObtenerEmbalaje($embalaje_id)
+    {
+        return $this->cURL_GET("/api/v1/embalaje/embalaje/ver/{$embalaje_id}");
+    }
+
 
     /**
      * Obtiene los embalajes de una venta dado su filtro

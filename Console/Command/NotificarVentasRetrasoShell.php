@@ -1,0 +1,34 @@
+<?php
+App::uses('Controller', 'Controller');
+App::uses('MetodoEnvioRetrasosController', 'Controller');
+
+class NotificarVentasRetrasoShell extends AppShell
+{
+
+	public function main()
+	{
+
+		$log = array();
+		$log[] = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' 		=> 'NotificarVentasRetrasoShell',
+			'modulo_accion' => 'Inicia proceso de notificar ventas con retraso: ' . date('Y-m-d H:i:s')
+		));
+
+		$MetodoEnvioRetrasosController = new MetodoEnvioRetrasosController();
+
+		# crear_registro_retrasos la base de datos con los cambios en los envios
+		$notificar_retraso = $MetodoEnvioRetrasosController->notificar_retraso();
+
+		$log[] = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' 		=> 'NotificarVentasRetrasoShell',
+			'modulo_accion' => 'Finaliza proceso de notificar ventas con retraso: ' . json_encode($notificar_retraso)
+		));
+
+		# Guardamos el log
+		ClassRegistry::init('Log')->saveMany($log);
+
+		return true;
+	}
+}

@@ -163,8 +163,11 @@ class MetodoEnviosController extends AppController
 						'MetodoEnvio.id' => $id
 					),
 					'contain'=>[
-							'BodegasMetodoEnvio'=>['Bodega']
-						]
+						'BodegasMetodoEnvio' => [
+							'Bodega'
+						],
+						'MetodoEnvioRetraso'
+					]
 				)
 			);
 		}
@@ -198,11 +201,13 @@ class MetodoEnviosController extends AppController
 			$estados[$value['VentaEstado']['id']] = "Estado {$value['VentaEstado']['nombre']} | Categoría {$value['VentaEstadoCategoria']['nombre']}";
 		}
 
+		$venta_estado_categorias = ClassRegistry::init('VentaEstadoCategoria')->find('list', array('conditions' => array('activo' => 1, 'final' => 0, 'venta' => 1)));
+		
 		$cuentaCorrienteTransporte = ClassRegistry::init('CuentaCorrienteTransporte')->selector();
 	
 		BreadcrumbComponent::add('Métodos de envio', '/metodoEnvios');
 		BreadcrumbComponent::add('Editar Método de envio');
-		$this->set(compact('dependencias', 'dependenciasVars','bodegas','tipo_servicio','estados','cuentaCorrienteTransporte'));
+		$this->set(compact('dependencias', 'dependenciasVars','bodegas','tipo_servicio','estados','cuentaCorrienteTransporte', 'venta_estado_categorias'));
 		
 
 	}
@@ -780,6 +785,29 @@ class MetodoEnviosController extends AppController
 
 		$this->redirect(array('action' => 'edit', $id));
 		
+	}
+
+
+	public function admin_retrasos_add($id)
+	{	
+		if ( $this->request->is('post') || $this->request->is('put') )
+		{	
+
+			ClassRegistry::init('MetodoEnvioRetraso')->deleteAll([
+				'MetodoEnvioRetraso.metodo_envio_id' 	=> $this->request->data['MetodoEnvio']['id']
+			]);
+
+			if ( $this->MetodoEnvio->saveAll($this->request->data) )
+			{
+				$this->Session->setFlash('Registro editado correctamente', null, array(), 'success');
+			}
+			else
+			{
+				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
+			}
+		}
+
+		$this->redirect(array('controller' => 'metodoEnvios', 'action' => 'edit', $id));
 	}
 		
 }
