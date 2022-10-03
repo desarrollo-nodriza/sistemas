@@ -36,14 +36,12 @@
 <!-- Parrafo -->
 <?= $this->element('emails/public/parrafo', array(
   'parrafo' => array(
-    'texto' => "Estimado/a <strong>{$retraso['VentaCliente']['nombre']}</strong>.<br>Lamentamos la demora en la recepción de tu pedido, estamos trabajando a toda máquina para agilizar la entrega lo antes posible.<br><br>De antemano te pedimos disculpas por los posibles problemas ocasionados.<br><br>Atte. Toolmania Spa.",
+    'texto' => "Hola <strong>{$retraso['VentaCliente']['nombre']}</strong>.<br>Lamentamos la demora en la recepción de tu pedido, estamos trabajando a toda máquina para agilizar la entrega lo antes posible.<br><br>De antemano te pedimos disculpas por los posibles problemas ocasionados.<br>",
     'style' => '',
     'custom_class' => ''
   )
 )); ?>
 <!-- /Parrafo -->
-
-<?= $this->element('emails/public/separador'); ?>
 
 
 <?= $this->element('emails/public/footer', array(
