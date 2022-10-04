@@ -16,7 +16,7 @@
 						<li><a href="#tab-envio" data-toggle="tab"><i class="fa fa-truck"></i> Direcciones</a></li>
 					<?php endif; ?>
 
-					<li><a href="#tab-transporte" data-toggle="tab"><i class="fa fa-truck"></i> Transporte Externo</a></li>
+					<li><a href="#tab-transporte" data-toggle="tab"><i class="fa fa-truck"></i> Orden de transporte</a></li>
 
 					<? if (!empty($venta['Transporte'])) : ?>
 						<li><a href="#tab-seguimiento" data-toggle="tab"><i class="fa fa-truck"></i> Seguimiento del pedido</a></li>
@@ -1136,7 +1136,7 @@
 					<div class="tab-pane panel-body" id="tab-transporte">
 						<div class="row mb-5 mt-5">
 							<div class="col-xs-12 col-md-6">
-								<h3><i class="fa fa-truck"></i> Transporte externo</h3>
+								<h3><i class="fa fa-truck"></i> Orden de Transporte</h3>
 							</div>
 							<div class="col-xs-12 col-md-6">
 								<div class="btn-group pull-right">
@@ -1212,16 +1212,16 @@
 									</div>
 								</div>
 							</div>
-						<? elseif ($this->request->data['MetodoEnvio']['dependencia'] != '') : ?>
+						<? elseif ($this->request->data['MetodoEnvio']['generar_ot']) : ?>
 							<div class="row mt-5">
 								<div class="col-xs-12">
-									<?= $this->Html->link('Crear Envio externo', array('action' => 'generar_envio_externo_manual', $venta['Venta']['id']), array('class' => 'btn btn-lg btn-success btn-block start-loading-then-redirect')); ?>
+									<?= $this->Html->link('Crear OT manualmente', array('action' => 'generar_envio_externo_manual', $venta['Venta']['id']), array('class' => 'btn btn-lg btn-success btn-block start-loading-then-redirect')); ?>
 								</div>
 							</div>
 						<? else : ?>
 							<div class="row mt-5">
 								<div class="col-xs-12">
-									<h4><?= __('El método de envio seleccionado no permite generar un OT externa.'); ?></h4>
+									<h4><?= __('El método de envio seleccionado no permite generar una órden de transporte.'); ?></h4>
 								</div>
 							</div>
 						<? endif; ?>

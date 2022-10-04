@@ -241,6 +241,7 @@ class BoosmapComponent extends Component
 			$etiquetaArr = array(
 				'venta' => array(
 					'id' 			=> $venta['Venta']['id'],
+					'embalaje_id'   => $embalaje['id'],
 					'metodo_envio' 	=> $venta['MetodoEnvio']['nombre'],
 					'canal' 		=> $canal_venta,
 					'medio_de_pago' => $venta['MedioPago']['nombre'],
@@ -583,6 +584,7 @@ class BoosmapComponent extends Component
 		$etiquetaArr = array(
 			'venta' => array(
 				'id' 			=> $venta['Venta']['id'],
+				'embalaje_id'   => $embalaje['id'],
 				'metodo_envio' 	=> $venta['MetodoEnvio']['nombre'],
 				'canal' 		=> $canal_venta,
 				'medio_de_pago' => $venta['MedioPago']['nombre'],

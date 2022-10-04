@@ -340,7 +340,7 @@ class MetodoEnviosController extends AppController
 		$logs 					= [];
 		$metodo_envio_enviame 	= explode(',', $venta['Tienda']['meta_ids_enviame']);
 		$resultado 				= false;
-
+		
 		$logs[] = array(
 			'Log' => array(
 				'administrador' => "Crear etiqueta envio externo | Vid: {$id_venta}",
@@ -383,7 +383,7 @@ class MetodoEnviosController extends AppController
 			}
 			
 		} elseif ($venta['MetodoEnvio']['generar_ot']) {
-
+			
 			foreach ($embalajes as $embalaje) {
 
 				$cuenta_corriente_transporte_id = null;
@@ -428,7 +428,7 @@ class MetodoEnviosController extends AppController
 					$informacion_bodega       		= Hash::extract($venta['MetodoEnvio']['BodegasMetodoEnvio'], "{n}[bodega_id={$embalaje['bodega_id']}].Bodega")[0] ?? [];
 
 				}
-
+			
 				if (is_null($cuenta_corriente_transporte_id)) {
 
 					$logs[] = array(
@@ -442,7 +442,7 @@ class MetodoEnviosController extends AppController
 				}
 
 				$CuentaCorrienteTransporte = ClassRegistry::init('CuentaCorrienteTransporte')->valor_atributos($cuenta_corriente_transporte_id);
-
+				
 				if (!$CuentaCorrienteTransporte) {
 
 					$logs[] = array(
@@ -456,7 +456,7 @@ class MetodoEnviosController extends AppController
 				}
 
 				$CuentaCorrienteTransporte['informacion_bodega'] = $informacion_bodega;
-
+				
 				switch (ClassRegistry::init('CuentaCorrienteTransporte')->dependencia($cuenta_corriente_transporte_id)) {
 
 					case 'starken':
@@ -546,6 +546,24 @@ class MetodoEnviosController extends AppController
 
 					default:
 
+						$this->TransporteInterno = $this->Components->load('TransporteInterno');
+
+						# Creamos la OT
+						if ($this->TransporteInterno->generar_ot($venta, $embalaje, $CuentaCorrienteTransporte)) {
+							$resultado = true;
+							$logs[] = array(
+								'Log' => array(
+									'administrador' => 'Crear etiqueta TransporteInterno venta ' . $id_venta,
+									'modulo'     	=> 'MetodoEnviosController',
+									'modulo_accion' => json_encode([
+										"venta" => $venta,
+										"embalaje" => $embalaje,
+										"ctacorriente" => $CuentaCorrienteTransporte
+									])
+								)
+							);
+						}
+
 						break;
 				}
 			}
@@ -557,7 +575,7 @@ class MetodoEnviosController extends AppController
 				'modulo_accion' => 'Resultado de la operación: ' . $resultado ? 'Se completo':'No se completo'
 			)
 		);
-
+		
 		ClassRegistry::init('Log')->saveMany($logs);
 		
 		$VentasController = new VentasController();

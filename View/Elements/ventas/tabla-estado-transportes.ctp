@@ -17,7 +17,7 @@
                     <td><?=$estado['EnvioHistorico']['id']; ?></td>
                     <td><?=$estado['EnvioHistorico']['created']; ?></td>
                     <td><label class="label label-<?=$estado['EstadoEnvio']['EstadoEnvioCategoria']['clase']??'info';?>"><?=$estado['EstadoEnvio']['nombre']; ?></label></td>
-                    <td><?=$estado['EnvioHistorico']['leyenda']??'-'; ?></td>
+                    <td><?=$estado['EstadoEnvio']['leyenda']??'-'; ?></td>
                     <td><?=$estado['EstadoEnvio']['EstadoEnvioCategoria']['nombre']??'-';?></td>
                     <td>
                     <? if ($estado['EstadoEnvio']['EstadoEnvioCategoria']['venta_estado_id']??false) : ?>
