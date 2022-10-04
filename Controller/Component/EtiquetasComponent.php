@@ -8,6 +8,7 @@ class EtiquetasComponent extends Component
     private static $formato = array(
         'venta' => array(
             'id',
+            'embalaje_id',
             'metodo_envio',
             'canal',
             'medio_de_pago',
@@ -163,15 +164,15 @@ class EtiquetasComponent extends Component
             'url' => '',
             'path' => ''
         );
-
+        
         # Validamos que los campos minimos existan
         if (!$this->validarformato($datos))
-        {
+        {   
             return $respuesta;
         }
 
         $etiquetaZpl = $this->formatoEtiquetaZplTransporte($datos);	
-
+        
         $pathEtiquetas  = APP . 'webroot' . DS . 'img' . DS . $datos['pdf']['dir'] . DS . $datos['venta']['id'] . DS;
         $nombreEtiqueta = $datos['transportista']['codigo_barra'] . '-label.pdf';
         

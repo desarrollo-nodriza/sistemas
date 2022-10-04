@@ -12634,7 +12634,7 @@ class VentasController extends AppController {
 		$logs				= [];
 		$return 			= false;
 		$total_en_espera 	= array_sum(Hash::extract($venta, 'VentaDetalle.{n}.cantidad_en_espera'));
-
+		
 		foreach ($venta['TransportesVenta'] as $TransportesVenta) {
 		
 			$cuenta_corriente_transporte_id = null;
@@ -12707,21 +12707,25 @@ class VentasController extends AppController {
 
 					default:
 
+						# Etiqueta interna de despacho
+						$this->TransporteInterno 	= $this->Components->load('TransporteInterno');
+						$return = $this->TransporteInterno->registrar_estados($TransportesVenta, $total_en_espera);
+
 						break;
 				}
 			} catch (\Throwable $th) {
 				
 			}
 		}
-
+		
 		$logs[] = array(
 			'Log' => array(
 				'administrador' => "Vid {$id} | finaliza actualizar estado ot",
 				'modulo'     	=> 'VentasController',
-				'modulo_accion' =>  null			
+				'modulo_accion' =>  $return			
 				)
 		);
-
+		
 		ClassRegistry::init('Log')->saveMany($logs);
 		
 		return $return;

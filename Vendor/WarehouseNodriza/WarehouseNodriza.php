@@ -146,7 +146,7 @@ class WarehouseNodriza
      */
     public function ObtenerEmbalaje($embalaje_id)
     {
-        return $this->cURL_GET("/api/v1/embalaje/embalaje/ver/{$embalaje_id}");
+        return $this->cURL_GET("/api/v1/embalaje/ver/{$embalaje_id}");
     }
 
 
