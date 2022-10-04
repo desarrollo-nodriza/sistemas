@@ -59,8 +59,8 @@ class TransporteInternoComponent extends Component
         ));
         
         # Buscamos e estado del embalaje asociado y lo regitramos en el historico
-        $embalaje =  $this->WarehouseNodriza->ObtenerEmbalaje($TransportesVenta['cod_seguimiento']);
-        
+        $embalaje =  $this->WarehouseNodriza->ObtenerEmbalaje($TransportesVenta['embalaje_id']);
+   
         $log[] = array(
             'Log' => array(
                 'administrador'     => "Respuesta codigo de seguimiento {$TransportesVenta['cod_seguimiento']} | vid - {$TransportesVenta['venta_id']}",
