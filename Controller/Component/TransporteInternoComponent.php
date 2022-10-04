@@ -333,7 +333,7 @@ class TransporteInternoComponent extends Component
                     [
                         'transporte_id'             => ClassRegistry::init('Transporte')->obtener_transporte_por_nombre($carrier_name, true, $carrier_opt),
                         'venta_id'                  => $venta['Venta']['id'],
-                        'cod_seguimiento'           => $embalaje['id'],
+                        'cod_seguimiento'           => $venta['Venta']['referencia'],
                         'etiqueta'                  => $union,
                         'paquete_generado'          => count($paquetes),
                         'etiqueta_envio_externa'    => $union,
