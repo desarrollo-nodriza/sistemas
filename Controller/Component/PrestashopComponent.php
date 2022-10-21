@@ -705,15 +705,15 @@ class PrestashopComponent extends Component
 				)
 			)
 		);
-
+		
 		if (!empty($VentaCliente)) {
 			return $VentaCliente['VentaCliente']['id'];
 		}
-
+		
 		//si el cliente no existe, se crea
 		$data = array();
 		$data['VentaCliente']['nombre'] = $cliente['customer']['firstname'];
-		$data['VentaCliente']['apellido'] = $cliente['customer']['lastname'];
+		$data['VentaCliente']['apellido'] = (is_array($cliente['customer']['lastname'])) ? '' : $cliente['customer']['lastname'];
 		$data['VentaCliente']['email'] = $cliente['customer']['email'];
 
 		ClassRegistry::init('VentaCliente')->create();
