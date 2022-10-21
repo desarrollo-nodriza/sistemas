@@ -705,15 +705,15 @@ class PrestashopComponent extends Component
 				)
 			)
 		);
-
+		
 		if (!empty($VentaCliente)) {
 			return $VentaCliente['VentaCliente']['id'];
 		}
-
+		
 		//si el cliente no existe, se crea
 		$data = array();
 		$data['VentaCliente']['nombre'] = $cliente['customer']['firstname'];
-		$data['VentaCliente']['apellido'] = $cliente['customer']['lastname'];
+		$data['VentaCliente']['apellido'] = (is_array($cliente['customer']['lastname'])) ? '' : $cliente['customer']['lastname'];
 		$data['VentaCliente']['email'] = $cliente['customer']['email'];
 
 		ClassRegistry::init('VentaCliente')->create();
@@ -896,31 +896,38 @@ class PrestashopComponent extends Component
 	 * @return array               resultado operación
 	 */
 	public function prestashop_obtener_stock_producto($producto_id)
-	{	
+	{
 		//se obtiene el stock de prestashop
-		$opt = array();
-		$opt['resource'] = 'stock_availables';
-		$opt['display'] = '[id,quantity]';
-		$opt['filter[id_product]'] = '[' .$producto_id. ']';
+		$opt 						= array();
+		$opt['resource'] 			= 'stock_availables';
+		$opt['display'] 			= '[id,quantity,id_product_attribute]';
+		$opt['filter[id_product]'] 	= '[' . $producto_id . ']';
 
 		$stock = array(
 			'stock_available' => array(
-				'id' => $producto_id,
-				'quantity' => 0
+				'id' 		=> $producto_id,
+				'quantity' 	=> 0,
 			)
 		);
 
 		try {
-			$xml = $this->ConexionPrestashop->get($opt);
+			$xml 					= $this->ConexionPrestashop->get($opt);
+			$PrestashopResources 	= $xml->children()->children();
+			$respuesta 				= to_array($PrestashopResources);
 
-			$PrestashopResources = $xml->children()->children();
+			// * Hay ocaciones donde prestashop responde con más de un stock, por lo que se busca el stock Padre
+			if ($respuesta['stock_available'][0] ?? false) {
 
-			$stock = to_array($PrestashopResources);
+				$stock = ['stock_available' => Hash::extract($stock['stock_available'], '{n}[id_product_attribute=0]')[0] ?? $stock['stock_available']];
+
+			} else {
+
+				$stock = isset($respuesta['stock_available']) ? $respuesta : $stock;
+			}
 
 		} catch (Exception $e) {
-			
 		}
-
+		// pr($stock);
 		return $stock;
 	}
 
