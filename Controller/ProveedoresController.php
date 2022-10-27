@@ -537,4 +537,106 @@ class ProveedoresController extends AppController
 
 		$this->redirect(array('action' => 'edit', $proveedor_id));
 	}
+
+	
+	/**
+	 * api_obtener_tiempo_preparacion_oc
+	 *	
+	 * Calcula el tiempo que tarda un proveedor procesar sus OCs.
+	 * El tiempo se calcula desde la creación de la OC hasta su recepción completa o incompleta.
+	 * 	
+	 * Se puede filtrar por proveedores y/o productos enviando en el body de la petición.
+	 * 
+	 * - Para filtrar por porductos se debe enviar una lista de ids llamada "producto_id"
+	 * - Para filtrar por proveedor se debe enviar una lista de ids llamada "proveedor_id"
+	 * 
+	 * @return json
+	 */
+	public function api_obtener_tiempo_preparacion_oc()
+	{
+		# Existe token
+		if (!isset($this->request->query['token'])) 
+		{
+			return $this->api_response(404, 'Token requerido');
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) 
+		{
+			return $this->api_response(401, 'Token de sesión expirado o invalido');
+		}
+
+		$qry = array(
+			'joins' => array(
+				array(
+					'alias' => 'ocp',
+					'table' => 'orden_compras_venta_detalle_productos',
+					'type' => 'INNER',
+					'conditions' => array(
+						'ocp.orden_compra_id = OrdenCompra.id'
+					),
+				),
+			),
+			'conditions' => array(
+				'OrdenCompra.estado' => array('recepcion_completa', 'recepcion_incompleta')
+			),
+			'group' => array('OrdenCompra.proveedor_id'),
+			'fields' => array(
+				'OrdenCompra.proveedor_id',
+				'ABS(TIMESTAMPDIFF(MINUTE, OrdenCompra.created, OrdenCompra.fecha_recibido)) as tiempo_preparacion_m'
+			),
+			'order' => array(
+				'ABS(TIMESTAMPDIFF(MINUTE, OrdenCompra.created, OrdenCompra.fecha_recibido))' => 'DESC'
+			)
+		);
+		
+		# filtro por proveedores
+		if (isset($this->request->data['proveedor_id']))
+		{	
+			$qry = array_replace_recursive($qry, array(
+				'joins' => array(
+					array(
+						'alias' => 'ocp',
+						'table' => 'orden_compras_venta_detalle_productos',
+						'type' => 'INNER',
+						'conditions' => array(
+							'ocp.orden_compra_id = OrdenCompra.id'
+						),
+					),
+				),
+				'conditions' => array(
+					'OrdenCompra.proveedor_id' => $this->request->data['proveedor_id']
+				)
+			));
+		}
+
+		# filtro por productos
+		if (isset($this->request->data['producto_id']))
+		{	
+			$qry = array_replace_recursive($qry, array(
+				'joins' => array(
+					array(
+						'alias' => 'ocp',
+						'table' => 'orden_compras_venta_detalle_productos',
+						'type' => 'INNER',
+						'conditions' => array(
+							'ocp.orden_compra_id = OrdenCompra.id',
+							'ocp.venta_detalle_producto_id' => $this->request->data['producto_id']
+						),
+					),
+				),
+				'group' => array('OrdenCompra.proveedor_id', 'ocp.venta_detalle_producto_id'),
+				'fields' => array(
+					'OrdenCompra.proveedor_id',
+					'ocp.venta_detalle_producto_id',
+					'ABS(TIMESTAMPDIFF(MINUTE, OrdenCompra.created, OrdenCompra.fecha_recibido)) as tiempo_preparacion_m'
+				),
+			));
+		}
+
+		# Obtenemos propietario
+		$tiempo_preparacion = ClassRegistry::init('OrdenCompra')->find('all', $qry);
+
+		return $this->api_response(200, 'Tiempo calculado con éxito', $tiempo_preparacion);
+	}
 }

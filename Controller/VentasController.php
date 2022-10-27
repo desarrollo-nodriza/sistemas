@@ -8478,7 +8478,7 @@ class VentasController extends AppController {
 			)
 		);
 
-		
+		prx($NuevaVenta);
 		//se guarda la venta
 		$this->Venta->create();
 		if ( $this->Venta->saveAll($NuevaVenta) ) {
