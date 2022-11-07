@@ -565,4 +565,29 @@ class WarehouseNodrizaComponent extends Component
         $this->crearCliente();
         return $this->WarehouseNodriza->UltimaApk();
     }
+    
+    /**
+     * obtener_tiempo_preparacion
+     * 
+     * Obtiene le timepo de preparación (Tiempo que tarda un embaljes desde su creación hasta su finalización)
+     *
+     * @param  int $id_producto
+     * @return void
+     */
+    public function obtener_tiempo_preparacion(int $id_producto)
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->obtener_tiempo_preparacion($id_producto);
+    }
+    
+    /**
+     * obtener_bodegas
+     *
+     * @return void
+     */
+    public function obtener_bodegas()
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->obtener_bodegas();
+    }
 }

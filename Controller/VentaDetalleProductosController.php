@@ -4487,9 +4487,53 @@ class VentaDetalleProductosController extends AppController
 			)
 		));
 
+		$rangos = array(
+			range(0, 12) => "Despacho en 12 hrs",
+			range(13, 24) => "Despacho en 24 hrs",
+			range(25, 36) => "Despacho en 36 hrs",
+			range(37, 48) => "Despacho en 48 hrs",
+			range(49, 72) => "Despacho en 72 hrs",
+			range(73, 1000) => "Despacho en 7 días"
+		);
+
+		# agrega información de disponibilidad por bodegas al arreglo de productos
 		$productos = $this->VentaDetalleProducto->set_stock_disponible_por_bodegas_v3($productos);
 
-		# Validar que se esten mostrando todos los productos tengan o no stock ---
+		$this->WarehouseNodriza 	= $this->Components->load('WarehouseNodriza');
+		
+		# Obtenemos la info de las bodegas de Warehouse
+		$bodegasWH = Hash::extract($this->WarehouseNodriza->obtener_bodegas(), 'response.body.data');
+		
+		foreach ($productos as $ip => $producto)
+		{	
+			$productos[$ip]['Disponibilidad']['Bodega'] = array_map(function($pd) use ($bodegasWH, $producto)
+			{	
+				$tiempo_preparacion_hrs = 12;
+
+				# si tiene stock se agrega el tiempo de preparación de warehouse para el producto
+				if ($producto['VentaDetalleProducto']['disponibilidad']['stock_disponible'])
+				{
+					$tiempo_preparacion_bodega = Hash::extract($bodegasWH, '{n}[alias_nodriza='.$pd['bodega_id'].'].tiempo_preparacion');
+					$tiempo_preparacion_hrs = (isset($tiempo_preparacion[0])) ? $tiempo_preparacion[0] : $tiempo_preparacion_hrs;
+				}
+
+				# si el producto no tiene stock pero si historial ede ventas, se agrega el tiempo de preparacion dada las ventas.
+				if (!$producto['VentaDetalleProducto']['disponibilidad']['stock_disponible'])
+				{
+					
+				}
+				$pd = array_replace_recursive($pd, array(
+					'detalle_bodega' => array(
+						'tiempo_preparacion_hrs' => $tiempo_preparacion_hrs
+					)
+				));
+				
+				return $pd;
+				
+			}, $producto['Disponibilidad']['Bodega']);
+			
+		}
+
 		prx($productos);
 		if (!$productos)
 		{
@@ -4512,7 +4556,7 @@ class VentaDetalleProductosController extends AppController
 	public function admin_obtener_tiempo_preparacion($id)
 	{	
 		# Tiempos de producto vendidos
-		$producto = $this->VentaDetalleProducto->find('all', array(
+		$productoVentas = $this->VentaDetalleProducto->find('all', array(
 			'conditions' => array(
 				'VentaDetalleProducto.id' => $id
 			),
@@ -4588,11 +4632,11 @@ class VentaDetalleProductosController extends AppController
 			)
 		));
 
-		# Tiempo de preparacion de proveedor
-		prx($producto);
-		
+		# Tiempo de preparacion del producto dada sus ventas
+		# si el producto no tiene ventas se calcula el tiempo del proveedor más el tiempo de preparación de Warehouse
+
 		$avg = array();
-		foreach ($ventas as $key => $value) {
+		foreach ($productoVentas as $key => $value) {
 			$f_creacion  = date_create($value['Venta']['fecha_venta']);
 			$f_recepcion = date_create($value['Venta']['fecha_entregado']);
 

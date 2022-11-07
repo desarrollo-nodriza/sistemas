@@ -300,6 +300,30 @@ class WarehouseNodriza
         return $this->cURL_POST("/api/v1/productos/editar-masivo", $body);
     }
 
+    
+    /**
+     * obtener_tiempo_preparacion
+     * 
+     * Obtiene le timepo de preparación (Tiempo que tarda un embaljes desde su creación hasta su finalización)
+     *
+     * @param  int $id_producto
+     * @return mixed
+     */
+    public function obtener_tiempo_preparacion(int $id_producto)
+    {
+        return $this->cURL_GET("/api/v1/productos/tiempo-preparacion/" . $id_producto);
+    }
+    
+    /**
+     * obtener_bodegas
+     *
+     * @return void
+     */
+    public function obtener_bodegas()
+    {
+        return $this->cURL_GET("/api/v1/bodegas?activo=1");
+    }
+
     public function UltimaApk()
     {
         return $this->cURL_GET("/api/v1/versionamiento/ultima-apk");
