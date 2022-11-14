@@ -1091,3 +1091,14 @@ Router::connect(
         'api'           => true,
         'prefix'        => 'api')
 );
+
+
+Router::connect(
+    '/api/filtro_servicios', 
+    array(
+        'controller'    => 'VentaDetalleProductos', 
+        'action'        => 'filtro_servicios',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+
