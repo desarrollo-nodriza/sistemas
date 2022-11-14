@@ -20,7 +20,9 @@ class PruebasController extends AppController
 
   public function api_pruebas()
   {
-    $OrdenComprasController = new OrdenComprasController();
-    prx($OrdenComprasController->RecorrerProveedor());
+    // $OrdenComprasController = new OrdenComprasController();
+    // prx($OrdenComprasController->RecorrerProveedor());
+    // prx(ClassRegistry::init('VentaDetalleProducto')->obtener_productos_con_stock_disponible_por_bodegas_v2());
+    prx(ClassRegistry::init('VentaDetalleProducto')->disponibilidad_por_bodega());
   }
 }

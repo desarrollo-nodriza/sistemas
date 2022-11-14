@@ -870,7 +870,7 @@ class VentaDetalleProducto extends AppModel
 				'SUM(BodegasVentaDetalleProducto.cantidad) > 0'
 			)
 		));
-
+		
 		if (empty($stock_disponible))
 			return array();
 
@@ -1119,5 +1119,28 @@ class VentaDetalleProducto extends AppModel
 		}, $productos);
 
 		return $productos;
+	}
+
+	public function disponibilidad_por_bodega()
+	{
+		return ClassRegistry::init('VentaDetalleProducto')->query("
+		SELECT p.id producto_id,
+			p.nombre,
+			p.peso,
+			concat(b.nombre, ' (', b.direccion, ')')                    nombre_bodega,
+			(SUM(`BodegasVentaDetalleProducto`.`cantidad`) - ifnull((select SUM(reserva.cantidad_reservada)
+																	 from rp_venta_detalles_reservas reserva
+																	 where reserva.venta_detalle_producto_id =
+																		   `BodegasVentaDetalleProducto`.`venta_detalle_producto_id`
+																	   and reserva.bodega_id = `BodegasVentaDetalleProducto`.`bodega_id`
+																	 group by reserva.venta_detalle_producto_id),
+																	0)) disponibilidad
+		 FROM `rp_bodegas_venta_detalle_productos` AS `BodegasVentaDetalleProducto`
+				  inner join rp_bodegas b on b.id = bodega_id
+				  inner join rp_venta_detalle_productos p on p.id = venta_detalle_producto_id
+		 WHERE `BodegasVentaDetalleProducto`.`tipo` <> 'GT'
+		 GROUP BY `BodegasVentaDetalleProducto`.`venta_detalle_producto_id`, `BodegasVentaDetalleProducto`.`bodega_id`
+		 HAVING disponibilidad > 0
+ 		");
 	}
 }

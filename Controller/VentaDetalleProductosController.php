@@ -4661,5 +4661,44 @@ class VentaDetalleProductosController extends AppController
 
 		return ceil($promedio_creado_recibido);
 	}
+
+
+	public function api_filtro_servicios()
+	{
+		
+		if (!$this->request->is('get')) {
+			throw new MethodNotAllowedException('Método no permitido');
+		}
+
+    	$token = '';
+
+    	if (isset($this->request->query['token'])) {
+    		$token = $this->request->query['token'];
+    	}
+	
+    	# Existe token
+		if (!isset($token)) {
+			throw new ForbiddenException('Se requiere token');
+		}
+
+		# Validamos token
+		if (!ClassRegistry::init('Token')->validar_token($token)) {
+			
+			throw new UnauthorizedException("Token a expirado");
+		}
+
+
+		$this->WarehouseNodriza 	= $this->Components->load('WarehouseNodriza');
+		
+		# Obtenemos la info de las bodegas de Warehouse
+
+		$this->set(array(
+			'respuesta' 	=> [
+				'disponibilidad_por_bodega' 			=> ClassRegistry::init('VentaDetalleProducto')->disponibilidad_por_bodega(),
+				'obtener_tiempo_preparacion_en_dias' 	=> $this->WarehouseNodriza->obtener_tiempo_preparacion_en_dias()['response']['body'] ?? [],
+			],
+			'_serialize' 	=> array('respuesta')
+		));
+	}
 	
 }

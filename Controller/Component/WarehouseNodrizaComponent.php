@@ -541,7 +541,7 @@ class WarehouseNodrizaComponent extends Component
         }
     }
 
-        
+
     /**
      * Editarproducto
      * Se debe enviar un array de productos
@@ -554,7 +554,7 @@ class WarehouseNodrizaComponent extends Component
         $this->crearCliente();
         return $this->WarehouseNodriza->Editarproducto($body);
     }
-    
+
     /**
      * UltimaApk
      *  Retorna la ultima apk disponible
@@ -565,7 +565,7 @@ class WarehouseNodrizaComponent extends Component
         $this->crearCliente();
         return $this->WarehouseNodriza->UltimaApk();
     }
-    
+
     /**
      * obtener_tiempo_preparacion
      * 
@@ -579,7 +579,7 @@ class WarehouseNodrizaComponent extends Component
         $this->crearCliente();
         return $this->WarehouseNodriza->obtener_tiempo_preparacion($id_producto);
     }
-    
+
     /**
      * obtener_bodegas
      *
@@ -589,5 +589,11 @@ class WarehouseNodrizaComponent extends Component
     {
         $this->crearCliente();
         return $this->WarehouseNodriza->obtener_bodegas();
+    }
+
+    public function obtener_tiempo_preparacion_en_dias()
+    {
+        $this->crearCliente();
+        return $this->WarehouseNodriza->obtener_tiempo_preparacion_en_dias();
     }
 }
