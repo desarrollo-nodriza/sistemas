@@ -137,7 +137,7 @@ class WarehouseNodriza
         return $this->cURL_GET("/api/v1/embalaje/embalaje-venta/{$venta_id}");
     }
 
-    
+
     /**
      * ObtenerEmbalaje desde warehouse
      *
@@ -300,7 +300,7 @@ class WarehouseNodriza
         return $this->cURL_POST("/api/v1/productos/editar-masivo", $body);
     }
 
-    
+
     /**
      * obtener_tiempo_preparacion
      * 
@@ -313,7 +313,7 @@ class WarehouseNodriza
     {
         return $this->cURL_GET("/api/v1/productos/tiempo-preparacion/" . $id_producto);
     }
-    
+
     /**
      * obtener_bodegas
      *
@@ -322,6 +322,11 @@ class WarehouseNodriza
     public function obtener_bodegas()
     {
         return $this->cURL_GET("/api/v1/bodegas?activo=1");
+    }
+
+    public function obtener_tiempo_preparacion_en_dias()
+    {
+        return $this->cURL_GET("/api/v1/productos/tiempo-preparacion-todos");
     }
 
     public function UltimaApk()
