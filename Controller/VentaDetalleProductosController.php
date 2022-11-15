@@ -568,7 +568,7 @@ class VentaDetalleProductosController extends AppController
 		$markets = ClassRegistry::init('Marketplace')->find('list', array('conditions' => array('activo' => 1)));
 
 		$tiendas = ClassRegistry::init('Tienda')->find('list', array('conditions' => array('activo' => 1)));
-
+		
 		if ( $this->request->is('post') || $this->request->is('put')) {
 
 			ini_set('max_execution_time', 0);
@@ -638,6 +638,8 @@ class VentaDetalleProductosController extends AppController
 					$columna['tn_preciooferta_' . $im] = array_search('tn_preciooferta_' . $im, $this->request->data['Indice']);
 					$columna['tn_activo_' . $im]       = array_search('tn_activo_' . $im, $this->request->data['Indice']);
 				}
+
+				$columna['proveedor_id'] = array_search('proveedor_id', $this->request->data['Indice']);
 				
 
 				if (!empty($this->Session->read('edicionMasiva.data'))) {
@@ -690,6 +692,11 @@ class VentaDetalleProductosController extends AppController
 						if (!empty($valor[$columna['peso']])) {
 							$dataToSave[$indice]['VentaDetalleProducto']['peso']             = round($valor[$columna['peso']], 2);
 						}
+
+						if (!empty($valor[$columna['proveedor_id']])) {
+							$dataToSave[$indice]['Proveedor']['Proveedor']	= $valor[$columna['proveedor_id']];
+						}
+
 
 						foreach ($tiendas as $im => $m) {
 
@@ -791,8 +798,10 @@ class VentaDetalleProductosController extends AppController
 			$columnas['mp_activo_' . $im] = 'Activar/Desactivar en ' . $m . ' (1/0)';
 		}
 
-		$marcas = ClassRegistry::init('Marca')->find('list', array('conditions' => array('activo' => 1)));
+		$columnas[] = ["proveedor_id" => "Relación con el proveedor"];
 
+		$marcas = ClassRegistry::init('Marca')->find('list', array('conditions' => array('activo' => 1)));
+		
 		BreadcrumbComponent::add('Listado de productos', '/ventaDetalleProductos/index');
 		BreadcrumbComponent::add('Edición masiva');
 
@@ -1332,7 +1341,7 @@ class VentaDetalleProductosController extends AppController
 			// Limpiar
 			//$this->VentaDetalleProducto->BodegasVentaDetalleProducto->deleteAll(array('venta_detalle_producto_id' => $id));
 			$this->VentaDetalleProducto->PrecioEspecificoProducto->deleteAll(array('venta_detalle_producto_id' => $id));
-
+			
 			if ( $this->VentaDetalleProducto->saveAll($this->request->data) )
 			{		
 
