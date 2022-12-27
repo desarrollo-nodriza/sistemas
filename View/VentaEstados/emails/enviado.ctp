@@ -173,11 +173,12 @@
                                                       <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">N° de seguimiento</td>
                                                       <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><?= $t['cod_seguimiento']; ?></td>
                                                     </tr>
-                                                    <tr>
-                                                      <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">Fecha estimada de entrega</td>
-                                                      <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><?= (!empty($t['entrega_aprox'])) ? date("d-m-Y", strtotime($t['entrega_aprox'])) : date("d-m-Y", strtotime($t['Transporte']['tiempo_entrega'])); ?></td>
-                                                    </tr>
-
+                                                    <? if ($t['entrega_aprox'] || $t['Transporte']['tiempo_entrega']) : ?>
+                                                      <tr>
+                                                        <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">Fecha estimada de entrega</td>
+                                                        <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><?= (!empty($t['entrega_aprox'])) ? date("d-m-Y", strtotime($t['entrega_aprox'])) : date("d-m-Y", strtotime($t['Transporte']['tiempo_entrega'])); ?></td>
+                                                      </tr>
+                                                    <? endif; ?>
                                                     <tr>
                                                       <td colspan="3" style="font-size: 15px; font-weight: bold;" align="left">Seguimiento</td>
                                                       <td colspan="1" style="font-size: 14px; padding-top: 10px; padding-bottom: 10px; line-height: 20px;" valign="center" align="left"><a href="<?= $t['Transporte']['url_seguimiento']; ?>">Ir a la página</a></td>
