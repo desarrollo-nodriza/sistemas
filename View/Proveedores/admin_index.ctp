@@ -11,6 +11,7 @@
 						<div class="btn-group pull-right">
 						<? if ($permisos['add']) : ?>
 							<?= $this->Html->link('<i class="fa fa-refresh"></i> Obtener desde Prestashop', array('action' => 'update'), array('class' => 'btn btn-success', 'escape' => false)); ?>
+							<?= $this->Html->link('<i class="fa fa-hourglass"></i> Tiempo despacho', array('action' => 'despacho_pedido'), array('class' => 'btn btn-info', 'escape' => false)); ?>
 						<? endif; ?>
 							<?= $this->Html->link('<i class="fa fa-file-excel-o"></i> Exportar a Excel', array('action' => 'exportar'), array('class' => 'btn btn-primary', 'escape' => false)); ?>
 						</div>

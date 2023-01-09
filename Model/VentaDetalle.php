@@ -371,4 +371,36 @@ class VentaDetalle extends AppModel
 		$this->id = $id;
 		return $this->field('venta_id');
 	}
+
+	public function tiempo_despacho_producto_con_stock($mes = 1)
+	{
+		return $this->query("
+			select 	
+					VentaDetalle.id,
+					count(VentaDetalle.venta_id)                            cantidad_productos,
+					VentaDetalle.venta_detalle_producto_id,
+					timestampdiff(DAY, VentaDetalle.created, rvdr.modified) tiempo_despacho
+
+			from rp_venta_detalles VentaDetalle
+
+					inner join rp_venta_detalles_reservas rvdr on VentaDetalle.id = rvdr.venta_detalle_id
+					left join rp_orden_compras_ventas rocv on VentaDetalle.venta_id = rocv.venta_id
+
+			where 
+				rvdr.embalaje_id is not null
+				and TIMESTAMPDIFF(MONTH, VentaDetalle.created, Now()) <= $mes
+				and TIMESTAMPDIFF(MONTH, rvdr.created, Now()) <= $mes
+				and ((SELECT SUM(rpb.cantidad)
+						FROM `rp_bodegas_venta_detalle_productos` AS `rpb`
+						WHERE `rpb`.`tipo` <> 'GT'
+						and rpb.venta_detalle_producto_id = VentaDetalle.venta_detalle_producto_id) - (SELECT SUM(rvdr.cantidad_reservada)
+																								FROM `rp_venta_detalles_reservas` AS `rvdr`
+																								where rvdr.venta_detalle_producto_id = VentaDetalle.venta_detalle_producto_id)) >
+					0
+				and rocv.id is null
+			group by VentaDetalle.venta_detalle_producto_id
+			having cantidad_productos = 1
+			order by VentaDetalle.venta_detalle_producto_id desc
+ 		", false);
+	}
 }

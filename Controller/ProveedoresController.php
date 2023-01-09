@@ -101,7 +101,7 @@ class ProveedoresController extends AppController
 		if ($this->request->is('post') || $this->request->is('put')) {
 
 			$this->Proveedor->MonedasProveedor->deleteAll(array('MonedasProveedor.proveedor_id' => $id));
-			
+
 			# Guardamos los emails en un objeto json
 			if (isset($this->request->data['ProveedoresEmail'])) {
 				$this->request->data['Proveedor']['meta_emails'] = json_encode($this->request->data['ProveedoresEmail'], true);
@@ -110,6 +110,8 @@ class ProveedoresController extends AppController
 
 				$this->Proveedor->FrecuenciaGenerarOC->deleteAll(array('proveedor_id' => $id));
 				$this->Proveedor->TipoEntregaProveedorOC->deleteAll(array('proveedor_id' => $id));
+
+
 				$this->request->data['FrecuenciaGenerarOC'] = array_filter($this->request->data['FrecuenciaGenerarOC'], function ($v, $k) {
 					return !empty($v['hora']);
 				}, ARRAY_FILTER_USE_BOTH);
@@ -122,6 +124,12 @@ class ProveedoresController extends AppController
 					return !empty($v['regla_generar_oc_id']);
 				}, ARRAY_FILTER_USE_BOTH);
 			}
+
+			$this->Proveedor->RangoDespacho->deleteAll(array('proveedor_id' => $id));
+			$this->request->data['RangoDespacho'] = array_filter($this->request->data['RangoDespacho'], function ($v, $k) {
+				return is_numeric($v['rango_desde']) && is_numeric($v['rango_hasta']) && is_numeric($v['despacho']);
+			}, ARRAY_FILTER_USE_BOTH);
+
 
 			if ($this->Proveedor->saveAll($this->request->data)) {
 
@@ -148,7 +156,8 @@ class ProveedoresController extends AppController
 					'TipoEntregaProveedorOC',
 					'ReglasGenerarOC' => [
 						'order' 	=> array('ReglasGenerarOC.mayor_que' => 'ASC')
-					]
+					],
+					'RangoDespacho'
 				)
 			));
 		}
@@ -538,105 +547,119 @@ class ProveedoresController extends AppController
 		$this->redirect(array('action' => 'edit', $proveedor_id));
 	}
 
-	
-	/**
-	 * api_obtener_tiempo_preparacion_oc
-	 *	
-	 * Calcula el tiempo que tarda un proveedor procesar sus OCs.
-	 * El tiempo se calcula desde la creación de la OC hasta su recepción completa o incompleta.
-	 * 	
-	 * Se puede filtrar por proveedores y/o productos enviando en el body de la petición.
-	 * 
-	 * - Para filtrar por porductos se debe enviar una lista de ids llamada "producto_id"
-	 * - Para filtrar por proveedor se debe enviar una lista de ids llamada "proveedor_id"
-	 * 
-	 * @return json
-	 */
-	public function api_obtener_tiempo_preparacion_oc()
+
+	public function admin_despacho_pedido()
 	{
-		# Existe token
-		if (!isset($this->request->query['token'])) 
-		{
-			return $this->api_response(404, 'Token requerido');
+
+		if ($this->request->is('post')) {
+
+
+			$RangoDespacho = array_filter($this->request->data['RangoDespacho'], function ($v, $k) {
+				return is_numeric($v['rango_desde']) && is_numeric($v['rango_hasta']) && is_numeric($v['despacho']) && !empty($v['proveedor_id']);
+			}, ARRAY_FILTER_USE_BOTH);
+
+			ClassRegistry::init('RangoDespacho')->create();
+			if (ClassRegistry::init('RangoDespacho')->saveAll($RangoDespacho)) {
+				$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');
+			} else {
+				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
+			}
+			$this->redirect(array('action' => 'despacho_pedido'));
 		}
 
-		# Validamos token
-		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) 
-		{
-			return $this->api_response(401, 'Token de sesión expirado o invalido');
-		}
+		$proveedores =  ClassRegistry::init('Proveedor')->find('all', [
+			'fields'	=>	[
+				'id',
+				'nombre'
+			],
+			'conditions' => ['activo' => 1],
+			'contain' => ['RangoDespacho']
+		]);
 
-		$qry = array(
-			'joins' => array(
-				array(
-					'alias' => 'ocp',
-					'table' => 'orden_compras_venta_detalle_productos',
-					'type' => 'INNER',
-					'conditions' => array(
-						'ocp.orden_compra_id = OrdenCompra.id'
-					),
-				),
-			),
-			'conditions' => array(
-				'OrdenCompra.estado' => array('recepcion_completa', 'recepcion_incompleta')
-			),
-			'group' => array('OrdenCompra.proveedor_id'),
-			'fields' => array(
-				'OrdenCompra.proveedor_id',
-				'ABS(TIMESTAMPDIFF(MINUTE, OrdenCompra.created, OrdenCompra.fecha_recibido)) as tiempo_preparacion_m'
-			),
-			'order' => array(
-				'ABS(TIMESTAMPDIFF(MINUTE, OrdenCompra.created, OrdenCompra.fecha_recibido))' => 'DESC'
-			)
-		);
-		
-		# filtro por proveedores
-		if (isset($this->request->data['proveedor_id']))
-		{	
-			$qry = array_replace_recursive($qry, array(
-				'joins' => array(
-					array(
-						'alias' => 'ocp',
-						'table' => 'orden_compras_venta_detalle_productos',
-						'type' => 'INNER',
-						'conditions' => array(
-							'ocp.orden_compra_id = OrdenCompra.id'
-						),
-					),
-				),
-				'conditions' => array(
-					'OrdenCompra.proveedor_id' => $this->request->data['proveedor_id']
-				)
-			));
-		}
-
-		# filtro por productos
-		if (isset($this->request->data['producto_id']))
-		{	
-			$qry = array_replace_recursive($qry, array(
-				'joins' => array(
-					array(
-						'alias' => 'ocp',
-						'table' => 'orden_compras_venta_detalle_productos',
-						'type' => 'INNER',
-						'conditions' => array(
-							'ocp.orden_compra_id = OrdenCompra.id',
-							'ocp.venta_detalle_producto_id' => $this->request->data['producto_id']
-						),
-					),
-				),
-				'group' => array('OrdenCompra.proveedor_id', 'ocp.venta_detalle_producto_id'),
-				'fields' => array(
-					'OrdenCompra.proveedor_id',
-					'ocp.venta_detalle_producto_id',
-					'ABS(TIMESTAMPDIFF(MINUTE, OrdenCompra.created, OrdenCompra.fecha_recibido)) as tiempo_preparacion_m'
-				),
-			));
-		}
-
-		# Obtenemos propietario
-		$tiempo_preparacion = ClassRegistry::init('OrdenCompra')->find('all', $qry);
-
-		return $this->api_response(200, 'Tiempo calculado con éxito', $tiempo_preparacion);
+		BreadcrumbComponent::add('Proveedores ', '/proveedores');
+		BreadcrumbComponent::add('Rango despacho proveedores ');
+		$this->set(compact('proveedores'));
 	}
+
+	public function admin_delete_despacho_pedido($id, $proveedor_id = null)
+	{
+
+		ClassRegistry::init('RangoDespacho')->delete($id);
+
+		if ($proveedor_id) {
+			$this->redirect(array('action' => 'edit', $proveedor_id));
+		}
+
+		$this->redirect(array('action' => 'despacho_pedido'));
+	}
+
+	public function admin_cronjob_despacho_pedido()
+	{
+
+		ClassRegistry::init('Proveedor')->actualizar_tiempo_despacho_proveedor();
+		
+		$tiempo_despacho_producto_con_stock =  ClassRegistry::init('VentaDetalle')->tiempo_despacho_producto_con_stock();
+		$ids_con_stock 						= Hash::extract($tiempo_despacho_producto_con_stock, '{n}.VentaDetalle.venta_detalle_producto_id');
+
+		$proveedores = ClassRegistry::init('Proveedor')->find('list', [
+			'fields' => [
+				'Proveedor.id',
+				'Proveedor.tiempo_despacho',
+			],
+			'conditions' => ['Proveedor.tiempo_despacho is not null']
+		]);
+
+		$data = [];
+
+		foreach ($proveedores as $proveedor_id => $tiempo_despacho) {
+
+			$productos_del_proveedor = ClassRegistry::init('VentaDetalleProducto')->find('all', [
+				'fields' => [
+					'VentaDetalleProducto.id',
+					'VentaDetalleProducto.tiempo_despacho'
+				],
+				'conditions' => [
+					'VentaDetalleProducto.id !=' 	 => $ids_con_stock,
+					'ProveedorProducto.proveedor_id' => $proveedor_id
+				],
+				'joins' => array(
+					array(
+						'table' => 'rp_proveedores_venta_detalle_productos',
+						'alias' => 'ProveedorProducto',
+						'type' => 'INNER',
+						'conditions' => array(
+							'ProveedorProducto.venta_detalle_producto_id = VentaDetalleProducto.id',
+
+						)
+					)
+				)
+			]);
+
+			$productos_ids = Hash::extract($productos_del_proveedor, '{n}.VentaDetalleProducto.id');
+
+			ClassRegistry::init('VentaDetalleProducto')->updateAll(
+				['VentaDetalleProducto.tiempo_despacho' => $tiempo_despacho],
+				['VentaDetalleProducto.id' 				=> $productos_ids]
+			);
+			
+		}
+
+		$data = array_merge(array_map(function ($data) {
+			return ['VentaDetalleProducto' => [
+				'id' 				=> $data['VentaDetalle']['venta_detalle_producto_id'],
+				'tiempo_despacho' 	=> $data[0]['tiempo_despacho'],
+			]];
+		}, $tiempo_despacho_producto_con_stock), $data);
+
+
+		if ($data) {
+			foreach (array_chunk($data, 500) as $value) {
+				ClassRegistry::init('VentaDetalleProducto')->create();
+				ClassRegistry::init('VentaDetalleProducto')->saveAll($value);
+			}
+		}
+
+		prx($data);
+	}
+	
 }
