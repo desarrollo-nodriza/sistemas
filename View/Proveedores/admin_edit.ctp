@@ -141,7 +141,24 @@
 
 								</tr>
 							<? endif; ?>
+							<tr>
+								<th>
+									<?= $this->Form->label('despacho_manual', 'Asignar tiempo despacho manual'); ?>
+								</th>
+								<td>
+									<?= $this->Form->input('despacho_manual', array('class' => 'icheckbox')); ?>
+									<span class="help-block"><?= __('***El valor del despacho no se actualizara automaticamente'); ?></span>
+								</td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('tiempo_despacho', 'Tiempo de despacho a mostrar al público'); ?></th>
+								<td>
+									<?= $this->Form->input('tiempo_despacho', array('class' => 'form-control')); ?>
+									<span class="help-block"><?= __('***El valor se actualiza automaticamente a menos que sea manual'); ?></span>
+								</td>
+							</tr>
 						</table>
+
 					</div>
 				</div>
 				<div class="panel-footer">
@@ -702,107 +719,6 @@
 			</div>
 		</div>
 	<? endif; ?>
-	<div class="row">
-		<div class="col-xs-12">
-			<div class="panel panel-info">
-				<div class="panel-heading">
-					<h5 class="panel-title"><i class="fa fa-filter" aria-hidden="true"></i> <?= __('Rango Despacho'); ?></h5>
-					<div class="btn-group pull-right">
-						<? if ($permisos['add']) : ?>
-							<?= $this->Html->link('<i class="fa fa-plus"></i> Nuevo rango', array('action' => '#'), array('class' => "btn btn-success clone-boton-proveedor", 'escape' => false)); ?>
-							<a type="button" class="btn btn-primary mb-control" data-box="#modal_alertas">Guardar cambios</a>
-						<? endif; ?>
-					</div>
-				</div>
-				<div class="panel-body">
-					<div class="card border-dark mb-3">
-
-						<div class="table-responsive">
-							<table class="table">
-								<tr>
-									<th>
-										<?= $this->Form->label('despacho_manual', 'Despacho manual'); ?>
-									</th>
-									<td>
-										<?= $this->Form->input('despacho_manual', array('class' => 'icheckbox')); ?>
-										<span class="help-block"><?= __('***El valor del despacho no se actualizara automaticamente'); ?></span>
-									</td>
-								</tr>
-								<tr>
-									<th><?= $this->Form->label('tiempo_despacho', 'Valor del despacho a mostrar al público'); ?></th>
-									<td><?= $this->Form->input('tiempo_despacho', array('class' => 'form-control')); ?></td>
-								</tr>
-							</table>
-						</div>
-
-					</div>
-
-					<hr>
-					<div class="table-responsive">
-						<table class="table" style="max-height: 300px;">
-							<thead>
-								<tr class="sort">
-									<th>Desde </th>
-									<th>Hasta</th>
-									<th>Valor a asignar</th>
-									<th>Acción</th>
-								</tr>
-							</thead>
-							<tbody>
-								<? $indice = 0; ?>
-								<?php foreach ($this->request->data['RangoDespacho'] as $rango_despacho) : ?>
-									<tr>
-
-										<td align="center" style="vertical-align: bottom;">
-											<?= $this->Form->input(sprintf('RangoDespacho.%d.rango_desde', $indice), array('required', 'default' =>  $rango_despacho['rango_desde'], 'type' => 'text', 'label' => '', 'class' => 'form-control',)); ?>
-											<!-- <?= $this->Form->input(sprintf('RangoDespacho.%d.id', $indice), array('default' =>  $rango_despacho['id'], 'type' => 'text', 'label' => '',  'class' => 'form-control hidden')); ?> -->
-
-										</td>
-										<td align="center" style="vertical-align: bottom;">
-											<?= $this->Form->input(sprintf('RangoDespacho.%d.rango_hasta', $indice), array('required', 'default' =>  $rango_despacho['rango_hasta'], 'type' => 'text', 'label' => '', 'class' => 'form-control',)); ?>
-
-										</td>
-										<td align="center" style="vertical-align: bottom;">
-											<?= $this->Form->input(sprintf('RangoDespacho.%d.despacho', $indice), array('required', 'default' =>  $rango_despacho['despacho'], 'type' => 'text', 'label' => '', 'class' => 'form-control',)); ?>
-										</td>
-										<td align="center" style="vertical-align: bottom;">
-											<?= $this->Html->link('<i class="fa fa-trash"></i> Eliminar rango', array('action' => 'delete_despacho_pedido', $rango_despacho['id'], $this->request->data['Proveedor']['id']), array('class' => 'btn btn-xs btn-danger', 'rel' => 'tooltip', 'title' => 'Eliminar este registro', 'escape' => false)); ?>
-										</td>
-
-									</tr>
-									<? $indice++; ?>
-								<?php endforeach; ?>
-								<? for ($i = (count($this->request->data['RangoDespacho']) + 1); $i <= (count($this->request->data['RangoDespacho']) + 6); $i++) : ?>
-									<tr class="fila hidden clone-tr-proveedor">
-
-										<td align="center" style="vertical-align: bottom;">
-											<?= $this->Form->input(sprintf('RangoDespacho.%d.rango_desde', $indice), array('required', 'type' => 'text', 'label' => '', 'class' => 'form-control',)); ?>
-											<!-- <?= $this->Form->input(sprintf('RangoDespacho.%d.id', $indice), array('type' => 'text', 'label' => '',  'class' => 'form-control hidden')); ?> -->
-
-										</td>
-										<td align="center" style="vertical-align: bottom;">
-											<?= $this->Form->input(sprintf('RangoDespacho.%d.rango_hasta', $indice), array('required', 'type' => 'text', 'label' => '', 'class' => 'form-control',)); ?>
-
-										</td>
-										<td align="center" style="vertical-align: bottom;">
-											<?= $this->Form->input(sprintf('RangoDespacho.%d.despacho', $indice), array('required', 'type' => 'text', 'label' => '', 'class' => 'form-control',)); ?>
-
-										</td>
-										<td align="center" style="vertical-align: bottom;">
-											<button type="button" class="remove-tr-proveedor btn-danger"><i class="fa fa-minus"></i></button>
-										</td>
-									</tr>
-									<? $indice++; ?>
-								<? endfor; ?>
-							</tbody>
-						</table>
-					</div>
-
-				</div>
-
-			</div>
-		</div>
-	</div>
 
 	<!-- MESSAGE BOX-->
 	<div class="message-box message-box-info animated fadeIn" data-sound="alert" id="modal_alertas">
@@ -1044,31 +960,5 @@
 			$receptor.rules('remove', 'required');
 		}
 
-	});
-
-	$(document).on('click', '.clone-boton-proveedor', function(e) {
-		$.app.formularios.bind('#ReglaCreate');
-		e.preventDefault();
-
-		let clone_tr = document.getElementsByClassName("clone-tr-proveedor");
-
-		if (clone_tr.length > 0) {
-			let elementoremoveClass = clone_tr.item(0);
-			elementoremoveClass.removeAttribute('class')
-			const classes_2 = elementoremoveClass.classList
-			classes_2.add("nuevo_elemento");
-			classes_2.add("fila");
-		}
-	});
-
-	$(document).on('click', '.remove-tr-proveedor', function(e) {
-
-		e.preventDefault();
-		var $th = $(this).parents('tr').eq(0);
-
-		$th.fadeOut('slow', function() {
-			$th.remove();
-
-		});
 	});
 </script>

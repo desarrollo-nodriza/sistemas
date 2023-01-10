@@ -124,13 +124,7 @@ class ProveedoresController extends AppController
 					return !empty($v['regla_generar_oc_id']);
 				}, ARRAY_FILTER_USE_BOTH);
 			}
-
-			$this->Proveedor->RangoDespacho->deleteAll(array('proveedor_id' => $id));
-			$this->request->data['RangoDespacho'] = array_filter($this->request->data['RangoDespacho'], function ($v, $k) {
-				return is_numeric($v['rango_desde']) && is_numeric($v['rango_hasta']) && is_numeric($v['despacho']);
-			}, ARRAY_FILTER_USE_BOTH);
-
-
+	
 			if ($this->Proveedor->saveAll($this->request->data)) {
 
 				if ($this->request->data['Proveedor']['actualizar_canales']) {
@@ -156,8 +150,8 @@ class ProveedoresController extends AppController
 					'TipoEntregaProveedorOC',
 					'ReglasGenerarOC' => [
 						'order' 	=> array('ReglasGenerarOC.mayor_que' => 'ASC')
-					],
-					'RangoDespacho'
+					]
+					
 				)
 			));
 		}
@@ -547,51 +541,6 @@ class ProveedoresController extends AppController
 		$this->redirect(array('action' => 'edit', $proveedor_id));
 	}
 
-
-	public function admin_despacho_pedido()
-	{
-
-		if ($this->request->is('post')) {
-
-
-			$RangoDespacho = array_filter($this->request->data['RangoDespacho'], function ($v, $k) {
-				return is_numeric($v['rango_desde']) && is_numeric($v['rango_hasta']) && is_numeric($v['despacho']) && !empty($v['proveedor_id']);
-			}, ARRAY_FILTER_USE_BOTH);
-
-			ClassRegistry::init('RangoDespacho')->create();
-			if (ClassRegistry::init('RangoDespacho')->saveAll($RangoDespacho)) {
-				$this->Session->setFlash('Registro agregado correctamente.', null, array(), 'success');
-			} else {
-				$this->Session->setFlash('Error al guardar el registro. Por favor intenta nuevamente.', null, array(), 'danger');
-			}
-			$this->redirect(array('action' => 'despacho_pedido'));
-		}
-
-		$proveedores =  ClassRegistry::init('Proveedor')->find('all', [
-			'fields'	=>	[
-				'id',
-				'nombre'
-			],
-			'conditions' => ['activo' => 1],
-			'contain' => ['RangoDespacho']
-		]);
-
-		BreadcrumbComponent::add('Proveedores ', '/proveedores');
-		BreadcrumbComponent::add('Rango despacho proveedores ');
-		$this->set(compact('proveedores'));
-	}
-
-	public function admin_delete_despacho_pedido($id, $proveedor_id = null)
-	{
-
-		ClassRegistry::init('RangoDespacho')->delete($id);
-
-		if ($proveedor_id) {
-			$this->redirect(array('action' => 'edit', $proveedor_id));
-		}
-
-		$this->redirect(array('action' => 'despacho_pedido'));
-	}
 
 	public function admin_cronjob_despacho_pedido()
 	{
