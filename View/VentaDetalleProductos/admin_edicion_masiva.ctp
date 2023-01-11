@@ -18,7 +18,7 @@
 					<div class="form-group col-xs-12">
 						<label>Descarga el archivo de ejemplo</label>
 						<br>
-						<?=$this->Html->link('<i class="fa fa-download"></i> Ejemplo', '/ejemplos/ejemplo-actualizacion-masiva.xlsx', array('escape' => false, 'target' => '_blank', 'fullbase' => true, 'class' => 'btn btn-xs btn-info')); ?>
+						<?=$this->Html->link('<i class="fa fa-download"></i> Ejemplo', '/ejemplos/ejemplo-actualizacion-masiva-2.xlsx', array('escape' => false, 'target' => '_blank', 'fullbase' => true, 'class' => 'btn btn-xs btn-info')); ?>
 					</div>
 					<div class="form-group col-xs-12 col-md-6">
 						<label>Archivo CSV,XLS,XLSX</label>
