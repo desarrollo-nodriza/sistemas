@@ -379,7 +379,7 @@ class VentaDetalle extends AppModel
 					VentaDetalle.id,
 					count(VentaDetalle.venta_id)                            cantidad_productos,
 					VentaDetalle.venta_detalle_producto_id,
-					timestampdiff(DAY, VentaDetalle.created, rvdr.modified) tiempo_despacho
+					(timestampdiff(DAY, VentaDetalle.created, rvdr.modified) - (select count(id) from rp_feriados where feriado BETWEEN VentaDetalle.created and rvdr.modified))  tiempo_despacho
 
 			from rp_venta_detalles VentaDetalle
 

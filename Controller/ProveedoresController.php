@@ -124,7 +124,7 @@ class ProveedoresController extends AppController
 					return !empty($v['regla_generar_oc_id']);
 				}, ARRAY_FILTER_USE_BOTH);
 			}
-	
+
 			if ($this->Proveedor->saveAll($this->request->data)) {
 
 				if ($this->request->data['Proveedor']['actualizar_canales']) {
@@ -151,7 +151,7 @@ class ProveedoresController extends AppController
 					'ReglasGenerarOC' => [
 						'order' 	=> array('ReglasGenerarOC.mayor_que' => 'ASC')
 					]
-					
+
 				)
 			));
 		}
@@ -545,8 +545,9 @@ class ProveedoresController extends AppController
 	public function admin_cronjob_despacho_pedido()
 	{
 
+
 		ClassRegistry::init('Proveedor')->actualizar_tiempo_despacho_proveedor();
-		
+
 		$tiempo_despacho_producto_con_stock =  ClassRegistry::init('VentaDetalle')->tiempo_despacho_producto_con_stock();
 		$ids_con_stock 						= Hash::extract($tiempo_despacho_producto_con_stock, '{n}.VentaDetalle.venta_detalle_producto_id');
 
@@ -558,7 +559,7 @@ class ProveedoresController extends AppController
 			'conditions' => ['Proveedor.tiempo_despacho is not null']
 		]);
 
-		$data = [];
+		// * Se actualiza tiempo de despacho a producto por proveedor sin contar a los que tienen stock
 
 		foreach ($proveedores as $proveedor_id => $tiempo_despacho) {
 
@@ -590,25 +591,75 @@ class ProveedoresController extends AppController
 				['VentaDetalleProducto.tiempo_despacho' => $tiempo_despacho],
 				['VentaDetalleProducto.id' 				=> $productos_ids]
 			);
-			
 		}
 
-		$data = array_merge(array_map(function ($data) {
-			return ['VentaDetalleProducto' => [
-				'id' 				=> $data['VentaDetalle']['venta_detalle_producto_id'],
-				'tiempo_despacho' 	=> $data[0]['tiempo_despacho'],
-			]];
-		}, $tiempo_despacho_producto_con_stock), $data);
+		// * Se actualiza tiempo de despacho a producto que tienen stock
+
+		if ($tiempo_despacho_producto_con_stock) {
+
+			$tiempo_despacho_producto_con_stock = array_map(function ($data) {
+				return ['VentaDetalleProducto' => [
+					'id' 				=> $data['VentaDetalle']['venta_detalle_producto_id'],
+					'tiempo_despacho' 	=> $data[0]['tiempo_despacho'],
+				]];
+			}, $tiempo_despacho_producto_con_stock);
 
 
-		if ($data) {
-			foreach (array_chunk($data, 500) as $value) {
-				ClassRegistry::init('VentaDetalleProducto')->create();
-				ClassRegistry::init('VentaDetalleProducto')->saveAll($value);
+			if ($tiempo_despacho_producto_con_stock) {
+				foreach (array_chunk($tiempo_despacho_producto_con_stock, 500) as $value) {
+					ClassRegistry::init('VentaDetalleProducto')->create();
+					ClassRegistry::init('VentaDetalleProducto')->saveAll($value);
+				}
 			}
 		}
 
-		prx($data);
+		$productos_sin_proveedor 	= ClassRegistry::init('VentaDetalleProducto')->find('all', [
+			'fields' => [
+				'VentaDetalleProducto.id',
+			],
+			'conditions' => [
+				'OR' => [
+					'ProveedorProducto.proveedor_id' => null,
+					'VentaDetalleProducto.tiempo_despacho' => null,
+					'VentaDetalleProducto.tiempo_despacho' => 0,
+				]
+			],
+			'joins' => array(
+				array(
+					'table' => 'rp_proveedores_venta_detalle_productos',
+					'alias' => 'ProveedorProducto',
+					'type' => 'LEFT',
+					'conditions' => array(
+						'ProveedorProducto.venta_detalle_producto_id = VentaDetalleProducto.id',
+
+					)
+				)
+			)
+		]);
+
+		// * Se actualiza tiempo de despacho a producto que no tienen relacion con proveedor
+
+		if ($productos_sin_proveedor) {
+
+			$ids_productos_sin_proveedor	= Hash::extract($productos_sin_proveedor, '{n}.VentaDetalleProducto.id');
+			$tiempo_despacho				= ClassRegistry::init('Tienda')->find(
+				'first',
+				[
+					'fields' => ['tiempo_despacho'],
+					'conditions' =>
+					[
+						'Tienda.principal' => true
+					]
+				]
+			);
+
+
+			ClassRegistry::init('VentaDetalleProducto')->updateAll(
+				['VentaDetalleProducto.tiempo_despacho' => $tiempo_despacho['Tienda']['tiempo_despacho'] ?? 7],
+				['VentaDetalleProducto.id' 				=> $ids_productos_sin_proveedor]
+			);
+		}
+
+		prx(true);
 	}
-	
 }

@@ -17,25 +17,23 @@ class GenerarActualizarTiempoDespachoShell extends AppShell
 			'modulo_accion' => 'Inicia proceso de crear OC automaticas: ' . date('Y-m-d H:i:s')
 		));
 
-		ClassRegistry::init('Proveedor')->actualizar_tiempo_despacho_proveedor();
-
 		$ProveedoresController = new ProveedoresController();
-		$respuesa              = $ProveedoresController->admin_cronjob_despacho_pedido();
-		
-		if ($respuesa) {
-			$log[] = array('Log' => array(
-				'administrador' => 'Demonio',
-				'modulo' 		=> 'GenerarActualizarTiempoDespachoShell',
-				'modulo_accion' => json_encode(
-					[
-						'Finaliza proceso de crear OC automaticas: ' . date('Y-m-d H:i:s') => $respuesa
-					]
-				)
-			));
+		$ProveedoresController->admin_cronjob_despacho_pedido();
 
-			# Guardamos el log
-			ClassRegistry::init('Log')->saveMany($log);
-		}
+
+		$log[] = array('Log' => array(
+			'administrador' => 'Demonio',
+			'modulo' 		=> 'GenerarActualizarTiempoDespachoShell',
+			'modulo_accion' => json_encode(
+				[
+					'Finaliza proceso de crear OC automaticas: ' . date('Y-m-d H:i:s')
+				]
+			)
+		));
+
+		# Guardamos el log
+		ClassRegistry::init('Log')->saveMany($log);
+
 
 
 		return true;
