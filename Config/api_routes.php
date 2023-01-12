@@ -1091,3 +1091,13 @@ Router::connect(
         'prefix'        => 'api')
 );
 
+Router::connect(
+    '/api/feriados', 
+    array(
+        'controller'    => 'Feriados', 
+        'action'        => 'feriados',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+
+
