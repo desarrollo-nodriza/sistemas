@@ -983,8 +983,14 @@ class VentaDetalleProducto extends AppModel
 
 		return $productos;
 	}
-
-	public function disponibilidad_por_bodega()
+	
+	/**
+	 * disponibilidad_por_bodega
+	 * Retorna la disponibilidad por bodega y el peso que posee cada producto y el nombre de la bodega a mostrar en toolmania prestashop
+	 * @param  bool $bodega_activas
+	 * @return array
+	 */
+	public function disponibilidad_por_bodega( $bodega_activas = true)
 	{
 		return ClassRegistry::init('VentaDetalleProducto')->query("
 		SELECT p.id producto_id,
@@ -1002,6 +1008,7 @@ class VentaDetalleProducto extends AppModel
 				  inner join rp_bodegas b on b.id = bodega_id
 				  inner join rp_venta_detalle_productos p on p.id = venta_detalle_producto_id
 		 WHERE `BodegasVentaDetalleProducto`.`tipo` <> 'GT'
+		   and b.activo = $bodega_activas
 		 GROUP BY `BodegasVentaDetalleProducto`.`venta_detalle_producto_id`, `BodegasVentaDetalleProducto`.`bodega_id`
 		 HAVING disponibilidad > 0
  		");
