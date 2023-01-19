@@ -9,7 +9,7 @@ class MetodoEnvioRetrasosController extends AppController
 
     public function admin_index()
     {
-        prx($this->notificar_retraso());
+        prx($this->obtener_ventas_por_retraso());
         $retrasos_sin_motificar = ClassRegistry::init('RetrasoVenta')->find('all', [
             'contain' => [
                 'VentaCliente',
@@ -114,7 +114,7 @@ class MetodoEnvioRetrasosController extends AppController
                 'Venta.id',
                 'Venta.venta_estado_id',
                 'Venta.venta_cliente_id',
-                '(SELECT TIMESTAMPDIFF(HOUR, `ev`.`fecha`, NOW())
+                '(SELECT TIMESTAMPDIFF(HOUR, `ev`.`fecha`, NOW()) - (select count(id) * 24 from rp_feriados where feriado BETWEEN `ev`.`fecha` and  NOW()) 
                 from rp_estados_ventas ev
                 where `ev`.`venta_id` = `Venta`.`id`
                   and `ev`.`venta_estado_id` = `Venta`.`venta_estado_id`
