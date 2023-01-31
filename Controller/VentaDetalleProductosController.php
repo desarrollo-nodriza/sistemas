@@ -4709,5 +4709,22 @@ class VentaDetalleProductosController extends AppController
 			'_serialize' 	=> array('respuesta')
 		));
 	}
-	
+
+
+	public function admin_disponibilidad_full()
+	{
+
+		App::uses('Folder', 'Utility');
+
+		$productos 	= ClassRegistry::init('VentaDetalleProducto')->disponibilidad_c_o_s_stock_en_bodega();
+		$dir 		= new Folder(WWW_ROOT . 'Disponibilidad');
+
+		$dir->chmod(WWW_ROOT . 'Disponibilidad', 0775, true);
+
+		file_put_contents(WWW_ROOT . 'Disponibilidad' . DS . 'productos_disponibilidad_full.json', json_encode($productos));
+
+		header('Content-Type: application/json; charset=utf-8');
+		echo json_encode($productos);
+		exit;
+	}
 }
