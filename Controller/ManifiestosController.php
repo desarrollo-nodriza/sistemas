@@ -394,11 +394,13 @@ class ManifiestosController extends AppController {
 				'Transporte',
 				'Venta' => array(
 					'ManifiestosVenta',
+					'VentaCliente',
 					'order' => array(
 						'Venta.fecha_venta' => 'DESC'
 					),
 					'fields' => array(
-						'Venta.id'
+						'Venta.id',
+						'Venta.venta_cliente_id',
 					)
 				)
 			)
@@ -412,6 +414,7 @@ class ManifiestosController extends AppController {
 			'N° folio',
 			'T documento',
 			'Nombre',
+			'Correo Venta',
 			'Teléfono',
 			'Dirección',
 			'Dpto',
@@ -428,15 +431,16 @@ class ManifiestosController extends AppController {
 			
 			if (!empty($detalle['ManifiestosVenta'])) {
 				$datos[$io]['Manifiesto']['n_documento']    = $manifiesto['Manifiesto']['id'];
-				$datos[$io]['Manifiesto']['venta_id'] 		= $detalle['ManifiestosVenta']['venta_id'];
+				$datos[$io]['Manifiesto']['venta_id'] 		= "VID-{$detalle['ManifiestosVenta']['venta_id']}";
 				$datos[$io]['Manifiesto']['cod_referencia'] = $detalle['ManifiestosVenta']['referencia_pedido'];
-				$datos[$io]['Manifiesto']['ot_transporte']  = (!empty($manifiesto['Manifiesto']['ot_manual'])) ? $manifiesto['Manifiesto']['ot_manual'] : 0 ;
+				$datos[$io]['Manifiesto']['ot_transporte']  = (!empty($manifiesto['Manifiesto']['ot_manual'])) ? $manifiesto['Manifiesto']['ot_manual'] : 0;
 				$datos[$io]['Manifiesto']['n_folio']        = $detalle['ManifiestosVenta']['folio_dte'];
-				$datos[$io]['Manifiesto']['t_documento']    = $detalle['ManifiestosVenta']['tipo_dte'];	
-				$datos[$io]['Manifiesto']['nombre']         = $detalle['ManifiestosVenta']['nombre_receptor'];	
-				$datos[$io]['Manifiesto']['fono']           = $detalle['ManifiestosVenta']['fono_receptor'];	
-				$datos[$io]['Manifiesto']['direccion']      = $detalle['ManifiestosVenta']['direcion_envio'];	
-				$datos[$io]['Manifiesto']['dpto']           = '';	
+				$datos[$io]['Manifiesto']['t_documento']    = $detalle['ManifiestosVenta']['tipo_dte'];
+				$datos[$io]['Manifiesto']['nombre']         = $detalle['ManifiestosVenta']['nombre_receptor'];
+				$datos[$io]['Manifiesto']['correo']         = $detalle['VentaCliente']['email'];
+				$datos[$io]['Manifiesto']['fono']           = $detalle['ManifiestosVenta']['fono_receptor'];
+				$datos[$io]['Manifiesto']['direccion']      = "{$detalle['ManifiestosVenta']['direcion_envio']}, " . strtoupper($detalle['ManifiestosVenta']['comuna']);
+				$datos[$io]['Manifiesto']['dpto']           = '';
 				$datos[$io]['Manifiesto']['comuna']         = strtoupper($detalle['ManifiestosVenta']['comuna']);
 				$datos[$io]['Manifiesto']['f_recepcion']    = $manifiesto['Manifiesto']['fecha_entregado'];
 				$datos[$io]['Manifiesto']['observacion']    = $detalle['ManifiestosVenta']['observacion'];
@@ -616,7 +620,7 @@ class ManifiestosController extends AppController {
 			
 			if (!empty($detalle['ManifiestosVenta'])) {
 				$datos[$io]['Manifiesto']['n_documento']    = $manifiesto['Manifiesto']['id'];
-				$datos[$io]['Manifiesto']['cod_referencia'] = $detalle['ManifiestosVenta']['venta_id'];
+				$datos[$io]['Manifiesto']['venta_id'] 		= $detalle['ManifiestosVenta']['venta_id'];
 				$datos[$io]['Manifiesto']['cod_referencia'] = $detalle['ManifiestosVenta']['referencia_pedido'];
 				$datos[$io]['Manifiesto']['ot_transporte']  = (!empty($manifiesto['Manifiesto']['ot_manual'])) ? $manifiesto['Manifiesto']['ot_manual'] : 0 ;
 				$datos[$io]['Manifiesto']['n_folio']        = $detalle['ManifiestosVenta']['folio_dte'];

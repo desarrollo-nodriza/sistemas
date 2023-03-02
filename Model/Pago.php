@@ -108,6 +108,14 @@ Class Pago extends AppModel {
 		)
 	);
 
+	public function beforeSave($options = array())
+	{
+		if (isset($this->data['Pago']['monto_pagado']))
+			$this->data['Pago']['monto_pagado'] = str_replace(',', '', str_replace('.', '', $this->data['Pago']['monto_pagado']));
+
+		return $this->data;
+	}
+
 
 	public function afterSave($created, $options = array())
 	{	

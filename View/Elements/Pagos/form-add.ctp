@@ -39,7 +39,7 @@
 					<tr>
 						<th>Monto a pagar</th>
 						<td>
-							<?=$this->Form->input('monto_pagado', array('type' => 'text', 'class' => 'form-control is-number not-blank', 'placeholder' => 'Ingrese monto pagado', 'min' => 0 ))?>
+							<?=$this->Form->input('monto_pagado', array('type' => 'text', 'class' => 'form-control is-digit not-blank', 'placeholder' => 'Ingrese monto pagado', 'min' => 0 ))?>
 							<span class="help-block">Monto a pagar $<span class="total-a-pagar"><?=($total_facturado - $total_pagado); ?></span></span>		
 						</td>
 					</tr>

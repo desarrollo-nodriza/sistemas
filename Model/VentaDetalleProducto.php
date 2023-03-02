@@ -200,7 +200,7 @@ class VentaDetalleProducto extends AppModel
 	);
 
 
-		
+
 	/**
 	 * beforeSave
 	 *
@@ -209,7 +209,6 @@ class VentaDetalleProducto extends AppModel
 	 */
 	public function beforeSave($options = array())
 	{
-		
 	}
 
 	public function afterSave($created, $options = array())
@@ -247,50 +246,41 @@ class VentaDetalleProducto extends AppModel
 		);
 
 		# Existe el producto en warehouse
-		if ($pWarehouse)
-		{	
+		if ($pWarehouse) {
 			# Tiene codigo de barra
-			if (!empty($pWarehouse['ProductoWarehouse']['cod_barra']))
-			{
+			if (!empty($pWarehouse['ProductoWarehouse']['cod_barra'])) {
 				$productoWarehouse['ProductoWarehouse']['cod_barra'] = $pWarehouse['ProductoWarehouse']['cod_barra'];
 			}
 		}
 
 		# En caso de modificar alguno de estos valores se actualiza o crea
-		foreach ($this->data['VentaDetalleProducto'] as $index => $val)
-		{	
-			if ($index == 'cod_barra')
-			{
+		foreach ($this->data['VentaDetalleProducto'] as $index => $val) {
+			if ($index == 'cod_barra') {
 				$productoWarehouse['ProductoWarehouse']['cod_barra'] = ($val) ? $val : null;
 			}
 
-			if ($index == 'permitir_ingreso_sin_barra')
-			{
+			if ($index == 'permitir_ingreso_sin_barra') {
 				$productoWarehouse['ProductoWarehouse']['permitir_ingreso_sin_barra'] = $val;
 			}
 		}
-	
+
 		# Guardamos
-		if (!empty($productoWarehouse))
-		{	
+		if (!empty($productoWarehouse)) {
 			ClassRegistry::init('ProductoWarehouse')->save($productoWarehouse);
 		}
 	}
 
-	
-	public function paginateCount($conditions = null, $recursive = 0, $extra = array()) {
-		
-		if (empty($conditions))
-		{
+
+	public function paginateCount($conditions = null, $recursive = 0, $extra = array())
+	{
+
+		if (empty($conditions)) {
 			return $this->find('count');
-		}
-		else
-		{
+		} else {
 			return $this->find('count', array(
 				'conditions' => $conditions
 			));
 		}
-		
 	}
 
 
@@ -350,29 +340,30 @@ class VentaDetalleProducto extends AppModel
 		// ! Se cambia la forma de leer las reservas ya que al mandar la bodega esta no siempre conside con la bodega de la venta
 		$venta_detalle_ids = [];
 
-		if($id_venta){
-			$venta_detalle_ids = ClassRegistry::init('VentaDetalle')->find('all',
-			[
-				"conditions" => ['VentaDetalle.venta_id' => $id_venta],
-				"fields" 	 => ['VentaDetalle.id'],
-			]);
+		if ($id_venta) {
+			$venta_detalle_ids = ClassRegistry::init('VentaDetalle')->find(
+				'all',
+				[
+					"conditions" => ['VentaDetalle.venta_id' => $id_venta],
+					"fields" 	 => ['VentaDetalle.id'],
+				]
+			);
 		}
-		
+
 		$conditions = [
 			'VentaDetallesReserva.venta_detalle_producto_id' => $id,
 			'VentaDetallesReserva.venta_detalle_id'		 	 => Hash::extract($venta_detalle_ids, '{n}.VentaDetalle.id'),
 			'VentaDetallesReserva.bodega_id' 				 => $id_bodega
 		];
-	
+
 		$vendidos = ClassRegistry::init('VentaDetallesReserva')->find('all', [
-			'fields' 	 => ['VentaDetallesReserva.venta_detalle_producto_id','VentaDetallesReserva.bodega_id','cantidad_reservada_total'],
+			'fields' 	 => ['VentaDetallesReserva.venta_detalle_producto_id', 'VentaDetallesReserva.bodega_id', 'cantidad_reservada_total'],
 			'conditions' => array_filter($conditions),
 			'group'  	 => ['VentaDetallesReserva.venta_detalle_producto_id']
 		]);
 
 		// ! Se retornan las reservas desde VentaDetallesReserva y no desde VentaDetalle
 		return $vendidos[0]['VentaDetallesReserva']['cantidad_reservada_total'] ?? 0;
-
 	}
 
 	/**
@@ -382,12 +373,12 @@ class VentaDetalleProducto extends AppModel
 	 * @return [type]            [description]
 	 */
 	public static function obtener_descuento_por_producto($producto = array(), $indice = false)
-	{	
+	{
 		$respuesta = array();
 
 		if ($indice) {
-			$precio_lista = $producto['VentaDetalleProducto']['precio_costo'];	
-		}else{
+			$precio_lista = $producto['VentaDetalleProducto']['precio_costo'];
+		} else {
 			$precio_lista = $producto['precio_costo'];
 		}
 
@@ -402,7 +393,7 @@ class VentaDetalleProducto extends AppModel
 		$descuentosProductosEspecificos = Hash::extract($producto, 'PrecioEspecificoProducto.{n}[descuento_compuesto=0]');
 		$descuentosProductosEspecificos = Hash::extract($descuentosProductosEspecificos, '{n}[activo=1]');
 		$descuentosProducto             = Hash::extract($producto, 'PrecioEspecificoProducto.{n}[activo=1]');
-		
+
 		$descuentosCompuestos = Hash::format(array_merge($descuentosMarcaCompuestos, $descuentosProductoCompuestos), array('{n}.descuento'), '%1d');
 		$descCompuesto        = 0;
 
@@ -411,63 +402,56 @@ class VentaDetalleProducto extends AppModel
 		$respuesta['valor_descuento']  = 0;
 
 		# Descuento marca
-		if ( !empty($descuentosMarca) ) {
+		if (!empty($descuentosMarca)) {
 
 			if ($descuentosMarca[0]['descuento_compuesto']) {
 
 				$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $producto['Marca']['descuento_base']);
 				$respuesta['total_descuento']  = round($precio_lista * $descCompuesto);
-				$respuesta['nombre_descuento'] = 'Compuestos (%): ' . ($descCompuesto*100);
+				$respuesta['nombre_descuento'] = 'Compuestos (%): ' . ($descCompuesto * 100);
 				$respuesta['valor_descuento'] = $descCompuesto;
-
-			}else{
+			} else {
 
 				if ($producto['Marca']['PrecioEspecificoMarca'][0]['tipo_descuento']) {
 					$respuesta['total_descuento'] = round($precio_lista * ($producto['Marca']['PrecioEspecificoMarca'][0]['descuento'] / 100)); // Primer descuento
-					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['Marca']['PrecioEspecificoMarca'][0]['nombre'] . ': % ' . $producto['Marca']['PrecioEspecificoMarca'][0]['descuento'];	
+					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['Marca']['PrecioEspecificoMarca'][0]['nombre'] . ': % ' . $producto['Marca']['PrecioEspecificoMarca'][0]['descuento'];
 					$respuesta['valor_descuento'] = $producto['Marca']['PrecioEspecificoMarca'][0]['descuento'];
-
-				}else{
+				} else {
 					$respuesta['total_descuento'] = round($producto['Marca']['PrecioEspecificoMarca'][0]['descuento']); // Primer descuento
-					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['Marca']['PrecioEspecificoMarca'][0]['nombre'] . ': $ ' . CakeNumber::currency($producto['Marca']['PrecioEspecificoMarca'][0]['descuento'] , 'CLP');
+					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['Marca']['PrecioEspecificoMarca'][0]['nombre'] . ': $ ' . CakeNumber::currency($producto['Marca']['PrecioEspecificoMarca'][0]['descuento'], 'CLP');
 					$respuesta['valor_descuento'] = $producto['Marca']['PrecioEspecificoMarca'][0]['descuento'];
 				}
-
 			}
-
 		}
-	
+
 		# Descuento producto
-		if ( !empty($descuentosProducto) ) {
+		if (!empty($descuentosProducto)) {
 
 			if ($descuentosProducto[0]['descuento_compuesto']) {
-				
+
 				if ($descCompuesto > 0) {
-					$respuesta['total_descuento']  = round($precio_lista * $descCompuesto);	
-				}else{
-					
+					$respuesta['total_descuento']  = round($precio_lista * $descCompuesto);
+				} else {
+
 					$descCompuesto = calcularDescuentoCompuesto($descuentosCompuestos, $producto['Marca']['descuento_base']);
-					
+
 					$respuesta['total_descuento']  = round($precio_lista * $descCompuesto);
 				}
 
-				$respuesta['nombre_descuento'] = 'Compuestos (%): ' . ($descCompuesto*100);
+				$respuesta['nombre_descuento'] = 'Compuestos (%): ' . ($descCompuesto * 100);
 				$respuesta['valor_descuento'] = $descCompuesto;
-
-			}else{
+			} else {
 
 				if ($producto['PrecioEspecificoProducto'][0]['tipo_descuento']) {
 					$respuesta['total_descuento'] = round($precio_lista * ($producto['PrecioEspecificoProducto'][0]['descuento'] / 100)); // Primer descuento
 					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['PrecioEspecificoProducto'][0]['nombre'] . ': % ' . $producto['PrecioEspecificoProducto'][0]['descuento'];
 					$respuesta['valor_descuento'] = $producto['PrecioEspecificoProducto'][0]['descuento'];
-				}else{
+				} else {
 					$respuesta['total_descuento'] = round($producto['PrecioEspecificoProducto'][0]['descuento']); // Primer descuento
-					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['PrecioEspecificoProducto'][0]['nombre'] . ': ' . CakeNumber::currency($producto['PrecioEspecificoProducto'][0]['descuento'] , 'CLP');
+					$respuesta['nombre_descuento'] = 'Descuento ' . $producto['PrecioEspecificoProducto'][0]['nombre'] . ': ' . CakeNumber::currency($producto['PrecioEspecificoProducto'][0]['descuento'], 'CLP');
 					$respuesta['valor_descuento'] = $producto['PrecioEspecificoProducto'][0]['descuento'];
 				}
-
 			}
-
 		}
 
 		if (empty($descuentosMarca) && empty($descuentosProducto) && isset($producto['Marca']['descuento_base'])) {
@@ -476,7 +460,7 @@ class VentaDetalleProducto extends AppModel
 			$respuesta['valor_descuento'] = $producto['Marca']['descuento_base'];
 		}
 
-		
+
 
 		return $respuesta;
 	}
@@ -580,13 +564,13 @@ class VentaDetalleProducto extends AppModel
 	 * @return bool
 	 */
 	public function actualizar_stock_virtual($id, $stock, $tipo = 'descontar')
-	{		
+	{
 		$this->id = $id;
 		if ($tipo == 'descontar') {
 			$nwStock = ($this->field('cantidad_virtual') - $stock);
-		}else if ($tipo == 'aumentar') {
+		} else if ($tipo == 'aumentar') {
 			$nwStock = ($this->field('cantidad_virtual') + $stock);
-		}else{
+		} else {
 			return false;
 		}
 
@@ -607,14 +591,14 @@ class VentaDetalleProducto extends AppModel
 			'fields' => array(
 				'VentaDetalle.cantidad_entregada'
 			)
-		));	
+		));
 
 		return array_sum(Hash::extract($ventas, '{n}.VentaDetalle.cantidad_entregada'));
 	}
 
 
 	public function obtener_tiempo_entrega($id)
-	{	
+	{
 		$producto = $this->find('first', array(
 			'conditions' => array(
 				'VentaDetalleProducto.id' => $id
@@ -633,7 +617,7 @@ class VentaDetalleProducto extends AppModel
 		$ventas = ClassRegistry::init('Venta')->find('all', array(
 			'conditions' => array(
 				'Venta.id' => array_unique(Hash::extract($producto['VentaDetalle'], '{n}.venta_id')),
-				'Venta.fecha_entregado !=' => '' 
+				'Venta.fecha_entregado !=' => ''
 			)
 		));
 
@@ -648,32 +632,30 @@ class VentaDetalleProducto extends AppModel
 			$avg[$key]['creado_recibido']['dias']   = $diferencia1->days;
 			$avg[$key]['creado_recibido']['horas']  = $diferencia1->h;
 		}
-		
+
 		if (count($avg) > 0) {
 
 			$promedio_creado_recibido  = (array_sum(Hash::extract($avg, '{n}.creado_recibido.dias')) / count($avg));
-			
+
 			# Si el tiempo de entrega calcuado es mayor al tiempo de la marca se mantiene el de la marca.
-			if(!empty($producto['Marca']['tiempo_entrega_maximo']) && $promedio_creado_recibido > $producto['Marca']['tiempo_entrega_maximo']){
+			if (!empty($producto['Marca']['tiempo_entrega_maximo']) && $promedio_creado_recibido > $producto['Marca']['tiempo_entrega_maximo']) {
 				$promedio_creado_recibido = $producto['Marca']['tiempo_entrega_maximo'];
 			}
-		
-		}else{
+		} else {
 			$promedio_creado_recibido = $producto['Marca']['tiempo_entrega_maximo'];
 		}
 
 		return ceil($promedio_creado_recibido);
-
 	}
 
-	
+
 	/**
 	 * Retorna un arreglo con los ids de productos con stock disponible para vender.
 	 *
 	 * @return array
 	 */
 	public function obtener_productos_con_stock_disponible($bodega_id = null)
-	{	
+	{
 
 		$qry = array(
 			'fields'     => array(
@@ -694,8 +676,7 @@ class VentaDetalleProducto extends AppModel
 			)
 		);
 
-		if (!empty($bodega_id))
-		{
+		if (!empty($bodega_id)) {
 			$qry = array_replace_recursive($qry, array(
 				'conditions' => array(
 					'BodegasVentaDetalleProducto.bodega_id' => $bodega_id
@@ -704,7 +685,7 @@ class VentaDetalleProducto extends AppModel
 
 			$qry['fields'][] = 'BodegasVentaDetalleProducto.bodega_id';
 		}
-		
+
 		$ids_con_stock_fisico = ClassRegistry::init('BodegasVentaDetalleProducto')->find('all', $qry);
 
 		// $qry2 = array(
@@ -773,32 +754,30 @@ class VentaDetalleProducto extends AppModel
 			'VentaDetallesReserva.venta_detalle_producto_id' => Hash::extract($ids_con_stock_fisico, '{n}.BodegasVentaDetalleProducto.venta_detalle_producto_id'),
 			'VentaDetallesReserva.bodega_id' => $bodega_id
 		];
-	
+
 		$ids_con_reserva = ClassRegistry::init('VentaDetallesReserva')->find('all', [
-			'fields' 	 => ['VentaDetallesReserva.venta_detalle_producto_id','VentaDetallesReserva.bodega_id','cantidad_reservada_total'],
+			'fields' 	 => ['VentaDetallesReserva.venta_detalle_producto_id', 'VentaDetallesReserva.bodega_id', 'cantidad_reservada_total'],
 			'conditions' => array_filter($conditions),
 			'having' 	 => ['SUM(VentaDetallesReserva.cantidad_reservada) > 0'],
 			'group'  	 => ['VentaDetallesReserva.venta_detalle_producto_id']
 		]);
-		
+
 		# Preparamos ids para usarlos en la actualización
 		$id_stock_disponible = array();
-		foreach ($ids_con_stock_fisico as $ids => $s) 
-		{	
+		foreach ($ids_con_stock_fisico as $ids => $s) {
 			$id_stock_disponible[$ids]['id'] = $s['BodegasVentaDetalleProducto']['venta_detalle_producto_id'];
 			$id_stock_disponible[$ids]['stock_disponible'] = $s[0]['stock'];
 			$id_stock_disponible[$ids]['stock_fisico'] = $s[0]['stock'];
 			$id_stock_disponible[$ids]['stock_reservado'] = 0;
 
-			if (!empty($bodega_id))
-			{
+			if (!empty($bodega_id)) {
 				$id_stock_disponible[$ids]['bodega_id'] = $s['BodegasVentaDetalleProducto']['bodega_id'];
 			}
 
-			$producto_reservado  = array_sum(Hash::extract($ids_con_reserva, "{n}.VentaDetallesReserva[venta_detalle_producto_id={$s['BodegasVentaDetalleProducto']['venta_detalle_producto_id']}].cantidad_reservada_total") );
-			$id_stock_disponible[$ids]['stock_disponible'] = ($producto_reservado <= $s[0]['stock'] ) ? $s[0]['stock'] - $producto_reservado : 0;
+			$producto_reservado  = array_sum(Hash::extract($ids_con_reserva, "{n}.VentaDetallesReserva[venta_detalle_producto_id={$s['BodegasVentaDetalleProducto']['venta_detalle_producto_id']}].cantidad_reservada_total"));
+			$id_stock_disponible[$ids]['stock_disponible'] = ($producto_reservado <= $s[0]['stock']) ? $s[0]['stock'] - $producto_reservado : 0;
 			$id_stock_disponible[$ids]['stock_reservado'] = $producto_reservado;
-			
+
 
 			// foreach ($ids_con_reserva as $idr => $r) 
 			// {	
@@ -811,8 +790,7 @@ class VentaDetalleProducto extends AppModel
 			// }
 
 			# Quitamos los stock disponibles iguales a 0
-			if ($id_stock_disponible[$ids]['stock_disponible'] == 0)
-			{
+			if ($id_stock_disponible[$ids]['stock_disponible'] == 0) {
 				unset($id_stock_disponible[$ids]);
 			}
 		}
@@ -820,7 +798,7 @@ class VentaDetalleProducto extends AppModel
 		return $id_stock_disponible;
 	}
 
-	
+
 	/**
 	 * obtener_productos_con_stock_disponible_por_bodega
 	 *
@@ -831,8 +809,7 @@ class VentaDetalleProducto extends AppModel
 		$bodegas = ClassRegistry::init('Bodega')->find('list', array('conditions' => array('activo' => 1)));
 
 		$respuesta =  array();
-		foreach ($bodegas as $id => $bodega) 
-		{	
+		foreach ($bodegas as $id => $bodega) {
 			$productos = $this->obtener_productos_con_stock_disponible($id);
 
 			$respuesta[] = array(
@@ -870,7 +847,7 @@ class VentaDetalleProducto extends AppModel
 				'SUM(BodegasVentaDetalleProducto.cantidad) > 0'
 			)
 		));
-		
+
 		if (empty($stock_disponible))
 			return array();
 
@@ -897,34 +874,32 @@ class VentaDetalleProducto extends AppModel
 		));
 
 		# Descontamos las unidades reservadas
-		array_walk($stock_disponible, function(&$p) use($reservas) 
-		{	
+		array_walk($stock_disponible, function (&$p) use ($reservas) {
 			$p[0]['stock_reservado'] = 0;
-			
-			foreach ($reservas as $r)
-			{	
-				if ($r['VentaDetallesReserva']['venta_detalle_producto_id'] == $p['BodegasVentaDetalleProducto']['venta_detalle_producto_id'] 
-					&& $r['VentaDetallesReserva']['bodega_id'] == $p['BodegasVentaDetalleProducto']['bodega_id'])
-				{
+
+			foreach ($reservas as $r) {
+				if (
+					$r['VentaDetallesReserva']['venta_detalle_producto_id'] == $p['BodegasVentaDetalleProducto']['venta_detalle_producto_id']
+					&& $r['VentaDetallesReserva']['bodega_id'] == $p['BodegasVentaDetalleProducto']['bodega_id']
+				) {
 					$p[0]['stock_disponible'] = (int) $p[0]['stock_disponible'] - $r[0]['cantidad_reservada'];
 					$p[0]['stock_reservado'] = $r[0]['cantidad_reservada'];
 				}
 			}
 
 			return $p;
-
 		});
-		
+
 		# Separamos los ids
 		$id_productos_stock_disponible = array_unique(Hash::extract($stock_disponible, '{n}.BodegasVentaDetalleProducto.venta_detalle_producto_id'));
-		
+
 		# Inofrmación de los productos con stock disponible
 		$productos = $this->find('all', array(
 			'conditions' => array(
-				'VentaDetalleProducto.id IN' => $id_productos_stock_disponible 
+				'VentaDetalleProducto.id IN' => $id_productos_stock_disponible
 			)
 		));
-		
+
 		# Obtenemos las bodegas involucradas una sola vez para reutilizarlas para cada producto
 		$bodegas = ClassRegistry::init('Bodega')->find('all', array(
 			'conditions' => array(
@@ -933,17 +908,14 @@ class VentaDetalleProducto extends AppModel
 		));
 
 		# Asignamos los stock según bodegas
-		$productos = array_map(function($p) use ($bodegas, $stock_disponible)
-		{
-			foreach($stock_disponible as $sd)
-			{	
-				if ($sd['BodegasVentaDetalleProducto']['venta_detalle_producto_id'] == $p['VentaDetalleProducto']['id'])
-				{	
-					$b = Hash::extract($bodegas, '{n}.Bodega[id='.$sd['BodegasVentaDetalleProducto']['bodega_id'].']');
+		$productos = array_map(function ($p) use ($bodegas, $stock_disponible) {
+			foreach ($stock_disponible as $sd) {
+				if ($sd['BodegasVentaDetalleProducto']['venta_detalle_producto_id'] == $p['VentaDetalleProducto']['id']) {
+					$b = Hash::extract($bodegas, '{n}.Bodega[id=' . $sd['BodegasVentaDetalleProducto']['bodega_id'] . ']');
 
 					// * Las bodegas que no tienen stock disponible no se muestran
-					 if ($sd[0]['stock_disponible'] < 1 ) 
-					 	continue;	
+					if ($sd[0]['stock_disponible'] < 1)
+						continue;
 
 					$p['Disponibilidad']['Bodega'][] = array(
 						'venta_detalle_producto_id' => $sd['BodegasVentaDetalleProducto']['venta_detalle_producto_id'],
@@ -954,8 +926,8 @@ class VentaDetalleProducto extends AppModel
 						'detalle_bodega' 			=> $b[0]
 					);
 				}
-			}	
-			
+			}
+
 			# Arreglo general de disponibilidad
 			$p['Disponibilidad']['General'] = array(
 				'stock_fisico' 		=> array_sum(Hash::extract($p, 'Disponibilidad.Bodega.{n}.stock_fisico')),
@@ -971,18 +943,17 @@ class VentaDetalleProducto extends AppModel
 			);
 
 			return $p;
-
 		}, $productos);
 
 		// * Se Muestran solo los que tienen stock general
-		$productos = array_filter($productos, function($v,$k)
-		{
+		$productos = array_filter($productos, function ($v, $k) {
 			return $v['Disponibilidad']['General']['stock_disponible'] > 0;
 		}, ARRAY_FILTER_USE_BOTH);
 
 
 		return $productos;
 	}
+<<<<<<< Model/VentaDetalleProducto.php
 	
 	/**
 	 * disponibilidad_por_bodega
@@ -991,6 +962,140 @@ class VentaDetalleProducto extends AppModel
 	 * @return array
 	 */
 	public function disponibilidad_por_bodega( $bodega_activas = true)
+=======
+
+	public function set_stock_disponible_por_bodegas_v3(&$productos)
+	{
+
+		# Obtenemos todos los productos con stock fisico por bodegas
+		$stock_disponible = classRegistry::init('BodegasVentaDetalleProducto')->find('all', array(
+			'fields' => array(
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id',
+				'BodegasVentaDetalleProducto.bodega_id',
+				'SUM(BodegasVentaDetalleProducto.cantidad) as stock_fisico',
+				'SUM(BodegasVentaDetalleProducto.cantidad) as stock_disponible'
+			),
+			'group' => array(
+				'BodegasVentaDetalleProducto.venta_detalle_producto_id',
+				'BodegasVentaDetalleProducto.bodega_id'
+			),
+			'conditions' => ['BodegasVentaDetalleProducto.tipo <>' => 'GT'],
+			'having' => array(
+				'SUM(BodegasVentaDetalleProducto.cantidad) > 0'
+			)
+		));
+
+		# Separamos los ids
+		$id_productos_stock_disponible = array_unique(Hash::extract($stock_disponible, '{n}.BodegasVentaDetalleProducto.venta_detalle_producto_id'));
+
+		# Obtenemos las reservas de los productos con stock fisico por bodegas
+		$reservas = classRegistry::init('VentaDetallesReserva')->find('all', array(
+			'conditions' => array(
+				'VentaDetallesReserva.venta_detalle_producto_id IN' => $id_productos_stock_disponible
+			),
+			'fields' => array(
+				'VentaDetallesReserva.venta_detalle_producto_id',
+				'VentaDetallesReserva.bodega_id',
+				'SUM(VentaDetallesReserva.cantidad_reservada) as cantidad_reservada'
+			),
+			'group' => array(
+				'VentaDetallesReserva.venta_detalle_producto_id',
+				'VentaDetallesReserva.bodega_id'
+			),
+			'having' => array(
+				'SUM(VentaDetallesReserva.cantidad_reservada) > 0'
+			)
+		));
+
+		# Descontamos las unidades reservadas
+		array_walk($stock_disponible, function (&$p) use ($reservas) {
+			$p[0]['stock_reservado'] = 0;
+
+			foreach ($reservas as $r) {
+				if (
+					$r['VentaDetallesReserva']['venta_detalle_producto_id'] == $p['BodegasVentaDetalleProducto']['venta_detalle_producto_id']
+					&& $r['VentaDetallesReserva']['bodega_id'] == $p['BodegasVentaDetalleProducto']['bodega_id']
+				) {
+					$p[0]['stock_disponible'] = (int) $p[0]['stock_disponible'] - $r[0]['cantidad_reservada'];
+					$p[0]['stock_reservado'] = $r[0]['cantidad_reservada'];
+				}
+			}
+
+			return $p;
+		});
+
+		# Separamos los ids
+		$id_productos_stock_disponible = array_unique(Hash::extract($stock_disponible, '{n}.BodegasVentaDetalleProducto.venta_detalle_producto_id'));
+
+		# Obtenemos las bodegas involucradas una sola vez para reutilizarlas para cada producto
+		$bodegas = ClassRegistry::init('Bodega')->find('all', array(
+			'contain' => array(
+				'Comuna' => array(
+					'fields' => array(
+						'Comuna.id',
+						'Comuna.nombre',
+						'Comuna.alias'
+					)
+				)
+			)
+		));
+
+		# Asignamos los stock según bodegas
+		$productos = array_map(function ($p) use ($bodegas, $stock_disponible) {
+			foreach ($bodegas as $bodega) {
+				$p['Disponibilidad']['Bodega'][$bodega['Bodega']['id']] = array(
+					'venta_detalle_producto_id' => $p['VentaDetalleProducto']['id'],
+					'bodega_id' 				=> $bodega['Bodega']['id'],
+					'stock_disponible' 			=> 0,
+					'stock_fisico' 				=> 0,
+					'stock_reservado' 			=> 0,
+					'detalle_bodega' 			=> $bodega['Bodega'],
+					'detalle_comuna'     	    => $bodega['Comuna']
+				);
+			}
+
+
+			foreach ($stock_disponible as $sd) {
+				if ($sd['BodegasVentaDetalleProducto']['venta_detalle_producto_id'] == $p['VentaDetalleProducto']['id']) {
+					$b = Hash::extract($bodegas, '{n}.Bodega[id=' . $sd['BodegasVentaDetalleProducto']['bodega_id'] . ']');
+
+					// * Las bodegas que no tienen stock disponible no se muestran
+					if ($sd[0]['stock_disponible'] < 1)
+						continue;
+
+					$p['Disponibilidad']['Bodega'][$sd['BodegasVentaDetalleProducto']['bodega_id']] = array(
+						'venta_detalle_producto_id' => $sd['BodegasVentaDetalleProducto']['venta_detalle_producto_id'],
+						'bodega_id' 				=> $sd['BodegasVentaDetalleProducto']['bodega_id'],
+						'stock_disponible' 			=> $sd[0]['stock_disponible'],
+						'stock_fisico' 				=> $sd[0]['stock_fisico'],
+						'stock_reservado' 			=> $sd[0]['stock_reservado'],
+						'detalle_bodega' 			=> $b[0]
+					);
+				}
+			}
+
+			# Arreglo general de disponibilidad
+			$p['Disponibilidad']['General'] = array(
+				'stock_fisico' 		=> array_sum(Hash::extract($p, 'Disponibilidad.Bodega.{n}.stock_fisico')),
+				'stock_reservado' 	=> array_sum(Hash::extract($p, 'Disponibilidad.Bodega.{n}.stock_reservado')),
+				'stock_disponible' 	=> array_sum(Hash::extract($p, 'Disponibilidad.Bodega.{n}.stock_disponible')),
+			);
+
+			# Se agrega información general del producto para uso personalizado
+			$p['VentaDetalleProducto']['disponibilidad'] = array(
+				'stock_fisico' 		=> $p['Disponibilidad']['General']['stock_fisico'],
+				'stock_reservado' 	=> $p['Disponibilidad']['General']['stock_reservado'],
+				'stock_disponible' 	=> $p['Disponibilidad']['General']['stock_disponible'],
+			);
+
+			return $p;
+		}, $productos);
+
+		return $productos;
+	}
+
+	public function disponibilidad_por_bodega()
+>>>>>>> Model/VentaDetalleProducto.php
 	{
 		return ClassRegistry::init('VentaDetalleProducto')->query("
 		SELECT p.id producto_id,
@@ -1012,5 +1117,72 @@ class VentaDetalleProducto extends AppModel
 		 GROUP BY `BodegasVentaDetalleProducto`.`venta_detalle_producto_id`, `BodegasVentaDetalleProducto`.`bodega_id`
 		 HAVING disponibilidad > 0
  		");
+	}
+
+	public function disponibilidad_c_o_s_stock_en_bodega()
+	{
+
+		$stock = ClassRegistry::init('VentaDetalleProducto')->query("
+						SELECT producto.id                                                 producto_id,
+						producto.nombre,
+						bodega.id                                                   bodega_id,
+						(SUM(`BodegasVentaDetalleProducto`.`cantidad`) - ifnull((select SUM(reserva.cantidad_reservada)
+																				from rp_venta_detalles_reservas reserva
+																				where reserva.venta_detalle_producto_id =
+																					`BodegasVentaDetalleProducto`.`venta_detalle_producto_id`
+																				and reserva.bodega_id = `BodegasVentaDetalleProducto`.`bodega_id`
+																				group by reserva.venta_detalle_producto_id),
+																				0)) disponibilidad
+				FROM `rp_bodegas_venta_detalle_productos` AS `BodegasVentaDetalleProducto`
+						inner join rp_bodegas bodega on bodega.id = bodega_id
+						inner join rp_venta_detalle_productos producto on producto.id = venta_detalle_producto_id
+				WHERE `BodegasVentaDetalleProducto`.`tipo` <> 'GT'
+				and bodega.activo = 1
+				GROUP BY `BodegasVentaDetalleProducto`.`venta_detalle_producto_id`, `BodegasVentaDetalleProducto`.`bodega_id`
+				HAVING disponibilidad > 0
+			");
+
+		$productos = ClassRegistry::init('VentaDetalleProducto')->find('all', [
+			'fields'	=> ['id', 'referencia'],
+			'conditions' => [
+				'activo' => true,
+			]
+		]);
+
+		$bodegas = ClassRegistry::init('Bodegas')->find('all', [
+			'fields'	=> ['id', 'nombre'],
+			'conditions' => [
+				'activo' => true,
+			]
+		]);
+
+		$productos = array_map(
+			function ($producto) use ($bodegas, $stock) {
+
+				foreach ($bodegas as $key => $bodega) {
+
+					$stock_disponible = array_filter(
+						$stock,
+						function ($v, $k) use ($bodega, $producto) {
+
+							return ($v['producto']['producto_id'] == $producto['VentaDetalleProducto']['id'] && $v['bodega']['bodega_id'] == $bodega['Bodegas']['id']);
+						},
+						ARRAY_FILTER_USE_BOTH
+					);
+
+					$producto['Disponibilidad']['Bodega'][] 	= [
+						'detalle_bodega' 	=> $bodega['Bodegas'],
+						'stock_disponible' 	=> (int) (Hash::extract($stock_disponible, '{n}.0.disponibilidad')[0] ?? 0),
+					];
+				}
+				return $producto;
+			},
+			$productos
+		);
+
+		return $productos;
+		// header('Content-Type: application/json; charset=utf-8');
+		// print json_encode($productos);
+		// exit;
 	}
 }
