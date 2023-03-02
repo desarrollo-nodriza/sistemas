@@ -3,7 +3,7 @@
 </div>
 
 <?= $this->Form->create('Tienda', array('class' => 'form-horizontal', 'type' => 'file', 'inputDefaults' => array('label' => false, 'div' => false, 'class' => 'form-control'))); ?>
-<?=$this->Form->input('id');?>
+<?= $this->Form->input('id'); ?>
 <div class="page-content-wrap">
 	<div class="row">
 		<div class="col-xs-12 col-sm-6">
@@ -41,19 +41,19 @@
 							<tr>
 								<th><?= $this->Form->label('tema', 'Tema de la tienda'); ?></th>
 								<td><?= $this->Form->select('tema', array(
-											'dark-head-light' => 'Dark Head Light',
-											'dark' => 'Dark',
-											'default-head-light' => 'Default Head Light',
-											'default' => 'Default',
-											'forest-head-light' => 'Forest Head light',
-											'forest' => 'Forest',
-											'light' => 'Light',
-											'night-head-light' => 'Night Head Light',
-											'night' => 'Night',
-											'nodriza' => 'Nodriza',
-											'serenity-head-light' => 'Serenity Head Light',
-											'serenity' => 'Serenity'
-										), array('class' => 'form-control','empty' => false)); ?></td>
+										'dark-head-light' => 'Dark Head Light',
+										'dark' => 'Dark',
+										'default-head-light' => 'Default Head Light',
+										'default' => 'Default',
+										'forest-head-light' => 'Forest Head light',
+										'forest' => 'Forest',
+										'light' => 'Light',
+										'night-head-light' => 'Night Head Light',
+										'night' => 'Night',
+										'nodriza' => 'Nodriza',
+										'serenity-head-light' => 'Serenity Head Light',
+										'serenity' => 'Serenity'
+									), array('class' => 'form-control', 'empty' => false)); ?></td>
 							</tr>
 							<tr>
 								<th><?= $this->Form->label('email_remitente', 'Email remitente'); ?></th>
@@ -62,7 +62,11 @@
 							<tr>
 								<th><?= $this->Form->label('emails_bcc', 'Email para <br> Copia oculta'); ?></th>
 								<td><?= $this->Form->input('emails_bcc', array('placeholder' => 'Emails separados por coma (,)')); ?></td>
-							</tr>							
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('tiempo_despacho', 'Tiempo despacho por defecto'); ?></th>
+								<td><?= $this->Form->input('tiempo_despacho', array('class' => 'is_number')); ?></td>
+							</tr>
 						</table>
 						<div class="pull-right">
 							<input type="submit" class="btn btn-primary esperar-carga" autocomplete="off" data-loading-text="Espera un momento..." value="Guardar cambios">
@@ -106,10 +110,10 @@
 								<th><?= $this->Form->label('whatsapp_numero', 'Número whatsapp'); ?></th>
 								<td><?= $this->Form->input('whatsapp_numero', array('class' => 'form-control js-fono')); ?></td>
 							</tr>
-							<? if ( !empty($this->request->data['Tienda']['logo']) ) : ?>
+							<? if (!empty($this->request->data['Tienda']['logo'])) : ?>
 								<tr>
 									<th><?= $this->Form->label('', 'Logo actual'); ?></th>
-									<td><?=$this->Html->image($this->request->data['Tienda']['logo']['path'], array('class' => 'img-responsive', 'style' => 'max-width: 100px'));?></td>
+									<td><?= $this->Html->image($this->request->data['Tienda']['logo']['path'], array('class' => 'img-responsive', 'style' => 'max-width: 100px')); ?></td>
 								</tr>
 								<tr>
 									<th><?= $this->Form->label('logo', 'Actualiza (300x135)'); ?></th>
@@ -133,16 +137,16 @@
 		<div class="col-xs-12 col-sm-6">
 
 			<h2><i class="fa fa-bug"></i> Integraciones & Extensiones</h2>
-			
+
 			<div class="panel panel-default panel-toggled">
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-bell"></i> Notificar retraso a cliente</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
-					
+
 					<p>Activa la notificación de ventas retrasadas para los cliente de la tienda (excluye Marketplaces).</p>
 
 					<div class="table-responsive">
@@ -191,11 +195,11 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-refresh"></i> Stock sincronizado</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
-					
+
 					<p>Activa la sincronización de stock de todos los canales de venta como prestashop, linio y mercadolibre. Recuerda que debes mantener el "stock virtual" de tus productos actualizado. Así evitas que los productos se desactiven en los distintos canales. </p>
 
 					<div class="table-responsive">
@@ -218,11 +222,11 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-hdd-o"></i> Almacenamiento externo</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
-					
+
 					<p>Agrega el Endpoint de tu Bucket S3 para tomar las imagenes de los productos desde ahí (Solo prestashop). </p>
 
 					<div class="table-responsive">
@@ -245,8 +249,8 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-shopping-bag"></i> Prestashop</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
@@ -272,8 +276,8 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-shopping-bag"></i> Linio <small>(No disponible en la siguente versión)</small></h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
@@ -307,8 +311,8 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-book"></i> Libredte</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
@@ -325,13 +329,13 @@
 					</div>
 				</div>
 			</div>
-			
+
 			<div class="panel panel-default panel-toggled">
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-bell"></i> Notificaciones Push</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
@@ -357,8 +361,8 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-truck"></i> Envíame</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive" style="overflow: unset;">
@@ -418,8 +422,8 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-envelope"></i> Envio de correos con Mandrill</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
@@ -441,8 +445,8 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-list"></i> Conexión SII</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 					<div class="table-responsive">
@@ -477,8 +481,8 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-truck"></i> Api Starken</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 					<p>Conexión para servicios web de Starken como tarificación y tracking.</p>
@@ -505,8 +509,8 @@
 				<div class="panel-heading">
 					<h3 class="panel-title"><i class="fa fa-refresh"></i> Api Onestock</h3>
 					<ul class="panel-controls">
-                        <li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
-                    </ul>
+						<li><a href="#" class="panel-collapse"><span class="fa fa-angle-down"></span></a></li>
+					</ul>
 				</div>
 				<div class="panel-body">
 					<p>Conexión para consultar stock de productos.</p>

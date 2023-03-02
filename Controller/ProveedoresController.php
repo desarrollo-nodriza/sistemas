@@ -101,7 +101,7 @@ class ProveedoresController extends AppController
 		if ($this->request->is('post') || $this->request->is('put')) {
 
 			$this->Proveedor->MonedasProveedor->deleteAll(array('MonedasProveedor.proveedor_id' => $id));
-			
+
 			# Guardamos los emails en un objeto json
 			if (isset($this->request->data['ProveedoresEmail'])) {
 				$this->request->data['Proveedor']['meta_emails'] = json_encode($this->request->data['ProveedoresEmail'], true);
@@ -110,6 +110,8 @@ class ProveedoresController extends AppController
 
 				$this->Proveedor->FrecuenciaGenerarOC->deleteAll(array('proveedor_id' => $id));
 				$this->Proveedor->TipoEntregaProveedorOC->deleteAll(array('proveedor_id' => $id));
+
+
 				$this->request->data['FrecuenciaGenerarOC'] = array_filter($this->request->data['FrecuenciaGenerarOC'], function ($v, $k) {
 					return !empty($v['hora']);
 				}, ARRAY_FILTER_USE_BOTH);
@@ -149,6 +151,7 @@ class ProveedoresController extends AppController
 					'ReglasGenerarOC' => [
 						'order' 	=> array('ReglasGenerarOC.mayor_que' => 'ASC')
 					]
+
 				)
 			));
 		}
@@ -538,105 +541,125 @@ class ProveedoresController extends AppController
 		$this->redirect(array('action' => 'edit', $proveedor_id));
 	}
 
-	
-	/**
-	 * api_obtener_tiempo_preparacion_oc
-	 *	
-	 * Calcula el tiempo que tarda un proveedor procesar sus OCs.
-	 * El tiempo se calcula desde la creación de la OC hasta su recepción completa o incompleta.
-	 * 	
-	 * Se puede filtrar por proveedores y/o productos enviando en el body de la petición.
-	 * 
-	 * - Para filtrar por porductos se debe enviar una lista de ids llamada "producto_id"
-	 * - Para filtrar por proveedor se debe enviar una lista de ids llamada "proveedor_id"
-	 * 
-	 * @return json
-	 */
-	public function api_obtener_tiempo_preparacion_oc()
+
+	public function admin_cronjob_despacho_pedido()
 	{
-		# Existe token
-		if (!isset($this->request->query['token'])) 
-		{
-			return $this->api_response(404, 'Token requerido');
+
+
+		ClassRegistry::init('Proveedor')->actualizar_tiempo_despacho_proveedor();
+
+		$tiempo_despacho_producto_con_stock =  ClassRegistry::init('VentaDetalle')->tiempo_despacho_producto_con_stock();
+		$ids_con_stock 						= Hash::extract($tiempo_despacho_producto_con_stock, '{n}.VentaDetalle.venta_detalle_producto_id');
+
+		$proveedores = ClassRegistry::init('Proveedor')->find('list', [
+			'fields' => [
+				'Proveedor.id',
+				'Proveedor.tiempo_despacho',
+			],
+			'conditions' => ['Proveedor.tiempo_despacho is not null']
+		]);
+
+		// * Se actualiza tiempo de despacho a producto por proveedor sin contar a los que tienen stock
+
+		foreach ($proveedores as $proveedor_id => $tiempo_despacho) {
+
+			$productos_del_proveedor = ClassRegistry::init('VentaDetalleProducto')->find('all', [
+				'fields' => [
+					'VentaDetalleProducto.id',
+					'VentaDetalleProducto.tiempo_despacho'
+				],
+				'conditions' => [
+					'VentaDetalleProducto.id !=' 	 => $ids_con_stock,
+					'ProveedorProducto.proveedor_id' => $proveedor_id
+				],
+				'joins' => array(
+					array(
+						'table' => 'rp_proveedores_venta_detalle_productos',
+						'alias' => 'ProveedorProducto',
+						'type' => 'INNER',
+						'conditions' => array(
+							'ProveedorProducto.venta_detalle_producto_id = VentaDetalleProducto.id',
+
+						)
+					)
+				)
+			]);
+
+			$productos_ids = Hash::extract($productos_del_proveedor, '{n}.VentaDetalleProducto.id');
+
+			ClassRegistry::init('VentaDetalleProducto')->updateAll(
+				['VentaDetalleProducto.tiempo_despacho' => $tiempo_despacho],
+				['VentaDetalleProducto.id' 				=> $productos_ids]
+			);
 		}
 
-		# Validamos token
-		if (!ClassRegistry::init('Token')->validar_token($this->request->query['token'])) 
-		{
-			return $this->api_response(401, 'Token de sesión expirado o invalido');
+		// * Se actualiza tiempo de despacho a producto que tienen stock
+
+		if ($tiempo_despacho_producto_con_stock) {
+
+			$tiempo_despacho_producto_con_stock = array_map(function ($data) {
+				return ['VentaDetalleProducto' => [
+					'id' 				=> $data['VentaDetalle']['venta_detalle_producto_id'],
+					'tiempo_despacho' 	=> $data[0]['tiempo_despacho'],
+				]];
+			}, $tiempo_despacho_producto_con_stock);
+
+
+			if ($tiempo_despacho_producto_con_stock) {
+				foreach (array_chunk($tiempo_despacho_producto_con_stock, 500) as $value) {
+					ClassRegistry::init('VentaDetalleProducto')->create();
+					ClassRegistry::init('VentaDetalleProducto')->saveAll($value);
+				}
+			}
 		}
 
-		$qry = array(
+		$productos_sin_proveedor 	= ClassRegistry::init('VentaDetalleProducto')->find('all', [
+			'fields' => [
+				'VentaDetalleProducto.id',
+			],
+			'conditions' => [
+				'OR' => [
+					'ProveedorProducto.proveedor_id' => null,
+					'VentaDetalleProducto.tiempo_despacho' => null,
+					'VentaDetalleProducto.tiempo_despacho' => 0,
+				]
+			],
 			'joins' => array(
 				array(
-					'alias' => 'ocp',
-					'table' => 'orden_compras_venta_detalle_productos',
-					'type' => 'INNER',
+					'table' => 'rp_proveedores_venta_detalle_productos',
+					'alias' => 'ProveedorProducto',
+					'type' => 'LEFT',
 					'conditions' => array(
-						'ocp.orden_compra_id = OrdenCompra.id'
-					),
-				),
-			),
-			'conditions' => array(
-				'OrdenCompra.estado' => array('recepcion_completa', 'recepcion_incompleta')
-			),
-			'group' => array('OrdenCompra.proveedor_id'),
-			'fields' => array(
-				'OrdenCompra.proveedor_id',
-				'ABS(TIMESTAMPDIFF(MINUTE, OrdenCompra.created, OrdenCompra.fecha_recibido)) as tiempo_preparacion_m'
-			),
-			'order' => array(
-				'ABS(TIMESTAMPDIFF(MINUTE, OrdenCompra.created, OrdenCompra.fecha_recibido))' => 'DESC'
-			)
-		);
-		
-		# filtro por proveedores
-		if (isset($this->request->data['proveedor_id']))
-		{	
-			$qry = array_replace_recursive($qry, array(
-				'joins' => array(
-					array(
-						'alias' => 'ocp',
-						'table' => 'orden_compras_venta_detalle_productos',
-						'type' => 'INNER',
-						'conditions' => array(
-							'ocp.orden_compra_id = OrdenCompra.id'
-						),
-					),
-				),
-				'conditions' => array(
-					'OrdenCompra.proveedor_id' => $this->request->data['proveedor_id']
+						'ProveedorProducto.venta_detalle_producto_id = VentaDetalleProducto.id',
+
+					)
 				)
-			));
+			)
+		]);
+
+		// * Se actualiza tiempo de despacho a producto que no tienen relacion con proveedor
+
+		if ($productos_sin_proveedor) {
+
+			$ids_productos_sin_proveedor	= Hash::extract($productos_sin_proveedor, '{n}.VentaDetalleProducto.id');
+			$tiempo_despacho				= ClassRegistry::init('Tienda')->find(
+				'first',
+				[
+					'fields' => ['tiempo_despacho'],
+					'conditions' =>
+					[
+						'Tienda.principal' => true
+					]
+				]
+			);
+
+
+			ClassRegistry::init('VentaDetalleProducto')->updateAll(
+				['VentaDetalleProducto.tiempo_despacho' => $tiempo_despacho['Tienda']['tiempo_despacho'] ?? 7],
+				['VentaDetalleProducto.id' 				=> $ids_productos_sin_proveedor]
+			);
 		}
 
-		# filtro por productos
-		if (isset($this->request->data['producto_id']))
-		{	
-			$qry = array_replace_recursive($qry, array(
-				'joins' => array(
-					array(
-						'alias' => 'ocp',
-						'table' => 'orden_compras_venta_detalle_productos',
-						'type' => 'INNER',
-						'conditions' => array(
-							'ocp.orden_compra_id = OrdenCompra.id',
-							'ocp.venta_detalle_producto_id' => $this->request->data['producto_id']
-						),
-					),
-				),
-				'group' => array('OrdenCompra.proveedor_id', 'ocp.venta_detalle_producto_id'),
-				'fields' => array(
-					'OrdenCompra.proveedor_id',
-					'ocp.venta_detalle_producto_id',
-					'ABS(TIMESTAMPDIFF(MINUTE, OrdenCompra.created, OrdenCompra.fecha_recibido)) as tiempo_preparacion_m'
-				),
-			));
-		}
-
-		# Obtenemos propietario
-		$tiempo_preparacion = ClassRegistry::init('OrdenCompra')->find('all', $qry);
-
-		return $this->api_response(200, 'Tiempo calculado con éxito', $tiempo_preparacion);
+		prx(true);
 	}
 }

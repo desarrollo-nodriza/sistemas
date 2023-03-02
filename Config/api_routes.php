@@ -1024,17 +1024,6 @@ Router::connect(
     )
 );
 
-Router::connect(
-    '/api/proveedor/obtener-tiempo-preparacion', // E.g. /blog/3-CakePHP_Rocks
-    array(
-        'controller'    => 'Proveedores',
-        'action'        => 'obtener_tiempo_preparacion_oc',
-        '[method]'      => 'POST',
-        'api'           => true,
-        'prefix'        => 'api'
-
-    )
-);
 
 Router::connect(
     '/api/pruebas', // E.g. /blog/3-CakePHP_Rocks
@@ -1101,4 +1090,14 @@ Router::connect(
         'api'           => true,
         'prefix'        => 'api')
 );
+
+Router::connect(
+    '/api/feriados', 
+    array(
+        'controller'    => 'Feriados', 
+        'action'        => 'feriados',
+        'api'           => true,
+        'prefix'        => 'api')
+);
+
 

@@ -36,7 +36,7 @@
                                     </div>
 								</td>
 							</tr>-->
-							<tr >
+							<tr>
 								<th><?= $this->Form->label('giro', 'Giro empresa'); ?></th>
 								<td><?= $this->Form->input('giro'); ?></td>
 							</tr>
@@ -141,7 +141,24 @@
 
 								</tr>
 							<? endif; ?>
+							<tr>
+								<th>
+									<?= $this->Form->label('despacho_manual', 'Asignar tiempo despacho manual'); ?>
+								</th>
+								<td>
+									<?= $this->Form->input('despacho_manual', array('class' => 'icheckbox')); ?>
+									<span class="help-block"><?= __('***El valor del despacho no se actualizara automaticamente'); ?></span>
+								</td>
+							</tr>
+							<tr>
+								<th><?= $this->Form->label('tiempo_despacho', 'Tiempo de despacho a mostrar al público'); ?></th>
+								<td>
+									<?= $this->Form->input('tiempo_despacho', array('class' => 'form-control')); ?>
+									<span class="help-block"><?= __('***El valor se actualiza automaticamente a menos que sea manual'); ?></span>
+								</td>
+							</tr>
 						</table>
+
 					</div>
 				</div>
 				<div class="panel-footer">

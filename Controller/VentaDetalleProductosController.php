@@ -4488,62 +4488,10 @@ class VentaDetalleProductosController extends AppController
 	 * 
 	 * @return bool
 	 */
-	public function admin_generar_json_productos_disponibles()
+	public function generar_json_productos_disponibles()
 	{	
-		$productos = $this->VentaDetalleProducto->find('all', array(
-			'conditions' => array(
-				'VentaDetalleProducto.activo' => 1
-			)
-		));
-
-		$rangos = array(
-			range(0, 12) => "Despacho en 12 hrs",
-			range(13, 24) => "Despacho en 24 hrs",
-			range(25, 36) => "Despacho en 36 hrs",
-			range(37, 48) => "Despacho en 48 hrs",
-			range(49, 72) => "Despacho en 72 hrs",
-			range(73, 1000) => "Despacho en 7 días"
-		);
-
-		# agrega información de disponibilidad por bodegas al arreglo de productos
-		$productos = $this->VentaDetalleProducto->set_stock_disponible_por_bodegas_v3($productos);
-
-		$this->WarehouseNodriza 	= $this->Components->load('WarehouseNodriza');
-		
-		# Obtenemos la info de las bodegas de Warehouse
-		$bodegasWH = Hash::extract($this->WarehouseNodriza->obtener_bodegas(), 'response.body.data');
-		
-		foreach ($productos as $ip => $producto)
-		{	
-			$productos[$ip]['Disponibilidad']['Bodega'] = array_map(function($pd) use ($bodegasWH, $producto)
-			{	
-				$tiempo_preparacion_hrs = 12;
-
-				# si tiene stock se agrega el tiempo de preparación de warehouse para el producto
-				if ($producto['VentaDetalleProducto']['disponibilidad']['stock_disponible'])
-				{
-					$tiempo_preparacion_bodega = Hash::extract($bodegasWH, '{n}[alias_nodriza='.$pd['bodega_id'].'].tiempo_preparacion');
-					$tiempo_preparacion_hrs = (isset($tiempo_preparacion[0])) ? $tiempo_preparacion[0] : $tiempo_preparacion_hrs;
-				}
-
-				# si el producto no tiene stock pero si historial ede ventas, se agrega el tiempo de preparacion dada las ventas.
-				if (!$producto['VentaDetalleProducto']['disponibilidad']['stock_disponible'])
-				{
-					
-				}
-				$pd = array_replace_recursive($pd, array(
-					'detalle_bodega' => array(
-						'tiempo_preparacion_hrs' => $tiempo_preparacion_hrs
-					)
-				));
-				
-				return $pd;
-				
-			}, $producto['Disponibilidad']['Bodega']);
-			
-		}
-
-		prx($productos);
+		$productos = $this->VentaDetalleProducto->obtener_productos_con_stock_disponible_por_bodegas_v2();
+	
 		if (!$productos)
 		{
 			return false;
@@ -4562,149 +4510,72 @@ class VentaDetalleProductosController extends AppController
 		return true;
 	}
 
-	public function admin_obtener_tiempo_preparacion($id)
-	{	
-		# Tiempos de producto vendidos
-		$productoVentas = $this->VentaDetalleProducto->find('all', array(
-			'conditions' => array(
-				'VentaDetalleProducto.id' => $id
-			),
-			'joins' => array(
-				array(
-					'alias' => 'vd',
-					'table' => 'venta_detalles',
-					'type' => 'INNER',
-					'conditions' => array(
-						'vd.venta_detalle_producto_id = VentaDetalleProducto.id'
-					),
-				),
-				array(
-					'alias' => 'vdr',
-					'table' => 'venta_detalle_producto_reservas',
-					'type' => 'LEFT',
-					'conditions' => array(
-						'vdr.venta_detalle_id = vd.id'
-					),
-				),
-				array(
-					'alias' => 'v',
-					'table' => 'ventas',
-					'type' => 'INNER',
-					'conditions' => array(
-						'v.id = vd.venta_id'
-					)
-				),
-				array(
-					'alias' => 've',
-					'table' => 'venta_estados',
-					'type' => 'INNER',
-					'conditions' => array(
-						've.id = v.venta_estado_id'
-					)
-				),
-				array(
-					'alias' => 'vec',
-					'table' => 'venta_estado_categorias',
-					'type' => 'INNER',
-					'conditions' => array(
-						'vec.id = ve.venta_estado_categoria_id',
-						'vec.venta' => 1,
-						'vec.final' => 1
-					)
-				),
-				array(
-					'alias' => 'vh',
-					'table' => 'estados_ventas',
-					'type' => 'INNER',
-					'conditions' => array(
-						'vh.venta_id = v.id',
-						'vh.venta_estado_id = ve.id'
-					)
-				),
-				array(
-					'alias' => 'pr',
-					'table' => 'venta_detalle_producto_reservas',
-					'type' => 'INNER',
-					'conditions' => array(
-						'vh.venta_id = v.id',
-						'vh.venta_estado_id = ve.id'
-					)
-				),
-			),
-			'fields' => array(
-				'vd.id',
-				'vd.venta_id',
-				'vd.created',
-				'vh.fecha',
-				'ABS(TIMESTAMPDIFF(MINUTE, vd.created, vh.fecha)) as tiempo_preparacion_m',
-				'ABS(TIMESTAMPDIFF(HOUR, vd.created, vh.fecha)) as tiempo_preparacion_h'
-			)
-		));
-
-		# Tiempo de preparacion del producto dada sus ventas
-		# si el producto no tiene ventas se calcula el tiempo del proveedor más el tiempo de preparación de Warehouse
-
-		$avg = array();
-		foreach ($productoVentas as $key => $value) {
-			$f_creacion  = date_create($value['Venta']['fecha_venta']);
-			$f_recepcion = date_create($value['Venta']['fecha_entregado']);
-
-			$diferencia1 = date_diff($f_creacion, $f_recepcion);
-
-			$avg[$key]['creado_recibido']['dias']   = $diferencia1->days;
-			$avg[$key]['creado_recibido']['horas']  = $diferencia1->h;
-		}
-		
-		if (count($avg) > 0) {
-
-			$promedio_creado_recibido  = (array_sum(Hash::extract($avg, '{n}.creado_recibido.dias')) / count($avg));
-			
-			# Si el tiempo de entrega calcuado es mayor al tiempo de la marca se mantiene el de la marca.
-			if(!empty($producto['Marca']['tiempo_entrega_maximo']) && $promedio_creado_recibido > $producto['Marca']['tiempo_entrega_maximo']){
-				$promedio_creado_recibido = $producto['Marca']['tiempo_entrega_maximo'];
-			}
-		
-		}else{
-			$promedio_creado_recibido = $producto['Marca']['tiempo_entrega_maximo'];
-		}
-
-		return ceil($promedio_creado_recibido);
-	}
-
 
 	public function api_filtro_servicios()
 	{
-		
+
 		if (!$this->request->is('get')) {
 			throw new MethodNotAllowedException('Método no permitido');
 		}
 
-    	$token = '';
+		$token = '';
 
-    	if (isset($this->request->query['token'])) {
-    		$token = $this->request->query['token'];
-    	}
-	
-    	# Existe token
+		if (isset($this->request->query['token'])) {
+			$token = $this->request->query['token'];
+		}
+
+		# Existe token
 		if (!isset($token)) {
 			throw new ForbiddenException('Se requiere token');
 		}
 
 		# Validamos token
 		if (!ClassRegistry::init('Token')->validar_token($token)) {
-			
+
 			throw new UnauthorizedException("Token a expirado");
 		}
 
 
 		$this->WarehouseNodriza 	= $this->Components->load('WarehouseNodriza');
-		
-		# Obtenemos la info de las bodegas de Warehouse
 
+		$tiempo_despacho 					= ClassRegistry::init('VentaDetalleProducto')->find('all', [
+			'fields'	=> [
+				'VentaDetalleProducto.id as producto_id',
+				"CONCAT(VentaDetalleProducto.tiempo_despacho, ' Dia(s)') tiempo_despacho ",
+			],
+			'conditions' => [
+				'VentaDetalleProducto.tiempo_despacho !=' => null
+			]
+		]);
+
+		$tiempo_despacho = array_map(function ($data) {
+			
+			return [
+				'producto_id'		=> $data['VentaDetalleProducto']['producto_id'],
+				'tiempo_despacho'	=> $data[0]['tiempo_despacho'],
+				
+			];
+			
+		}, $tiempo_despacho);
+		
+		$disponibilidad_por_bodega = ClassRegistry::init('VentaDetalleProducto')->disponibilidad_por_bodega();
+		$disponibilidad_por_bodega = array_map(function ($data) {
+
+			return [
+				'producto_id'		=> $data['p']['producto_id'],
+				'nombre'			=> $data['p']['nombre'],
+				'peso'				=> $data['p']['peso'],
+				'nombre_bodega'		=> $data[0]['nombre_bodega'],
+				'disponibilidad'	=> $data[0]['disponibilidad'],
+
+			];
+
+		}, $disponibilidad_por_bodega);
+		
 		$this->set(array(
 			'respuesta' 	=> [
-				'disponibilidad_por_bodega' 			=> ClassRegistry::init('VentaDetalleProducto')->disponibilidad_por_bodega(),
-				'obtener_tiempo_preparacion_en_dias' 	=> $this->WarehouseNodriza->obtener_tiempo_preparacion_en_dias()['response']['body'] ?? [],
+				'disponibilidad_por_bodega'	=> $disponibilidad_por_bodega,
+				'tiempo_despacho' 			=> $tiempo_despacho
 			],
 			'_serialize' 	=> array('respuesta')
 		));
