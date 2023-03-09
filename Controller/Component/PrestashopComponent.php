@@ -1061,9 +1061,16 @@ class PrestashopComponent extends Component
 
 		$hoy = date('Y-m-d H:i:s');
 
-		$descuento = array();;
+		$descuento = array();
 
 		foreach ($descuentos as $id => $d) {
+			
+			# si el descuento es un arreglo multidimensional quiere decir que es un desceunto por volumne, por ende no aplica
+			# para el calculo de la unidad.
+			if (!isset($d['specific_price']['id']))
+			{	
+				break;
+			}
 			
 			if ($d['specific_price']['from'] == '0000-00-00 00:00:00' && $d['specific_price']['to'] == '0000-00-00 00:00:00') {
 				$descuento['tipo']  = $d['specific_price']['reduction_type'];
@@ -1088,9 +1095,9 @@ class PrestashopComponent extends Component
 
 		$descuento_monto = 0;
 
-		if ($descuento['tipo'] == 'percentage') {
+		if (!empty($descuento) && $descuento['tipo'] == 'percentage') {
 			$descuento_monto = $monto * $descuento['valor'];
-		}else{
+		}elseif (!empty($descuento) && $descuento['tipo'] == 'amount'){
 			$descuento_monto = $descuento['valor'];
 		}
 

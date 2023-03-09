@@ -242,7 +242,32 @@ Class CampanasController extends AppController {
 			)
 		));
 
+		$logs = array();
+
+		$logs[] = array(
+			'Log' => array(
+				'administrador' => 'Console',
+				'modulo' => 'Campanas',
+				'modulo_accion' => 'Inicia generación XML: ' . date('Y-m-d')
+			)
+		);
+
 		if (empty($tienda['Tienda']['apiurl_prestashop']) || empty($tienda['Tienda']['apikey_prestashop'])) {
+
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => 'Console',
+					'modulo' => 'Campanas',
+					'modulo_accion' => json_encode(array(
+						'Evento' => 'Finaliza generación XML: ' . date('Y-m-d'),
+						'Resultado' => 'Tienda no configurada'
+					))
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($logs);
+
 			return;
 		}
 
@@ -263,6 +288,21 @@ Class CampanasController extends AppController {
 		));
 
 		if (!$campana) {
+
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => 'Console',
+					'modulo' => 'Campanas',
+					'modulo_accion' => json_encode(array(
+						'Evento' => 'Finaliza generación XML: ' . date('Y-m-d'),
+						'Resultado' => 'La campaña ' . $id_campana . ' no existe.'
+					))
+				)
+			);
+
+			ClassRegistry::init('Log')->create();
+			ClassRegistry::init('Log')->saveMany($logs);
+
 			return;
 		}
 
@@ -294,7 +334,18 @@ Class CampanasController extends AppController {
 				$producosProcesados = array_merge($producosProcesados, $this->productosProcesadoParaGoogle($categoria_id, true, $ic, $c));
 			}
 		}
-
+		
+		$logs[] = array(
+			'Log' => array(
+				'administrador' => 'Console',
+				'modulo' => 'Campanas',
+				'modulo_accion' => json_encode(array(
+					'Evento' => 'Productos preparados para la generación XML: ' . date('Y-m-d'),
+					'Resultado' => $producosProcesados
+				))
+			)
+		);
+		
 		# Campana de Google
 		GoogleShopping::title('Feed Google Shopping');
 		GoogleShopping::link(FULL_BASE_URL);
@@ -305,7 +356,7 @@ Class CampanasController extends AppController {
 		$google = array();
 
 		$productoTienda = new ProductotiendasController();
-
+		
 		foreach ($producosProcesados as $ip => $producto) {
 			# Se excluyen los productos sin stock
 			if ($producto['quantity'] < 1 && $campana['Campana']['excluir_stockout'])
@@ -376,7 +427,31 @@ Class CampanasController extends AppController {
 		if (!is_dir("FeedGoogle")) mkdir("FeedGoogle");
 		$ruta = "FeedGoogle/{$campana['Campana']['id']}.xml";
 
-		file_put_contents($ruta, $salida);
+		if(file_put_contents($ruta, $salida) === strlen($salida))
+		{
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => 'Console',
+					'modulo' => 'Campanas',
+					'modulo_accion' => json_encode(array(
+						'Evento' => 'Productos agregados al XML: ' . date('Y-m-d'),
+						'Resultado' => true
+					))
+				)
+			);
+		} else {
+
+			$logs[] = array(
+				'Log' => array(
+					'administrador' => 'Console',
+					'modulo' => 'Campanas',
+					'modulo_accion' => json_encode(array(
+						'Evento' => 'Productos NO agregados al XML: ' . date('Y-m-d'),
+						'Resultado' => false
+					))
+				)
+			);
+		}
 
 		if (file_exists($ruta)) {
 			ClassRegistry::init('Campana')->create();
@@ -387,6 +462,9 @@ Class CampanasController extends AppController {
 				]
 			]);
 		}
+
+		ClassRegistry::init('Log')->create();
+		ClassRegistry::init('Log')->saveMany($logs);
 
 		// * según se requiere se retorna el valor de la variable o se muestra en pantalla
 		if ($retornar) {
@@ -408,8 +486,9 @@ Class CampanasController extends AppController {
 				'filter[id]' 		=> "[{$categoria_id}]"
 			)
 		);
-
+		
 		$producto_ids_original 	= Hash::extract($categoria['category']['associations']['products'], 'product.{*}.id');
+		
 		foreach (array_chunk($producto_ids_original, 500) as $producto_ids) {
 			
 			$producosProcesados = [];
@@ -429,13 +508,19 @@ Class CampanasController extends AppController {
 					'filter[id_shop_default]' 		=> "[1]",
 				)
 			)['product'] ?? [];
-
+					
 			$stocks				= $this->Prestashop->prestashop_obtener_stock_productos($producto_ids);
 			$categorias_ids 	= array_unique(Hash::extract($productostodos, '{*}.id_category_default'));
 			$arbol_categoria	= $this->Prestashop->prestashop_arbol_categorias_muchas_categorias($categorias_ids);
 
 			foreach ($productostodos as $producto) {
 
+				# si no viene bien definido el arreglo se omite
+				if (!is_array($producto) || !isset($producto['id']))
+				{
+					continue;
+				}
+					
 				$producto['quantity']		= $stocks[$producto['id']] ?? 0;
 				$producto['product_type']	= $arbol_categoria[$producto['id_category_default']];
 				$producto['image_link']		= $imagenes[$producto['id']] ?? "";
