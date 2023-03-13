@@ -251,7 +251,7 @@ Class CampanasController extends AppController {
 				'modulo_accion' => 'Inicia generación XML: ' . date('Y-m-d')
 			)
 		);
-
+		
 		if (empty($tienda['Tienda']['apiurl_prestashop']) || empty($tienda['Tienda']['apikey_prestashop'])) {
 
 			$logs[] = array(
@@ -310,13 +310,13 @@ Class CampanasController extends AppController {
 		
 		$categoria_id 		= "";
 		
-		$producosProcesados = [];
+		$productosProcesados = [];
 		
 		# si no tiene etiqueta, se usa la categoria principal
 		if (empty($campana['CampanaEtiqueta'])) {
 
 			$categoria_id 	= $campana['Campana']['categoria_id'];
-			$producosProcesados = $this->productosProcesadoParaGoogle($categoria_id);
+			$productosProcesados = $this->productosProcesadoParaGoogle($categoria_id);
 
 		} else {
 
@@ -331,21 +331,22 @@ Class CampanasController extends AppController {
 					$categoria_id 	= $campana['Campana']['categoria_id'];
 				}
 
-				$producosProcesados = array_merge($producosProcesados, $this->productosProcesadoParaGoogle($categoria_id, true, $ic, $c));
+				$productosProcesados = array_merge($productosProcesados, $this->productosProcesadoParaGoogle($categoria_id, true, $ic, $c));
 			}
 		}
-		
+
+
 		$logs[] = array(
 			'Log' => array(
 				'administrador' => 'Console',
 				'modulo' => 'Campanas',
 				'modulo_accion' => json_encode(array(
-					'Evento' => 'Productos preparados para la generación XML: ' . date('Y-m-d'),
-					'Resultado' => $producosProcesados
+					'Evento' => 'Agregar productos al XML: ' . date('Y-m-d'),
+					'Resultado' => Hash::extract($productosProcesados, '{n}.id')
 				))
 			)
 		);
-		
+	
 		# Campana de Google
 		GoogleShopping::title('Feed Google Shopping');
 		GoogleShopping::link(FULL_BASE_URL);
@@ -354,33 +355,30 @@ Class CampanasController extends AppController {
 
 
 		$google = array();
-
-		$productoTienda = new ProductotiendasController();
 		
-		foreach ($producosProcesados as $ip => $producto) {
+		foreach ($productosProcesados as $ip => $producto) {
 			# Se excluyen los productos sin stock
 			if ($producto['quantity'] < 1 && $campana['Campana']['excluir_stockout'])
 				continue;
 
-			$producto['valor_iva'] 			= is_null($producto['id_tax_rules_group']) ? $producto['price'] : $productoTienda->precio($producto['price'], Configure::read('iva_clp'));
-			$producto['valor_final'] 		= $producto['valor_iva'];
+			$producto['valor_iva'] 			= is_null($producto['id_tax_rules_group']) ? $producto['price'] : $this->precio($producto['price'], Configure::read('iva_clp'));
+			$producto['valor_final'] 		= round($producto['valor_iva'], 0);
 			$producto['valor_final'] 		= $producto['valor_final'] - $this->Prestashop->prestashop_obtener_descuento_producto($producto['id'], $producto['valor_final']);
 
 			$google[$ip]['g:id']           	= $producto['id'];
 			$google[$ip]['g:title']        	= $producto['name']['language'];
-			$google[$ip]['g:description']  	= strip_tags(!is_array($producto['description_short']['language']) ? $producto['description_short']['language'] : "") . '';
-			$google[$ip]['g:link']         	= sprintf('%s%s-%s.html', $api_url, $producto['link_rewrite']['language'], $producto['id']);
+			$google[$ip]['g:description']  	= $producto['description_short'];
+			$google[$ip]['g:link']         	= sprintf('%s%s/%s-%s.html', $api_url,$producto['category_default_slug'], $producto['link_rewrite']['language'], $producto['id']);
 			$google[$ip]["g:image_link"]   	= $producto['image_link'];
 			$google[$ip]['g:availability'] 	= ($producto['quantity'] > 0) ? 'in stock' : 'out of stock';
 			$google[$ip]['g:price']        	= $producto['valor_iva'];
-			$google[$ip]['g:sale_price']   	= round($producto['valor_final']);
+			$google[$ip]['g:sale_price']   	= $producto['valor_final'];
 			$google[$ip]['g:product_type'] 	= $producto['product_type'] ?? 'Sin categoría';
 			$google[$ip]['g:brand']        	= (empty($producto['id_manufacturer'])) ? 'No especificado' : $producto['manufacturer_name'];
 			$google[$ip]['g:mpn']          	= $producto['reference'];
 			$google[$ip]['g:condition']    	= $producto['condition'];
 			$google[$ip]['g:adult']        	= 'no';
 			$google[$ip]['g:age_group']    	= 'adult';
-
 
 			# Se agrega la info del producto al Campana
 			$item = GoogleShopping::createItem();
@@ -474,6 +472,19 @@ Class CampanasController extends AppController {
 		}
 		
 	}
+
+
+	/**
+	 * productosProcesadoParaGoogle
+	 * 
+	 * Prepara el arreglo de productos con la información necesaria para crear el feed de google
+	 *
+	 * @param  mixed $categoria_id
+	 * @param  mixed $es_etiqueta
+	 * @param  mixed $ic
+	 * @param  mixed $c
+	 * @return array
+	 */
 	public function productosProcesadoParaGoogle($categoria_id, bool $es_etiqueta = false, $ic = null, $c = [])
 	{
 		ini_set('max_execution_time', 0);
@@ -491,7 +502,7 @@ Class CampanasController extends AppController {
 		
 		foreach (array_chunk($producto_ids_original, 500) as $producto_ids) {
 			
-			$producosProcesados = [];
+			$productosProcesados = [];
 			$imagenes	 		= [];
 			$productostodos		= [];
 			$stocks 			= [];
@@ -506,6 +517,7 @@ Class CampanasController extends AppController {
 					'filter[active]' 				=> "[1]",
 					'filter[available_for_order]' 	=> "[1]",
 					'filter[id_shop_default]' 		=> "[1]",
+					'display'						=> "[id,id_category_default,reference,quantity,id_tax_rules_group,price,name,description_short,link_rewrite,product_type,id_manufacturer,manufacturer_name,condition]"
 				)
 			)['product'] ?? [];
 					
@@ -513,6 +525,19 @@ Class CampanasController extends AppController {
 			$categorias_ids 	= array_unique(Hash::extract($productostodos, '{*}.id_category_default'));
 			$arbol_categoria	= $this->Prestashop->prestashop_arbol_categorias_muchas_categorias($categorias_ids);
 
+			$categorias_slug    = $this->Prestashop->prestashop_obtener_categorias_v2(array(
+				'filter[id]' => '[' . implode('|', $categorias_ids) . ']',
+				'display' => "[id,name,link_rewrite]"
+			));
+
+			# Si es un solo registro, se convierte en arrglo multiple
+			if (isset($categorias_slug['category']['id']))
+			{
+				$categorias_slug['category'] = [
+					0 => $categorias_slug['category']
+				];
+			}
+			
 			foreach ($productostodos as $producto) {
 
 				# si no viene bien definido el arreglo se omite
@@ -523,8 +548,10 @@ Class CampanasController extends AppController {
 					
 				$producto['quantity']		= $stocks[$producto['id']] ?? 0;
 				$producto['product_type']	= $arbol_categoria[$producto['id_category_default']];
+				$producto['category_default_slug'] = Hash::extract($categorias_slug, "category.{n}[id=".$producto['id_category_default']."].link_rewrite.language")[0] ?? '';
 				$producto['image_link']		= $imagenes[$producto['id']] ?? "";
-
+				$producto['description_short'] = strip_tags(!is_array($producto['description_short']['language']) ? $producto['description_short']['language'] : "") . '';
+				
 				if ($es_etiqueta) {
 					if ($c['categoria_id'] == 1000000000 && !empty($producto['reference'])) {
 
@@ -545,10 +572,10 @@ Class CampanasController extends AppController {
 					}
 				}
 
-				$producosProcesados[]		= $producto;
+				$productosProcesados[]		= $producto;
 			}
 
-			$productos_todos = array_merge($productos_todos,$producosProcesados);
+			$productos_todos = array_merge($productos_todos,$productosProcesados);
 		}
 
 		return $productos_todos;

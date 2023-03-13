@@ -1560,13 +1560,13 @@ class PrestashopComponent extends Component
 		ini_set('max_execution_time', 0);
 
 		$opt             	= array();
-		$opt['display'] 	= "full";
+		$opt['display'] 	= 'full';
 		$opt['resource'] 	= 'categories';
 		
 		foreach ($filter as $field => $value) {
 			$opt = array_replace_recursive($opt, array($field => $value));
 		}
-		
+
 		$informacion = array();
 
 		try {
