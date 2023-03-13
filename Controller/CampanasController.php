@@ -366,7 +366,7 @@ Class CampanasController extends AppController {
 			$producto['valor_final'] 		= $producto['valor_final'] - $this->Prestashop->prestashop_obtener_descuento_producto($producto['id'], $producto['valor_final']);
 
 			$google[$ip]['g:id']           	= $producto['id'];
-			$google[$ip]['g:title']        	= $producto['name']['language'];
+			$google[$ip]['g:title']        	= str_replace("''", '"', $producto['name']['language']);
 			$google[$ip]['g:description']  	= $producto['description_short'];
 			$google[$ip]['g:link']         	= sprintf('%s%s/%s-%s.html', $api_url,$producto['category_default_slug'], $producto['link_rewrite']['language'], $producto['id']);
 			$google[$ip]["g:image_link"]   	= $producto['image_link'];
